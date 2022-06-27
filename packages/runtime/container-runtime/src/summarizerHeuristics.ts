@@ -90,7 +90,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         private readonly summarizeStrategies: ISummaryHeuristicStrategy[] = getDefaultSummaryHeuristicStrategies(),
     ) {
         this.idleTimer = new Timer(
-            this.configuration.idleTime,
+            this.idleTime,
             () => this.runSummarize("idle"));
 
         this.runSummarize = (reason: SummarizeReason) => {
@@ -104,12 +104,31 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         };
     }
 
+    public get idleTime(): number {
+        const maxIdleTime = this.configuration.maxIdleTime;
+        const minIdleTime = this.configuration.minIdleTime;
+        const weightedNumOfOps = getWeightedNumberOfOps(
+            this.heuristicData.numRuntimeOps,
+            this.heuristicData.numNonRuntimeOps,
+            this.configuration.runtimeOpWeight,
+            this.configuration.nonRuntimeOpWeight,
+        );
+        const pToMaxOps = weightedNumOfOps * 1.0 / this.configuration.maxOps;
+
+        if (pToMaxOps >= 1) {
+            return minIdleTime;
+        }
+
+        // Return a ratioed idle time based on the percentage of ops
+        return maxIdleTime - ((maxIdleTime - minIdleTime) * pToMaxOps);
+    }
+
     public get opsSinceLastAck(): number {
         return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
     }
 
     public start() {
-        this.idleTimer?.start();
+        this.idleTimer?.start(this.idleTime);
     }
 
     public run() {
@@ -119,7 +138,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
             }
         }
 
-        this.idleTimer?.restart();
+        this.idleTimer?.restart(this.idleTime);
     }
 
     public shouldRunLastSummary(): boolean {
@@ -153,6 +172,16 @@ class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     }
 }
 
+function getWeightedNumberOfOps(
+    runtimeOpCount: number,
+    nonRuntimeOpCount: number,
+    runtimeOpWeight: number,
+    nonRuntimeOpWeight: number,
+): number {
+    return (runtimeOpWeight * runtimeOpCount)
+         + (nonRuntimeOpWeight * nonRuntimeOpCount);
+}
+
 /** Strategy used to do a weighted analysis on the ops we've processed since the last successful summary */
 class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxOps";
@@ -161,8 +190,12 @@ class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
         configuration: ISummaryConfigurationHeuristics,
         heuristicData: ISummarizeHeuristicData,
     ): boolean {
-        const weightedNumOfOps = (configuration.runtimeOpWeight * heuristicData.numRuntimeOps)
-                               + (configuration.nonRuntimeOpWeight * heuristicData.numNonRuntimeOps);
+        const weightedNumOfOps = getWeightedNumberOfOps(
+            heuristicData.numRuntimeOps,
+            heuristicData.numNonRuntimeOps,
+            configuration.runtimeOpWeight,
+            configuration.nonRuntimeOpWeight,
+        );
         return weightedNumOfOps > configuration.maxOps;
     }
 }

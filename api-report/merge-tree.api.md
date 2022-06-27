@@ -96,8 +96,6 @@ export class Client {
     accumWindow: number;
     // (undocumented)
     accumWindowTime: number;
-    // @deprecated (undocumented)
-    addLocalReference(lref: LocalReference): void;
     // (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
@@ -114,7 +112,7 @@ export class Client {
     // (undocumented)
     cloneFromSegments(): Client;
     // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): ReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     createTextHelper(): MergeTreeTextHelper;
     protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
@@ -195,11 +193,10 @@ export class Client {
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
+    rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
-    // @deprecated (undocumented)
-    removeLocalReference(lref: LocalReference): ReferencePosition | undefined;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
@@ -279,6 +276,9 @@ export function createAnnotateMarkerOp(marker: Marker, props: PropertySet, combi
 
 // @public
 export function createAnnotateRangeOp(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg;
+
+// @public (undocumented)
+export function createDetachedLocalReferencePosition(refType?: ReferenceType): LocalReferencePosition;
 
 // @public (undocumented)
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
@@ -791,8 +791,6 @@ export class List<T> {
     next: List<T>;
     // (undocumented)
     prev: List<T>;
-    // @deprecated (undocumented)
-    push(data: T): void;
     // (undocumented)
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[];
     // (undocumented)
@@ -810,62 +808,11 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined;
 // @public (undocumented)
 export const LocalClientId = -1;
 
-// @public @deprecated (undocumented)
-export class LocalReference implements ReferencePosition {
-    // @deprecated
-    constructor(client: Client, initSegment: ISegment,
-    offset?: number, refType?: ReferenceType, properties?: PropertySet);
-    // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp): void;
-    // @deprecated (undocumented)
-    compare(b: LocalReference): number;
-    // @deprecated (undocumented)
-    static readonly DetachedPosition: number;
-    // @deprecated (undocumented)
-    getClient(): Client;
-    // (undocumented)
-    getOffset(): number;
-    // (undocumented)
-    getProperties(): PropertySet | undefined;
-    // @deprecated (undocumented)
-    getRangeLabels(): string[] | undefined;
-    // (undocumented)
-    getSegment(): ISegment | undefined;
-    // @deprecated (undocumented)
-    getTileLabels(): string[] | undefined;
-    // @deprecated (undocumented)
-    hasRangeLabel(label: string): boolean;
-    // @deprecated (undocumented)
-    hasRangeLabels(): boolean;
-    // @deprecated (undocumented)
-    hasTileLabel(label: string): boolean;
-    // @deprecated (undocumented)
-    hasTileLabels(): boolean;
-    // (undocumented)
-    isLeaf(): boolean;
-    // @deprecated (undocumented)
-    max(b: LocalReference): LocalReference;
-    // @deprecated (undocumented)
-    min(b: LocalReference): LocalReference;
-    // @deprecated (undocumented)
-    offset: number;
-    // @deprecated (undocumented)
-    pairedRef?: LocalReference;
-    // (undocumented)
-    properties: PropertySet | undefined;
-    // (undocumented)
-    refType: ReferenceType;
-    // @deprecated (undocumented)
-    segment: ISegment | undefined;
-    // @deprecated (undocumented)
-    toPosition(): number;
-}
-
 // @public
 export class LocalReferenceCollection {
     // @internal
     [Symbol.iterator](): {
-        next(): IteratorResult<LocalReference>;
+        next(): IteratorResult<LocalReferencePosition>;
         [Symbol.iterator](): any;
     };
     // Warning: (ae-forgotten-export) The symbol "IRefsAtOffset" needs to be exported by the entry point index.d.ts
@@ -874,11 +821,11 @@ export class LocalReferenceCollection {
     constructor(
     segment: ISegment, initialRefsByfOffset?: (IRefsAtOffset | undefined)[]);
     // (undocumented)
-    addAfterTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
+    addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
     // (undocumented)
-    addBeforeTombstones(...refs: Iterable<LocalReference | ReferencePosition>[]): void;
+    addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
     // @internal
-    addLocalRef(lref: LocalReference | ReferencePosition): void;
+    addLocalRef(lref: LocalReferencePosition, offset: number): void;
     // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
     // @internal
@@ -886,19 +833,24 @@ export class LocalReferenceCollection {
     // @internal
     clear(): void;
     // @internal
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
+    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // @internal
     get empty(): boolean;
     // @internal
+    has(lref: ReferencePosition): boolean;
+    // @internal
     hierRefCount: number;
     // @internal
-    removeLocalRef(lref: LocalReference | ReferencePosition): LocalReference | undefined;
+    removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // @internal
     split(offset: number, splitSeg: ISegment): void;
 }
 
 // @public (undocumented)
-export type LocalReferenceMapper = (id: string) => LocalReference;
+export interface LocalReferencePosition extends ReferencePosition {
+    // (undocumented)
+    callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
+}
 
 // @public (undocumented)
 export interface LRUSegment {
@@ -933,22 +885,10 @@ export class Marker extends BaseSegment implements ReferencePosition {
     getOffset(): number;
     // (undocumented)
     getProperties(): PropertySet | undefined;
-    // @deprecated (undocumented)
-    getRangeLabels(): string[] | undefined;
     // (undocumented)
     getSegment(): this;
-    // @deprecated (undocumented)
-    getTileLabels(): string[] | undefined;
-    // @deprecated (undocumented)
-    hasRangeLabel(label: string): boolean;
-    // @deprecated (undocumented)
-    hasRangeLabels(): boolean;
     // (undocumented)
     hasSimpleType(simpleTypeName: string): boolean;
-    // @deprecated (undocumented)
-    hasTileLabel(label: string): boolean;
-    // @deprecated (undocumented)
-    hasTileLabels(): boolean;
     // (undocumented)
     static is(segment: ISegment): segment is Marker;
     // (undocumented)
@@ -1009,8 +949,6 @@ export class MergeNode implements IMergeNodeCommon {
 export class MergeTree {
     constructor(options?: PropertySet | undefined);
     ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs): void;
-    // @deprecated (undocumented)
-    addLocalReference(lref: LocalReference): void;
     // (undocumented)
     addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void): void;
     annotateRange(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs): void;
@@ -1021,7 +959,7 @@ export class MergeTree {
     // (undocumented)
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined, client: Client): ReferencePosition;
+    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
     findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
         tile: ReferencePosition;
@@ -1088,10 +1026,8 @@ export class MergeTree {
     referencePositionToLocalPosition(refPos: ReferencePosition, refSeq?: number, clientId?: number): number;
     // (undocumented)
     reloadFromSegments(segments: ISegment[]): void;
-    // @deprecated (undocumented)
-    removeLocalReference(segment: ISegment, lref: LocalReference): void;
     // (undocumented)
-    removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined;
+    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: number): number | undefined;
     // (undocumented)
     root: IMergeBlock;
@@ -1330,22 +1266,10 @@ export interface ReferencePosition {
     addProperties(newProps: PropertySet, op?: ICombiningOp): void;
     // (undocumented)
     getOffset(): number;
-    // @deprecated (undocumented)
-    getRangeLabels(): string[] | undefined;
     // (undocumented)
     getSegment(): ISegment | undefined;
-    // @deprecated (undocumented)
-    getTileLabels(): string[] | undefined;
-    // @deprecated (undocumented)
-    hasRangeLabel(label: string): boolean;
-    // @deprecated (undocumented)
-    hasRangeLabels(): boolean;
-    // @deprecated (undocumented)
-    hasTileLabel(label: string): boolean;
-    // @deprecated (undocumented)
-    hasTileLabels(): boolean;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     properties?: PropertySet;
     // (undocumented)

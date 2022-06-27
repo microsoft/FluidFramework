@@ -1429,14 +1429,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             return false;
         }
 
-        if (this.pendingKeys.has(op.key)) {
+        const pendingKeyMessageId = this.pendingKeys.get(op.key);
+        if (pendingKeyMessageId !== undefined) {
             // Found an NACK op, clear it from the directory if the latest sequence number in the directory
             // match the message's and don't process the op.
             if (local) {
                 assert(localOpMetadata !== undefined,
                     0x011 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageId = localOpMetadata as number;
-                const pendingKeyMessageId = this.pendingKeys.get(op.key);
                 if (pendingKeyMessageId === pendingMessageId) {
                     this.pendingKeys.delete(op.key);
                 }
@@ -1463,12 +1463,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         local: boolean,
         localOpMetadata: unknown,
     ): boolean {
-        if (this.pendingSubDirectories.has(op.subdirName)) {
+        const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
+        if (pendingSubDirectoryMessageId !== undefined) {
             if (local) {
                 assert(localOpMetadata !== undefined,
                     0x012 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageId = localOpMetadata as number;
-                const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
                 if (pendingSubDirectoryMessageId === pendingMessageId) {
                     this.pendingSubDirectories.delete(op.subdirName);
                 }
