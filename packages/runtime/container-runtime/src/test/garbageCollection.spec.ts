@@ -27,7 +27,6 @@ import {
     gcBlobPrefix,
     GCNodeType,
     gcTreeKey,
-    IGarbageCollectionRuntime,
     IGarbageCollector,
     runSessionExpiryKey,
     disableSessionExpiryKey,
@@ -71,7 +70,7 @@ describe("Garbage Collection Tests", () => {
         };
 
         // The runtime to be passed to the garbage collector.
-        const gcRuntime: IGarbageCollectionRuntime = {
+        const gcRuntime = {
             updateStateBeforeGC: async () => {},
             getGCData: async (fullGC?: boolean) => defaultGCData,
             updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
@@ -79,6 +78,7 @@ describe("Garbage Collection Tests", () => {
             getNodeType,
             getCurrentReferenceTimestampMs: () => Date.now(),
             closeFn,
+            emit: (event: string, ...args: any[]) => {},
         };
 
         return GarbageCollector.create({

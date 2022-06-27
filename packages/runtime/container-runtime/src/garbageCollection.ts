@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+import { ITelemetryErrorEvent, ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
@@ -40,7 +40,7 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
-import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
+import { ContainerRuntime, IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
 import {
     getGCVersion,
@@ -1338,11 +1338,13 @@ export class GarbageCollector implements IGarbageCollector {
         if (this.isSummarizerClient) {
             this.pendingEventsQueue.push({ ...propsToLog, usageType, state });
         } else {
-            this.mc.logger.sendErrorEvent({
+            const event: ITelemetryErrorEvent = {
                 ...propsToLog,
                 eventName: `${state}Object_${usageType}`,
                 pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-            });
+            };
+            this.mc.logger.sendErrorEvent(event);
+            (this.runtime as ContainerRuntime).emit("gcEvent", event);
         }
     }
 
@@ -1360,12 +1362,14 @@ export class GarbageCollector implements IGarbageCollector {
             if ((usageType === "Revived") === active) {
                 const pkg = await this.getNodePackagePath(eventProps.id);
                 const fromPkg = eventProps.fromId ? await this.getNodePackagePath(eventProps.fromId) : undefined;
-                logger.sendErrorEvent({
+                const event: ITelemetryErrorEvent = {
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
                     pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
                     fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
-                });
+                };
+                logger.sendErrorEvent(event);
+                (this.runtime as ContainerRuntime).emit("gcEvent", event);
             }
         }
         this.pendingEventsQueue = [];
