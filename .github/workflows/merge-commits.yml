@@ -1,14 +1,8 @@
 name: Merge commits to next branch
 
-# on:
-#   schedule:
-#     - cron: "0 */2 * * *"
-
 on:
-  push:
-    branches:
-      - 'batching'
-
+  schedule:
+    - cron: "0 */2 * * *"
 
 env:
   TARGET_BRANCH: next
@@ -19,7 +13,7 @@ env:
 jobs:
   dequeue:
     runs-on: ubuntu-latest
-    # if: github.repository_owner == 'microsoft'
+    if: github.repository_owner == 'microsoft'
     steps:
       - run: npm install @azure/storage-queue
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
@@ -165,7 +159,7 @@ jobs:
       group: group-pr
       cancel-in-progress: false
     needs: [ pull-request ]
-    if: always()
+    if: needs.pull-request.result == 'success'
     steps:
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
       - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
