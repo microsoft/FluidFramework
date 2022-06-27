@@ -5,9 +5,23 @@
 
 import EventEmitter from "events";
 
-import { extractStringData } from "./dataHelpers";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+
+import { applyStringData, extractStringData } from "./dataHelpers";
 import { externalDataSource } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
+import { containerKillBitId } from "./version1";
+
+async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
+    // Our inventory list is available at the URL "/".
+    return requestFluidObject<IInventoryList>(container, { url: "/" });
+}
+
+async function getContainerKillBitFromContainer(container: IContainer): Promise<IContainerKillBit> {
+    // Our kill bit is available at the URL containerKillBitId.
+    return requestFluidObject<IContainerKillBit>(container, { url: containerKillBitId });
+}
 
 export class AppDebug extends EventEmitter {
     private _sessionState = SessionState.collaborating;
@@ -49,27 +63,55 @@ export enum SessionState {
 }
 
 export class App extends EventEmitter {
-    public readonly debug = new AppDebug(this.inventoryList, this.containerKillBit);
-
     private _sessionState = SessionState.collaborating;
     public get sessionState(): SessionState {
         return this._sessionState;
     }
 
-    public constructor(
-        public readonly inventoryList: IInventoryList,
-        private readonly containerKillBit: IContainerKillBit,
-    ) {
+    private _inventoryList: IInventoryList | undefined;
+    public get inventoryList() {
+        if (this._inventoryList === undefined) {
+            throw new Error("Initialize App before using");
+        }
+        return this._inventoryList;
+    }
+
+    private _containerKillBit: IContainerKillBit | undefined;
+    private get containerKillBit() {
+        if (this._containerKillBit === undefined) {
+            throw new Error("Initialize App before using");
+        }
+        return this._containerKillBit;
+    }
+
+    public constructor(private readonly container: IContainer) {
         super();
+    }
+
+    public readonly initialize = async (initialData?: string) => {
+        if (initialData !== undefined && this.container.attachState !== AttachState.Detached) {
+            throw new Error("Cannot set initial data after attach");
+        }
+
+        this._inventoryList = await getInventoryListFromContainer(this.container);
+        this._containerKillBit = await getContainerKillBitFromContainer(this.container);
         this.containerKillBit.on("markedForDestruction", this.onStateChanged);
         this.containerKillBit.on("dead", this.onStateChanged);
-    }
+
+        if (initialData !== undefined) {
+            await applyStringData(this.inventoryList, initialData);
+        }
+    };
 
     private readonly onStateChanged = () => {
         const newState = getStateFromKillBit(this.containerKillBit);
         // assert new state !== old state
         this._sessionState = newState;
         this.emit("sessionStateChanged", this._sessionState);
+    };
+
+    public readonly exportStringData = async () => {
+        return extractStringData(this.inventoryList);
     };
 
     public readonly writeToExternalStorage = async () => {
