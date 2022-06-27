@@ -115,9 +115,7 @@ export class RootDataObject extends DataObject<{
     InitialState: RootDataObjectProps;
 }> {
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    // (undocumented)
     protected hasInitialized(): Promise<void>;
-    // (undocumented)
     protected initializingFirstTime(props: RootDataObjectProps): Promise<void>;
     get initialObjects(): LoadableObjectRecord;
 }
