@@ -1,6 +1,4 @@
-**_Documentation is a work-in-progress_**
-
-## SignalManager
+# SignalManager
 The `SignalManager` is a DataObject that can be used to communicate transient data via signals.
 
 ### Usage
