@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { runGarbageCollection } from "../garbageCollector";
 import { IGCResult } from "../interfaces";
 
@@ -14,19 +13,6 @@ interface IGCNode {
 }
 
 describe("Garbage Collector", () => {
-    let logger: ITelemetryLogger;
-    let telemetryEvents: ITelemetryGenericEvent[];
-
-    beforeEach(() => {
-        logger = {
-            sendTelemetryEvent: (event: ITelemetryGenericEvent) => telemetryEvents.push(event),
-        } as unknown as ITelemetryLogger;
-    });
-
-    afterEach(() => {
-        telemetryEvents = [];
-    });
-
     function runGCAndValidateResults(gcNodes: IGCNode[], startingIds: string[], deletedNodes: IGCNode[]) {
         const referenceGraph: { [ id: string ]: string[]; } = {};
         for (const node of gcNodes) {
@@ -38,7 +24,7 @@ describe("Garbage Collector", () => {
         const referencedNodeIds = Array.from(referencedNodes, (node: IGCNode) => node.id);
         const deletedNodeIds = Array.from(deletedNodes, (node: IGCNode) => node.id);
 
-        const gcResult: IGCResult = runGarbageCollection(referenceGraph, startingIds, logger);
+        const gcResult: IGCResult = runGarbageCollection(referenceGraph, startingIds);
         assert.deepStrictEqual(
             gcResult.referencedNodeIds.sort(),
             referencedNodeIds.sort(),

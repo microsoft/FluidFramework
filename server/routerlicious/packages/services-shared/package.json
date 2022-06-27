@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-shared",
-  "version": "0.1036.5000",
+  "version": "0.1037.0",
   "description": "Fluid server shared services",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -52,12 +52,12 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/gitresources": "^0.1036.5000",
-    "@fluidframework/protocol-base": "^0.1036.5000",
+    "@fluidframework/gitresources": "^0.1037.0",
+    "@fluidframework/protocol-base": "^0.1037.0",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/server-services-client": "^0.1036.5000",
-    "@fluidframework/server-services-core": "^0.1036.5000",
-    "@fluidframework/server-services-telemetry": "^0.1036.5000",
+    "@fluidframework/server-services-client": "^0.1037.0",
+    "@fluidframework/server-services-core": "^0.1037.0",
+    "@fluidframework/server-services-telemetry": "^0.1037.0",
     "@socket.io/redis-adapter": "^7.0.0",
     "body-parser": "^1.17.1",
     "debug": "^4.1.1",
@@ -73,7 +73,7 @@
     "winston": "^3.6.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
+    "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/body-parser": "^1.19.2",
