@@ -261,6 +261,14 @@ export class AzureClient {
             "/",
         );
         return new (class extends FluidContainer {
+            /**
+             * @see {@link FluidContainer.attach}
+             *
+             * @remarks This is required since the FluidContainer doesn't have knowledge of how the attach will happen
+             * or the id that will be returned.
+             * This exists because we are projecting a separation of server responsibility to the end developer that
+             * doesn't exist in the framework.
+             */
             public async attach(): Promise<string> {
                 if (this.attachState !== AttachState.Detached) {
                     throw new Error(
