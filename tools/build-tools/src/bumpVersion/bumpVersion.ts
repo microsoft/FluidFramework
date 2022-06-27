@@ -11,8 +11,6 @@ import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getPackageShortName } from "./releaseVersion";
 import * as semver from "semver";
-import { bumpPackageDependencies } from "./bumpDependencies";
-import { version } from "commander";
 
 export async function bumpVersionCommand(context: Context, bump: string, version: VersionChangeType, commit: boolean, virtualPatch: boolean) {
     const bumpBranch = `bump_${version}_${Date.now()}`;
@@ -207,12 +205,6 @@ export async function bumpRepo(
     virtualPatch: boolean,
     versionBag?: VersionBag
 ) {
-    // let explicitVersion = "";
-    if (versionBump === "current") {
-        // explicitVersion = adjustVersion()
-        // return versionBag;
-    }
-
     const getVersion = (key: MonoRepoKind | string): string => {
         // const verBag = versionBag !== undefined && Object.keys(versionBag).length > 0;
         let ver = "";
