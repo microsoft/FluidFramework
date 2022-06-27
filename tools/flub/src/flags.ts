@@ -1,12 +1,12 @@
 import { Flags } from "@oclif/core";
-import {
-    MonoRepoKind,
-    isMonoRepoKind,
-    supportedMonoRepoValues,
-    sentenceCase,
-} from "@fluidframework/build-tools/src/common/monoRepo";
-import { VersionBumpTypeExtended } from "@fluidframework/build-tools/src/bumpVersion/context";
-import type { OptionFlag } from "@oclif/core/lib/interfaces";
+// import {
+//     MonoRepoKind,
+//     isMonoRepoKind,
+//     supportedMonoRepoValues,
+//     sentenceCase,
+// } from "@fluidframework/build-tools/src/common/monoRepo";
+// import type { VersionBumpTypeExtended } from "@fluidframework/build-tools/src/bumpVersion/context";
+// import type { OptionFlag } from "@oclif/core/lib/interfaces";
 
 // function getTeam(): Promise<string> {
 //     // imagine this reads a configuration file or something to find the team
@@ -23,15 +23,13 @@ export const rootPathFlag = Flags.build({
     // required: true,
 });
 
-const releaseGroupOptions = [...supportedMonoRepoValues()].map((s) => s.toString().toLowerCase());
-
-console.log(releaseGroupOptions);
+// const releaseGroupOptions = [...supportedMonoRepoValues()].map((s) => s.toString().toLowerCase());
 
 export const releaseGroupFlag = Flags.build({
     char: "g",
     description: "release group",
-    options: releaseGroupOptions,
-    parse: async (input, _) => sentenceCase(input),
+    options: ["Azure", "Client", "Server"], // releaseGroupOptions,
+    parse: async (str, _) => str.charAt(0).toUpperCase() + str.slice(1),
     exclusive: ["p"],
 });
 

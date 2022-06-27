@@ -1,5 +1,5 @@
 import { Command } from "@oclif/core";
-import { rootPathFlag } from "./flags";
+import { packageFilterFlags, rootPathFlag } from "./flags";
 
 export abstract class BaseCommand extends Command {
     static flags = {

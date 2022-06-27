@@ -27,6 +27,7 @@
   ],
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
+    "build:full": "npm run format && npm run prepack",
     "lint": "eslint . --ext .ts --config .eslintrc.cjs",
     "prepack": "npm run build && oclif manifest && oclif readme",
     "postpack": "shx rm -f oclif.manifest.json",
@@ -42,6 +43,7 @@
     "@fluidframework/build-tools": "^0.2.76221",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
+    "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "semver": "^7.3.7"
   },
@@ -79,14 +81,9 @@
     "dirname": "flub",
     "commands": "./dist/commands",
     "plugins": [
-      "@oclif/plugin-help",
-      "@oclif/plugin-plugins"
+      "@oclif/plugin-help"
     ],
     "topicSeparator": " ",
-    "topics": {
-      "hello": {
-        "description": "Say hello to the world and others"
-      }
-    }
+    "topics": {}
   }
 }
