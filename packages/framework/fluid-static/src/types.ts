@@ -86,6 +86,10 @@ export interface ContainerSchema {
  * Only changes that would be reflected in the returned map of IServiceAudience's getMembers method
  * will emit events.
  *
+ *  @remarks
+ *
+ * The following is the list of events emitted.
+ *
  * ### "membersChanged"
  *
  * The membersChanged event is emitted when a member is either added or removed.

@@ -82,7 +82,7 @@ jobs:
       issues: write
       pull-requests: write
       statuses: write
-    needs: [ create-branch ]
+    needs: [ create-branch, dequeue ]
     steps:
       - name: Git checkout
         uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
@@ -127,19 +127,20 @@ jobs:
     concurrency:
       group: group-pr
       cancel-in-progress: false
-    needs: [ create-branch, dequeue, merge-dry-run ]
+    needs: [ create-branch, dequeue, merge-dry-run, push-merge ]
     if: always()
     steps:
       - run: npm install @octokit/core
       - name: Create PR using octokit
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
+          token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           script: |
             const { Octokit } = require("@octokit/core");
             const token = `${{ secrets.GITHUB_TOKEN }}`;
             const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
             const author = '${{needs.dequeue.outputs.AUTHOR}}';
-            const baseBranch = ${{ env.TARGET_BRANCH }};
+            const baseBranch = String(${{ env.TARGET_BRANCH }});
             const octokit = new Octokit({ auth: token })
             const newPr = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
               owner: 'microsoft',
