@@ -99,19 +99,19 @@ export class App extends EventEmitter {
         }
 
         if (this.containerKillBit.dead) {
-            return undefined;
+            return;
         }
 
         // After the quorum proposal is accepted, our system doesn't allow further edits to the string
         // So we can immediately get the data out even before taking the lock.
         const stringData = await extractStringData(this.inventoryList);
         if (this.containerKillBit.dead) {
-            return stringData;
+            return;
         }
 
         await this.containerKillBit.volunteerForDestruction();
         if (this.containerKillBit.dead) {
-            return stringData;
+            return;
         }
 
         await externalDataSource.writeData(stringData);
@@ -120,6 +120,5 @@ export class App extends EventEmitter {
         } else {
             await this.containerKillBit.setDead();
         }
-        return stringData;
     };
 }

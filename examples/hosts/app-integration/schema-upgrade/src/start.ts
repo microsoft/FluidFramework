@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IFluidCodeDetails, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
+import {
+    IContainer,
+    IFluidCodeDetails,
+    IFluidModuleWithDetails,
+    IHostLoader,
+} from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -14,7 +19,7 @@ import ReactDOM from "react-dom";
 
 import { App } from "./app";
 import { AppView } from "./appView";
-import { applyStringData } from "./dataHelpers";
+import { applyStringData, extractStringData } from "./dataHelpers";
 import { externalDataSource } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
@@ -58,30 +63,10 @@ function createLoader() {
     });
 }
 
-async function createNewContainer(externalStringData?: string) {
-    const loader = createLoader();
-
-    // TODO probably take an argument for which container code to use.
-    const container = await loader.createDetachedContainer({ package: "two" });
-    if (externalStringData !== undefined) {
-        const inventoryList = await getInventoryListFromContainer(container);
-        await applyStringData(inventoryList, externalStringData);
-    }
-    await container.attach(createTinyliciousCreateNewRequest());
-
-    return container;
-}
-
-async function loadContainer(containerId: string) {
-    const loader = createLoader();
-
-    return loader.resolve({ url: containerId });
-}
-
 async function start(): Promise<void> {
+    const loader = createLoader();
     let fetchedData: string | undefined;
     let container: IContainer;
-    let containerId: string;
 
     // In interacting with the service, we need to be explicit about whether we're creating a new container vs.
     // loading an existing one.  If loading, we also need to provide the unique ID for the container we are
@@ -94,22 +79,10 @@ async function start(): Promise<void> {
     // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
     if (location.hash.length === 0) {
         fetchedData = await externalDataSource.fetchData();
-        container = await createNewContainer(fetchedData);
-
-        // Discover the container ID after attaching
-        const resolved = container.resolvedUrl;
-        ensureFluidResolvedUrl(resolved);
-        containerId = resolved.id;
-
-        // Update the URL with the actual container ID
-        location.hash = containerId;
+        container = await createNewFlow(loader, fetchedData);
     } else {
-        containerId = location.hash.substring(1);
-        container = await loadContainer(containerId);
+        container = await loadFlow(loader);
     }
-
-    // Put the container ID in the tab title
-    document.title = containerId;
 
     const inventoryList = await getInventoryListFromContainer(container);
     const containerKillBit = await getContainerKillBitFromContainer(container);
@@ -117,17 +90,10 @@ async function start(): Promise<void> {
     const app = new App(inventoryList, containerKillBit);
 
     const migrateContainer = async () => {
-        const exportedData = await app.saveAndEndSession();
+        await app.saveAndEndSession();
+        const exportedData = await extractStringData(inventoryList);
         container.close();
-        container = await createNewContainer(exportedData);
-
-        // Discover the container ID after attaching
-        const resolved = container.resolvedUrl;
-        ensureFluidResolvedUrl(resolved);
-        containerId = resolved.id;
-
-        location.hash = containerId;
-        document.title = containerId;
+        container = await createNewFlow(loader, exportedData);
     };
 
     // Given an IInventoryList, we can render the list and provide controls for users to modify it.
@@ -141,6 +107,39 @@ async function start(): Promise<void> {
         }),
         div,
     );
+}
+
+async function createNewFlow(loader: IHostLoader, initialData: string): Promise<IContainer> {
+    // TODO probably take an argument for which container code to use.
+    const container = await loader.createDetachedContainer({ package: "two" });
+    if (initialData !== undefined) {
+        const inventoryList = await getInventoryListFromContainer(container);
+        await applyStringData(inventoryList, initialData);
+    }
+    await container.attach(createTinyliciousCreateNewRequest());
+
+    // Discover the container ID after attaching
+    const resolved = container.resolvedUrl;
+    ensureFluidResolvedUrl(resolved);
+    const containerId = resolved.id;
+
+    // Update the URL with the actual container ID
+    location.hash = containerId;
+
+    // Put the container ID in the tab title
+    document.title = containerId;
+
+    return container;
+}
+
+async function loadFlow(loader: IHostLoader): Promise<IContainer> {
+    const containerId = location.hash.substring(1);
+    const container = await loader.resolve({ url: containerId });
+
+    // Put the container ID in the tab title
+    document.title = containerId;
+
+    return container;
 }
 
 start().catch((error) => console.error(error));
