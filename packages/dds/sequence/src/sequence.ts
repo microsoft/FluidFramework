@@ -67,6 +67,10 @@ const contentPath = "content";
 /**
  * Events emitted in response to changes to the sequence data.
  *
+ *  @remarks
+ *
+ * The following is the list of events emitted.
+ *
  * ### "sequenceDelta"
  *
  * The sequenceDelta event is emitted when segments are inserted, annotated, or removed.
