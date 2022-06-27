@@ -102,7 +102,7 @@ export async function getAndUpdatePackageDetails(packageDir: string, updateOptio
     * previous major. In the case of minor we target specific previous minor version.
     * Similarly for patch we do not use semver, we compare directly to the previous patch version.
     *
-    * We do this to align with our release process. We are strictest between patches, and looser between minor and major
+    * We do this to align with our release process. We are strictest between patches and minor, and looser between major
     * We may need to adjust this as we adjust our release processes.
     */
     let normalizeParts = normalizedVersion.split(".").map((p)=>Number.parseInt(p));
