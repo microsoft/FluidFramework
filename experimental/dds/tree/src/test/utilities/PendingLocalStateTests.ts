@@ -205,46 +205,18 @@ export function runPendingLocalStateTests(
 				writeFormat: WriteFormat.v0_0_2,
 			}));
 
-			// insertSmallTree(tree);
-			// await waitForSummary(container);
-
-			// const { pendingLocalState } = await withContainerOffline(testObjectProvider, c0, () => {
-			// 	insertSmallTree(tree);
-			// });
-
-			// insertSmallTree(tree);
-			// await waitForSummary(container);
-
-			// await setUpLocalServerTestSharedTree({
-			// 	id: documentId,
-			// 	testObjectProvider,
-			// 	writeFormat: WriteFormat.v0_0_2,
-			// 	pendingLocalState,
-			// });
-
-			// await testObjectProvider.ensureSynchronized();
-
-			// return;
-
-			// 3. The second client creates stashed ops and rejoins multiple times
-			({ tree, container } = await stash(container, () => {
-				insertSmallTree(tree);
-				insertSmallTree(tree);
-				insertSmallTree(tree);
-			}));
+			// 3. The second client creates stashed ops and rejoins after a summary
+			await waitForSummary(container);
 			({ tree, container } = await stash(container, () => insertSmallTree(tree)));
 
-			// 4. A third client joins and also stashes and rejoins
-			await stash(
-				(
-					await setUpLocalServerTestSharedTree({
-						id: documentId,
-						testObjectProvider,
-						writeFormat: WriteFormat.v0_0_2,
-					})
-				).container,
-				() => insertSmallTree(tree)
-			);
+			// 4. A third client joins, stashes and rejoins
+			const { container: container3 } = await setUpLocalServerTestSharedTree({
+				id: documentId,
+				testObjectProvider,
+				writeFormat: WriteFormat.v0_0_2,
+			});
+
+			await stash(container3, () => insertSmallTree(tree));
 
 			/** Go offline, do something, then rejoin with pending local state */
 			async function stash(
