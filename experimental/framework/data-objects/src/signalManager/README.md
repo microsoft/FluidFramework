@@ -1,7 +1,7 @@
 # SignalManager
 The `SignalManager` is a DataObject that can be used to communicate transient data via signals. Transient data refers to impermanent information that is not persisted with the container.
 
-### Usage
+## Usage
 
 User presence scenarios are well-suited for `SignalManager`, as users are required to tell other users their own information and their past data is mostly irrelavant. Using `SignalManager` over other distributed data structures in these scenarios is beneficial, as its usage does not result in the storage of data that is not useful in the long-term.
 
