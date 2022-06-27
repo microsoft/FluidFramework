@@ -31,7 +31,7 @@ The current feature focus is on:
 ## Whats missing from existing DDSs?
 
 `directory` and `map` can not provide merge resolution that guarantees well-formedness of trees while supporting the desired editing APIs (like subsequence move),
-and are missing (can can not be practically extended to have) efficient ways to handle large data ort schema.
+and are missing (and cannot be practically extended to have) efficient ways to handle large data ort schema.
 
 `sequence` does not capture the hierarchy or schema, and also does not handle partial checkouts.
 Additionally its actual merge resolution leaves some things to be desired in some cases which `tree` aims to improve on.
