@@ -7,16 +7,15 @@ import { TaskManager } from "@fluid-experimental/task-manager";
 import { Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
 import type { IContainerKillBit } from "./interfaces";
 
 const quorumKey = "quorum";
 const crcKey = "crc";
 const taskManagerKey = "task-manager";
-const markedForDestructionKey = "marked";
-const destroyTaskName = "destroy";
-const deadKey = "dead";
+const codeDetailsProposedKey = "code";
+const migrateTaskName = "migrate";
+const newContainerIdKey = "newContainerId";
 
 export class ContainerKillBit extends DataObject implements IContainerKillBit {
     private _quorum: Quorum | undefined;
@@ -44,36 +43,32 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         return this._taskManager;
     }
 
-    public get dead() {
-        return this.crc.read(deadKey) as boolean;
+    public get migrated() {
+        return this.crc.read(newContainerIdKey) as boolean;
     }
 
-    public async setDead() {
+    public async setNewContainerId() {
         // Using a consensus-type data structure here, to make it easier to validate
-        // that the setDead was ack'd and we can have confidence other clients will agree.
-        return PerformanceEvent.timedExecAsync(
-            this.runtime.logger,
-            { eventName: "SettingContainerDead" },
-            async () => this.crc.write(deadKey, true).then(() => { }),
-        );
+        // that the setNewContainerId was ack'd and we can have confidence other clients will agree.
+        await this.crc.write(newContainerIdKey, true);
     }
 
-    public get markedForDestruction() {
-        return this.quorum.get(markedForDestructionKey) as boolean;
+    public get codeDetailsProposed() {
+        return this.quorum.get(codeDetailsProposedKey) as boolean;
     }
 
-    public async markForDestruction() {
+    public async proposeCodeDetails() {
         // Early exit/resolve if already marked.
-        if (this.markedForDestruction) {
+        if (this.codeDetailsProposed) {
             return;
         }
 
         // Note that the marking could come from another client (e.g. two clients try to mark simultaneously).
         // Watching via the event listener will work regardless of whether our marking or a remote client's
         // marking was the one that actually wrote the flag.
-        const markP = new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve, reject) => {
             const acceptedListener = (key: string) => {
-                if (key === markedForDestructionKey) {
+                if (key === codeDetailsProposedKey) {
                     resolve();
                     this.quorum.off("accepted", acceptedListener);
                 }
@@ -82,26 +77,16 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
             // Even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
             // whether our marking or a remote client's marking writes the flag (though maybe we'd do retry
             // logic if a remote client rejects the local client's mark).
-            this.quorum.set(markedForDestructionKey, true);
+            this.quorum.set(codeDetailsProposedKey, true);
         });
-
-        return PerformanceEvent.timedExecAsync(
-            this.runtime.logger,
-            { eventName: "MarkingContainerForDestruction" },
-            async () => markP,
-        );
     }
 
-    public async volunteerForDestruction(): Promise<void> {
-        return PerformanceEvent.timedExecAsync(
-            this.runtime.logger,
-            { eventName: "VolunteeringForDestruction" },
-            async () => this.taskManager.lockTask(destroyTaskName),
-        );
+    public async volunteerForMigration(): Promise<void> {
+        return this.taskManager.lockTask(migrateTaskName);
     }
 
-    public haveDestructionTask(): boolean {
-        return this.taskManager.haveTaskLock(destroyTaskName);
+    public haveMigrationTask(): boolean {
+        return this.taskManager.haveTaskLock(migrateTaskName);
     }
 
     protected async initializingFirstTime() {
@@ -114,21 +99,16 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         // TODO: Update if/when .set() returns a promise.
         const initialSetP = new Promise<void>((resolve) => {
             const watchForInitialSet = (key: string) => {
-                if (key === markedForDestructionKey) {
+                if (key === codeDetailsProposedKey) {
                     resolve();
                     quorum.off("accepted", watchForInitialSet);
                 }
             };
             quorum.on("accepted", watchForInitialSet);
         });
-        quorum.set(markedForDestructionKey, false);
-        await PerformanceEvent.timedExecAsync(
-            this.runtime.logger,
-            { eventName: "InitializingKillBit" },
-            async () => {
-                await initialSetP;
-                await crc.write(deadKey, false);
-            });
+        quorum.set(codeDetailsProposedKey, false);
+        await initialSetP;
+        await crc.write(newContainerIdKey, false);
     }
 
     protected async hasInitialized() {
@@ -139,14 +119,14 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         this._crc = await crcHandle.get();
 
         this.quorum.on("accepted", (key: string) => {
-            if (key === markedForDestructionKey) {
-                this.emit("markedForDestruction");
+            if (key === codeDetailsProposedKey) {
+                this.emit("codeDetailsProposed");
             }
         });
 
         this.crc.on("atomicChanged", (key) => {
-            if (key === deadKey) {
-                this.emit("dead");
+            if (key === newContainerIdKey) {
+                this.emit("migrated");
             }
         });
 

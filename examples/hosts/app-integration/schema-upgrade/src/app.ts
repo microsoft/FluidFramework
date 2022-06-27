@@ -34,8 +34,8 @@ export class AppDebug extends EventEmitter {
         private readonly containerKillBit: IContainerKillBit,
     ) {
         super();
-        this.containerKillBit.on("markedForDestruction", this.onStateChanged);
-        this.containerKillBit.on("dead", this.onStateChanged);
+        this.containerKillBit.on("codeDetailsProposed", this.onStateChanged);
+        this.containerKillBit.on("migrated", this.onStateChanged);
     }
 
     private readonly onStateChanged = () => {
@@ -47,9 +47,9 @@ export class AppDebug extends EventEmitter {
 }
 
 const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
-    if (containerKillBit.dead) {
+    if (containerKillBit.migrated) {
         return SessionState.ended;
-    } else if (containerKillBit.markedForDestruction) {
+    } else if (containerKillBit.codeDetailsProposed) {
         return SessionState.ending;
     } else {
         return SessionState.collaborating;
@@ -95,8 +95,8 @@ export class App extends EventEmitter {
 
         this._inventoryList = await getInventoryListFromContainer(this.container);
         this._containerKillBit = await getContainerKillBitFromContainer(this.container);
-        this.containerKillBit.on("markedForDestruction", this.onStateChanged);
-        this.containerKillBit.on("dead", this.onStateChanged);
+        this.containerKillBit.on("codeDetailsProposed", this.onStateChanged);
+        this.containerKillBit.on("migrated", this.onStateChanged);
 
         if (initialData !== undefined) {
             await applyStringData(this.inventoryList, initialData);
@@ -128,39 +128,39 @@ export class App extends EventEmitter {
     };
 
     public readonly proposeEndSession = () => {
-        this.containerKillBit.markForDestruction().catch(console.error);
+        this.containerKillBit.proposeCodeDetails().catch(console.error);
     };
 
     public readonly endSession = () => {
-        this.containerKillBit.setDead().catch(console.error);
+        this.containerKillBit.setNewContainerId().catch(console.error);
     };
 
     public readonly saveAndEndSession = async () => {
-        if (!this.containerKillBit.markedForDestruction) {
-            await this.containerKillBit.markForDestruction();
+        if (!this.containerKillBit.codeDetailsProposed) {
+            await this.containerKillBit.proposeCodeDetails();
         }
 
-        if (this.containerKillBit.dead) {
+        if (this.containerKillBit.migrated) {
             return;
         }
 
         // After the quorum proposal is accepted, our system doesn't allow further edits to the string
         // So we can immediately get the data out even before taking the lock.
         const stringData = await extractStringData(this.inventoryList);
-        if (this.containerKillBit.dead) {
+        if (this.containerKillBit.migrated) {
             return;
         }
 
-        await this.containerKillBit.volunteerForDestruction();
-        if (this.containerKillBit.dead) {
+        await this.containerKillBit.volunteerForMigration();
+        if (this.containerKillBit.migrated) {
             return;
         }
 
         await externalDataSource.writeData(stringData);
-        if (!this.containerKillBit.haveDestructionTask()) {
+        if (!this.containerKillBit.haveMigrationTask()) {
             throw new Error("Lost task during write");
         } else {
-            await this.containerKillBit.setDead();
+            await this.containerKillBit.setNewContainerId();
         }
     };
 }

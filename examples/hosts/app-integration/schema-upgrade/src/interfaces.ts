@@ -8,16 +8,16 @@ import type { IEvent, IEventProvider } from "@fluidframework/common-definitions"
 import { SharedString } from "@fluidframework/sequence";
 
 export interface IContainerKillBitEvents extends IEvent {
-    (event: "markedForDestruction" | "dead", listener: () => void);
+    (event: "codeDetailsProposed" | "migrated", listener: () => void);
 }
 
 export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvents> {
-    dead: boolean;
-    setDead(): Promise<void>;
-    markedForDestruction: boolean;
-    markForDestruction(): Promise<void>;
-    volunteerForDestruction(): Promise<void>;
-    haveDestructionTask(): boolean;
+    migrated: boolean;
+    setNewContainerId(): Promise<void>;
+    codeDetailsProposed: boolean;
+    proposeCodeDetails(): Promise<void>;
+    volunteerForMigration(): Promise<void>;
+    haveMigrationTask(): boolean;
 }
 
 export interface IInventoryItem extends EventEmitter {
