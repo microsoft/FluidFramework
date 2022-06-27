@@ -40,6 +40,30 @@ use_old_EnumDeclaration_AttachState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_CompressedSerializedInterval": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_CompressedSerializedInterval():
+    TypeOnly<old.CompressedSerializedInterval>;
+declare function use_current_TypeAliasDeclaration_CompressedSerializedInterval(
+    use: TypeOnly<current.CompressedSerializedInterval>);
+use_current_TypeAliasDeclaration_CompressedSerializedInterval(
+    get_old_TypeAliasDeclaration_CompressedSerializedInterval());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_CompressedSerializedInterval": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_CompressedSerializedInterval():
+    TypeOnly<current.CompressedSerializedInterval>;
+declare function use_old_TypeAliasDeclaration_CompressedSerializedInterval(
+    use: TypeOnly<old.CompressedSerializedInterval>);
+use_old_TypeAliasDeclaration_CompressedSerializedInterval(
+    get_current_TypeAliasDeclaration_CompressedSerializedInterval());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_ConnectionState": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_ConnectionState():
@@ -496,6 +520,30 @@ use_old_InterfaceDeclaration_IJSONRunSegment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMapMessageLocalMetadata": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IMapMessageLocalMetadata():
+    TypeOnly<old.IMapMessageLocalMetadata>;
+declare function use_current_InterfaceDeclaration_IMapMessageLocalMetadata(
+    use: TypeOnly<current.IMapMessageLocalMetadata>);
+use_current_InterfaceDeclaration_IMapMessageLocalMetadata(
+    get_old_InterfaceDeclaration_IMapMessageLocalMetadata());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMapMessageLocalMetadata": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IMapMessageLocalMetadata():
+    TypeOnly<current.IMapMessageLocalMetadata>;
+declare function use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
+    use: TypeOnly<old.IMapMessageLocalMetadata>);
+use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
+    get_current_InterfaceDeclaration_IMapMessageLocalMetadata());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IMember": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IMember():
@@ -551,7 +599,6 @@ declare function get_old_ClassDeclaration_IntervalCollection():
 declare function use_current_ClassDeclaration_IntervalCollection(
     use: TypeOnly<current.IntervalCollection<any>>);
 use_current_ClassDeclaration_IntervalCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_IntervalCollection());
 
 /*
@@ -709,6 +756,30 @@ declare function use_old_InterfaceDeclaration_ISerializedInterval(
     use: TypeOnly<old.ISerializedInterval>);
 use_old_InterfaceDeclaration_ISerializedInterval(
     get_current_InterfaceDeclaration_ISerializedInterval());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializedIntervalCollectionV2": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISerializedIntervalCollectionV2():
+    TypeOnly<old.ISerializedIntervalCollectionV2>;
+declare function use_current_InterfaceDeclaration_ISerializedIntervalCollectionV2(
+    use: TypeOnly<current.ISerializedIntervalCollectionV2>);
+use_current_InterfaceDeclaration_ISerializedIntervalCollectionV2(
+    get_old_InterfaceDeclaration_ISerializedIntervalCollectionV2());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializedIntervalCollectionV2": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISerializedIntervalCollectionV2():
+    TypeOnly<current.ISerializedIntervalCollectionV2>;
+declare function use_old_InterfaceDeclaration_ISerializedIntervalCollectionV2(
+    use: TypeOnly<old.ISerializedIntervalCollectionV2>);
+use_old_InterfaceDeclaration_ISerializedIntervalCollectionV2(
+    get_current_InterfaceDeclaration_ISerializedIntervalCollectionV2());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1488,7 +1559,6 @@ declare function get_old_ClassDeclaration_SequenceInterval():
 declare function use_current_ClassDeclaration_SequenceInterval(
     use: TypeOnly<current.SequenceInterval>);
 use_current_ClassDeclaration_SequenceInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceInterval());
 
 /*
