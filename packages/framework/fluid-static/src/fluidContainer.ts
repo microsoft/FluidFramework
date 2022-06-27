@@ -166,7 +166,10 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 }
 
 /**
- * {@inheritDoc IFluidContainer}
+ * Base {@link IFluidContainer} implementation.
+ *
+ * @remarks Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
+ * will need to utilize or provide a service-specific implementation of this type that implements that method.
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
@@ -223,10 +226,15 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * {@inheritDoc IFluidContainer.attach}
+     * Incomplete base implementation of {@link IFluidContainer.attach}.
+     * @remarks Note: this implementation will unconditionally throw.
+     * Consumers who rely on this will need to utilize or provide a service specific implementation of this base type
+     * that provides an implementation of this method.
+     *
+     * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
+     * but internally this separation is not there.
      */
     public async attach(): Promise<string> {
-        // TODO: this needs to be implemented. This type should be self-sufficient.
         throw new Error("Cannot attach container. Container is not in detached state");
     }
 
