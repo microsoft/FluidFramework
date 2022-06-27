@@ -7,5 +7,8 @@
  * Base user definition. It is valid to extend this interface when adding new details to the user object.
  */
 export interface IUser {
+    /**
+     * Unique identifier of the user session. This ID is established on each connection with the service.
+     */
     id: string;
 }

@@ -19,7 +19,7 @@ export enum BuildResult {
     Success,
     UpToDate,
     Failed,
-};
+}
 
 export function summarizeBuildResult(results: BuildResult[]) {
     let retResult = BuildResult.UpToDate;
@@ -40,14 +40,14 @@ class TaskStats {
     public leafUpToDateCount = 0;
     public leafBuiltCount = 0;
     public leafExecTimeTotal = 0;
-};
+}
 
 class BuildContext {
     public readonly fileHashCache = new FileHashCache();
     public readonly taskStats = new TaskStats();
     public readonly failedTaskLines: string[] = [];
     constructor(public readonly workerPool?: WorkerPool) { }
-};
+}
 
 export class BuildPackage {
     private buildTask?: Task | null = null;
@@ -127,7 +127,7 @@ export class BuildGraph {
             if (!await buildPackage.pkg.checkInstall()) {
                 succeeded = false;
             }
-        };
+        }
         return succeeded;
     }
 
@@ -233,6 +233,7 @@ export class BuildGraph {
     }
 
     private propagateMarkForBuild(needPropagate: BuildPackage[]) {
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const node = needPropagate.pop();
             if (!node) {
