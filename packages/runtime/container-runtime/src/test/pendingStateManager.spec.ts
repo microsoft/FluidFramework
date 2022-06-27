@@ -34,6 +34,7 @@ describe("Pending State Manager Rollback", () => {
                     throw new Error();
                 }
             },
+            orderSequentially: () => {},
         }, FlushMode.Immediate, undefined);
     });
 
@@ -94,15 +95,6 @@ describe("Pending State Manager Rollback", () => {
         assert.throws(() => { checkpoint.rollback(); });
 
         assert.strictEqual(rollbackCalled, true);
-        assert.strictEqual(closeCalled, true);
-    });
-
-    it("should throw and close when rolling back pending state type is not message", () => {
-        const checkpoint = pendingStateManager.checkpoint();
-        pendingStateManager.onFlushModeUpdated(FlushMode.TurnBased);
-        assert.throws(() => { checkpoint.rollback(); });
-
-        assert.strictEqual(rollbackCalled, false);
         assert.strictEqual(closeCalled, true);
     });
 });

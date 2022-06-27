@@ -416,14 +416,6 @@ export interface IPendingFlush {
     type: "flush";
 }
 
-// @public
-export interface IPendingFlushMode {
-    // (undocumented)
-    flushMode: FlushMode;
-    // (undocumented)
-    type: "flushMode";
-}
-
 // @public (undocumented)
 export interface IPendingLocalState {
     pendingStates: IPendingState[];
@@ -457,7 +449,7 @@ export interface IPendingRuntimeState {
 }
 
 // @public (undocumented)
-export type IPendingState = IPendingMessage | IPendingFlushMode | IPendingFlush;
+export type IPendingState = IPendingMessage | IPendingFlush;
 
 // @public @deprecated (undocumented)
 export interface IProvideSummarizer {

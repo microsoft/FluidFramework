@@ -405,12 +405,13 @@ export class PendingStateManager implements IDisposable {
                      * either receive the whole batch ack or nothing at all.
                      */
                     if (this.flushMode === FlushMode.Immediate
-                        && (messageBatchQueue.length > 0 || pendingState.opMetadata?.batch))
-                    {
+                        && (messageBatchQueue.length > 0 || pendingState.opMetadata?.batch)
+                    ) {
                         messageBatchQueue.enqueue(pendingState);
                         if (pendingState.opMetadata?.batch === false) {
                             this.stateHandler.orderSequentially(() => {
                                 while (messageBatchQueue.length > 0) {
+                                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                                     const message = messageBatchQueue.dequeue()!;
                                     this.stateHandler.reSubmit(
                                         message.messageType,

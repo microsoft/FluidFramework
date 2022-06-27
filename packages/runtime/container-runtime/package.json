@@ -143,7 +143,17 @@
         "backCompat": false
       },
       "InterfaceDeclaration_ISummarizerRuntime": {"backCompat": false},
-      "InterfaceDeclaration_IConnectableRuntime": {"backCompat": false}
+      "InterfaceDeclaration_IConnectableRuntime": {"backCompat": false},
+      "RemovedInterfaceDeclaration_IPendingFlushMode": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IPendingLocalState": {
+        "forwardCompat": false
+      },
+      "TypeAliasDeclaration_IPendingState": {
+        "forwardCompat": false
+      }
     }
   }
 }
