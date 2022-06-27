@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/aqueduct",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A set of implementations for Fluid Framework interfaces.",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -65,27 +65,27 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^1.1.0",
-    "@fluidframework/container-loader": "^1.1.0",
-    "@fluidframework/container-runtime": "^1.1.0",
-    "@fluidframework/container-runtime-definitions": "^1.1.0",
-    "@fluidframework/core-interfaces": "^1.1.0",
-    "@fluidframework/datastore": "^1.1.0",
-    "@fluidframework/datastore-definitions": "^1.1.0",
-    "@fluidframework/map": "^1.1.0",
-    "@fluidframework/request-handler": "^1.1.0",
-    "@fluidframework/runtime-definitions": "^1.1.0",
-    "@fluidframework/runtime-utils": "^1.1.0",
-    "@fluidframework/synthesize": "^1.1.0",
-    "@fluidframework/view-interfaces": "^1.1.0",
+    "@fluidframework/container-definitions": "^1.2.0",
+    "@fluidframework/container-loader": "^1.2.0",
+    "@fluidframework/container-runtime": "^1.2.0",
+    "@fluidframework/container-runtime-definitions": "^1.2.0",
+    "@fluidframework/core-interfaces": "^1.2.0",
+    "@fluidframework/datastore": "^1.2.0",
+    "@fluidframework/datastore-definitions": "^1.2.0",
+    "@fluidframework/map": "^1.2.0",
+    "@fluidframework/request-handler": "^1.2.0",
+    "@fluidframework/runtime-definitions": "^1.2.0",
+    "@fluidframework/runtime-utils": "^1.2.0",
+    "@fluidframework/synthesize": "^1.2.0",
+    "@fluidframework/view-interfaces": "^1.2.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@^1.0.0",
-    "@fluidframework/build-common": "^0.24.0-0",
-    "@fluidframework/build-tools": "^0.2.71273",
+    "@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@1.1.0",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^1.1.0",
+    "@fluidframework/mocha-test-setup": "^1.2.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -102,7 +102,7 @@
   },
   "module:es5": "es5/index.js",
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "broken": {}
   }
 }

@@ -95,7 +95,6 @@ declare function get_old_ClassDeclaration_MockContainerRuntimeFactory():
 declare function use_current_ClassDeclaration_MockContainerRuntimeFactory(
     use: TypeOnly<current.MockContainerRuntimeFactory>);
 use_current_ClassDeclaration_MockContainerRuntimeFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntimeFactory());
 
 /*
@@ -120,7 +119,6 @@ declare function get_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnec
 declare function use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
     use: TypeOnly<current.MockContainerRuntimeFactoryForReconnection>);
 use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection());
 
 /*

@@ -98,6 +98,7 @@ export class Context {
         }
 
         const publishedPackageDependenciesPromises: Promise<void>[] = [];
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const pkg = pendingDepCheck.pop();
             if (!pkg) {
@@ -123,7 +124,7 @@ export class Context {
                         }
                         continue;
                     }
-                    let depVersion = depBuildPackage.version;
+                    const depVersion = depBuildPackage.version;
                     const reference = `${pkg.name}@local`;
                     // Check if the version in the repo is compatible with the version described in the dependency.
 
@@ -175,4 +176,4 @@ export class Context {
             await this.gitRepo.deleteTag(tag);
         }
     }
-};
+}

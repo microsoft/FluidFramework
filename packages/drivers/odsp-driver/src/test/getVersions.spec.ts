@@ -66,6 +66,7 @@ describe("Tests for snapshot fetch", () => {
             id: "id",
             sequenceNumber: 1,
         }],
+        blobs: [],
     };
 
     const content: ISnapshotContents = {
