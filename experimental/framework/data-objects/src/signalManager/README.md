@@ -18,7 +18,7 @@ const containerSchema: ContainerSchema = {
     },
 };
 
-const { container, services } =  await client.createContainer(containerSchema);
+const { container, services } = await client.createContainer(containerSchema);
 
 const signalManager = container.initialObjects.signalManager as SignalManager
 ```
