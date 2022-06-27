@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { stub } from "sinon";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { EpochTracker } from "../epochTracker";
 import { HostStoragePolicyInternal } from "../contracts";
@@ -15,11 +16,13 @@ import { INewFileInfo, IOdspResponse } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
+import { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
+import { createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache();
 
-describe("Tests for snapshot fetch headers", () => {
+describe("Tests for snapshot fetch", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
     const driveId = "driveId";
     const itemId = "itemId";
@@ -107,14 +110,18 @@ describe("Tests for snapshot fetch headers", () => {
                 getDownloadSnapshotStub.restore();
             }
         }
-        const odspResponse: IOdspResponse<ISnapshotContents> = {
-            content,
+        const odspResponse: IOdspResponse<Response> = {
+            content: (await createResponse(
+                {},
+                content,
+                200,
+            )) as unknown as Response,
             duration: 10,
-            headers: new Map([["x-fluid-epoch", "epoch1"]]),
+            headers: new Map([["x-fluid-epoch", "epoch1"], ["content-type", "application/json"]]),
             propsToLog: {},
         };
-        const response = {
-            odspSnapshotResponse: odspResponse,
+        const response: ISnapshotRequestAndResponseOptions = {
+            odspResponse,
             requestHeaders: {},
             requestUrl: siteUrl,
         };
@@ -125,5 +132,44 @@ describe("Tests for snapshot fetch headers", () => {
             );
         } catch (error) { }
         assert(success, "mds limit should not be set!!");
+    });
+
+    it("Check error in snapshot content type", async () => {
+        async function mockDownloadSnapshot<T>(_response: Promise<any>, callback: () => Promise<T>): Promise<T> {
+            const getDownloadSnapshotStub = stub(fetchSnapshotImport, "downloadSnapshot");
+            getDownloadSnapshotStub.returns(_response);
+            try {
+                return await callback();
+            } finally {
+                getDownloadSnapshotStub.restore();
+            }
+        }
+        const odspResponse: IOdspResponse<Response> = {
+            content: (await createResponse(
+                {},
+                content,
+                200,
+            )) as unknown as Response,
+            duration: 10,
+            headers: new Map([["x-fluid-epoch", "epoch1"], ["content-type", "unknown"]]),
+            propsToLog: {},
+        };
+        const response: ISnapshotRequestAndResponseOptions = {
+            odspResponse,
+            requestHeaders: {},
+            requestUrl: siteUrl,
+        };
+        try {
+            await mockDownloadSnapshot(
+                Promise.resolve(response),
+                async () => service.getVersions(null, 1),
+            );
+            assert.fail("should throw incorrectServerResponse error");
+        } catch (error: any) {
+            assert.strictEqual(error.errorType, DriverErrorType.incorrectServerResponse,
+                "incorrectServerResponse should be received");
+            assert.strictEqual(error.contentType, "unknown",
+                "content type should be unknown");
+        }
     });
 });

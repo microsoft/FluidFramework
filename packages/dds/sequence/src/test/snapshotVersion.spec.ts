@@ -31,7 +31,11 @@ function assertIntervalCollectionsAreEquivalent(
     for (const label of actual.getIntervalCollectionLabels()) {
         const expectedCollection = expected.getIntervalCollection(label);
         for (const interval of actual.getIntervalCollection(label)) {
-            const expectedInterval = expectedCollection.getIntervalById(interval.getIntervalId());
+            assert(interval);
+            const intervalId = interval.getIntervalId();
+            assert(intervalId);
+            const expectedInterval = expectedCollection.getIntervalById(intervalId);
+            assert(expectedInterval);
             const start = actual.localReferencePositionToPosition(interval.start);
             const expectedStart = expected.localReferencePositionToPosition(expectedInterval.start);
             assert.equal(start, expectedStart, message);
