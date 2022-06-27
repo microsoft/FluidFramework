@@ -8,7 +8,7 @@ import { bumpDependencies } from "./bumpDependencies";
 import { bumpVersion } from "./bumpVersion";
 import { runPolicyCheckWithFix } from "./policyCheck";
 import { fatal } from "./utils";
-import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 
 export function getPackageShortName(pkgName: string) {
@@ -63,13 +63,14 @@ export async function releaseVersion(context: Context, releaseName: string, upda
                     packages.push(pkg);
                 }
             } else {
-                if (isMonoRepoKind(name)) {
-                    monoRepo = context.repo.monoRepos.get(name)
+                if (name === MonoRepoKind[MonoRepoKind.Client]) {
+                    monoRepo = context.repo.clientMonoRepo;
                     break;
                 }
-                // else {
-                //     fatal(`${name} is not a valid monorepo name`);
-                // }
+                if (name === MonoRepoKind[MonoRepoKind.Server]) {
+                    monoRepo = context.repo.serverMonoRepo;
+                    break;
+                }
                 const pkg = context.fullPackageMap.get(name);
                 if (!pkg) {
                     fatal(`Unable find package ${name}`);

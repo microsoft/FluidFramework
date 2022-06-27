@@ -132,7 +132,7 @@ export async function cleanPrereleaseDependencies(context: Context, updateLock: 
  * @param release if we are releasing, only patch the pre-release dependencies
  * @param changedVersion the version bag to collect version that is changed
  */
-export async function bumpPackageDependencies(
+async function bumpPackageDependencies(
     pkg: Package,
     bumpPackageMap: Map<string, { pkg: Package, rangeSpec: string }>,
     release: boolean,
@@ -141,9 +141,6 @@ export async function bumpPackageDependencies(
     let changed = false;
     for (const { name, dev } of pkg.combinedDependencies) {
         const dep = bumpPackageMap.get(name);
-        if (name === "@fluidframework/azure-client") {
-            console.log(`check dep: ${name}`);
-        }
         if (dep && !MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo)) {
             const depVersion = dep.rangeSpec;
             const dependencies = dev ? pkg.packageJson.devDependencies : pkg.packageJson.dependencies;

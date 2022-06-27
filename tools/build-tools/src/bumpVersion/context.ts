@@ -10,7 +10,7 @@ import { commonOptions } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getPackageManifest } from "../common/fluidUtils";
 import { FluidRepo, IPackageManifest } from "../common/fluidRepo";
-import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo } from "./gitRepo";
@@ -19,12 +19,9 @@ import { fatal, prereleaseSatisfies } from "./utils";
 import * as semver from "semver";
 
 export type VersionBumpType = "major" | "minor" | "patch";
-export type VersionBumpTypeExtended = VersionBumpType | "current";
 export type VersionChangeType = VersionBumpType | semver.SemVer;
-export type VersionChangeTypeExtended = VersionBumpTypeExtended | semver.SemVer;
-
 export function isVersionBumpType(type: VersionChangeType | string): type is VersionBumpType {
-    return type === "major" || type === "minor" || type === "patch" || type === "current";
+    return type === "major" || type === "minor" || type === "patch";
 }
 
 export class Context {
@@ -77,23 +74,20 @@ export class Context {
     public async collectVersionInfo(releaseName: string) {
         console.log("  Resolving published dependencies");
 
-        const depVersions =
-            new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
+        const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
         const pendingDepCheck = [];
         const processMonoRepo = (monoRepo: MonoRepo) => {
-            console.log(monoRepo);
             pendingDepCheck.push(...monoRepo.packages);
             // Fake these for printing.
             const firstClientPackage = monoRepo.packages[0];
             depVersions.add(firstClientPackage, firstClientPackage.version);
         };
 
-        if (isMonoRepoKind(releaseName)) {
-            const repoKind = MonoRepoKind[releaseName];
-            if (repoKind === MonoRepoKind.Server) {
-                assert(this.repo.serverMonoRepo, "Attempted to collect server info on a Fluid repo with no server directory");
-            }
-            processMonoRepo(this.repo.monoRepos.get(repoKind)!);
+        if (releaseName === MonoRepoKind[MonoRepoKind.Client]) {
+            processMonoRepo(this.repo.clientMonoRepo);
+        } else if (releaseName === MonoRepoKind[MonoRepoKind.Server]) {
+            assert(this.repo.serverMonoRepo, "Attempted to collect server info on a Fluid repo with no server directory");
+            processMonoRepo(this.repo.serverMonoRepo!);
         } else {
             const pkg = this.fullPackageMap.get(releaseName);
             if (!pkg) {

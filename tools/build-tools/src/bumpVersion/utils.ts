@@ -5,7 +5,6 @@
 
 import { execAsync } from "../common/utils";
 import * as semver from "semver";
-import { VersionBumpType, VersionBumpTypeExtended, VersionChangeTypeExtended } from "./context";
 
 export function fatal(error: string): never {
     const e = new Error(error);
@@ -46,19 +45,4 @@ export async function execNoError(cmd: string, dir: string, pipeStdIn?: string) 
 export function prereleaseSatisfies(packageVersion: string, range: string) {
     // Pretend that the current package is latest prerelease (zzz) and see if the version still satisfies.
     return semver.satisfies(`${packageVersion}-zzz`, range)
-}
-
-export const adjustVersion = async (version: string | semver.SemVer | undefined, bumpType: VersionChangeTypeExtended): Promise<semver.SemVer | null> => {
-    const sv = semver.parse(version);
-    switch (bumpType) {
-        case "current":
-            return sv;
-        case "major":
-        case "minor":
-        case "patch":
-            return sv?.inc(bumpType) ?? null;
-        default:
-            // If ythe bump type is an explicit version, just use it.
-            return bumpType;
-    }
 }

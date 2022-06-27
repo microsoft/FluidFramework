@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import { Context, isVersionBumpType, VersionChangeType, VersionChangeTypeExtended } from "./context";
+import { Context, isVersionBumpType, VersionChangeType } from "./context";
 import { getRepoStateChange, VersionBag } from "./versionBag";
-import { fatal, exec, adjustVersion } from "./utils";
-import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { fatal, exec } from "./utils";
+import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getPackageShortName } from "./releaseVersion";
 import * as semver from "semver";
 
-export async function bumpVersionCommand(context: Context, bump: string, version: VersionChangeType, commit: boolean, virtualPatch: boolean) {
+export async function bumpVersionCommand(context:Context, bump: string, version: VersionChangeType, commit: boolean, virtualPatch: boolean) {
     const bumpBranch = `bump_${version}_${Date.now()}`;
     if (commit) {
         console.log(`Creating branch ${bumpBranch}`);
@@ -33,16 +33,20 @@ export async function bumpVersionCommand(context: Context, bump: string, version
 export async function bumpVersion(context: Context, bump: string[], version: VersionChangeType, packageShortNames: string, virtualPatch: boolean, commit?: string) {
     console.log(`Bumping ${packageShortNames} to ${version}`);
 
-    const monoRepoNeedsBump = new Set<MonoRepoKind>();
+    let clientNeedBump = false;
+    let serverNeedBump = false;
     const packageNeedBump = new Set<Package>();
     for (const name of bump) {
-        if (isMonoRepoKind(name)) {
-            monoRepoNeedsBump.add(name);
-            const repo = context.repo.monoRepos.get(name);
-            assert(repo !== undefined,
-                `Attempted to bump ${name} version on a Fluid repo with no ${name} release group defined`
-            );
-            const ret = await repo.install();
+        if (name === MonoRepoKind[MonoRepoKind.Client]) {
+            clientNeedBump = true;
+            const ret = await context.repo.clientMonoRepo.install();
+            if (ret.error) {
+                fatal("Install failed");
+            }
+        } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
+            serverNeedBump = true;
+            assert(context.repo.serverMonoRepo, "Attempted to bump server version on a Fluid repo with no server directory");
+            const ret = await context.repo.serverMonoRepo!.install();
             if (ret.error) {
                 fatal("Install failed");
             }
@@ -63,7 +67,7 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
     }
 
     const oldVersions = context.collectVersions();
-    const newVersions = await bumpRepo(context, version, monoRepoNeedsBump, packageNeedBump, virtualPatch, oldVersions);
+    const newVersions = await bumpRepo(context, version, clientNeedBump, serverNeedBump, packageNeedBump, virtualPatch, oldVersions);
     const bumpRepoState = getRepoStateChange(oldVersions, newVersions);
     console.log(bumpRepoState);
 
@@ -123,75 +127,6 @@ function translateVirtualVersion(
     virtualVersion.format(); // semver must be reformated after edits
     return virtualVersion;
 }
-
-export async function setReleaseGroupVersion(
-    context: Context,
-    version: semver.SemVer,
-    releaseGroup: MonoRepoKind,
-    versionBag?: VersionBag,
-) {
-    console.log(`  Setting ${releaseGroup} version to: ${version.version}`);
-    // Translate the versionBump into the appropriate change for virtual patch versioning
-    const toBump = context.repo.monoRepos.get(releaseGroup);
-    assert(toBump !== undefined, `No monorepo with name '${toBump}'`);
-
-    const packages = new Set<string>(toBump.packages.map(p => p.name));
-    // const packageBumpMap = new Map<string, { pkg: Package, rangeSpec: string }>();
-    const mismatchedVersions = new Set<string>();
-    const expectedVersion = toBump.version;
-    const expectedRangeSpec = `^${expectedVersion}`;
-    for (const pkg of toBump.packages) {
-        if (semver.neq(pkg.version, expectedVersion)) {
-            // console.log(`${pkg.name}: ${pkg.version} (should be ${expectedVersion})`);
-            mismatchedVersions.add(pkg.name);
-        }
-
-        // Check dependencies for mismatches as well because they may have an incorrect range even though the
-        // package.json version for the package is correct.
-        for (const { name: dep, version } of pkg.combinedDependencies) {
-            if (packages.has(dep) && version !== expectedRangeSpec) {
-                // console.log(`${dep}: ${version} (should be ${expectedRangeSpec})`);
-                mismatchedVersions.add(dep)
-            }
-            // packageBumpMap.set(pkg.name, { pkg, rangeSpec: `^${expectedVersion}` })
-        }
-        pkg.packageJson.version = expectedVersion;
-        await pkg.savePackageJson();
-    }
-
-    console.log(`  Found ${mismatchedVersions.size} mismatched packages.`);
-    for (const v of mismatchedVersions) {
-        console.log(`    ${v}`);
-    }
-
-    for (const pkg of toBump.packages) {
-        for (const { name, dev } of pkg.combinedDependencies) {
-            if (mismatchedVersions.has(name)) {
-                if (dev) {
-                    pkg.packageJson.devDependencies[name] = expectedRangeSpec;
-                } else {
-                    pkg.packageJson.dependencies[name] = expectedRangeSpec;
-                }
-            }
-        }
-        await pkg.savePackageJson();
-    }
-
-    // for (const pkg of packageNeedBump) {
-    //     console.log(`  Bumping ${pkg.name}${vPatchLogString}`);
-    //     // Translate the versionBump into the appropriate change for virtual patch versioning
-    //     const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get(pkg.name), virtualPatch);
-    //     let cmd = `npm version ${translatedVersionBump}`;
-    //     if (pkg.getScript("build:genver")) {
-    //         cmd += " && npm run build:genver";
-    //     }
-    //     await exec(cmd, pkg.directory, `bump version on ${pkg.name}`);
-    // }
-
-    // Package json has changed. Reload.
-    return context.collectVersions(true);
-}
-
 /**
  * Bump version of packages in the repo
  *
@@ -199,62 +134,39 @@ export async function setReleaseGroupVersion(
  */
 export async function bumpRepo(
     context: Context,
-    versionBump: VersionChangeTypeExtended,
-    monoReposNeedBump: Set<MonoRepoKind>,
+    versionBump: VersionChangeType,
+    clientNeedBump: boolean,
+    serverNeedBump: boolean,
     packageNeedBump: Set<Package>,
     virtualPatch: boolean,
-    versionBag?: VersionBag
+    versionBag: VersionBag,
 ) {
-    const getVersion = (key: MonoRepoKind | string): string => {
-        // const verBag = versionBag !== undefined && Object.keys(versionBag).length > 0;
-        let ver = "";
-        if (versionBag !== undefined && !versionBag.isEmpty()) {
-            // console.warn(`found a versionBag of length ${Object.keys(versionBag).length}...`);
-            for (const k of Object.keys(versionBag)) {
-                console.log(k);
-            }
-            ver = versionBag.get(key);
-        } else if (isMonoRepoKind(key)) {
-            // console.log(`getting version from repo`)
-            const repo = context.repo.monoRepos.get(key);
-            if (repo === undefined) {
-                fatal(`repo not found: ${key}`);
-            }
-            ver = repo.version;
-        } else {
-            fatal(`${key} is not a valid MonoRepoKind`);
-        }
-        console.log(`key: ${key}, ${ver}`);
-        return ver;
-    }
-
-    const bumpMonoRepo = async (repoVersionBump: VersionChangeType | semver.SemVer, monoRepo: MonoRepo) => {
+    const bumpMonoRepo = async (repoVersionBump: VersionChangeType, monoRepo: MonoRepo) => {
         return exec(`npx lerna version ${repoVersionBump} --no-push --no-git-tag-version -y && npm run build:genver`, monoRepo.repoPath, "bump mono repo");
     }
 
     const vPatchLogString = virtualPatch ? " using virtual patches" : "";
 
-    for (const monoRepo of monoReposNeedBump) {
-        console.log(`  Bumping ${monoRepo} version${vPatchLogString}`);
+    if (clientNeedBump) {
+        console.log(`  Bumping client version${vPatchLogString}`);
         // Translate the versionBump into the appropriate change for virtual patch versioning
-        const ver = getVersion(monoRepo);
-        assert(ver, "ver is missing");
-        const adjVer = await adjustVersion(ver, versionBump);
-        const translatedVersionBump = adjVer!;
-        // translateVirtualVersion(adjVer!, versionBag.get(monoRepo), virtualPatch);
-        const toBump = context.repo.monoRepos.get(monoRepo);
-        assert(toBump !== undefined, `No monorepo with name '${toBump}'`);
-        if (toBump !== undefined) {
-            await bumpLegacyDependencies(context, translatedVersionBump);
-            await bumpMonoRepo(translatedVersionBump, toBump);
-        }
+        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get("Client"), virtualPatch);
+        await bumpLegacyDependencies(context, translatedVersionBump);
+        await bumpMonoRepo(translatedVersionBump, context.repo.clientMonoRepo);
+    }
+
+    if (serverNeedBump) {
+        console.log(`  Bumping server version${vPatchLogString}`);
+        assert(context.repo.serverMonoRepo, "Attempted server version bump on a Fluid repo with no server directory");
+        // Translate the versionBump into the appropriate change for virtual patch versioning
+        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get("Server"), virtualPatch);
+        await bumpMonoRepo(translatedVersionBump, context.repo.serverMonoRepo!);
     }
 
     for (const pkg of packageNeedBump) {
         console.log(`  Bumping ${pkg.name}${vPatchLogString}`);
         // Translate the versionBump into the appropriate change for virtual patch versioning
-        const translatedVersionBump = await adjustVersion(getVersion(pkg.name), versionBump);
-        // translateVirtualVersion(versionBump as VersionChangeType, versionBag.get(pkg.name), virtualPatch);
+        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get(pkg.name), virtualPatch);
         let cmd = `npm version ${translatedVersionBump}`;
         if (pkg.getScript("build:genver")) {
             cmd += " && npm run build:genver";
@@ -266,9 +178,6 @@ export async function bumpRepo(
     return context.collectVersions(true);
 }
 
-/**
- * Note: this function does nothing if called with versionBump !== "patch".
- */
 async function bumpLegacyDependencies(context: Context, versionBump: VersionChangeType) {
     if (versionBump !== "patch") {
         // Assumes that we want N/N-1 testing

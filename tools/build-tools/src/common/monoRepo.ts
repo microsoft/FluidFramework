@@ -8,31 +8,9 @@ import * as path from "path";
 import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } from "./utils";
 
 export enum MonoRepoKind {
-    Client = "Client",
-    Server = "Server",
-    Azure = "Azure",
-}
-
-/**
- * A type guard used to determine if a string is a MonoRepoKind.
- */
-export function isMonoRepoKind(str: unknown): str is MonoRepoKind {
-    return typeof str === "string";
-}
-
-export function sentenceCase(str: string) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-/**
- * An iterator that returns only the Enum values of MonoRepoKind.
- *
- * TODO: Is there a better approach? for-of Object.values returns both strings and the enum values.
- */
-export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
-    yield MonoRepoKind.Client;
-    yield MonoRepoKind.Server;
-    yield MonoRepoKind.Azure;
+    Client,
+    Server,
+    Azure,
 }
 
 export class MonoRepo {
