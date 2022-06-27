@@ -61,7 +61,51 @@ describe("TelemetryLogger", () => {
                 assert.strictEqual(event.eventName, "namespace:whatever");
                 const eventKeys = Object.keys(event);
                 // should include error props too
-                const propsKeys = Object.keys({ ... props?.all, ... props?.error });
+                const propsKeys = Object.keys({ error: "whatever", ... props?.all, ... props?.error });
+                // +2 for category and event name
+                assert.strictEqual(
+                    eventKeys.length,
+                    propsKeys.length + 2,
+                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
+            }
+        });
+
+        it("sendErrorEvent with error field", () => {
+            for (const props of propertyCases) {
+                const logger = new TestTelemetryLogger("namespace", props);
+                logger.sendErrorEvent({ eventName: "whatever", error: "bad" });
+                assert.strictEqual(logger.events.length, 1);
+                const event = logger.events[0];
+                assert.strictEqual(event.category, "error");
+                assert.strictEqual(event.eventName, "namespace:whatever");
+                const eventKeys = Object.keys(event);
+                // should include error props too
+                const propsKeys = Object.keys({ error: "bad", ... props?.all, ... props?.error });
+                // +2 for category and event name
+                assert.strictEqual(
+                    eventKeys.length,
+                    propsKeys.length + 2,
+                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
+            }
+        });
+
+        it("sendErrorEvent with error object", () => {
+            for (const props of propertyCases) {
+                const logger = new TestTelemetryLogger("namespace", props);
+                const error = new Error("badMessage");
+                logger.sendErrorEvent({ eventName: "whatever" }, error);
+                assert.strictEqual(logger.events.length, 1);
+                const event = logger.events[0];
+                assert.strictEqual(event.category, "error");
+                assert.strictEqual(event.eventName, "namespace:whatever");
+                const eventKeys = Object.keys(event);
+                // should include error props too
+                const propsKeys = Object.keys({
+                    error: error.message,
+                    message: error.message,
+                    stack: error.stack,
+                    ... props?.all,
+                    ... props?.error });
                 // +2 for category and event name
                 assert.strictEqual(
                     eventKeys.length,

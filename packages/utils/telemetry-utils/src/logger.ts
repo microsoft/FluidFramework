@@ -171,7 +171,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             // this can and will be overridden by event, or error
             error: event.eventName,
             ...event,
-            category: "error" }, error);
+            category: "error",
+        }, error);
     }
 
     /**
