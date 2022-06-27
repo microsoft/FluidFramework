@@ -223,7 +223,7 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * {@inheritDoc IFluidContainer.connect}
+     * {@inheritDoc IFluidContainer.attach}
      */
     public async attach(): Promise<string> {
         // TODO: this needs to be implemented. This type should be self-sufficient.
