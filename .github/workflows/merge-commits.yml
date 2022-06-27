@@ -25,16 +25,14 @@ jobs:
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
-            var receivedMessages = await queueClient.receiveMessages();
-            const message = receivedMessages.receivedMessageItems[0];
-            const firstMessage = JSON.parse(message.messageText);
-            if(firstMessage === undefined) { return 0; }
-            const updateMsg = { "sha": firstMessage.sha, "author": firstMessage.author, "label": "in-progress" }
-            await queueClient.updateMessage(
-                message.messageId,
-                message.popReceipt,
-                JSON.stringify(updateMsg)
-            );
+            // Peek at messages in the queue
+            const peekedMessages = await queueClient.peekMessages({ numberOfMessages: 5 });
+            let firstMessage;
+            for (i = 0; i < peekedMessages.peekedMessageItems.length; i++) {
+                // Display the peeked message
+                console.log("Peeked message: ", peekedMessages.peekedMessageItems[i].messageText);
+                firstMessage = JSON.parse(peekedMessages.peekedMessageItems[i].messageText);
+            }
             console.log("sha---", firstMessage.sha);
             console.log("label---", firstMessage.label);
             console.log("author---", firstMessage.author);
@@ -177,7 +175,10 @@ jobs:
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueClient = queueServiceClient.getQueueClient(queueName);
-            receivedMessages = await queueClient.receiveMessages();
-            var message = receivedMessages.receivedMessageItems[0];
-            console.log("Deleting message: ", message.messageText);
-            await queueClient.deleteMessage(message.messageId, message.popReceipt);
+            // Get up to 5 messages from the queue
+            const receivedMsgsResp = await queueClient.receiveMessages({ numberOfMessages: 5, visibilityTimeout: 5 * 60 });
+            for (i = 0; i < receivedMsgsResp.receivedMessageItems.length; i++) {
+                message = receivedMsgsResp.receivedMessageItems[i];
+                console.log("Dequeuing message: ", message.messageText);
+                await queueClient.deleteMessage(message.messageId, message.popReceipt);
+            }
