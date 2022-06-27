@@ -25,7 +25,6 @@ import {
     gcBlobPrefix,
     GCNodeType,
     gcTreeKey,
-    IGarbageCollectionRuntime,
     IGarbageCollector,
     runSessionExpiryKey,
     disableSessionExpiryKey,
@@ -60,7 +59,7 @@ describe("Garbage Collection Tests", () => {
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
     const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
     // The runtime to be passed to the garbage collector.
-    const gcRuntime: IGarbageCollectionRuntime = {
+    const gcRuntime = {
         updateStateBeforeGC: async () => {},
         getGCData: async (fullGC?: boolean) => defaultGCData,
         updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
@@ -68,6 +67,7 @@ describe("Garbage Collection Tests", () => {
         getNodeType,
         getCurrentReferenceTimestampMs: () => Date.now(),
         closeFn: () => { closeCalled = true; },
+        emit: (event: string, ...args: any[]) => {},
     };
 
     // The GC details in the summary blob of a node. This is used by the garbage collector to initialize GC state.
