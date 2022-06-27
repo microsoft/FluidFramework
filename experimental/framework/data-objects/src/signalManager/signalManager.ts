@@ -37,7 +37,7 @@ export interface ISignaler {
      * @param listener - The callback signal handler to remove
      * @returns This ISignaler
      */
-    offSignal(signalName: string, listener: SignalListener | ((message: any) => void)): ISignaler;
+    offSignal(signalName: string, listener: SignalListener): ISignaler;
     /**
      * Send a signal with payload to its connected listeners.
      * @param signalName - The name of the signal

@@ -88,6 +88,10 @@ export interface ContainerSchema {
  *
  * @remarks
  *
+ *  @remarks
+ *
+ * The following is the list of events emitted.
+ *
  * ### "membersChanged"
  *
  * The "membersChanged" event is emitted when a member is either added or removed.
