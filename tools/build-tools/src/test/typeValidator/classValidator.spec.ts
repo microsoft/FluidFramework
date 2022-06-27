@@ -13,7 +13,7 @@ import { BreakingIncrement, enableLogging } from "./../../typeValidator/validato
 describe("Class", () => {
     enableLogging(true);
     let project: Project;
-    let pkgDir: string = os.tmpdir();
+    const pkgDir: string = os.tmpdir();
     before(() => {
         project = new Project({
             skipFileDependencyResolution: true,
@@ -65,7 +65,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -83,7 +83,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.minor);
         });
 
@@ -101,7 +101,7 @@ describe("Class", () => {
             export class TestClass {}
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -121,7 +121,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.none);
         });
 
@@ -140,7 +140,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -159,7 +159,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -181,7 +181,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -205,7 +205,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -225,7 +225,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -246,7 +246,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.minor);
         });
 
@@ -267,7 +267,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -289,7 +289,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
     });
@@ -318,7 +318,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -345,7 +345,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -374,7 +374,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.none);
         });
     });
@@ -398,7 +398,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.none);
         });
     });
@@ -418,7 +418,7 @@ describe("Class", () => {
             export class TestClass extends BaseClass<number> {}
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -438,7 +438,7 @@ describe("Class", () => {
             export class TestClass extends BaseClass2<string> {}
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -458,7 +458,7 @@ describe("Class", () => {
             export class TestClass implements TestInterface2 {}
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -478,7 +478,7 @@ describe("Class", () => {
             export class TestClass implements TestInterface2, TestInterface1 {}
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.none);
         });
     });
@@ -500,7 +500,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -520,7 +520,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -540,7 +540,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.major);
         });
 
@@ -560,7 +560,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.minor);
         });
 
@@ -582,7 +582,7 @@ describe("Class", () => {
             }
             `;
 
-            let increment = checkIncrement(classOld, classNew);
+            const increment = checkIncrement(classOld, classNew);
             assert.strictEqual(increment, BreakingIncrement.none);
         });
     });

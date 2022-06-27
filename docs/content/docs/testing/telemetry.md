@@ -277,11 +277,18 @@ The `DebugLogger` offers a convenient way to output all telemetry events to the 
 Under the hood, `DebugLogger` uses the [debug](https://github.com/visionmedia/debug) library. The `debug` library enables Fluid to send to a unique 'namespace,' `fluid`. By default these messages are hidden but they can be enabled
 in both Node.js and a web browser.
 
-**To enable Fluid Framework logging in the browser,** set the `localStorage.debug` variable in the JavaScript console, after which you will need to reload the page.
+**To enable Fluid Framework logging in the browser,** set the `localStorage.debug` variable in the JavaScript console,
+after which you will need to reload the page.
 
 ```js
 localStorage.debug = 'fluid:*'
 ```
-It's not recommended to set this in code; your users will see a very spammy console window if you do.
+
+You'll also need to enable the `Verbose` logging level in the console. The dropdown that controls that is just above it,
+to the right of the Filter input box (it might say "Default Levels").
+
+![A screenshot of how to enable the Verbose logging level in the console](/images/verbose-log-level.png)
+
+It's not recommended to set `localStorage.debug` in code; your users will see a very spammy console window if you do.
 
 **To enable Fluid Framework logging in a Node.js application,** set the `DEBUG` environment variable when running the app.
