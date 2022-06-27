@@ -94,6 +94,8 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
         super(message, { timeoutMs: expiryMs });
     }
 }
+/** Telemetry props with driver-specific required properties */
+export type RuntimeErrorTelemetryProps = ITelemetryProperties & { runtimeVersion: string | undefined; };
 
 /**
  * DataCorruptionError indicates that we encountered definitive evidence that the data at rest
@@ -105,7 +107,7 @@ export class DataCorruptionError extends LoggingError implements IErrorBase, IFl
 
     constructor(
         message: string,
-        props: ITelemetryProperties,
+        props: RuntimeErrorTelemetryProps,
     ) {
         super(message, { ...props, dataProcessingError: 1 });
     }

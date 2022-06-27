@@ -24,7 +24,7 @@ export class ClientSessionExpiredError extends LoggingError implements IFluidErr
 
 // @public
 export class DataCorruptionError extends LoggingError implements IErrorBase, IFluidErrorBase {
-    constructor(message: string, props: ITelemetryProperties);
+    constructor(message: string, props: RuntimeErrorTelemetryProps);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
