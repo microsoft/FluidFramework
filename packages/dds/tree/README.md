@@ -6,7 +6,7 @@ This DDS is not yet ready for public consumption. See (#8273)[https://github.com
 
 There are a lot of different factors motivating the creation of this Tree DDS.
 A wide variety of possible consumers (across several companies) have overlapping feature requirements
-which seem like they can best be met by collaborating on a single feature rich tree implementation powered by fluid.
+which seem like they can best be met by collaborating on a single feature rich tree implementation powered by Fluid.
 The current feature focus is on:
 
 - Semantics:
@@ -51,7 +51,7 @@ For example, moving part of a sequence from one sequence DDS to another cannot b
 Cross DDS moves also currently can't be as efficient as moves withing a single DDS, and there isn't a good way to do cross DDS history or branching without major framework changes.
 There are also some significant per DDS performance and storage costs that make this approach much more costly than using a single DDS.
 
-One way to think about this new tree DDS is to try and mix some of the fluid-framework features (like the ability to checkout a subset of the data) with features from DDSs (ex: lower overhead per item, efficient moves of sub-sequences, transactions).
+One way to think about this new tree DDS is to try and mix some of the Fluid-Framework features (like the ability to checkout a subset of the data) with features from DDSs (ex: lower overhead per item, efficient moves of sub-sequences, transactions).
 If this effort is successful, it might reveal some improved abstractions for modularizing hierarchical collaborative data-structures (perhaps "field kinds"),
 which could make their way back into the framework, enabling some features specific to this tree (ex: history, branching, transactional moves, reduced overhead) to be framework features instead.
 
