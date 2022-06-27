@@ -52,6 +52,7 @@ import {
 import { IContainerRuntimeMetadata, nonDataStorePaths, rootHasIsolatedChannels } from "./summaryFormat";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { GCNodeType } from "./garbageCollection";
+import { pkgVersion } from "./packageVersion";
 
 type PendingAliasResolve = (success: boolean) => void;
 
@@ -194,11 +195,13 @@ export class DataStores implements IDisposable {
          // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.alreadyProcessed(attachMessage.id)) {
             // TODO: dataStoreId may require a different tag from PackageData #7488
+            const errorProps: any = extractSafePropertiesFromMessage(message);
+            errorProps.runtimeVersion = pkgVersion;
             const error = new DataCorruptionError(
                 // pre-0.58 error message: duplicateDataStoreCreatedWithExistingId
                 "Duplicate DataStore created with existing id",
                 {
-                    ...extractSafePropertiesFromMessage(message),
+                    ...errorProps,
                     dataStoreId: {
                         value: attachMessage.id,
                         tag: TelemetryDataTag.PackageData,
@@ -254,10 +257,12 @@ export class DataStores implements IDisposable {
     ): void {
         const aliasMessage = message.contents as IDataStoreAliasMessage;
         if (!isDataStoreAliasMessage(aliasMessage)) {
+            const errorProps: any = extractSafePropertiesFromMessage(message);
+            errorProps.runtimeVersion = pkgVersion;
             throw new DataCorruptionError(
                 "malformedDataStoreAliasMessage",
                 {
-                    ...extractSafePropertiesFromMessage(message),
+                    ...errorProps,
                 },
             );
         }

@@ -1680,8 +1680,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         try {
             result = this.protocolHandler.processMessage(message, local);
         } catch (error) {
-            this.close(wrapError(error, (errorMessage) =>
-                new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
+            this.close(wrapError(error, (errorMessage) =>{
+                const errorProps: any = extractSafePropertiesFromMessage(message);
+                errorProps.runtimeVersion = pkgVersion;
+                return new DataCorruptionError(errorMessage, errorProps);
+            }));
         }
 
         // Forward non system messages to the loaded runtime for processing

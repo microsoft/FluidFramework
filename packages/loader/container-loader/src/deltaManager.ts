@@ -48,6 +48,7 @@ import {
     extractSafePropertiesFromMessage,
     DataProcessingError,
 } from "@fluidframework/container-utils";
+import { pkgVersion } from "./packageVersion";
 import { DeltaQueue } from "./deltaQueue";
 import {
     IConnectionManagerFactoryArgs,
@@ -771,8 +772,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // Watch the minimum sequence number and be ready to update as needed
         if (this.minSequenceNumber > message.minimumSequenceNumber) {
             // pre-0.58 error message: msnMovesBackwards
+            const errorProps: any = extractSafePropertiesFromMessage(message);
+            errorProps.runtimeVersion = pkgVersion;
             throw new DataCorruptionError("Found a lower minimumSequenceNumber (msn) than previously recorded", {
-                ...extractSafePropertiesFromMessage(message),
+                ...errorProps,
                 clientId: this.connectionManager.clientId,
             });
         }
@@ -780,8 +783,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         if (message.sequenceNumber !== this.lastProcessedSequenceNumber + 1) {
             // pre-0.58 error message: nonSequentialSequenceNumber
+            const errorProps: any = extractSafePropertiesFromMessage(message);
+            errorProps.runtimeVersion = pkgVersion;
             throw new DataCorruptionError("Found a non-Sequential sequenceNumber", {
-                ...extractSafePropertiesFromMessage(message),
+                ...errorProps,
                 clientId: this.connectionManager.clientId,
             });
         }
