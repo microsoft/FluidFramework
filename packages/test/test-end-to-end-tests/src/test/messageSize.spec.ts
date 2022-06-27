@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
-import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { GenericError } from "@fluidframework/container-utils";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
@@ -99,12 +99,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         const error = await errorEvent;
         assert.ok(error instanceof GenericError);
         assert.ok(error.getTelemetryProperties().length ?? 0 > maxMessageSizeInBytes);
-        assert.deepEqual(
-            error.getTelemetryProperties().limit,
-            {
-                value: maxMessageSizeInBytes,
-                tag: TelemetryDataTag.PackageData,
-            });
+        assert.deepEqual(error.getTelemetryProperties().limit, maxMessageSizeInBytes);
     });
 
     it("Small ops will pass with chunking disabled", async () => {
