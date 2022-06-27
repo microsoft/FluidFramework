@@ -44,31 +44,6 @@ export interface ISignaler {
      * @param payload - The data to send with the signal
      */
     submitSignal(signalName: string, payload?: Jsonable);
-
-    /**
-     * Adds a listener for a broadcast request.  The listener is called when a client calls
-     * `requestBroadcast` for that signal.  It behaves in the same way as EventEmitter's `on`
-     * method regarding multiple registrations, callback order, etc.
-     * @param signalName - The signal for which broadcast is requested
-     * @param listener - The callback for the broadcast request to add
-     * @returns This ISignaler
-     */
-    onBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
-    /**
-     * Remove a listener for a broadcast request.  It behaves in the same way as EventEmitter's
-     * `off` method regarding multiple registrations, removal order, etc.
-     * @param signalName  - The signal for which broadcast is requested
-     * @param listener - The callback for the broadcast request to remove
-     * @returns This ISignaler
-     */
-    offBroadcastRequested(signalName: string, listener: SignalListener): ISignaler;
-    /**
-     * Request broadcast of a signal from other connected clients.  Other clients must have
-     * registered to respond to broadcast requests using the `onBroadcastRequested` method.
-     * @param signalName - The signal for which broadcast is requested
-     * @param payload - A payload to send with the broadcast request
-     */
-    requestBroadcast(signalName: string, payload?: Jsonable);
 }
 
 /**
@@ -127,10 +102,6 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
         return this.managerId ? `${signalName}${this.managerId}` : signalName;
     }
 
-    private getBroadcastSignalName(signalName: string): string {
-        return `${signalName}#req`;
-    }
-
     // ISignaler methods
 
     public onSignal(
@@ -159,30 +130,6 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
         if (this.signaler.connected) {
             this.signaler.submitSignal(managerSignalName, payload);
         }
-    }
-
-    public onBroadcastRequested(
-        signalName: string,
-        listener: SignalListener,
-    ): ISignaler {
-        const broadcastSignalName = this.getBroadcastSignalName(signalName);
-        return this.onSignal(broadcastSignalName, listener);
-    }
-
-    public offBroadcastRequested(
-        signalName: string,
-        listener: SignalListener,
-    ): ISignaler {
-        const broadcastSignalName = this.getBroadcastSignalName(signalName);
-        return this.offSignal(broadcastSignalName, listener);
-    }
-
-    public requestBroadcast(
-        signalName: string,
-        payload?: Jsonable,
-    ) {
-        const broadcastSignalName = this.getBroadcastSignalName(signalName);
-        this.submitSignal(broadcastSignalName, payload);
     }
 }
 
@@ -239,28 +186,5 @@ export class SignalManager extends DataObject<{ Events: IErrorEvent; }> implemen
         payload?: Jsonable,
     ) {
         this.manager.submitSignal(signalName, payload);
-    }
-
-    public onBroadcastRequested(
-        signalName: string,
-        listener: SignalListener,
-    ): ISignaler {
-        this.manager.onBroadcastRequested(signalName, listener);
-        return this;
-    }
-
-    public offBroadcastRequested(
-        signalName: string,
-        listener: SignalListener,
-    ): ISignaler {
-        this.manager.offBroadcastRequested(signalName, listener);
-        return this;
-    }
-
-    public requestBroadcast(
-        signalName: string,
-        payload?: Jsonable,
-    ) {
-        this.manager.requestBroadcast(signalName, payload);
     }
 }
