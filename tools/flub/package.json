@@ -28,15 +28,15 @@
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
     "build:full": "npm run format && npm run prepack",
+    "format": "npm run prettier:fix",
     "lint": "eslint . --ext .ts --config .eslintrc.cjs",
     "prepack": "npm run build && oclif manifest && oclif readme",
     "postpack": "shx rm -f oclif.manifest.json",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
-    "tsc": "tsc -b",
-    "posttest": "npm run lint",
-    "format": "npm run prettier:fix",
     "prettier": "prettier --check \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
     "prettier:fix": "prettier --write \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "posttest": "npm run lint",
+    "tsc": "tsc -b",
     "version": "oclif readme && git add README.md"
   },
   "dependencies": {
