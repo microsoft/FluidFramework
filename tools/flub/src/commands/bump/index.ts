@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as semver from "semver";
 import { getResolvedFluidRoot } from "@fluidframework/build-tools/src/common/fluidUtils";
 import { GitRepo } from "@fluidframework/build-tools/src/bumpVersion/gitRepo";
 import {
@@ -48,57 +47,32 @@ export default class Bump extends BaseCommand {
 
         const bumpType = flags.type as VersionBumpTypeExtended;
 
-        switch (bumpType) {
-            // case "current": {
-            //     if (flags.releaseGroup && isMonoRepoKind(flags.releaseGroup)) {
-            //         const rg = context.repo.monoRepos.get(flags.releaseGroup);
-            //         this.log(`Monorepo version: ${rg?.version}`);
-            //         const versionToSet = await adjustVersion(rg?.version, bumpType);
-            //         await setReleaseGroupVersion(context, versionToSet!, flags.releaseGroup);
-            //     } else {
-            //         this.log("Running on all release groups.");
-            //         for (const monoRepoKind of supportedMonoRepoValues()) {
-            //             const rg = context.repo.monoRepos.get(monoRepoKind);
-            //             this.log(`${monoRepoKind} version: ${rg?.version}`);
-            //             // eslint-disable-next-line no-await-in-loop
-            //             const versionToSet = await adjustVersion(rg?.version, bumpType);
-            //             // eslint-disable-next-line no-await-in-loop
-            //             await setReleaseGroupVersion(context, versionToSet!, monoRepoKind);
-            //         }
-            //     }
+        const monoReposToBump: MonoRepoKind[] = [];
 
-            //     break;
-            // }
+        if (flags.releaseGroup && isMonoRepoKind(flags.releaseGroup)) {
+            monoReposToBump.push(flags.releaseGroup);
+        } else {
+            this.log("Running on all release groups.");
+            monoReposToBump.push(...supportedMonoRepoValues());
+        }
 
-            default: {
-                const monoReposToBump: MonoRepoKind[] = [];
-
-                if (flags.releaseGroup && isMonoRepoKind(flags.releaseGroup)) {
-                    monoReposToBump.push(flags.releaseGroup);
-                } else {
-                    this.log("Running on all release groups.");
-                    monoReposToBump.push(...supportedMonoRepoValues())
-                }
-
-                for (const monoRepoKind of monoReposToBump) {
-                    const rg = context.repo.monoRepos.get(monoRepoKind);
-                    this.log(`${monoRepoKind} version: ${rg?.version}`);
-                    // eslint-disable-next-line no-await-in-loop
-                    const versionToSet = await adjustVersion(rg?.version, bumpType);
-                    // eslint-disable-next-line no-await-in-loop
-                    await setReleaseGroupVersion(context, versionToSet!, monoRepoKind);
-                    // eslint-disable-next-line no-await-in-loop
-                    const newVersions = await bumpRepo(
-                        context,
-                        bumpType,
-                        new Set([MonoRepoKind.Azure]),
-                        new Set(),
-                        false,
-                        new VersionBag(),
-                    );
-                    // const repoState = getRepoStateChange(depVersions.repoVersions, newVersions);
-                }
-            }
+        for (const monoRepoKind of monoReposToBump) {
+            const rg = context.repo.monoRepos.get(monoRepoKind);
+            this.log(`${monoRepoKind} version: ${rg?.version}`);
+            // eslint-disable-next-line no-await-in-loop
+            const versionToSet = await adjustVersion(rg?.version, bumpType);
+            // eslint-disable-next-line no-await-in-loop
+            await setReleaseGroupVersion(context, versionToSet!, monoRepoKind);
+            // eslint-disable-next-line no-await-in-loop
+            const newVersions = await bumpRepo(
+                context,
+                bumpType,
+                new Set([MonoRepoKind.Azure]),
+                new Set(),
+                false,
+                new VersionBag(),
+            );
+            // const repoState = getRepoStateChange(depVersions.repoVersions, newVersions);
         }
     }
 }

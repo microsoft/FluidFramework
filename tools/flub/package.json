@@ -2,7 +2,7 @@
   "name": "@fluid-internal/flub",
   "version": "0.0.0",
   "private": true,
-  "description": "oclif example Hello World CLI",
+  "description": "",
   "keywords": [
     "oclif"
   ],
@@ -39,7 +39,7 @@
     "version": "oclif readme && git add README.md"
   },
   "dependencies": {
-    "@fluidframework/build-tools": "file:../build-tools",
+    "@fluidframework/build-tools": "^0.2.76221",
     "@oclif/core": "^1",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-plugins": "^2.0.1",

@@ -1,23 +1,25 @@
 # @fluid-internal/flub
 
-oclif example Hello World CLI
+flub is a build and release tool for the Fluid Framework GitHub repositories. flub is intended to replace the existing
+fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,
+maintainable CLI using [oclif](https://oclif.io).
 
-[![oclif](https://img.shields.io/badge/cli-oclif-brightgreen.svg)](https://oclif.io)
-[![Version](https://img.shields.io/npm/v/oclif-hello-world.svg)](https://npmjs.org/package/oclif-hello-world)
+flub is not built in CI. You need to build it locally.
 
 <!-- toc -->
 * [@fluid-internal/flub](#fluid-internalflub)
 * [Usage](#usage)
 * [Commands](#commands)
 <!-- tocstop -->
+
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g @fluid-internal/flub
+$ npm install -g flub
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-internal/flub/0.0.0 linux-x64 node-v14.19.3
+flub/0.0.0 linux-x64 node-v14.19.3
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -26,8 +28,7 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`flub build PERSON`](#flub-build-person)
-* [`flub build world`](#flub-build-world)
+* [`flub bump [FILE]`](#flub-bump-file)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub plugins`](#flub-plugins)
 * [`flub plugins:install PLUGIN...`](#flub-pluginsinstall-plugin)
@@ -39,45 +40,26 @@ USAGE
 * [`flub plugins:uninstall PLUGIN...`](#flub-pluginsuninstall-plugin-2)
 * [`flub plugins update`](#flub-plugins-update)
 
-## `flub build PERSON`
+## `flub bump [FILE]`
 
-Say hello
+describe the command here
 
 ```
 USAGE
-  $ flub build [PERSON] -f <value>
-
-ARGUMENTS
-  PERSON  Person to say hello to
+  $ flub bump [FILE] [-n <value>] [-f]
 
 FLAGS
-  -f, --from=<value>  (required) Whom is saying hello
+  -f, --force
+  -n, --name=<value>  name to print
 
 DESCRIPTION
-  Say hello
+  describe the command here
 
 EXAMPLES
-  $ oex hello friend --from oclif
-  hello friend from oclif! (./src/commands/hello/index.ts)
+  $ flub bump
 ```
 
-_See code: [dist/commands/build/index.ts](https://github.com/microsoft/FluidFramework/blob/v0.0.0/dist/commands/build/index.ts)_
-
-## `flub build world`
-
-Say hello world
-
-```
-USAGE
-  $ flub build world
-
-DESCRIPTION
-  Say hello world
-
-EXAMPLES
-  $ oex hello world
-  hello world! (./src/commands/hello/world.ts)
-```
+_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.0.0/dist/commands/bump.ts)_
 
 ## `flub help [COMMAND]`
 
@@ -150,7 +132,7 @@ ALIASES
   $ flub plugins add
 
 EXAMPLES
-  $ flub plugins:install myplugin 
+  $ flub plugins:install myplugin
 
   $ flub plugins:install https://github.com/someuser/someplugin
 
@@ -210,7 +192,7 @@ ALIASES
   $ flub plugins add
 
 EXAMPLES
-  $ flub plugins:install myplugin 
+  $ flub plugins:install myplugin
 
   $ flub plugins:install https://github.com/someuser/someplugin
 
