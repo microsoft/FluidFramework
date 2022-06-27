@@ -9,8 +9,27 @@ import { extractStringData } from "./dataHelpers";
 import { externalDataSource } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 
-export class AppDebug {
-    public foobar = 3;
+export class AppDebug extends EventEmitter {
+    private _sessionState = SessionState.collaborating;
+    public get sessionState(): SessionState {
+        return this._sessionState;
+    }
+
+    public constructor(
+        public readonly inventoryList: IInventoryList,
+        private readonly containerKillBit: IContainerKillBit,
+    ) {
+        super();
+        this.containerKillBit.on("markedForDestruction", this.onStateChanged);
+        this.containerKillBit.on("dead", this.onStateChanged);
+    }
+
+    private readonly onStateChanged = () => {
+        const newState = getStateFromKillBit(this.containerKillBit);
+        // assert new state !== old state
+        this._sessionState = newState;
+        this.emit("sessionStateChanged", this._sessionState);
+    };
 }
 
 const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
@@ -30,7 +49,7 @@ export enum SessionState {
 }
 
 export class App extends EventEmitter {
-    public readonly debug = new AppDebug();
+    public readonly debug = new AppDebug(this.inventoryList, this.containerKillBit);
 
     private _sessionState = SessionState.collaborating;
     public get sessionState(): SessionState {
