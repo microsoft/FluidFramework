@@ -189,8 +189,8 @@ export function runPendingLocalStateTests(
 			// 1. Create a client
 			const {
 				testObjectProvider,
-				container: c0,
-				tree: t0,
+				container: container0,
+				tree: tree0,
 			} = await setUpLocalServerTestSharedTree({
 				id: documentId,
 				writeFormat: WriteFormat.v0_0_2,
@@ -205,18 +205,30 @@ export function runPendingLocalStateTests(
 				writeFormat: WriteFormat.v0_0_2,
 			}));
 
+			expect(countSmallTrees(tree0)).to.equal(0);
+			expect(countSmallTrees(tree)).to.equal(0);
+
 			// 3. The second client creates stashed ops and rejoins after a summary
 			await waitForSummary(container);
 			({ tree, container } = await stash(container, () => insertSmallTree(tree)));
+			await testObjectProvider.ensureSynchronized();
+
+			expect(countSmallTrees(tree0)).to.equal(1);
+			expect(countSmallTrees(tree)).to.equal(1);
 
 			// 4. A third client joins, stashes and rejoins
-			const { container: container3 } = await setUpLocalServerTestSharedTree({
+			const { container: container2, tree: tree2 } = await setUpLocalServerTestSharedTree({
 				id: documentId,
 				testObjectProvider,
 				writeFormat: WriteFormat.v0_0_2,
 			});
 
-			await stash(container3, () => insertSmallTree(tree));
+			await stash(container2, () => insertSmallTree(tree2));
+			await testObjectProvider.ensureSynchronized();
+
+			expect(countSmallTrees(tree0)).to.equal(2);
+			expect(countSmallTrees(tree)).to.equal(2);
+			expect(countSmallTrees(tree2)).to.equal(2);
 
 			/** Go offline, do something, then rejoin with pending local state */
 			async function stash(
@@ -295,6 +307,15 @@ export function runPendingLocalStateTests(
 						})
 					)
 				).id;
+			}
+
+			function countSmallTrees(tree: SharedTree): number {
+				return (
+					tree.currentView.getTrait({
+						label: '3b9e2dd8-def4-45fb-88bc-0df48df62314' as TraitLabel,
+						parent: tree.currentView.root,
+					}).length / 2
+				);
 			}
 		});
 	});
