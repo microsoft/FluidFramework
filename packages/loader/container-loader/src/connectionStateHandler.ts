@@ -6,8 +6,8 @@
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetails } from "@fluidframework/container-definitions";
-import { ProtocolOpHandler } from "@fluidframework/protocol-base";
-import { ConnectionMode, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
+import { ILocalSequencedClient, IProtocolHandler } from "@fluidframework/protocol-base";
+import { ConnectionMode, IQuorumClients } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 
@@ -26,10 +26,6 @@ export interface IConnectionStateHandlerInputs {
     logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => void;
     /** Callback whenever the ConnectionState changes between Disconnected and Connected */
     connectionStateChanged: () => void;
-}
-
-export interface ILocalSequencedClient extends ISequencedClient {
-    shouldHaveLeft?: boolean;
 }
 
 const JoinOpTimeoutMs = 45000;
@@ -181,7 +177,7 @@ export class ConnectionStateHandler {
 
         // Move to connected state only if we are in Connecting state, we have seen our join op
         // and there is no timer running which means we are not waiting for previous client to leave
-        // or timeout has occured while doing so.
+        // or timeout has occurred while doing so.
         if (this.pendingClientId !== this.clientId
             && this.pendingClientId !== undefined
             && quorumClients.getMember(this.pendingClientId) !== undefined
@@ -332,8 +328,8 @@ export class ConnectionStateHandler {
         this.handler.connectionStateChanged();
     }
 
-    public initProtocol(protocol: ProtocolOpHandler) {
-        protocol.quorum.on("addMember", (clientId, details) => {
+    public initProtocol(protocol: IProtocolHandler) {
+        protocol.quorum.on("addMember", (clientId, _details) => {
             this.receivedAddMemberEvent(clientId);
         });
 

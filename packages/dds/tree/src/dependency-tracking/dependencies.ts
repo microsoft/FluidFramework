@@ -22,6 +22,20 @@ export interface NamedComputation {
 	 * Use when measuring / debugging / logging computation costs, invalidation etc.
 	 */
 	readonly computationName: string;
+
+    /**
+     * Lists the currently subscribed set of Dependees.
+     * This is exposed to allow tooling to inspect the dependency graph,
+     * and should not be needed for regular functionality.
+     */
+    listDependees?(): Iterable<Dependee>;
+
+    /**
+     * Lists the currently subscribed set of Dependent.
+     * This is exposed to allow tooling to inspect the dependency graph,
+     * and should not be needed for regular functionality.
+     */
+    listDependents?(): Iterable<Dependent>;
 }
 
 /**
@@ -46,13 +60,6 @@ export interface Dependent extends NamedComputation {
      * there will be a token specific invalidation protocol that must be obeyed.
 	 */
 	markInvalid(token?: InvalidationToken): void;
-
-    /**
-	 * Lists the currently subscribed set of Dependees.
-	 * This is exposed to allow tooling to inspect the dependency graph,
-     * and should not be needed for regular functionality.
-	 */
-	listDependees?(): Iterable<Dependee>;
 }
 
 /**

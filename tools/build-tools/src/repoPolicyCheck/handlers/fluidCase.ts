@@ -11,7 +11,7 @@ import {
 
 export const handler: Handler = {
     name: "fluid-case",
-    match: /(^|\/)[^\/]+\.([tj]s?|html|md|json)$/i,
+    match: /(^|\/)[^/]+\.([tj]s?|html|md|json)$/i,
     handler: file => {
         const content = readFile(file);
         // search for Fluid Framework
