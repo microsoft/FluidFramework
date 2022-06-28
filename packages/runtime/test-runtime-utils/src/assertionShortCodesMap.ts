@@ -663,7 +663,6 @@ export const shortCodeMap = {
     "0x31c": "rightDiv is undefined",
     "0x31d": "options are not of type \"IRouterliciousRouteOptions\" as expected",
     "0x31e": "options.tenantId is undefined",
-    "0x31f": "options.bearerSecret is undefined",
     "0x320": "options.tenantId is undefined",
     "0x321": "options.bearerSecret is undefined",
     "0x322": "options.fluidHost is undefined",
