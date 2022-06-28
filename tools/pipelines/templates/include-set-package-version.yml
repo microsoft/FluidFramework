@@ -21,6 +21,8 @@ steps:
     script: |
       pushd "$(Build.SourcesDirectory)/build-tools"
       npm ci
+      popd
+      pushd "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
       npm run build
       popd
       npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
