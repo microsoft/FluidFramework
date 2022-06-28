@@ -743,7 +743,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 
         const id = interval.getIntervalId();
 
-        assert(id !== undefined, "expected id to exist on interval");
+        assert(id !== undefined, 0x311 /* expected id to exist on interval */);
 
         this.intervalIdMap.delete(id);
     }

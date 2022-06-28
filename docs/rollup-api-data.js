@@ -14,14 +14,17 @@
 const websitePackages = [
     "fluid-framework",
     "tinylicious",
+    "@fluidframework/aqueduct",
     "@fluidframework/azure-client",
     "@fluidframework/azure-service-utils",
     "@fluidframework/container-definitions",
     "@fluidframework/map",
     "@fluidframework/sequence",
     "@fluidframework/fluid-static",
+    "@fluidframework/routerlicious-driver",
     "@fluidframework/test-client-utils",
     "@fluidframework/tinylicious-client",
+    "@fluidframework/tinylicious-driver",
 ];
 
 /** An array of objects describing how members should be combined. */

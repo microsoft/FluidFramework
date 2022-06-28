@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/undo-redo",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Undo Redo",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -60,17 +60,17 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/map": "^1.1.0",
-    "@fluidframework/matrix": "^1.1.0",
-    "@fluidframework/merge-tree": "^1.1.0",
-    "@fluidframework/sequence": "^1.1.0"
+    "@fluidframework/map": "^1.2.0",
+    "@fluidframework/matrix": "^1.2.0",
+    "@fluidframework/merge-tree": "^1.2.0",
+    "@fluidframework/sequence": "^1.2.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
-    "@fluidframework/build-tools": "^0.2.71273",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^1.1.0",
-    "@fluidframework/test-runtime-utils": "^1.1.0",
+    "@fluidframework/mocha-test-setup": "^1.2.0",
+    "@fluidframework/test-runtime-utils": "^1.2.0",
     "@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@^0.59.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",

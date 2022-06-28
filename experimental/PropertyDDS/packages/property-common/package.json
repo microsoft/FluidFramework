@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/property-common",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "common functions used in properties",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -68,9 +68,9 @@
     "traverse": "0.6.6"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
+    "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^1.1.0",
+    "@fluidframework/mocha-test-setup": "^1.2.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",

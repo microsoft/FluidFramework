@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-web-cache",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Implementation of the driver caching API for a web browser",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -38,14 +38,14 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/odsp-driver-definitions": "^1.1.0",
-    "@fluidframework/telemetry-utils": "^1.1.0",
+    "@fluidframework/odsp-driver-definitions": "^1.2.0",
+    "@fluidframework/telemetry-utils": "^1.2.0",
     "idb": "^6.1.2"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
-    "@fluidframework/build-tools": "^0.2.71273",
-    "@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@^1.0.0",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
+    "@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@1.1.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -61,7 +61,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "broken": {}
   }
 }
