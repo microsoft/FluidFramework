@@ -74,7 +74,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/build-tools": "^0.2.70857",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@0.59.4001",
+    "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@0.59.4002",
     "@fluidframework/mocha-test-setup": "^0.59.4003",
     "@fluidframework/test-runtime-utils": "^0.59.4003",
     "@microsoft/api-extractor": "^7.22.2",
@@ -110,76 +110,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4002",
-    "broken": {
-      "InterfaceDeclaration_IMergeTreeAnnotateMsg": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IMergeTreeDelta": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_IMergeTreeDeltaOp": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IMergeTreeDeltaOpArgs": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IMergeTreeGroupMsg": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IMergeTreeInsertMsg": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_IMergeTreeOp": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_IMergeTreeRemoveMsg": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_IntervalNode": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_MergeTreeDeltaOperationType": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "TypeAliasDeclaration_MergeTreeDeltaOperationTypes": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "EnumDeclaration_MergeTreeDeltaType": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "EnumDeclaration_MergeTreeMaintenanceType": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "EnumDeclaration_RBColor": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "InterfaceDeclaration_RBNode": {
-        "forwardCompat": false,
-        "backCompat": false
-      }
-    }
+    "version": "0.59.4003",
+    "broken": {}
   }
 }

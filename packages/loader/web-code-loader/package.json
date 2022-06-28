@@ -41,7 +41,7 @@
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@0.59.4001",
+    "@fluidframework/web-code-loader-previous": "npm:@fluidframework/web-code-loader@0.59.4002",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/isomorphic-fetch": "^0.0.35",
@@ -67,7 +67,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4002",
+    "version": "0.59.4003",
     "broken": {}
   }
 }

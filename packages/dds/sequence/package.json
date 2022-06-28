@@ -82,7 +82,7 @@
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/gitresources": "^0.1036.4000",
     "@fluidframework/mocha-test-setup": "^0.59.4003",
-    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@0.59.4001",
+    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@0.59.4002",
     "@fluidframework/server-services-client": "^0.1036.4000",
     "@fluidframework/test-runtime-utils": "^0.59.4003",
     "@microsoft/api-extractor": "^7.22.2",
@@ -117,24 +117,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4002",
-    "broken": {
-      "InterfaceDeclaration_ISequenceDeltaRange": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceDeltaEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_SequenceMaintenanceEvent": {
-        "forwardCompat": false,
-        "backCompat": false
-      }
-    }
+    "version": "0.59.4003",
+    "broken": {}
   }
 }
