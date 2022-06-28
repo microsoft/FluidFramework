@@ -220,7 +220,7 @@ export class StringProperty extends ValueArrayProperty {
      * @inheritdoc
      */
     _deserialize(in_serializedObj, in_reportToView,
-        in_filteringOptions, in_createChangeSet) {
+                 in_filteringOptions, in_createChangeSet) {
         if ((in_serializedObj.remove && in_serializedObj.remove.length > 0) ||
             (in_serializedObj.modify && in_serializedObj.modify.length > 0) ||
             (in_serializedObj.insert &&
@@ -322,10 +322,10 @@ export class StringProperty extends ValueArrayProperty {
     }
 
     /**
-     * See {@link StringProperty.setValues}
      * @param {string} in_values the new values
      * @param {Bool} in_initial  - Whether we are setting default/initial values
      *   or if the function is called directly with the values to set.
+     * @see {setValues}
      */
     _setValues(in_values, in_initial) {
         throw new Error(MSG.NO_VALUE_PROPERTY_SETVALUES);

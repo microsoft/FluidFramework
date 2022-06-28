@@ -349,9 +349,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Sets the values of items in the array.
      * If values are typed, iterates through the values and creates a property with the defined type and value.
-     *
-     * See {@link ArrayProperty.setValues}
-     *
+     * @see {setValues}
      * @param {Array<*>} in_values  - The list of typed values.
      * @param {Bool} in_typed  - Whether the values are typed/polymorphic.
      * @param {Bool} in_initial  - Whether we are setting default/initial values
@@ -387,9 +385,8 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     }
 
     /**
-     * See {@link ArrayProperty.setValues}
-     *
      * @param {Array<*>|Object} in_values an array or object containing the values to be set.
+     * @see {setValues}
      */
     _setValuesInternal(in_values) {
         this._checkIsNotReadOnly(true);
@@ -1211,7 +1208,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
             for (var j = 0; j < segmentLength; j++) {
                 var existingEntry = this._dataArrayGetValue(startPointInInitialArray + j + offset);
                 var entryChanges = existingEntry._deserialize(targetArray[startPointInTargetArray + j],
-                    false, undefined, true);
+                                                              false, undefined, true);
 
                 // We had changes which we have to report back
                 if (!ChangeSet.isEmptyChangeSet(entryChanges)) {
@@ -1275,15 +1272,15 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     _serializeArray(in_array) {
         var len = in_array.length;
         var result = new Array(len);
-        if (this._isPrimitive) {
-            for (var i = 0; i < len; i++) {
-                result[i] = this._serializeValue(in_array[i]);
-            }
-        } else {
-            for (var i = 0; i < len; i++) {
-                result[i] = {};
-            }
+    if (this._isPrimitive) {
+        for (var i = 0; i < len; i++) {
+            result[i] = this._serializeValue(in_array[i]);
         }
+    } else {
+        for (var i = 0; i < len; i++) {
+            result[i] = {};
+        }
+    }
         return result;
     }
 

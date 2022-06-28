@@ -27,7 +27,7 @@ import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjec
 export interface RootDataObjectProps {
     /**
      * Initial object structure with which the {@link RootDataObject} will be first-time initialized.
-     * See {@link RootDataObject.initializingFirstTime}
+     * @see {@link RootDataObject.initializingFirstTime}
      */
     initialObjects: LoadableObjectClassRecord;
 }
@@ -53,7 +53,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
      * The first time this object is initialized, creates each object identified in
      * {@link RootDataObjectProps.initialObjects} and stores them as unique values in the root directory.
      *
-     * See {@link @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
+     * @see {@link @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
      */
     protected async initializingFirstTime(props: RootDataObjectProps) {
         this.root.createSubDirectory(this.initialObjectsDirKey);
@@ -75,7 +75,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
      * Every time an instance is initialized, loads all of the initial objects in the root directory so they can be
      * accessed immediately.
      *
-     * See {@link @fluidframework/aqueduct#PureDataObject.hasInitialized}
+     * @see {@link @fluidframework/aqueduct#PureDataObject.hasInitialized}
      */
     protected async hasInitialized() {
         // We will always load the initial objects so they are available to the developer
@@ -93,7 +93,7 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
 
     /**
      * Provides a record of the initial objects defined on creation.
-     * See {@link RootDataObject.initializingFirstTime}
+     * @see {@link RootDataObject.initializingFirstTime}
      */
     public get initialObjects(): LoadableObjectRecord {
         if (Object.keys(this._initialObjects).length === 0) {

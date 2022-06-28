@@ -90,7 +90,7 @@ export interface MakeNominal { }
  * @public
  */
 export interface Contravariant<T> {
-    _removeCovariance?: (_: T) => void;
+	_removeCovariance?: (_: T) => void;
 }
 
 /**
@@ -103,7 +103,7 @@ export interface Contravariant<T> {
  * @public
  */
 export interface Covariant<T> {
-    _removeContravariance?: T;
+	_removeContravariance?: T;
 }
 
 /**
@@ -120,10 +120,10 @@ export interface Covariant<T> {
  * @public
  */
 export interface Bivariant<T> {
-    /**
-     * See {@link Bivariant}
-     */
-    _constrainToBivariant?(_: T): void;
+	/**
+	 * @see {@link Bivariant}
+	 */
+	_constrainToBivariant?(_: T): void;
 }
 
 /**
@@ -161,10 +161,10 @@ export type requireFalse<_X extends false> = true;
  * @public
  */
 export type isAssignableTo<Source, Destination> = isAny<Source> extends true
-    ? true
-    : Source extends Destination
-    ? true
-    : false;
+	? true
+	: Source extends Destination
+	? true
+	: false;
 
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
@@ -172,10 +172,10 @@ export type isAssignableTo<Source, Destination> = isAny<Source> extends true
  * @public
  */
 export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> extends false
-    ? false
-    : isAssignableTo<Superset, Subset> extends true
-    ? false
-    : true;
+	? false
+	: isAssignableTo<Superset, Subset> extends true
+	? false
+	: true;
 
 /**
  * Returns a type parameter that is true iff A and B are assignable to each other, and neither is any.
@@ -184,10 +184,10 @@ export type isStrictSubset<Subset, Superset> = isAssignableTo<Subset, Superset> 
  * @public
  */
 export type areSafelyAssignable<A, B> = eitherIsAny<A, B> extends true
-    ? false
-    : isAssignableTo<A, B> extends true
-    ? isAssignableTo<B, A>
-    : false;
+	? false
+	: isAssignableTo<A, B> extends true
+	? isAssignableTo<B, A>
+	: false;
 
 /**
  * Returns a type parameter that is true iff A is any or B is any.

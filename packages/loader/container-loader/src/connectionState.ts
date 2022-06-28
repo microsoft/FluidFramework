@@ -18,8 +18,8 @@ export enum ConnectionState {
     EstablishingConnection = 3,
 
     /**
-     * See {@link ConnectionState.CatchingUp}, which is the new name for this state.
-     * @deprecated - This state itself is not gone, just being renamed. Please use {@link ConnectionState.CatchingUp}.
+     * @see ConnectionState.CatchingUp, which is the new name for this state.
+     * @deprecated - This state itself is not gone, just being renamed. Please use ConnectionState.CatchingUp.
      */
     Connecting = 1,
 
