@@ -15,6 +15,7 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     ISummaryConfiguration,
 } from "./containerRuntime";
+import { opSize } from "./opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
     IEnqueueSummarizeOptions,
@@ -86,7 +87,9 @@ export class RunningSummarizer implements IDisposable {
             heuristicData.lastSuccessfulSummary.refSequenceNumber
             + heuristicData.numNonRuntimeOps
             + heuristicData.numRuntimeOps);
-        if (diff > 0) {
+        heuristicData.hasMissingOpData = diff > 0;
+
+        if (heuristicData.hasMissingOpData) {
             // Split the diff 50-50 and increment the counts appropriately
             heuristicData.numNonRuntimeOps += Math.ceil(diff / 2);
             heuristicData.numRuntimeOps += Math.floor(diff / 2);
@@ -242,6 +245,8 @@ export class RunningSummarizer implements IDisposable {
             this.heuristicData.numNonRuntimeOps++;
         }
 
+        this.heuristicData.totalOpsSize += opSize(op);
+
         // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
         if (this.initialized
             && this.opCanTriggerSummary(op)
@@ -258,7 +263,7 @@ export class RunningSummarizer implements IDisposable {
 
     /**
      * Can the given op trigger a summary?
-     * # Currently only prevents summaries for Symmarize and SummaryAck ops
+     * # Currently only prevents summaries for Summarize and SummaryAck ops
      * @param op - op to check
      * @returns true if this type of op can trigger a summary
      */
