@@ -36,7 +36,7 @@ export interface ISummaryStats {
  * will be taking part of the summarization process.
  */
 export interface ISummaryTreeWithStats {
-    /** Represents an agreggation of node counts and blob sizes associated to the current summary information */
+    /** Represents an aggregation of node counts and blob sizes associated to the current summary information */
     stats: ISummaryStats;
     /**
      * A recursive data structure that will be converted to a snapshot tree and uploaded
@@ -54,7 +54,7 @@ export interface ISummarizeResult {
 }
 
 /**
- * Contains the same data as ISummaryResult but in order to avoid naming colisions,
+ * Contains the same data as ISummaryResult but in order to avoid naming collisions,
  * the data store summaries are wrapped around an array of labels identified by pathPartsForChildren.
  * Ex: id:""
        pathPartsForChildren: ["path1"]
@@ -202,7 +202,7 @@ export interface ISummarizerNode {
 }
 
 /**
- * Extends the functionality of ISummarizerNode to support garbage collection. It adds / udpates the following APIs:
+ * Extends the functionality of ISummarizerNode to support garbage collection. It adds / updates the following APIs:
  * - usedRoutes - The routes in this node that are currently in use.
  * - getGCData - A new API that can be used to get the garbage collection data for this node.
  * - summarize - Added a trackState flag which indicates whether the summarizer node should track the state of the

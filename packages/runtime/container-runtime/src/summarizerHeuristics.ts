@@ -27,6 +27,16 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
     }
 
     public numNonRuntimeOps: number = 0;
+    public totalOpsSize: number = 0;
+    public hasMissingOpData: boolean = false;
+
+    /**
+     * Cumulative size in bytes of all the ops at the beginning of the summarization attempt.
+     * Is used to adjust totalOpsSize appropriately after successful summarization.
+     */
+     /** */
+    private totalOpsSizeBefore: number = 0;
+
     /**
      * Number of system ops at beginning of attempting to summarize.
      * Is used to adjust numSystemOps appropriately after successful summarization.
@@ -62,6 +72,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 
         this.numSystemOpsBefore = this.numNonRuntimeOps;
         this.numNonSystemOpsBefore = this.numRuntimeOps;
+        this.totalOpsSizeBefore = this.totalOpsSize;
     }
 
     public markLastAttemptAsSuccessful() {
@@ -72,6 +83,9 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 
         this.numRuntimeOps -= this.numNonSystemOpsBefore;
         this.numNonSystemOpsBefore = 0;
+
+        this.totalOpsSize -= this.totalOpsSizeBefore;
+        this.totalOpsSizeBefore = 0;
     }
 }
 
