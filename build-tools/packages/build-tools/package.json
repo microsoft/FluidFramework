@@ -1,12 +1,12 @@
 {
   "name": "@fluidframework/build-tools",
   "version": "0.3.0",
-  "description": "Fluid Build tool",
+  "description": "Fluid Build tools",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "tools/build-tools"
+    "directory": "build-tools/packages/build-tools"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
