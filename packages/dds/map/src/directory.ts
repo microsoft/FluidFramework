@@ -844,26 +844,25 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 interface IKeyEditLocalOpMetadata {
     type: "edit";
     pendingMessageId: number;
-    // "unknown" indicates we don't know the prior value because it is a stashed op so it cannot be rolled back
-    previousValue: ILocalValue | undefined | "unknown";
+    previousValue: ILocalValue | undefined;
 }
 
 interface IClearLocalOpMetadata {
     type: "clear";
     pendingMessageId: number;
-    previousStorage: Map<string, ILocalValue> | "unknown";
+    previousStorage: Map<string, ILocalValue>;
 }
 
 interface ICreateSubDirLocalOpMetadata {
     type: "createSubDir";
     pendingMessageId: number;
-    previouslyExisted: boolean | "unknown";
+    previouslyExisted: boolean;
 }
 
 interface IDeleteSubDirLocalOpMetadata {
     type: "deleteSubDir";
     pendingMessageId: number;
-    subDirectory: SubDirectory | undefined | "unknown";
+    subDirectory: SubDirectory | undefined;
 }
 
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
@@ -874,19 +873,21 @@ function isKeyEditLocalOpMetadata(metadata: any): metadata is IKeyEditLocalOpMet
 }
 
 function isClearLocalOpMetadata(metadata: any): metadata is IClearLocalOpMetadata {
-    return metadata !== undefined && metadata.type === "clear" && typeof metadata.pendingMessageId === "number";
+    return metadata !== undefined && metadata.type === "clear" && typeof metadata.pendingMessageId === "number" &&
+        typeof metadata.previousStorage === "object";
 }
 
 function isSubDirLocalOpMetadata(metadata: any): metadata is SubDirLocalOpMetadata {
-    return metadata !== undefined &&
-        ((metadata.type === "createSubDir" && typeof metadata.previouslyExisted !== undefined) ||
-         (metadata.type === "deleteSubDir" && typeof metadata.subDirectory !== undefined));
+    return metadata !== undefined && typeof metadata.pendingMessageId === "number" &&
+        ((metadata.type === "createSubDir" && typeof metadata.previouslyExisted === "boolean") ||
+         metadata.type === "deleteSubDir");
 }
 
 function isDirectoryLocalOpMetadata(metadata: any): metadata is DirectoryLocalOpMetadata {
     return metadata !== undefined && typeof metadata.pendingMessageId === "number" &&
-        (metadata.type === "edit" || metadata.type === "clear" ||
-        metadata.type === "createSubDir" || metadata.type === "deleteSubDir");
+        (metadata.type === "edit" || metadata.type === "deleteSubDir" ||
+         (metadata.type === "clear" && typeof metadata.previousStorage === "object") ||
+         (metadata.type === "createSubDir" && typeof metadata.previouslyExisted === "boolean"));
 }
 
 /**
@@ -1378,7 +1379,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param op - The operation
      */
     private submitClearMessage(op: IDirectoryClearOperation,
-        previousValue: Map<string, ILocalValue> | "unknown"): void {
+        previousValue: Map<string, ILocalValue>): void {
         this.throwIfDisposed();
         const pendingMsgId = ++this.pendingMessageId;
         this.pendingClearMessageIds.push(pendingMsgId);
@@ -1424,7 +1425,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param op - The operation
      * @param previousValue - The value of the key before this op
      */
-    private submitKeyMessage(op: IDirectoryKeyOperation, previousValue?: ILocalValue | "unknown"): void {
+    private submitKeyMessage(op: IDirectoryKeyOperation, previousValue?: ILocalValue): void {
         this.throwIfDisposed();
         const pendingMessageId = this.getKeyMessageId(op);
         const localMetadata = { type: "edit", pendingMessageId, previousValue };
@@ -1473,7 +1474,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param prevExisted - Whether the subdirectory existed before the op
      */
     private submitCreateSubDirectoryMessage(op: IDirectorySubDirectoryOperation,
-        prevExisted: boolean | "unknown"): void {
+        prevExisted: boolean): void {
         this.throwIfDisposed();
         const newMessageId = this.getSubDirMessageId(op);
 
@@ -1488,10 +1489,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * Submit a delete subdirectory operation.
      * @param op - The operation
-     * @param prevExisted - Whether the subdirectory existed before the op
+     * @param subDir - Any subdirectory deleted by the op
      */
     private submitDeleteSubDirectoryMessage(op: IDirectorySubDirectoryOperation,
-        subDir: SubDirectory | "unknown" | undefined): void {
+        subDir: SubDirectory | undefined): void {
         this.throwIfDisposed();
         const newMessageId = this.getSubDirMessageId(op);
 
@@ -1604,9 +1605,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
 
         if (op.type === "clear" && localOpMetadata.type === "clear") {
-            if (localOpMetadata.previousStorage === "unknown") {
-                throw new Error("Cannot rollback without previous contents");
-            }
             localOpMetadata.previousStorage.forEach((localValue, key) => {
                 this.setCore(key, localValue, true);
             });
@@ -1616,9 +1614,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                 throw new Error("Rollback op does match last clear");
             }
         } else if ((op.type === "delete" || op.type === "set") && localOpMetadata.type === "edit") {
-            if (localOpMetadata.previousValue === "unknown") {
-                throw new Error("Cannot rollback without previous contents");
-            }
             if (localOpMetadata.previousValue === undefined) {
                 this.deleteCore(op.key, true);
             } else {
@@ -1627,17 +1622,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
             this.rollbackPendingMessageId(this.pendingKeys, op.key, localOpMetadata.pendingMessageId);
         } else if (op.type === "createSubDirectory" && localOpMetadata.type === "createSubDir") {
-            if (localOpMetadata.previouslyExisted === "unknown") {
-                throw new Error("Cannot rollback without previous contents");
-            } else if (!localOpMetadata.previouslyExisted) {
+            if (!localOpMetadata.previouslyExisted) {
                 this.deleteSubDirectoryCore(op.subdirName, true);
             }
 
             this.rollbackPendingMessageId(this.pendingSubDirectories, op.subdirName, localOpMetadata.pendingMessageId);
         } else if (op.type === "deleteSubDirectory" && localOpMetadata.type === "deleteSubDir") {
-            if (localOpMetadata.subDirectory === "unknown") {
-                throw new Error("Cannot rollback without previous contents");
-            } else if (localOpMetadata.subDirectory !== undefined) {
+            if (localOpMetadata.subDirectory !== undefined) {
                 this.undeleteSubDirectoryTree(localOpMetadata.subDirectory);
                 // don't need to register events because deleting never unregistered
                 this._subdirectories.set(op.subdirName, localOpMetadata.subDirectory);
