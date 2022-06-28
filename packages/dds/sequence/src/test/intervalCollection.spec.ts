@@ -35,8 +35,8 @@ const assertIntervals = (
 
     const actualPos = actual.map((interval) => {
         assert(interval);
-        const start = sharedString.localRefToPos(interval.start);
-        const end = sharedString.localRefToPos(interval.end);
+        const start = sharedString.localReferencePositionToPosition(interval.start);
+        const end = sharedString.localReferencePositionToPosition(interval.end);
         return { start, end };
     });
     assert.deepEqual(actualPos, expected, "intervals are not as expected");
@@ -57,7 +57,7 @@ describe("SharedString interval collections", () => {
     let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
     beforeEach(() => {
-        dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+        dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
         sharedString = new SharedString(dataStoreRuntime1, "shared-string-1", SharedStringFactory.Attributes);
     });
 
@@ -79,7 +79,7 @@ describe("SharedString interval collections", () => {
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
             const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
             const services2 = {
                 deltaConnection: containerRuntime2.createDeltaConnection(),
@@ -392,7 +392,7 @@ describe("SharedString interval collections", () => {
 
         it("can slide intervals on create ack", () => {
             // Create and connect a third SharedString.
-            const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
+            const dataStoreRuntime3 = new MockFluidDataStoreRuntime({ clientId: "3" });
             const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
             const services3 = {
                 deltaConnection: containerRuntime3.createDeltaConnection(),
@@ -436,7 +436,7 @@ describe("SharedString interval collections", () => {
 
         it("can slide intervals on change ack", () => {
             // Create and connect a third SharedString.
-            const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
+            const dataStoreRuntime3 = new MockFluidDataStoreRuntime({ clientId: "3" });
             const containerRuntime3 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
             const services3 = {
                 deltaConnection: containerRuntime3.createDeltaConnection(),
@@ -1196,7 +1196,7 @@ describe("SharedString interval collections", () => {
             sharedString.connect(services1);
 
             // Create and connect a second SharedString.
-            const runtime2 = new MockFluidDataStoreRuntime();
+            const runtime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
             containerRuntime2 = containerRuntimeFactory.createContainerRuntime(runtime2);
             sharedString2 = new SharedString(runtime2, "shared-string-2", SharedStringFactory.Attributes);
             const services2: IChannelServices = {

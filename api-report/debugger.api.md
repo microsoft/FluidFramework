@@ -152,7 +152,6 @@ export interface IDebuggerUI {
     versionSelected(seqNumber: number, version: IVersion | string): void;
 }
 
-
 // (No @packageDocumentation comment for this package)
 
 ```

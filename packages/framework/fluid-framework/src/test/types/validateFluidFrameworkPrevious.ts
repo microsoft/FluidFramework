@@ -611,6 +611,7 @@ declare function get_current_ClassDeclaration_IntervalCollection():
 declare function use_old_ClassDeclaration_IntervalCollection(
     use: TypeOnly<old.IntervalCollection<any>>);
 use_old_ClassDeclaration_IntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_IntervalCollection());
 
 /*
@@ -1019,6 +1020,7 @@ declare function get_current_InterfaceDeclaration_ISharedString():
 declare function use_old_InterfaceDeclaration_ISharedString(
     use: TypeOnly<old.ISharedString>);
 use_old_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedString());
 
 /*
@@ -1523,6 +1525,7 @@ declare function get_current_ClassDeclaration_SequenceDeltaEvent():
 declare function use_old_ClassDeclaration_SequenceDeltaEvent(
     use: TypeOnly<old.SequenceDeltaEvent>);
 use_old_ClassDeclaration_SequenceDeltaEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceDeltaEvent());
 
 /*
@@ -1547,6 +1550,7 @@ declare function get_current_ClassDeclaration_SequenceEvent():
 declare function use_old_ClassDeclaration_SequenceEvent(
     use: TypeOnly<old.SequenceEvent>);
 use_old_ClassDeclaration_SequenceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceEvent());
 
 /*
@@ -1571,6 +1575,7 @@ declare function get_current_ClassDeclaration_SequenceInterval():
 declare function use_old_ClassDeclaration_SequenceInterval(
     use: TypeOnly<old.SequenceInterval>);
 use_old_ClassDeclaration_SequenceInterval(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceInterval());
 
 /*
@@ -1595,6 +1600,7 @@ declare function get_current_ClassDeclaration_SequenceMaintenanceEvent():
 declare function use_old_ClassDeclaration_SequenceMaintenanceEvent(
     use: TypeOnly<old.SequenceMaintenanceEvent>);
 use_old_ClassDeclaration_SequenceMaintenanceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceMaintenanceEvent());
 
 /*
@@ -1739,6 +1745,7 @@ declare function get_current_ClassDeclaration_SharedNumberSequence():
 declare function use_old_ClassDeclaration_SharedNumberSequence(
     use: TypeOnly<old.SharedNumberSequence>);
 use_old_ClassDeclaration_SharedNumberSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedNumberSequence());
 
 /*
@@ -1811,6 +1818,7 @@ declare function get_current_ClassDeclaration_SharedObjectSequence():
 declare function use_old_ClassDeclaration_SharedObjectSequence(
     use: TypeOnly<old.SharedObjectSequence<any>>);
 use_old_ClassDeclaration_SharedObjectSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedObjectSequence());
 
 /*
@@ -1859,6 +1867,7 @@ declare function get_current_ClassDeclaration_SharedSegmentSequence():
 declare function use_old_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<old.SharedSegmentSequence<any>>);
 use_old_ClassDeclaration_SharedSegmentSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -1883,6 +1892,7 @@ declare function get_current_ClassDeclaration_SharedSequence():
 declare function use_old_ClassDeclaration_SharedSequence(
     use: TypeOnly<old.SharedSequence<any>>);
 use_old_ClassDeclaration_SharedSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSequence());
 
 /*
@@ -1907,6 +1917,7 @@ declare function get_current_ClassDeclaration_SharedString():
 declare function use_old_ClassDeclaration_SharedString(
     use: TypeOnly<old.SharedString>);
 use_old_ClassDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedString());
 
 /*
@@ -1955,6 +1966,7 @@ declare function get_current_TypeAliasDeclaration_SharedStringSegment():
 declare function use_old_TypeAliasDeclaration_SharedStringSegment(
     use: TypeOnly<old.SharedStringSegment>);
 use_old_TypeAliasDeclaration_SharedStringSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SharedStringSegment());
 
 /*
@@ -1979,6 +1991,7 @@ declare function get_current_ClassDeclaration_SparseMatrix():
 declare function use_old_ClassDeclaration_SparseMatrix(
     use: TypeOnly<old.SparseMatrix>);
 use_old_ClassDeclaration_SparseMatrix(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SparseMatrix());
 
 /*

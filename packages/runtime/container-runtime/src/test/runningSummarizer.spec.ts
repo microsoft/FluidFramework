@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { Deferred } from "@fluidframework/common-utils";
 import {
+    IDocumentMessage,
     ISequencedDocumentMessage,
     ISummaryAck,
     ISummaryNack,
@@ -16,11 +17,20 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
+import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { neverCancelledSummaryToken } from "../runWhileConnectedCoordinator";
 import { RunningSummarizer } from "../runningSummarizer";
 import { SummaryCollection } from "../summaryCollection";
 import { SummarizeHeuristicData } from "../summarizerHeuristics";
+import { ISummarizerRuntime } from "..";
+import { ISummarizeHeuristicData } from "../summarizerTypes";
+
+class MockRuntime {
+    constructor(
+        public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+    ) { }
+}
 
 describe("Runtime", () => {
     describe("Summarization", () => {
@@ -38,6 +48,8 @@ describe("Runtime", () => {
             let lastRefSeq = 0;
             let lastClientSeq: number;
             let lastSummarySeq: number;
+            let mockRuntime: MockRuntime;
+            let heuristicData: ISummarizeHeuristicData;
             const summaryCommon = {
                 maxAckWaitTime: 120000, // 2 min
                 maxOpsSinceLastSummary: 7000,
@@ -50,6 +62,10 @@ describe("Runtime", () => {
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
+                minIdleTime: 5000, // 5 sec (idle)
+                maxIdleTime: 5000, // This must remain the same as minIdleTime for tests to pass nicely
+                nonRuntimeOpWeight: 0.1,
+                runtimeOpWeight: 1.0,
                 ...summaryCommon,
             };
             const summaryConfigDisableHeuristics: ISummaryConfiguration = {
@@ -62,13 +78,18 @@ describe("Runtime", () => {
 
             const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 
-            async function emitNextOp(increment: number = 1, timestamp: number = Date.now()) {
+            async function emitNextOp(
+                increment: number = 1,
+                timestamp: number = Date.now(),
+                type: string = MessageType.Operation,
+            ) {
+                heuristicData.numRuntimeOps += increment - 1; // -1 because we emit an op below
                 lastRefSeq += increment;
                 const op: Partial<ISequencedDocumentMessage> = {
                     sequenceNumber: lastRefSeq,
                     timestamp,
+                    type,
                 };
-                summarizer.handleOp(undefined, op as ISequencedDocumentMessage);
                 mockDeltaManager.emit("op", op);
                 await flushPromises();
             }
@@ -95,7 +116,11 @@ describe("Runtime", () => {
                     handle: "test-ack-handle",
                     summaryProposal,
                 };
-                mockDeltaManager.emit("op", { contents, type: MessageType.SummaryAck });
+                mockDeltaManager.emit("op", {
+                    contents,
+                    type: MessageType.SummaryAck,
+                    sequenceNumber: ++lastRefSeq,
+                });
 
                 await flushPromises(); // let summarize run
             }
@@ -109,7 +134,11 @@ describe("Runtime", () => {
                     retryAfter: retryAfterSeconds,
                     message: "test-nack",
                 };
-                mockDeltaManager.emit("op", { contents, type: MessageType.SummaryNack });
+                mockDeltaManager.emit("op", {
+                    contents,
+                    type: MessageType.SummaryNack,
+                    sequenceNumber: ++lastRefSeq,
+                });
 
                 await flushPromises();
             }
@@ -140,6 +169,7 @@ describe("Runtime", () => {
             const startRunningSummarizer = async (
                 disableHeuristics?: boolean,
             ): Promise<void> => {
+                heuristicData = new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() });
                 summarizer = await RunningSummarizer.start(
                     mockLogger,
                     summaryCollection.createWatcher(summarizerClientId),
@@ -180,8 +210,6 @@ describe("Runtime", () => {
                                 dataStoreCount: 0,
                                 summarizedDataStoreCount: 0,
                                 unreferencedBlobSize: 0,
-                                opsSizesSinceLastSummary: 0,
-                                nonSystemOpsSinceLastSummary: 0,
                                 summaryNumber: 0,
                             },
                             handle: "test-handle",
@@ -189,12 +217,13 @@ describe("Runtime", () => {
                             forcedFullTree: false,
                         } as const;
                     },
-                    new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
+                    heuristicData,
                     () => { },
                     summaryCollection,
                     neverCancelledSummaryToken,
                     // stopSummarizerCallback
                     (reason) => { stopCall++; },
+                    mockRuntime as any as ISummarizerRuntime,
                 );
             };
 
@@ -220,6 +249,7 @@ describe("Runtime", () => {
                 lastSummarySeq = 0; // negative/decrement for test
                 mockLogger = new MockLogger();
                 mockDeltaManager = new MockDeltaManager();
+                mockRuntime = new MockRuntime(mockDeltaManager);
                 summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
             });
 
@@ -229,10 +259,8 @@ describe("Runtime", () => {
                 });
 
                 it("Should summarize after configured number of ops when not pending", async () => {
-                    await emitNextOp();
-
                     // too early, should not run yet
-                    await emitNextOp(summaryConfig.maxOps - 1);
+                    await emitNextOp(summaryConfig.maxOps);
                     assertRunCounts(0, 0, 0);
 
                     // now should run
@@ -267,7 +295,7 @@ describe("Runtime", () => {
                     await emitNextOp();
 
                     // too early, should not run yet
-                    await tickAndFlushPromises(summaryConfig.idleTime - 1);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime - 1);
                     assertRunCounts(0, 0, 0);
 
                     // now should run
@@ -276,25 +304,25 @@ describe("Runtime", () => {
 
                     // should not run, because our summary hasnt been acked/nacked yet
                     await emitNextOp();
-                    await tickAndFlushPromises(summaryConfig.idleTime);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
                     assertRunCounts(1, 0, 0);
 
                     // should run, because another op has come in, and our summary has been acked
                     await emitAck();
                     await emitNextOp();
-                    await tickAndFlushPromises(summaryConfig.idleTime);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
                     assertRunCounts(2, 0, 0);
                 });
 
                 it("Should summarize after configured active time when not pending", async () => {
-                    const idlesPerActive = Math.floor((summaryConfig.maxTime + 1) / (summaryConfig.idleTime - 1));
-                    const remainingTime = (summaryConfig.maxTime + 1) % (summaryConfig.idleTime - 1);
+                    const idlesPerActive = Math.floor((summaryConfig.maxTime + 1) / (summaryConfig.minIdleTime - 1));
+                    const remainingTime = (summaryConfig.maxTime + 1) % (summaryConfig.minIdleTime - 1);
                     await emitNextOp();
 
                     // too early should not run yet
                     for (let i = 0; i < idlesPerActive; i++) {
                         // prevent idle from triggering with periodic ops
-                        await tickAndFlushPromises(summaryConfig.idleTime - 1);
+                        await tickAndFlushPromises(summaryConfig.minIdleTime - 1);
                         await emitNextOp();
                     }
                     await tickAndFlushPromises(remainingTime - 1);
@@ -309,7 +337,7 @@ describe("Runtime", () => {
                     // should not run because our summary hasnt been acked/nacked yet
                     for (let i = 0; i < idlesPerActive; i++) {
                         // prevent idle from triggering with periodic ops
-                        await tickAndFlushPromises(summaryConfig.idleTime - 1);
+                        await tickAndFlushPromises(summaryConfig.minIdleTime - 1);
                         await emitNextOp();
                     }
                     await tickAndFlushPromises(remainingTime);
@@ -392,6 +420,40 @@ describe("Runtime", () => {
                     await stopP;
 
                     assertRunCounts(0, 0, 0, "should not perform lastSummary");
+                });
+
+                it("Should not summarize when processing summary ack op", async () => {
+                    await emitNextOp(summaryConfig.maxOps);
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+
+                    await emitAck();
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+                });
+
+                it("Should not summarize when processing summary nack op", async () => {
+                    await emitNextOp(summaryConfig.maxOps);
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+
+                    await emitNack();
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+                });
+
+                it("Should not summarize when processing summarize op", async () => {
+                    await emitNextOp(summaryConfig.maxOps);
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+
+                    await emitNextOp(1, Date.now(), MessageType.Summarize);
+                    assertRunCounts(0, 0, 0, "should not perform summary");
+                });
+
+                it("Should not include Summarize ops with runtime count", async () => {
+                    assert.strictEqual(heuristicData.numRuntimeOps, 0);
+                    assert.strictEqual(heuristicData.numNonRuntimeOps, 0);
+
+                    await emitNextOp(1, Date.now(), MessageType.Summarize);
+
+                    assert.strictEqual(heuristicData.numRuntimeOps, 0);
+                    assert.strictEqual(heuristicData.numNonRuntimeOps, 1);
                 });
             });
 
@@ -841,7 +903,8 @@ describe("Runtime", () => {
                     assert(submitResult.data.stage === "submit",
                         "enqueued summary submitted data stage should be submit");
 
-                    const expectedRefSeqNum = summaryConfig.maxOps * 2 + 22;
+                    // 24 = 22 regular runtime ops + 2 summary ack ops
+                    const expectedRefSeqNum = summaryConfig.maxOps * 2 + 24;
                     assert.strictEqual(submitResult.data.referenceSequenceNumber, expectedRefSeqNum, "ref seq num");
                     assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
 
@@ -1005,14 +1068,14 @@ describe("Runtime", () => {
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(0, 0, 0, "should not summarize after maxOps");
 
-                    await tickAndFlushPromises(summaryConfig.idleTime + 1);
-                    assertRunCounts(0, 0, 0, "should not summarize after idleTime");
+                    await tickAndFlushPromises(summaryConfig.minIdleTime + 1);
+                    assertRunCounts(0, 0, 0, "should not summarize after minIdleTime");
 
                     await tickAndFlushPromises(summaryConfig.maxTime + 1);
                     assertRunCounts(0, 0, 0, "should not summarize after maxTime");
 
                     await emitNextOp(summaryConfig.maxOps * 3 + 10000);
-                    await tickAndFlushPromises(summaryConfig.maxTime * 3 + summaryConfig.idleTime * 3 + 10000);
+                    await tickAndFlushPromises(summaryConfig.maxTime * 3 + summaryConfig.minIdleTime * 3 + 10000);
                     assertRunCounts(0, 0, 0, "make extra sure");
                 });
 
