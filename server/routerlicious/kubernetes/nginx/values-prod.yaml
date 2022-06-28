@@ -1,11 +1,11 @@
 controller:
   terminationGracePeriodSeconds: 60
   ingressClassResource:
-    # 'name' needs to be unique cluster-wide; IngressClass is a cluser-scoped resource
-    # It must match what the deployment pipeline ends up passing to the historian chart
-    # to fill in the spec.ingressClassName field of its Ingress resource
+    # 'name' needs to be unique cluster-wide; IngressClass is a cluser-scoped resource.
+    # It must match what the deployment pipelines ends up passing to the spec.ingressClassName
+    # field of Ingress resources that get deployed.
     name: nginx-prod
-    # 'controllerValue' needs to be unique cluster-wide to avoid IngressClass resources getting confused about which controller to us
+    # 'controllerValue' needs to be unique cluster-wide to avoid IngressClass resources getting confused about which controller to use
     controllerValue: fluidframework.com/prod-ingress-controller
   extraArgs:
     default-ssl-certificate: default/wu2-tls-certificate
