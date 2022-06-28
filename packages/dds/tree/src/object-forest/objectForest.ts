@@ -1,7 +1,7 @@
 /*!
-* Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-* Licensed under the MIT License.
-*/
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
 import { assert } from "@fluidframework/common-utils";
 import { DisposingDependee, ObservingDependent, recordDependency, SimpleDependee } from "../dependency-tracking";
