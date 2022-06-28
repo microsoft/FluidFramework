@@ -1,4 +1,4 @@
- /*!
+/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
@@ -24,7 +24,7 @@ import { ObjectForest } from "./objectForest";
  */
 
 /**
- *
+ * Base type for nodes in a path tree.
  */
 class PathShared<TParent extends TreeParent> {
     // PathNode arrays are kept sorted by index for efficient search.
