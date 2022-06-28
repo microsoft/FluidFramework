@@ -426,13 +426,17 @@ export class SequenceInterval implements ISerializableInterval {
         let startRef = this.start;
         if (start !== undefined) {
             startRef = createPositionReference(this.client, start, getRefType(this.start.refType), op);
-            startRef.addProperties(this.start.properties);
+            if (this.start.properties) {
+                startRef.addProperties(this.start.properties);
+            }
         }
 
         let endRef = this.end;
         if (end !== undefined) {
             endRef = createPositionReference(this.client, end, getRefType(this.end.refType), op);
-            endRef.addProperties(this.end.properties);
+            if (this.end.properties) {
+                endRef.addProperties(this.end.properties);
+            }
         }
 
         const newInterval = new SequenceInterval(this.client, startRef, endRef, this.intervalType);
@@ -1332,8 +1336,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             // Note that the ID is in the property bag only to allow us to find the interval.
             // This API cannot change the ID, and writing to the ID property will result in an exception. So we
             // strip it out of the properties here.
-            const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties;
-            interval = this.getIntervalById(id);
+            const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties ?? {};
+            interval = id && this.getIntervalById(id);
             if (interval) {
                 let start: number | undefined;
                 let end: number | undefined;

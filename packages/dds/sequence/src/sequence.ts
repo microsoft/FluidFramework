@@ -163,7 +163,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected loadedDeferred = new Deferred<void>();
     // cache out going ops created when partial loading
     private readonly loadedDeferredOutgoingOps:
-        [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
+        [IMergeTreeOp, SegmentGroup | SegmentGroup[] | undefined][] = [];
     // cache incoming ops that arrive when partial loading
     private deferIncomingOps = true;
     private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
