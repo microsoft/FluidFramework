@@ -14,6 +14,14 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 1.1.0
+
+## 1.1.0 Upcoming changes
+- [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated)
+
+ ### IContainerRuntime.createRootDataStore is deprecated
+ See [#9660](https://github.com/microsoft/FluidFramework/issues/9660). The API is vulnerable to name conflicts, which lead to invalid documents. As a replacement, create a regular datastore using the `IContainerRuntimeBase.createDataStore` function, then alias the datastore by using the `IDataStore.trySetAlias` function and specify a string value to serve as the alias to which the datastore needs to be bound. If successful, "Success" will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
+
 # 1.0.0
 
 ## 1.0.0 Upcoming changes

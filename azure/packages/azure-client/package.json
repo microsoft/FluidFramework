@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/azure-client",
-  "version": "0.60.1000",
+  "version": "1.1.0",
   "description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -43,28 +43,29 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/container-definitions": "^0.48.1000",
-    "@fluidframework/container-loader": "^0.59.2001",
-    "@fluidframework/core-interfaces": "^0.43.1000",
-    "@fluidframework/driver-definitions": "^0.46.1000",
-    "@fluidframework/driver-utils": "^0.59.2001",
-    "@fluidframework/fluid-static": "^0.59.2001",
-    "@fluidframework/map": "^0.59.2001",
+    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/container-definitions": "^1.0.1",
+    "@fluidframework/container-loader": "^1.0.1",
+    "@fluidframework/core-interfaces": "^1.0.1",
+    "@fluidframework/driver-definitions": "^1.0.1",
+    "@fluidframework/driver-utils": "^1.0.1",
+    "@fluidframework/fluid-static": "^1.0.1",
+    "@fluidframework/map": "^1.0.1",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/routerlicious-driver": "^0.59.2001",
-    "@fluidframework/runtime-utils": "^0.59.2000",
-    "@fluidframework/server-services-client": "^0.1036.4000",
+    "@fluidframework/routerlicious-driver": "^1.0.1",
+    "@fluidframework/runtime-utils": "^1.0.1",
+    "@fluidframework/server-services-client": "^0.1036.5000",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/aqueduct": "^0.59.2001",
-    "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@0.59.2000",
+    "@fluidframework/aqueduct": "^1.0.1",
+    "@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@1.0.0-73930",
     "@fluidframework/azure-local-service": "^0.1.38773",
-    "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.71273",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/test-client-utils": "^0.59.2001",
+    "@fluidframework/test-client-utils": "^1.0.1",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -78,26 +79,10 @@
     "typescript": "~4.5.5"
   },
   "peerDependencies": {
-    "fluid-framework": "^0.60.1000"
+    "fluid-framework": "^1.0.1"
   },
   "typeValidation": {
-    "version": "0.60.1000",
-    "broken": {
-      "ClassDeclaration_AzureClient": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_AzureClientProps": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_AzureConnectionConfig": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedVariableDeclaration_LOCAL_MODE_TENANT_ID": {
-        "backCompat": false,
-        "forwardCompat": false
-      }
-    }
+    "version": "1.1.0",
+    "broken": {}
   }
 }

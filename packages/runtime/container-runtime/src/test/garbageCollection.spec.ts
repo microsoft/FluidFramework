@@ -7,6 +7,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -27,15 +28,16 @@ import {
     gcTreeKey,
     IGarbageCollectionRuntime,
     IGarbageCollector,
-    trackGCStateMinimumVersionKey,
     runSessionExpiryKey,
     disableSessionExpiryKey,
-    semverCompare,
+    IGarbageCollectorCreateParams,
 } from "../garbageCollection";
-import { IContainerRuntimeMetadata } from "../summaryFormat";
-import { pkgVersion } from "../packageVersion";
+import { dataStoreAttributesBlobName, IContainerRuntimeMetadata } from "../summaryFormat";
 
 describe("Garbage Collection Tests", () => {
+    const testPkgPath = ["testPkg"];
+    // The package data is tagged in the telemetry event.
+    const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.PackageData };
     // Nodes in the reference graph.
     const nodes: string[] = [
         "/node1",
@@ -44,60 +46,53 @@ describe("Garbage Collection Tests", () => {
         "/node4",
     ];
 
-    let clock: SinonFakeTimers;
     const mockLogger: MockLogger = new MockLogger();
     const mc = mixinMonitoringContext(mockLogger, sessionStorageConfigProvider.value);
-    let closeCalled = false;
-    // Time after which unreferenced nodes becomes inactive.
-    const inactiveTimeoutMs = 500;
-    const testPkgPath = ["testPkg"];
-    // The package data is tagged in the telemetry event.
-    const eventPkg = { value: `/${testPkgPath.join("/")}`, tag: TelemetryDataTag.PackageData };
-
-    const getNodeType = (nodePath: string) => {
-        if (nodePath.split("/").length !== 2) {
-            return GCNodeType.Other;
-        }
-        return GCNodeType.DataStore;
-    };
-    // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
-    const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
-    // The runtime to be passed to the garbage collector.
-    const gcRuntime: IGarbageCollectionRuntime = {
-        updateStateBeforeGC: async () => {},
-        getGCData: async (fullGC?: boolean) => defaultGCData,
-        updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-        deleteUnusedRoutes: (unusedRoutes: string[]) => {},
-        getNodeType,
-        getCurrentReferenceTimestampMs: () => Date.now(),
-        closeFn: () => { closeCalled = true; },
-    };
-
-    // The GC details in the summary blob of a node. This is used by the garbage collector to initialize GC state.
-    // Update this for individual node to update the initial GC state of that node.
-    const emptyGCDetails: IGarbageCollectionDetailsBase = {};
-
-    const createGarbageCollector = (
-        baseSnapshot: ISnapshotTree | undefined = undefined,
-        getNodeGCDetails: (id: string) => IGarbageCollectionDetailsBase = () => emptyGCDetails,
-        metadata: IContainerRuntimeMetadata | undefined = undefined,
-    ) => {
-        return GarbageCollector.create(
-            gcRuntime,
-            { gcAllowed: true, inactiveTimeoutMs },
-            (nodeId: string) => testPkgPath,
-            () => Date.now(),
-            baseSnapshot,
-            async <T>(id: string) => getNodeGCDetails(id) as T,
-            mockLogger,
-            metadata !== undefined /* existing */,
-            metadata,
-            true /* summarizerClient */,
-        );
-    };
 
     const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
     let injectedSettings = {};
+    let clock: SinonFakeTimers;
+
+    // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
+    const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
+
+    function createGarbageCollector(
+        createParams: Partial<IGarbageCollectorCreateParams> = {},
+        gcBlobsMap: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase> = new Map(),
+        closeFn: (error?: ICriticalContainerError) => void = () => {},
+    ) {
+        const getNodeType = (nodePath: string) => {
+            if (nodePath.split("/").length !== 2) {
+                return GCNodeType.Other;
+            }
+            return GCNodeType.DataStore;
+        };
+
+        // The runtime to be passed to the garbage collector.
+        const gcRuntime: IGarbageCollectionRuntime = {
+            updateStateBeforeGC: async () => {},
+            getGCData: async (fullGC?: boolean) => defaultGCData,
+            updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
+            deleteUnusedRoutes: (unusedRoutes: string[]) => {},
+            getNodeType,
+            getCurrentReferenceTimestampMs: () => Date.now(),
+            closeFn,
+        };
+
+        return GarbageCollector.create({
+            ...createParams,
+            runtime: gcRuntime,
+            gcOptions: createParams.gcOptions ?? {},
+            baseSnapshot: createParams.baseSnapshot,
+            baseLogger: mockLogger,
+            existing: createParams.metadata !== undefined /* existing */,
+            metadata: createParams.metadata,
+            isSummarizerClient: true /* summarizerClient */,
+            readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
+            getNodePackagePath: (nodeId: string) => testPkgPath,
+            getLastSummaryTimestampMs: () => Date.now(),
+        });
+    }
 
     before(() => {
         clock = useFakeTimers();
@@ -118,6 +113,7 @@ describe("Garbage Collection Tests", () => {
 
     describe("Session expiry", () => {
         const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
+        let closeCalled = false;
 
         beforeEach(() => {
             closeCalled = false;
@@ -133,29 +129,33 @@ describe("Garbage Collection Tests", () => {
             return closeCalled;
         }
 
+        const createGCOverride = (metadata?: IContainerRuntimeMetadata) => {
+            return createGarbageCollector({ metadata }, undefined /* gcBlobsMap */, () => { closeCalled = true; });
+        };
+
         it("Session expires for an existing container", async () => {
             const metadata: IContainerRuntimeMetadata =
                 { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
-            createGarbageCollector(undefined, undefined, metadata);
+            createGCOverride(metadata);
             assert(closeCalledAfterExactTicks(10), "Close should have been called at exact expiry.");
         });
 
         it("Session expires for a new container", async () => {
-            createGarbageCollector();
+            createGCOverride();
             assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
         });
 
         it("Session expiry disabled via DisableSessionExpiry config", async () => {
             // disable expiry even though it's set to run (meaning expiry value will present)
             injectedSettings[disableSessionExpiryKey] = "true";
-            createGarbageCollector();
+            createGCOverride();
             assert(!closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should NOT have been called due to disable.");
         });
 
         it("Session expiry explicitly not disabled via DisableSessionExpiry config", async () => {
             // Explicitly set value to false (instead of relying on undefined)
             injectedSettings[disableSessionExpiryKey] = "false";
-            createGarbageCollector();
+            createGCOverride();
             assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
         });
 
@@ -167,7 +167,7 @@ describe("Garbage Collection Tests", () => {
 
             const metadata: IContainerRuntimeMetadata =
                 { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
-            createGarbageCollector(undefined, undefined, metadata);
+            createGCOverride(metadata);
             assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
         });
 
@@ -177,7 +177,7 @@ describe("Garbage Collection Tests", () => {
             const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
             assert(customExpiryMs, "setting not found!");
 
-            createGarbageCollector();
+            createGCOverride();
             assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
         });
 
@@ -187,7 +187,7 @@ describe("Garbage Collection Tests", () => {
             const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
             assert(customExpiryMs, "setting not found!");
 
-            createGarbageCollector();
+            createGCOverride();
 
             clock.tick(customExpiryMs);
             assert(!closeCalled, "Close should not have been called since runSessionExpiry disabled.");
@@ -201,7 +201,7 @@ describe("Garbage Collection Tests", () => {
             const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
             assert(customExpiryMs, "setting not found!");
 
-            createGarbageCollector();
+            createGCOverride();
 
             clock.tick(customExpiryMs);
             assert(!closeCalled, "Close should not have been called since DisableSessionExpiry true.");
@@ -211,6 +211,8 @@ describe("Garbage Collection Tests", () => {
     });
 
     describe("Inactive events", () => {
+        // Time after which unreferenced nodes becomes inactive.
+        const inactiveTimeoutMs = 500;
         const revivedEvent = "GarbageCollector:inactiveObject_Revived";
         const changedEvent = "GarbageCollector:inactiveObject_Changed";
         const loadedEvent = "GarbageCollector:inactiveObject_Loaded";
@@ -244,6 +246,8 @@ describe("Garbage Collection Tests", () => {
         };
 
         beforeEach(async () => {
+            injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = inactiveTimeoutMs;
+
             // Set up the reference graph such that all nodes are referenced. Add in a couple of cycles in the graph.
             defaultGCData.gcNodes["/"] = [nodes[0]];
             defaultGCData.gcNodes[nodes[0]] = [nodes[1]];
@@ -369,14 +373,8 @@ describe("Garbage Collection Tests", () => {
             };
             gcState.gcNodes[nodes[3]] = node3Data;
 
-            // Set up the getNodeGCDetails function to return the GC details for node 3 when asked by garbage collector.
-            const getNodeGCDetails = (blobId: string) => {
-                if (blobId === gcBlobId) {
-                    return gcState;
-                }
-                return {};
-            };
-            const garbageCollector = createGarbageCollector(baseSnapshot, getNodeGCDetails);
+            const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
+            const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap);
 
             // Remove node 3's reference from node 2 so that it is still unreferenced. The GC details from the base
             // summary is not loaded until the first time GC is run, so run GC.
@@ -416,20 +414,21 @@ describe("Garbage Collection Tests", () => {
                 unrefTimestamp: Date.now() - (inactiveTimeoutMs + 100),
             };
             const node3Snapshot = getDummySnapshotTree();
-            node3Snapshot.blobs[gcBlobKey] = "node3GCDetails";
+            const gcBlobId = "node3GCDetails";
+            const attributesBlobId = "attributesBlob";
+            node3Snapshot.blobs[gcBlobKey] = gcBlobId;
+            node3Snapshot.blobs[dataStoreAttributesBlobName] = attributesBlobId;
 
             // Create a base snapshot that contains snapshot tree of node 3.
             const baseSnapshot = getDummySnapshotTree();
             baseSnapshot.trees[nodes[3].slice(1)] = node3Snapshot;
 
             // Set up the getNodeGCDetails function to return the GC details for node 3 when asked by garbage collector.
-            const getNodeGCDetails = (blobId: string) => {
-                if (blobId === "node3GCDetails") {
-                    return node3GCDetails;
-                }
-                return {};
-            };
-            const garbageCollector = createGarbageCollector(baseSnapshot, getNodeGCDetails);
+            const gcBlobMap = new Map([
+                [gcBlobId, node3GCDetails],
+                [attributesBlobId, {}],
+            ]);
+            const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap);
 
             // Remove node 3's reference from node 2 so that it is still unreferenced. The GC details from the base
             // summary is not loaded until the first time GC is run, so do that immediately.
@@ -492,10 +491,7 @@ describe("Garbage Collection Tests", () => {
             const baseSnapshot = getDummySnapshotTree();
             baseSnapshot.trees[gcTreeKey] = gcSnapshotTree;
 
-            const getNodeGCDetails = (blobId: string) => {
-                return gcBlobMap.get(blobId) ?? {};
-            };
-            const garbageCollector = createGarbageCollector(baseSnapshot, getNodeGCDetails);
+            const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap);
 
             // For the nodes in the GC snapshot blobs, remove their references from the default GC data.
             defaultGCData.gcNodes[nodes[0]] = [];
@@ -633,7 +629,6 @@ describe("Garbage Collection Tests", () => {
         }
 
         beforeEach(() => {
-            closeCalled = false;
             defaultGCData.gcNodes = {};
             garbageCollector = createGarbageCollector();
         });
@@ -987,27 +982,6 @@ describe("Garbage Collection Tests", () => {
             );
         };
 
-        /**
-         * The client package version on the server is likely to be [major].[minor].[patch]-[pre-release], i.e 1.0.0-1
-         * This does conversions like this as minimumVersion needs to be [major].[minor].[patch] where [x] is a number.
-         * 1.0.0-1 to 1.0.0
-         * 1.0.0 to 1.0.0
-         * 1.0.0-pre1+12 to 1.0.0
-         * 1.0.0+a123-a123 to 1.0.0
-         */
-        const getRegularSemverVersion = () => {
-            let lastRegularIndex = pkgVersion.length;
-            const firstHyphen = pkgVersion.indexOf("-");
-            const firstPlus = pkgVersion.indexOf("+");
-            if (firstHyphen > 0 && (firstHyphen <= firstPlus || firstPlus <= 0)) {
-                lastRegularIndex = firstHyphen;
-            } else if (firstPlus > 0 && (firstPlus < firstHyphen || firstHyphen <= 0)) {
-                lastRegularIndex = firstPlus;
-            }
-
-            return pkgVersion.substring(0, lastRegularIndex);
-        };
-
         it("No changes to GC between summaries creates a blob handle when no version specified", async () => {
             garbageCollector = createGarbageCollector();
 
@@ -1026,70 +1000,5 @@ describe("Garbage Collection Tests", () => {
 
             checkGCSummaryType(tree2, SummaryType.Handle, "second");
         });
-
-        it("No changes to GC between summaries creates a blob handle when greater than minimum version", async () => {
-            settings[trackGCStateMinimumVersionKey] = "0.59.1000";
-            garbageCollector = createGarbageCollector();
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree1 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree1, SummaryType.Tree, "first");
-
-            await garbageCollector.latestSummaryStateRefreshed(
-                { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parseNothing,
-            );
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree2 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree2, SummaryType.Handle, "second");
-        });
-
-        it("No changes to GC between summaries creates a blob when less than minimum version", async () => {
-            settings[trackGCStateMinimumVersionKey] = `1${getRegularSemverVersion()}`;
-            garbageCollector = createGarbageCollector();
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree1 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree1, SummaryType.Tree, "first");
-
-            await garbageCollector.latestSummaryStateRefreshed(
-                { wasSummaryTracked: true, latestSummaryUpdated: true },
-                parseNothing,
-            );
-
-            await garbageCollector.collectGarbage({ runGC: true });
-            const tree2 = garbageCollector.summarize(fullTree, trackState);
-
-            checkGCSummaryType(tree2, SummaryType.Tree, "second");
-        });
-    });
-
-    describe("Semver comparison tests", () => {
-        const test = (current: string, minimum: string, expected: number) => {
-            it(`Current: ${current} ${expected === 1 ? ">" : expected === 0 ? "=" : "<" } Minimum: ${minimum}`, () => {
-                const actual = semverCompare(current, minimum);
-                assert(actual === expected, `Semver compare failed, expected ${expected}, got ${actual}`);
-            });
-        };
-        test("0.0.0", "0.0.0", 0);
-        test("0.0.1", "0.0.0", 1);
-        test("0.0.0", "0.0.1", -1);
-        test("0.1.0", "0.1.0", 0);
-        test("0.1.0", "0.0.1", 1);
-        test("0.0.0", "0.1.0", -1);
-        test("1.0.0", "1.0.0", 0);
-        test("1.0.0", "0.1.1", 1);
-        test("0.1.1", "1.0.0", -1);
-        test("0.0.0-123", "0.0.0", -1);
-        test("0.0.12-123", "0.0.0", 1);
-        test("10.2.3-DEV-SNAPSHOT", "10.2.3", -1);
-        test("1.1.2-prerelease+meta", "1.1.2", -1);
-        test("0.59.4000", "0.59.4001", -1);
-        test("1.0.0", "0.59.4001", 1);
-        test("0.59.4000-123123", "0.59.4000", -1);
     });
 });

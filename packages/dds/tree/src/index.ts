@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export { FieldKey, TreeType } from "./tree";
+export { EmptyKey, FieldKey, TreeType } from "./tree";
 
-export { ITreeCursor, TreeNavigationResult } from "./forest";
+export { ITreeCursor, TreeNavigationResult, Value } from "./forest";
 
 export {
     Brand,

@@ -15,7 +15,7 @@ your other telemetry, and route the event data in whatever way you need.
 The `ITelemetryBaseLogger` is an interface within the `@fluidframework/common-definitions` package. This interface can
 be implemented and passed into the service client's constructor via the `props` parameter.
 
-All Fluid service clients (for example, `AzureClient` and `TinyliciousClient`) allow passing a `logger?: ITelemetryBaseLogger`
+All Fluid service clients (for example, [AzureClient]({{< relref "azure-frs.md" >}}) and [TinyliciousClient]({{< relref "tinyliciousclient.md" >}})) allow passing a `logger?: ITelemetryBaseLogger`
 into the service client props. Both `createContainer()` and `getContainer()` methods will then create an instance of the `logger`.
 
 `TinyliciousClientProps` interface definition takes an optional parameter `logger`.
@@ -59,7 +59,7 @@ example, you may wish to handle some categories differently than others, or you 
 the input.
 
 Regardless of your logic, `ITelemetryBaseLogger` must be implemented, and you must call the `send()` method ultimately
-since it is the actual method that is piped to the container's telemetry system and sends the telemetry event.
+since it is the actual method that is piped to the container's telemetry system and sends the telemetry events.
 
 To see an example of building custom logic into the telemetry implementation, see the `ITelemetryLogger` interface
 snippets below, or in the `@fluidframework/common-definitions` package for full details.
@@ -96,8 +96,8 @@ public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
 }
 ```
 
-Like demonstrated here, it is imperative to ensure `send()` is ultimately called at the end of custom properties for the
-information to be piped to the container's telemetry system and sends the telemetry event.
+Like demonstrated here, it is imperative to ensure `send()` is ultimately called at the end of custom properties.
+This ensures that information is piped to the container's telemetry system, and that the telemetry event is correctly fired.
 
 ## ITelemetryBaseEvent interface
 
@@ -277,11 +277,18 @@ The `DebugLogger` offers a convenient way to output all telemetry events to the 
 Under the hood, `DebugLogger` uses the [debug](https://github.com/visionmedia/debug) library. The `debug` library enables Fluid to send to a unique 'namespace,' `fluid`. By default these messages are hidden but they can be enabled
 in both Node.js and a web browser.
 
-**To enable Fluid Framework logging in the browser,** set the `localStorage.debug` variable in the JavaScript console, after which you will need to reload the page.
+**To enable Fluid Framework logging in the browser,** set the `localStorage.debug` variable in the JavaScript console,
+after which you will need to reload the page.
 
 ```js
 localStorage.debug = 'fluid:*'
 ```
-It's not recommended to set this in code; your users will see a very spammy console window if you do.
+
+You'll also need to enable the `Verbose` logging level in the console. The dropdown that controls that is just above it,
+to the right of the Filter input box (it might say "Default Levels").
+
+![A screenshot of how to enable the Verbose logging level in the console](/images/verbose-log-level.png)
+
+It's not recommended to set `localStorage.debug` in code; your users will see a very spammy console window if you do.
 
 **To enable Fluid Framework logging in a Node.js application,** set the `DEBUG` environment variable when running the app.

@@ -12,9 +12,8 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import path from "path";
-import { Trace } from "@fluidframework/common-utils";
+import { assert, Trace } from "@fluidframework/common-utils";
 import * as MergeTree from "@fluidframework/merge-tree";
-// eslint-disable-next-line @typescript-eslint/no-duplicate-imports
 import {
     TextSegment,
     createGroupOp,
@@ -66,7 +65,7 @@ export function propertyCopy() {
         v[i] = i;
     }
     let clockStart = clock();
-    let obj: MergeTree.MapLike<number>;
+    let obj: MergeTree.MapLike<number> = MergeTree.createMap<number>();
     for (let j = 0; j < iterCount; j++) {
         obj = MergeTree.createMap<number>();
         for (let i = 0; i < propCount; i++) {
@@ -186,6 +185,7 @@ export function TestPack(verbose = true) {
         const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
         const stats = client.mergeTree.getStats();
         const windowTime = stats.windowTime;
+        assert(windowTime !== undefined, "window time is expected to exist");
         const packTime = stats.packTime;
         const ordTime = stats.ordTime;
         const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
@@ -241,7 +241,7 @@ export function TestPack(verbose = true) {
         const testSyncload = false;
         let snapClient: TestClient;
         const useGroupOperationsForMoveWord = false;
-        let annotateProps: PropertySet;
+        let annotateProps: PropertySet | undefined;
         const insertAsRefPos = false;
 
         const testServer = new TestServer({});
@@ -342,23 +342,13 @@ export function TestPack(verbose = true) {
 
         function clientProcessSome(client: TestClient, all = false) {
             const cliMsgCount = client.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = cliMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
-            }
+            const countToApply: number = all ? cliMsgCount : random.integer(Math.floor(2 * cliMsgCount / 3), cliMsgCount)(mt);
             client.applyMessages(countToApply);
         }
 
         function serverProcessSome(server: TestClient, all = false) {
             const svrMsgCount = server.getMessageCount();
-            let countToApply: number;
-            if (all) {
-                countToApply = svrMsgCount;
-            } else {
-                countToApply = random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
-            }
+            const countToApply: number = all ? svrMsgCount : random.integer(Math.floor(2 * svrMsgCount / 3), svrMsgCount)(mt);
             return server.applyMessages(countToApply);
         }
 
@@ -402,7 +392,7 @@ export function TestPack(verbose = true) {
                     if (TestClient.useCheckQ) {
                         client.enqueueTestString();
                     }
-                } else {
+                } else if (removeOp) {
                     ops.push(removeOp);
                 }
 
@@ -412,15 +402,12 @@ export function TestPack(verbose = true) {
                 }
                 const pos = word2.pos + word2.text.length;
 
-                let insertOp;
                 const segOff = client.getContainingSegment(pos);
-                if (!insertAsRefPos && segOff.segment) {
-                    insertOp = client.insertAtReferencePositionLocal(
+                const insertOp = !insertAsRefPos && segOff.segment
+                    ? client.insertAtReferencePositionLocal(
                         new MergeTree.LocalReference(client, segOff.segment, segOff.offset, MergeTree.ReferenceType.Transient),
-                        TextSegment.make(word1.text));
-                } else {
-                    insertOp = client.insertTextLocal(pos, word1.text);
-                }
+                        TextSegment.make(word1.text))
+                    : client.insertTextLocal(pos, word1.text);
 
                 if (!useGroupOperationsForMoveWord) {
                     testServer.enqueueMsg(
@@ -428,7 +415,7 @@ export function TestPack(verbose = true) {
                     if (TestClient.useCheckQ) {
                         client.enqueueTestString();
                     }
-                } else {
+                } else if (insertOp) {
                     ops.push(insertOp);
                 }
 
@@ -436,7 +423,7 @@ export function TestPack(verbose = true) {
                     const annotateOp = client.annotateRangeLocal(pos, pos + word1.text.length, annotateProps, undefined);
                     if (!useGroupOperationsForMoveWord) {
                         testServer.enqueueMsg(client.makeOpMessage(annotateOp));
-                    } else {
+                    } else if (annotateOp) {
                         ops.push(annotateOp);
                     }
                 }
@@ -1069,7 +1056,17 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number,
     const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const checkText = editFlat(origText, start, end - start);
     const clockStart = clock();
-    mergeTree.markRangeRemoved(start, end, UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, false, undefined);
+    mergeTree.markRangeRemoved(
+        start,
+        end,
+        UniversalSequenceNumber,
+        LocalClientId,
+        UniversalSequenceNumber,
+        false,
+        // `opArgs` being `undefined` is special-cased specifically for internal
+        // test code
+        undefined as any,
+    );
     accumTime += elapsedMicroseconds(clockStart);
     const updatedText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const result = (checkText === updatedText);
@@ -1264,11 +1261,7 @@ export class RandomPack {
 }
 
 function docNodeToString(docNode: DocumentNode) {
-    if (typeof docNode === "string") {
-        return docNode;
-    } else {
-        return docNode.name;
-    }
+    return typeof docNode === "string" ? docNode : docNode.name;
 }
 
 export type DocumentNode = string | DocumentTree;
@@ -1283,7 +1276,7 @@ export type DocumentNode = string | DocumentTree;
 export class DocumentTree {
     pos = 0;
     ids = { box: 0, row: 0 };
-    id: string;
+    id: string | undefined;
     static randPack = new RandomPack();
 
     constructor(public name: string, public children: DocumentNode[]) {
@@ -1295,7 +1288,7 @@ export class DocumentTree {
             client.insertTextLocal(this.pos, text);
             this.pos += text.length;
         } else {
-            let id: number;
+            let id: number | undefined;
             if (docNode.name === "pg") {
                 client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.Tile,
                     {
@@ -1325,6 +1318,7 @@ export class DocumentTree {
                 this.addToMergeTree(client, child);
             }
             if (docNode.name !== "pg") {
+                assert(id !== undefined, "expected `id` to be defined");
                 const etrid = `end-${docNode.name}${id.toString()}`;
                 client.insertMarkerLocal(this.pos, MergeTree.ReferenceType.NestEnd,
                     {
@@ -1419,12 +1413,12 @@ export class DocumentTree {
         };
 
         let prevPos = -1;
-        let prevChild: DocumentNode;
+        let prevChild: DocumentNode | undefined;
 
         // Console.log(client.mergeTree.toString());
         for (const rootChild of this.children) {
             if (prevPos >= 0) {
-                if ((typeof prevChild !== "string") && (prevChild.name === "row")) {
+                if ((typeof prevChild !== "string") && (prevChild?.name === "row")) {
                     const id = prevChild.id;
                     const endId = `end-${id}`;
                     const endRowMarker = <MergeTree.Marker>client.getMarkerFromId(endId);
