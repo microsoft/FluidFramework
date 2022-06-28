@@ -1,12 +1,12 @@
 {
     "extends": "@fluidframework/build-common/ts-common-config.json",
     "exclude": [
-        "dist",
+        "lib",
         "node_modules"
     ],
     "compilerOptions": {
         "module": "esnext",
-        "outDir": "dist",
+        "outDir": "lib",
         "jsx": "react",
         "types": [
             "jest",

@@ -46,7 +46,7 @@ export class AzureUrlResolver implements IUrlResolver {
             throw new Error("Azure URL did not contain containerId");
         }
         const documentUrl = `${ordererUrl}/${tenantId}/${containerId}`;
-        return Promise.resolve({
+        return {
             endpoints: {
                 deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/${containerId}`,
                 ordererUrl,
@@ -56,7 +56,7 @@ export class AzureUrlResolver implements IUrlResolver {
             tokens: {},
             type: "fluid",
             url: documentUrl,
-        });
+        };
     }
 
     public async getAbsoluteUrl(
@@ -64,7 +64,7 @@ export class AzureUrlResolver implements IUrlResolver {
         relativeUrl: string,
     ): Promise<string> {
         if (resolvedUrl.type !== "fluid") {
-            throw Error("Invalid Resolved Url");
+            throw new Error("Invalid Resolved Url");
         }
         return `${resolvedUrl.url}/${relativeUrl}`;
     }
