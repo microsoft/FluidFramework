@@ -2,7 +2,7 @@ name: Merge commits to next branch
 
 on:
   schedule:
-    - cron: "0 */3 * * *"
+    - cron: "0 */2 * * *"
 
 env:
   TARGET_BRANCH: next
@@ -25,16 +25,14 @@ jobs:
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueClient = queueServiceClient.getQueueClient(queueName);
-            var receivedMessages = await queueClient.receiveMessages();
-            const message = receivedMessages.receivedMessageItems[0];
-            const firstMessage = JSON.parse(message.messageText);
-            if(firstMessage === undefined) { return 0; }
-            const updateMsg = { "sha": firstMessage.sha, "author": firstMessage.author, "label": "in-progress" }
-            await queueClient.updateMessage(
-                message.messageId,
-                message.popReceipt,
-                JSON.stringify(updateMsg)
-            );
+            // Peek at messages in the queue
+            const peekedMessages = await queueClient.peekMessages({ numberOfMessages: 5 });
+            let firstMessage;
+            for (i = 0; i < peekedMessages.peekedMessageItems.length; i++) {
+                // Display the peeked message
+                console.log("Peeked message: ", peekedMessages.peekedMessageItems[i].messageText);
+                firstMessage = JSON.parse(peekedMessages.peekedMessageItems[i].messageText);
+            }
             console.log("sha---", firstMessage.sha);
             console.log("label---", firstMessage.label);
             console.log("author---", firstMessage.author);
@@ -84,12 +82,12 @@ jobs:
       - name: Create PR using octokit
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         with:
+          token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           script: |
             const { Octokit } = require("@octokit/core");
             const token = `${{ secrets.GITHUB_TOKEN }}`;
             const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
             const author = '${{needs.dequeue.outputs.AUTHOR}}';
-            const baseBranch = '$TARGET_BRANCH';
             const octokit = new Octokit({ auth: token })
             const newPr = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
               owner: 'microsoft',
@@ -97,7 +95,7 @@ jobs:
               title: 'Main Next Integrate',
               body: 'This commit is queued for getting merged with the next branch. Please make sure to resolve any conflicts/CI failures seen on this PR. Thank you!',
               head: sha,
-              base: baseBranch
+              base: 'next'
             });
             await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
               owner: 'microsoft',
@@ -111,7 +109,7 @@ jobs:
       group: group-pr
       cancel-in-progress: false
     needs: [ pull-request ]
-    if: ( needs.pull-request.result == 'success' )
+    if: needs.pull-request.result == 'success'
     steps:
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
       - uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # pin@v2
@@ -127,7 +125,60 @@ jobs:
             const queueServiceClient = QueueServiceClient.fromConnectionString(connectionString);
             const queueName = `${{ secrets.AZURE_QUEUE_NAME }}`;
             const queueClient = queueServiceClient.getQueueClient(queueName);
-            receivedMessages = await queueClient.receiveMessages();
-            var message = receivedMessages.receivedMessageItems[0];
-            console.log("Deleting message: ", message.messageText);
-            await queueClient.deleteMessage(message.messageId, message.popReceipt);
+            // Get up to 5 messages from the queue
+            const receivedMsgsResp = await queueClient.receiveMessages({ numberOfMessages: 5, visibilityTimeout: 5 * 60 });
+            for (i = 0; i < receivedMsgsResp.receivedMessageItems.length; i++) {
+                message = receivedMsgsResp.receivedMessageItems[i];
+                console.log("Dequeuing message: ", message.messageText);
+                await queueClient.deleteMessage(message.messageId, message.popReceipt);
+            }
+  merge-dry-run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      actions: write
+      checks: write
+      issues: write
+      pull-requests: write
+      statuses: write
+    needs: [ create-branch, dequeue ]
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+        with:
+          fetch-depth: '0'
+      - name: Merge next
+        run: |
+          git config user.name $USERNAME
+          git config user.email $EMAIL
+          git fetch origin
+          git checkout main-next-${{needs.dequeue.outputs.SHA}}
+          git merge origin/$TARGET_BRANCH -X theirs
+  push-merge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      actions: write
+      checks: write
+      issues: write
+      pull-requests: write
+      statuses: write
+    needs: [ merge-dry-run, dequeue ]
+    if: needs.merge-dry-run.result == 'success'
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
+        with:
+          fetch-depth: '0'
+      - name: Push next merge
+        run: |
+          git config user.name $USERNAME
+          git config user.email $EMAIL
+          git fetch origin
+          git checkout main-next-${{needs.dequeue.outputs.SHA}}
+          git merge origin/$TARGET_BRANCH -X theirs
+          git add .
+          git commit -m "Main to next"
+          git push

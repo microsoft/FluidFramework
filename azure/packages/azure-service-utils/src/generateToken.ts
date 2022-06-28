@@ -77,6 +77,9 @@ export function generateToken(
     };
 
     const utf8Key = { utf8: key };
+
+    // External API uses null
+    // eslint-disable-next-line unicorn/no-null
     return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
 }
 

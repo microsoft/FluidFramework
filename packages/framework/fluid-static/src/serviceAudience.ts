@@ -17,6 +17,9 @@ import { IServiceAudience, IServiceAudienceEvents, IMember } from "./types";
 export abstract class ServiceAudience<M extends IMember = IMember>
   extends TypedEventEmitter<IServiceAudienceEvents<M>>
   implements IServiceAudience<M> {
+  /**
+   * Audience object which includes all the existing members of the container.
+   */
   protected readonly audience: IAudience;
 
   /**
@@ -33,7 +36,10 @@ export abstract class ServiceAudience<M extends IMember = IMember>
   protected lastMembers: Map<string, M> = new Map();
 
   constructor(
-      protected readonly container: IContainer,
+    /**
+     * Fluid Container to read the audience from.
+     */
+    protected readonly container: IContainer,
   ) {
     super();
     this.audience = container.audience;
@@ -60,6 +66,10 @@ export abstract class ServiceAudience<M extends IMember = IMember>
     this.container.on("connected", () => this.emit("membersChanged"));
   }
 
+  /**
+   * Provides ability for inheriting class to modify/extend the audience object.
+   * @param audienceMember - Record of a specific audience member.
+   */
   protected abstract createServiceMember(audienceMember: IClient): M;
 
   /**
@@ -114,6 +124,11 @@ export abstract class ServiceAudience<M extends IMember = IMember>
     return member;
   }
 
+  /**
+   * Provides ability for the inheriting class to include/omit specific members.
+   * An example use case is omitting the summarizer client.
+   * @param member - Member to be included/omitted.
+   */
   protected shouldIncludeAsMember(member: IClient): boolean {
     // Include only human members
     return member.details.capabilities.interactive;

@@ -72,7 +72,7 @@
     "@fluidframework/telemetry-utils": "^2.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
+    "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@^1.0.0",
@@ -101,7 +101,6 @@
     "version": "2.0.0",
     "broken": {
       "ClassDeclaration_Client": {
-        "forwardCompat": false,
         "backCompat": false
       },
       "ClassDeclaration_LocalReference": {
@@ -115,6 +114,7 @@
       "ClassDeclaration_SnapshotLegacy": {"backCompat": false, "forwardCompat": false},
       "InterfaceDeclaration_IConsensusInfo": {"backCompat": false, "forwardCompat": false},
       "RemovedClassDeclaration_LocalReference": {"forwardCompat": false, "backCompat": false},
+      "InterfaceDeclaration_LocalReferencePosition": {"backCompat": false},
       "ClassDeclaration_MergeTree": {"forwardCompat": false, "backCompat": false},
       "ClassDeclaration_BaseSegment": {"forwardCompat": false},
       "InterfaceDeclaration_IHierBlock": {"forwardCompat": false},
@@ -128,7 +128,8 @@
       "TypeAliasDeclaration_IMergeNode": {"forwardCompat": false},
       "ClassDeclaration_MergeNode": {"forwardCompat": false},
       "InterfaceDeclaration_IMergeNodeCommon": {"forwardCompat": false},
-      "ClassDeclaration_TextSegment": {"forwardCompat": false}
+      "ClassDeclaration_TextSegment": {"forwardCompat": false},
+      "InterfaceDeclaration_LocalReferencePosition": {"backCompat": false}
     }
   }
 }

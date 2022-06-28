@@ -154,10 +154,6 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcTotalBlobsSize?: number;
     /** The number of gc blobs in this summary. */
     readonly gcBlobNodeCount?: number;
-    /** Sum of the sizes of all op contents since the last summary */
-    readonly opsSizesSinceLastSummary: number;
-    /** Number of non-system ops since the last summary @see isSystemMessage */
-    readonly nonSystemOpsSinceLastSummary: number;
     /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
     readonly summaryNumber: number;
 }
@@ -371,6 +367,12 @@ export interface ISummarizeHeuristicData {
     /** Number of non-runtime ops since last summary */
     numNonRuntimeOps: number;
 
+    /** Cumulative size in bytes of all the ops since the last summary */
+    totalOpsSize: number;
+
+    /** Wether or not this instance contains adjusted metrics due to missing op data */
+    hasMissingOpData: boolean;
+
     /**
      * Updates lastAttempt and lastSuccessfulAttempt based on the last summary.
      * @param lastSummary - last ack summary
@@ -454,8 +456,10 @@ type SummaryGeneratorOptionalTelemetryProperties =
     /** Delta in sum of op sizes between the current reference sequence number and the reference
      *  sequence number of the last summary */
     "opsSizesSinceLastSummary" |
-    /** Delta between the number of non-system ops since the last summary @see isSystemMessage */
-    "nonSystemOpsSinceLastSummary" |
+    /** Delta between the number of non-runtime ops since the last summary */
+    "nonRuntimeOpsSinceLastSummary" |
+    /** Wether or not this instance contains adjusted metrics due to missing op data */
+    "hasMissingOpData" |
     /** Time it took to generate the summary tree and stats. */
     "generateDuration" |
     /** The handle returned by storage pointing to the uploaded summary tree. */

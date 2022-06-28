@@ -210,8 +210,6 @@ describe("Runtime", () => {
                                 dataStoreCount: 0,
                                 summarizedDataStoreCount: 0,
                                 unreferencedBlobSize: 0,
-                                opsSizesSinceLastSummary: 0,
-                                nonSystemOpsSinceLastSummary: 0,
                                 summaryNumber: 0,
                             },
                             handle: "test-handle",
