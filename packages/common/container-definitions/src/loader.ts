@@ -60,14 +60,14 @@ export interface IFluidModuleWithDetails {
  * a package name and package version range.
  */
 export interface ICodeDetailsLoader
- extends Partial<IProvideFluidCodeDetailsComparer> {
- /**
-  * Load the code module (package) that is capable to interact with the document.
-  *
-  * @param source - Code proposal that articulates the current schema the document is written in.
-  * @returns - Code module entry point along with the code details associated with it.
-  */
- load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
+    extends Partial<IProvideFluidCodeDetailsComparer> {
+    /**
+     * Load the code module (package) that is capable to interact with the document.
+     *
+     * @param source - Code proposal that articulates the current schema the document is written in.
+     * @returns - Code module entry point along with the code details associated with it.
+     */
+    load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
 /**
@@ -142,15 +142,15 @@ export namespace ConnectionState {
      * The container is disconnected but actively trying to establish a new connection
      * PLEASE NOTE that this numerical value falls out of the order you may expect for this state
      */
-     export type EstablishingConnection = 3;
+    export type EstablishingConnection = 3;
 
-     /**
-     * The container has an inbound connection only, and is catching up to the latest known state from the service.
-     */
+    /**
+    * The container has an inbound connection only, and is catching up to the latest known state from the service.
+    */
     export type CatchingUp = 1;
 
     /**
-     * @see ConnectionState.CatchingUp, which is the new name for this state.
+     * See ConnectionState.CatchingUp, which is the new name for this state.
      * @deprecated - This state itself is not gone, just being renamed. Please use ConnectionState.CatchingUp.
      */
     export type Connecting = 1;
@@ -158,7 +158,7 @@ export namespace ConnectionState {
     /**
      * The container is fully connected and syncing
      */
-     export type Connected = 2;
+    export type Connected = 2;
 }
 
 /**
@@ -406,44 +406,44 @@ export enum LoaderHeader {
 
 export interface IContainerLoadMode {
     opsBeforeReturn?:
-        /*
-         * No trailing ops are applied before container is returned.
-         * Default value.
-         */
-        | undefined
-        /*
-         * Only cached trailing ops are applied before returning container.
-         * Caching is optional and could be implemented by the driver.
-         * If driver does not implement any kind of local caching strategy, this is same as above.
-         * Driver may cache a lot of ops, so care needs to be exercised (see below).
-         */
-        | "cached"
-        /*
-         * All trailing ops in storage are fetched and applied before container is returned
-         * This mode might have significant impact on boot speed (depends on storage perf characteristics)
-         * Also there might be a lot of trailing ops and applying them might take time, so hosts are
-         * recommended to have some progress UX / cancellation built into loading flow when using this option.
-         */
-        | "all";
+    /*
+     * No trailing ops are applied before container is returned.
+     * Default value.
+     */
+    | undefined
+    /*
+     * Only cached trailing ops are applied before returning container.
+     * Caching is optional and could be implemented by the driver.
+     * If driver does not implement any kind of local caching strategy, this is same as above.
+     * Driver may cache a lot of ops, so care needs to be exercised (see below).
+     */
+    | "cached"
+    /*
+     * All trailing ops in storage are fetched and applied before container is returned
+     * This mode might have significant impact on boot speed (depends on storage perf characteristics)
+     * Also there might be a lot of trailing ops and applying them might take time, so hosts are
+     * recommended to have some progress UX / cancellation built into loading flow when using this option.
+     */
+    | "all";
     deltaConnection?:
-        /*
-         * Connection to delta stream is made only when Container.connect() call is made. Op processing
-         * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
-         */
-        | "none"
-        /*
-         * Connection to delta stream is made only when Container.connect() call is made.
-         * Op fetching from storage is performed and ops are applied as they come in.
-         * This is useful option if connection to delta stream is expensive and thus it's beneficial to move it
-         * out from critical boot sequence, but it's beneficial to allow catch up to happen as fast as possible.
-         */
-        | "delayed"
-        /*
-         * Connection to delta stream is made right away.
-         * Ops processing is enabled and ops are flowing through the system.
-         * Default value.
-         */
-        | undefined;
+    /*
+     * Connection to delta stream is made only when Container.connect() call is made. Op processing
+     * is paused (when container is returned from Loader.resolve()) until Container.connect() call is made.
+     */
+    | "none"
+    /*
+     * Connection to delta stream is made only when Container.connect() call is made.
+     * Op fetching from storage is performed and ops are applied as they come in.
+     * This is useful option if connection to delta stream is expensive and thus it's beneficial to move it
+     * out from critical boot sequence, but it's beneficial to allow catch up to happen as fast as possible.
+     */
+    | "delayed"
+    /*
+     * Connection to delta stream is made right away.
+     * Ops processing is enabled and ops are flowing through the system.
+     * Default value.
+     */
+    | undefined;
 }
 
 /**
