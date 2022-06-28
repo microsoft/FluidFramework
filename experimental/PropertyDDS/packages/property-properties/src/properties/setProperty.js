@@ -258,7 +258,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         this._checkIsNotReadOnly(true);
 
         var that = this;
-        _.each(in_properties, function (property) {
+        _.each(in_properties, function(property) {
             if (property instanceof BaseProperty) {
                 that.set(property);
             } else {
@@ -344,7 +344,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      */
     clear() {
         var that = this;
-        this.getIds().forEach(function (id) {
+        this.getIds().forEach(function(id) {
             that.remove(id);
         });
     }

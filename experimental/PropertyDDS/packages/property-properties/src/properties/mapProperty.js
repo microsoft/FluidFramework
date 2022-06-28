@@ -84,7 +84,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     _setValuesInternal(in_values, in_typed) {
         if (this._containsPrimitiveTypes) {
             var that = this;
-            _.each(in_values, function (value, key) {
+            _.each(in_values, function(value, key) {
                 if (that.has(key)) {
                     that.remove(key);
                 }
@@ -93,7 +93,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
             });
         } else {
             var that = this;
-            _.each(in_values, function (value, key) {
+            _.each(in_values, function(value, key) {
                 var property = that.get(String(key), { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
                 // if key exists in set replace its value else insert a new key/value
                 if (property) {
@@ -404,7 +404,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      */
     clear() {
         var that = this;
-        this.getIds().forEach(function (id) {
+        this.getIds().forEach(function(id) {
             that.remove(id);
         });
     }

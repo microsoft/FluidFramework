@@ -70,7 +70,7 @@ var PATH_TOKENS = BaseProperty.PATH_TOKENS;
  * @return {Array.<Number>} List of the selected segments, given as indices of the segments
  * @private
  */
-var _getLongestIncreasingSubsequenceSegments = function (in_segmentStarts, in_segmentLengths) {
+var _getLongestIncreasingSubsequenceSegments = function(in_segmentStarts, in_segmentLengths) {
     if (in_segmentStarts.length === 0) {
         return [];
     }
@@ -408,7 +408,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
             var that = this;
             var maxIndex = this._dataArrayGetLength() - 1;
-            _.each(in_values, function (value, index) {
+            _.each(in_values, function(value, index) {
                 if (index > maxIndex) {
                     that.insert(index, value);
                 } else {

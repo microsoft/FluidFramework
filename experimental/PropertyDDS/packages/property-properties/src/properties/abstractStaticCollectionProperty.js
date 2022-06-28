@@ -560,7 +560,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         in_dirtinessType = in_dirtinessType === undefined ?
             BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE : in_dirtinessType;
 
-        this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
+        this._traverseStaticProperties(function(in_node, in_pathFromTraversalStart) {
             if (in_dirtyOnly && !in_node._isDirty(in_dirtinessType)) {
                 return;
             }
@@ -609,7 +609,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         var changeSet = {};
 
         // Traverse all properties of this template
-        this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
+        this._traverseStaticProperties(function(in_node, in_pathFromTraversalStart) {
             // We do not deserialize base properties, since the traverseStatic function
             // already traverses recursively
             if (in_node.getTypeid() === 'ContainerProperty' && in_node.getContext() === 'single') {
