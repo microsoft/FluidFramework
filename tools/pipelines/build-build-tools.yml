@@ -65,6 +65,6 @@ extends:
     tagName:
     taskBuild: build
     taskBuildDocs: false
-    taskLint: lint
+    taskLint: true
     taskTest: test
     buildNumberInPatch: true
