@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-driver-definitions",
-  "version": "0.59.4002",
+  "version": "0.59.4003",
   "description": "A driver abstraction and implementations for testing against server",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -64,7 +64,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/test-driver-definitions-previous": "npm:@fluidframework/test-driver-definitions@0.59.4001",
+    "@fluidframework/test-driver-definitions-previous": "npm:@fluidframework/test-driver-definitions@0.59.4002",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -91,7 +91,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.4002",
+    "version": "0.59.4003",
     "broken": {}
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-pairwise-generator",
-  "version": "0.59.4002",
+  "version": "0.59.4003",
   "description": "End to end tests",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -56,8 +56,8 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^0.59.4002",
-    "@fluidframework/test-pairwise-generator-previous": "npm:@fluidframework/test-pairwise-generator@0.59.4001",
+    "@fluidframework/mocha-test-setup": "^0.59.4003",
+    "@fluidframework/test-pairwise-generator-previous": "npm:@fluidframework/test-pairwise-generator@0.59.4002",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
@@ -83,7 +83,7 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "0.59.4002",
+    "version": "0.59.4003",
     "broken": {}
   }
 }
