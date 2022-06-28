@@ -79,7 +79,7 @@
   },
   "oclif": {
     "bin": "flub",
-    "dirname": "flub",
+    "dirname": "tools/build-cli",
     "commands": "./dist/commands",
     "plugins": [
       "@oclif/plugin-help"
