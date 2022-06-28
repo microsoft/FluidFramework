@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "flub",
-            "program": "${workspaceFolder}/tools/flub/bin/dev",
+            "program": "${workspaceFolder}/tools/build-cli/bin/dev",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
