@@ -67,9 +67,6 @@ export async function releaseVersion(context: Context, releaseName: string, upda
                     monoRepo = context.repo.monoRepos.get(name)
                     break;
                 }
-                // else {
-                //     fatal(`${name} is not a valid monorepo name`);
-                // }
                 const pkg = context.fullPackageMap.get(name);
                 if (!pkg) {
                     fatal(`Unable find package ${name}`);

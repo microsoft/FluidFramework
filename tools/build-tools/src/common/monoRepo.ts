@@ -7,6 +7,10 @@ import { Package, Packages } from "./npmPackage";
 import * as path from "path";
 import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } from "./utils";
 
+/**
+ * Represents the different types of release groups supported by the build tools. Each of these groups should be defined
+ * in the fluid-build section of the root package.json.
+ */
 export enum MonoRepoKind {
     Client = "Client",
     Server = "Server",
@@ -20,19 +24,17 @@ export function isMonoRepoKind(str: unknown): str is MonoRepoKind {
     return typeof str === "string" && sentenceCase(str) in MonoRepoKind;
 }
 
-export function sentenceCase(str: string) {
+function sentenceCase(str: string) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**
  * An iterator that returns only the Enum values of MonoRepoKind.
- *
- * TODO: Is there a better approach? for-of Object.values returns both strings and the enum values.
  */
 export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
-    yield MonoRepoKind.Client;
-    yield MonoRepoKind.Server;
-    yield MonoRepoKind.Azure;
+    for(const [, flag] of Object.entries(MonoRepoKind)) {
+        yield flag;
+    }
 }
 
 export class MonoRepo {
