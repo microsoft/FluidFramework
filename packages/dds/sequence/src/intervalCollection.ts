@@ -43,7 +43,7 @@ import {
     IValueOperation,
     IValueType,
     IValueTypeOperationValue,
-} from "./defaultMapInterfaces";
+} from "@fluidframework/default-map";
 
 const reservedIntervalIdKey = "intervalId";
 
