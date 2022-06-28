@@ -248,7 +248,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 
     /**
      * Adds a list of properties to the set.
-     * @see {setValues}
+     * See {@link SetProperty.setValues}
      * @param {NamedProperty[]|NamedNodeProperty[]|Object[]} in_properties - The list of properties to add to the list
      * @param {Boolean} in_typed - If the set's items have a typeid and a value then create the
      *   properties with that typeid, else use the set's typeid (support polymorphic items).
@@ -258,7 +258,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
         this._checkIsNotReadOnly(true);
 
         var that = this;
-        _.each(in_properties, function(property) {
+        _.each(in_properties, function (property) {
             if (property instanceof BaseProperty) {
                 that.set(property);
             } else {
@@ -276,7 +276,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 
     /**
      * Adds a list of properties to the set.
-     * @see {setValues}
+     * See {@link SetProperty.setValues}
      * @param {NamedProperty[]|NamedNodeProperty[]|Object[]} in_properties - The list of properties to add to the list
      * @param {Boolean} in_typed - If the set's items have a typeid and a value then create the
      *   properties with that typeid, else use the set's typeid (support polymorphic items).
@@ -344,7 +344,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      */
     clear() {
         var that = this;
-        this.getIds().forEach(function(id) {
+        this.getIds().forEach(function (id) {
             that.remove(id);
         });
     }

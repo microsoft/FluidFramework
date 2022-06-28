@@ -324,7 +324,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Given an object that mirrors a PSet Template, assigns the properties to the values
      * found in that object.
-     * @see {setValues}
+     * See {@link setValues}
      * @param {object} in_values The object containing the nested values to assign
      * @param {boolean} in_typed Whether the values are typed/polymorphic.
      * @param {boolean} in_initial  - Whether we are setting default/initial values
@@ -560,7 +560,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         in_dirtinessType = in_dirtinessType === undefined ?
             BaseProperty.MODIFIED_STATE_FLAGS.PENDING_CHANGE : in_dirtinessType;
 
-        this._traverseStaticProperties(function(in_node, in_pathFromTraversalStart) {
+        this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
             if (in_dirtyOnly && !in_node._isDirty(in_dirtinessType)) {
                 return;
             }
@@ -609,7 +609,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
         var changeSet = {};
 
         // Traverse all properties of this template
-        this._traverseStaticProperties(function(in_node, in_pathFromTraversalStart) {
+        this._traverseStaticProperties(function (in_node, in_pathFromTraversalStart) {
             // We do not deserialize base properties, since the traverseStatic function
             // already traverses recursively
             if (in_node.getTypeid() === 'ContainerProperty' && in_node.getContext() === 'single') {

@@ -74,16 +74,17 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     /**
      * Sets multiple values in a map.
      *
+     * See {@link MapProperty.setValues}
+     *
      * @param {object} in_values to assign to the collection
      * @param {Boolean} in_typed - If the map's items have a typeid and a value then create the
      *   properties with that typeid, else use the set's typeid (support polymorphic items).
-     * @see {setValues}
      * @private
      */
     _setValuesInternal(in_values, in_typed) {
         if (this._containsPrimitiveTypes) {
             var that = this;
-            _.each(in_values, function(value, key) {
+            _.each(in_values, function (value, key) {
                 if (that.has(key)) {
                     that.remove(key);
                 }
@@ -92,7 +93,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
             });
         } else {
             var that = this;
-            _.each(in_values, function(value, key) {
+            _.each(in_values, function (value, key) {
                 var property = that.get(String(key), { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
                 // if key exists in set replace its value else insert a new key/value
                 if (property) {
@@ -123,11 +124,12 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     /**
      * Sets multiple values in a map.
      *
+     * See {@link MapProperty.setValues}
+     *
      * @param {object} in_values to assign to the collection
      * @param {Bool} in_typed  - Whether the values are typed/polymorphic.
      * @param {Bool} in_initial  - Whether we are setting default/initial values
      *   or if the function is called directly with the values to set.
-     * @see {setValues}
      * @override
      */
     _setValues(in_values, in_typed, in_initial) {
@@ -402,7 +404,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      */
     clear() {
         var that = this;
-        this.getIds().forEach(function(id) {
+        this.getIds().forEach(function (id) {
             that.remove(id);
         });
     }

@@ -13,13 +13,13 @@ import { Dependee, InvalidationToken } from "./dependencies";
  * InvalidationToken type to use for cleanable.
  * Using a subclass of InvalidationToken results in cleanable showing up better in the debugger.
  */
-class CleanableToken extends InvalidationToken {}
+class CleanableToken extends InvalidationToken { }
 
 /**
  * InvalidationToken type to use for cleanable.
  * Using a subclass of InvalidationToken results in cleanable showing up better in the debugger.
  */
-class CleaningFailedToken extends InvalidationToken {}
+class CleaningFailedToken extends InvalidationToken { }
 
 /**
  * `Dependee` might have changed and implements Cleanable.
@@ -33,7 +33,7 @@ export const cleanable: InvalidationToken = new CleanableToken("cleanable", fals
  * `Dependee` previously sent cleanable invalidation, and that cleaning has failed.
  * Unlike normal invalidation, cleaningFailed invalidation can be sent when updating/recomputing a cell.
  *
- * @see {@link Cleanable} for contract.
+ * See {@link Cleanable} for contract.
  *
  * @internal
  */
@@ -62,16 +62,16 @@ export const cleaningFailed: InvalidationToken = new CleaningFailedToken("cleani
  * @internal
  */
 export interface Cleanable extends Dependee {
-	/**
-	 * Guarantees this dependee is not in the 'awaiting cleaning' state, attempting to clean this dependee if necessary.
-	 * If this cleaning fails (ex: cannot be updated, or updating results in changes),
+    /**
+     * Guarantees this dependee is not in the 'awaiting cleaning' state, attempting to clean this dependee if necessary.
+     * If this cleaning fails (ex: cannot be updated, or updating results in changes),
      * the implementation must call markInvalid with a
-	 * cleaningFailed token on all dependents.
-	 *
-	 * If `tryClean` undefined,
+     * cleaningFailed token on all dependents.
+     *
+     * If `tryClean` undefined,
      * this dependee is considered not to be Cleanable and must not send cleanable invalidation:
-	 * dependents can assume that 'cleanable' invalidation only comes from dependees with a defined tryClean,
-	 * and thus any dependee without a tryClean is never in the 'awaiting cleaning' state.
-	 */
-	tryClean?(): void;
+     * dependents can assume that 'cleanable' invalidation only comes from dependees with a defined tryClean,
+     * and thus any dependee without a tryClean is never in the 'awaiting cleaning' state.
+     */
+    tryClean?(): void;
 }
