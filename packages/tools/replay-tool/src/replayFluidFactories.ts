@@ -96,7 +96,7 @@ const allDdsFactories: IChannelFactory[] = [
 ];
 
 /**
- * Simple data store factory that creates a data store runtime with a list of known DDSs. It does not create a data
+ * Simple data store factory that creates a data store runtime with a list of known DDSes. It does not create a data
  * object since the replay tool doesn't request any data store but only loads the data store runtime to summarize it.
  */
 export class ReplayDataStoreFactory implements IFluidDataStoreFactory, Partial<IFluidDataStoreRegistry> {
@@ -110,7 +110,7 @@ export class ReplayDataStoreFactory implements IFluidDataStoreFactory, Partial<I
 
     /**
      * Return ourselves when asked for child data store entry. The idea is that each data store that is created
-     * has access to and can create from the list of known DDSs.
+     * has access to and can create from the list of known DDSes.
     */
     public async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
         return this;
