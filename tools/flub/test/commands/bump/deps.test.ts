@@ -13,10 +13,4 @@ describe("deps", () => {
         .it("runs bump:deps", (ctx) => {
             expect(ctx.stdout).to.contain("hello from deps");
         });
-
-    // test.stdout()
-    //     .command(["bump", "deps", "--help"])
-    //     .it("runs hello --name jeff", (ctx) => {
-    //         expect(ctx.stdout).to.contain("hello jeff");
-    //     });
 });

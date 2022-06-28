@@ -4,46 +4,42 @@
  */
 
 import { Flags } from "@oclif/core";
-// import {
-//     MonoRepoKind,
-//     isMonoRepoKind,
-//     supportedMonoRepoValues,
-//     sentenceCase,
-// } from "@fluidframework/build-tools/src/common/monoRepo";
-// import type { VersionBumpTypeExtended } from "@fluidframework/build-tools/src/bumpVersion/context";
-// import type { OptionFlag } from "@oclif/core/lib/interfaces";
 
-// function getTeam(): Promise<string> {
-//     // imagine this reads a configuration file or something to find the team
-// }
-
-// export const wrapFlag = (merge?: OptionFlag<string>) => {
-//     Flags
-// }
-
+/**
+ * A re-usable CLI flag to parse the root directory of the Fluid repo.
+ */
 export const rootPathFlag = Flags.build({
     char: "r",
-    description: "root path",
+    description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
     env: "_FLUID_ROOT_",
     // required: true,
 });
 
-// const releaseGroupOptions = [...supportedMonoRepoValues()].map((s) => s.toString().toLowerCase());
-
+/**
+ * A re-usable CLI flag to parse release groups.
+ */
 export const releaseGroupFlag = Flags.build({
     char: "g",
     description: "release group",
     options: ["Azure", "Client", "Server"], // releaseGroupOptions,
-    parse: async (str, _) => str.charAt(0).toUpperCase() + str.slice(1),
+    parse: async (str: string, _: never) => str.charAt(0).toUpperCase() + str.slice(1),
+    // Can't be used with individual packages.
     exclusive: ["p"],
 });
 
+/**
+ * A re-usable CLI flag to parse package name/version specifiers.
+ */
 export const packageSelectorFlag = Flags.build({
     char: "p",
     description: "package",
+    // Can't be used with release groups.
     exclusive: ["g"],
 });
 
+/**
+ * A re-usable CLI flag to parse bump types.
+ */
 export const bumpTypeFlag = Flags.build({
     char: "t",
     description: "bump type",
@@ -51,10 +47,3 @@ export const bumpTypeFlag = Flags.build({
     default: "current",
     required: true,
 });
-
-export const packageFilterFlags = () => {
-    return {
-        releaseGroup: releaseGroupFlag(),
-        package: packageSelectorFlag(),
-    };
-};

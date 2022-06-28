@@ -1,6 +1,6 @@
 {
-  "name": "@fluid-internal/flub",
-  "version": "0.0.0",
+  "name": "@fluid-internal/build-cli",
+  "version": "0.1.0",
   "private": true,
   "description": "",
   "keywords": [
@@ -74,7 +74,7 @@
     "typescript": "^4.4.3"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=14.0.0"
   },
   "oclif": {
     "bin": "flub",

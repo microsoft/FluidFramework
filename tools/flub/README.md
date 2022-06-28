@@ -15,11 +15,11 @@ flub is not built in CI. You need to build it locally.
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g @fluid-internal/flub
+$ npm install -g @fluid-internal/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-internal/flub/0.0.0 linux-x64 node-v14.19.3
+@fluid-internal/build-cli/0.1.0 linux-x64 node-v14.19.3
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -45,7 +45,7 @@ FLAGS
   -g, --releaseGroup=<option>  release group
                                <options: Azure|Client|Server>
   -p, --package=<value>        package
-  -r, --root=<value>           root path
+  -r, --root=<value>           Root directory of the Fluid repo (default: env _FLUID_ROOT_).
   -t, --type=<option>          (required) [default: current] bump type
                                <options: major|minor|patch|current>
 
@@ -53,7 +53,7 @@ DESCRIPTION
   Bump versions of packages and dependencies.
 ```
 
-_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.0.0/dist/commands/bump.ts)_
+_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.1.0/dist/commands/bump.ts)_
 
 ## `flub bump deps`
 
@@ -67,7 +67,7 @@ FLAGS
   -g, --releaseGroup=<option>  release group
                                <options: Azure|Client|Server>
   -p, --package=<value>        package
-  -r, --root=<value>           root path
+  -r, --root=<value>           Root directory of the Fluid repo (default: env _FLUID_ROOT_).
 
 DESCRIPTION
   Bump the dependencies version of specified package or release group
@@ -105,13 +105,13 @@ USAGE
   $ flub info [-r <value>]
 
 FLAGS
-  -r, --root=<value>  root path
+  -r, --root=<value>  Root directory of the Fluid repo (default: env _FLUID_ROOT_).
 
 DESCRIPTION
   Get info about the repo, release groups, and packages
 ```
 
-_See code: [dist/commands/info/index.ts](https://github.com/microsoft/FluidFramework/blob/v0.0.0/dist/commands/info/index.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.1.0/dist/commands/info.ts)_
 <!-- commandsstop -->
 
 ## Trademark

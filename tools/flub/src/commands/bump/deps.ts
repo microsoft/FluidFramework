@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Command, Flags } from "@oclif/core";
 import { BaseBumpCommand } from "../bump";
 
-export default class Deps extends BaseBumpCommand {
+/**
+ * The `bump deps` command. This command is equivalent to `fluid-bump-version --dep`.
+ */
+export default class DepsCommand extends BaseBumpCommand {
     static description = "Bump the dependencies version of specified package or release group";
 
     static examples = ["<%= config.bin %> <%= command.id %>"];
@@ -15,10 +17,8 @@ export default class Deps extends BaseBumpCommand {
         ...super.flags,
     };
 
-    // static args = [{ name: "file" }];
-
     public async run(): Promise<void> {
-        const { args, flags } = await this.parse(Deps);
+        const { args, flags } = await this.parse(DepsCommand);
 
         this.log(`hello from deps`);
         this.error(`Not yet implemented`, { exit: 100 });

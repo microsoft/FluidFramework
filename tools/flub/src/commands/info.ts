@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Command, Flags } from "@oclif/core";
-import { BaseCommand } from "../../base";
-import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
+import { BaseCommand } from "../base";
 
+/**
+ * The root `info` command.
+ */
 export default class InfoCommand extends BaseCommand {
     static description = "Get info about the repo, release groups, and packages";
 
