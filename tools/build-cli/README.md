@@ -1,4 +1,4 @@
-# @fluid-internal/flub
+# @fluid-internal/build-cli
 
 flub is a build and release tool for the Fluid Framework GitHub repositories. flub is intended to replace the existing
 fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,
