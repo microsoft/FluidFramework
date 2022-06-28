@@ -111,6 +111,75 @@
   },
   "typeValidation": {
     "version": "0.59.4003",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_IMergeTreeAnnotateMsg": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeDelta": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeDeltaCallbackArgs": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_IMergeTreeDeltaOp": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeDeltaOpArgs": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeGroupMsg": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeInsertMsg": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeMaintenanceCallbackArgs": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_IMergeTreeOp": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IMergeTreeRemoveMsg": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_IntervalNode": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_MergeTreeDeltaOperationType": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_MergeTreeDeltaOperationTypes": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "EnumDeclaration_MergeTreeDeltaType": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "EnumDeclaration_MergeTreeMaintenanceType": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "EnumDeclaration_RBColor": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_RBNode": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }
