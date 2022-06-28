@@ -19,7 +19,7 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      pushd "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
+      pushd "$(Build.SourcesDirectory)/build-tools"
       npm ci
       npm run build
       popd
