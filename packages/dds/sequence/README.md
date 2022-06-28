@@ -1,10 +1,17 @@
 # @fluidframework/sequence
 
-The **@fluidframework/sequence** packages supports distributed data structures which are list-like.
-It includes [SharedString]({{< relref "string.md" >}}) for storing and simultaneously editing a sequence of text.
+The **@fluidframework/sequence** package supports distributed data structures which are list-like.
+Its main export is [SharedString]({{< relref "string.md" >}}), a DDS for storing and simultaneously editing a sequence of text.
+
 Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for working with text.
 
-Sequence DDSes share a common base class, `SharedSegmentSequence`.
+This package historically hosted a number of other sequence-based DDSes, but because they have in many ways unintuitive behaviors,
+they are deprecated and being moved to the experimental folder.
+The main reason for this is the lack of *move* semantics within the sequence, which becomes crucial when dealing with sequences of
+non-JS-primitive content.
+For that reason, all of the examples in this README will use `SharedString`.
+However, the APIs discussed are available on the common base class: `SharedSegmentSequence`.
+
 For the remainder of this document, the term *sequence* will refer to this base class.
 
 *Item*s are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
@@ -43,8 +50,12 @@ farther position is closer to the length. -->
 
 ## Using a Sequence
 
-Sequences support three basic operations: insert, remove, and annotate. Insert and remove are used to add and remove
-items from the sequence, while annotate is used to add metadata to items.
+Sequences support three basic operations: insert, remove, and annotate.
+Insert and remove are used to add and remove items from the sequence, while annotate is used to add metadata to items.
+Notably, sequences do not support a notion of "moving" a range of content.
+
+If "move" semantics are a hard requirement, the upcoming tree DDS may suit your needs.
+In the meantime, [a map keyed on numbers with appropriate conflict resolution](https://github.com/microsoft/FluidFramework/issues/8518) is another good option for some scenarios.
 
 ### Insert
 
@@ -145,8 +156,28 @@ specified range. Setting a property key to null will remove that property from t
 
 ### Sequence delta event
 
-Whenever an operation is performed on a sequence a *sequenceDelta* event will be raised. This event provides the ranges
+Whenever an operation is performed on a sequence a `sequenceDelta` event will be raised. This event provides the ranges
 affected by the operation, the type of the operation, and the properties that were changes by the operation.
+
+```typescript
+sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
+    if (isLocal) {
+        // ex: app code may have already synced local operations to their model at the time they were applied
+        return;
+    }
+
+    if (deltaOperation === MergeTreeDeltaType.INSERT) {
+        syncInsertSegmentToModel(deltaOperation, ranges);
+    }
+
+    // realistic app code would likely handle the other deltaOperation types as well here.
+});
+```
+
+Internally, sequence relies on `@fluidframework/merge-tree`, and also surfaces `MergeTreeMaintenance` events on that tree as `maintenance` events.
+These events don't correspond directly to APIs invoked on a sequence DDS, but may be useful for advanced users.
+
+Both `sequenceDelta` and `maintenance` events are commonly used to synchronize or invalidate some view an application might have over a backing sequence DDS.
 
 ## Sequence merge strategy
 
@@ -244,6 +275,122 @@ operations, and the merge resolution is straightforward -- the data is removed.
 As mentioned above, annotate operations behave like operations on SharedMaps. The merge strategy used is last writer
 wins. If two collaborators set the same key on the annotate properties the operation that gets ordered last will
 determine the value.
+
+## Local References
+
+Sequences support addition and manipulation of *local references* to locally track positions in the sequence over time.
+As the name suggests, any created references will only exist locally: other clients will not see them.
+This is advantageous for implementing various common user interactions on sequences in a way that is robust to concurrent editing.
+For example, consider a text editor which tracks some cursor state.
+It might decide to keep around a local reference to the character after the cursor position:
+
+```typescript
+    //   content: hi world!
+    // positions: 012345678
+    const { segment, offset } = sharedString.getContainingSegment(5)
+    const cursor = sharedString.createLocalReferencePosition(
+        segment,
+        offset,
+        ReferenceType.SlideOnRemove,
+        /* any additional properties */ { cursorColor: 'blue' }
+    );
+
+    //    cursor:      x
+    //   content: hi world!
+    // positions: 012345678
+
+    // ... in some view code, retrieve the position of the local reference for rendering:
+    const pos = sharedString.localReferencePositionToPosition(cursor); // 5
+
+    // meanwhile, some other client submits an edit which gets applied to our string:
+    otherSharedString.replaceText(1, 2, "ello");
+
+    // The local sharedString state will now look like this:
+    //    cursor:         x
+    //   content: hello world!
+    // positions: 0123456789AB (hex)
+
+    // ... in some view code, retrieve the position of the local reference for rendering:
+    const pos = sharedString.localReferencePositionToPosition(cursor); // 8
+```
+
+Notice that even though another client concurrently edited the string, the local reference representing the cursor still lies at the correct spot with no further work for the API consumer.
+The `ReferenceType.SlideOnRemove` parameter changes the behavior of what happens when the segment that reference is associated with is removed.
+`SlideOnRemove` instructs the sequence to attempt to slide the reference to the start of the next furthest segment, or if no such segment exists (i.e. the end of the string has been removed), the end of the next nearest one.
+
+The [webflow](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/webflow/src/editor/caret.ts) example fleshes out this idea in much more detail.
+
+Unlike segments, it *is* safe for consumers to persist local references in auxiliary data structures, such as an undo-redo stack.
+
+## Interval Collections
+
+Sequences allow creation of *interval collections*, an auxiliary collection of intervals associated with positions in the sequence.
+Much like segments, intervals support addition of arbitrary properties (including references to other DDSes).
+The interval collection implementation leverages local references, and so benefits from all of the robustness to concurrent editing
+described in the previous section.
+Unlike local references, operations on interval collections are sent to all clients and updated in an eventually consistent fashion.
+This means they're suitable for implementing features like adding comment threads to a text-based document.
+The following example illustrates these properties and highlights the major APIs supported by `IntervalCollection`.
+
+
+```typescript
+    //   content: hi world!
+    // positions: 012345678
+
+    const comments = sharedString.getIntervalCollection("comments");
+    const comment = comments.add(
+        3,
+        7, // (inclusive range): references "world"
+        IntervalType.SlideOnRemove,
+        {
+            creator: 'my-user-id',
+            handle: myCommentThreadDDS.handle
+        }
+    );
+    //   content: hi world!
+    // positions: 012345678
+    //   comment:    [   ]
+
+    // Interval collection supports iterating over all intervals via Symbol.iterator or `.map()`:
+    const allIntervalsInCollection = Array.from(comments);
+    const allProperties = comments.map((comment) => comment.properties);
+    // or iterating over intervals overlapping a region:
+    const intervalsOverlappingFirstHalf = comments.findOverlappingIntervals(0, 4);
+
+    // Interval endpoints are LocalReferencePositions, so all APIs in the above section can be used:
+    const startPosition = sharedString.localReferencePositionToPosition(comment.start);
+    const endPosition = sharedString.localReferencePositionToPosition(comment.end);
+
+    // Intervals can be modified:
+    comments.change(comment.getIntervalId(), 0, 1);
+    //   content: hi world!
+    // positions: 012345678
+    //   comment: []
+
+    // their properties can be changed:
+    comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
+    // comment.properties === { creator: 'my-user-id', handle: <some DDS handle object>, status: "resolved" }
+
+    // and they can be removed:
+    comments.removeIntervalById(comment.getIntervalId());
+```
+
+### Intervals vs. Markers
+
+Interval endpoints and markers both implement `ReferencePosition` and seem to serve a similar function;
+a reasonable question to ask is how they are different to a user, and why you might want to use one or the other.
+
+Using the interval collection API has two main benefits:
+
+1. Efficient spatial querying
+    - Interval collections support iterating all intervals overlapping the region `[start, end]` in `O(log N) + O(overlap size)` time, where `N` is the total number of intervals in the collection.
+    This may be critical for applications that display only a small view of the document contents.
+    On the other hand, using markers to implement intervals would require a linear scan from the start or end of the string to determine which intervals overlap.
+
+2. Reduced risk of data loss on modification
+    - Interval collections natively support a `modify` operation on the intervals, which allows moving the endpoints of the interval to a different place in the sequence.
+    This operation is atomic, whereas with markers one would have to submit a `delete` operation for the existing position and an `insert` for the new one.
+    This has some small potential for data loss if the delete operation ends up sequenced but the insert does not.
 
 ## SharedString
 
