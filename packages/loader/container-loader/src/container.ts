@@ -158,7 +158,7 @@ export interface IProtocolDetails {
 
     /**
      * Optional implementation of the audience logic. If not provided,
-     * the default implementation from {@link Audience} will be used.
+     * the default fluid implementation will be used.
      */
     audience?: IAudience;
 }
