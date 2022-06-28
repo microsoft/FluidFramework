@@ -1,4 +1,8 @@
 {
+    "exclude": [
+        "dist",
+        "node_modules"
+    ],
     "compilerOptions": {
         "declaration": true,
         "importHelpers": true,
@@ -9,6 +13,11 @@
         "target": "es2019",
         "types": ["node"],
         "esModuleInterop": true,
+        "incremental": true,
+        "pretty": true,
+    },
+    "parserOptions": {
+        "project": ["./tsconfig.json", "./test/tsconfig.json"],
     },
     "include": ["src/**/*"],
 }

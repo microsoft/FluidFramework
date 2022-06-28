@@ -6,14 +6,16 @@
 module.exports = {
     plugins: ["@typescript-eslint"],
     extends: [
-        "oclif",
-        "oclif-typescript",
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
-        // require.resolve("@fluidframework/eslint-config-fluid"),
+        // eslint-disable-next-line node/no-extraneous-require
+        require.resolve("@fluidframework/eslint-config-fluid"),
+        "oclif",
+        "oclif-typescript",
         "prettier",
     ],
     rules: {
-        "no-negated-condition": "off",
+        // oclif uses default exports for commands
+        "import/no-default-export": "off",
     },
 };

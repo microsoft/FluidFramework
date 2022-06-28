@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { expect, test } from "@oclif/test";
+import { test } from "@oclif/test";
 
 describe("bump", () => {
     test.stdout().command(["bump"]).exit(100).it("exits with code 100");

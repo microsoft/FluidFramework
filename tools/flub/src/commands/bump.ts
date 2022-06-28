@@ -25,6 +25,8 @@ export abstract class BaseBumpCommand extends BaseCommand {
 export default class BumpCommand extends BaseBumpCommand {
     static description = "Bump versions of packages and dependencies.";
 
+    static examples = ["<%= config.bin %> <%= command.id %>"];
+
     static flags = {
         ...super.flags,
         type: bumpTypeFlag(),
@@ -34,6 +36,7 @@ export default class BumpCommand extends BaseBumpCommand {
     static args = [];
 
     async run(): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { args, flags } = await this.parse(BumpCommand);
         this.error(`Not yet implemented`, { exit: 100 });
     }

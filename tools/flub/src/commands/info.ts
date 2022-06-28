@@ -18,6 +18,7 @@ export default class InfoCommand extends BaseCommand {
     static args = [];
 
     async run(): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { args, flags } = await this.parse(InfoCommand);
 
         this.error(`Not yet implemented`);

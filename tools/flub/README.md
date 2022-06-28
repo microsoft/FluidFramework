@@ -51,6 +51,9 @@ FLAGS
 
 DESCRIPTION
   Bump versions of packages and dependencies.
+
+EXAMPLES
+  $ flub bump
 ```
 
 _See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.1.0/dist/commands/bump.ts)_
