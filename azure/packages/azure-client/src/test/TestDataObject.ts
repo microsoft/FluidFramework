@@ -6,7 +6,7 @@
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
 
 export class TestDataObject extends DataObject {
-    public static get Name() { return "@fluid-example/test-data-object"; }
+    public static get Name(): string { return "@fluid-example/test-data-object"; }
 
     public static readonly factory = new DataObjectFactory(
         TestDataObject.Name,
@@ -15,7 +15,7 @@ export class TestDataObject extends DataObject {
         {},
     );
 
-    public constructor(props: IDataObjectProps) {
+    constructor(props: IDataObjectProps) {
         super(props);
     }
 }
