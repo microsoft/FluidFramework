@@ -30,6 +30,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "postinstall": "npm run postinstall:lerna",
+    "install:build-tools": "cd packages/build-tools && npm run build:compile && npm link && cd ..",
     "layer-check": "cd .. && npm run layer-check",
     "lerna": "lerna",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
