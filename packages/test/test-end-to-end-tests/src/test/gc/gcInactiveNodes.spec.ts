@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -21,7 +21,6 @@ import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gc
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
 describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
-    const summaryLogger = new TelemetryNullLogger();
     const revivedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Revived";
     const changedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Changed";
     const loadedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Loaded";
@@ -81,7 +80,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             runGC: true,
             fullTree: true,
             trackState: false,
-            summaryLogger,
         });
     }
 
@@ -117,16 +115,9 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
             const dataObject = await requestFluidObject<ITestDataObject>(dataStore, "");
             const url = dataObject.handle.absolutePath;
+
             defaultDataStore._root.set("dataStore1", dataObject.handle);
-
-            // Make changes to the data store - send an op and load it.
-            dataObject._root.set("key", "value1");
             await provider.ensureSynchronized();
-            await summarizerRuntime.resolveHandle({ url });
-
-            // Summarize and validate that no unreferenced errors were logged.
-            await summarize(summarizerRuntime);
-            validateNoInactiveEvents();
 
             // Mark dataStore1 as unreferenced, send an op and load it.
             defaultDataStore._root.delete("dataStore1");
@@ -143,7 +134,9 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
             // Make changes to the inactive data store and validate that we get the changedEvent.
             dataObject._root.set("key", "value");
-            await provider.ensureSynchronized();
+            // Load the data store and validate that we get loadedEvent.
+            await summarizerRuntime.resolveHandle({ url });
+            await summarize(summarizerRuntime);
             assert(
                 mockLogger.matchEvents([
                     {
@@ -152,32 +145,24 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
                         id: url,
                         pkg: { value: TestDataObjectType, tag: TelemetryDataTag.PackageData },
                     },
-                ]),
-                "changed event not generated as expected",
-            );
-
-            // Load the data store and validate that we get loadedEvent.
-            await summarizerRuntime.resolveHandle({ url });
-            assert(
-                mockLogger.matchEvents([
                     {
                         eventName: loadedEvent,
                         timeout: inactiveTimeoutMs,
                         id: url,
                     },
                 ]),
-                "loaded event not generated as expected",
+                "changed and loaded events not generated as expected",
             );
 
             // Make a change again and validate that we don't get another changedEvent as we only log it
             // once per data store per session.
             dataObject._root.set("key2", "value2");
-            await provider.ensureSynchronized();
+            await summarize(summarizerRuntime);
             validateNoInactiveEvents();
 
             // Revive the inactive data store and validate that we get the revivedEvent event.
             defaultDataStore._root.set("dataStore1", dataObject.handle);
-            await provider.ensureSynchronized();
+            await summarize(summarizerRuntime);
             assert(
                 mockLogger.matchEvents([
                     {
@@ -227,6 +212,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
             // Retrieve the blob in the summarizer client now and validate that we get the loadedEvent.
             await summarizerBlobHandle.get();
+            await summarize(summarizerRuntime);
             assert(
                 mockLogger.matchEvents([
                     {
@@ -241,6 +227,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             // Add the handle back, summarize and validate that we get the revivedEvent.
             defaultDataStore._root.set("blob", blobHandle);
             await provider.ensureSynchronized();
+            await summarize(summarizerRuntime);
             assert(
                 mockLogger.matchEvents([
                     {
