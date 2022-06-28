@@ -12,6 +12,10 @@ import { RootDataObject } from "./rootDataObject";
 /**
  * Events emitted from IFluidContainer.
  *
+ *  @remarks
+ *
+ * The following is the list of events emitted.
+ *
  * ### "connected"
  *
  * The connected event is emitted when the `IFluidContainer` completes connecting to the Fluid service.

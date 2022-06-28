@@ -153,4 +153,4 @@ export function getTscUtil(tsLib: typeof ts) {
         },
         convertToOptionsWithAbsolutePath,
     }
-};
+}

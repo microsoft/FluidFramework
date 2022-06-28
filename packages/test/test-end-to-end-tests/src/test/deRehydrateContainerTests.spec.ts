@@ -241,7 +241,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
     const tests = () => {
         it("Dehydrated container snapshot", async () => {
-            const { container } =
+            const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
             const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
@@ -261,8 +261,9 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             assert(snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !== undefined,
                 "Blobs should contain attributes blob");
             // Check for default dataStore
-            const { datastoreTree: defaultDatastore } = assertDatastoreTree(snapshotTree, "default");
-            const datastoreAttributes = assertBlobContents<{ pkg: string; }>(defaultDatastore, ".component");
+            const { datastoreTree: snapshotDefaultDataStore } =
+                assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
+            const datastoreAttributes = assertBlobContents<{ pkg: string; }>(snapshotDefaultDataStore, ".component");
             assert.strictEqual(datastoreAttributes.pkg, JSON.stringify(["default"]), "Package name should be default");
         });
 
@@ -288,10 +289,10 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 
             // Check for newly create channel
             const defaultChannelsTree1 = assertChannelsTree(
-                assertDatastoreTree(snapshotTree1, "default").datastoreTree);
+                assertDatastoreTree(snapshotTree1, defaultDataStore.runtime.id).datastoreTree);
             assert(defaultChannelsTree1.trees.test1 === undefined,
                 "Test channel 1 should not be present in snapshot 1");
-            assertChannelTree(assertDatastoreTree(snapshotTree2, "default").datastoreTree, "test1",
+            assertChannelTree(assertDatastoreTree(snapshotTree2, defaultDataStore.runtime.id).datastoreTree, "test1",
                 "Test channel 1 should be present in snapshot 2");
         });
 
@@ -310,7 +311,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
-            assertDatastoreTree(snapshotTree, "default");
+            assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
 
             assertDatastoreTree(snapshotTree, dataStore2.runtime.id, "Handle Bounded dataStore should be in summary");
         });
@@ -327,7 +328,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await container2.request({ url: "/" });
             assert.strictEqual(response.status, 200, "Component should exist!!");
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -365,7 +365,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await container2.request({ url: "/" });
             assert.strictEqual(response.status, 200, "Component should exist!!");
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -403,7 +402,6 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const response = await container1.request({ url: "/" });
             assert.strictEqual(response.status, 200, `Component should exist!! ${response.value}`);
             const defaultDataStore = response.value as TestFluidObject;
-            assert.strictEqual(defaultDataStore.runtime.id, "default", "Id should be default");
 
             // Check for dds
             const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
@@ -771,7 +769,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const snapshotTree = getSnapshotTreeFromSerializedSnapshot(container);
 
             assertProtocolTree(snapshotTree);
-            assertDatastoreTree(snapshotTree, "default");
+            assertDatastoreTree(snapshotTree, defaultDataStore.runtime.id);
         });
 
         it("can rehydrate from arbitrary summary that is not generated from serialized container", async () => {
