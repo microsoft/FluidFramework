@@ -418,9 +418,9 @@ export class PendingStateManager implements IDisposable {
                     break;
                 case "flush":
                     /**
-                     * When flushMode is Immediate, a "flush" call indicates the end of a batch
+                     * When flushMode is Immediate, a "flush" call can indicate the end of a batch.
                      * We can't rely on the "batch" property in the message metadata as it gets
-                     * updated elsewhere and it is not the same object that gets updated.
+                     * updated elsewhere and it is not the same object instance that gets updated.
                      */
                     if (this.flushMode === FlushMode.Immediate && messageBatchQueue.length > 0) {
                         this.stateHandler.orderSequentially(() => {
