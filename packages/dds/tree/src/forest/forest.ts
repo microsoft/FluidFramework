@@ -12,7 +12,6 @@ import { ITreeCursor, TreeNavigationResult } from "./cursor";
  *
  * This results in rather manual memory management,
  * but makes it practical to provide highly optimized implementations,
-```?
  * for example WASM powered binary formats that can track reference counts and only copy when needed.
  */
 
@@ -46,8 +45,6 @@ export interface IForestSubscription extends Dependee {
     /**
      * If observer is provided, it will be invalidated if the value returned from this changes
      * (including from or to undefined).
-     *
-     *  @returns the node associated with `id`, or undefined if there is none.
      *
      * It is an error not to free `cursorToMove` before the next edit.
      * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
