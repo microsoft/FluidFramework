@@ -47,7 +47,7 @@ export interface ITokenClaims {
      * Identifies the expiration time on or after which the token must not be accepted for processing.
      * Expressed in {@link https://en.wikipedia.org/wiki/Unix_time | Unix Time}.
      *
-     * See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
+     * See {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4}
      */
     exp: number;
 
