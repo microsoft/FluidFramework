@@ -58,6 +58,12 @@
     "broken": {
       "TypeAliasDeclaration_IContainerRuntimeBaseWithCombinedEvents": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_IContainerRuntime": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IProvideContainerRuntime": {
+        "backCompat": false
       }
     }
   }

@@ -103,6 +103,9 @@
       },
       "ClassDeclaration_MockFluidDataStoreRuntime": {
         "backCompat": false
+      },
+      "ClassDeclaration_MockFluidDataStoreContext": {
+        "backCompat": false
       }
     }
   }
