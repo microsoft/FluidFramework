@@ -1224,7 +1224,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             existing,
             metadata,
             isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
-            getNodePackagePath: (nodePath: string) => this.getGCNodePackagePath(nodePath),
+            getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
             getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
         });
@@ -2349,7 +2349,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const {
             fullTree = false,
             trackState = true,
-            summaryLogger = this.logger,
+            summaryLogger = this.mc.logger,
             runGC = this.garbageCollector.shouldRunGC,
             runSweep,
             fullGC,
@@ -2463,7 +2463,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Called by GC to retrieve the package path of the node with the given path. The node should belong to a
      * data store or an attachment blob.
      */
-    public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
+    public async getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
         switch (this.getNodeType(nodePath)) {
             case GCNodeType.Blob:
                 return ["_blobs"];
