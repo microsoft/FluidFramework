@@ -5,12 +5,12 @@ Its main export is [SharedString]({{< relref "string.md" >}}), a DDS for storing
 
 Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for working with text.
 
-This package historically hosted a number of other sequence-based DDSes, but because they have in many ways unintuitive behaviors,
-they are deprecated and being moved to the experimental folder.
+This package historically contained several other sequence-based DDSes, but because they have unintuitive behaviors,
+they are deprecated and being moved to the _experimental_ folder.
+
 The main reason for this is the lack of *move* semantics within the sequence, which becomes crucial when dealing with sequences of
-non-JS-primitive content.
-For that reason, all of the examples in this README will use `SharedString`.
-However, the APIs discussed are available on the common base class: `SharedSegmentSequence`.
+complex content.
+For that reason, all of the examples in this README use `SharedString`. However, the APIs discussed are available on the common base class: `SharedSegmentSequence`.
 
 For the remainder of this document, the term *sequence* will refer to this base class.
 
@@ -174,10 +174,10 @@ sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
 });
 ```
 
-Internally, sequence relies on `@fluidframework/merge-tree`, and also surfaces `MergeTreeMaintenance` events on that tree as `maintenance` events.
+Internally, the sequence package depends on `@fluidframework/merge-tree`, and also raises `MergeTreeMaintenance` events on that tree as `maintenance` events.
 These events don't correspond directly to APIs invoked on a sequence DDS, but may be useful for advanced users.
 
-Both `sequenceDelta` and `maintenance` events are commonly used to synchronize or invalidate some view an application might have over a backing sequence DDS.
+Both `sequenceDelta` and `maintenance` events are commonly used to synchronize or invalidate a view an application might have over a backing sequence DDS.
 
 ## Sequence merge strategy
 
@@ -276,13 +276,13 @@ As mentioned above, annotate operations behave like operations on SharedMaps. Th
 wins. If two collaborators set the same key on the annotate properties the operation that gets ordered last will
 determine the value.
 
-## Local References
+## Local references
 
 Sequences support addition and manipulation of *local references* to locally track positions in the sequence over time.
-As the name suggests, any created references will only exist locally: other clients will not see them.
-This is advantageous for implementing various common user interactions on sequences in a way that is robust to concurrent editing.
+As the name suggests, any created references will only exist locally; other clients will not see them.
+This can be used to implement user interactions with sequence data in a way that is robust to concurrent editing.
 For example, consider a text editor which tracks some cursor state.
-It might decide to keep around a local reference to the character after the cursor position:
+The application can store a local reference to the character after the cursor position:
 
 ```typescript
     //   content: hi world!
@@ -314,22 +314,22 @@ It might decide to keep around a local reference to the character after the curs
     const pos = sharedString.localReferencePositionToPosition(cursor); // 8
 ```
 
-Notice that even though another client concurrently edited the string, the local reference representing the cursor still lies at the correct spot with no further work for the API consumer.
-The `ReferenceType.SlideOnRemove` parameter changes the behavior of what happens when the segment that reference is associated with is removed.
-`SlideOnRemove` instructs the sequence to attempt to slide the reference to the start of the next furthest segment, or if no such segment exists (i.e. the end of the string has been removed), the end of the next nearest one.
+Notice that even though another client concurrently edited the string, the local reference representing the cursor is still in the correct location with no further work for the API consumer.
+The `ReferenceType.SlideOnRemove` parameter changes what happens when the segment that reference is associated with is removed.
+`SlideOnRemove` instructs the sequence to attempt to *slide* the reference to the start of the next furthest segment, or if no such segment exists (i.e. the end of the string has been removed), the end of the next nearest one.
 
-The [webflow](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/webflow/src/editor/caret.ts) example fleshes out this idea in much more detail.
+The [webflow](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/webflow/src/editor/caret.ts) example demonstrates this idea in more detail.
 
-Unlike segments, it *is* safe for consumers to persist local references in auxiliary data structures, such as an undo-redo stack.
+Unlike segments, it *is* safe to persist local references in auxiliary data structures, such as an undo-redo stack.
 
-## Interval Collections
+## Interval collections
 
-Sequences allow creation of *interval collections*, an auxiliary collection of intervals associated with positions in the sequence.
-Much like segments, intervals support addition of arbitrary properties (including references to other DDSes).
-The interval collection implementation leverages local references, and so benefits from all of the robustness to concurrent editing
+Sequences support creation of *interval collections*, an auxiliary collection of intervals associated with positions in the sequence.
+Like segments, intervals support adding arbitrary properties, including handles (references) to other DDSes.
+The interval collection implementation uses local references, and so benefits from all of the robustness to concurrent editing
 described in the previous section.
-Unlike local references, operations on interval collections are sent to all clients and updated in an eventually consistent fashion.
-This means they're suitable for implementing features like adding comment threads to a text-based document.
+Unlike local references, operations on interval collections are sent to all clients and updated in an eventually consistent way.
+This makes them suitable for implementing features like comment threads on a text-based documents.
 The following example illustrates these properties and highlights the major APIs supported by `IntervalCollection`.
 
 
@@ -375,10 +375,9 @@ The following example illustrates these properties and highlights the major APIs
     comments.removeIntervalById(comment.getIntervalId());
 ```
 
-### Intervals vs. Markers
+### Intervals vs. markers
 
-Interval endpoints and markers both implement `ReferencePosition` and seem to serve a similar function;
-a reasonable question to ask is how they are different to a user, and why you might want to use one or the other.
+Interval endpoints and markers both implement `ReferencePosition` and seem to serve a similar function so it's not obvious how they differ and why you would choose one or the other.
 
 Using the interval collection API has two main benefits:
 
