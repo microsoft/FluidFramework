@@ -13,4 +13,4 @@ export class ApiExtractorTask extends TscDependentTask {
     protected get configFileFullPath() {
         return this.getPackageFileFullPath("api-extractor.json");
     }
-};
+}

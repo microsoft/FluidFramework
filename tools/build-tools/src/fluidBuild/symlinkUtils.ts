@@ -95,7 +95,7 @@ async function fixSymlink(stat: fs.Stats | undefined, symlinkPath: string, pkg: 
     await symlinkAsync(depBuildPackage.directory, symlinkPath, "junction");
 
     if (depBuildPackage.packageJson.bin) {
-        for (var name of Object.keys(depBuildPackage.packageJson.bin)) {
+        for (const name of Object.keys(depBuildPackage.packageJson.bin)) {
             await writeBin(pkg.directory, name, depBuildPackage.name, depBuildPackage.packageJson.bin[name]);
         }
     }
@@ -113,7 +113,7 @@ async function revertSymlink(symlinkPath: string, pkg: Package, depBuildPackage:
     }
 
     if (depBuildPackage.packageJson.bin) {
-        for (var name of Object.keys(depBuildPackage.packageJson.bin)) {
+        for (const name of Object.keys(depBuildPackage.packageJson.bin)) {
             await revertBin(pkg.directory, name);
         }
     }
@@ -122,7 +122,7 @@ async function revertSymlink(symlinkPath: string, pkg: Package, depBuildPackage:
 export interface ISymlinkOptions {
     symlink: boolean;
     fullSymlink: boolean | undefined;
-};
+}
 
 export async function symlinkPackage(repo: FluidRepoBuild, pkg: Package, buildPackages: Map<string, Package>, options: ISymlinkOptions) {
     let count = 0;

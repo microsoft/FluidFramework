@@ -40,9 +40,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         return this.internalStorageService.repositoryUrl;
     }
 
-    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
+    public async getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null> {
         return this.runWithRetry(
-            async () => this.internalStorageService.getSnapshotTree(version),
+            async () => this.internalStorageService.getSnapshotTree(version, scenarioName),
             "storage_getSnapshotTree",
         );
     }
@@ -54,9 +54,9 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         );
     }
 
-    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
+    public async getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]> {
         return this.runWithRetry(
-            async () => this.internalStorageService.getVersions(versionId, count),
+            async () => this.internalStorageService.getVersions(versionId, count, scenarioName),
             "storage_getVersions",
         );
     }

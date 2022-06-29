@@ -5,7 +5,7 @@
 
 module.exports = {
     "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
+        require.resolve("@fluidframework/eslint-config-fluid/strict")
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]

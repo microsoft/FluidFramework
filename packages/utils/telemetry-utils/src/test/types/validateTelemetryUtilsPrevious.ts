@@ -760,18 +760,6 @@ use_old_FunctionDeclaration_normalizeError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_originatedAsExternalError": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_originatedAsExternalError": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_PerformanceEvent": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_PerformanceEvent():

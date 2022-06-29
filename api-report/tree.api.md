@@ -28,6 +28,9 @@ export interface Covariant<T> {
     _removeContravariance?: T;
 }
 
+// @public
+export const EmptyKey: FieldKey;
+
 // Warning: (ae-forgotten-export) The symbol "ExtractFromOpaque" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -47,9 +50,13 @@ export interface ITreeCursor {
     keys: Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
+    seek(offset: number): {
+        result: TreeNavigationResult;
+        moved: number;
+    };
     readonly type: TreeType;
     up(): TreeNavigationResult;
-    readonly value: undefined | Serializable;
+    readonly value: Value;
 }
 
 // @public
@@ -68,6 +75,9 @@ export const enum TreeNavigationResult {
 
 // @public (undocumented)
 export type TreeType = Brand<number | string, "TreeType">;
+
+// @public
+export type Value = undefined | Serializable;
 
 // (No @packageDocumentation comment for this package)
 
