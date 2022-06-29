@@ -166,7 +166,7 @@ function getIndexSourceFile(basePath: string){
 
 export async function generateTypeDataForProject(packageDir: string, dependencyName: string | undefined): Promise<PackageAndTypeData> {
 
-    let basePath = dependencyName === undefined
+    const basePath = dependencyName === undefined
         ? packageDir
         : tryFindDependencyPath(packageDir, dependencyName);
 

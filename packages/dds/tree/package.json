@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/tree",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Tree",
   "homepage": "https://fluidframework.com",
@@ -62,15 +62,15 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/datastore-definitions": "^1.1.0",
+    "@fluidframework/datastore-definitions": "^1.2.0",
     "@ungap/structured-clone": "^0.3.4"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
-    "@fluidframework/build-tools": "^0.2.71273",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^1.1.0",
-    "@fluidframework/test-runtime-utils": "^1.1.0",
+    "@fluidframework/mocha-test-setup": "^1.2.0",
+    "@fluidframework/test-runtime-utils": "^1.2.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",

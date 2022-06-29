@@ -10,7 +10,7 @@ import { commonOptions } from "../common/commonOptions";
 import { Timer } from "../common/timer";
 import { getPackageManifest } from "../common/fluidUtils";
 import { FluidRepo, IPackageManifest } from "../common/fluidRepo";
-import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo } from "./gitRepo";
@@ -74,20 +74,23 @@ export class Context {
     public async collectVersionInfo(releaseName: string) {
         console.log("  Resolving published dependencies");
 
-        const depVersions = new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
+        const depVersions =
+            new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
         const pendingDepCheck = [];
         const processMonoRepo = (monoRepo: MonoRepo) => {
+            console.log(monoRepo);
             pendingDepCheck.push(...monoRepo.packages);
             // Fake these for printing.
             const firstClientPackage = monoRepo.packages[0];
             depVersions.add(firstClientPackage, firstClientPackage.version);
         };
 
-        if (releaseName === MonoRepoKind[MonoRepoKind.Client]) {
-            processMonoRepo(this.repo.clientMonoRepo);
-        } else if (releaseName === MonoRepoKind[MonoRepoKind.Server]) {
-            assert(this.repo.serverMonoRepo, "Attempted to collect server info on a Fluid repo with no server directory");
-            processMonoRepo(this.repo.serverMonoRepo!);
+        if (isMonoRepoKind(releaseName)) {
+            const repoKind = MonoRepoKind[releaseName];
+            if (repoKind === MonoRepoKind.Server) {
+                assert(this.repo.serverMonoRepo, "Attempted to collect server info on a Fluid repo with no server directory");
+            }
+            processMonoRepo(this.repo.monoRepos.get(repoKind)!);
         } else {
             const pkg = this.fullPackageMap.get(releaseName);
             if (!pkg) {
@@ -98,6 +101,7 @@ export class Context {
         }
 
         const publishedPackageDependenciesPromises: Promise<void>[] = [];
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const pkg = pendingDepCheck.pop();
             if (!pkg) {
@@ -123,7 +127,7 @@ export class Context {
                         }
                         continue;
                     }
-                    let depVersion = depBuildPackage.version;
+                    const depVersion = depBuildPackage.version;
                     const reference = `${pkg.name}@local`;
                     // Check if the version in the repo is compatible with the version described in the dependency.
 
@@ -175,4 +179,4 @@ export class Context {
             await this.gitRepo.deleteTag(tag);
         }
     }
-};
+}

@@ -151,8 +151,8 @@ export interface IDocumentServicePolicies {
 export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -259,7 +259,6 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 
 // @public (undocumented)
 export interface IUrlResolver {
-    // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
@@ -278,7 +277,6 @@ export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
 }
-
 
 // (No @packageDocumentation comment for this package)
 
