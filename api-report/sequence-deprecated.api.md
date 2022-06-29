@@ -10,12 +10,17 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IJSONSegment } from '@fluidframework/merge-tree';
 import { Interval } from '@fluidframework/sequence';
 import { IntervalCollection } from '@fluidframework/sequence';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedIntervalCollection } from '@fluidframework/sequence';
+import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+import { SharedSequence } from '@fluidframework/sequence';
+import { SubSequence } from '@fluidframework/sequence';
 
 // @public @deprecated (undocumented)
 export class SharedIntervalCollection extends SharedObject implements ISharedIntervalCollection<Interval> {
@@ -57,6 +62,38 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
     static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
     // (undocumented)
     get type(): string;
+}
+
+// @public @deprecated
+export class SharedNumberSequence extends SharedSequence<number> {
+    // @deprecated
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    // @deprecated
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedNumberSequence;
+    // Warning: (ae-forgotten-export) The symbol "SharedNumberSequenceFactory" needs to be exported by the entry point index.d.ts
+    //
+    // @deprecated
+    static getFactory(): SharedNumberSequenceFactory;
+    // @deprecated (undocumented)
+    getRange(start: number, end?: number): number[];
+    // (undocumented)
+    id: string;
+}
+
+// @public @deprecated
+export class SharedObjectSequence<T> extends SharedSequence<T> {
+    // @deprecated
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    // @deprecated
+    static create<T>(runtime: IFluidDataStoreRuntime, id?: string): SharedObjectSequence<T>;
+    // Warning: (ae-forgotten-export) The symbol "SharedObjectSequenceFactory" needs to be exported by the entry point index.d.ts
+    //
+    // @deprecated
+    static getFactory(): SharedObjectSequenceFactory;
+    // @deprecated (undocumented)
+    getRange(start: number, end?: number): Serializable<T>[];
+    // (undocumented)
+    id: string;
 }
 
 // (No @packageDocumentation comment for this package)

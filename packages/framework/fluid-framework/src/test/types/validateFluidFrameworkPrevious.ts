@@ -1702,51 +1702,26 @@ use_old_ClassDeclaration_SharedMap(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedNumberSequence": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedNumberSequence": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedNumberSequence():
-    TypeOnly<old.SharedNumberSequence>;
-declare function use_current_ClassDeclaration_SharedNumberSequence(
-    use: TypeOnly<current.SharedNumberSequence>);
-use_current_ClassDeclaration_SharedNumberSequence(
-    get_old_ClassDeclaration_SharedNumberSequence());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedNumberSequence": {"backCompat": false}
+* "RemovedClassDeclaration_SharedNumberSequence": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedNumberSequence():
-    TypeOnly<current.SharedNumberSequence>;
-declare function use_old_ClassDeclaration_SharedNumberSequence(
-    use: TypeOnly<old.SharedNumberSequence>);
-use_old_ClassDeclaration_SharedNumberSequence(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_SharedNumberSequence());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedNumberSequenceFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedNumberSequenceFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedNumberSequenceFactory():
-    TypeOnly<old.SharedNumberSequenceFactory>;
-declare function use_current_ClassDeclaration_SharedNumberSequenceFactory(
-    use: TypeOnly<current.SharedNumberSequenceFactory>);
-use_current_ClassDeclaration_SharedNumberSequenceFactory(
-    get_old_ClassDeclaration_SharedNumberSequenceFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedNumberSequenceFactory": {"backCompat": false}
+* "RemovedClassDeclaration_SharedNumberSequenceFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedNumberSequenceFactory():
-    TypeOnly<current.SharedNumberSequenceFactory>;
-declare function use_old_ClassDeclaration_SharedNumberSequenceFactory(
-    use: TypeOnly<old.SharedNumberSequenceFactory>);
-use_old_ClassDeclaration_SharedNumberSequenceFactory(
-    get_current_ClassDeclaration_SharedNumberSequenceFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1775,51 +1750,26 @@ use_old_TypeAliasDeclaration_SharedObjectClass(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedObjectSequence": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedObjectSequence": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedObjectSequence():
-    TypeOnly<old.SharedObjectSequence<any>>;
-declare function use_current_ClassDeclaration_SharedObjectSequence(
-    use: TypeOnly<current.SharedObjectSequence<any>>);
-use_current_ClassDeclaration_SharedObjectSequence(
-    get_old_ClassDeclaration_SharedObjectSequence());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedObjectSequence": {"backCompat": false}
+* "RemovedClassDeclaration_SharedObjectSequence": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedObjectSequence():
-    TypeOnly<current.SharedObjectSequence<any>>;
-declare function use_old_ClassDeclaration_SharedObjectSequence(
-    use: TypeOnly<old.SharedObjectSequence<any>>);
-use_old_ClassDeclaration_SharedObjectSequence(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_SharedObjectSequence());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedObjectSequenceFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SharedObjectSequenceFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SharedObjectSequenceFactory():
-    TypeOnly<old.SharedObjectSequenceFactory>;
-declare function use_current_ClassDeclaration_SharedObjectSequenceFactory(
-    use: TypeOnly<current.SharedObjectSequenceFactory>);
-use_current_ClassDeclaration_SharedObjectSequenceFactory(
-    get_old_ClassDeclaration_SharedObjectSequenceFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SharedObjectSequenceFactory": {"backCompat": false}
+* "RemovedClassDeclaration_SharedObjectSequenceFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SharedObjectSequenceFactory():
-    TypeOnly<current.SharedObjectSequenceFactory>;
-declare function use_old_ClassDeclaration_SharedObjectSequenceFactory(
-    use: TypeOnly<old.SharedObjectSequenceFactory>);
-use_old_ClassDeclaration_SharedObjectSequenceFactory(
-    get_current_ClassDeclaration_SharedObjectSequenceFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
