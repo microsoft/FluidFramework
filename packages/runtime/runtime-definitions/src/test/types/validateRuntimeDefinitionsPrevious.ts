@@ -23,6 +23,7 @@ declare function get_old_TypeAliasDeclaration_AliasResult():
 declare function use_current_TypeAliasDeclaration_AliasResult(
     use: TypeOnly<current.AliasResult>);
 use_current_TypeAliasDeclaration_AliasResult(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_AliasResult());
 
 /*
