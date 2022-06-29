@@ -1009,10 +1009,10 @@ export class GarbageCollector implements IGarbageCollector {
          *    references added new outbound references before getting deleted, we need to detect them.
          * 2. We need new outbound references since last run because some of them may have been deleted later. If those
          *    references added new outbound references before getting deleted, we need to detect them.
-         * 3. We need data from the current run because currently we may not detect when DDSs are referenced:
-         *    - We don't require DDSs handles to be stored in a referenced DDS. For this, we need GC at DDS level
+         * 3. We need data from the current run because currently we may not detect when DDSes are referenced:
+         *    - We don't require DDSes handles to be stored in a referenced DDS. For this, we need GC at DDS level
          *      which is tracked by https://github.com/microsoft/FluidFramework/issues/8470.
-         *    - A new data store may have "root" DDSs already created and we don't detect them today.
+         *    - A new data store may have "root" DDSes already created and we don't detect them today.
          */
         const gcDataSuperSet = concatGarbageCollectionData(this.previousGCDataFromLastRun, currentGCData);
         this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
