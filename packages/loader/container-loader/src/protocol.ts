@@ -39,7 +39,7 @@ export type ProtocolHandlerBuilder = (
     attributes: IDocumentAttributes,
     snapshot: IQuorumSnapshot,
     sendProposal: (key: string, value: any) => number,
-    audience?: IAudience,
+    audience: IAudience,
 ) => IProtocolHandler;
 
 export interface IProtocolHandler extends IBaseProtocolHandler {

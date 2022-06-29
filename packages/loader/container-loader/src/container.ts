@@ -519,7 +519,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Retrieves the audience associated with the document
      */
     public get audience(): IAudience {
-        return this._audience;
+        return this.protocolHandler.audience;
     }
 
     /**

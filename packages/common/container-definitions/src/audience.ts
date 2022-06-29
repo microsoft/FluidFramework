@@ -12,7 +12,7 @@ import { IClient } from "@fluidframework/protocol-definitions";
  * See {@link https://nodejs.org/api/events.html#class-eventemitter | here} for an overview of the `EventEmitter`
  * class.
  */
- export interface IAudience extends EventEmitter {
+export interface IAudience extends EventEmitter {
     /**
      * See {@link https://nodejs.dev/learn/the-nodejs-event-emitter | here} for an overview of `EventEmitter.on`.
      */
