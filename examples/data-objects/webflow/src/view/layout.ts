@@ -5,7 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { ISegment, LocalReference, MergeTreeMaintenanceType } from "@fluidframework/merge-tree";
+import { ISegment, ReferencePosition, MergeTreeMaintenanceType, LocalReferencePosition } from "@fluidframework/merge-tree";
 import { SequenceEvent } from "@fluidframework/sequence";
 import { FlowDocument } from "../document";
 import { clamp, Dom, done, emptyObject, getSegmentRange, hasTagName, isTextNode, TagName } from "../util";
@@ -82,8 +82,8 @@ export class Layout extends EventEmitter {
     private _segmentStart = NaN;
     private _segmentEnd = NaN;
 
-    private startInvalid: LocalReference;
-    private endInvalid: LocalReference;
+    private startInvalid: LocalReferencePosition;
+    private endInvalid: LocalReferencePosition;
 
     private readonly scheduleRender: () => void;
 
@@ -543,7 +543,7 @@ export class Layout extends EventEmitter {
         this.invalidate(e.first.position, e.last.position + e.last.segment.cachedLength);
     };
 
-    private unionRef(doc: FlowDocument, position: number | undefined, ref: LocalReference | undefined, fn: (a: number, b: number) => number, limit: number) {
+    private unionRef(doc: FlowDocument, position: number | undefined, ref: ReferencePosition | undefined, fn: (a: number, b: number) => number, limit: number) {
         return fn(
             position === undefined
                 ? limit
@@ -559,10 +559,9 @@ export class Layout extends EventEmitter {
         let _end = end;
         // Union the delta range with the current invalidated range (if any).
         const doc = this.doc;
-        /* eslint-disable @typescript-eslint/unbound-method */
+
         _start = this.unionRef(doc, _start, this.startInvalid, Math.min, +Infinity);
         _end = this.unionRef(doc, _end, this.endInvalid, Math.max, -Infinity);
-        /* eslint-enable @typescript-eslint/unbound-method */
         this.startInvalid = updateRef(doc, this.startInvalid, _start);
         this.endInvalid = updateRef(doc, this.endInvalid, _end);
         this.scheduleRender();

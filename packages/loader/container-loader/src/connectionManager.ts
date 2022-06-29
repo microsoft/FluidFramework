@@ -96,7 +96,6 @@ class NoDeltaStream
     serviceConfiguration: IClientConfiguration = {
         maxMessageSize: 0,
         blockSize: 0,
-        summary: undefined as any,
     };
     checkpointSequenceNumber?: number | undefined = undefined;
     submit(messages: IDocumentMessage[]): void {
