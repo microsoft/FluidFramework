@@ -220,9 +220,13 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * Call back on disconnect
      */
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
-    private applyInnerOp(content: any) {
+    /**
+     * Set or delete cell foll ICellOperation type
+     * @param content - ICellOperation content
+     */
+    private applyInnerOp(content: ICellOperation) {
         switch (content.type) {
             case "setCell":
                 this.setCore(this.decode(content.value));
