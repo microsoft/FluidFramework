@@ -892,7 +892,7 @@ export class ConnectionManager implements IConnectionManager {
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
 
                 // Please see #8483 for more details on why maintaining connection further as is would not work.
-                // Short story - connection properties are immutable, and many processes (consensus DDSs, summarizer)
+                // Short story - connection properties are immutable, and many processes (consensus DDSes, summarizer)
                 // assume that connection stays "write" connection until disconnect, and act accordingly, which may
                 // not work well with de-facto "read" connection we are in after receiving own leave op on timeout.
                 // Clients need to be able to transition to "read" state after some time of inactivity!
