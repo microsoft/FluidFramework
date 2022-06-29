@@ -8,10 +8,11 @@ import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
 /**
  * APIs for forest designed so the implementation can be copy on write,
- * or mutate in palace, and we can ensure no references are dangling into the forest to allow this.
+ * or mutate in place, and we can ensure no references are dangling into the forest to allow this.
  *
  * This results in rather manual memory management,
- * but make is practical to provide highly optimized implementations,
+ * but makes it practical to provide highly optimized implementations,
+```?
  * for example WASM powered binary formats that can track reference counts and only copy when needed.
  */
 
@@ -44,7 +45,7 @@ export interface IForestSubscription extends Dependee {
 
     /**
      * If observer is provided, it will be invalidated if the value returned from this changes
-     * (including from or two undefined).
+     * (including from or to undefined).
      *
      *  @returns the node associated with `id`, or undefined if there is none.
      *
