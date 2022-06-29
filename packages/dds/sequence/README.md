@@ -54,8 +54,7 @@ Sequences support three basic operations: insert, remove, and annotate.
 Insert and remove are used to add and remove items from the sequence, while annotate is used to add metadata to items.
 Notably, sequences do not support a notion of "moving" a range of content.
 
-If "move" semantics are a hard requirement, the upcoming tree DDS may suit your needs.
-In the meantime, [a map keyed on numbers with appropriate conflict resolution](https://github.com/microsoft/FluidFramework/issues/8518) is another good option for some scenarios.
+If "move" semantics are a hard requirement for your scenario, [this github issue](https://github.com/microsoft/FluidFramework/issues/8518) outlines some reasonable alternatives.
 
 ### Insert
 
@@ -386,10 +385,13 @@ Using the interval collection API has two main benefits:
     This may be critical for applications that display only a small view of the document contents.
     On the other hand, using markers to implement intervals would require a linear scan from the start or end of the sequence to determine which intervals overlap.
 
-2. Reduced risk of data loss on modification
+2. More ergonomic modification APIs
     - Interval collections natively support a modify operation on the intervals, which allows moving the endpoints of the interval to a different place in the sequence.
     This operation is atomic, whereas with markers one would have to submit a delete operation for the existing position and an insert for the new one.
-    This has some small potential for data loss if the delete operation ends up acknowledged by the server but the insert does not.
+    In order to achieve the same atomicity, those operations would need to leverage the `SharedSegmentSequence.groupOperation` API,
+    which is less user-friendly.
+    If the ops were submitted using standard insert and delete APIs instead, there would be some potential for data loss if the delete
+    operation ended up acknowledged by the server but the insert operation did not.
 
 ## SharedString
 
@@ -412,16 +414,15 @@ to 0, and the farther position is closer to the length.
 
 - Rich Text Editor Implementations
   - [webflow](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/webflow)
-  - [flowView](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/client-ui-lib/src/controls/flowView.ts)
+  - [flowView](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/shared-text/src/client-ui-lib/controls/flowView.ts)
 
 - Integrations with Open Source Rich Text Editors
   - [prosemirror](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/prosemirror)
   - [smde](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/smde)
-  - [draft-js](https://github.com/microsoft/FluidExamples/tree/main/draft-js)
 
 - Plain Text Editor Implementations
-  - [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/react-inputs/src/CollaborativeTextArea.tsx)
-  - [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/react-inputs/src/collaborativeInput.tsx)
+  - [collaborativeTextArea](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeTextArea.tsx)
+  - [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/experimental/framework/react-inputs/src/CollaborativeInput.tsx)
 
 [SharedMap]: https://fluidframework.com/docs/data-structures/map/
 [SharedString]: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/src/sharedString.ts
