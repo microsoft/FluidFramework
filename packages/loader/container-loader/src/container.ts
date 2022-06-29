@@ -52,9 +52,6 @@ import {
 } from "@fluidframework/driver-utils";
 import {
     isSystemMessage,
-    IProtocolHandler,
-    ProtocolHandlerBuilder,
-    ProtocolOpHandlerWithClientValidation,
     IQuorumSnapshot,
 } from "@fluidframework/protocol-base";
 import {
@@ -109,6 +106,12 @@ import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, Quorum
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
+import {
+    IProtocolDetails,
+    IProtocolHandler,
+    ProtocolHandlerBuilder,
+    ProtocolOpHandlerWithClientValidation
+} from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -146,21 +149,6 @@ export interface IContainerConfig {
      * Serialized state from a previous instance of this container
      */
     serializedContainerState?: IPendingContainerState;
-}
-
-export interface IProtocolDetails {
-    /**
-     * Optional function to be used for creating a protocol handler. If not provided,
-     * an instance of {@link @fluidframework/protocol-base/protocol.ts#ProtocolOpHandlerWithClientValidation}
-     * will be created and used.
-     */
-    protocolHandlerBuilder?: ProtocolHandlerBuilder;
-
-    /**
-     * Optional implementation of the audience logic. If not provided,
-     * the default fluid implementation will be used.
-     */
-    audience?: IAudience;
 }
 
 /**

@@ -16,6 +16,7 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
+    IAudience,
     ILoader,
     AttachState,
     ILoaderOptions,
@@ -23,7 +24,6 @@ import {
 
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
-    IAudience,
     IQuorumClients,
     ISequencedClient,
     ISequencedDocumentMessage,

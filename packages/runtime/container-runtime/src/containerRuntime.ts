@@ -13,6 +13,7 @@ import {
     IResponse,
 } from "@fluidframework/core-interfaces";
 import {
+    IAudience,
     IFluidTokenProvider,
     IContainerContext,
     IDeltaManager,
@@ -54,7 +55,6 @@ import {
     extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 import {
-    IAudience,
     IClientDetails,
     IDocumentMessage,
     IQuorumClients,

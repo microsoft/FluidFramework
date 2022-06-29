@@ -9,7 +9,6 @@ export {
     IContainerLoadOptions,
     IContainerConfig,
     IPendingContainerState,
-    IProtocolDetails,
     waitContainerToCatchUp,
 } from "./container";
 export {
@@ -22,3 +21,8 @@ export {
     Loader,
     RelativeLoader,
 } from "./loader";
+export {
+    IProtocolDetails,
+    IProtocolHandler,
+    ProtocolHandlerBuilder,
+} from "./protocol";

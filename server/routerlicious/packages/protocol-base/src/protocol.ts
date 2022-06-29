@@ -4,7 +4,6 @@
  */
 
 import {
-    IAudience,
     IDocumentAttributes,
     IClientJoin,
     ICommittedProposal,
@@ -17,7 +16,6 @@ import {
     ISequencedProposal,
     MessageType,
     ISignalMessage,
-    ISignalClient,
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
@@ -53,15 +51,7 @@ export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
 
-export type ProtocolHandlerBuilder = (
-    attributes: IDocumentAttributes,
-    snapshot: IQuorumSnapshot,
-    sendProposal: (key: string, value: any) => number,
-    audience?: IAudience,
-) => IProtocolHandler;
-
 export interface IProtocolHandler {
-    readonly audience?: IAudience;
     readonly quorum: IQuorum;
     readonly attributes: IDocumentAttributes;
 
@@ -93,7 +83,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
         proposals: [number, ISequencedProposal, string[]][],
         values: [string, ICommittedProposal][],
         sendProposal: (key: string, value: any) => number,
-        public readonly audience?: IAudience,
     ) {
         this.term = term ?? 1;
         this._quorum = new Quorum(
@@ -124,20 +113,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
         this._quorum.close();
     }
 
-    public processSignal(message: ISignalMessage) {
-        if (this.audience === undefined) {
-            return;
-        }
-
-        const innerContent = message.content as { content: any; type: string; };
-        if (innerContent.type === MessageType.ClientJoin) {
-            const newClient = innerContent.content as ISignalClient;
-            this.audience.addMember(newClient.clientId, newClient.client);
-        } else if (innerContent.type === MessageType.ClientLeave) {
-            const leftClientId = innerContent.content as string;
-            this.audience.removeMember(leftClientId);
-        }
-    }
+    public processSignal(message: ISignalMessage) {}
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         // verify it's moving sequentially
@@ -210,42 +186,3 @@ export class ProtocolOpHandler implements IProtocolHandler {
     }
 }
 
-export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
-    constructor(
-        attributes: IDocumentAttributes,
-        quorumSnapshot: IQuorumSnapshot,
-        sendProposal: (key: string, value: any) => number,
-        audience?: IAudience,
-    ) {
-        super(
-            attributes.minimumSequenceNumber,
-            attributes.sequenceNumber,
-            attributes.term,
-            quorumSnapshot.members,
-            quorumSnapshot.proposals,
-            quorumSnapshot.values,
-            sendProposal,
-            audience,
-        );
-    }
-
-    public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
-        const client: ILocalSequencedClient | undefined = this.quorum.getMember(message.clientId);
-
-        // Check and report if we're getting messages from a clientId that we previously
-        // flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
-        if (message.clientId != null) {
-            if (client === undefined && message.type !== MessageType.ClientJoin) {
-                // pre-0.58 error message: messageClientIdMissingFromQuorum
-                throw new Error("Remote message's clientId is missing from the quorum");
-            }
-
-            if (client?.shouldHaveLeft === true && message.type !== MessageType.NoOp) {
-                // pre-0.58 error message: messageClientIdShouldHaveLeft
-                throw new Error("Remote message's clientId already should have left");
-            }
-        }
-
-        return super.processMessage(message, local);
-    }
-}
