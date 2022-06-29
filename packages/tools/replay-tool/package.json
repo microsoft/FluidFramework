@@ -60,6 +60,7 @@
     "@fluidframework/shared-summary-block": "^2.0.0",
     "@fluidframework/telemetry-utils": "^2.0.0",
     "@fluidframework/tool-utils": "^2.0.0",
+    "@fluid-experimental/sequence-deprecated": "^2.0.0",
     "json-stable-stringify": "^1.0.1"
   },
   "devDependencies": {

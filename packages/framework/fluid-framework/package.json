@@ -80,6 +80,14 @@
       "RemovedEnumDeclaration_ConnectionState": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "RemovedClassDeclaration_SharedIntervalCollection": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedClassDeclaration_SharedIntervalCollectionFactory": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }

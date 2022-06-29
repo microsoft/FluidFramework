@@ -53,11 +53,11 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { DefaultMap, IMapMessageLocalMetadata, IValueChanged } from "@fluidframework/default-map";
 import {
     IntervalCollection,
+    ISharedIntervalCollection,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
-import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
 const snapshotFileName = "header";
 const contentPath = "content";

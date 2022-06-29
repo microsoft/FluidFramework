@@ -1,12 +1,12 @@
 {
-  "name": "@fluidframework/sequence",
+  "name": "@fluid-experimental/sequence-deprecated",
   "version": "2.0.0",
-  "description": "Distributed sequence",
+  "description": "Deprecated distributed sequences",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/dds/sequence"
+    "directory": "experimental/dds/sequence-deprecated"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
@@ -72,6 +72,7 @@
     "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/runtime-definitions": "^2.0.0",
     "@fluidframework/runtime-utils": "^2.0.0",
+    "@fluidframework/sequence": "^2.0.0",
     "@fluidframework/shared-object-base": "^2.0.0",
     "@fluidframework/telemetry-utils": "^2.0.0",
     "uuid": "^8.3.1"
@@ -84,7 +85,6 @@
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/gitresources": "^0.1037.1000-0",
     "@fluidframework/mocha-test-setup": "^2.0.0",
-    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@^1.0.0",
     "@fluidframework/server-services-client": "^0.1037.1000-0",
     "@fluidframework/test-runtime-utils": "^2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
@@ -104,31 +104,5 @@
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
-  },
-  "typeValidation": {
-    "version": "2.0.0",
-    "broken": {
-      "ClassDeclaration_IntervalCollection": {"backCompat": false},
-      "ClassDeclaration_SequenceInterval": {"backCompat": false},
-      "InterfaceDeclaration_ISharedString": {"backCompat": false},
-      "ClassDeclaration_SequenceEvent": {"backCompat": false},
-      "ClassDeclaration_SequenceDeltaEvent": {"backCompat": false},
-      "ClassDeclaration_SequenceMaintenanceEvent": {"backCompat": false},
-      "ClassDeclaration_SharedNumberSequence": {"backCompat": false},
-      "ClassDeclaration_SharedObjectSequence": {"backCompat": false},
-      "ClassDeclaration_SharedSegmentSequence": {"backCompat": false},
-      "ClassDeclaration_SharedSequence": {"backCompat": false},
-      "ClassDeclaration_SharedString": {"backCompat": false},
-      "TypeAliasDeclaration_SharedStringSegment": {"backCompat": false},
-      "ClassDeclaration_SparseMatrix": {"backCompat": false},
-      "RemovedClassDeclaration_SharedIntervalCollection": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedClassDeclaration_SharedIntervalCollectionFactory": {
-        "backCompat": false,
-        "forwardCompat": false
-      }
-    }
   }
 }

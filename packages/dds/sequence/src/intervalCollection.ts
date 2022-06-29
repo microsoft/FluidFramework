@@ -1625,3 +1625,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return this.localCollection.nextInterval(pos);
     }
 }
+
+export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
+    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
+    getIntervalCollection(label: string): IntervalCollection<TInterval>;
+}
