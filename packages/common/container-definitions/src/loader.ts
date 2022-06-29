@@ -30,18 +30,6 @@ import {
 } from "./fluidPackage";
 
 /**
- * Code loading interface
- *
- * @deprecated in favor of {@link @fluidframework/container-loader#ICodeDetailsLoader}
- */
-export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
-    /**
-     * Loads the package specified by code details and returns a promise to its entry point exports.
-     */
-    load(source: IFluidCodeDetails): Promise<IFluidModule>;
-}
-
-/**
  * Encapsulates a module entry point with corresponding code details.
  */
 export interface IFluidModuleWithDetails {
