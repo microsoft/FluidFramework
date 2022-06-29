@@ -60,7 +60,6 @@ declare function get_current_ClassDeclaration_BlobAggregationStorage():
 declare function use_old_ClassDeclaration_BlobAggregationStorage(
     use: TypeOnly<old.BlobAggregationStorage>);
 use_old_ClassDeclaration_BlobAggregationStorage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_BlobAggregationStorage());
 
 /*
@@ -85,7 +84,6 @@ declare function get_current_ClassDeclaration_BlobCacheStorageService():
 declare function use_old_ClassDeclaration_BlobCacheStorageService(
     use: TypeOnly<old.BlobCacheStorageService>);
 use_old_ClassDeclaration_BlobCacheStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_BlobCacheStorageService());
 
 /*
@@ -326,7 +324,6 @@ declare function get_current_ClassDeclaration_DocumentStorageServiceProxy():
 declare function use_old_ClassDeclaration_DocumentStorageServiceProxy(
     use: TypeOnly<old.DocumentStorageServiceProxy>);
 use_old_ClassDeclaration_DocumentStorageServiceProxy(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DocumentStorageServiceProxy());
 
 /*
@@ -597,6 +594,30 @@ use_old_InterfaceDeclaration_IProgress(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isClientMessage": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isClientMessage():
+    TypeOnly<typeof old.isClientMessage>;
+declare function use_current_FunctionDeclaration_isClientMessage(
+    use: TypeOnly<typeof current.isClientMessage>);
+use_current_FunctionDeclaration_isClientMessage(
+    get_old_FunctionDeclaration_isClientMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isClientMessage": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isClientMessage():
+    TypeOnly<typeof current.isClientMessage>;
+declare function use_old_FunctionDeclaration_isClientMessage(
+    use: TypeOnly<typeof old.isClientMessage>);
+use_old_FunctionDeclaration_isClientMessage(
+    get_current_FunctionDeclaration_isClientMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isFluidResolvedUrl": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isFluidResolvedUrl():
@@ -641,6 +662,30 @@ declare function use_old_FunctionDeclaration_isOnline(
     use: TypeOnly<typeof old.isOnline>);
 use_old_FunctionDeclaration_isOnline(
     get_current_FunctionDeclaration_isOnline());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isRuntimeMessage": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isRuntimeMessage():
+    TypeOnly<typeof old.isRuntimeMessage>;
+declare function use_current_FunctionDeclaration_isRuntimeMessage(
+    use: TypeOnly<typeof current.isRuntimeMessage>);
+use_current_FunctionDeclaration_isRuntimeMessage(
+    get_old_FunctionDeclaration_isRuntimeMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isRuntimeMessage": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isRuntimeMessage():
+    TypeOnly<typeof current.isRuntimeMessage>;
+declare function use_old_FunctionDeclaration_isRuntimeMessage(
+    use: TypeOnly<typeof old.isRuntimeMessage>);
+use_old_FunctionDeclaration_isRuntimeMessage(
+    get_current_FunctionDeclaration_isRuntimeMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -856,7 +901,6 @@ declare function get_current_ClassDeclaration_PrefetchDocumentStorageService():
 declare function use_old_ClassDeclaration_PrefetchDocumentStorageService(
     use: TypeOnly<old.PrefetchDocumentStorageService>);
 use_old_ClassDeclaration_PrefetchDocumentStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_PrefetchDocumentStorageService());
 
 /*

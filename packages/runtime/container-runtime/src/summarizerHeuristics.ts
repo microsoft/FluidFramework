@@ -27,6 +27,16 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
     }
 
     public numNonRuntimeOps: number = 0;
+    public totalOpsSize: number = 0;
+    public hasMissingOpData: boolean = false;
+
+    /**
+     * Cumulative size in bytes of all the ops at the beginning of the summarization attempt.
+     * Is used to adjust totalOpsSize appropriately after successful summarization.
+     */
+     /** */
+    private totalOpsSizeBefore: number = 0;
+
     /**
      * Number of system ops at beginning of attempting to summarize.
      * Is used to adjust numSystemOps appropriately after successful summarization.
@@ -62,6 +72,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 
         this.numSystemOpsBefore = this.numNonRuntimeOps;
         this.numNonSystemOpsBefore = this.numRuntimeOps;
+        this.totalOpsSizeBefore = this.totalOpsSize;
     }
 
     public markLastAttemptAsSuccessful() {
@@ -72,6 +83,9 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 
         this.numRuntimeOps -= this.numNonSystemOpsBefore;
         this.numNonSystemOpsBefore = 0;
+
+        this.totalOpsSize -= this.totalOpsSizeBefore;
+        this.totalOpsSizeBefore = 0;
     }
 }
 
@@ -90,7 +104,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         private readonly summarizeStrategies: ISummaryHeuristicStrategy[] = getDefaultSummaryHeuristicStrategies(),
     ) {
         this.idleTimer = new Timer(
-            this.configuration.idleTime,
+            this.idleTime,
             () => this.runSummarize("idle"));
 
         this.runSummarize = (reason: SummarizeReason) => {
@@ -104,12 +118,31 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
         };
     }
 
+    public get idleTime(): number {
+        const maxIdleTime = this.configuration.maxIdleTime;
+        const minIdleTime = this.configuration.minIdleTime;
+        const weightedNumOfOps = getWeightedNumberOfOps(
+            this.heuristicData.numRuntimeOps,
+            this.heuristicData.numNonRuntimeOps,
+            this.configuration.runtimeOpWeight,
+            this.configuration.nonRuntimeOpWeight,
+        );
+        const pToMaxOps = weightedNumOfOps * 1.0 / this.configuration.maxOps;
+
+        if (pToMaxOps >= 1) {
+            return minIdleTime;
+        }
+
+        // Return a ratioed idle time based on the percentage of ops
+        return maxIdleTime - ((maxIdleTime - minIdleTime) * pToMaxOps);
+    }
+
     public get opsSinceLastAck(): number {
         return this.heuristicData.lastOpSequenceNumber - this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
     }
 
     public start() {
-        this.idleTimer?.start();
+        this.idleTimer?.start(this.idleTime);
     }
 
     public run() {
@@ -119,7 +152,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
             }
         }
 
-        this.idleTimer?.restart();
+        this.idleTimer?.restart(this.idleTime);
     }
 
     public shouldRunLastSummary(): boolean {
@@ -153,6 +186,16 @@ class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     }
 }
 
+function getWeightedNumberOfOps(
+    runtimeOpCount: number,
+    nonRuntimeOpCount: number,
+    runtimeOpWeight: number,
+    nonRuntimeOpWeight: number,
+): number {
+    return (runtimeOpWeight * runtimeOpCount)
+         + (nonRuntimeOpWeight * nonRuntimeOpCount);
+}
+
 /** Strategy used to do a weighted analysis on the ops we've processed since the last successful summary */
 class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
     public readonly summarizeReason: Readonly<SummarizeReason> = "maxOps";
@@ -161,8 +204,12 @@ class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
         configuration: ISummaryConfigurationHeuristics,
         heuristicData: ISummarizeHeuristicData,
     ): boolean {
-        const weightedNumOfOps = (configuration.runtimeOpWeight * heuristicData.numRuntimeOps)
-                               + (configuration.nonRuntimeOpWeight * heuristicData.numNonRuntimeOps);
+        const weightedNumOfOps = getWeightedNumberOfOps(
+            heuristicData.numRuntimeOps,
+            heuristicData.numNonRuntimeOps,
+            configuration.runtimeOpWeight,
+            configuration.nonRuntimeOpWeight,
+        );
         return weightedNumOfOps > configuration.maxOps;
     }
 }

@@ -85,7 +85,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         public readonly attributes: IChannelAttributes) {
         super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
 
-        assert(!id.includes("/"), "Id cannot contain slashes");
+        assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
         this.handle = new SharedObjectHandle(
             this,

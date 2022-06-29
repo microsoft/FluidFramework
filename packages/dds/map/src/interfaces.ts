@@ -98,8 +98,12 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
 }
 
 /**
- * Events emitted in response to changes to the directory data.  These events only emit on the ISharedDirectory itself,
+ * Events emitted in response to changes to the directory data. These events only emit on the ISharedDirectory itself,
  * and not on subdirectories.
+ *
+ * @remarks
+ *
+ * The following is the list of events emitted.
  *
  * ### "valueChanged"
  *
@@ -118,7 +122,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * - `changed` - Information on the key that changed, its value prior to the change, and the path to the key that
  *   changed.
  *
- * - `local` - Whether the change originated from the this client.
+ * - `local` - Whether the change originated from this client.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -131,7 +135,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  * ```typescript
  * (local: boolean, target: IEventThisPlaceHolder) => void
  * ```
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the clear originated from this client.
  *
  * - `target` - The ISharedDirectory itself.
  *
@@ -151,7 +155,7 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
  *
  * - `target` - The ISharedDirectory itself.
  *
- * * ### "subDirectoryDeleted"
+ * ###"subDirectoryDeleted"
  *
  * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
  *
@@ -193,6 +197,10 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 /**
  * Events emitted in response to changes to the directory data.
  *
+ * @remarks
+ *
+ * The following is the list of events emitted.
+ *
  * ### "containedValueChanged"
  *
  * The containedValueChanged event is emitted when a key is set or deleted.  As opposed to the SharedDirectory's
@@ -205,10 +213,10 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  * ```
  * - `changed` - Information on the key that changed and its value prior to the change.
  *
- * - `local` - Whether the change originated from the this client.
- *
+ * - `local` - Whether the change originated from this client.
  *
  * - `target` - The IDirectory itself.
+ *
  * ### "subDirectoryCreated"
  *
  * The subDirectoryCreated event is emitted when a subdirectory is created.
@@ -225,7 +233,7 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
  *
  * - `target` - The ISharedDirectory itself.
  *
- * * ### "subDirectoryDeleted"
+ * ### "subDirectoryDeleted"
  *
  * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
  *
@@ -288,7 +296,7 @@ export interface ISharedDirectory extends
 }
 
 /**
- * Type of "valueChanged" event parameter for SharedDirectory
+ * Type of "valueChanged" event parameter for SharedDirectory.
  */
 export interface IDirectoryValueChanged extends IValueChanged {
     /**
@@ -299,6 +307,10 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 /**
  * Events emitted in response to changes to the map data.
+ *
+ * @remarks
+ *
+ * The following is the list of events emitted.
  *
  * ### "valueChanged"
  *
@@ -315,7 +327,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
  * ```
  * - `changed` - Information on the key that changed and its value prior to the change.
  *
- * - `local` - Whether the change originated from the this client.
+ * - `local` - Whether the change originated from this client.
  *
  * - `target` - The map itself.
  *
@@ -328,7 +340,7 @@ export interface IDirectoryValueChanged extends IValueChanged {
  * ```typescript
  * (local: boolean, target: IEventThisPlaceHolder) => void
  * ```
- * - `local` - Whether the clear originated from the this client.
+ * - `local` - Whether the clear originated from this client.
  *
  * - `target` - The map itself.
  */
@@ -363,19 +375,22 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 }
 
 /**
- * The _ready-for-serialization_ format of values contained in DDS contents.  This allows us to use
+ * The _ready-for-serialization_ format of values contained in DDS contents. This allows us to use
  * ISerializableValue.type to understand whether they're storing a Plain JS object, a SharedObject, or a value type.
+ *
+ * @remarks
+ *
  * Note that the in-memory equivalent of ISerializableValue is ILocalValue (similarly holding a type, but with
  * the _in-memory representation_ of the value instead).  An ISerializableValue is what gets passed to
- * JSON.stringify and comes out of JSON.parse.  This format is used both for snapshots (loadCore/populate)
+ * JSON.stringify and comes out of JSON.parse. This format is used both for snapshots (loadCore/populate)
  * and ops (set).
  * If type is Plain, it must be a plain JS object that can survive a JSON.stringify/parse.  E.g. a URL object will
- * just get stringified to a URL string and not rehydrate as a URL object on the other side.  It may contain members
+ * just get stringified to a URL string and not rehydrate as a URL object on the other side. It may contain members
  * that are ISerializedHandle (the serialized form of a handle).
  * If type is a value type then it must be amongst the types registered via registerValueType or we won't know how
  * to serialize/deserialize it (we rely on its factory via .load() and .store()).  Its value will be type-dependent.
  * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
- * channel ID.  This type is legacy and deprecated.
+ * channel ID. This type is legacy and deprecated.
  */
 export interface ISerializableValue {
     /**

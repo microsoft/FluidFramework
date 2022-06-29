@@ -8,7 +8,7 @@ import { bumpDependencies } from "./bumpDependencies";
 import { bumpVersion } from "./bumpVersion";
 import { runPolicyCheckWithFix } from "./policyCheck";
 import { fatal } from "./utils";
-import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 
 export function getPackageShortName(pkgName: string) {
@@ -52,7 +52,7 @@ export async function releaseVersion(context: Context, releaseName: string, upda
     const depVersions = await context.collectBumpInfo(releaseName);
 
     let releaseGroup: string | undefined;
-    let packages: Package[] = [];
+    const packages: Package[] = [];
     let monoRepo: MonoRepo | undefined;
     // Assumes that the packages are in dependency order already.
     for (const [name] of depVersions.repoVersions) {
@@ -63,12 +63,8 @@ export async function releaseVersion(context: Context, releaseName: string, upda
                     packages.push(pkg);
                 }
             } else {
-                if (name === MonoRepoKind[MonoRepoKind.Client]) {
-                    monoRepo = context.repo.clientMonoRepo;
-                    break;
-                }
-                if (name === MonoRepoKind[MonoRepoKind.Server]) {
-                    monoRepo = context.repo.serverMonoRepo;
+                if (isMonoRepoKind(name)) {
+                    monoRepo = context.repo.monoRepos.get(name)
                     break;
                 }
                 const pkg = context.fullPackageMap.get(name);

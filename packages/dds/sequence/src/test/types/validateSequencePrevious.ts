@@ -16,6 +16,30 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_CompressedSerializedInterval": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_CompressedSerializedInterval():
+    TypeOnly<old.CompressedSerializedInterval>;
+declare function use_current_TypeAliasDeclaration_CompressedSerializedInterval(
+    use: TypeOnly<current.CompressedSerializedInterval>);
+use_current_TypeAliasDeclaration_CompressedSerializedInterval(
+    get_old_TypeAliasDeclaration_CompressedSerializedInterval());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_CompressedSerializedInterval": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_CompressedSerializedInterval():
+    TypeOnly<current.CompressedSerializedInterval>;
+declare function use_old_TypeAliasDeclaration_CompressedSerializedInterval(
+    use: TypeOnly<old.CompressedSerializedInterval>);
+use_old_TypeAliasDeclaration_CompressedSerializedInterval(
+    get_current_TypeAliasDeclaration_CompressedSerializedInterval());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_DeserializeCallback": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_DeserializeCallback():
@@ -112,6 +136,30 @@ use_old_InterfaceDeclaration_IJSONRunSegment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMapMessageLocalMetadata": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IMapMessageLocalMetadata():
+    TypeOnly<old.IMapMessageLocalMetadata>;
+declare function use_current_InterfaceDeclaration_IMapMessageLocalMetadata(
+    use: TypeOnly<current.IMapMessageLocalMetadata>);
+use_current_InterfaceDeclaration_IMapMessageLocalMetadata(
+    get_old_InterfaceDeclaration_IMapMessageLocalMetadata());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IMapMessageLocalMetadata": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IMapMessageLocalMetadata():
+    TypeOnly<current.IMapMessageLocalMetadata>;
+declare function use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
+    use: TypeOnly<old.IMapMessageLocalMetadata>);
+use_old_InterfaceDeclaration_IMapMessageLocalMetadata(
+    get_current_InterfaceDeclaration_IMapMessageLocalMetadata());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Interval": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Interval():
@@ -143,7 +191,6 @@ declare function get_old_ClassDeclaration_IntervalCollection():
 declare function use_current_ClassDeclaration_IntervalCollection(
     use: TypeOnly<current.IntervalCollection<any>>);
 use_current_ClassDeclaration_IntervalCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_IntervalCollection());
 
 /*
@@ -156,6 +203,7 @@ declare function get_current_ClassDeclaration_IntervalCollection():
 declare function use_old_ClassDeclaration_IntervalCollection(
     use: TypeOnly<old.IntervalCollection<any>>);
 use_old_ClassDeclaration_IntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_IntervalCollection());
 
 /*
@@ -281,6 +329,30 @@ use_old_InterfaceDeclaration_ISerializedInterval(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializedIntervalCollectionV2": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISerializedIntervalCollectionV2():
+    TypeOnly<old.ISerializedIntervalCollectionV2>;
+declare function use_current_InterfaceDeclaration_ISerializedIntervalCollectionV2(
+    use: TypeOnly<current.ISerializedIntervalCollectionV2>);
+use_current_InterfaceDeclaration_ISerializedIntervalCollectionV2(
+    get_old_InterfaceDeclaration_ISerializedIntervalCollectionV2());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializedIntervalCollectionV2": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISerializedIntervalCollectionV2():
+    TypeOnly<current.ISerializedIntervalCollectionV2>;
+declare function use_old_InterfaceDeclaration_ISerializedIntervalCollectionV2(
+    use: TypeOnly<old.ISerializedIntervalCollectionV2>);
+use_old_InterfaceDeclaration_ISerializedIntervalCollectionV2(
+    get_current_InterfaceDeclaration_ISerializedIntervalCollectionV2());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISharedIntervalCollection": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISharedIntervalCollection():
@@ -336,7 +408,6 @@ declare function get_old_InterfaceDeclaration_ISharedString():
 declare function use_current_InterfaceDeclaration_ISharedString(
     use: TypeOnly<current.ISharedString>);
 use_current_InterfaceDeclaration_ISharedString(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISharedString());
 
 /*
@@ -349,6 +420,7 @@ declare function get_current_InterfaceDeclaration_ISharedString():
 declare function use_old_InterfaceDeclaration_ISharedString(
     use: TypeOnly<old.ISharedString>);
 use_old_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedString());
 
 /*
@@ -637,6 +709,7 @@ declare function get_current_ClassDeclaration_SequenceDeltaEvent():
 declare function use_old_ClassDeclaration_SequenceDeltaEvent(
     use: TypeOnly<old.SequenceDeltaEvent>);
 use_old_ClassDeclaration_SequenceDeltaEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceDeltaEvent());
 
 /*
@@ -661,6 +734,7 @@ declare function get_current_ClassDeclaration_SequenceEvent():
 declare function use_old_ClassDeclaration_SequenceEvent(
     use: TypeOnly<old.SequenceEvent>);
 use_old_ClassDeclaration_SequenceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceEvent());
 
 /*
@@ -673,7 +747,6 @@ declare function get_old_ClassDeclaration_SequenceInterval():
 declare function use_current_ClassDeclaration_SequenceInterval(
     use: TypeOnly<current.SequenceInterval>);
 use_current_ClassDeclaration_SequenceInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SequenceInterval());
 
 /*
@@ -711,6 +784,7 @@ declare function get_current_ClassDeclaration_SequenceMaintenanceEvent():
 declare function use_old_ClassDeclaration_SequenceMaintenanceEvent(
     use: TypeOnly<old.SequenceMaintenanceEvent>);
 use_old_ClassDeclaration_SequenceMaintenanceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceMaintenanceEvent());
 
 /*
@@ -771,7 +845,6 @@ declare function get_old_ClassDeclaration_SharedNumberSequence():
 declare function use_current_ClassDeclaration_SharedNumberSequence(
     use: TypeOnly<current.SharedNumberSequence>);
 use_current_ClassDeclaration_SharedNumberSequence(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedNumberSequence());
 
 /*
@@ -784,6 +857,7 @@ declare function get_current_ClassDeclaration_SharedNumberSequence():
 declare function use_old_ClassDeclaration_SharedNumberSequence(
     use: TypeOnly<old.SharedNumberSequence>);
 use_old_ClassDeclaration_SharedNumberSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedNumberSequence());
 
 /*
@@ -820,7 +894,6 @@ declare function get_old_ClassDeclaration_SharedObjectSequence():
 declare function use_current_ClassDeclaration_SharedObjectSequence(
     use: TypeOnly<current.SharedObjectSequence<any>>);
 use_current_ClassDeclaration_SharedObjectSequence(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedObjectSequence());
 
 /*
@@ -833,6 +906,7 @@ declare function get_current_ClassDeclaration_SharedObjectSequence():
 declare function use_old_ClassDeclaration_SharedObjectSequence(
     use: TypeOnly<old.SharedObjectSequence<any>>);
 use_old_ClassDeclaration_SharedObjectSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedObjectSequence());
 
 /*
@@ -869,7 +943,6 @@ declare function get_old_ClassDeclaration_SharedSegmentSequence():
 declare function use_current_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<current.SharedSegmentSequence<any>>);
 use_current_ClassDeclaration_SharedSegmentSequence(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -882,6 +955,7 @@ declare function get_current_ClassDeclaration_SharedSegmentSequence():
 declare function use_old_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<old.SharedSegmentSequence<any>>);
 use_old_ClassDeclaration_SharedSegmentSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -894,7 +968,6 @@ declare function get_old_ClassDeclaration_SharedSequence():
 declare function use_current_ClassDeclaration_SharedSequence(
     use: TypeOnly<current.SharedSequence<any>>);
 use_current_ClassDeclaration_SharedSequence(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedSequence());
 
 /*
@@ -907,6 +980,7 @@ declare function get_current_ClassDeclaration_SharedSequence():
 declare function use_old_ClassDeclaration_SharedSequence(
     use: TypeOnly<old.SharedSequence<any>>);
 use_old_ClassDeclaration_SharedSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSequence());
 
 /*
@@ -919,7 +993,6 @@ declare function get_old_ClassDeclaration_SharedString():
 declare function use_current_ClassDeclaration_SharedString(
     use: TypeOnly<current.SharedString>);
 use_current_ClassDeclaration_SharedString(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SharedString());
 
 /*
@@ -932,6 +1005,7 @@ declare function get_current_ClassDeclaration_SharedString():
 declare function use_old_ClassDeclaration_SharedString(
     use: TypeOnly<old.SharedString>);
 use_old_ClassDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedString());
 
 /*
@@ -993,7 +1067,6 @@ declare function get_old_ClassDeclaration_SparseMatrix():
 declare function use_current_ClassDeclaration_SparseMatrix(
     use: TypeOnly<current.SparseMatrix>);
 use_current_ClassDeclaration_SparseMatrix(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SparseMatrix());
 
 /*
@@ -1006,6 +1079,7 @@ declare function get_current_ClassDeclaration_SparseMatrix():
 declare function use_old_ClassDeclaration_SparseMatrix(
     use: TypeOnly<old.SparseMatrix>);
 use_old_ClassDeclaration_SparseMatrix(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SparseMatrix());
 
 /*

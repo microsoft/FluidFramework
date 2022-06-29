@@ -43,17 +43,17 @@
     "@fluidframework/container-runtime-definitions": "^2.0.0",
     "@fluidframework/core-interfaces": "^2.0.0",
     "@fluidframework/datastore-definitions": "^2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/request-handler": "^2.0.0",
     "@fluidframework/runtime-definitions": "^2.0.0",
     "@fluidframework/runtime-utils": "^2.0.0"
   },
   "devDependencies": {
     "@fluid-experimental/get-container": "^2.0.0",
-    "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.71273",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@^0.59.0",
+    "@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/node": "^14.18.0",
@@ -66,15 +66,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.0.0",
-    "broken": {
-      "InterfaceDeclaration_IFluidContainer": {
-        "forwardCompat": false,
-        "backCompat": false
-      },
-      "ClassDeclaration_FluidContainer": {
-        "backCompat": false
-      }
-    }
+    "version": "2.0.0",
+    "broken": {}
   }
 }

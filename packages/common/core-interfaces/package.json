@@ -38,9 +38,9 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.71273",
-    "@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@0.43.1000",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
+    "@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@1.1.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
@@ -53,24 +53,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.44.1000",
-    "broken": {
-      "RemovedVariableDeclaration_IFluidSerializer": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_IFluidSerializer": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_IProvideFluidSerializer": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_ISerializedHandle": {
-        "backCompat": false,
-        "forwardCompat": false
-      }
-    }
+    "version": "2.0.0",
+    "broken": {}
   }
 }

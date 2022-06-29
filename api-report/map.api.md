@@ -210,6 +210,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
     get size(): number;
     subdirectories(): IterableIterator<[string, IDirectory]>;

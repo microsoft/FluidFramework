@@ -201,7 +201,7 @@ export const handlers: Handler[] = [
                 return { resolved: false, message: 'Error parsing JSON file: ' + file };
             }
 
-            let resolved = true;
+            const resolved = true;
 
             if (json.author === undefined || json.author !== author) {
                 json.author = author;
@@ -483,7 +483,7 @@ export const handlers: Handler[] = [
                 return { resolved: false, message: 'Error parsing JSON file: ' + file };
             }
 
-            let resolved = true;
+            const resolved = true;
 
             const { valid, validationResults } = runNpmJsonLint(json, file);
 
@@ -545,7 +545,7 @@ const defaultNpmPackageJsonLintConfig = {
 function getLintConfig(file: string) {
     const configFilePath = path.join(path.dirname(file), ".npmpackagejsonlintrc.json");
     const defaultConfig = defaultNpmPackageJsonLintConfig;
-    let finalConfig = {};
+    const finalConfig = {};
     if (pathExistsSync(configFilePath)) {
         let configJson;
         try {

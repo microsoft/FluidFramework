@@ -100,7 +100,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
-    // (undocumented)
+    // @deprecated (undocumented)
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
@@ -383,8 +383,6 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcBlobNodeCount?: number;
     readonly gcStateUpdatedDataStoreCount?: number;
     readonly gcTotalBlobsSize?: number;
-    readonly nonSystemOpsSinceLastSummary: number;
-    readonly opsSizesSinceLastSummary: number;
     readonly summarizedDataStoreCount: number;
     readonly summaryNumber: number;
 }
@@ -603,9 +601,12 @@ export interface ISummaryConfigurationDisableSummarizer {
 
 // @public (undocumented)
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
+    // @deprecated (undocumented)
     idleTime: number;
+    maxIdleTime: number;
     maxOps: number;
     maxTime: number;
+    minIdleTime: number;
     minOpsForLastSummaryAttempt: number;
     nonRuntimeOpWeight: number;
     runtimeOpWeight: number;
@@ -631,7 +632,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
-    // (undocumented)
+    // @deprecated (undocumented)
     disableIsolatedChannels?: boolean;
     // @deprecated (undocumented)
     disableSummaries?: boolean;

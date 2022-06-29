@@ -63,7 +63,7 @@ function makeHandler(config: IFileConfig) {
 export const handlers: Handler[] = [
     {
         name: "html-copyright-file-header",
-        match: /(^|\/)[^\/]+\.html$/i,
+        match: /(^|\/)[^/]+\.html$/i,
         handler: makeHandler({
             type: "Html",
             lineStart: /<!-- /,    // Lines begin with '<!-- '
@@ -100,7 +100,7 @@ export const handlers: Handler[] = [
     },
     {
         name: "js-ts-copyright-file-header",
-        match: /(^|\/)[^\/]+\.[jt]sx?$/i,
+        match: /(^|\/)[^/]+\.[jt]sx?$/i,
         handler: makeHandler({
             type: "JavaScript/TypeScript",
             headerStart: /(#![^\n]*\r?\n)?\/\*!\r?\n/,  // Begins with optional hashbang followed by '/*!'

@@ -66,12 +66,12 @@
     "@fluidframework/sequence": "^2.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.71273",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^2.0.0",
     "@fluidframework/test-runtime-utils": "^2.0.0",
-    "@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@^0.59.0",
+    "@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
@@ -91,7 +91,9 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "ClassDeclaration_SharedSegmentSequenceRevertible": {"backCompat": false}
+    }
   }
 }

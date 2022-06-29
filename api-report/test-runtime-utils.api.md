@@ -67,7 +67,9 @@ export interface IMockContainerRuntimePendingMessage {
 
 // @public
 export class InsecureTokenProvider implements ITokenProvider {
-    constructor(tenantKey: string, user: IUser);
+    constructor(
+    tenantKey: string,
+    user: IUser);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -338,6 +340,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 
 // @public
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+    constructor(overrides?: {
+        clientId?: string;
+    });
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
