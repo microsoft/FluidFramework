@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { SharedXTree } from "./tree";
-export { SharedXTreeFactory } from "./runtime";
+export { run } from "@oclif/core";

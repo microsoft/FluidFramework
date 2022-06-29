@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
+# DisableDockerDetector "No feasible secure solution for OSS repos yet"
+
 FROM node:14.19.1-stretch-slim AS base
 
 # node-gyp dependencies

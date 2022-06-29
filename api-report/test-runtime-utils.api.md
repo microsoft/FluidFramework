@@ -67,7 +67,9 @@ export interface IMockContainerRuntimePendingMessage {
 
 // @public
 export class InsecureTokenProvider implements ITokenProvider {
-    constructor(tenantKey: string, user: IUser);
+    constructor(
+    tenantKey: string,
+    user: IUser);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -286,7 +288,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     createProps?: any;
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
+    // @deprecated (undocumented)
     documentId: string;
     // (undocumented)
     readonly existing: boolean;

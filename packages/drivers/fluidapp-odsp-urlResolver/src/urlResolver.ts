@@ -5,7 +5,7 @@
 
 import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IContainerPackageInfo, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { createOdspUrl, OdspDriverUrlResolver } from "@fluidframework/odsp-driver";
 import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 
@@ -49,6 +49,7 @@ export class FluidAppOdspUrlResolver implements IUrlResolver {
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,
+        packageInfoSource?: IContainerPackageInfo,
     ): Promise<string> {
         throw new Error("Not implemented");
     }

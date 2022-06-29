@@ -259,7 +259,6 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 
 // @public (undocumented)
 export interface IUrlResolver {
-    // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;

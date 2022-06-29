@@ -16,6 +16,19 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "bump",
+            "program": "${workspaceFolder}/dist/bumpVersion/bumpVersionCli.js",
+            "args": [
+                "--writeReleaseVersions"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "cwd": "${workspaceFolder}",
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "policy-check",
             "program": "${workspaceFolder}\\dist\\repoPolicyCheck\\repoPolicyCheck.js",
             "args": [
