@@ -265,6 +265,12 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof (x?.value) !== "object" && typeof (x?.tag) === "string");
 }
 
+export function isSimpleArray(x: any): boolean {
+    if (!Array.isArray(x)) {
+        return false;
+    }
+    return x.every((val) => typeof val === "string" || "number" || "boolean" || "undefined");
+}
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
@@ -285,9 +291,13 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
             default: {
                 if (isTaggedTelemetryPropertyValue(val)) {
                     props[key] = val;
+                } else if (isSimpleArray(val)) {
+                    // we will log array object of primitives
+                    props[key] = JSON.stringify(val);
                 } else {
                     // We don't support logging arbitrary objects
                     props[key] = "REDACTED (arbitrary object)";
+                    console.error("unSupported Format of Logging Error Property:", val);
                 }
                 break;
             }
