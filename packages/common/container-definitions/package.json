@@ -68,7 +68,7 @@
       "RemovedInterfaceDeclaration_ICodeLoader": {
         "forwardCompat": false,
         "backCompat": false
-      }
+      },
       "RemovedTypeAliasDeclaration_ConnectionState.Connecting": {
         "forwardCompat": false,
         "backCompat": false
