@@ -315,7 +315,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         codeDetails: IFluidCodeDetails,
         protocolDetails?: IProtocolDetails,
     ): Promise<Container> {
-        const container = new Container(loader, {});
+        const container = new Container(
+            loader,
+            {});
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -336,7 +338,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         snapshot: string,
         protocolDetails?: IProtocolDetails,
     ): Promise<Container> {
-        const container = new Container(loader, {});
+        const container = new Container(
+            loader,
+            {});
+
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
             { eventName: "RehydrateDetachedFromSnapshot" },
