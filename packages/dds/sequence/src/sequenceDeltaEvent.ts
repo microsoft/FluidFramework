@@ -72,7 +72,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     /**
      * The client id of the client that made the change which caused the delta event
      */
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.mergeTreeClient.longClientId;
     }
 

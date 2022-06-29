@@ -11,6 +11,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
     IJSONSegment,
+    ISegment,
     Marker,
     TextSegment,
 } from "@fluidframework/merge-tree";
@@ -32,12 +33,14 @@ export class SharedStringFactory implements IChannelFactory {
         packageVersion: pkgVersion,
     };
 
-    public static segmentFromSpec(spec: any): SharedStringSegment {
+    public static segmentFromSpec(spec: any): SharedStringSegment | undefined {
         const maybeText = TextSegment.fromJSONObject(spec);
         if (maybeText) { return maybeText; }
 
         const maybeMarker = Marker.fromJSONObject(spec);
         if (maybeMarker) { return maybeMarker; }
+
+        return undefined;
     }
 
     public get type() {
@@ -172,7 +175,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
      * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
      * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
      */
-    public static segmentFromSpec(segSpec: IJSONSegment) {
+    public static segmentFromSpec(segSpec: IJSONSegment): ISegment | undefined {
         const runSegment = segSpec as IJSONRunSegment<number>;
         if (runSegment.items) {
             const seg = new SubSequence<number>(runSegment.items);
