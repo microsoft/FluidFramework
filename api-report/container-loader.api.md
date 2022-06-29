@@ -36,6 +36,7 @@ import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
@@ -55,7 +56,7 @@ export enum ConnectionState {
 
 // @public (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    constructor(loader: Loader, config: IContainerConfig, audience?: IAudience);
+    constructor(loader: Loader, config: IContainerConfig);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
     // (undocumented)
@@ -200,8 +201,7 @@ export interface IPendingContainerState {
 
 // @public (undocumented)
 export interface IProtocolDetails {
-    audience?: IAudience;
-    protocolHandlerBuilder?: ProtocolHandlerBuilder;
+    protocolHandlerBuilder: ProtocolHandlerBuilder;
 }
 
 // @public (undocumented)
@@ -228,7 +228,7 @@ export class Loader implements IHostLoader {
 }
 
 // @public (undocumented)
-export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number, audience: IAudience) => IProtocolHandler;
+export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number, initialClients: ISignalClient[]) => IProtocolHandler;
 
 // @public (undocumented)
 export class RelativeLoader implements ILoader {

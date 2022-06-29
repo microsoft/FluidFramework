@@ -113,7 +113,7 @@ export class ProtocolOpHandler implements IProtocolHandler {
         this._quorum.close();
     }
 
-    public processSignal(message: ISignalMessage) {}
+    public processSignal(_message: ISignalMessage) {}
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         // verify it's moving sequentially

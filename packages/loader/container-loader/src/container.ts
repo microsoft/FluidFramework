@@ -69,6 +69,7 @@ import {
     ISequencedClient,
     ISequencedDocumentMessage,
     ISequencedProposal,
+    ISignalClient,
     ISignalMessage,
     ISnapshotTree,
     ISummaryContent,
@@ -109,8 +110,8 @@ import { ConnectionState } from "./connectionState";
 import {
     IProtocolDetails,
     IProtocolHandler,
+    ProtocolHandler,
     ProtocolHandlerBuilder,
-    ProtocolOpHandlerWithClientValidation
 } from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
@@ -262,8 +263,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
                 serializedContainerState: pendingLocalState,
-            },
-            protocolDetails?.audience);
+            });
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -313,10 +313,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         codeDetails: IFluidCodeDetails,
         protocolDetails?: IProtocolDetails,
     ): Promise<Container> {
-        const container = new Container(
-            loader,
-            {},
-            protocolDetails?.audience);
+        const container = new Container(loader, {});
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -337,10 +334,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         snapshot: string,
         protocolDetails?: IProtocolDetails,
     ): Promise<Container> {
-        const container = new Container(
-            loader,
-            {},
-            protocolDetails?.audience);
+        const container = new Container(loader, {});
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
             { eventName: "RehydrateDetachedFromSnapshot" },
@@ -396,9 +390,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
+    private _initialClients: ISignalClient[] = [];
     private service: IDocumentService | undefined;
-    private readonly _audience: IAudience;
-
     private _context: ContainerContext | undefined;
     private get context() {
         if (this._context === undefined) {
@@ -540,7 +533,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     constructor(
         private readonly loader: Loader,
         config: IContainerConfig,
-        audience?: IAudience,
     ) {
         super((name, error) => {
             this.mc.logger.sendErrorEvent(
@@ -550,7 +542,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 error);
             });
-        this._audience = audience ?? new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._resolvedUrl = config.resolvedUrl;
@@ -1400,12 +1391,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 attributes,
                 quorumSnapshot,
                 (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-                this._audience,
-            ) : new ProtocolOpHandlerWithClientValidation(
+                this._initialClients,
+            ) : new ProtocolHandler(
                 attributes,
                 quorumSnapshot,
                 (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-                this._audience,
+                new Audience(),
+                this._initialClients,
             );
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
@@ -1528,12 +1520,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         deltaManager.inboundSignal.pause();
 
-        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
-            // Back-compat for new client and old server.
-            this._audience.clear();
+        deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+            this._initialClients = details.initialClients ?? [];
 
-            for (const priorClient of details.initialClients ?? []) {
-                this._audience.addMember(priorClient.clientId, priorClient.client);
+            if (this._protocolHandler !== undefined) {
+                // Back-compat for new client and old server.
+                this.audience.clear();
+
+                for (const priorClient of this._initialClients) {
+                    this.audience.addMember(priorClient.clientId, priorClient.client);
+                }
             }
 
             this.connectionStateHandler.receivedConnectEvent(

@@ -19,39 +19,31 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 
-
 export interface IProtocolDetails {
     /**
-     * Optional function to be used for creating a protocol handler. If not provided,
-     * an instance of {@link @fluidframework/protocol-base/protocol.ts#ProtocolOpHandlerWithClientValidation}
-     * will be created and used.
+     * Function to be used for creating a protocol handler.
      */
-    protocolHandlerBuilder?: ProtocolHandlerBuilder;
-
-    /**
-     * Optional implementation of the audience logic. If not provided,
-     * the default fluid implementation will be used.
-     */
-    audience?: IAudience;
+    protocolHandlerBuilder: ProtocolHandlerBuilder;
 }
 
 export type ProtocolHandlerBuilder = (
     attributes: IDocumentAttributes,
     snapshot: IQuorumSnapshot,
     sendProposal: (key: string, value: any) => number,
-    audience: IAudience,
+    initialClients: ISignalClient[],
 ) => IProtocolHandler;
 
 export interface IProtocolHandler extends IBaseProtocolHandler {
     readonly audience: IAudience;
 }
 
-export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler implements IProtocolHandler {
+export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandler {
     constructor(
         attributes: IDocumentAttributes,
         quorumSnapshot: IQuorumSnapshot,
         sendProposal: (key: string, value: any) => number,
         readonly audience: IAudience,
+        initialClients: ISignalClient[],
     ) {
         super(
             attributes.minimumSequenceNumber,
@@ -62,6 +54,10 @@ export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler imp
             quorumSnapshot.values,
             sendProposal,
         );
+
+        for (const initialClient of initialClients) {
+            this.audience.addMember(initialClient.clientId, initialClient.client);
+        }
     }
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
@@ -86,12 +82,18 @@ export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler imp
 
     public processSignal(message: ISignalMessage) {
         const innerContent = message.content as { content: any; type: string; };
-        if (innerContent.type === MessageType.ClientJoin) {
-            const newClient = innerContent.content as ISignalClient;
-            this.audience.addMember(newClient.clientId, newClient.client);
-        } else if (innerContent.type === MessageType.ClientLeave) {
-            const leftClientId = innerContent.content as string;
-            this.audience.removeMember(leftClientId);
+        switch (innerContent.type) {
+            case MessageType.ClientJoin: {
+                const newClient = innerContent.content as ISignalClient;
+                this.audience.addMember(newClient.clientId, newClient.client);
+                break;
+            }
+            case MessageType.ClientLeave: {
+                const leftClientId = innerContent.content as string;
+                this.audience.removeMember(leftClientId);
+                break;
+            }
+            default: break;
         }
     }
 }
