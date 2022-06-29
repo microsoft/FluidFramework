@@ -20,10 +20,12 @@ import {
     IntervalTree,
     ISegment,
     LocalReference,
+    LocalReferencePosition,
     MergeTreeDeltaType,
     PropertiesManager,
     PropertySet,
     RedBlackTree,
+    ReferencePosition,
     ReferenceType,
     refTypeIncludesFlag,
     reservedRangeLabelsKey,
@@ -1021,19 +1023,35 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     /**
-     * This event is invoked whenever the properties or endpoints of an interval may have changed.
+     * This event is invoked whenever the endpoints of an interval may have changed.
      * This can happen on:
-     * - endpoint modification (local or remote)
+     * - local endpoint modification
      * - ack of an endpoint modification
-     * - property change (local or remote)
      * - position change due to segment sliding (will always appear as a local change)
      * The `interval` argument reflects the new values.
+     * `previousEndpoints` contains `ReferencePosition`s at the same location as the interval's original endpoints.
+     * These references may be transient, so should only be used for location information.
+     * `local` reflects whether the change originated locally.
+     * `op` is defined if and only if the server has acked this change.
      */
     (event: "changeInterval",
-        listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
+        listener: (interval: TInterval, previousEndpoints: { start: ReferencePosition, end: ReferencePosition }, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
+    /**
+     * This event is invoked whenever an interval is added or removed from the collection.
+     * `local` reflects whether the change originated locally.
+     * `op` is defined if and only if the server has acked this change.
+     */
     (event: "addInterval" | "deleteInterval",
-        listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void);
-    (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void);
+        listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
+    /**
+     * This event is invoked whenever an interval's properties have changed.
+     * `interval` reflects the state of the updated properties.
+     * `propertyDeltas` is a map-like containing all changed key-values.
+     * `previousProps` is the property bag before the change.
+     * `local` reflects whether the change originated locally.
+     * `op` is defined if and only if the server has acked this change.
+     */
+    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, previousProps: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
 }
 
 export class IntervalCollection<TInterval extends ISerializableInterval>
