@@ -136,26 +136,14 @@ use_old_TypeAliasDeclaration_ConnectionState_Connected(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ConnectionState.Connecting": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_ConnectionState.Connecting": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_ConnectionState_Connecting():
-    TypeOnly<old.ConnectionState.Connecting>;
-declare function use_current_TypeAliasDeclaration_ConnectionState_Connecting(
-    use: TypeOnly<current.ConnectionState.Connecting>);
-use_current_TypeAliasDeclaration_ConnectionState_Connecting(
-    get_old_TypeAliasDeclaration_ConnectionState_Connecting());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ConnectionState.Connecting": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_ConnectionState.Connecting": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_ConnectionState_Connecting():
-    TypeOnly<current.ConnectionState.Connecting>;
-declare function use_old_TypeAliasDeclaration_ConnectionState_Connecting(
-    use: TypeOnly<old.ConnectionState.Connecting>);
-use_old_TypeAliasDeclaration_ConnectionState_Connecting(
-    get_current_TypeAliasDeclaration_ConnectionState_Connecting());
 
 /*
 * Validate forward compat by using old type in place of current type
