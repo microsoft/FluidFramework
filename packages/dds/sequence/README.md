@@ -1,12 +1,12 @@
 # @fluidframework/sequence
 
 The **@fluidframework/sequence** package supports distributed data structures which are list-like.
-Its main export is [SharedString]({{< relref "string.md" >}}), a DDS for storing and simultaneously editing a sequence of text.
+Its main export is [SharedString][], a DDS for storing and simultaneously editing a sequence of text.
 
 Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for working with text.
 
 This package historically contained several other sequence-based DDSes, but because they have unintuitive behaviors,
-they are deprecated and being moved to the _experimental_ folder.
+they are deprecated and being moved to the *experimental* folder.
 
 The main reason for this is the lack of *move* semantics within the sequence, which becomes crucial when dealing with sequences of
 complex content.
@@ -156,7 +156,7 @@ specified range. Setting a property key to null will remove that property from t
 
 ### Sequence delta event
 
-Whenever an operation is performed on a sequence a `sequenceDelta` event will be raised. This event provides the ranges
+Whenever an operation is performed on a sequence a *sequenceDelta* event will be raised. This event provides the ranges
 affected by the operation, the type of the operation, and the properties that were changes by the operation.
 
 ```typescript
@@ -174,10 +174,10 @@ sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
 });
 ```
 
-Internally, the sequence package depends on `@fluidframework/merge-tree`, and also raises `MergeTreeMaintenance` events on that tree as `maintenance` events.
+Internally, the sequence package depends on `@fluidframework/merge-tree`, and also raises `MergeTreeMaintenance` events on that tree as *maintenance* events.
 These events don't correspond directly to APIs invoked on a sequence DDS, but may be useful for advanced users.
 
-Both `sequenceDelta` and `maintenance` events are commonly used to synchronize or invalidate a view an application might have over a backing sequence DDS.
+Both sequenceDelta and maintenance events are commonly used to synchronize or invalidate a view an application might have over a backing sequence DDS.
 
 ## Sequence merge strategy
 
@@ -330,7 +330,7 @@ The interval collection implementation uses local references, and so benefits fr
 described in the previous section.
 Unlike local references, operations on interval collections are sent to all clients and updated in an eventually consistent way.
 This makes them suitable for implementing features like comment threads on a text-based documents.
-The following example illustrates these properties and highlights the major APIs supported by `IntervalCollection`.
+The following example illustrates these properties and highlights the major APIs supported by IntervalCollection.
 
 
 ```typescript
@@ -377,18 +377,18 @@ The following example illustrates these properties and highlights the major APIs
 
 ### Intervals vs. markers
 
-Interval endpoints and markers both implement `ReferencePosition` and seem to serve a similar function so it's not obvious how they differ and why you would choose one or the other.
+Interval endpoints and markers both implement *ReferencePosition* and seem to serve a similar function so it's not obvious how they differ and why you would choose one or the other.
 
 Using the interval collection API has two main benefits:
 
 1. Efficient spatial querying
     - Interval collections support iterating all intervals overlapping the region `[start, end]` in `O(log N) + O(overlap size)` time, where `N` is the total number of intervals in the collection.
     This may be critical for applications that display only a small view of the document contents.
-    On the other hand, using markers to implement intervals would require a linear scan from the start or end of the string to determine which intervals overlap.
+    On the other hand, using markers to implement intervals would require a linear scan from the start or end of the sequence to determine which intervals overlap.
 
 2. Reduced risk of data loss on modification
-    - Interval collections natively support a `modify` operation on the intervals, which allows moving the endpoints of the interval to a different place in the sequence.
-    This operation is atomic, whereas with markers one would have to submit a `delete` operation for the existing position and an `insert` for the new one.
+    - Interval collections natively support a modify operation on the intervals, which allows moving the endpoints of the interval to a different place in the sequence.
+    This operation is atomic, whereas with markers one would have to submit a delete operation for the existing position and an insert for the new one.
     This has some small potential for data loss if the delete operation ends up acknowledged by the server but the insert does not.
 
 ## SharedString
@@ -424,3 +424,4 @@ to 0, and the farther position is closer to the length.
   - [collaborativeInput](https://github.com/microsoft/FluidFramework/blob/main/examples/data-objects/react-inputs/src/collaborativeInput.tsx)
 
 [SharedMap]: https://fluidframework.com/docs/data-structures/map/
+[SharedString]: https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/src/sharedString.ts
