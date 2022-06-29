@@ -4,10 +4,13 @@ type Source = () => number;
  * Generates a Jsonable tree with statistical similarities to 'canada.json':
  * https://github.com/serde-rs/json-benchmark/tree/master/data
  */
-export function canada(rnd: Source) {
+export function generateCanada(rnd: Source) {
+    // Map uniform distribution in the range [0..1) to a uniform distribution
+    // in the range [min, max).
     const uniform = (source: Source, min: number, max: number) =>
         () => source() * (max - min) + min;
 
+    // Map uniform distribution in the range [0..1) to a normal distribution.
     // https://en.wikipedia.org/wiki/Marsaglia_polar_method
     const normal = (source: Source, mu = 0, sigma = 1) => {
         return () => {

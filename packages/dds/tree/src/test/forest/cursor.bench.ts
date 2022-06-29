@@ -10,16 +10,17 @@ import { default as Random } from "random-js";
 import { ITreeCursor } from "../..";
 import { JsonCursor } from "./jsonCursor";
 import { extract } from "./cursor.spec";
-import { canada } from "./json";
+import { generateCanada } from "./json";
 
+// Helper for creating a PRNG instance that produces a uniform distribution in the range [0..1).
 function makeRng(seed: string) {
     const rng = Random.engines.mt19937().seed(Number.parseInt(seed, 36));
     const dist = Random.real(0, 1);
     return () => dist(rng);
 }
 
-const c = canada(makeRng("canada"));
-
+// IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
+// the leaves, but this should be verified.
 function cloneObject<T, J = Jsonable<T>>(obj: J): J {
     if (Array.isArray(obj)) {
         // PERF: 'Array.map()' was ~44% faster than looping over the array. (node 14 x64)
@@ -35,6 +36,9 @@ function cloneObject<T, J = Jsonable<T>>(obj: J): J {
     }
 }
 
+// Optimized deep clone implementation for "Jsonable" object trees.  Used as a real-world-ish
+// baseline to measure the overhead of using ITreeCursor in a scenario where we're reifying a
+// domain model for the application.
 function clone<T>(value: Jsonable<T>): Jsonable<T> {
     // PERF: Separate clone vs. cloneObject yields an ~11% speedup in 'canada.json',
     //       likely due to inlining short-circuiting recursing at leaves (node 14 x64).
@@ -43,6 +47,8 @@ function clone<T>(value: Jsonable<T>): Jsonable<T> {
         : cloneObject(value);
 }
 
+// Helper that measures an optimized 'deepClone()' vs. using ITreeCursor to extract an
+// equivalent clone of the source data.
 function bench(name: string, getJson: () => any) {
     let cursor: ITreeCursor;
     let json: any;
@@ -68,7 +74,12 @@ function bench(name: string, getJson: () => any) {
         title: `ITreeCursor: '${name}'`,
         before: () => {
             cursor = new JsonCursor(getJson());
+
+            // TODO: extract() hasn't been optimized, and possibly should be cloned into
+            //       the benchmark to avoid test enhancements (e.g., additional asserts)
+            //       from skewing benchmark results.
             const extracted = extract(cursor);
+
             assert.deepEqual(extracted, json,
                 "extract() must return an equivalent tree.");
             assert.deepEqual(extract(cursor), json,
@@ -82,6 +93,8 @@ function bench(name: string, getJson: () => any) {
     });
 }
 
+const canada = generateCanada(makeRng("canada"));
+
 describe("ITreeCursor", () => {
-    bench("canada", () => c);
+    bench("canada", () => canada);
 });
