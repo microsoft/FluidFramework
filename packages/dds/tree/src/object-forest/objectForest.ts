@@ -10,10 +10,9 @@ import {
     Anchor, IEditableForest,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
-    DetachedRange,
     Value,
 } from "../forest";
-import { FieldKey, TreeType } from "../tree";
+import { FieldKey, TreeType, DetachedRange } from "../tree";
 import { brand } from "../util";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {

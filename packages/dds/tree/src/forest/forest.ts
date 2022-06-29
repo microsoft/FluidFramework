@@ -4,8 +4,6 @@
  */
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
-import { FieldKey } from "../tree";
-import { Brand, Opaque } from "../util";
 import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
 /**
@@ -22,37 +20,6 @@ import { ITreeCursor, TreeNavigationResult } from "./cursor";
  */
 export type NodeId = ITreeSubscriptionCursor | Anchor;
 
-/**
- * Location of a tree within a forest.
- *
- * @public
- */
-export interface TreeLocation {
-    readonly container: TreeParent;
-    readonly index: number;
-}
-
-export interface RootRange {
-	readonly key: DetachedRange;
-}
-
-/**
- * Parent of a tree in a forest.
- */
-export type TreeParent = FieldKey | RootRange;
-
-/**
- * A root in the forest.
- *
- * The anchoring does not refer to any of the nodes contained in this range:
- * instead `start` and `end` are anchored to the ends of this detached range, but its object identity.
- * Thus any additional content inserted before or after contents of this range will be included in the range.
- * This also means that moving the content from this range elsewhere will leave this range valid, but empty.
- *
- * DetachedRanges, as well as their start and end, are not valid to use as anchors across edits:
- * they are only valid within the edit in which they were created.
- */
-export type DetachedRange = Opaque<Brand<number, "forest.DetachedRange">>;
 /**
  * Invalidates whenever `current` changes.
  * For now (might change later) downloading new parts of the forest counts as a change.

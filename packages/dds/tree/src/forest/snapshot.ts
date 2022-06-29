@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../tree";
+import { FieldKey, ChildLocation } from "../tree";
 import { Value, ITreeCursor } from "./cursor";
-import { TreeLocation } from "./forest";
 
 /**
  * Copy on write and immutable views for forests.
@@ -40,12 +39,12 @@ import { TreeLocation } from "./forest";
     /**
      * @returns the parent of `id`. Should not be used if there is no node with id or if id refers to the root node.
      */
-    getParent(id: NodeId): TreeLocation;
+    getParent(id: NodeId): ChildLocation;
 
     /**
      * @returns undefined iff root, otherwise the parent of `id`.
      */
-    tryGetParent(id: NodeId): TreeLocation | undefined;
+    tryGetParent(id: NodeId): ChildLocation | undefined;
 
     /**
      * Compares two forests for equality.

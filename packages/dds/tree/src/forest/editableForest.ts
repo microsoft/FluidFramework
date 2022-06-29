@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey } from "../tree";
+import { FieldKey, DetachedRange } from "../tree";
 import { Value, ITreeCursor } from "./cursor";
-import { DetachedRange, IForestSubscription, NodeId } from "./forest";
+import { IForestSubscription, NodeId } from "./forest";
 
 /**
  * Editing APIs.
