@@ -198,7 +198,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
                 maps.push(map);
             }
         }
-        
+
         await Promise.all([provider.ensureSynchronized()]);
 
         for (const map of maps) {
