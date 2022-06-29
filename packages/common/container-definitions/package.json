@@ -69,6 +69,14 @@
         "forwardCompat": false,
         "backCompat": false
       }
+      "RemovedTypeAliasDeclaration_ConnectionState.Connecting": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_ConnectionState.Connecting": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
     }
   }
 }

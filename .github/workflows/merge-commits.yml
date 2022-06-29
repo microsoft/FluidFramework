@@ -2,7 +2,7 @@ name: Merge commits to next branch
 
 on:
   schedule:
-    - cron: "0 */2 * * *"
+    - cron: "0 9-17/2 * * mon-fri" # At minute 0 past every 2nd hour from 9 through 17 on every day-of-week from Monday through Friday
 
 env:
   TARGET_BRANCH: next
