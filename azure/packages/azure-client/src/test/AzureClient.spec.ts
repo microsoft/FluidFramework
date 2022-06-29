@@ -202,7 +202,7 @@ describe("AzureClient", () => {
 
         const containerGet = (await client.getContainer(containerId, schema)).container;
         const map1Get = containerGet.initialObjects.map1 as SharedMap;
-        const valueGet = await map1Get.get("new-key");
+        const valueGet: string | undefined = await map1Get.get("new-key");
         assert.strictEqual(valueGet, valueCreate, "container can't change initial objects");
     });
 
