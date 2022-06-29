@@ -681,6 +681,7 @@ class ScheduleManagerCore {
                 throw new DataCorruptionError(
                     "OpBatchIncomplete",
                     {
+                        runtimeVersion: pkgVersion,
                         batchClientId: this.currentBatchClientId,
                         ...extractSafePropertiesFromMessage(message),
                     });
@@ -905,7 +906,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const error = new DataCorruptionError(
                     // pre-0.58 error message: SummaryMetadataMismatch
                     "Summary metadata mismatch",
-                    { runtimeSequenceNumber, protocolSequenceNumber },
+                    { runtimeVersion: pkgVersion, runtimeSequenceNumber, protocolSequenceNumber },
                 );
 
                 if (loadSequenceNumberVerification === "log") {
@@ -1215,18 +1216,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
-        this.garbageCollector = GarbageCollector.create(
-            this,
-            this.runtimeOptions.gcOptions,
-            (nodePath: string) => this.getGCNodePackagePath(nodePath),
-            () => this.messageAtLastSummary?.timestamp,
+        this.garbageCollector = GarbageCollector.create({
+            runtime: this,
+            gcOptions: this.runtimeOptions.gcOptions,
             baseSnapshot,
-            async <T>(id: string) => readAndParse<T>(this.storage, id),
-            this.mc.logger,
+            baseLogger: this.mc.logger,
             existing,
             metadata,
-            this.context.clientDetails.type === summarizerClientType,
-        );
+            isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
+            getNodePackagePath: (nodePath: string) => this.getGCNodePackagePath(nodePath),
+            getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
+            readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
+        });
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
         this.summarizerNode = createRootSummarizerNodeWithGC(
@@ -2067,6 +2068,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return fluidDataStore;
     }
 
+    /**
+     * @deprecated - will be removed in an upcoming release. See #9660.
+     */
     public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         if (rootDataStoreId.includes("/")) {
             throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);

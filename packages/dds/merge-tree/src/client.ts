@@ -333,7 +333,7 @@ export class Client {
     }
 
     public createLocalReferencePosition(
-        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
+        segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined,
     ): LocalReferencePosition {
         return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties, this);
     }
@@ -803,9 +803,15 @@ export class Client {
                 case MergeTreeDeltaType.INSERT:
                     assert(segment.seq === UnassignedSequenceNumber,
                         0x037 /* "Segment already has assigned sequence number" */);
+                    let segInsertOp = segment;
+                    if (typeof resetOp.seg === "object" && resetOp.seg.props !== undefined) {
+                        segInsertOp = segment.clone();
+                        segInsertOp.properties = resetOp.seg.props;
+                    }
                     newOp = createInsertSegmentOp(
                         segmentPosition,
-                        segment);
+                        segInsertOp,
+                    );
                     break;
 
                 case MergeTreeDeltaType.REMOVE:

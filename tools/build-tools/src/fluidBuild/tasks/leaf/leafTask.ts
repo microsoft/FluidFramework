@@ -279,6 +279,7 @@ export abstract class LeafTask extends Task {
     protected get recheckLeafIsUpToDate(): boolean { return false; }
 
     // For called when the task has successfully executed
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     protected async markExecDone(): Promise<void> { }
 
     protected getVsCodeErrorMessages(errorMessages: string) { return errorMessages; }
@@ -309,7 +310,7 @@ export abstract class LeafTask extends Task {
 
         // TODO: we should add all the prefix tasks in the task tree of the current package as well.
     }
-};
+}
 
 export abstract class LeafWithDoneFileTask extends LeafTask {
     protected get doneFileFullPath() {
@@ -337,7 +338,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
     protected async markExecDone() {
         const doneFileFullPath = this.doneFileFullPath;
         try {
-            let content = await this.getDoneFileContent();
+            const content = await this.getDoneFileContent();
             if (content !== undefined) {
                 await writeFileAsync(doneFileFullPath, content);
             } else {

@@ -11,7 +11,7 @@ import { BuildResult, BuildPackage } from "../buildGraph";
 export class NPMTask extends Task {
     constructor(node: BuildPackage, command: string, protected readonly subTasks: Task[]) {
         super(node, command);
-    };
+    }
 
     public initializeDependentTask() {
         for (const task of this.subTasks) {
@@ -69,4 +69,4 @@ export class NPMTask extends Task {
     protected logVerboseTask(msg: string) {
         logVerbose(`Task: ${this.node.pkg.nameColored} ${this.command}: ${msg}`);
     }
-};
+}

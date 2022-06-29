@@ -86,6 +86,9 @@ export interface IFluidCodeDetails {
 
     /**
      * Configuration details. This includes links to the package manager and base CDNs.
+     *
+     * @remarks This is strictly consumer-defined data.
+     * Its contents and semantics (including whether or not this data is present) are completely up to the consumer.
      */
     readonly config?: IFluidCodeDetailsConfig;
 }
