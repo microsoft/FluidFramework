@@ -12,7 +12,8 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
-import { LocalOdspDocumentServiceFactory } from "./localOdspDocumentServiceFactory";
+// eslint-disable-next-line import/no-internal-modules
+import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to

@@ -8,12 +8,12 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import * as api from "@fluidframework/protocol-definitions";
-import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageManager";
-import { ISnapshotContents } from "./odspPublicUtils";
-import { IOdspSnapshot } from "./contracts";
-import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
-import { parseCompactSnapshotResponse } from "./compactSnapshotParser";
-import { ReadBuffer } from "./ReadBufferUtils";
+import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase";
+import { ISnapshotContents } from "../odspPublicUtils";
+import { IOdspSnapshot } from "../contracts";
+import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";
+import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
+import { ReadBuffer } from "../ReadBufferUtils";
 
 /**
  * ODSP document storage service that works on a provided snapshot for all its processing.

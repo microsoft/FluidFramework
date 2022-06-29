@@ -13,9 +13,11 @@ import {
     SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
-import { LocalOdspDocumentService } from "../localOdspDocumentService";
-import { LocalOdspDocumentServiceFactory } from "../localOdspDocumentServiceFactory";
-import { LocalOdspDocumentStorageService } from "../localOdspDocumentStorageManager";
+/* eslint-disable import/no-internal-modules */
+import { LocalOdspDocumentServiceFactory } from "../localOdspDriver/localOdspDocumentServiceFactory";
+import { LocalOdspDocumentService } from "../localOdspDriver/localOdspDocumentService";
+import { LocalOdspDocumentStorageService } from "../localOdspDriver/localOdspDocumentStorageManager";
+/* eslint-enable import/no-internal-modules */
 
 describe("Local Odsp driver", () => {
     // TODO: add end-to-end test

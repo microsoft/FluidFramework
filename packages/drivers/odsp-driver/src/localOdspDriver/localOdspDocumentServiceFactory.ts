@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { IDocumentService, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/driver-utils";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { createOdspLogger, getOdspResolvedUrl } from "./odspUtils";
-import { ICacheAndTracker } from "./epochTracker";
-import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
+import { createOdspLogger, getOdspResolvedUrl } from "../odspUtils";
+import { ICacheAndTracker } from "../epochTracker";
+import { OdspDocumentServiceFactoryCore } from "../odspDocumentServiceFactoryCore";
 import { LocalOdspDocumentService } from "./localOdspDocumentService";
 
 /**
@@ -26,13 +25,13 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
         private readonly localSnapshot: Uint8Array | string,
     ) {
         super(
-            (_options) => this.throwUnsupportedUsage("Getting storage token"),
-            (_options) => this.throwUnsupportedUsage("Getting websocket token"),
-            () => this.throwUnsupportedUsage("Getting SocketIO Client"),
+            (_options) => this.throwUnsupportedUsageError("Getting storage token"),
+            (_options) => this.throwUnsupportedUsageError("Getting websocket token"),
+            () => this.throwUnsupportedUsageError("Getting SocketIO Client"),
         );
     }
 
-    private throwUnsupportedUsage(unsupportedFuncName: string): never {
+    private throwUnsupportedUsageError(unsupportedFuncName: string): never {
         const toThrow = new UsageError(
             `${unsupportedFuncName} is not supported by LocalOdspDocumentServiceFactory`);
         this.logger?.sendErrorEvent({ eventName: "UnsupportedUsage" }, toThrow);
@@ -56,8 +55,12 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
         _cacheAndTrackerArg?: ICacheAndTracker,
         _clientIsSummarizer?: boolean,
     ): Promise<IDocumentService> {
-        assert(_cacheAndTrackerArg === undefined, "Invalid usage. \"_cacheAndTrackerArg\" should not be provided");
-        assert(_clientIsSummarizer !== true, "Invalid usage. \"_clientIsSummarizer\" should not be provided");
+        if (_cacheAndTrackerArg !== undefined) {
+            throw new UsageError("Invalid usage. \"_cacheAndTrackerArg\" should not be provided");
+        }
+        if (_clientIsSummarizer) {
+            throw new UsageError("Invalid usage. \"_clientIsSummarizer\" should not be provided");
+        }
         this.logger = odspLogger;
         return new LocalOdspDocumentService(getOdspResolvedUrl(resolvedUrl), odspLogger, this.localSnapshot);
     }
