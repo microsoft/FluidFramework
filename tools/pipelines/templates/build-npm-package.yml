@@ -81,6 +81,10 @@ parameters:
 - name: tagName
   type: string
 
+- name: installBuildTools
+  type: boolean
+  default: true
+
 trigger: none
 
 variables:
@@ -203,6 +207,7 @@ stages:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
             tagName: ${{ parameters.tagName }}
+            installBuildTools: ${{ parameters.installBuildTools }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
