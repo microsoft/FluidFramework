@@ -438,11 +438,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     it("can call connect() twice", async () => {
         const container = await createConnectedContainer();
 
-        let disconnectedEventFired = false;
-        container.once("disconnected", () => { disconnectedEventFired = true; });
         container.disconnect();
-        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
-        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
         container.connect();
         container.connect();
@@ -456,14 +452,30 @@ describeNoCompat("Container", (getTestObjectProvider) => {
         );
     });
 
+    it("can call connect() twice to change the connection mode", async () => {
+        const container = await createConnectedContainer();
+
+        container.disconnect();
+
+        container.connect();
+        (container as any).deltaManager.connectionManager.shouldJoinWrite = () => { return true; };
+        container.connect();
+
+        await timeoutPromise(
+            (resolve) => container.once("connected", () => resolve()),
+            { durationMs: timeoutMs, errorMsg: "container connected event timeout" },
+        );
+
+        assert.strictEqual(
+            (container as any).connectionMode, "write",
+            "container in read mode after connecting with pending op",
+        );
+    });
+
     it("can cancel call connect() twice then cancel with disconnect()", async () => {
         const container = await createConnectedContainer();
 
-        let disconnectedEventFired = false;
-        container.once("disconnected", () => { disconnectedEventFired = true; });
         container.disconnect();
-        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
-        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
         container.connect();
         container.connect();
@@ -490,11 +502,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
     it("can rapidly call connect() and disconnect()", async () => {
         const container = await createConnectedContainer();
 
-        let disconnectedEventFired = false;
-        container.once("disconnected", () => { disconnectedEventFired = true; });
         container.disconnect();
-        assert(disconnectedEventFired, "disconnected event didn't fire when calling container.disconnect");
-        assert.strictEqual(container.connectionState, ConnectionState.Disconnected, "container can't disconnect()");
 
         container.connect();
         container.disconnect();

@@ -126,7 +126,7 @@ interface IPendingConnection {
     /**
      * Used to cancel an in-progress connection attempt.
      */
-    abortController: AbortController;
+    abort(): void;
 
     /**
      * Desired ConnectionMode of this in-progress connection attempt.
@@ -143,6 +143,11 @@ export class ConnectionManager implements IConnectionManager {
     /** Connection mode used when reconnecting on error or disconnect. */
     private readonly defaultReconnectionMode: ConnectionMode;
 
+    /**
+     * Tracks the current in-progress connection attempt. Undefined if there is none.
+     * Note: Once the connection attempt fires and the code becomes asynchronous, its possible that a new connection
+     * attempt was fired and this.pendingConnection was overwritten to reflect the new attempt.
+     */
     private pendingConnection: IPendingConnection | undefined;
     private connection: IDocumentDeltaConnection | undefined;
 
@@ -440,9 +445,6 @@ export class ConnectionManager implements IConnectionManager {
         // If there is no specified ConnectionMode, try the previous mode, if there is no previous mode use default
         let requestedMode = connectionMode ?? pendingConnectionMode ?? this.defaultReconnectionMode;
 
-        this.pendingConnection = { abortController: new AbortController(), connectionMode: requestedMode };
-        const abortSignal = this.pendingConnection.abortController.signal;
-
         // if we have any non-acked ops from last connection, reconnect as "write".
         // without that we would connect in view-only mode, which will result in immediate
         // firing of "connected" event from Container and switch of current clientId (as tracked
@@ -459,7 +461,7 @@ export class ConnectionManager implements IConnectionManager {
 
         if (docService.policies?.storageOnly === true) {
             connection = new NoDeltaStream();
-            this.setupNewSuccessfulConnection(connection, "read", abortSignal);
+            this.setupNewSuccessfulConnection(connection, "read");
             assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
             return;
         }
@@ -469,19 +471,29 @@ export class ConnectionManager implements IConnectionManager {
         const connectStartTime = performance.now();
         let lastError: any;
 
+        const abortController = new AbortController();
+        const abortSignal = abortController.signal;
+        this.pendingConnection = { abort: () => { abortController.abort(); }, connectionMode: requestedMode };
+
         // This loop will keep trying to connect until successful, with a delay between each iteration.
         while (connection === undefined) {
             if (this.closed) {
                 throw new Error("Attempting to connect a closed DeltaManager");
             }
             if (abortSignal.aborted === true) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "ConnectionAttemptCancelled",
+                    attempts: connectRepeatCount,
+                    duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                    connectionEstablished: false,
+                });
                 return;
             }
             connectRepeatCount++;
 
             try {
                 this.client.mode = requestedMode;
-                connection = await docService.connectToDeltaStream(this.client);
+                connection = await docService.connectToDeltaStream({ ...this.client, mode: requestedMode });
 
                 if (connection.disposed) {
                     // Nobody observed this connection, so drop it on the floor and retry.
@@ -539,7 +551,19 @@ export class ConnectionManager implements IConnectionManager {
             );
         }
 
-        this.setupNewSuccessfulConnection(connection, requestedMode, abortSignal);
+        // Check for abort signal after while loop as well
+        if (abortSignal.aborted === true) {
+            connection.dispose();
+            this.logger.sendTelemetryEvent({
+                eventName: "ConnectionAttemptCancelled",
+                attempts: connectRepeatCount,
+                duration: TelemetryLogger.formatTick(performance.now() - connectStartTime),
+                connectionEstablished: true,
+            });
+            return;
+        }
+
+        this.setupNewSuccessfulConnection(connection, requestedMode);
     }
 
     /**
@@ -602,9 +626,9 @@ export class ConnectionManager implements IConnectionManager {
      */
     private cancelConnection() {
         assert(this.pendingConnection !== undefined, "this.pendingConnection is undefined when trying to cancel");
-        this.pendingConnection.abortController.abort();
+        this.pendingConnection.abort();
         this.pendingConnection = undefined;
-        this.logger.sendTelemetryEvent({ eventName: "ConnectionAttemptCancelled" });
+        this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
     }
 
     /**
@@ -612,21 +636,12 @@ export class ConnectionManager implements IConnectionManager {
      * initial messages.
      * @param connection - The newly established connection
      */
-     private setupNewSuccessfulConnection(
-         connection: IDocumentDeltaConnection,
-         requestedMode: ConnectionMode,
-         abortSignal: AbortSignal,
-        ) {
+     private setupNewSuccessfulConnection(connection: IDocumentDeltaConnection, requestedMode: ConnectionMode) {
         // Old connection should have been cleaned up before establishing a new one
         assert(this.connection === undefined, 0x0e6 /* "old connection exists on new connection setup" */);
         assert(!connection.disposed, 0x28a /* "can't be disposed - Callers need to ensure that!" */);
 
         this.pendingConnection = undefined;
-
-        if (abortSignal.aborted === true) {
-            connection.dispose();
-            return;
-        }
 
         this.connection = connection;
 
