@@ -31,13 +31,13 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
      * Gets the accepted value for the given key.
      * @param key - The key to retrieve from
      */
-    get(key: string): any;
+    get(key: string): unknown;
 
     /**
      * Gets the pending value for the given key.
      * @param key - The key to retrieve from
      */
-    getPending(key: string): any;
+    getPending(key: string): unknown;
 
     /**
      * Sets the value for the given key.  After setting the value, it will be in "pending" state until all connected
@@ -45,7 +45,7 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
      * @param key - The key to set
      * @param value - The value to store
      */
-    set(key: string, value: any): void;
+    set(key: string, value: unknown): void;
 
     /**
      * Deletes the key/value pair at the given key.  After issuing the delete, the delete is in "pending" state until
