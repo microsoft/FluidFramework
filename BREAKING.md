@@ -37,6 +37,7 @@ to be `string | undefined`.
 - [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
 - [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+- [Remove `aliasing` return value](#Remove-aliasing-return-value)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -61,6 +62,9 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 
 ### Remove ConnectionState.Connecting
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
+
+### Remove `aliasing` return value from `AliasResult`
+The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
 
 # 1.1.0
 
