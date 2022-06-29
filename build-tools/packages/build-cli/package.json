@@ -43,7 +43,7 @@
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
     "posttest": "npm run lint",
     "tsc": "tsc -b",
-    "version": "oclif readme && git add README.md"
+    "version": "npm run build:readme && git add README.md"
   },
   "dependencies": {
     "@fluidframework/build-tools": "^0.3.0",
