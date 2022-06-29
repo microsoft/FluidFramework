@@ -558,7 +558,7 @@ export class ConnectionManager implements IConnectionManager {
     /**
      * Disconnect the current connection.
      * @param reason - Text description of disconnect reason to emit with disconnect event
-     * @returns A boolean that indicates if the disconnection was successful
+     * @returns A boolean that indicates if there was an existing connection (or pending connection) to disconnect
      */
      private disconnectFromDeltaStream(reason: string): boolean {
         this.pendingReconnect = false;
