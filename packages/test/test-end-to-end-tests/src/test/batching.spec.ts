@@ -75,7 +75,7 @@ async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
     }));
 }
 
-describeFullCompat.only("Flushing ops", (getTestObjectProvider) => {
+describeFullCompat("Flushing ops", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     beforeEach(() => {
         provider = getTestObjectProvider();
@@ -252,7 +252,7 @@ describeFullCompat.only("Flushing ops", (getTestObjectProvider) => {
             testFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased });
         });
 
-        describe.only("Flushing of batches via orderSequentially [Immediate]", () => {
+        describe("Flushing of batches via orderSequentially [Immediate]", () => {
             testFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate });
         });
 
