@@ -9,7 +9,7 @@
  *
  * The Tinylicious service is a local, in-memory Fluid service intended for prototyping and development purposes.
  *
- * @see {@link https://fluidframework.com/docs/testing/tinylicious/}
+ * See {@link https://fluidframework.com/docs/testing/tinylicious/}
  *
  * @packageDocumentation
  */

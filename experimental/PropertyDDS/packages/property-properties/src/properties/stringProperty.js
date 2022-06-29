@@ -322,10 +322,10 @@ export class StringProperty extends ValueArrayProperty {
     }
 
     /**
+     * See {@link StringProperty.setValues}
      * @param {string} in_values the new values
      * @param {Bool} in_initial  - Whether we are setting default/initial values
      *   or if the function is called directly with the values to set.
-     * @see {setValues}
      */
     _setValues(in_values, in_initial) {
         throw new Error(MSG.NO_VALUE_PROPERTY_SETVALUES);
