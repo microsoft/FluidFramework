@@ -650,8 +650,8 @@ export class DataStores implements IDisposable {
      * Called during GC to retrieve the package path of a data store node with the given path.
      */
     public getDataStorePackagePath(nodePath: string): readonly string[] | undefined {
-        // If the node belongs to a data store, return its package path if the data store is loaded. For DDSes, we return
-        // the package path of the data store that contains it.
+        // If the node belongs to a data store, return its package path if the data store is loaded. For DDSes, we
+        // return the package path of the data store that contains it.
         const context = this.contexts.get(nodePath.split("/")[1]);
         return context?.isLoaded ? context.packagePath : undefined;
     }
