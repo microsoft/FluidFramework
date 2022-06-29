@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IAudience } from "@fluidframework/container-definitions";
 import {
     ILocalSequencedClient,
     IProtocolHandler as IBaseProtocolHandler,
@@ -10,7 +11,6 @@ import {
     ProtocolOpHandler,
 } from "@fluidframework/protocol-base";
 import {
-    IAudience,
     IDocumentAttributes,
     IProcessMessageResult,
     ISequencedDocumentMessage,
@@ -43,7 +43,7 @@ export type ProtocolHandlerBuilder = (
 ) => IProtocolHandler;
 
 export interface IProtocolHandler extends IBaseProtocolHandler {
-    readonly audience?: IAudience;
+    readonly audience: IAudience;
 }
 
 export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler implements IProtocolHandler {
@@ -51,7 +51,7 @@ export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler imp
         attributes: IDocumentAttributes,
         quorumSnapshot: IQuorumSnapshot,
         sendProposal: (key: string, value: any) => number,
-        audience?: IAudience,
+        readonly audience: IAudience,
     ) {
         super(
             attributes.minimumSequenceNumber,
@@ -61,7 +61,6 @@ export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler imp
             quorumSnapshot.proposals,
             quorumSnapshot.values,
             sendProposal,
-            audience,
         );
     }
 
@@ -86,10 +85,6 @@ export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler imp
     }
 
     public processSignal(message: ISignalMessage) {
-        if (this.audience === undefined) {
-            return;
-        }
-
         const innerContent = message.content as { content: any; type: string; };
         if (innerContent.type === MessageType.ClientJoin) {
             const newClient = innerContent.content as ISignalClient;

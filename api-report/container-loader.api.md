@@ -7,7 +7,7 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAudience } from '@fluidframework/protocol-definitions';
+import { IAudience } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
@@ -16,6 +16,7 @@ import { IContainerEvents } from '@fluidframework/container-definitions';
 import { IContainerLoadMode } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
+import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -26,9 +27,11 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
+import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol-base';
 import { IProtocolState } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
@@ -37,7 +40,6 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
-import { ProtocolHandlerBuilder } from '@fluidframework/protocol-base';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
@@ -202,6 +204,12 @@ export interface IProtocolDetails {
     protocolHandlerBuilder?: ProtocolHandlerBuilder;
 }
 
+// @public (undocumented)
+export interface IProtocolHandler extends IProtocolHandler_2 {
+    // (undocumented)
+    readonly audience: IAudience;
+}
+
 // @public
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
@@ -218,6 +226,9 @@ export class Loader implements IHostLoader {
     // (undocumented)
     readonly services: ILoaderServices;
 }
+
+// @public (undocumented)
+export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number, audience?: IAudience) => IProtocolHandler;
 
 // @public (undocumented)
 export class RelativeLoader implements ILoader {

@@ -11,7 +11,7 @@ import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IAudience } from '@fluidframework/protocol-definitions';
+import { IAudience } from '@fluidframework/container-definitions';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';

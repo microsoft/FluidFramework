@@ -6,7 +6,6 @@
 
 import * as git from '@fluidframework/gitresources';
 import { IAttachment } from '@fluidframework/protocol-definitions';
-import { IAudience } from '@fluidframework/protocol-definitions';
 import { IBlob } from '@fluidframework/protocol-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateTreeEntry } from '@fluidframework/gitresources';
@@ -85,8 +84,6 @@ export interface IProtocolHandler {
     // (undocumented)
     readonly attributes: IDocumentAttributes;
     // (undocumented)
-    readonly audience?: IAudience;
-    // (undocumented)
     close(): void;
     // (undocumented)
     getProtocolState(): IScribeProtocolState;
@@ -135,16 +132,11 @@ export function isSystemMessage(message: ISequencedDocumentMessage): boolean;
 // @public (undocumented)
 export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: ITree_2): ICreateTreeEntry[];
 
-// @public (undocumented)
-export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number, audience?: IAudience) => IProtocolHandler;
-
 // @public
 export class ProtocolOpHandler implements IProtocolHandler {
-    constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number, audience?: IAudience | undefined);
+    constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
     // (undocumented)
     get attributes(): IDocumentAttributes;
-    // (undocumented)
-    readonly audience?: IAudience | undefined;
     // (undocumented)
     close(): void;
     getProtocolState(): IScribeProtocolState;
@@ -164,13 +156,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
     snapshot(): IQuorumSnapshot;
     // (undocumented)
     readonly term: number;
-}
-
-// @public (undocumented)
-export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
-    constructor(attributes: IDocumentAttributes, quorumSnapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number, audience?: IAudience);
-    // (undocumented)
-    processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
 }
 
 // @public

@@ -4,7 +4,6 @@
 
 ```ts
 
-import { EventEmitter } from 'events';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -39,16 +38,6 @@ export type IApprovedProposal = {
 export interface IAttachment {
     // (undocumented)
     id: string;
-}
-
-// @public
-export interface IAudience extends EventEmitter {
-    addMember(clientId: string, details: IClient): any;
-    clear(): any;
-    getMember(clientId: string): IClient | undefined;
-    getMembers(): Map<string, IClient>;
-    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
-    removeMember(clientId: string): boolean;
 }
 
 // @public

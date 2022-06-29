@@ -28,6 +28,7 @@ import {
     IContainerLoadMode,
     IFluidCodeDetails,
     isFluidCodeDetails,
+    IAudience,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
@@ -55,7 +56,6 @@ import {
     IQuorumSnapshot,
 } from "@fluidframework/protocol-base";
 import {
-    IAudience,
     IClient,
     IClientConfiguration,
     IClientDetails,

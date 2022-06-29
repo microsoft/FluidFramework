@@ -8,7 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import { ConnectionState } from '@fluidframework/container-definitions';
 import { DataObject } from '@fluidframework/aqueduct';
-import { IAudience } from '@fluidframework/protocol-definitions';
+import { IAudience } from '@fluidframework/container-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
