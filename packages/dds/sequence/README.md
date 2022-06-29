@@ -281,7 +281,7 @@ determine the value.
 Sequences support addition and manipulation of *local references* to locally track positions in the sequence over time.
 As the name suggests, any created references will only exist locally; other clients will not see them.
 This can be used to implement user interactions with sequence data in a way that is robust to concurrent editing.
-For example, consider a text editor which tracks some cursor state.
+For example, consider a text editor which tracks a user's cursor state.
 The application can store a local reference to the character after the cursor position:
 
 ```typescript
@@ -389,7 +389,7 @@ Using the interval collection API has two main benefits:
 2. Reduced risk of data loss on modification
     - Interval collections natively support a `modify` operation on the intervals, which allows moving the endpoints of the interval to a different place in the sequence.
     This operation is atomic, whereas with markers one would have to submit a `delete` operation for the existing position and an `insert` for the new one.
-    This has some small potential for data loss if the delete operation ends up sequenced but the insert does not.
+    This has some small potential for data loss if the delete operation ends up acknowledged by the server but the insert does not.
 
 ## SharedString
 
