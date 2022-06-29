@@ -2349,7 +2349,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const {
             fullTree = false,
             trackState = true,
-            summaryLogger = this.logger,
+            summaryLogger = this.mc.logger,
             runGC = this.garbageCollector.shouldRunGC,
             runSweep,
             fullGC,

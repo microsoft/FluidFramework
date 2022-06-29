@@ -21,9 +21,9 @@ import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gc
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
 describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
-    const revivedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Revived";
-    const changedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Changed";
-    const loadedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Loaded";
+    const revivedEvent = "fluid:telemetry:ContainerRuntime:inactiveObject_Revived";
+    const changedEvent = "fluid:telemetry:ContainerRuntime:inactiveObject_Changed";
+    const loadedEvent = "fluid:telemetry:ContainerRuntime:inactiveObject_Loaded";
     const inactiveTimeoutMs = 100;
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
@@ -134,6 +134,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
             // Make changes to the inactive data store and validate that we get the changedEvent.
             dataObject._root.set("key", "value");
+            await provider.ensureSynchronized();
             // Load the data store and validate that we get loadedEvent.
             await summarizerRuntime.resolveHandle({ url });
             await summarize(summarizerRuntime);
@@ -149,6 +150,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
                         eventName: loadedEvent,
                         timeout: inactiveTimeoutMs,
                         id: url,
+                        pkg: { value: TestDataObjectType, tag: TelemetryDataTag.PackageData },
                     },
                 ]),
                 "changed and loaded events not generated as expected",
@@ -170,6 +172,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
                         timeout: inactiveTimeoutMs,
                         id: url,
                         pkg: { value: TestDataObjectType, tag: TelemetryDataTag.PackageData },
+                        fromId: defaultDataStore._root.handle.absolutePath,
                     },
                 ]),
                 "revived event not generated as expected",
@@ -245,13 +248,11 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
          * when we identify the error. The following bug was fixed in this code path and this test covers that
          * scenario - https://github.com/microsoft/FluidFramework/pull/10237.
          *
-         * Note that the namespace for "inactiveObject_Changed" is different because it is logged when collectGarbage
-         * runs where a different logger is used. It is not logged immediately because the data store is not loaded
-         * so the packageData is not available.
+         * Note that the namespace for "inactiveObject_Revived" is different than the tests above because it is logged
+         * via the running summarizer's logger.
          */
         itExpects("can generate events for data stores that are not loaded", [
-            { eventName: revivedEvent, timeout: inactiveTimeoutMs },
-            { eventName: "fluid:telemetry:Summarizer:Running:inactiveObject_Changed", timeout: inactiveTimeoutMs },
+            { eventName: "fluid:telemetry:Summarizer:Running:inactiveObject_Revived", timeout: inactiveTimeoutMs },
         ], async () => {
             const waitForSummary = async (summarizer: ISummarizer) => {
                 await provider.ensureSynchronized();

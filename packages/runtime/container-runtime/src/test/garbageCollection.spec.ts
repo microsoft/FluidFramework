@@ -307,7 +307,7 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([
-                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg, fromId: nodes[1] },
                 ]),
                 "revived event not logged as expected",
             );
@@ -340,7 +340,7 @@ describe("Garbage Collection Tests", () => {
             }
             assert(
                 mockLogger.matchEvents([
-                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[2], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[2], pkg: eventPkg, fromId: nodes[1] },
                 ]),
                 "revived event not logged as expected",
             );
@@ -425,7 +425,7 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([
-                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg, fromId: nodes[2] },
                 ]),
                 "revived event not logged as expected",
             );
@@ -481,7 +481,7 @@ describe("Garbage Collection Tests", () => {
             await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([
-                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg, fromId: nodes[2] },
                 ]),
                 "revived event not logged as expected",
             );
