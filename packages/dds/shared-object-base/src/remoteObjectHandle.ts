@@ -18,7 +18,7 @@ import { create404Response, exceptionToResponse, responseToException } from "@fl
 /**
  * This handle is used to dynamically load a Fluid object on a remote client and is created on parsing a serialized
  * FluidObjectHandle.
- * This class is used to generate an IFluidHandle when de-serializing any all handles (including handles to DDSes, custom
+ * This class is used to generate an IFluidHandle when de-serializing any all handles (including handles to DDSs, custom
  * objects) that are stored in SharedObjects. The Data Store or SharedObject corresponding to the IFluidHandle can be
  * retrieved by calling `get` on it.
  */

@@ -152,7 +152,7 @@ In the `instantiateComponent` call **(8.1)** the following is performed:
 2. Sets the `request` handler on the `ComponentRuntime` **(8.2)**
     - Requests that are sent to the `ComponentRuntime` are proxied to the `Component` object (more on this later)
 3. Provides a registry of Distributed Data Structures (DDS) / Sub-Component factories to the `ComponentRuntime` **(8.2)**
-    - This can be used to create new DDSes
+    - This can be used to create new DDSs
     - This can be used to create new Components that are not defined in the `ContainerRegistry`
 4. Create the `Component` object **(8.3)**
 
@@ -163,7 +163,7 @@ specific logic. In most cases the `instantiateComponent` call will provide the `
 `ComponentContext` **(8.3.1)**, and the `ComponentRuntime` **(8.3.2)** it created.
 
 The `Component` should use the `ComponentContext` to talk upwards to the `ContainerRuntime` **(8.3.1)**, and should use
-the `ComponentRuntime` to manage Fluid state of itself; mainly creating DDSes **(8.3.2)**.
+the `ComponentRuntime` to manage Fluid state of itself; mainly creating DDSs **(8.3.2)**.
 
 ![Image 9](/images/container-and-component-loading-9.jpg)
 
