@@ -71,6 +71,7 @@ declare function get_old_EnumDeclaration_ConnectionState():
 declare function use_current_EnumDeclaration_ConnectionState(
     use: TypeOnly<current.ConnectionState>);
 use_current_EnumDeclaration_ConnectionState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_ConnectionState());
 
 /*

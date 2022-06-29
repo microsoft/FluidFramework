@@ -716,6 +716,7 @@ class ScheduleManagerCore {
                 throw new DataCorruptionError(
                     "OpBatchIncomplete",
                     {
+                        runtimeVersion: pkgVersion,
                         batchClientId: this.currentBatchClientId,
                         ...extractSafePropertiesFromMessage(message),
                     });
@@ -940,7 +941,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 const error = new DataCorruptionError(
                     // pre-0.58 error message: SummaryMetadataMismatch
                     "Summary metadata mismatch",
-                    { runtimeSequenceNumber, protocolSequenceNumber },
+                    { runtimeVersion: pkgVersion, runtimeSequenceNumber, protocolSequenceNumber },
                 );
 
                 if (loadSequenceNumberVerification === "log") {
