@@ -1,7 +1,7 @@
 type Source = () => number;
 
 /**
- * Randomly generates a Jsonable tree with statistical similarities to 'canada.json':
+ * Generates a Jsonable tree with statistical similarities to 'canada.json':
  * https://github.com/serde-rs/json-benchmark/tree/master/data
  */
 export function canada(rnd: Source) {
@@ -11,7 +11,9 @@ export function canada(rnd: Source) {
     // https://en.wikipedia.org/wiki/Marsaglia_polar_method
     const normal = (source: Source, mu = 0, sigma = 1) => {
         return () => {
-            let x, y, r;
+            let x: number;
+            let y: number;
+            let r: number;
 
             do {
                 x = source() * 2 - 1;
@@ -20,11 +22,12 @@ export function canada(rnd: Source) {
             } while (r > 1 || r === 0);
 
             return mu + sigma * y * Math.sqrt(-2 * Math.log(r) / r);
-        }
-    }
+        };
+    };
 
-    // Distributions were calculated from 'canada.json', and then slightly tweaked until
-    // the gzipped result was similar in size to the original canada.json.
+    // Distribution parameters were calculated from 'canada.json', rounded for brevity,
+    // and then the gzipped size compared with the original tree to verify that the
+    // these choices generate a tree with similar entropy.
     const vxDist = normal(rnd, 0, 75);
     const vyDist = normal(rnd, 0, 20);
     const noiseDist = uniform(rnd, -18e-14, 18e-14);
@@ -57,10 +60,10 @@ export function canada(rnd: Source) {
         const clamp = (min: number, value: number, max: number) =>
             Math.max(Math.min(value, max), min);
 
-        // An interesting detail of 'canada.json' is that it appears to have ~6 digits of
-        // precision, followed by ~8 consecutive zeros or nines, and then a couple additional
-        // digits.  We recreate this by truncating to 6 digits of precision and then
-        // adding/subtracting a very small value.
+        // An interesting detail of 'canada.json' is that coordinates typically have ~6 digits of
+        // precision, followed by ~8 consecutive zeros or nines, and then a couple additional digits.
+        // We recreate this by truncating to 6 digits of precision and then adding/subtracting a very
+        // small value.
         const noise = (x: number) =>
             (Math.trunc(x * 1000000) / 1000000) + noiseDist();
 
