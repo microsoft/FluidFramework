@@ -403,6 +403,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._protocolHandler;
     }
 
+    /** During initialization we pause the inbound queues. We track this state to ensure we only call resume once */
     private inboundQueuePausedFromInit = true;
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
