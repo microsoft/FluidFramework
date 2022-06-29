@@ -459,7 +459,6 @@ export class ConnectionManager implements IConnectionManager {
 
         if (docService.policies?.storageOnly === true) {
             connection = new NoDeltaStream();
-            // to keep setupNewSuccessfulConnection happy
             this.setupNewSuccessfulConnection(connection, "read", abortSignal);
             assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
             return;
