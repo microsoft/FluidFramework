@@ -1883,7 +1883,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Note that this should happen before the `this.needsFlush` check below because in the scenario where we are
         // not connected, `this.needsFlush` will be false but the PendingStateManager might have pending messages and
         // hence needs to track this.
-        this.pendingStateManager.onFlush();
+        this.pendingStateManager.onFlush(this.isImmediateBatching);
 
         // If flush has already been called then exit early
         if (!this.needsFlush) {
@@ -1900,6 +1900,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         return this.deltaSender.flush();
     }
+
+    private isImmediateBatching = false;
 
     public orderSequentially(callback: () => void): void {
         let checkpoint: { rollback: () => void; } | undefined;
@@ -1923,7 +1925,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         }
 
         if (!this.currentlyBatching()) {
+            this.isImmediateBatching = true;
             this.flush();
+            this.isImmediateBatching = false;
         }
     }
 
@@ -2064,7 +2068,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private currentlyBatching() {
-        // TODO: potentially have property in pending state manager that knows it's batching
         return this.flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls !== 0;
     }
 
@@ -2704,7 +2707,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                if (!this.flushTrigger) {
+                if (this.flushMode === FlushMode.TurnBased && !this.flushTrigger) {
                     this.flushTrigger = true;
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     Promise.resolve().then(() => {

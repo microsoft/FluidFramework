@@ -158,10 +158,10 @@ export class PendingStateManager implements IDisposable {
     /**
      * Called when flush() is called on the ContainerRuntime to manually flush messages.
      */
-    public onFlush() {
+    public onFlush(isImmediateBatch: boolean = false) {
         // If the FlushMode is Immediate, we don't need to track an explicit flush call because every message is
         // automatically flushed. So, flush is a no-op.
-        if (this.flushMode === FlushMode.Immediate) {
+        if (!isImmediateBatch && this.flushMode === FlushMode.Immediate) {
             return;
         }
 
@@ -408,19 +408,6 @@ export class PendingStateManager implements IDisposable {
                         && (messageBatchQueue.length > 0 || pendingState.opMetadata?.batch)
                     ) {
                         messageBatchQueue.enqueue(pendingState);
-                        if (pendingState.opMetadata?.batch === false) {
-                            this.stateHandler.orderSequentially(() => {
-                                while (messageBatchQueue.length > 0) {
-                                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                                    const message = messageBatchQueue.dequeue()!;
-                                    this.stateHandler.reSubmit(
-                                        message.messageType,
-                                        message.content,
-                                        message.localOpMetadata,
-                                        message.opMetadata);
-                                }
-                            });
-                        }
                     } else {
                         this.stateHandler.reSubmit(
                             pendingState.messageType,
@@ -430,6 +417,24 @@ export class PendingStateManager implements IDisposable {
                     }
                     break;
                 case "flush":
+                    /**
+                     * When flushMode is Immediate, a "flush" call indicates the end of a batch
+                     * We can't rely on the "batch" property in the message metadata as it gets
+                     * updated elsewhere and it is not the same object that gets updated.
+                     */
+                    if (this.flushMode === FlushMode.Immediate && messageBatchQueue.length > 0) {
+                        this.stateHandler.orderSequentially(() => {
+                            while (messageBatchQueue.length > 0) {
+                                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                const message = messageBatchQueue.dequeue()!;
+                                this.stateHandler.reSubmit(
+                                    message.messageType,
+                                    message.content,
+                                    message.localOpMetadata,
+                                    message.opMetadata);
+                            }
+                        });
+                    }
                     assert(messageBatchQueue.length === 0, "cannot flush in the middle of a batch");
                     this.stateHandler.flush();
                     break;
