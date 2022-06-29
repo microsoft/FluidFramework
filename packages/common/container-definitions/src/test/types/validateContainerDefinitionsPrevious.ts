@@ -328,26 +328,14 @@ use_old_InterfaceDeclaration_ICodeDetailsLoader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ICodeLoader():
-    TypeOnly<old.ICodeLoader>;
-declare function use_current_InterfaceDeclaration_ICodeLoader(
-    use: TypeOnly<current.ICodeLoader>);
-use_current_InterfaceDeclaration_ICodeLoader(
-    get_old_InterfaceDeclaration_ICodeLoader());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICodeLoader": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ICodeLoader": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ICodeLoader():
-    TypeOnly<current.ICodeLoader>;
-declare function use_old_InterfaceDeclaration_ICodeLoader(
-    use: TypeOnly<old.ICodeLoader>);
-use_old_InterfaceDeclaration_ICodeLoader(
-    get_current_InterfaceDeclaration_ICodeLoader());
 
 /*
 * Validate forward compat by using old type in place of current type

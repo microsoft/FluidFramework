@@ -99,11 +99,6 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @public @deprecated
-export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
-    load(source: IFluidCodeDetails): Promise<IFluidModule>;
-}
-
 // @public
 export interface IConnectionDetails {
     checkpointSequenceNumber: number | undefined;
