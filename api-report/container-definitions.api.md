@@ -84,7 +84,6 @@ export interface ContainerWarning extends IErrorBase {
 export interface IAudience extends EventEmitter {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
-    // (undocumented)
     on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
 }
 
