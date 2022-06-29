@@ -70,7 +70,7 @@ async function start(): Promise<void> {
     }
 
     const migrateContainer = async () => {
-        await app.saveAndEndSession();
+        // await app.saveAndEndSession();
         const exportedData = await app.exportStringData();
         await createNewFlow(loader, exportedData);
     };

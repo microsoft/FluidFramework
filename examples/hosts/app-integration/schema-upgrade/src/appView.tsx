@@ -31,10 +31,8 @@ const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
             <SessionStatusView app={ app } />
             <ImportedDataView data={ importedStringData } />
             <ControlsView
-                saveAndEndSession={ app.saveAndEndSession }
                 migrateContainer={ migrateContainer }
                 proposeEndSession={ app.proposeEndSession }
-                writeToExternalStorage={ app.writeToExternalStorage }
                 endSession={ app.endSession }
             />
             <ExternalDataSourceView externalDataSource={ externalDataSource }/>
@@ -90,9 +88,7 @@ const ImportedDataView: React.FC<IImportedDataViewProps> = (props: IImportedData
 
 interface IControlsViewProps {
     proposeEndSession: () => void;
-    writeToExternalStorage: () => void;
     endSession: () => void;
-    saveAndEndSession: () => void;
     // End the collaboration session and create a new container using exported data.
     migrateContainer: () => void;
 }
@@ -100,20 +96,15 @@ interface IControlsViewProps {
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
     const {
         proposeEndSession,
-        writeToExternalStorage,
         endSession,
-        saveAndEndSession,
         migrateContainer,
     } = props;
 
     return (
         <div>
-            <button onClick={ saveAndEndSession }>Save and End Session</button>
-            <br />
             <button onClick={ migrateContainer }>Migrate to new container</button>
             <br />
             <button onClick={ proposeEndSession }>1. Propose ending collaboration session</button>
-            <button onClick={ writeToExternalStorage }>2. Write out to external data source</button>
             <button onClick={ endSession }>3. Actually end the collaboration session</button>
         </div>
     );

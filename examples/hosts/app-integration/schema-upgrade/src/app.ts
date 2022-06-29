@@ -9,7 +9,6 @@ import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { applyStringData, extractStringData } from "./dataHelpers";
-import { externalDataSource } from "./externalData";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { containerKillBitId } from "./version1";
 
@@ -114,53 +113,11 @@ export class App extends EventEmitter {
         return extractStringData(this.inventoryList);
     };
 
-    public readonly writeToExternalStorage = async () => {
-        // CONSIDER: it's perhaps more-correct to spawn a new client to extract with (to avoid local changes).
-        // This can be done by making a loader.request() call with appropriate headers (same as we do for the
-        // summarizing client).  E.g.
-        // const exportContainer = await loader.resolve(...);
-        // const inventoryList = (await exportContainer.request(...)).value;
-        // const stringData = extractStringData(inventoryList);
-        // exportContainer.close();
-
-        const stringData = await extractStringData(this.inventoryList);
-        await externalDataSource.writeData(stringData);
-    };
-
     public readonly proposeEndSession = () => {
         this.containerKillBit.proposeCodeDetails().catch(console.error);
     };
 
     public readonly endSession = () => {
         this.containerKillBit.setNewContainerId().catch(console.error);
-    };
-
-    public readonly saveAndEndSession = async () => {
-        if (!this.containerKillBit.codeDetailsProposed) {
-            await this.containerKillBit.proposeCodeDetails();
-        }
-
-        if (this.containerKillBit.migrated) {
-            return;
-        }
-
-        // After the quorum proposal is accepted, our system doesn't allow further edits to the string
-        // So we can immediately get the data out even before taking the lock.
-        const stringData = await extractStringData(this.inventoryList);
-        if (this.containerKillBit.migrated) {
-            return;
-        }
-
-        await this.containerKillBit.volunteerForMigration();
-        if (this.containerKillBit.migrated) {
-            return;
-        }
-
-        await externalDataSource.writeData(stringData);
-        if (!this.containerKillBit.haveMigrationTask()) {
-            throw new Error("Lost task during write");
-        } else {
-            await this.containerKillBit.setNewContainerId();
-        }
     };
 }
