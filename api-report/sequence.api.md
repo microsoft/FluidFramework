@@ -72,7 +72,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number, end: number, client: Client | undefined, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
+    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
 }
 
 // @public (undocumented)
@@ -135,11 +135,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // @internal
     constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2);
     // @internal (undocumented)
-    ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
+    ackAdd(serializedInterval: ISerializedInterval, local: boolean, op?: ISequencedDocumentMessage): TInterval;
     // @internal (undocumented)
-    ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
+    ackChange(serializedInterval: ISerializedInterval, local: boolean, op?: ISequencedDocumentMessage): void;
     // @internal (undocumented)
-    ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
+    ackDelete(serializedInterval: ISerializedInterval, local: boolean, op?: ISequencedDocumentMessage): void;
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
     // (undocumented)
     addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;

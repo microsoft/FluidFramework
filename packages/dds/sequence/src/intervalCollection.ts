@@ -132,8 +132,14 @@ export interface ISerializableInterval extends IInterval {
 
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     compareEnds(a: TInterval, b: TInterval): number;
-    create(label: string, start: number, end: number,
-        client: Client | undefined, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
+    create(
+        label: string,
+        start: number | undefined,
+        end: number | undefined,
+        client: Client | undefined,
+        intervalType?: IntervalType,
+        op?: ISequencedDocumentMessage,
+    ): TInterval;
 }
 
 export class Interval implements ISerializableInterval {
@@ -817,7 +823,12 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return this.intervalIdMap.get(id);
     }
 
-    public changeInterval(interval: TInterval, start: number, end: number, op?: ISequencedDocumentMessage) {
+    public changeInterval(
+        interval: TInterval,
+        start: number | undefined,
+        end: number | undefined,
+        op?: ISequencedDocumentMessage,
+    ) {
         const newInterval = interval.modify(this.label, start, end, op) as TInterval | undefined;
         if (newInterval) {
             this.removeExistingInterval(interval);
@@ -1330,7 +1341,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     /** @internal */
-    public ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
+    public ackChange(serializedInterval: ISerializedInterval, local: boolean, op?: ISequencedDocumentMessage) {
         if (!this.localCollection) {
             throw new LoggingError("Attach must be called before accessing intervals");
         }
@@ -1375,7 +1386,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                     // the one we originally found in the tree.
                     interval = this.localCollection.changeInterval(interval, start, end, op) ?? interval;
                 }
-                const deltaProps = interval.addProperties(newProps, true, op.sequenceNumber);
+                const deltaProps = interval.addProperties(newProps, true, op?.sequenceNumber);
                 if (this.onDeserialize) {
                     this.onDeserialize(interval);
                 }
@@ -1458,7 +1469,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         lref.refType = refType;
     }
 
-    private ackInterval(interval: TInterval, op: ISequencedDocumentMessage) {
+    private ackInterval(interval: TInterval, op?: ISequencedDocumentMessage) {
         // in current usage, interval is always a SequenceInterval
         if (!(interval instanceof SequenceInterval)) {
             return;
@@ -1520,7 +1531,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     public ackAdd(
         serializedInterval: ISerializedInterval,
         local: boolean,
-        op: ISequencedDocumentMessage) {
+        op?: ISequencedDocumentMessage) {
         if (local) {
             const id: string = serializedInterval.properties?.[reservedIntervalIdKey];
             const localInterval = this.getIntervalById(id);
@@ -1558,7 +1569,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     public ackDelete(
         serializedInterval: ISerializedInterval,
         local: boolean,
-        op: ISequencedDocumentMessage): void {
+        op?: ISequencedDocumentMessage): void {
         if (local) {
             // Local ops were applied when the message was created and there's no "pending delete"
             // state to bookkeep: remote operation application takes into account possibility of

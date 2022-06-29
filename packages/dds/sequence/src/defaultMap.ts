@@ -401,9 +401,7 @@ export class DefaultMap<T> {
                 resubmit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
                     const localValue = this.data.get(op.key);
 
-                    if (!localValue) {
-                        throw new Error();
-                    }
+                    assert(localValue !== undefined, "Local value expected on resubmission");
 
                     const handler = localValue.getOpHandler(op.value.opName);
                     const {
