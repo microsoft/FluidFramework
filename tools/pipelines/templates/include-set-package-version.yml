@@ -15,7 +15,7 @@ parameters:
 
 # Set version
 steps:
-- ${{ if ne(parameters.installBuildTools, true) }}:
+- ${{ if eq(parameters.installBuildTools, true) }}:
   - task: Bash@3
     name: InstallBuildTools
     displayName: Install Fluid Build Tools
