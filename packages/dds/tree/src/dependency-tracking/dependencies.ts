@@ -35,7 +35,7 @@ export interface NamedComputation {
      * Lists the currently subscribed set of Dependent.
      * This is exposed to allow tooling to inspect the dependency graph,
      * and should not be needed for regular functionality.
-	 * Implementing this is not required: absence of an implementation does not mean there are no dependees.
+	 * Implementing this is not required: absence of an implementation does not mean there are no dependents.
      */
     listDependents?(): Iterable<Dependent>;
 }
