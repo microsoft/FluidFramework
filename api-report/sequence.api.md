@@ -72,7 +72,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
+    create(label: string, start: number, end: number, client: Client | undefined, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
 }
 
 // @public (undocumented)
@@ -148,7 +148,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     get attached(): boolean;
     // (undocumented)
-    attachGraph(client: Client, label: string): void;
+    attachGraph(client: Client | undefined, label: string): void;
     // (undocumented)
     change(id: string, start?: number, end?: number): TInterval | undefined;
     // (undocumented)

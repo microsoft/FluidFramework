@@ -1925,31 +1925,6 @@ use_old_ClassDeclaration_LocalReferenceCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_LocalReferencePosition": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_LocalReferencePosition():
-    TypeOnly<old.LocalReferencePosition>;
-declare function use_current_InterfaceDeclaration_LocalReferencePosition(
-    use: TypeOnly<current.LocalReferencePosition>);
-use_current_InterfaceDeclaration_LocalReferencePosition(
-    get_old_InterfaceDeclaration_LocalReferencePosition());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_LocalReferencePosition": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_LocalReferencePosition():
-    TypeOnly<current.LocalReferencePosition>;
-declare function use_old_InterfaceDeclaration_LocalReferencePosition(
-    use: TypeOnly<old.LocalReferencePosition>);
-use_old_InterfaceDeclaration_LocalReferencePosition(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_LocalReferencePosition());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_LRUSegment": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_LRUSegment():
