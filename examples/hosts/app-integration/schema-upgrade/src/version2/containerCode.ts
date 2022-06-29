@@ -35,15 +35,9 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await Promise.all([
-            runtime.createRootDataStore(
-                InventoryListInstantiationFactory.type,
-                inventoryListId,
-            ),
-            runtime.createRootDataStore(
-                ContainerKillBitInstantiationFactory.type,
-                containerKillBitId,
-            ),
-        ]);
+        const inventoryList = await runtime.createDataStore(InventoryListInstantiationFactory.type);
+        await inventoryList.trySetAlias(inventoryListId);
+        const containerKillBit = await runtime.createDataStore(ContainerKillBitInstantiationFactory.type);
+        await containerKillBit.trySetAlias(containerKillBitId);
     }
 }

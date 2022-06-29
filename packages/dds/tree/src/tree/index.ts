@@ -4,6 +4,7 @@
  */
 
 export {
-    TreeKey,
+    EmptyKey,
+    FieldKey,
     TreeType,
 } from "./types";

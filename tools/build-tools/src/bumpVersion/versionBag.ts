@@ -10,6 +10,10 @@ import * as semver from "semver";
 
 export class VersionBag {
     private versionData: { [key: string]: string } = {};
+
+    public isEmpty(): boolean {
+        return Object.keys(this.versionData).length === 0;
+    }
     public add(pkg: Package, version: string) {
         const existing = this.internalAdd(pkg, version);
         if (existing) {
@@ -31,7 +35,7 @@ export class VersionBag {
         }
     }
     public get(pkgOrMonoRepoName: Package | string) {
-        let entryName = typeof pkgOrMonoRepoName === "string" ? pkgOrMonoRepoName : VersionBag.getEntryName(pkgOrMonoRepoName);
+        const entryName = typeof pkgOrMonoRepoName === "string" ? pkgOrMonoRepoName : VersionBag.getEntryName(pkgOrMonoRepoName);
         return this.versionData[entryName];
     }
     public [Symbol.iterator]() {

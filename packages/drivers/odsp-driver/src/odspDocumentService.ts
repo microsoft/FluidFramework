@@ -21,8 +21,7 @@ import {
     IDocumentServicePolicies,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
-import { IFacetCodes } from "@fluidframework/odsp-doclib-utils";
+import { canRetryOnError, DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
 import {
     IClient,
     ISequencedDocumentMessage,
@@ -35,6 +34,7 @@ import {
     InstrumentedStorageTokenFetcher,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
+import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { HostStoragePolicyInternal, ISocketStorageDiscovery } from "./contracts";
 import { IOdspCache } from "./odspCache";
@@ -341,9 +341,8 @@ export class OdspDocumentService implements IDocumentService {
         options: TokenFetchOptionsEx,
     ) {
         return this.joinSessionCore(requestSocketToken, options).catch((e) => {
-            const likelyFacetCodes = e as IFacetCodes;
-            if (Array.isArray(likelyFacetCodes.facetCodes)) {
-                for (const code of likelyFacetCodes.facetCodes) {
+            if (hasFacetCodes(e) && e.facetCodes !== undefined) {
+                for (const code of e.facetCodes) {
                     switch (code) {
                         case "sessionForbiddenOnPreservedFiles":
                         case "sessionForbiddenOnModerationEnabledLibrary":
@@ -415,12 +414,16 @@ export class OdspDocumentService implements IDocumentService {
             if (response.refreshAfterDeltaMs > 0) {
                 this.scheduleJoinSessionRefresh(response.refreshAfterDeltaMs)
                     .catch((error) => {
-                        this.mc.logger.sendErrorEvent({
+                        const canRetry = canRetryOnError(error);
+                        // Only record error event in case it is non retriable.
+                        if (!canRetry) {
+                            this.mc.logger.sendErrorEvent({
                                 eventName: "JoinSessionRefreshError",
                                 details: JSON.stringify(props),
                             },
                             error,
-                        );
+                            );
+                        }
                     });
             } else {
                 // Logging just for informational purposes to help with debugging as this is a new feature.

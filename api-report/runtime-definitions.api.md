@@ -283,6 +283,7 @@ export interface IProvideFluidDataStoreRegistry {
 // @public (undocumented)
 export interface ISignalEnvelope {
     address?: string;
+    clientSignalSequenceNumber: number;
     contents: {
         type: string;
         content: any;

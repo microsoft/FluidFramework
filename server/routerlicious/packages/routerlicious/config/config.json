@@ -72,6 +72,12 @@
                 "maxBurst": 1000000,
                 "minCooldownIntervalInMs": 1000000,
                 "minThrottleIntervalInMs": 1000000
+            },
+            "submitSignal": {
+                "maxPerMs": 1000000,
+                "maxBurst": 1000000,
+                "minCooldownIntervalInMs": 1000000,
+                "minThrottleIntervalInMs": 1000000
             }
         },
         "topic": "rawdeltas",
@@ -96,7 +102,10 @@
             "enableCustomSocketIoAdapter": true,
             "shouldDisableDefaultNamespace": false
         },
-        "enforceServerGeneratedDocumentId": false
+        "enforceServerGeneratedDocumentId": false,
+        "socketIo": {
+            "perMessageDeflate": true
+        }
     },
     "client": {
         "type": "browser",
@@ -128,6 +137,10 @@
         "topics": {
             "send": "deltas"
         }
+    },
+    "usage": {
+        "clientConnectivityCountingEnabled": false,
+        "signalUsageCountingEnabled": false
     },
     "auth": {
         "endpoint": "http://riddler:5000",

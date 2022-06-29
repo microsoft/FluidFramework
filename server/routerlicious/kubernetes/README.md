@@ -1,11 +1,14 @@
 # Kubernetes deployment
 
 ## Cluster preparation
+
 Azure Container Service is the simplest way to get a cluster up and running. Optionally instructions on how to manually
 prepare a Kubernetes cluster on Azure can be found [here](azure.md).
 
 You can also make use of minikube to run a local cluster for testing. The [minikube](minikube.md) page provides setup
 instructions.
+
+**NOTE**: we currently support Kubernetes v1.23.
 
 ## Routerlicious deployment
 
@@ -20,14 +23,14 @@ chart. Or in the future simpling installing a chart we have published to a chart
 Prior to deploying the Routerlicious chart first a few base components need to be configured
 
 To actually deploy our services you'll need to provide the cluster with credentials to our private container as
-documented at https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/. This boils
+documented [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/). This boils
 down to the below command to create a secret in Kubernetes
 
-```
+```bash
 kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.io --docker-username=prague --docker-password=/vM3i=D+K4+vj+pgha=cg=55OQLDWj3w --docker-email=kurtb@microsoft.com
 ```
 
-```
+```bash
 kubectl apply -f system/azure-unmanaged-premium.yaml
 ```
 
@@ -49,7 +52,7 @@ these files. But with the ability to provide runtime parameters.
 
 Once they are built we build dependencies (the helm version of npm install) followed by packaging the chart.
 
-```
+```bash
 node tools/generateChart.js ./routerlicious/ $(Build.BuildId) $(Build.BuildId)
 cd routerlicious
 helm dependency build
@@ -60,7 +63,7 @@ helm package .
 
 Simply take the tarball from the package step and deploy it to the cluster
 
-```
+```bash
 helm upgrade -i pesky-platypus chart.tgz
 ```
 
@@ -75,17 +78,20 @@ care of by Azure Container Service.
 
 ### Current Environments
 
-Shared
-Kafka - left-numbat
+#### Shared
 
-PPE
-Mongo - quoting-armadillo
-Redis - lumpy-condor
-Historian - terrific-otter
-Rabbitmq - modest-poodle
+- Kafka - left-numbat
 
-Prod
-Mongo - quieting-guppy
-Redis - winsome-wombat
-Historian - smelly-wolf
-Rabbitmq - lumpy-worm
+#### PPE
+
+- Mongo - quoting-armadillo
+- Redis - lumpy-condor
+- Historian - terrific-otter
+- Rabbitmq - modest-poodle
+
+#### Prod
+
+- Mongo - quieting-guppy
+- Redis - winsome-wombat
+- Historian - smelly-wolf
+- Rabbitmq - lumpy-worm

@@ -68,7 +68,7 @@ async function bumpDependenciesCore(
             }
         }
 
-        let changedVersionString: string[] = [];
+        const changedVersionString: string[] = [];
         for (const [name, version] of changedVersion) {
             changedVersionString.push(`${name.padStart(40)} -> ${version}`);
         }
@@ -132,7 +132,7 @@ export async function cleanPrereleaseDependencies(context: Context, updateLock: 
  * @param release if we are releasing, only patch the pre-release dependencies
  * @param changedVersion the version bag to collect version that is changed
  */
-async function bumpPackageDependencies(
+export async function bumpPackageDependencies(
     pkg: Package,
     bumpPackageMap: Map<string, { pkg: Package, rangeSpec: string }>,
     release: boolean,

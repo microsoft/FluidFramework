@@ -6,8 +6,13 @@
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
 import { createSandbox } from "sinon";
-import { AttachState, IContainerContext, ICriticalContainerError } from "@fluidframework/container-definitions";
-import { GenericError } from "@fluidframework/container-utils";
+import {
+    AttachState,
+    ContainerErrorType,
+    IContainerContext,
+    ICriticalContainerError,
+} from "@fluidframework/container-definitions";
+import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
     MessageType,
@@ -20,8 +25,8 @@ import {
     mixinMonitoringContext,
     MockLogger,
 } from "@fluidframework/telemetry-utils";
-import { MockDeltaManager, MockQuorum } from "@fluidframework/test-runtime-utils";
-import { ContainerRuntime, ScheduleManager } from "../containerRuntime";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+import { ContainerMessageType, ContainerRuntime, ScheduleManager } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
@@ -32,7 +37,7 @@ describe("Runtime", () => {
             const getMockContext = ((): Partial<IContainerContext> => {
                 return {
                     deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorum(),
+                    quorum: new MockQuorumClients(),
                     taggedLogger: new MockLogger(),
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (_error?: ICriticalContainerError): void => { },
@@ -73,7 +78,7 @@ describe("Runtime", () => {
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
                             deltaManager: new MockDeltaManager(),
-                            quorum: new MockQuorum(),
+                            quorum: new MockQuorumClients(),
                             taggedLogger: new MockLogger(),
                             clientDetails: { capabilities: { interactive: true } },
                             closeFn: (error?: ICriticalContainerError): void => {
@@ -81,7 +86,7 @@ describe("Runtime", () => {
                                     containerErrors.push(error);
                                 }
                             },
-                            updateDirtyContainerState: (dirty: boolean) => { },
+                            updateDirtyContainerState: (_dirty: boolean) => { },
                         };
                     });
 
@@ -184,7 +189,7 @@ describe("Runtime", () => {
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
                             deltaManager: new MockDeltaManager(),
-                            quorum: new MockQuorum(),
+                            quorum: new MockQuorumClients(),
                             taggedLogger: mixinMonitoringContext(new MockLogger(), configProvider({
                                 "Fluid.ContainerRuntime.EnableRollback": true,
                             })) as unknown as MockLogger,
@@ -245,10 +250,10 @@ describe("Runtime", () => {
 
                     return {
                         deltaManager: new MockDeltaManager(),
-                        quorum: new MockQuorum(),
+                        quorum: new MockQuorumClients(),
                         taggedLogger: new MockLogger(),
                         clientDetails: { capabilities: { interactive: true } },
-                        updateDirtyContainerState: (dirty: boolean) => { },
+                        updateDirtyContainerState: (_dirty: boolean) => { },
                         attachState,
                         pendingLocalState: addPendingMsg ? pendingState : undefined,
                     };
@@ -648,7 +653,7 @@ describe("Runtime", () => {
                 return {
                     clientId: "fakeClientId",
                     deltaManager: new MockDeltaManager(),
-                    quorum: new MockQuorum(),
+                    quorum: new MockQuorumClients(),
                     taggedLogger: mockLogger,
                     clientDetails: { capabilities: { interactive: true } },
                     closeFn: (error?: ICriticalContainerError): void => {
@@ -656,18 +661,33 @@ describe("Runtime", () => {
                             containerErrors.push(error);
                         }
                     },
-                    updateDirtyContainerState: (dirty: boolean) => { },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
                 };
             };
-            const getMockPendingStateManager = (hasPendingMessages: boolean): PendingStateManager => {
+            const getMockPendingStateManager = (): PendingStateManager => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+                let pendingMessages = 0;
                 return {
                     replayPendingStates: () => { },
-                    hasPendingMessages: () => hasPendingMessages,
+                    hasPendingMessages: (): boolean => pendingMessages > 0,
+                    processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
+                        return { localAck: false, localOpMetadata: undefined };
+                    },
                     processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
                         return undefined;
                     },
-                } as PendingStateManager;
+                    get pendingMessagesCount() {
+                        return pendingMessages;
+                    },
+                    onSubmitMessage: (
+                        _type: ContainerMessageType,
+                        _clientSequenceNumber: number,
+                        _referenceSequenceNumber: number,
+                        _content: any,
+                        _localOpMetadata: unknown,
+                        _opMetadata: Record<string, unknown> | undefined,
+                    ) => pendingMessages++,
+                } as unknown as PendingStateManager;
             };
             const getMockDataStores = (): DataStores => {
                 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -717,26 +737,35 @@ describe("Runtime", () => {
                 runtime.setConnectionState(true);
             };
 
+            const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
+                pendingStateManager.onSubmitMessage(ContainerMessageType.FluidDataStoreOp, 0, 0, "", "", undefined);
+
             it(`No progress for ${maxReconnects} connection state changes and pending state will ` +
                 "close the container", async () => {
-                    patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
+                    const pendingStateManager = getMockPendingStateManager();
+                    patchRuntime(pendingStateManager);
 
                     for (let i = 0; i < maxReconnects; i++) {
+                        addPendingMessage(pendingStateManager);
                         toggleConnection(containerRuntime);
                     }
 
                     const error = getFirstContainerError();
-                    assert.ok(error instanceof GenericError);
+                    assert.ok(error instanceof DataProcessingError);
                     assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
+                    assert.strictEqual(error.getTelemetryProperties().pendingMessages, maxReconnects);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
                         attempts: 7,
+                        pendingMessages: 7,
                     }]);
                 });
 
             it(`No progress for ${maxReconnects} / 2 connection state changes and pending state will ` +
                 "not close the container", async () => {
-                    patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
+                    const pendingStateManager = getMockPendingStateManager();
+                    patchRuntime(pendingStateManager);
+                    addPendingMessage(pendingStateManager);
 
                     for (let i = 0; i < maxReconnects / 2; i++) {
                         toggleConnection(containerRuntime);
@@ -746,16 +775,17 @@ describe("Runtime", () => {
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
                         attempts: 7,
+                        pendingMessages: 1,
                     }]);
                 });
 
             it(`No progress for ${maxReconnects} connection state changes and pending state with` +
                 "feature disabled will not close the container", async () => {
-                    patchRuntime(
-                        getMockPendingStateManager(true /* always has pending messages */),
-                        -1 /* maxConsecutiveReplays */);
+                    const pendingStateManager = getMockPendingStateManager();
+                    patchRuntime(pendingStateManager, -1 /* maxConsecutiveReplays */);
 
                     for (let i = 0; i < maxReconnects; i++) {
+                        addPendingMessage(pendingStateManager);
                         toggleConnection(containerRuntime);
                     }
 
@@ -765,7 +795,8 @@ describe("Runtime", () => {
 
             it(`No progress for ${maxReconnects} connection state changes and no pending state will ` +
                 "not close the container", async () => {
-                    patchRuntime(getMockPendingStateManager(false /* always has no pending messages */));
+                    const pendingStateManager = getMockPendingStateManager();
+                    patchRuntime(pendingStateManager);
 
                     for (let i = 0; i < maxReconnects; i++) {
                         toggleConnection(containerRuntime);
@@ -777,7 +808,9 @@ describe("Runtime", () => {
 
             it(`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
                 "processing local op will not close the container", async () => {
-                    patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
+                    const pendingStateManager = getMockPendingStateManager();
+                    patchRuntime(pendingStateManager);
+                    addPendingMessage(pendingStateManager);
 
                     for (let i = 0; i < maxReconnects; i++) {
                         containerRuntime.setConnectionState(!containerRuntime.connected);
@@ -797,9 +830,11 @@ describe("Runtime", () => {
 
             it(`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
                 "processing remote op will close the container", async () => {
-                    patchRuntime(getMockPendingStateManager(true /* always has pending messages */));
+                    const pendingStateManager = getMockPendingStateManager();
+                    patchRuntime(pendingStateManager);
 
                     for (let i = 0; i < maxReconnects; i++) {
+                        addPendingMessage(pendingStateManager);
                         toggleConnection(containerRuntime);
                         containerRuntime.process({
                             type: "op",
@@ -812,13 +847,58 @@ describe("Runtime", () => {
                     }
 
                     const error = getFirstContainerError();
-                    assert.ok(error instanceof GenericError);
+                    assert.ok(error instanceof DataProcessingError);
                     assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
+                    assert.strictEqual(error.getTelemetryProperties().pendingMessages, maxReconnects);
                     mockLogger.assertMatchAny([{
                         eventName: "ContainerRuntime:ReconnectsWithNoProgress",
                         attempts: 7,
+                        pendingMessages: 7,
                     }]);
                 });
+        });
+
+        describe("User input validations", () => {
+            let containerRuntime: ContainerRuntime;
+            const getMockContext = ((): Partial<IContainerContext> => {
+                return {
+                    deltaManager: new MockDeltaManager(),
+                    quorum: new MockQuorumClients(),
+                    taggedLogger: new MockLogger(),
+                    clientDetails: { capabilities: { interactive: true } },
+                    closeFn: (_error?: ICriticalContainerError): void => { },
+                    updateDirtyContainerState: (_dirty: boolean) => { },
+                };
+            });
+
+            before(async () => {
+                containerRuntime = await ContainerRuntime.load(
+                    getMockContext() as IContainerContext,
+                    [],
+                    undefined, // requestHandler
+                    {}, // runtimeOptions
+                );
+            });
+
+            it("cannot create root data store with slashes in id", async () => {
+                const invalidId = "beforeSlash/afterSlash";
+                const codeBlock = async () => {
+                    await containerRuntime.createRootDataStore("", invalidId);
+                };
+                await assert.rejects(codeBlock,
+                    (e) => e.errorType === ContainerErrorType.usageError
+                        && e.message === `Id cannot contain slashes: '${invalidId}'`);
+            });
+
+            it("cannot create detached root data store with slashes in id", async () => {
+                const invalidId = "beforeSlash/afterSlash";
+                const codeBlock = () => {
+                    containerRuntime.createDetachedRootDataStore([""], invalidId);
+                };
+                assert.throws(codeBlock,
+                    (e) => e.errorType === ContainerErrorType.usageError
+                        && e.message === `Id cannot contain slashes: '${invalidId}'`);
+            });
         });
     });
 });

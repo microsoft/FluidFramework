@@ -203,6 +203,7 @@ declare function get_current_ClassDeclaration_MockDeltaManager():
 declare function use_old_ClassDeclaration_MockDeltaManager(
     use: TypeOnly<old.MockDeltaManager>);
 use_old_ClassDeclaration_MockDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockDeltaManager());
 
 /*
@@ -275,7 +276,6 @@ declare function get_current_ClassDeclaration_MockFluidDataStoreContext():
 declare function use_old_ClassDeclaration_MockFluidDataStoreContext(
     use: TypeOnly<old.MockFluidDataStoreContext>);
 use_old_ClassDeclaration_MockFluidDataStoreContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockFluidDataStoreContext());
 
 /*
@@ -300,6 +300,7 @@ declare function get_current_ClassDeclaration_MockFluidDataStoreRuntime():
 declare function use_old_ClassDeclaration_MockFluidDataStoreRuntime(
     use: TypeOnly<old.MockFluidDataStoreRuntime>);
 use_old_ClassDeclaration_MockFluidDataStoreRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockFluidDataStoreRuntime());
 
 /*
@@ -353,26 +354,26 @@ use_old_ClassDeclaration_MockObjectStorageService(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MockQuorum": {"forwardCompat": false}
+* "ClassDeclaration_MockQuorumClients": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_MockQuorum():
-    TypeOnly<old.MockQuorum>;
-declare function use_current_ClassDeclaration_MockQuorum(
-    use: TypeOnly<current.MockQuorum>);
-use_current_ClassDeclaration_MockQuorum(
-    get_old_ClassDeclaration_MockQuorum());
+declare function get_old_ClassDeclaration_MockQuorumClients():
+    TypeOnly<old.MockQuorumClients>;
+declare function use_current_ClassDeclaration_MockQuorumClients(
+    use: TypeOnly<current.MockQuorumClients>);
+use_current_ClassDeclaration_MockQuorumClients(
+    get_old_ClassDeclaration_MockQuorumClients());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MockQuorum": {"backCompat": false}
+* "ClassDeclaration_MockQuorumClients": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_MockQuorum():
-    TypeOnly<current.MockQuorum>;
-declare function use_old_ClassDeclaration_MockQuorum(
-    use: TypeOnly<old.MockQuorum>);
-use_old_ClassDeclaration_MockQuorum(
-    get_current_ClassDeclaration_MockQuorum());
+declare function get_current_ClassDeclaration_MockQuorumClients():
+    TypeOnly<current.MockQuorumClients>;
+declare function use_old_ClassDeclaration_MockQuorumClients(
+    use: TypeOnly<old.MockQuorumClients>);
+use_old_ClassDeclaration_MockQuorumClients(
+    get_current_ClassDeclaration_MockQuorumClients());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -421,3 +422,27 @@ declare function use_old_ClassDeclaration_MockStorage(
     use: TypeOnly<old.MockStorage>);
 use_old_ClassDeclaration_MockStorage(
     get_current_ClassDeclaration_MockStorage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validateAssertionError": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_validateAssertionError():
+    TypeOnly<typeof old.validateAssertionError>;
+declare function use_current_FunctionDeclaration_validateAssertionError(
+    use: TypeOnly<typeof current.validateAssertionError>);
+use_current_FunctionDeclaration_validateAssertionError(
+    get_old_FunctionDeclaration_validateAssertionError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validateAssertionError": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_validateAssertionError():
+    TypeOnly<typeof current.validateAssertionError>;
+declare function use_old_FunctionDeclaration_validateAssertionError(
+    use: TypeOnly<typeof old.validateAssertionError>);
+use_old_FunctionDeclaration_validateAssertionError(
+    get_current_FunctionDeclaration_validateAssertionError());

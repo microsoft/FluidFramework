@@ -21,8 +21,8 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
         const messages: string[] = [];
         diagnostics.forEach(diagnostic => {
             if (diagnostic.file) {
-                let { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
-                let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+                const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
+                const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
                 messages.push(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
             } else {
                 messages.push(ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
@@ -32,7 +32,7 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
     }
 
     let commandLine = TscUtils.parseCommandLine(command);
-    let diagnostics: Diagnostic[] = [];
+    const diagnostics: Diagnostic[] = [];
 
     if (commandLine) {
         const configFileName = TscUtils.findConfigFile(cwd, commandLine);

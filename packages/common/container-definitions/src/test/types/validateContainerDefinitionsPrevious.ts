@@ -83,8 +83,31 @@ declare function get_current_TypeAliasDeclaration_ConnectionState():
 declare function use_old_TypeAliasDeclaration_ConnectionState(
     use: TypeOnly<old.ConnectionState>);
 use_old_TypeAliasDeclaration_ConnectionState(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_ConnectionState());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ConnectionState.CatchingUp": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ConnectionState_CatchingUp():
+    TypeOnly<old.ConnectionState.CatchingUp>;
+declare function use_current_TypeAliasDeclaration_ConnectionState_CatchingUp(
+    use: TypeOnly<current.ConnectionState.CatchingUp>);
+use_current_TypeAliasDeclaration_ConnectionState_CatchingUp(
+    get_old_TypeAliasDeclaration_ConnectionState_CatchingUp());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ConnectionState.CatchingUp": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ConnectionState_CatchingUp():
+    TypeOnly<current.ConnectionState.CatchingUp>;
+declare function use_old_TypeAliasDeclaration_ConnectionState_CatchingUp(
+    use: TypeOnly<old.ConnectionState.CatchingUp>);
+use_old_TypeAliasDeclaration_ConnectionState_CatchingUp(
+    get_current_TypeAliasDeclaration_ConnectionState_CatchingUp());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -113,26 +136,14 @@ use_old_TypeAliasDeclaration_ConnectionState_Connected(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ConnectionState.Connecting": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_ConnectionState.Connecting": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_ConnectionState_Connecting():
-    TypeOnly<old.ConnectionState.Connecting>;
-declare function use_current_TypeAliasDeclaration_ConnectionState_Connecting(
-    use: TypeOnly<current.ConnectionState.Connecting>);
-use_current_TypeAliasDeclaration_ConnectionState_Connecting(
-    get_old_TypeAliasDeclaration_ConnectionState_Connecting());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ConnectionState.Connecting": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_ConnectionState.Connecting": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_ConnectionState_Connecting():
-    TypeOnly<current.ConnectionState.Connecting>;
-declare function use_old_TypeAliasDeclaration_ConnectionState_Connecting(
-    use: TypeOnly<old.ConnectionState.Connecting>);
-use_old_TypeAliasDeclaration_ConnectionState_Connecting(
-    get_current_TypeAliasDeclaration_ConnectionState_Connecting());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -157,6 +168,30 @@ declare function use_old_TypeAliasDeclaration_ConnectionState_Disconnected(
     use: TypeOnly<old.ConnectionState.Disconnected>);
 use_old_TypeAliasDeclaration_ConnectionState_Disconnected(
     get_current_TypeAliasDeclaration_ConnectionState_Disconnected());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ConnectionState.EstablishingConnection": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ConnectionState_EstablishingConnection():
+    TypeOnly<old.ConnectionState.EstablishingConnection>;
+declare function use_current_TypeAliasDeclaration_ConnectionState_EstablishingConnection(
+    use: TypeOnly<current.ConnectionState.EstablishingConnection>);
+use_current_TypeAliasDeclaration_ConnectionState_EstablishingConnection(
+    get_old_TypeAliasDeclaration_ConnectionState_EstablishingConnection());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ConnectionState.EstablishingConnection": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ConnectionState_EstablishingConnection():
+    TypeOnly<current.ConnectionState.EstablishingConnection>;
+declare function use_old_TypeAliasDeclaration_ConnectionState_EstablishingConnection(
+    use: TypeOnly<old.ConnectionState.EstablishingConnection>);
+use_old_TypeAliasDeclaration_ConnectionState_EstablishingConnection(
+    get_current_TypeAliasDeclaration_ConnectionState_EstablishingConnection());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -281,26 +316,14 @@ use_old_InterfaceDeclaration_ICodeDetailsLoader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ICodeLoader": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ICodeLoader():
-    TypeOnly<old.ICodeLoader>;
-declare function use_current_InterfaceDeclaration_ICodeLoader(
-    use: TypeOnly<current.ICodeLoader>);
-use_current_InterfaceDeclaration_ICodeLoader(
-    get_old_InterfaceDeclaration_ICodeLoader());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICodeLoader": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ICodeLoader": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ICodeLoader():
-    TypeOnly<current.ICodeLoader>;
-declare function use_old_InterfaceDeclaration_ICodeLoader(
-    use: TypeOnly<old.ICodeLoader>);
-use_old_InterfaceDeclaration_ICodeLoader(
-    get_current_InterfaceDeclaration_ICodeLoader());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -324,6 +347,7 @@ declare function get_current_InterfaceDeclaration_IConnectionDetails():
 declare function use_old_InterfaceDeclaration_IConnectionDetails(
     use: TypeOnly<old.IConnectionDetails>);
 use_old_InterfaceDeclaration_IConnectionDetails(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectionDetails());
 
 /*
@@ -336,7 +360,6 @@ declare function get_old_InterfaceDeclaration_IContainer():
 declare function use_current_InterfaceDeclaration_IContainer(
     use: TypeOnly<current.IContainer>);
 use_current_InterfaceDeclaration_IContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainer());
 
 /*
@@ -349,7 +372,6 @@ declare function get_current_InterfaceDeclaration_IContainer():
 declare function use_old_InterfaceDeclaration_IContainer(
     use: TypeOnly<old.IContainer>);
 use_old_InterfaceDeclaration_IContainer(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainer());
 
 /*
@@ -362,7 +384,6 @@ declare function get_old_InterfaceDeclaration_IContainerContext():
 declare function use_current_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<current.IContainerContext>);
 use_current_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -375,7 +396,6 @@ declare function get_current_InterfaceDeclaration_IContainerContext():
 declare function use_old_InterfaceDeclaration_IContainerContext(
     use: TypeOnly<old.IContainerContext>);
 use_old_InterfaceDeclaration_IContainerContext(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerContext());
 
 /*
@@ -496,7 +516,6 @@ declare function get_current_InterfaceDeclaration_IDeltaManager():
 declare function use_old_InterfaceDeclaration_IDeltaManager(
     use: TypeOnly<old.IDeltaManager<any,any>>);
 use_old_InterfaceDeclaration_IDeltaManager(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaManager());
 
 /*
@@ -574,18 +593,6 @@ use_old_InterfaceDeclaration_IDeltaQueueEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IDeltaSender": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_IDeltaSender": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDeltaSender": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaSender():
@@ -605,7 +612,6 @@ declare function get_current_InterfaceDeclaration_IDeltaSender():
 declare function use_old_InterfaceDeclaration_IDeltaSender(
     use: TypeOnly<old.IDeltaSender>);
 use_old_InterfaceDeclaration_IDeltaSender(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltaSender());
 
 /*
@@ -1091,18 +1097,6 @@ use_old_InterfaceDeclaration_IPendingLocalState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProvideDeltaSender": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProvideDeltaSender": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidCodeDetailsComparer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():
@@ -1199,18 +1193,6 @@ use_old_InterfaceDeclaration_IProvideRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProxyLoaderFactory": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IProxyLoaderFactory": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IResolvedFluidCodeDetails": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IResolvedFluidCodeDetails():
@@ -1242,7 +1224,6 @@ declare function get_old_InterfaceDeclaration_IRuntime():
 declare function use_current_InterfaceDeclaration_IRuntime(
     use: TypeOnly<current.IRuntime>);
 use_current_InterfaceDeclaration_IRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntime());
 
 /*
@@ -1376,6 +1357,30 @@ declare function use_old_VariableDeclaration_isFluidPackage(
     use: TypeOnly<typeof old.isFluidPackage>);
 use_old_VariableDeclaration_isFluidPackage(
     get_current_VariableDeclaration_isFluidPackage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotTreeWithBlobContents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents():
+    TypeOnly<old.ISnapshotTreeWithBlobContents>;
+declare function use_current_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
+    use: TypeOnly<current.ISnapshotTreeWithBlobContents>);
+use_current_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
+    get_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotTreeWithBlobContents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISnapshotTreeWithBlobContents():
+    TypeOnly<current.ISnapshotTreeWithBlobContents>;
+declare function use_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
+    use: TypeOnly<old.ISnapshotTreeWithBlobContents>);
+use_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents(
+    get_current_InterfaceDeclaration_ISnapshotTreeWithBlobContents());
 
 /*
 * Validate forward compat by using old type in place of current type

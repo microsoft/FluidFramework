@@ -44,9 +44,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
      * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
      */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        await runtime.createRootDataStore(
-            this.defaultFactory.type,
-            defaultDataStoreId,
-        );
+        const dataStore = await runtime.createDataStore(this.defaultFactory.type);
+        await dataStore.trySetAlias(defaultDataStoreId);
     }
 }

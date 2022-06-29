@@ -48,11 +48,12 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     protected onDisconnect(): void;
     // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
     set(key: string, value: any): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    }
-
+}
 
 // (No @packageDocumentation comment for this package)
 

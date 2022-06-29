@@ -30,7 +30,7 @@ describe("RestLess", () => {
             const restLessServer = new RestLessServer();
             return (req, res, next) => {
                 restLessServer
-                    .translate(req)
+                    .translate(req, res)
                     .then(() => next())
                     .catch(next);
             };
@@ -47,7 +47,7 @@ describe("RestLess", () => {
             app.use(authMiddleware());
         }
         app.use(json());
-        // urlencoded does not recognize content-type: application/x-www-form-urlencoded
+        // urlencoded does not recognize content-type: application/x-www-form-urlencoded;restless
         app.use(urlencoded({ extended: true, type: (req) => req.headers["content-type"]?.startsWith("application/x-www-form-urlencoded") }));
         if (!restLessBeforeBodyParser) {
             app.use(restLessMiddleware());

@@ -9,6 +9,7 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
 import { assert } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import {
     Comparer,
     Heap,
@@ -23,7 +24,11 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./constants";
-import { LocalReference, LocalReferenceCollection } from "./localReference";
+import {
+     assertLocalReferences,
+     LocalReferenceCollection,
+     LocalReferencePosition,
+} from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -57,13 +62,11 @@ import {
     refGetRangeLabels,
     refGetTileLabels,
     refHasRangeLabel,
-    refHasRangeLabels,
     refHasTileLabel,
-    refHasTileLabels,
+    DetachedReferencePosition,
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
-import { Client } from "./client";
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
@@ -107,6 +110,15 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
     }
     assert(maybe?.removedClientIds === undefined && maybe?.removedSeq === undefined,
         0x2bf /* "both removedClientIds and removedSeq should be set or not set" */);
+}
+
+function isRemoved(segment: ISegment): boolean {
+    return toRemovalInfo(segment) !== undefined;
+}
+
+function isRemovedAndAcked(segment: ISegment): boolean {
+    const removalInfo = toRemovalInfo(segment);
+    return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
 }
 
 /**
@@ -554,7 +566,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 return true;
 
             case MergeTreeDeltaType.REMOVE:
-
                 const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
                 assert(removalInfo !== undefined, 0x046 /* "On remove ack, missing removal info!" */);
                 this.localRemovedSeq = undefined;
@@ -562,7 +573,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                     removalInfo.removedSeq = opArgs.sequencedMessage!.sequenceNumber;
                     return true;
                 }
-
                 return false;
 
             default:
@@ -686,43 +696,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
         if (this.properties && this.properties[reservedMarkerIdKey]) {
             return this.properties[reservedMarkerIdKey] as string;
         }
-    }
-
-    /**
-     * @deprecated - use refHasTileLabels
-     */
-    hasTileLabels() {
-        return refHasTileLabels(this);
-    }
-    /**
-     * @deprecated - use refHasRangeLabels
-     */
-    hasRangeLabels() {
-        return refHasRangeLabels(this);
-    }
-    /**
-     * @deprecated - use refHasTileLabel
-     */
-    hasTileLabel(label: string): boolean {
-        return refHasTileLabel(this, label);
-    }
-    /**
-     * @deprecated - use refHasRangeLabel
-     */
-    hasRangeLabel(label: string): boolean {
-        return refHasRangeLabel(this, label);
-    }
-    /**
-     * @deprecated - use refGetTileLabels
-     */
-    getTileLabels(): string[] | undefined {
-        return refGetTileLabels(this);
-    }
-    /**
-     * @deprecated - use refGetRangeLabels
-     */
-    getRangeLabels(): string[] | undefined {
-        return refGetRangeLabels(this);
     }
 
     toString() {
@@ -995,8 +968,6 @@ const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
     compare: (a, b) => a.minRequired - b.minRequired,
 };
-
-export type LocalReferenceMapper = (id: string) => LocalReference;
 
 // Represents a sequence of text segments
 export class MergeTree {
@@ -1414,6 +1385,99 @@ export class MergeTree {
         return { segment, offset };
     }
 
+    /**
+     * @internal must only be used by client
+     * @param segoff - The segment and offset to slide from
+     * @returns The segment and offset to slide to
+     */
+    public _getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
+        if (!segoff.segment || !isRemovedAndAcked(segoff.segment)) {
+            return segoff;
+        }
+        let slideToSegment: ISegment | undefined;
+        const goFurtherToFindSlideToSegment = (seg) => {
+            if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
+                slideToSegment = seg;
+                return false;
+            }
+            return true;
+        };
+        // Slide to the next farthest valid segment in the tree.
+        this.rightExcursion(segoff.segment, goFurtherToFindSlideToSegment);
+        if (slideToSegment) {
+            return { segment: slideToSegment, offset: 0 };
+        }
+        // If no such segment is found, slide to the last valid segment.
+        this.leftExcursion(segoff.segment, goFurtherToFindSlideToSegment);
+
+        // Workaround TypeScript issue (https://github.com/microsoft/TypeScript/issues/9998)
+        slideToSegment = slideToSegment as ISegment | undefined;
+
+        if (slideToSegment) {
+            // If slid nearer then offset should be at the end of the segment
+            return { segment: slideToSegment, offset: slideToSegment.cachedLength - 1 };
+        }
+
+        return { segment: undefined, offset: 0 };
+    }
+
+    /**
+     * This method should only be called when the current client sequence number is
+     * max(remove segment sequence number, add reference sequence number).
+     * Otherwise eventual consistency is not guaranteed.
+     * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
+     */
+    private slideReferences(segment: ISegment, refsToSlide: Iterable<LocalReferencePosition>) {
+        assert(
+            isRemovedAndAcked(segment),
+            0x2f1 /* slideReferences from a segment which has not been removed and acked */);
+        assert(!!segment.localRefs, 0x2f2 /* Ref not in the segment localRefs */);
+        const newSegoff = this._getSlideToSegment({ segment, offset: 0 });
+        const newSegment = newSegoff.segment;
+        if (newSegment && !newSegment.localRefs) {
+            newSegment.localRefs = new LocalReferenceCollection(newSegment);
+        }
+        for (const ref of refsToSlide) {
+            assertLocalReferences(ref);
+            ref.callbacks?.beforeSlide?.();
+            const removedRef = segment.localRefs.removeLocalRef(ref);
+            assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
+            if (newSegment) {
+                assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
+                newSegment.localRefs.addLocalRef(ref, newSegoff.offset ?? 0);
+            }
+            ref.callbacks?.afterSlide?.();
+        }
+        // TODO is it required to update the path lengths?
+        if (newSegment) {
+            this.blockUpdatePathLengths(newSegment.parent, TreeMaintenanceSequenceNumber,
+                LocalClientId);
+        }
+    }
+
+    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean) {
+        if (!segment.localRefs || segment.localRefs.empty) {
+            return;
+        }
+        const refsToSlide: ReferencePosition[] = [];
+        for (const lref of segment.localRefs) {
+            if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
+                continue;
+            } if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                if (!pending) {
+                    refsToSlide.push(lref);
+                }
+            } else {
+                segment.localRefs.removeLocalRef(lref);
+            }
+        }
+        // Rethink implementation of keeping and sliding refs once other reference
+        // changes are complete. This works but is fragile and possibly slow.
+        if (!pending) {
+            this.slideReferences(segment, refsToSlide);
+        }
+    }
+
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
         if ((this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)) {
             return node.partialLengths!.getPartialLength(refSeq, clientId);
@@ -1514,11 +1578,18 @@ export class MergeTree {
         refSeq = this.collabWindow.currentSeq,
         clientId = this.collabWindow.clientId) {
         const seg = refPos.getSegment();
-        if (seg && seg.parent) {
-            const offset = !seg.removedSeq ? refPos.getOffset() : 0;
-            return offset + this.getPosition(seg, refSeq, clientId);
+        if (seg?.parent === undefined) {
+            return DetachedReferencePosition;
         }
-        return LocalReference.DetachedPosition;
+        if (refPos.isLeaf()) {
+            return this.getPosition(refPos, refSeq, clientId);
+        }
+        if (refTypeIncludesFlag(refPos, ReferenceType.Transient)
+            || seg.localRefs?.has(refPos)) {
+                const offset = isRemoved(seg) ? 0 : refPos.getOffset();
+                return offset + this.getPosition(seg, refSeq, clientId);
+        }
+        return DetachedReferencePosition;
     }
 
     public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
@@ -1555,8 +1626,8 @@ export class MergeTree {
                 const marker = <Marker>searchInfo.tile;
                 pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
             } else {
-                const localRef = <LocalReference>searchInfo.tile;
-                pos = localRef.toPosition();
+                const localRef = searchInfo.tile;
+                pos = this.referencePositionToLocalPosition(localRef, UniversalSequenceNumber, clientId);
             }
             return { tile: searchInfo.tile, pos };
         }
@@ -1676,7 +1747,12 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                overwrite = !pendingSegment.ack(pendingSegmentGroup, opArgs, this) || overwrite;
+                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, this);
+                overwrite = overlappingRemove || overwrite;
+
+                if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
+                    this.updateSegmentRefsAfterMarkRemoved(pendingSegment, false);
+                }
                 if (MergeTree.options.zamboniSegments) {
                     this.addToLRUSet(pendingSegment, seq);
                 }
@@ -2338,7 +2414,7 @@ export class MergeTree {
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
         const removedSegments: IMergeTreeSegmentDelta[] = [];
-        const savedLocalRefs: LocalReferenceCollection[] = [];
+        const localOverlapWithRefs: ISegment[] = [];
         const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
         const markRemoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
             const existingRemovalInfo = toRemovalInfo(segment);
@@ -2352,6 +2428,9 @@ export class MergeTree {
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
                     segment.localRemovedSeq = undefined;
+                    if (segment.localRefs?.empty === false) {
+                        localOverlapWithRefs.push(segment);
+                    }
                 } else {
                     // Do not replace earlier sequence number for remove
                     existingRemovalInfo.removedClientIds.push(clientId);
@@ -2362,10 +2441,6 @@ export class MergeTree {
                 segment.localRemovedSeq = localSeq;
 
                 removedSegments.push({ segment });
-                if (segment.localRefs && !segment.localRefs.empty) {
-                    savedLocalRefs.push(segment.localRefs);
-                }
-                segment.localRefs = undefined;
             }
 
             // Save segment so can assign removed sequence number when acked by server
@@ -2389,39 +2464,9 @@ export class MergeTree {
             return true;
         };
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
-        if (savedLocalRefs.length > 0) {
-            const length = this.getLength(refSeq, clientId);
-            let refSegment: ISegment | undefined;
-            if (start < length) {
-                const afterSegOff = this.getContainingSegment(start, refSeq, clientId);
-                refSegment = afterSegOff.segment;
-                assert(!!refSegment, 0x052 /* "Missing reference segment!" */);
-                if (!refSegment.localRefs) {
-                    refSegment.localRefs = new LocalReferenceCollection(refSegment);
-                }
-                refSegment.localRefs.addBeforeTombstones(...savedLocalRefs);
-            } else if (length > 0) {
-                const beforeSegOff = this.getContainingSegment(length - 1, refSeq, clientId);
-                refSegment = beforeSegOff.segment;
-                assert(!!refSegment, 0x053 /* "Missing reference segment!" */);
-                if (!refSegment.localRefs) {
-                    refSegment.localRefs = new LocalReferenceCollection(refSegment);
-                }
-                refSegment.localRefs.addAfterTombstones(...savedLocalRefs);
-            } else {
-                // TODO: The tree is empty, so there isn't anywhere to put these
-                // they should be preserved somehow
-                for (const refsCollection of savedLocalRefs) {
-                    refsCollection.clear();
-                }
-            }
-
-            if (refSegment) {
-                this.blockUpdatePathLengths(refSegment.parent, TreeMaintenanceSequenceNumber,
-                    LocalClientId);
-            }
-        }
-
+        // these segments are already viewed as being removed locally and are not event-ed
+        // so can slide immediately
+        localOverlapWithRefs.forEach((s) => this.slideReferences(s, s.localRefs!));
         // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
             this.mergeTreeDeltaCallback(
@@ -2431,6 +2476,13 @@ export class MergeTree {
                     deltaSegments: removedSegments,
                 });
         }
+        const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
+        // these events are newly removed
+        // so we slide after eventing in case the consumer wants to make reference
+        // changes at remove time, like add a ref to track undo redo.
+        removedSegments.forEach(
+            (rSeg) => this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending));
+
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
@@ -2445,7 +2497,7 @@ export class MergeTree {
         }
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition): ReferencePosition | undefined {
+    public removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         const segment = lref.getSegment();
         if (segment) {
             const removedRefs = segment?.localRefs?.removeLocalRef(lref);
@@ -2458,44 +2510,21 @@ export class MergeTree {
     }
     public createLocalReferencePosition(
         segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
-        client: Client,
-    ): ReferencePosition {
+    ): LocalReferencePosition {
+        if (isRemoved(segment)) {
+            if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)) {
+                throw new UsageError(
+                    "Can only create SlideOnRemove or Transient local reference position on a removed segment");
+            }
+        }
         const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
         segment.localRefs = localRefs;
 
-        const segRef = localRefs.createLocalRef(offset, refType, properties, client);
+        const segRef = localRefs.createLocalRef(offset, refType, properties);
 
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
         return segRef;
-    }
-
-    /**
-     * @deprecated - use removeLocalReferencePosition
-     */
-    public removeLocalReference(segment: ISegment, lref: LocalReference) {
-        if (segment.localRefs) {
-            const removedRef = segment.localRefs.removeLocalRef(lref);
-            if (removedRef) {
-                this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-                    LocalClientId);
-            }
-        }
-    }
-
-    /**
-     * @deprecated - use createLocalReference
-     */
-    public addLocalReference(lref: LocalReference) {
-        const segment = lref.segment!;
-        let localRefs = segment.localRefs;
-        if (!localRefs) {
-            localRefs = new LocalReferenceCollection(segment);
-            segment.localRefs = localRefs;
-        }
-        localRefs.addLocalRef(lref);
-        this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-            LocalClientId);
     }
 
     private blockUpdate(block: IMergeBlock) {

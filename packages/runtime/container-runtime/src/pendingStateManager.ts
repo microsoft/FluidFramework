@@ -82,7 +82,10 @@ export class PendingStateManager implements IDisposable {
     });
 
     // Maintains the count of messages that are currently unacked.
-    private pendingMessagesCount: number = 0;
+    private _pendingMessagesCount: number = 0;
+    public get pendingMessagesCount(): number {
+        return this._pendingMessagesCount;
+    }
 
     // Indicates whether we are processing a batch.
     private isProcessingBatch: boolean = false;
@@ -98,7 +101,7 @@ export class PendingStateManager implements IDisposable {
      * @returns A boolean indicating whether there are messages or not.
      */
     public hasPendingMessages(): boolean {
-        return this.pendingMessagesCount !== 0 || !this.initialStates.isEmpty();
+        return this._pendingMessagesCount !== 0 || !this.initialStates.isEmpty();
     }
 
     public getLocalState(): IPendingLocalState | undefined {
@@ -152,7 +155,7 @@ export class PendingStateManager implements IDisposable {
 
         this.pendingStates.push(pendingMessage);
 
-        this.pendingMessagesCount++;
+        this._pendingMessagesCount++;
     }
 
     /**
@@ -234,7 +237,7 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
-        this.pendingMessagesCount--;
+        this._pendingMessagesCount--;
 
         // Post-processing part - If we are processing a batch then this could be the last message in the batch.
         this.maybeProcessBatchEnd(message);
@@ -349,7 +352,7 @@ export class PendingStateManager implements IDisposable {
             return;
         }
 
-        this.pendingMessagesCount--;
+        this._pendingMessagesCount--;
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const pendingState = this.pendingStates.pop()!;
@@ -385,7 +388,7 @@ export class PendingStateManager implements IDisposable {
         }
 
         // Reset the pending message count because all these messages will be removed from the queue.
-        this.pendingMessagesCount = 0;
+        this._pendingMessagesCount = 0;
 
         const messageBatchQueue = new Deque<IPendingMessage>();
 

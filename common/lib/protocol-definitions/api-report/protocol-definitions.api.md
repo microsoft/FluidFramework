@@ -87,8 +87,6 @@ export interface IClientConfiguration {
     maxMessageSize: number;
     noopCountFrequency?: number;
     noopTimeFrequency?: number;
-    // (undocumented)
-    summary: ISummaryConfiguration;
 }
 
 // @public (undocumented)
@@ -445,20 +443,6 @@ export interface ISummaryCommitter {
 }
 
 // @public (undocumented)
-export interface ISummaryConfiguration {
-    // (undocumented)
-    disableSummaries?: boolean;
-    // (undocumented)
-    idleTime: number;
-    // (undocumented)
-    maxAckWaitTime: number;
-    // (undocumented)
-    maxOps: number;
-    // (undocumented)
-    maxTime: number;
-}
-
-// @public (undocumented)
 export interface ISummaryContent {
     // (undocumented)
     details?: IUploadedSummaryDetails;
@@ -515,23 +499,15 @@ export interface ISummaryTree {
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @public
 export interface ITokenClaims {
-    // (undocumented)
     documentId: string;
-    // (undocumented)
     exp: number;
-    // (undocumented)
     iat: number;
-    // (undocumented)
     jti?: string;
-    // (undocumented)
     scopes: string[];
-    // (undocumented)
     tenantId: string;
-    // (undocumented)
     user: IUser;
-    // (undocumented)
     ver: string;
 }
 
@@ -590,7 +566,6 @@ export interface IUploadedSummaryDetails {
 
 // @public
 export interface IUser {
-    // (undocumented)
     id: string;
 }
 
@@ -646,13 +621,10 @@ export enum NackErrorType {
     ThrottlingError = "ThrottlingError"
 }
 
-// @public (undocumented)
+// @public
 export enum ScopeType {
-    // (undocumented)
     DocRead = "doc:read",
-    // (undocumented)
     DocWrite = "doc:write",
-    // (undocumented)
     SummaryWrite = "summary:write"
 }
 

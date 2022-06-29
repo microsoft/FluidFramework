@@ -194,7 +194,7 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider implements ITestObjectProvider {
-    private readonly _loaderContainerTracker = new LoaderContainerTracker();
+    private _loaderContainerTracker = new LoaderContainerTracker();
     private _documentServiceFactory: IDocumentServiceFactory | undefined;
     private _urlResolver: IUrlResolver | undefined;
     private _logger: EventAndErrorTrackingLogger | undefined;
@@ -407,6 +407,11 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
         this._documentIdStrategy.update(resolvedUrl);
+    }
+
+    public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
+        this._loaderContainerTracker.reset();
+        this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
     }
 }
 
