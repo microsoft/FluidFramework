@@ -104,6 +104,9 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
+      "EnumDeclaration_ConnectionState": {
+        "forwardCompat": false
+      },
       "ClassDeclaration_Container": {
         "forwardCompat": false
       }

@@ -1,0 +1,21 @@
+{
+    // "extends": "../tsconfig",
+    "parserOptions": {
+        "project": ["./tsconfig.json"],
+    },
+    "compilerOptions": {
+        "noEmit": true,
+        "declaration": true,
+        "importHelpers": true,
+        "module": "commonjs",
+        "outDir": "dist",
+        "rootDir": "src",
+        "strict": true,
+        "target": "es2019",
+        "types": ["node"],
+        "esModuleInterop": true,
+        "incremental": true,
+        "pretty": true,
+    },
+    "references": [{ "path": ".." }],
+}

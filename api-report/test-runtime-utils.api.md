@@ -288,7 +288,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     createProps?: any;
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
+    // @deprecated (undocumented)
     documentId: string;
     // (undocumented)
     readonly existing: boolean;

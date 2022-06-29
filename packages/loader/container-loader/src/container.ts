@@ -222,7 +222,9 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on(connectedEventName, callback);
 
-        container.connect();
+        if (container.connectionState === ConnectionState.Disconnected) {
+            container.connect();
+        }
     });
 }
 
@@ -407,7 +409,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._protocolHandler;
     }
 
-    private resumedOpProcessingAfterLoad = false;
+    /** During initialization we pause the inbound queues. We track this state to ensure we only call resume once */
+    private inboundQueuePausedFromInit = true;
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
@@ -996,8 +999,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(!this.closed, 0x0d9 /* "Attempting to connect() a closed DeltaManager" */);
 
         // Resume processing ops
-        if (!this.resumedOpProcessingAfterLoad) {
-            this.resumedOpProcessingAfterLoad = true;
+        if (this.inboundQueuePausedFromInit) {
+            this.inboundQueuePausedFromInit = false;
             this._deltaManager.inbound.resume();
             this._deltaManager.inboundSignal.resume();
         }
@@ -1201,13 +1204,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             switch (loadMode.deltaConnection) {
                 case undefined:
-                    // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
-                    // If there is gap, we will learn about it once connected, but the gap should be small (if any),
-                    // assuming that resumeInternal() is called quickly after initial container boot.
-                    this.resumeInternal({ reason: "DocumentLoad", fetchOpsFromStorage: false });
-                    break;
                 case "delayed":
-                    this.resumedOpProcessingAfterLoad = true;
+                    assert(this.inboundQueuePausedFromInit, "inboundQueuePausedFromInit should be true");
+                    this.inboundQueuePausedFromInit = false;
                     this._deltaManager.inbound.resume();
                     this._deltaManager.inboundSignal.resume();
                     break;
