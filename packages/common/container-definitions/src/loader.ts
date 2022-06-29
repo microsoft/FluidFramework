@@ -138,11 +138,6 @@ export namespace ConnectionState {
     export type CatchingUp = 1;
 
     /**
-    * The container has an inbound connection only, and is catching up to the latest known state from the service.
-    */
-    export type CatchingUp = 1;
-
-    /**
      * The container is fully connected and syncing
      */
     export type Connected = 2;
