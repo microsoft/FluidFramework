@@ -285,7 +285,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         return this.serializer.decode(value);
     }
 
-    protected applyStashedOp(content: any) {
+    protected applyStashedOp(content: ICellOperation) {
         this.applyInnerOp(content);
         ++this.messageId;
         return this.messageId;
