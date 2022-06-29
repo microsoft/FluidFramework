@@ -7,10 +7,34 @@ import { Package, Packages } from "./npmPackage";
 import * as path from "path";
 import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } from "./utils";
 
+/**
+ * Represents the different types of release groups supported by the build tools. Each of these groups should be defined
+ * in the fluid-build section of the root package.json.
+ */
 export enum MonoRepoKind {
-    Client,
-    Server,
-    Azure,
+    Client = "Client",
+    Server = "Server",
+    Azure = "Azure",
+}
+
+/**
+ * A type guard used to determine if a string is a MonoRepoKind.
+ */
+export function isMonoRepoKind(str: unknown): str is MonoRepoKind {
+    return typeof str === "string" && sentenceCase(str) in MonoRepoKind;
+}
+
+function sentenceCase(str: string) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * An iterator that returns only the Enum values of MonoRepoKind.
+ */
+export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
+    for(const [, flag] of Object.entries(MonoRepoKind)) {
+        yield flag;
+    }
 }
 
 export class MonoRepo {

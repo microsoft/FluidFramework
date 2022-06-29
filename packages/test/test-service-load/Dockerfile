@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
+# DisableDockerDetector "No feasible secure solution for OSS repos yet"
+
 # Build doesn't work with node 16
 FROM node:14-slim
 
@@ -11,7 +13,7 @@ RUN apt-get update
 
 # Install module to get processess through ps-node package
 RUN apt-get install -y procps jq \
-  && apt-get clean
+    && apt-get clean
 
 RUN npm update -g
 

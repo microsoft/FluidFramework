@@ -25,6 +25,7 @@
   "scripts": {
     "build": "tsc -b && npm run build:test",
     "build:test": "tsc --project ./src/test/tsconfig.json",
+    "bump": "node dist/bumpVersion/bumpVersionCli.js",
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -34,7 +35,7 @@
     "lint:fix": "npm run eslint:fix",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
     "policy-check": "cd ../.. && node tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
-    "policy-check:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js ",
+    "policy-check:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:fix": "npm run policy-check -- -r",
     "policy-check:fix:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000"
