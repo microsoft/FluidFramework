@@ -390,7 +390,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         accum?: TClientData,
         splitRange: boolean = false,
     ): void {
-        this.client.walkSegments<TClientData>(handler, start, end, accum, splitRange);
+        this.client.walkSegments(handler, start, end, accum as TClientData, splitRange);
     }
 
     public getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {

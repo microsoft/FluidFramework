@@ -167,6 +167,6 @@ class Lazy<T> {
             this.pEvaluated = true;
             this.pValue = this.valueGenerator();
         }
-        return this.pValue;
+        return this.pValue as T;
     }
 }

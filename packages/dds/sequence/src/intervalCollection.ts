@@ -72,6 +72,10 @@ export interface ISerializedInterval {
     properties?: PropertySet;
 }
 
+type SerializedIntervalDelta =
+    Omit<ISerializedInterval, "start" | "end" | "properties">
+    & Partial<Pick<ISerializedInterval, "start" | "end" | "properties">>;
+
 /**
  * A size optimization to avoid redundantly storing keys when serializing intervals
  * as JSON. Intervals are of the format:
@@ -1262,7 +1266,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 throw new LoggingError("client does not exist");
             }
             const newInterval = this.localCollection.changeInterval(interval, start, end);
-            const serializedInterval: ISerializedInterval = interval.serialize(this.client);
+            const serializedInterval: SerializedIntervalDelta = interval.serialize(this.client);
             serializedInterval.start = start;
             serializedInterval.end = end;
             // Emit a property bag containing only the ID, as we don't intend for this op to change any properties.
@@ -1279,7 +1283,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return undefined;
     }
 
-    private addPendingChange(id: string, serializedInterval: ISerializedInterval) {
+    private addPendingChange(id: string, serializedInterval: SerializedIntervalDelta) {
         if (serializedInterval.start !== undefined) {
             this.addPendingChangeHelper(id, this.pendingChangesStart, serializedInterval);
         }
@@ -1290,10 +1294,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
     private addPendingChangeHelper(
         id: string,
-        pendingChanges: Map<string, ISerializedInterval[]>,
-        serializedInterval: ISerializedInterval,
+        pendingChanges: Map<string, SerializedIntervalDelta[]>,
+        serializedInterval: SerializedIntervalDelta,
     ) {
-        let entries: ISerializedInterval[] | undefined = pendingChanges.get(id);
+        let entries: SerializedIntervalDelta[] | undefined = pendingChanges.get(id);
         if (!entries) {
             entries = [];
             pendingChanges.set(id, entries);
@@ -1301,7 +1305,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         entries.push(serializedInterval);
     }
 
-    private removePendingChange(serializedInterval: ISerializedInterval) {
+    private removePendingChange(serializedInterval: SerializedIntervalDelta) {
         // Change ops always have an ID.
         const id: string = serializedInterval.properties?.[reservedIntervalIdKey];
         if (serializedInterval.start !== undefined) {
@@ -1314,8 +1318,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
     private removePendingChangeHelper(
         id: string,
-        pendingChanges: Map<string, ISerializedInterval[]>,
-        serializedInterval: ISerializedInterval,
+        pendingChanges: Map<string, SerializedIntervalDelta[]>,
+        serializedInterval: SerializedIntervalDelta,
     ) {
         const entries = pendingChanges.get(id);
         if (entries) {
@@ -1423,7 +1427,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     /** @internal */
     public rebaseLocalInterval(
         opName: string,
-        serializedInterval: ISerializedInterval,
+        serializedInterval: SerializedIntervalDelta,
         localSeq: number,
     ) {
         if (!this.attached) {
@@ -1440,7 +1444,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             this.client.rebasePosition(end, sequenceNumber, localSeq);
 
         const intervalId = properties?.[reservedIntervalIdKey];
-        const rebased: ISerializedInterval = {
+        const rebased: SerializedIntervalDelta = {
             start: startRebased,
             end: endRebased,
             intervalType,
