@@ -30,7 +30,6 @@ trigger:
   paths:
     include:
     - build-tools
-    - tools/build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
@@ -49,7 +48,6 @@ pr:
   paths:
     include:
     - build-tools
-    - tools/build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml

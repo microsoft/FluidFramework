@@ -132,7 +132,8 @@ To build Fluid within VSCode, use Ctrl-Shift-B to break up the build task list a
 
 ## Running `fluid-layer-check` (Command Line)
 
-<!-- this list of arguments is duplicated in `tools/build-tools/src/fluidBuild/options.ts` and they should be updated together -->
+<!-- this list of arguments is duplicated in `build-tools/packages/build-tools/src/fluidBuild/options.ts`
+    and they should be updated together -->
 
 ```txt
 Usage: fluid-layer-check <options>
