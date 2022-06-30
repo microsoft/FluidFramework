@@ -226,7 +226,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * Apply inner op
      * @param content - ICellOperation content
      */
-    private applyInnerOp(content: any) {
+    private applyInnerOp(content: ICellOperation) {
         switch (content.type) {
             case "setCell":
                 this.setCore(this.decode(content.value));
@@ -289,7 +289,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(content: unknown) {
+    protected applyStashedOp(content: unknown): unknown {
         const cellContent = content as ICellOperation;
         this.applyInnerOp(cellContent);
         ++this.messageId;
