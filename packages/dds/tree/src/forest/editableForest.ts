@@ -27,30 +27,21 @@ export interface IEditableForest extends IForestSubscription {
     add(nodes: Iterable<ITreeCursor>): DetachedRange;
 
     /**
-     * Parents a set of nodes already in the forest at a specified location within a trait.
-     * @param parentId - the id of the parent under which to insert the new nodes
-     * @param label - the label of the trait under which to insert the new nodes
-     * @param index - the index in the trait after which to insert the new nodes
-     * @param childIds - the ids of the nodes to insert
+     * Parents a set of nodes already in the forest at a specified location.
      */
     attachRangeOfChildren(
-        parentId: NodeId,
-        label: FieldKey,
-        index: number,
-        childIds: DetachedRange,
+        destination: TreeLocation,
+        toAttach: DetachedRange,
     ): void;
 
     /**
      * Detaches a range of nodes from their parent. The detached nodes remain in the `Forest`.
-     * @param parentId - the id of the parent from which to detach the nodes
-     * @param label - the label of the trait from which to detach the nodes
      * @param startIndex - the index of the first node in the range to detach
      * @param endIndex - the index after the last node in the range to detach
      * @returns a new `Forest` with the nodes detached, and a list of the ids of the nodes that were detached
      */
     detachRangeOfChildren(
-        parentId: NodeId,
-        label: FieldKey,
+        range: FieldLocation | DetachedRange,
         startIndex: number,
         endIndex: number
     ): DetachedRange;
@@ -63,9 +54,20 @@ export interface IEditableForest extends IForestSubscription {
     setValue(nodeId: NodeId, value: Value): void;
 
     /**
-     * Deletes every node in ids (each of which must be unparented)
-     * @param ids - The IDs of the nodes to delete.
-     * @param deleteChildren - If true, recursively deletes descendants. Otherwise, leaves children unparented.
+     * Recursively deletes a range and its children.
      */
     delete(ids: DetachedRange): void;
+}
+
+export interface TreeLocation {
+    readonly range: FieldLocation | DetachedRange;
+    readonly index: number;
+}
+
+/**
+ * Wrapper around DetachedRange that can be detected at runtime.
+ */
+export interface FieldLocation {
+	readonly key: FieldKey;
+    readonly parent: NodeId;
 }

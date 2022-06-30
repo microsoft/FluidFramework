@@ -11,6 +11,7 @@ import {
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
     Value,
+    FieldLocation, TreeLocation,
 } from "../forest";
 import { FieldKey, TreeType, DetachedRange } from "../tree";
 import { brand } from "../util";
@@ -59,10 +60,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     add(nodes: Iterable<ITreeCursor>): DetachedRange {
         throw new Error("Method not implemented.");
     }
-    attachRangeOfChildren(parentId: NodeId, label: FieldKey, index: number, childIds: DetachedRange): void {
+    attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void {
         throw new Error("Method not implemented.");
     }
-    detachRangeOfChildren(parentId: NodeId, label: FieldKey, startIndex: number, endIndex: number): DetachedRange {
+    detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange {
         throw new Error("Method not implemented.");
     }
     setValue(nodeId: NodeId, value: any): void {

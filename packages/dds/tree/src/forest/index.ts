@@ -9,4 +9,4 @@ export {
     Value,
 } from "./cursor";
 export * from "./forest";
-export { IEditableForest } from "./editableForest";
+export { IEditableForest, FieldLocation, TreeLocation } from "./editableForest";
