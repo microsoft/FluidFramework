@@ -450,7 +450,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
         this.opProcessingHelper.measure(
             () => { this.processCore(message, local, localOpMetadata); },
-            10,
+            100,
             local ? "local" : "remote");
 
         this.emit("op", message, local, this);
@@ -495,7 +495,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         } else {
             returnValue = this.callbacksHelper.measure(
                 () => super.emit(event, ...args),
-                10);
+                100);
         }
 
         return returnValue;
