@@ -63,6 +63,9 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/datastore-definitions": "^1.2.0",
+    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/runtime-definitions": "^1.2.0",
+    "@fluidframework/shared-object-base": "^1.2.0",
     "@ungap/structured-clone": "^0.3.4"
   },
   "devDependencies": {

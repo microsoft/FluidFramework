@@ -66,13 +66,13 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
 
 // TODO: managing the types with these is not working well (inferring any for methods in Rebaser). Do something else.
 
-type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> =
+export type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> =
     TChangeRebaser extends ChangeRebaser<infer TChange, any, any> ? TChange : never;
 
-type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> =
+export type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> =
     TChangeRebaser extends ChangeRebaser<any, infer TFinal, any> ? TFinal : never;
 
-type SetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> =
+export type SetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> =
     TChangeRebaser extends ChangeRebaser<any, any, infer TState> ? TState : never;
 
 /**
