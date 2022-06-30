@@ -60,9 +60,21 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-   "version": "2.0.0",
+    "version": "2.0.0",
     "broken": {
       "InterfaceDeclaration_IConnectionDetails": {
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ICodeLoader": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_ConnectionState.Connecting": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_ConnectionState.Connecting": {
+        "forwardCompat": false,
         "backCompat": false
       }
     }
