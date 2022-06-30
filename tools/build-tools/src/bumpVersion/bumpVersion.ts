@@ -7,12 +7,12 @@ import { strict as assert } from "assert";
 import { Context, isVersionBumpType, VersionChangeType } from "./context";
 import { getRepoStateChange, VersionBag } from "./versionBag";
 import { fatal, exec } from "./utils";
-import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getPackageShortName } from "./releaseVersion";
 import * as semver from "semver";
 
-export async function bumpVersionCommand(context:Context, bump: string, version: VersionChangeType, commit: boolean, virtualPatch: boolean) {
+export async function bumpVersionCommand(context: Context, bump: string, version: VersionChangeType, commit: boolean, virtualPatch: boolean) {
     const bumpBranch = `bump_${version}_${Date.now()}`;
     if (commit) {
         console.log(`Creating branch ${bumpBranch}`);
@@ -33,20 +33,16 @@ export async function bumpVersionCommand(context:Context, bump: string, version:
 export async function bumpVersion(context: Context, bump: string[], version: VersionChangeType, packageShortNames: string, virtualPatch: boolean, commit?: string) {
     console.log(`Bumping ${packageShortNames} to ${version}`);
 
-    let clientNeedBump = false;
-    let serverNeedBump = false;
+    const monoRepoNeedsBump = new Set<MonoRepoKind>();
     const packageNeedBump = new Set<Package>();
     for (const name of bump) {
-        if (name === MonoRepoKind[MonoRepoKind.Client]) {
-            clientNeedBump = true;
-            const ret = await context.repo.clientMonoRepo.install();
-            if (ret.error) {
-                fatal("Install failed");
-            }
-        } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
-            serverNeedBump = true;
-            assert(context.repo.serverMonoRepo, "Attempted to bump server version on a Fluid repo with no server directory");
-            const ret = await context.repo.serverMonoRepo!.install();
+        if (isMonoRepoKind(name)) {
+            monoRepoNeedsBump.add(name);
+            const repo = context.repo.monoRepos.get(name);
+            assert(repo !== undefined,
+                `Attempted to bump ${name} version on a Fluid repo with no ${name} release group defined`
+            );
+            const ret = await repo.install();
             if (ret.error) {
                 fatal("Install failed");
             }
@@ -67,7 +63,7 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
     }
 
     const oldVersions = context.collectVersions();
-    const newVersions = await bumpRepo(context, version, clientNeedBump, serverNeedBump, packageNeedBump, virtualPatch, oldVersions);
+    const newVersions = await bumpRepo(context, version, monoRepoNeedsBump, packageNeedBump, virtualPatch, oldVersions);
     const bumpRepoState = getRepoStateChange(oldVersions, newVersions);
     console.log(bumpRepoState);
 
@@ -135,8 +131,7 @@ function translateVirtualVersion(
 export async function bumpRepo(
     context: Context,
     versionBump: VersionChangeType,
-    clientNeedBump: boolean,
-    serverNeedBump: boolean,
+    monoReposNeedBump: Set<MonoRepoKind>,
     packageNeedBump: Set<Package>,
     virtualPatch: boolean,
     versionBag: VersionBag,
@@ -147,20 +142,16 @@ export async function bumpRepo(
 
     const vPatchLogString = virtualPatch ? " using virtual patches" : "";
 
-    if (clientNeedBump) {
-        console.log(`  Bumping client version${vPatchLogString}`);
+    for (const monoRepo of monoReposNeedBump) {
+        console.log(`  Bumping ${monoRepo} version${vPatchLogString}`);
         // Translate the versionBump into the appropriate change for virtual patch versioning
-        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get("Client"), virtualPatch);
-        await bumpLegacyDependencies(context, translatedVersionBump);
-        await bumpMonoRepo(translatedVersionBump, context.repo.clientMonoRepo);
-    }
-
-    if (serverNeedBump) {
-        console.log(`  Bumping server version${vPatchLogString}`);
-        assert(context.repo.serverMonoRepo, "Attempted server version bump on a Fluid repo with no server directory");
-        // Translate the versionBump into the appropriate change for virtual patch versioning
-        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get("Server"), virtualPatch);
-        await bumpMonoRepo(translatedVersionBump, context.repo.serverMonoRepo!);
+        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get(monoRepo), virtualPatch);
+        const toBump = context.repo.monoRepos.get(monoRepo);
+        assert(toBump !== undefined, `No monorepo with name '${toBump}'`);
+        if (toBump !== undefined) {
+            await bumpLegacyDependencies(context, translatedVersionBump);
+            await bumpMonoRepo(translatedVersionBump, toBump);
+        }
     }
 
     for (const pkg of packageNeedBump) {

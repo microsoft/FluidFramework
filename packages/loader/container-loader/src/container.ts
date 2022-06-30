@@ -35,7 +35,7 @@ import {
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
- } from "@fluidframework/container-utils";
+} from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -50,9 +50,10 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
+    isRuntimeMessage,
+    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
-    isSystemMessage,
     IProtocolHandler,
     ProtocolOpHandlerWithClientValidation,
 } from "@fluidframework/protocol-base";
@@ -217,7 +218,9 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on(connectedEventName, callback);
 
-        container.connect();
+        if (container.connectionState === ConnectionState.Disconnected) {
+            container.connect();
+        }
     });
 }
 
@@ -263,7 +266,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.mc.logger,
             { eventName: "Load" },
             async (event) => new Promise<Container>((resolve, reject) => {
-                container._lifecycleState = "loading";
                 const version = loadOptions.version;
 
                 const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
@@ -287,14 +289,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end({ ...props, ...loadOptions.loadMode });
                         resolve(container);
                     },
-                    (error) => {
-                        const err = normalizeError(error);
-                        // Depending where error happens, we can be attempting to connect to web socket
-                        // and continuously retrying (consider offline mode)
-                        // Host has no container to close, so it's prudent to do it here
-                        container.close(err);
-                        onClosed(err);
-                    });
+                        (error) => {
+                            const err = normalizeError(error);
+                            // Depending where error happens, we can be attempting to connect to web socket
+                            // and continuously retrying (consider offline mode)
+                            // Host has no container to close, so it's prudent to do it here
+                            container.close(err);
+                            onClosed(err);
+                        });
             }),
             { start: true, end: true, cancel: "generic" },
         );
@@ -315,7 +317,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             container.mc.logger,
             { eventName: "CreateDetached" },
             async (_event) => {
-                container._lifecycleState = "loading";
                 await container.createDetached(codeDetails);
                 return container;
             },
@@ -338,7 +339,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             { eventName: "RehydrateDetachedFromSnapshot" },
             async (_event) => {
                 const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
-                container._lifecycleState = "loading";
                 await container.rehydrateDetachedFromSnapshot(deserializedSummary);
                 return container;
             },
@@ -353,19 +353,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private readonly mc: MonitoringContext;
 
-    private _lifecycleState: "created" | "loading" | "loaded" | "closing" | "closed" = "created";
+    private _lifecycleState: "loading" | "loaded" | "closing" | "closed" = "loading";
 
-    private get loaded(): boolean {
-        return (this._lifecycleState !== "created" && this._lifecycleState !== "loading");
-    }
-
-    private set loaded(t: boolean) {
-        assert(t, 0x27d /* "Setting loaded state to false is not supported" */);
-        assert(this._lifecycleState !== "created", 0x27e /* "Must go through loading state before loaded" */);
-
+    private setLoaded() {
         // It's conceivable the container could be closed when this is called
         // Only transition states if currently loading
         if (this._lifecycleState === "loading") {
+            // Propagate current connection state through the system.
+            this.propagateConnectionState();
             this._lifecycleState = "loaded";
         }
     }
@@ -409,7 +404,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._protocolHandler;
     }
 
-    private resumedOpProcessingAfterLoad = false;
+    /** During initialization we pause the inbound queues. We track this state to ensure we only call resume once */
+    private inboundQueuePausedFromInit = true;
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
@@ -543,7 +539,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     name: typeof name === "string" ? name : undefined,
                 },
                 error);
-            });
+        });
         this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
@@ -619,7 +615,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     });
                 },
                 connectionStateChanged: () => {
-                    if (this.loaded) {
+                    // Fire events only if container is fully loaded and not closed
+                    if (this._lifecycleState === "loaded") {
                         this.propagateConnectionState();
                     }
                 },
@@ -685,10 +682,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         }
                         break;
                     case connectedEventName:
-                         if (this.connected) {
+                        if (this.connected) {
                             listener(this.clientId);
-                         }
-                         break;
+                        }
+                        break;
                     case disconnectedEventName:
                         if (!this.connected) {
                             listener();
@@ -710,25 +707,40 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public close(error?: ICriticalContainerError) {
-        if (this.closed) {
-            return;
-        }
+        // 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
+        // 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
+        //    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
+        //    "closing" will lose that info (can also solve by tracking extra state).
+        this._deltaManager.close(error);
+        assert(this.connectionState === ConnectionState.Disconnected,
+            0x0cf /* "disconnect event was not raised!" */);
+
+        assert(this._lifecycleState === "closed", 0x314 /* Container properly closed */);
+    }
+
+    private closeCore(error?: ICriticalContainerError) {
+        assert(!this.closed, 0x315 /* re-entrancy */);
 
         try {
-            this._lifecycleState = "closing";
-
             // Ensure that we raise all key events even if one of these throws
             try {
-                this._deltaManager.close(error);
+                // Raise event first, to ensure we capture _lifecycleState before transition.
+                // This gives us a chance to know what errors happened on open vs. on fully loaded container.
+                this.mc.logger.sendTelemetryEvent(
+                    {
+                        eventName: "ContainerClose",
+                        category: error === undefined ? "generic" : "error",
+                    },
+                    error,
+                );
+
+                this._lifecycleState = "closing";
 
                 this._protocolHandler?.close();
 
                 this.connectionStateHandler.dispose();
 
                 this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
-
-                assert(this.connectionState === ConnectionState.Disconnected,
-                    0x0cf /* "disconnect event was not raised!" */);
 
                 this._storageService?.dispose();
 
@@ -739,14 +751,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             } catch (exception) {
                 this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, exception);
             }
-
-            this.mc.logger.sendTelemetryEvent(
-                {
-                    eventName: "ContainerClose",
-                    category: error === undefined ? "generic" : "error",
-                },
-                error,
-            );
 
             this.emit("closed", error);
 
@@ -913,7 +917,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 throw newError;
             }
         },
-        { start: true, end: true, cancel: "generic" });
+            { start: true, end: true, cancel: "generic" });
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -992,8 +996,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(!this.closed, 0x0d9 /* "Attempting to connect() a closed DeltaManager" */);
 
         // Resume processing ops
-        if (!this.resumedOpProcessingAfterLoad) {
-            this.resumedOpProcessingAfterLoad = true;
+        if (this.inboundQueuePausedFromInit) {
+            this.inboundQueuePausedFromInit = false;
             this._deltaManager.inbound.resume();
             this._deltaManager.inboundSignal.resume();
         }
@@ -1171,11 +1175,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pendingLocalState?.pendingRuntimeState,
         );
 
-        // Propagate current connection state through the system.
-        this.propagateConnectionState();
-
         // Internal context is fully loaded at this point
-        this.loaded = true;
+        this.setLoaded();
 
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
@@ -1192,13 +1193,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             switch (loadMode.deltaConnection) {
                 case undefined:
-                    // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
-                    // If there is gap, we will learn about it once connected, but the gap should be small (if any),
-                    // assuming that resumeInternal() is called quickly after initial container boot.
-                    this.resumeInternal({ reason: "DocumentLoad", fetchOpsFromStorage: false });
-                    break;
                 case "delayed":
-                    this.resumedOpProcessingAfterLoad = true;
+                    assert(this.inboundQueuePausedFromInit, "inboundQueuePausedFromInit should be true");
+                    this.inboundQueuePausedFromInit = false;
                     this._deltaManager.inbound.resume();
                     this._deltaManager.inboundSignal.resume();
                     break;
@@ -1247,9 +1244,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             false, // existing
         );
 
-        this.propagateConnectionState();
-
-        this.loaded = true;
+        this.setLoaded();
     }
 
     private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
@@ -1284,9 +1279,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             snapshotTree,
         );
 
-        this.loaded = true;
-
-        this.propagateConnectionState();
+        this.setLoaded();
     }
 
     private async connectStorageService(): Promise<void> {
@@ -1402,7 +1395,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (key === "code" || key === "code2") {
                     if (!isFluidCodeDetails(value)) {
                         this.mc.logger.sendErrorEvent({
-                                eventName: "CodeProposalNotIFluidCodeDetails",
+                            eventName: "CodeProposalNotIFluidCodeDetails",
                         });
                     }
                     this.processCodeProposal().catch((error) => {
@@ -1535,7 +1528,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         });
 
         deltaManager.on("closed", (error?: ICriticalContainerError) => {
-            this.close(error);
+            this.closeCore(error);
         });
 
         return deltaManager;
@@ -1625,10 +1618,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
 
         const state = this.connectionState === ConnectionState.Connected;
+
+        // Both protocol and context should not be undefined if we got so far.
+
         if (this._context?.disposed === false) {
             this.context.setConnectionState(state, this.clientId);
         }
-        assert(this.protocolHandler !== undefined, 0x0dc /* "Protocol handler should be set here" */);
         this.protocolHandler.setConnectionState(state, this.clientId);
         raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
 
@@ -1689,8 +1684,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
         }
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
+            this.mc.logger.sendTelemetryEvent(
+                { eventName: "UnpackedRuntimeMessage", type: message.type });
+        }
         // Forward non system messages to the loaded runtime for processing
-        if (!isSystemMessage(message)) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
             this.context.process(message, local, undefined);
         }
 

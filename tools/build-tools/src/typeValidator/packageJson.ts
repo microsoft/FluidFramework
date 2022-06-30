@@ -98,22 +98,22 @@ export async function getAndUpdatePackageDetails(packageDir: string, updateOptio
 
     /*
     * this is where we build the previous version we use to compare against the current version.
-    * For both major and minor we use semver such that the current major is compared against the latest
-    * previous major, and the same for minor.
-    * For patch we do not use semver, we compare directly to the previous patch version.
+    * For major we use semver such that the current major is compared against the latest
+    * previous major. In the case of minor we target specific previous minor version.
+    * Similarly for patch we do not use semver, we compare directly to the previous patch version.
     *
-    * We do this to align with our release process. We are strictest between patches, and looser between minor and major
+    * We do this to align with our release process. We are strictest between patches and minor, and looser between major
     * We may need to adjust this as we adjust our release processes.
     */
     let normalizeParts = normalizedVersion.split(".").map((p)=>Number.parseInt(p));
     const validationVersionParts = packageDetails.pkg.typeValidation?.version?.split(".").map((p)=>Number.parseInt(p)) ?? [0,0,0];
-    let semVer="^"
+    let semVer = "";
     if(normalizeParts[0] !== validationVersionParts[0]){
+        semVer = "^"
         normalizeParts= [normalizeParts[0] -1, 0, 0];
     }else if(normalizeParts[1] !== validationVersionParts[1]){
         normalizeParts= [normalizeParts[0], normalizeParts[1] -1, 0];
     }else{
-        semVer="";
         normalizeParts[2] = validationVersionParts[2];
     }
     const previousVersion = normalizeParts.join(".");

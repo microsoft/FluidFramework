@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-client",
-  "version": "0.1036.5000",
+  "version": "0.1037.0",
   "description": "Fluid server isomorphic services for communicating with Fluid",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -58,21 +58,21 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/gitresources": "^0.1036.5000",
-    "@fluidframework/protocol-base": "^0.1036.5000",
+    "@fluidframework/gitresources": "^0.1037.0",
+    "@fluidframework/protocol-base": "^0.1037.0",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
     "axios": "^0.26.0",
     "crc-32": "1.2.0",
     "debug": "^4.1.1",
     "json-stringify-safe": "^5.0.1",
-    "jsrsasign": "^10.2.0",
+    "jsrsasign": "^10.5.25",
     "jwt-decode": "^3.0.0",
     "querystring": "^0.2.0",
     "sillyname": "^0.1.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
+    "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",

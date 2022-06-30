@@ -7,6 +7,7 @@
 
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
@@ -29,10 +30,14 @@ import {
     IGarbageCollector,
     runSessionExpiryKey,
     disableSessionExpiryKey,
+    IGarbageCollectorCreateParams,
 } from "../garbageCollection";
-import { IContainerRuntimeMetadata } from "../summaryFormat";
+import { dataStoreAttributesBlobName, IContainerRuntimeMetadata } from "../summaryFormat";
 
 describe("Garbage Collection Tests", () => {
+    const testPkgPath = ["testPkg"];
+    // The package data is tagged in the telemetry event.
+    const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.PackageData };
     // Nodes in the reference graph.
     const nodes: string[] = [
         "/node1",
@@ -41,60 +46,53 @@ describe("Garbage Collection Tests", () => {
         "/node4",
     ];
 
-    let clock: SinonFakeTimers;
     const mockLogger: MockLogger = new MockLogger();
     const mc = mixinMonitoringContext(mockLogger, sessionStorageConfigProvider.value);
-    let closeCalled = false;
-    // Time after which unreferenced nodes becomes inactive.
-    const inactiveTimeoutMs = 500;
-    const testPkgPath = ["testPkg"];
-    // The package data is tagged in the telemetry event.
-    const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.PackageData };
-
-    const getNodeType = (nodePath: string) => {
-        if (nodePath.split("/").length !== 2) {
-            return GCNodeType.Other;
-        }
-        return GCNodeType.DataStore;
-    };
-    // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
-    const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
-    // The runtime to be passed to the garbage collector.
-    const gcRuntime: IGarbageCollectionRuntime = {
-        updateStateBeforeGC: async () => {},
-        getGCData: async (fullGC?: boolean) => defaultGCData,
-        updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
-        deleteUnusedRoutes: (unusedRoutes: string[]) => {},
-        getNodeType,
-        getCurrentReferenceTimestampMs: () => Date.now(),
-        closeFn: () => { closeCalled = true; },
-    };
-
-    // The GC details in the summary blob of a node. This is used by the garbage collector to initialize GC state.
-    // Update this for individual node to update the initial GC state of that node.
-    const emptyGCDetails: IGarbageCollectionDetailsBase = {};
-
-    const createGarbageCollector = (
-        baseSnapshot: ISnapshotTree | undefined = undefined,
-        getNodeGCDetails: (id: string) => IGarbageCollectionDetailsBase = () => emptyGCDetails,
-        metadata: IContainerRuntimeMetadata | undefined = undefined,
-    ) => {
-        return GarbageCollector.create({
-            runtime: gcRuntime,
-            gcOptions: { gcAllowed: true, inactiveTimeoutMs },
-            baseSnapshot,
-            baseLogger: mockLogger,
-            existing: metadata !== undefined /* existing */,
-            metadata,
-            isSummarizerClient: true /* summarizerClient */,
-            readAndParseBlob: async <T>(id: string) => getNodeGCDetails(id) as T,
-            getNodePackagePath: (nodeId: string) => testPkgPath,
-            getLastSummaryTimestampMs: () => Date.now(),
-        });
-    };
 
     const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
     let injectedSettings = {};
+    let clock: SinonFakeTimers;
+
+    // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
+    const defaultGCData: IGarbageCollectionData = { gcNodes: {} };
+
+    function createGarbageCollector(
+        createParams: Partial<IGarbageCollectorCreateParams> = {},
+        gcBlobsMap: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase> = new Map(),
+        closeFn: (error?: ICriticalContainerError) => void = () => {},
+    ) {
+        const getNodeType = (nodePath: string) => {
+            if (nodePath.split("/").length !== 2) {
+                return GCNodeType.Other;
+            }
+            return GCNodeType.DataStore;
+        };
+
+        // The runtime to be passed to the garbage collector.
+        const gcRuntime: IGarbageCollectionRuntime = {
+            updateStateBeforeGC: async () => {},
+            getGCData: async (fullGC?: boolean) => defaultGCData,
+            updateUsedRoutes: (usedRoutes: string[]) => { return { totalNodeCount: 0, unusedNodeCount: 0 }; },
+            deleteUnusedRoutes: (unusedRoutes: string[]) => {},
+            getNodeType,
+            getCurrentReferenceTimestampMs: () => Date.now(),
+            closeFn,
+        };
+
+        return GarbageCollector.create({
+            ...createParams,
+            runtime: gcRuntime,
+            gcOptions: createParams.gcOptions ?? {},
+            baseSnapshot: createParams.baseSnapshot,
+            baseLogger: mockLogger,
+            existing: createParams.metadata !== undefined /* existing */,
+            metadata: createParams.metadata,
+            isSummarizerClient: true /* summarizerClient */,
+            readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
+            getNodePackagePath: async (nodeId: string) => testPkgPath,
+            getLastSummaryTimestampMs: () => Date.now(),
+        });
+    }
 
     before(() => {
         clock = useFakeTimers();
@@ -115,6 +113,7 @@ describe("Garbage Collection Tests", () => {
 
     describe("Session expiry", () => {
         const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
+        let closeCalled = false;
 
         beforeEach(() => {
             closeCalled = false;
@@ -130,29 +129,33 @@ describe("Garbage Collection Tests", () => {
             return closeCalled;
         }
 
+        const createGCOverride = (metadata?: IContainerRuntimeMetadata) => {
+            return createGarbageCollector({ metadata }, undefined /* gcBlobsMap */, () => { closeCalled = true; });
+        };
+
         it("Session expires for an existing container", async () => {
             const metadata: IContainerRuntimeMetadata =
                 { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
-            createGarbageCollector(undefined, undefined, metadata);
+            createGCOverride(metadata);
             assert(closeCalledAfterExactTicks(10), "Close should have been called at exact expiry.");
         });
 
         it("Session expires for a new container", async () => {
-            createGarbageCollector();
+            createGCOverride();
             assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
         });
 
         it("Session expiry disabled via DisableSessionExpiry config", async () => {
             // disable expiry even though it's set to run (meaning expiry value will present)
             injectedSettings[disableSessionExpiryKey] = "true";
-            createGarbageCollector();
+            createGCOverride();
             assert(!closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should NOT have been called due to disable.");
         });
 
         it("Session expiry explicitly not disabled via DisableSessionExpiry config", async () => {
             // Explicitly set value to false (instead of relying on undefined)
             injectedSettings[disableSessionExpiryKey] = "false";
-            createGarbageCollector();
+            createGCOverride();
             assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
         });
 
@@ -164,7 +167,7 @@ describe("Garbage Collection Tests", () => {
 
             const metadata: IContainerRuntimeMetadata =
                 { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
-            createGarbageCollector(undefined, undefined, metadata);
+            createGCOverride(metadata);
             assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
         });
 
@@ -174,7 +177,7 @@ describe("Garbage Collection Tests", () => {
             const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
             assert(customExpiryMs, "setting not found!");
 
-            createGarbageCollector();
+            createGCOverride();
             assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
         });
 
@@ -184,7 +187,7 @@ describe("Garbage Collection Tests", () => {
             const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
             assert(customExpiryMs, "setting not found!");
 
-            createGarbageCollector();
+            createGCOverride();
 
             clock.tick(customExpiryMs);
             assert(!closeCalled, "Close should not have been called since runSessionExpiry disabled.");
@@ -198,7 +201,7 @@ describe("Garbage Collection Tests", () => {
             const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
             assert(customExpiryMs, "setting not found!");
 
-            createGarbageCollector();
+            createGCOverride();
 
             clock.tick(customExpiryMs);
             assert(!closeCalled, "Close should not have been called since DisableSessionExpiry true.");
@@ -208,6 +211,8 @@ describe("Garbage Collection Tests", () => {
     });
 
     describe("Inactive events", () => {
+        // Time after which unreferenced nodes becomes inactive.
+        const inactiveTimeoutMs = 500;
         const revivedEvent = "GarbageCollector:inactiveObject_Revived";
         const changedEvent = "GarbageCollector:inactiveObject_Changed";
         const loadedEvent = "GarbageCollector:inactiveObject_Loaded";
@@ -225,11 +230,12 @@ describe("Garbage Collection Tests", () => {
         }
 
         // Simulates node loaded and changed activity for all the nodes in the graph.
-        function updateAllNodes(garbageCollector: IGarbageCollector) {
+        async function updateAllNodesAndRunGC(garbageCollector: IGarbageCollector) {
             nodes.forEach((nodeId) => {
                 garbageCollector.nodeUpdated(nodeId, "Changed", Date.now(), testPkgPath);
                 garbageCollector.nodeUpdated(nodeId, "Loaded", Date.now(), testPkgPath);
             });
+            await garbageCollector.collectGarbage({});
         }
 
         // Returns a dummy snapshot tree to be built upon.
@@ -241,6 +247,8 @@ describe("Garbage Collection Tests", () => {
         };
 
         beforeEach(async () => {
+            injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = inactiveTimeoutMs;
+
             // Set up the reference graph such that all nodes are referenced. Add in a couple of cycles in the graph.
             defaultGCData.gcNodes["/"] = [nodes[0]];
             defaultGCData.gcNodes[nodes[0]] = [nodes[1]];
@@ -255,19 +263,15 @@ describe("Garbage Collection Tests", () => {
             // Run garbage collection on the default GC data where everything is referenced.
             await garbageCollector.collectGarbage({ runGC: true });
 
-            // Update all nodes.
-            updateAllNodes(garbageCollector);
-
-            // Validate that no inactive events are generated yet.
+            // Validate that no inactive events are logged yet.
+            await updateAllNodesAndRunGC(garbageCollector);
             validateNoInactiveEvents();
 
             // Expire the unreferenced timer (if any).
             clock.tick(inactiveTimeoutMs + 1);
 
-            // Change all nodes again.
-            updateAllNodes(garbageCollector);
-
-            // Validate that no inactive events are generated since everything is referenced.
+            // Validate that no inactive events are logged since everything is referenced.
+            await updateAllNodesAndRunGC(garbageCollector);
             validateNoInactiveEvents();
         });
 
@@ -279,18 +283,15 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
 
-            // Update all nodes.
-            updateAllNodes(garbageCollector);
-
-            // Validate that no inactive events are generated yet.
+            // Validate that no inactive events are logged yet.
+            await updateAllNodesAndRunGC(garbageCollector);
             validateNoInactiveEvents();
 
             // Expire the unreferenced timer (if any).
             clock.tick(inactiveTimeoutMs + 1);
 
-            // Update all nodes. This should result in an inactiveObjectChanged event for node 2 and node 3 since they
-            // are inactive.
-            updateAllNodes(garbageCollector);
+            // Validate that changed and loaded events for node 2 and node 3 are logged since they are inactive.
+            await updateAllNodesAndRunGC(garbageCollector);
             assert(
                 mockLogger.matchEvents([
                     { eventName: changedEvent, timeout: inactiveTimeoutMs, id: nodes[2], pkg: eventPkg },
@@ -298,16 +299,50 @@ describe("Garbage Collection Tests", () => {
                     { eventName: changedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
                     { eventName: loadedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
-                "inactive events not generated as expected",
+                "inactive events not logged as expected",
             );
 
-            // Add reference from node 1 to node 3 and validate that we get revivedEvent event.
+            // Add reference from node 1 to node 3 and validate that revived event is logged.
             garbageCollector.addedOutboundReference(nodes[1], nodes[3]);
+            await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([
-                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg, fromId: nodes[1] },
                 ]),
-                "inactive event not generated as expected",
+                "revived event not logged as expected",
+            );
+        });
+
+        it("generates only revived event when an inactive node is changed and revived", async () => {
+            const garbageCollector = createGarbageCollector();
+
+            // Remove node 2's reference from node 1. This should make node 2 and node 3 unreferenced.
+            defaultGCData.gcNodes[nodes[1]] = [];
+
+            await garbageCollector.collectGarbage({ runGC: true });
+
+            // Validate that no inactive events are logged yet.
+            await updateAllNodesAndRunGC(garbageCollector);
+            validateNoInactiveEvents();
+
+            // Expire the unreferenced timer (if any).
+            clock.tick(inactiveTimeoutMs + 1);
+
+            // Validate that only revived event is generated for node 2 when it is changed and revived.
+            garbageCollector.nodeUpdated(nodes[2], "Changed", Date.now(), testPkgPath);
+            garbageCollector.nodeUpdated(nodes[2], "Loaded", Date.now(), testPkgPath);
+            garbageCollector.addedOutboundReference(nodes[1], nodes[2]);
+            await garbageCollector.collectGarbage({});
+
+            for (const event of mockLogger.events) {
+                assert.notStrictEqual(event.eventName, changedEvent, "Unexpected changed event logged");
+                assert.notStrictEqual(event.eventName, loadedEvent, "Unexpected loaded event logged");
+            }
+            assert(
+                mockLogger.matchEvents([
+                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[2], pkg: eventPkg, fromId: nodes[1] },
+                ]),
+                "revived event not logged as expected",
             );
         });
 
@@ -322,19 +357,18 @@ describe("Garbage Collection Tests", () => {
             // Expire the unreferenced timer (if any).
             clock.tick(inactiveTimeoutMs + 1);
 
-            // Update all nodes. This should result in an inactiveObjectChanged event for node 3 since it's inactive.
-            updateAllNodes(garbageCollector);
+            // Validate that changed and loaded events are logged for node 3 since it's inactive.
+            await updateAllNodesAndRunGC(garbageCollector);
             assert(
                 mockLogger.matchEvents([
                     { eventName: changedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
                     { eventName: loadedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
-                "inactive events not generated as expected",
+                "inactive events not logged as expected",
             );
 
-            // Update all nodes. There shouldn't be any more inactive events since for each node the event is only
-            // once.
-            updateAllNodes(garbageCollector);
+            // Validate there are no more inactive events since for each node an event is only logged once.
+            await updateAllNodesAndRunGC(garbageCollector);
             validateNoInactiveEvents();
         });
 
@@ -350,7 +384,7 @@ describe("Garbage Collection Tests", () => {
             const gcSnapshotTree = getDummySnapshotTree();
             const gcBlobId = "root";
             // Add a GC blob with key that start with `gcBlobPrefix` to the GC snapshot tree. The blob Id for this
-            // is generated by server in real scenarios but we use a static id here for testing.
+            // is logged by server in real scenarios but we use a static id here for testing.
             gcSnapshotTree.blobs[`${gcBlobPrefix}_${gcBlobId}`] = gcBlobId;
 
             // Create a base snapshot that contains the GC snapshot tree.
@@ -366,38 +400,34 @@ describe("Garbage Collection Tests", () => {
             };
             gcState.gcNodes[nodes[3]] = node3Data;
 
-            // Set up the getNodeGCDetails function to return the GC details for node 3 when asked by garbage collector.
-            const getNodeGCDetails = (blobId: string) => {
-                if (blobId === gcBlobId) {
-                    return gcState;
-                }
-                return {};
-            };
-            const garbageCollector = createGarbageCollector(baseSnapshot, getNodeGCDetails);
+            const gcBlobMap: Map<string, IGarbageCollectionState> = new Map([[gcBlobId, gcState]]);
+            const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap);
 
             // Remove node 3's reference from node 2 so that it is still unreferenced. The GC details from the base
             // summary is not loaded until the first time GC is run, so run GC.
             defaultGCData.gcNodes[nodes[2]] = [];
             await garbageCollector.collectGarbage({ runGC: true });
 
-            // Update node 3. This should result in an inactiveObjectChanged/Loaded event since it should be inactive.
+            // Validate that changed and loaded events are logged for node 3 since it is inactive.
             garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
             garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
+            await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([
                     { eventName: changedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
                     { eventName: loadedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
-                "inactive events not generated as expected",
+                "inactive events not logged as expected",
             );
 
-            // Add reference from node 2 to node 3 and validate that we get revivedEvent event.
+            // Add reference from node 2 to node 3 and validate that we get revived event.
             garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
+            await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([
-                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg, fromId: nodes[2] },
                 ]),
-                "inactive event not generated as expected",
+                "revived event not logged as expected",
             );
         });
 
@@ -413,44 +443,47 @@ describe("Garbage Collection Tests", () => {
                 unrefTimestamp: Date.now() - (inactiveTimeoutMs + 100),
             };
             const node3Snapshot = getDummySnapshotTree();
-            node3Snapshot.blobs[gcBlobKey] = "node3GCDetails";
+            const gcBlobId = "node3GCDetails";
+            const attributesBlobId = "attributesBlob";
+            node3Snapshot.blobs[gcBlobKey] = gcBlobId;
+            node3Snapshot.blobs[dataStoreAttributesBlobName] = attributesBlobId;
 
             // Create a base snapshot that contains snapshot tree of node 3.
             const baseSnapshot = getDummySnapshotTree();
             baseSnapshot.trees[nodes[3].slice(1)] = node3Snapshot;
 
             // Set up the getNodeGCDetails function to return the GC details for node 3 when asked by garbage collector.
-            const getNodeGCDetails = (blobId: string) => {
-                if (blobId === "node3GCDetails") {
-                    return node3GCDetails;
-                }
-                return {};
-            };
-            const garbageCollector = createGarbageCollector(baseSnapshot, getNodeGCDetails);
+            const gcBlobMap = new Map([
+                [gcBlobId, node3GCDetails],
+                [attributesBlobId, {}],
+            ]);
+            const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap);
 
             // Remove node 3's reference from node 2 so that it is still unreferenced. The GC details from the base
             // summary is not loaded until the first time GC is run, so do that immediately.
             defaultGCData.gcNodes[nodes[2]] = [];
             await garbageCollector.collectGarbage({ runGC: true });
 
-            // Change node 3. This should result in an inactiveObjectChanged/Loaded event since it should be inactive.
+            // Validate that changed and loaded events are logged for node 3 since it is inactive.
             garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
             garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
+            await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([
                     { eventName: changedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
                     { eventName: loadedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
-                "inactive event not generated as expected",
+                "inactive events not logged as expected",
             );
 
-            // Add reference from node 2 to node 3 and validate that we get revivedEvent event.
+            // Add reference from node 2 to node 3 and validate that we get revived event.
             garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
+            await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([
-                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
+                    { eventName: revivedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg, fromId: nodes[2] },
                 ]),
-                "inactive event not generated as expected",
+                "revived event not logged as expected",
             );
         });
 
@@ -489,10 +522,7 @@ describe("Garbage Collection Tests", () => {
             const baseSnapshot = getDummySnapshotTree();
             baseSnapshot.trees[gcTreeKey] = gcSnapshotTree;
 
-            const getNodeGCDetails = (blobId: string) => {
-                return gcBlobMap.get(blobId) ?? {};
-            };
-            const garbageCollector = createGarbageCollector(baseSnapshot, getNodeGCDetails);
+            const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap);
 
             // For the nodes in the GC snapshot blobs, remove their references from the default GC data.
             defaultGCData.gcNodes[nodes[0]] = [];
@@ -501,17 +531,18 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
 
-            // Update the nodes and validate that inactive events is correctly generated for each.
+            // Validate that changed and loaded events are logged for inactive nodes.
             garbageCollector.nodeUpdated(nodes[1], "Changed", Date.now(), testPkgPath);
             garbageCollector.nodeUpdated(nodes[2], "Changed", Date.now(), testPkgPath);
             garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
+            await garbageCollector.collectGarbage({});
             assert(
                 mockLogger.matchEvents([
                     { eventName: changedEvent, timeout: inactiveTimeoutMs, id: nodes[1], pkg: eventPkg },
                     { eventName: changedEvent, timeout: inactiveTimeoutMs, id: nodes[2], pkg: eventPkg },
                     { eventName: loadedEvent, timeout: inactiveTimeoutMs, id: nodes[3], pkg: eventPkg },
                 ]),
-                "inactiveObjectChanged event not generated as expected",
+                "inactive events not logged as expected",
             );
         });
 
@@ -526,18 +557,15 @@ describe("Garbage Collection Tests", () => {
 
             await garbageCollector.collectGarbage({ runGC: true });
 
-            // Update all nodes.
-            updateAllNodes(garbageCollector);
-
-            // Validate that no inactive events are generated yet.
+            // Validate that no inactive events are logged yet.
+            await updateAllNodesAndRunGC(garbageCollector);
             validateNoInactiveEvents();
 
             // Advance the clock so that inactive timeout expires.
             clock.tick(inactiveTimeoutOverrideMs + 1);
 
-            // Update all nodes. This should result in an inactiveObjectChanged event for node 2 and node 3 since they
-            // are inactive.
-            updateAllNodes(garbageCollector);
+            // Validate that changed and loaded events for node 2 and node 3 are logged since they are inactive.
+            await updateAllNodesAndRunGC(garbageCollector);
             assert(
                 mockLogger.matchEvents([
                     { eventName: changedEvent, timeout: inactiveTimeoutOverrideMs, id: nodes[2], pkg: eventPkg },
@@ -545,7 +573,7 @@ describe("Garbage Collection Tests", () => {
                     { eventName: changedEvent, timeout: inactiveTimeoutOverrideMs, id: nodes[3], pkg: eventPkg },
                     { eventName: loadedEvent, timeout: inactiveTimeoutOverrideMs, id: nodes[3], pkg: eventPkg },
                 ]),
-                "inactive events not generated as expected",
+                "inactive events not logged as expected",
             );
         });
     });
@@ -630,7 +658,6 @@ describe("Garbage Collection Tests", () => {
         }
 
         beforeEach(() => {
-            closeCalled = false;
             defaultGCData.gcNodes = {};
             garbageCollector = createGarbageCollector();
         });

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/tinylicious-driver",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Driver for tinylicious",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -32,21 +32,21 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^1.1.0",
-    "@fluidframework/driver-definitions": "^1.1.0",
-    "@fluidframework/driver-utils": "^1.1.0",
+    "@fluidframework/core-interfaces": "^1.2.0",
+    "@fluidframework/driver-definitions": "^1.2.0",
+    "@fluidframework/driver-utils": "^1.2.0",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/routerlicious-driver": "^1.1.0",
-    "@fluidframework/server-services-client": "^0.1036.5000-0",
-    "jsrsasign": "^10.2.0",
+    "@fluidframework/routerlicious-driver": "^1.2.0",
+    "@fluidframework/server-services-client": "^0.1036.5000",
+    "jsrsasign": "^10.5.25",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
-    "@fluidframework/build-tools": "^0.2.71273",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-tools": "^0.2.3074",
-    "@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@^1.0.0",
+    "@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@1.1.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jsrsasign": "^8.0.8",
     "@types/mocha": "^9.1.1",
@@ -59,7 +59,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "broken": {}
   }
 }

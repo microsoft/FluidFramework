@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/server-services-telemetry";
-export const pkgVersion = "0.1036.5000";
+export const pkgVersion = "0.1037.0";

@@ -42,7 +42,7 @@ export function getDocumentServiceFactory(
         const routerliciousRouteOptions = options as IRouterliciousRouteOptions;
         assert(
             routerliciousRouteOptions !== undefined,
-            "options are not of type \"IRouterliciousRouteOptions\" as expected");
+            0x31d /* options are not of type "IRouterliciousRouteOptions" as expected */);
         routerliciousTokenProvider = new InsecureTokenProvider(
             routerliciousRouteOptions.tenantSecret ?? "",
             getUser());
