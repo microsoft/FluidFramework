@@ -146,6 +146,12 @@
       },
       "InterfaceDeclaration_IPendingRuntimeState": {
         "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISummarizerRuntime": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IConnectableRuntime": {
+        "backCompat": false
       }
     }
   }
