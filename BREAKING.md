@@ -20,7 +20,7 @@ There are a few steps you can take to write a good change note and avoid needing
 
  - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
  - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
-  - [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
+ - [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
 
 ### Remove `documentId` field from `MockFluidDataStoreContext`
 
