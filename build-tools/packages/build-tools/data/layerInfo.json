@@ -210,6 +210,7 @@
                 "dev": true,
                 "dot": false,
                 "dirs": [
+                    "build-tools/",
                     "packages/tools/"
                 ]
             },

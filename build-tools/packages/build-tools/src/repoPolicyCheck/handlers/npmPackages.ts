@@ -155,7 +155,7 @@ export const handlers: Handler[] = [
                 return 'Error parsing JSON file: ' + file;
             }
 
-            const ret = [];
+            const ret: string[] = [];
 
             if (JSON.stringify(sortPackageJson(json)) != JSON.stringify(json)) {
                 ret.push(`package.json not sorted`);
@@ -268,7 +268,7 @@ export const handlers: Handler[] = [
                 return 'Error parsing JSON file: ' + file;
             }
 
-            const errors = [];
+            const errors: string[] = [];
 
             if (json.private && packageMustNotBePrivate(json.name)) {
                 errors.push(`Package ${json.name} must not be marked private`);
@@ -448,7 +448,7 @@ export const handlers: Handler[] = [
                 return 'Error parsing JSON file: ' + file;
             }
 
-            const ret = [];
+            const ret: string[] = [];
 
             const { valid, validationResults } = runNpmJsonLint(json, file);
 

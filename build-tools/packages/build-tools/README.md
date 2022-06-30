@@ -33,7 +33,7 @@ To run that version, just do one of:
 There are several also ways to use the local version of `@fluidframework/build-tools` from within the repo.
 Just build it (as in "Setup") then do one of:
 * Use [npm link](https://docs.npmjs.com/cli/v8/commands/npm-link) with this package to override the version of it used in the root package (which is the `client` lerna package, but often used to build other as well). This will make scripts like `build:fast` use the linked version.
-* use `node bin/tool-name` in this directory or `node tools/build-tools/bin/fluid-build tool-name` from the root.
+* use `node bin/tool-name` in this directory or `node build-tools/packages/build-tools/bin/fluid-build tool-name` from the root.
 
 You can also use `npx --package "@fluidframework/build-tools" tool-name`, but exactly how versioning on this works and how it can be specified depends on the npm version and isn't super clear.
 
@@ -55,12 +55,12 @@ All the tools take some common options:
 This package produces several binaries, see `bin` in package.json.
 You can globally install this package to run them.
 To run the version of them you built in "Setup" above, run `node bin/tool-name`.
-Note that this correctly detects the fluid-framework directory when from elsewhere, for example it works just fine in the repository root with `node tools/build-tools/bin/fluid-build fluid-build`.
+Note that this correctly detects the fluid-framework directory when from elsewhere, for example it works just fine in the repository root with `node build-tools/packages/build-tools/bin/fluid-build fluid-build`.
 
 One of these is tools is `fluid-build`:
 
-<!-- this list of arguments is duplicated in `src/fluidBuild/options.ts` and they should be updated together -->
-
+<!-- this list of arguments is duplicated in `build-tools/packages/build-tools/src/fluidBuild/options.ts`
+  and they should be updated together -->
 ```txt
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
@@ -132,7 +132,8 @@ To build Fluid within VSCode, use Ctrl-Shift-B to break up the build task list a
 
 ## Running `fluid-layer-check` (Command Line)
 
-<!-- this list of arguments is duplicated in `tools/build-tools/src/fluidBuild/options.ts` and they should be updated together -->
+<!-- this list of arguments is duplicated in `build-tools/packages/build-tools/src/fluidBuild/options.ts`
+    and they should be updated together -->
 
 ```txt
 Usage: fluid-layer-check <options>
