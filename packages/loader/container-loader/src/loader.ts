@@ -48,6 +48,7 @@ import {
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
+import { IProtocolDetails } from "./protocol";
 
 function canUseCache(request: IRequest): boolean {
     if (request.headers === undefined) {
@@ -212,6 +213,12 @@ export interface ILoaderProps {
      * The configuration provider which may be used to control features.
      */
      readonly configProvider?: IConfigProviderBase;
+
+     /**
+      * Optional property for allowing the container to use a custom
+      * protocol implementation for handling the quorum and/or the audience.
+      */
+     readonly protocolDetails?: IProtocolDetails;
 }
 
 /**
@@ -278,6 +285,7 @@ export class Loader implements IHostLoader {
     private readonly containers = new Map<string, Promise<Container>>();
     public readonly services: ILoaderServices;
     private readonly mc: MonitoringContext;
+    private readonly protocolDetails: IProtocolDetails | undefined;
 
     constructor(loaderProps: ILoaderProps) {
         const scope: FluidObject<ILoader> = { ...loaderProps.scope };
@@ -306,6 +314,7 @@ export class Loader implements IHostLoader {
         };
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.services.subLogger, "Loader"));
+        this.protocolDetails = loaderProps.protocolDetails;
     }
 
     public get IFluidRouter(): IFluidRouter { return this; }
@@ -314,6 +323,7 @@ export class Loader implements IHostLoader {
         const container = await Container.createDetached(
             this,
             codeDetails,
+            this.protocolDetails,
         );
 
         if (this.cachingEnabled) {
@@ -330,7 +340,7 @@ export class Loader implements IHostLoader {
     }
 
     public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
-        return Container.rehydrateDetachedFromSnapshot(this, snapshot);
+        return Container.rehydrateDetachedFromSnapshot(this, snapshot, this.protocolDetails);
     }
 
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
@@ -410,7 +420,9 @@ export class Loader implements IHostLoader {
                 const containerP =
                     this.loadContainer(
                         request,
-                        resolvedAsFluid);
+                        resolvedAsFluid,
+                        undefined, // pendingLocalState
+                        this.protocolDetails);
                 this.addToContainerCache(key, containerP);
                 container = await containerP;
             }
@@ -419,7 +431,8 @@ export class Loader implements IHostLoader {
                 await this.loadContainer(
                     request,
                     resolvedAsFluid,
-                    pendingLocalState);
+                    pendingLocalState,
+                    this.protocolDetails);
         }
 
         if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
@@ -471,6 +484,7 @@ export class Loader implements IHostLoader {
         request: IRequest,
         resolved: IFluidResolvedUrl,
         pendingLocalState?: IPendingContainerState,
+        protocolDetails?: IProtocolDetails,
     ): Promise<Container> {
         return Container.load(
             this,
@@ -482,6 +496,7 @@ export class Loader implements IHostLoader {
                 loadMode: request.headers?.[LoaderHeader.loadMode],
             },
             pendingLocalState,
+            protocolDetails,
         );
     }
 }

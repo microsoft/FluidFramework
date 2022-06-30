@@ -168,6 +168,7 @@ export interface ILoaderProps {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
+    readonly protocolDetails?: IProtocolDetails;
     readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
 }
