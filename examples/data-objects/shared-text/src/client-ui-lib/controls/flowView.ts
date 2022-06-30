@@ -15,6 +15,7 @@ import { performance } from "@fluidframework/common-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
+import { refHasRangeLabel, refHasTileLabel } from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
@@ -248,8 +249,8 @@ function showPositionInLine(
 }
 
 function endRenderSegments(marker: MergeTree.Marker) {
-    return (marker.hasTileLabel("pg") ||
-        ((marker.hasRangeLabel("cell") &&
+    return (refHasTileLabel(marker, "pg") ||
+        ((refHasRangeLabel(marker, "cell") &&
             (marker.refType & MergeTree.ReferenceType.NestEnd))));
 }
 
@@ -1125,7 +1126,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             ? segoff.segment
             : undefined;
 
-        if (asMarker && asMarker.hasRangeLabel("table")) {
+        if (asMarker && refHasRangeLabel(asMarker, "table")) {
             let tableView: Table.Table;
             if (asMarker.removedSeq === undefined) {
                 renderTable(asMarker, docContext, layoutContext);
@@ -1197,7 +1198,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                     segoff = getContainingSegment(flowView.sharedString, currentPos);
                     if (MergeTree.Marker.is(segoff.segment)) {
                         // eslint-disable-next-line max-len
-                        if (segoff.segment.hasRangeLabel("cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
+                        if (refHasRangeLabel(segoff.segment, "cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
                             break;
                         }
                     }
@@ -1464,8 +1465,8 @@ interface IRemotePresenceBase {
     type: string;
 }
 interface ILocalPresenceInfo {
-    localRef?: MergeTree.LocalReference;
-    markLocalRef?: MergeTree.LocalReference;
+    localRef?: MergeTree.ReferencePosition;
+    markLocalRef?: MergeTree.ReferencePosition;
     xformPos?: number;
     markXformPos?: number;
     clientId: string;
@@ -1561,8 +1562,8 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
     }
 }
 
-function getLocalRefPos(sharedString: Sequence.SharedString, localRef: MergeTree.LocalReference) {
-    return sharedString.getPosition(localRef.segment!) + localRef.offset;
+function getLocalRefPos(sharedString: Sequence.SharedString, localRef: MergeTree.ReferencePosition) {
+    return sharedString.localReferencePositionToPosition(localRef);
 }
 
 function getContainingSegment(sharedString: Sequence.SharedString, pos: number): ISegmentOffset {
@@ -1915,9 +1916,9 @@ export class FlowView extends ui.Component {
                 localPresenceInfo.cursor!.presenceInfoUpdated = true;
             }
             if (presentPresence.markLocalRef) {
-                this.sharedString.removeLocalReference(presentPresence.markLocalRef);
+                this.sharedString.removeLocalReferencePosition(presentPresence.markLocalRef);
             }
-            this.sharedString.removeLocalReference(presentPresence.localRef);
+            this.sharedString.removeLocalReferencePosition(presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
             tempMarkXformPos = presentPresence.markXformPos;
         }
@@ -2188,12 +2189,12 @@ export class FlowView extends ui.Component {
             if (MergeTree.Marker.is(segoff.segment)) {
                 const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
-                    if (marker.hasTileLabel("pg")) {
-                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
+                    if (refHasTileLabel(marker, "pg")) {
+                        if (refHasRangeLabel(marker, "table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                             this.cursorRev();
                         }
                     }
-                } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (marker.hasRangeLabel("cell"))) {
+                } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (refHasRangeLabel(marker, "cell"))) {
                     const cellMarker = marker as Table.ICellMarker;
                     const endId = cellMarker.getId();
                     let beginMarker: Table.ICellMarker | undefined;
@@ -2222,19 +2223,19 @@ export class FlowView extends ui.Component {
                 // REVIEW: assume marker for now
                 const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
-                    if (marker.hasTileLabel("pg")) {
-                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
+                    if (refHasTileLabel(marker, "pg")) {
+                        if (refHasRangeLabel(marker, "table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                             this.cursorFwd();
                         } else {
                             return;
                         }
                     }
                 } else if (marker.refType & MergeTree.ReferenceType.NestBegin) {
-                    if (marker.hasRangeLabel("table")) {
+                    if (refHasRangeLabel(marker, "table")) {
                         this.cursor.pos += 3;
-                    } else if (marker.hasRangeLabel("row")) {
+                    } else if (refHasRangeLabel(marker, "row")) {
                         this.cursor.pos += 2;
-                    } else if (marker.hasRangeLabel("cell")) {
+                    } else if (refHasRangeLabel(marker, "cell")) {
                         if (Table.cellIsMoribund(marker)) {
                             this.tryMoveCell(this.cursor.pos);
                         } else {
@@ -2244,9 +2245,9 @@ export class FlowView extends ui.Component {
                         this.cursorFwd();
                     }
                 } else if (marker.refType & MergeTree.ReferenceType.NestEnd) {
-                    if (marker.hasRangeLabel("row")) {
+                    if (refHasRangeLabel(marker, "row")) {
                         this.cursorFwd();
-                    } else if (marker.hasRangeLabel("table")) {
+                    } else if (refHasRangeLabel(marker, "table")) {
                         this.cursor.pos += 2;
                     } else {
                         this.cursorFwd();
@@ -2634,7 +2635,7 @@ export class FlowView extends ui.Component {
         if (tileInfo) {
             const tile = tileInfo.tile as Paragraph.IParagraphMarker;
             let listStatus = false;
-            if (tile.hasTileLabel("list")) {
+            if (refHasTileLabel(tile, "list")) {
                 listStatus = true;
             }
             const curLabels = tile.properties![MergeTree.reservedTileLabelsKey] as string[];
@@ -3194,8 +3195,8 @@ export class FlowView extends ui.Component {
                 const localPresenceInfo = {
                     clientId,
                     fresh: true,
-                    localRef: this.sharedString.createPositionReference(
-                        segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove),
+                    localRef: this.sharedString.createLocalReferencePosition(
+                        segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove, undefined),
                     presenceColor: this.presenceVector.has(clientId) ?
                         this.presenceVector.get(clientId)!.presenceColor :
                         presenceColors[this.presenceVector.size % presenceColors.length],
@@ -3207,8 +3208,8 @@ export class FlowView extends ui.Component {
                     const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
                     if (markSegoff.segment) {
                         localPresenceInfo.markLocalRef =
-                            this.sharedString.createPositionReference(markSegoff.segment,
-                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+                            this.sharedString.createLocalReferencePosition(markSegoff.segment,
+                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove, undefined);
                     }
                 }
                 this.updatePresenceVector(localPresenceInfo);
