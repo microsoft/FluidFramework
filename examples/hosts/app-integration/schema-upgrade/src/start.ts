@@ -16,7 +16,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { App, SessionState } from "./app";
-import { AppView } from "./appView";
+import { AppView, DebugView } from "./appView";
 import { externalDataSource } from "./externalData";
 import { TinyliciousService } from "./tinyliciousService";
 import {
@@ -75,16 +75,23 @@ async function start(): Promise<void> {
         await createNewFlow(loader, exportedData);
     };
 
-    // Given an IInventoryList, we can render the list and provide controls for users to modify it.
-    const div = document.getElementById("content") as HTMLDivElement;
+    // The AppView is what a normal user would see in a normal scenario...
+    const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.render(
-        React.createElement(AppView, {
+        React.createElement(AppView, { app }),
+        appDiv,
+    );
+
+    // Whereas the DebugView is just for the purposes of this demo.  Separated out here to clarify the division.
+    const debugDiv = document.getElementById("debug") as HTMLDivElement;
+    ReactDOM.render(
+        React.createElement(DebugView, {
             app,
             importedStringData: fetchedData,
             migrateContainer: () => { migrateContainer().catch(console.error); },
             externalDataSource,
         }),
-        div,
+        debugDiv,
     );
 }
 

@@ -8,7 +8,6 @@ import EventEmitter from "events";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { applyStringData, extractStringData } from "./dataHelpers";
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
 import { containerKillBitId } from "./version1";
 
@@ -60,6 +59,30 @@ export enum SessionState {
     ending,
     ended,
 }
+
+// These helper functions produce and consume the same stringified form of the data.
+function parseStringData(stringData: string) {
+    const itemStrings = stringData.split("\n");
+    return itemStrings.map((itemString) => {
+        const [itemNameString, itemQuantityString] = itemString.split(":");
+        return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
+    });
+}
+
+const applyStringData = async (inventoryList: IInventoryList, stringData: string) => {
+    const parsedInventoryItemData = parseStringData(stringData);
+    for (const { name, quantity } of parsedInventoryItemData) {
+        inventoryList.addItem(name, quantity);
+    }
+};
+
+const extractStringData = async (inventoryList: IInventoryList) => {
+    const inventoryItems = inventoryList.getItems();
+    const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
+        return `${ inventoryItem.name.getText() }:${ inventoryItem.quantity.toString() }`;
+    });
+    return inventoryItemStrings.join("\n");
+};
 
 export class App extends EventEmitter {
     private _sessionState = SessionState.collaborating;

@@ -9,7 +9,7 @@ import { App, SessionState } from "./app";
 import type { ExternalDataSource } from "./externalData";
 import { InventoryListView } from "./inventoryView";
 
-interface IDebugViewProps {
+export interface IDebugViewProps {
     app: App;
     // Normally there's no need to display the imported string data, this is for demo purposes only.
     importedStringData: string | undefined;
@@ -18,7 +18,7 @@ interface IDebugViewProps {
     externalDataSource: ExternalDataSource;
 }
 
-const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
     const {
         app,
         importedStringData,
@@ -142,20 +142,10 @@ const ExternalDataSourceView: React.FC<IExternalDataSourceViewProps> = (props: I
 
 export interface IAppViewProps {
     app: App;
-    // Normally there's no need to display the imported string data, this is for demo purposes only.
-    importedStringData: string | undefined;
-    // End the collaboration session and create a new container using exported data.
-    migrateContainer: () => void;
-    externalDataSource: ExternalDataSource;
 }
 
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
-    const {
-        app,
-        importedStringData,
-        migrateContainer,
-        externalDataSource,
-    } = props;
+    const { app } = props;
 
     const [disableInput, setDisableInput] = useState<boolean>(app.sessionState !== SessionState.collaborating);
 
@@ -171,14 +161,6 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     }, [app]);
 
     return (
-        <div>
-            <InventoryListView inventoryList={ app.inventoryList } disabled={ disableInput } />
-            <DebugView
-                app={ app }
-                importedStringData={ importedStringData }
-                migrateContainer={ migrateContainer }
-                externalDataSource={ externalDataSource }
-            />
-        </div>
+        <InventoryListView inventoryList={ app.inventoryList } disabled={ disableInput } />
     );
 };
