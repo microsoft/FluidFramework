@@ -7,12 +7,18 @@ import { IDisposable, ITelemetryLogger, ITelemetryPerformanceEvent } from "@flui
 import { performance } from "@fluidframework/common-utils";
 
 interface Measurements {
-    latestDuration: number;
-    executionCount: number;
-    totalDuration: number;
-    minDuration: number | undefined;
-    maxDuration: number | undefined;
+    // The names of the properties in this interface are the ones that will get stamped in the
+    // telemetry event, changes should be considered carefully. The optional properties should
+    // only be populated if 'includeAggregateMetrics' is true.
+
+    duration: number;
+    count?: number;
+    totalDuration?: number;
+    minDuration?: number;
+    maxDuration?: number;
 }
+
+interface CountAndMeasurements { count: number; measurements: Measurements; }
 
 /**
  * Helper class that executes a specified code block and writes an
@@ -24,11 +30,13 @@ interface Measurements {
  export class SampledTelemetryHelper implements IDisposable {
     disposed: boolean = false;
 
-    private readonly measurementsMap = new Map<string, Measurements>();
+    private readonly measurementsMap = new Map<string, CountAndMeasurements>();
 
     /**
      * @param eventBase - Custom properties to include in the telemetry performance event when it is written.
      * @param logger - The logger to use to write the telemetry performance event.
+     * @param sampleThreshold - Telemetry performance events will be generated every time we hit this many
+     *                          executions of the code block.
      * @param includeAggregateMetrics - If set to `true`, the telemetry performance event will include aggregated
      *                                  metrics (execution count, total duration, min duration, max duration) for
      *                                  all the executions in between generated events.
@@ -36,51 +44,38 @@ interface Measurements {
     public constructor(
         private readonly eventBase: any,
         private readonly logger: ITelemetryLogger,
+        private readonly sampleThreshold: number,
         private readonly includeAggregateMetrics: boolean = false) {
     }
 
     /**
      * @param codeToMeasure - The code to be executed and measured.
-     * @param countThreshold - The telemetry performance event with aggregated data will be
-     *                         generated after this many executions of the code block.
      * @param dimension - A key to track executions of the code block separately. Each different
      *                    value of this parameter has a separate set of executions and metrics tracked
      *                    by the class. If no such distinction needs to be made, do not provide a value.
      * @returns Whatever the passed-in code block returns.
      */
-    public measure<T>(
-        codeToMeasure: () => T,
-        countThreshold: number,
-        dimension: string = ""): T {
+    public measure<T>(codeToMeasure: () => T, dimension: string = ""): T {
         const start = performance.now();
         const returnValue = codeToMeasure();
         const duration = performance.now() - start;
 
         let m = this.measurementsMap.get(dimension);
         if (m === undefined) {
-            m = {
-                latestDuration: 0,
-                executionCount: 0,
-                totalDuration: 0,
-                minDuration: undefined,
-                maxDuration: undefined,
-            };
+            m = { count: 0, measurements: { duration: 0 } };
             this.measurementsMap.set(dimension, m);
         }
-        m.executionCount++;
-        m.latestDuration = duration;
+        m.count++;
+        m.measurements.duration = duration;
 
         if (this.includeAggregateMetrics) {
-            m.totalDuration += duration;
-            m.minDuration = m.minDuration === undefined
-                ? duration
-                : Math.min(m.minDuration, duration);
-            m.maxDuration = m.maxDuration === undefined
-                ? duration
-                : Math.max(m.maxDuration, duration);
+            m.measurements.count = (m.measurements.count ?? 0) + 1;
+            m.measurements.totalDuration = (m.measurements.totalDuration ?? 0) + duration;
+            m.measurements.minDuration = Math.min(m.measurements.minDuration ?? Infinity, duration);
+            m.measurements.maxDuration = Math.max(m.measurements.maxDuration ?? 0, duration);
         }
 
-        if (m.executionCount >= countThreshold) {
+        if (m.count >= this.sampleThreshold) {
             this.flushDimension(dimension);
         }
 
@@ -93,35 +88,18 @@ interface Measurements {
             return;
         }
 
-        if (measurements.executionCount !== 0) {
-            let telemetryEvent: ITelemetryPerformanceEvent = {
+        if (measurements.count !== 0) {
+            const telemetryEvent: ITelemetryPerformanceEvent = {
                 ...this.eventBase,
-                ...{
-                    duration: measurements.latestDuration,
-                    dimension,
-                } };
-
-            if (this.includeAggregateMetrics) {
-                telemetryEvent = {
-                    ...telemetryEvent,
-                    ...{
-                        aggDuration: measurements.totalDuration,
-                        count: measurements.executionCount,
-                        aggMinDuration: measurements.minDuration,
-                        aggMaxDuration: measurements.maxDuration,
-                    },
-                };
-            }
+                ...measurements.measurements,
+                dimension,
+            };
 
             this.logger.sendPerformanceEvent(telemetryEvent);
-            this.measurementsMap.set(dimension,
-                {
-                    latestDuration: 0,
-                    executionCount: 0,
-                    totalDuration: 0,
-                    minDuration: undefined,
-                    maxDuration: undefined,
-                });
+            this.measurementsMap.set(dimension, {
+                count: 0,
+                measurements: { duration: 0 },
+            });
         }
     }
 

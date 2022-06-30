@@ -117,6 +117,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
                 category: "performance",
             },
             this.logger,
+            10,
             true);
         const callbacksHelper = new SampledTelemetryHelper(
             {
@@ -124,6 +125,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
                 category: "performance",
             },
             this.logger,
+            10,
             true);
 
         this.runtime.on("dispose", () => {
@@ -446,14 +448,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      */
     private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed(); // This will result in container closure.
-        this.emit("pre-op", message, local, this);
+        this.emitInternal("pre-op", message, local, this);
 
         this.opProcessingHelper.measure(
             () => { this.processCore(message, local, localOpMetadata); },
-            100,
             local ? "local" : "remote");
 
-        this.emit("op", message, local, this);
+        this.emitInternal("op", message, local, this);
     }
 
     /**
@@ -483,22 +484,21 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      */
     protected abstract applyStashedOp(content: any): unknown;
 
-    public emit(
+    public emit(event: EventEmitterEventType, ...args: any[]): boolean {
+        return this.callbacksHelper.measure(() => super.emit(event, ...args));
+    }
+
+    /**
+     * Use to emit events inside {@link SharedObjectCore}, with no telemetry measurement
+     * done on the duration of the callbacks. Simply calls `super.emit()`.
+     * @param event - Event to emit
+     * @param args - Arguments for the event
+     * @returns Whatever `super.emit()` returns.
+     */
+    private emitInternal(
         event: EventEmitterEventType,
         ...args: any[]): boolean {
-        let returnValue: boolean;
-
-        // Do not include the events emmited by SharedObject itself, we only care
-        // about the events from child classes.
-        if (["op", "pre-op"].includes(event.toString())) {
-            returnValue = super.emit(event, ...args);
-        } else {
-            returnValue = this.callbacksHelper.measure(
-                () => super.emit(event, ...args),
-                100);
-        }
-
-        return returnValue;
+        return super.emit(event, ...args);
     }
 }
 

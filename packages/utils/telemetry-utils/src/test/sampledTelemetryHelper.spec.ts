@@ -44,27 +44,27 @@ describe("SampledTelemetryHelper", () => {
     });
 
     it("only writes event after correct number of samples", () => {
-        const helper = new SampledTelemetryHelper({}, logger);
         const sampling = 10;
+        const helper = new SampledTelemetryHelper({}, logger, sampling);
         for (let i = 0; i < sampling - 1; i++) {
-            helper.measure(() => {}, sampling);
+            helper.measure(() => {});
         }
         assert.strictEqual(logger.events.length, 0);
-        helper.measure(() => {}, sampling);
+        helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
 
         // Again to make sure the internal counter is reset correctly
         for (let i = 0; i < sampling - 1; i++) {
-            helper.measure(() => {}, sampling);
+            helper.measure(() => {});
         }
         assert.strictEqual(logger.events.length, 1);
-        helper.measure(() => {}, sampling);
+        helper.measure(() => {});
         assert.strictEqual(logger.events.length, 2);
     });
 
     it("does not include aggregate properties when it shouldn't", () => {
-        const helper = new SampledTelemetryHelper({}, logger, false);
-        helper.measure(() => {}, 1);
+        const helper = new SampledTelemetryHelper({}, logger, 1, false);
+        helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
         ensurePropertiesExist(event, ["duration", "dimension"], true);
@@ -72,19 +72,19 @@ describe("SampledTelemetryHelper", () => {
     });
 
     it("includes aggregate properties when it should", () => {
-        const helper = new SampledTelemetryHelper({}, logger, true);
-        helper.measure(() => {}, 1);
+        const helper = new SampledTelemetryHelper({}, logger, 1, true);
+        helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
         ensurePropertiesExist(event,
-            ["duration", "dimension", "aggDuration", "count", "aggMinDuration", "aggMaxDuration"], true);
+            ["duration", "dimension", "totalDuration", "count", "minDuration", "maxDuration"], true);
         assert.strictEqual(event.dimension, "");
         assert.strictEqual(event.count, 1);
     });
 
     it("includes properties from base event when no aggregate properties are included", () => {
-        const helper = new SampledTelemetryHelper({ myProp: "myValue" }, logger, false);
-        helper.measure(() => {}, 1);
+        const helper = new SampledTelemetryHelper({ myProp: "myValue" }, logger, 1, false);
+        helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
         ensurePropertiesExist(event, ["duration", "dimension", "myProp"], true);
@@ -92,34 +92,33 @@ describe("SampledTelemetryHelper", () => {
     });
 
     it("includes properties from base event when aggregate properties are included", () => {
-        const helper = new SampledTelemetryHelper({ myProp: "myValue" }, logger, true);
-        helper.measure(() => {}, 1);
+        const helper = new SampledTelemetryHelper({ myProp: "myValue" }, logger, 1, true);
+        helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
         ensurePropertiesExist(event,
-            ["duration", "dimension", "aggDuration", "count", "aggMinDuration", "aggMaxDuration", "myProp"], true);
+            ["duration", "dimension", "totalDuration", "count", "minDuration", "maxDuration", "myProp"], true);
         assert.strictEqual(event.dimension, "");
     });
 
     it("tracks dimensions separately", () => {
-        const helper = new SampledTelemetryHelper({}, logger);
-        const sampling1 = 10;
-        const sampling2 = 3;
+        const helper = new SampledTelemetryHelper({}, logger, 3);
         const dimension1 = "dimension1";
         const dimension2 = "dimension2";
 
-        // The dimensions have different sampling rates so they'll generate a different number of telemetry events
-        for (let i = 0; i < 10; i++) {
-            helper.measure(() => {}, sampling1, dimension1);
-            helper.measure(() => {}, sampling2, dimension2);
+        for (let i = 0; i < 9; i++) {
+            helper.measure(() => {}, dimension1);
+        }
+        for (let i = 0; i < 7; i++) {
+            helper.measure(() => {}, dimension2);
         }
 
-        assert.strictEqual(logger.events.filter((x) => x.dimension === dimension1).length, 1);
-        assert.strictEqual(logger.events.filter((x) => x.dimension === dimension2).length, 3);
+        assert.strictEqual(logger.events.filter((x) => x.dimension === dimension1).length, 3);
+        assert.strictEqual(logger.events.filter((x) => x.dimension === dimension2).length, 2);
     });
 
     it("generates telemetry event from buffered data when disposed", () => {
-        const helper = new SampledTelemetryHelper({}, logger);
+        const helper = new SampledTelemetryHelper({}, logger, 5);
 
         // Logging several dimensions to make sure they are all flushed
         const dimension1 = "dimension1";
@@ -127,8 +126,8 @@ describe("SampledTelemetryHelper", () => {
 
         // Only measure 4 times when we need 5 samples before writing the telemetry event
         for (let i = 0; i < 4; i++) {
-            helper.measure(() => {}, 5, dimension1);
-            helper.measure(() => {}, 5, dimension2);
+            helper.measure(() => {}, dimension1);
+            helper.measure(() => {}, dimension2);
         }
 
         // Nothing should have been logged yet
@@ -138,6 +137,22 @@ describe("SampledTelemetryHelper", () => {
         helper.dispose();
         assert.strictEqual(logger.events.filter((x) => x.dimension === dimension1).length, 1);
         assert.strictEqual(logger.events.filter((x) => x.dimension === dimension2).length, 1);
+    });
+
+    it("no event is generated on dispose if there's no pending 'buffered' data", () => {
+        const helper = new SampledTelemetryHelper({}, logger, 2);
+
+        // Nothing should have been logged after the first call
+        helper.measure(() => {});
+        assert.strictEqual(logger.events.length, 0);
+
+        // On the second call, we should have 1 event
+        helper.measure(() => {});
+        assert.strictEqual(logger.events.length, 1);
+
+        // After disposing, there should still be just one event
+        helper.dispose();
+        assert.strictEqual(logger.events.length, 1);
     });
 });
 
