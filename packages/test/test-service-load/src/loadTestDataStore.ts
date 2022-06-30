@@ -252,7 +252,7 @@ export class LoadTestDataStoreModel {
             this.root.on("valueChanged", (v) => {
                 if (v.key.startsWith(this.partnerBlobKeyPrefix)) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.root.get<IFluidHandle>(v.key)?.get().catch((error) => log);
+                    this.root.get<IFluidHandle>(v.key)?.get();
                 }
             });
         }
