@@ -37,7 +37,7 @@ to be `string | undefined`.
 - [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
 - [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
-- [Remove `aliasing` return value](#Remove-aliasing-return-value)
+- [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
