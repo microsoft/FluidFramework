@@ -81,7 +81,6 @@ const getPendingStateWithoutClose = (container: IContainer): string => {
 };
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
-type CellCallback = (container: IContainer, dataStore: ITestFluidObject, cell: SharedCell) => void | Promise<void>;
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
 const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
@@ -875,9 +874,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it.skip("can stash between summary op and ack", async function() {
         map1.set("test op 1", "test op 1");
         const container = await provider.loadTestContainer(testContainerConfig);
-        const pendingOps = await new Promise<string>((res) => container.on("op", (op) => {
+        const pendingOps = await new Promise<string>((resolve, reject) => container.on("op", (op) => {
             if (op.type === "summarize") {
-                res(container.closeAndGetPendingLocalState());
+                resolve(container.closeAndGetPendingLocalState());
             }
         }));
 
