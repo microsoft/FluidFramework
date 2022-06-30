@@ -151,7 +151,10 @@ export class App extends EventEmitter {
         return this.containerKillBit.newContainerId;
     }
 
-    public readonly endSession = (newContainerId: string) => {
+    public readonly finalizeMigration = (newContainerId: string) => {
+        if (this.newContainerId !== undefined) {
+            throw new Error("The migration has already been finalized.");
+        }
         this.containerKillBit.setNewContainerId(newContainerId).catch(console.error);
     };
 }

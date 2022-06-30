@@ -137,9 +137,10 @@ async function start(): Promise<void> {
         const resolved = newContainer.resolvedUrl;
         ensureFluidResolvedUrl(resolved);
         const containerId = resolved.id;
-        _app.endSession(containerId);
+        _app.finalizeMigration(containerId);
         // Here we let the newly created container/app fall out of scope intentionally.
         // If we don't win the race to set the container, it is the wrong container/app to use anyway
+        // And the loader is probably caching the container anyway too.
     }
 
     const setUpAppForContainer = async (_container: IContainer, initialData?: string) => {
