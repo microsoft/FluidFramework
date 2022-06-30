@@ -113,35 +113,6 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     return pendingState;
 };
 
-const getPendingCellOps = async (args: ITestObjectProvider, send: boolean, cb: CellCallback) => {
-    const container = await args.loadTestContainer(testContainerConfig);
-    await ensureContainerConnected(container);
-    const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
-    const cell = await dataStore.getSharedObject<SharedCell>(cellId);
-
-    [...Array(lots).keys()].map((i) => dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i));
-
-    await args.ensureSynchronized();
-    await args.opProcessingController.pauseProcessing(container);
-    assert(dataStore.runtime.deltaManager.outbound.paused);
-
-    await cb(container, dataStore, cell);
-
-    let pendingState: string;
-    if (send) {
-        pendingState = getPendingStateWithoutClose(container);
-        await args.ensureSynchronized();
-        container.close();
-    } else {
-        pendingState = container.closeAndGetPendingLocalState();
-    }
-
-    args.opProcessingController.resumeProcessing();
-
-    assert.ok(pendingState);
-    return pendingState;
-};
-
 async function loadOffline(provider: ITestObjectProvider, request: IRequest, pendingLocalState: string):
     Promise<{ container: IContainer; connect: () => void; }> {
     const p = new Deferred();
@@ -234,7 +205,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("resends cell op", async function() {
-        const pendingOps = await getPendingCellOps(provider, false, (c, d, cell) => {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+            const cell = await d.getSharedObject<SharedCell>(cellId);
             cell.set(testValue);
         });
 
@@ -267,7 +239,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     it("doesn't resend successful cell op", async function() {
-        const pendingOps = await getPendingCellOps(provider, true, (c, d, cell) => {
+        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+            const cell = await d.getSharedObject<SharedCell>(cellId);
             cell.set("something unimportant");
         });
 

@@ -289,8 +289,9 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(content: any) {
-        this.applyInnerOp(content);
+    protected applyStashedOp(content: unknown) {
+        const cellContent = content as ICellOperation;
+        this.applyInnerOp(cellContent);
         ++this.messageId;
         return this.messageId;
     }
