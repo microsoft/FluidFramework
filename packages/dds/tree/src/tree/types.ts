@@ -42,12 +42,11 @@ export type ChildCollection = FieldKey | RootRange;
 /**
  * A root in the forest.
  *
- * The anchoring does not refer to any of the nodes contained in this range:
- * instead `start` and `end` are anchored to the ends of this detached range, but its object identity.
- * Thus any additional content inserted before or after contents of this range will be included in the range.
+ * The range is a "container" like a field:
+ * any additional content inserted before or after contents of this range will be included in the range.
  * This also means that moving the content from this range elsewhere will leave this range valid, but empty.
  *
- * DetachedRanges, as well as their start and end, are not valid to use as anchors across edits:
+ * DetachedRanges are not valid to use as across edits:
  * they are only valid within the edit in which they were created.
  */
-export type DetachedRange = Opaque<Brand<number, "forest.DetachedRange">>;
+export type DetachedRange = Opaque<Brand<number, "tree.DetachedRange">>;
