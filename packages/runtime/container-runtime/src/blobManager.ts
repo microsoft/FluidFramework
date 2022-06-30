@@ -252,15 +252,15 @@ export class BlobManager {
         );
     }
 
-    private onUploadResolve(id, response: ICreateBlobResponse) {
-        const entry = this.pendingBlobs.get(id);
-        assert(!!entry, "");
+    private onUploadResolve(localId: string, response: ICreateBlobResponse) {
+        const entry = this.pendingBlobs.get(localId);
+        assert(!!entry, "Must have pending blob entry for uploaded blob");
         entry.storageId = response.id;
         if (this.runtime.connected) {
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
                 if (this.storageIds.has(response.id)) {
                     entry.handleP.resolve(this.getBlobHandle(response.id));
-                    this.pendingBlobs.delete(id);
+                    this.pendingBlobs.delete(localId);
                 } else {
                     entry.status = PendingBlobStatus.OnlinePendingOp;
                     this.sendBlobAttachOp(response.id);
@@ -272,31 +272,30 @@ export class BlobManager {
             // connected to storage but not ordering service?
             this.logger.sendTelemetryEvent({ eventName: "BlobUploadSuccessWhileDisconnected" });
             if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
-                this.sendBlobAttachOp(response.id, id);
-                entry.handleP.resolve(this.getBlobHandle(id));
+                this.sendBlobAttachOp(response.id, localId);
+                entry.handleP.resolve(this.getBlobHandle(localId));
             }
             entry.status = PendingBlobStatus.OfflinePendingOp;
         }
         return response;
     }
 
-    private async onUploadReject(id, error) {
-        const entry = this.pendingBlobs.get(id);
-        assert(!!entry, "");
+    private async onUploadReject(localId: string, error) {
+        const entry = this.pendingBlobs.get(localId);
+        assert(!!entry, "Must have pending blob entry for blob which failed to upload");
         if (!this.runtime.connected) {
             entry.status = PendingBlobStatus.OfflinePendingUpload;
             // since we are not connected, we will have a chance to add the storage ID when reSubmit() is called
-            this.sendBlobAttachOp(undefined, id);
-            entry.handleP.resolve(this.getBlobHandle(id));
+            this.sendBlobAttachOp(undefined, localId);
+            entry.handleP.resolve(this.getBlobHandle(localId));
             // we are probably not connected to storage but start another upload request in case we are
             const delay = this.retryThrottler.getDelay();
             entry.uploadP = new Promise<void>((res) => setTimeout(res, delay))
-                .then(async () => this.uploadBlob(id, entry.blob));
+                .then(async () => this.uploadBlob(localId, entry.blob));
             return entry.uploadP;
         } else {
-            // retry?
             entry.handleP.reject(error);
-            throw new Error("something");
+            throw error;
         }
     }
 
@@ -305,16 +304,18 @@ export class BlobManager {
      * submitted to runtime while disconnected.
      * @param metadata - op metadata containing storage and/or local IDs
      */
-    public reSubmit(metadata) {
-        assert(metadata.blobId || metadata.localId, "Submitted BlobAttach ops must have a blobId or localId");
-        if (!metadata.blobId) {
+    public reSubmit(metadata: Record<string, unknown> | undefined) {
+        assert(!!metadata, "Resubmitted ops must have metadata");
+        const { blobId, localId }: { blobId?: string; localId?: string; } = metadata;
+        if (!blobId) {
+            assert(!!localId, "Submitted BlobAttach ops must have a blobId or localId");
             // We submitted this op while offline. The blob should have been uploaded by now.
-            const pendingEntry = this.pendingBlobs.get(metadata.localId);
+            const pendingEntry = this.pendingBlobs.get(localId);
             assert(pendingEntry?.status === PendingBlobStatus.OfflinePendingOp &&
                 !!pendingEntry?.storageId, "blob must be uploaded before resubmitting BlobAttach op");
-            return this.sendBlobAttachOp(pendingEntry.storageId, metadata.localId);
+            return this.sendBlobAttachOp(pendingEntry.storageId, localId);
         }
-        return this.sendBlobAttachOp(metadata.blobId, metadata.localId);
+        return this.sendBlobAttachOp(blobId, localId);
     }
 
     public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {

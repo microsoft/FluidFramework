@@ -1786,15 +1786,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             assert(!!clientId, "Must have clientId when connecting");
             this.delayConnectClientId = clientId;
             this.blobManager.onConnected().then(() => {
+                // make sure we didn't reconnect before the promise resolved
                 if (this.delayConnectClientId === clientId && !this.disposed) {
                     this.delayConnectClientId = undefined;
                     this.setConnectionStateCore(connected, clientId);
                 }
-            }, (error) => {
-                if (error.errorType !== DriverErrorType.offlineError) {
-                    this.closeFn(error);
-                }
-            });
+            }, (error) => this.closeFn(error));
             return;
         }
 
