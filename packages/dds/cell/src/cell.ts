@@ -223,10 +223,10 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     protected onDisconnect() { }
 
     /**
-     * Set or delete cell foll ICellOperation type
+     * Apply inner op
      * @param content - ICellOperation content
      */
-    private applyInnerOp(content: ICellOperation) {
+    private applyInnerOp(content: any) {
         switch (content.type) {
             case "setCell":
                 this.setCore(this.decode(content.value));
@@ -285,7 +285,11 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         return this.serializer.decode(value);
     }
 
-    protected applyStashedOp(content: ICellOperation) {
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+     * @internal
+     */
+    protected applyStashedOp(content: any) {
         this.applyInnerOp(content);
         ++this.messageId;
         return this.messageId;
