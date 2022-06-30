@@ -123,7 +123,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     getAudience(): IAudience;
     getCurrentReferenceTimestampMs(): number | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-    getGCNodePackagePath(nodePath: string): readonly string[] | undefined;
+    getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)

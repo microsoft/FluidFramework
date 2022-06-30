@@ -125,7 +125,7 @@ export interface AzureContainerServices {
  * Since Azure provides user names for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IUser} interface to include this service-specific value. *
  *
- * @typeParam T - @see {@link AzureUser.additionalDetails}.
+ * @typeParam T - See {@link AzureUser.additionalDetails}.
  * Note: must be JSON-serializable.
  * Passing a non-serializable object (e.g. a `class`) will result in undefined behavior.
  */
@@ -146,7 +146,7 @@ export interface AzureUser<T = any> extends IUser {
  * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
  * It will be returned for all audience members connected to Azure.
  *
- * @typeParam T - @see {@link AzureMember.additionalDetails}.
+ * @typeParam T - See {@link AzureMember.additionalDetails}.
  * Note: must be JSON-serializable.
  * Passing a non-serializable object (e.g. a `class`) will result in undefined behavior.
  */

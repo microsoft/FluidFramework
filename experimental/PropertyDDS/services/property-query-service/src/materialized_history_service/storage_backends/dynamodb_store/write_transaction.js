@@ -12,7 +12,7 @@ const OperationError = require('@fluid-experimental/property-common').OperationE
  * A write transaction accumulates calls to conditionally put, update, and delete DynamoDB records,
  * and executes them in a single transaction. The transaction is subject to all the limitations
  * documented in DynamoDB for transactWriteItems.
- * @see https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html
+ * See {@link https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html}
  */
 class WriteTransaction {
   /**
