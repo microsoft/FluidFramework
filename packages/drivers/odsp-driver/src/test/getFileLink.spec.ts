@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { TelemetryUTLogger } from "@fluidframework/telemetry-utils";
 import { getFileLink } from "../getFileLink";
-import { mockFetchOk, mockFetchSingle, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
+import { mockFetchSingle, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
 describe("getFileLink", () => {
     const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
