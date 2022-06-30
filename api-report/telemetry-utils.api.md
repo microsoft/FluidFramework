@@ -7,6 +7,7 @@
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { IDebugger } from 'debug';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { ILoggingError } from '@fluidframework/common-definitions';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
@@ -53,9 +54,6 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     // (undocumented)
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
 }
-
-// @public
-export function ExecuteWithAggregatedTelemetry(codeBlockId: symbol, codeToMeasure: () => any, countThreshold: number, eventBase: any, logger: ITelemetryLogger): any;
 
 // @public
 export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean): {
@@ -235,6 +233,17 @@ export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmit
 
 // @public (undocumented)
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
+
+// @public
+export class SampledTelemetryHelper implements IDisposable {
+    constructor(eventBase: any, logger: ITelemetryLogger, includeAggregateMetrics?: boolean);
+    // (undocumented)
+    dispose(error?: Error | undefined): void;
+    // (undocumented)
+    disposed: boolean;
+    // (undocumented)
+    measure<T>(codeToMeasure: () => T, countThreshold: number, dimension?: string): T;
+}
 
 // @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;

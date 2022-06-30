@@ -11,7 +11,7 @@ export * from "./logger";
 export * from "./mockLogger";
 export * from "./thresholdCounter";
 export * from "./utils";
-export * from "./perfTelemetryAggregator";
+export * from "./sampledTelemetryHelper";
 export {
     MonitoringContext,
     IConfigProviderBase,

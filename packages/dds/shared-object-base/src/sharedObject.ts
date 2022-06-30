@@ -25,7 +25,7 @@ import {
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
-    ExecuteWithAggregatedTelemetry,
+    SampledTelemetryHelper,
 } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
@@ -40,8 +40,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     public get IFluidLoadable() { return this; }
 
-    private static readonly DdsOpProcessingTelemetrySymbol: symbol = Symbol("DdsOpProcessingTelemetrySymbol");
-    private static readonly DdsCallbacksTelemetrySymbol: symbol = Symbol("DdsCallbacksTelemetrySymbol");
+    private readonly opProcessingHelper: SampledTelemetryHelper;
+    private readonly callbacksHelper: SampledTelemetryHelper;
 
     /**
      * The handle referring to this SharedObject
@@ -105,7 +105,33 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             { all: { sharedObjectId: uuid() } },
         );
 
+        [this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
+
         this.attachListeners();
+    }
+
+    private setUpSampledTelemetryHelpers(): SampledTelemetryHelper[] {
+        const opProcessingHelper = new SampledTelemetryHelper(
+            {
+                eventName: "ddsOpProcessing",
+                category: "performance",
+            },
+            this.logger,
+            true);
+        const callbacksHelper = new SampledTelemetryHelper(
+            {
+                eventName: "ddsEventCallbacks",
+                category: "performance",
+            },
+            this.logger,
+            true);
+
+        this.runtime.on("dispose", () => {
+            this.callbacksHelper.dispose();
+            this.opProcessingHelper.dispose();
+        });
+
+        return [opProcessingHelper, callbacksHelper];
     }
 
     /**
@@ -422,21 +448,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.verifyNotClosed(); // This will result in container closure.
         this.emit("pre-op", message, local, this);
 
-        // Do not measure for local ops, because callbacks are not invoked for them in this codepath
-        // and including them in the measurements would skew the numbers.
-        if (local) {
-            this.processCore(message, local, localOpMetadata);
-        } else {
-            ExecuteWithAggregatedTelemetry(
-                SharedObjectCore.DdsOpProcessingTelemetrySymbol,
-                () => { this.processCore(message, local, localOpMetadata); },
-                100,
-                {
-                    eventName: "ddsOpProcessing",
-                    category: "performance",
-                },
-                this.logger);
-        }
+        this.opProcessingHelper.measure(
+            () => { this.processCore(message, local, localOpMetadata); },
+            10,
+            local ? "local" : "remote");
 
         this.emit("op", message, local, this);
     }
@@ -478,15 +493,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         if (["op", "pre-op"].includes(event.toString())) {
             returnValue = super.emit(event, ...args);
         } else {
-            returnValue = ExecuteWithAggregatedTelemetry(
-                SharedObjectCore.DdsCallbacksTelemetrySymbol,
+            returnValue = this.callbacksHelper.measure(
                 () => super.emit(event, ...args),
-                100,
-                {
-                    eventName: "ddsEventCallbacks",
-                    category: "performance",
-                },
-                this.logger);
+                10);
         }
 
         return returnValue;
