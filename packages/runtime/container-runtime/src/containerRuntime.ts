@@ -46,7 +46,7 @@ import {
     TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
+import { readAndParse, isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
     DataProcessingError,
@@ -282,9 +282,9 @@ export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConf
 }
 
 export type ISummaryConfiguration =
-| ISummaryConfigurationDisableSummarizer
-| ISummaryConfigurationDisableHeuristics
-| ISummaryConfigurationHeuristics;
+    | ISummaryConfigurationDisableSummarizer
+    | ISummaryConfigurationDisableHeuristics
+    | ISummaryConfigurationHeuristics;
 
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
@@ -381,11 +381,11 @@ export interface ISummaryRuntimeOptions {
      */
     maxOpsSinceLastSummary?: number;
 
-     /**
-     * @deprecated - use `summaryConfigOverrides.summarizerClientElection` instead.
-     * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
-     * This defaults to false (disabled) and must be explicitly set to true to enable.
-     */
+    /**
+    * @deprecated - use `summaryConfigOverrides.summarizerClientElection` instead.
+    * Flag that will enable changing elected summarizer client after maxOpsSinceLastSummary.
+    * This defaults to false (disabled) and must be explicitly set to true to enable.
+    */
     summarizerClientElection?: boolean;
 
     /**
@@ -537,7 +537,7 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
-        assert(isRuntimeMessage(message), 0x122 /* "Message to unpack is not proper runtime message" */);
+        assert(isUnpackedRuntimeMessage(message), 0x122 /* "Message to unpack is not proper runtime message" */);
     } else {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
@@ -609,7 +609,7 @@ class ScheduleManagerCore {
      * The only public function in this class - called when we processed an op,
      * to make decision if op processing should be paused or not afer that.
      */
-     public afterOpProcessing(sequenceNumber: number) {
+    public afterOpProcessing(sequenceNumber: number) {
         assert(!this.localPaused, 0x294 /* "can't have op processing paused if we are processing an op" */);
 
         // If the inbound queue is ever empty, nothing to do!
@@ -694,7 +694,7 @@ class ScheduleManagerCore {
         const batchMetadata = metadata?.batch;
 
         // Protocol messages are never part of a runtime batch of messages
-        if (!isRuntimeMessage(message)) {
+        if (!isUnpackedRuntimeMessage(message)) {
             // Protocol messages should never show up in the middle of the batch!
             assert(this.currentBatchClientId === undefined, 0x29a /* "System message in the middle of batch!" */);
             assert(batchMetadata === undefined, 0x29b /* "system op in a batch?" */);
@@ -848,11 +848,11 @@ export function getDeviceSpec() {
  */
 export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     implements
-        IContainerRuntime,
-        IGarbageCollectionRuntime,
-        IRuntime,
-        ISummarizerRuntime,
-        ISummarizerInternalsProvider {
+    IContainerRuntime,
+    IGarbageCollectionRuntime,
+    IRuntime,
+    ISummarizerRuntime,
+    ISummarizerInternalsProvider {
     public get IContainerRuntime() { return this; }
     public get IFluidRouter() { return this; }
 
@@ -1212,9 +1212,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         private readonly requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
         private readonly summaryConfiguration: ISummaryConfiguration = {
             // the defaults
-            ... DefaultSummaryConfiguration,
+            ...DefaultSummaryConfiguration,
             // the runtime configuration overrides
-            ... runtimeOptions.summaryOptions?.summaryConfigOverrides,
+            ...runtimeOptions.summaryOptions?.summaryConfigOverrides,
         },
     ) {
         super();
@@ -1258,7 +1258,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             existing,
             metadata,
             isSummarizerClient: this.context.clientDetails.type === summarizerClientType,
-            getNodePackagePath: (nodePath: string) => this.getGCNodePackagePath(nodePath),
+            getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
             getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
         });
@@ -1294,17 +1294,17 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this,
             (attachMsg) => this.submit(ContainerMessageType.Attach, attachMsg),
             (id: string, createParam: CreateChildSummarizerNodeParam) => (
-                    summarizeInternal: SummarizeInternalFn,
-                    getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-                    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
-                ) => this.summarizerNode.createChild(
-                    summarizeInternal,
-                    id,
-                    createParam,
-                    undefined,
-                    getGCDataFn,
-                    getBaseGCDetailsFn,
-                ),
+                summarizeInternal: SummarizeInternalFn,
+                getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+                getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
+            ) => this.summarizerNode.createChild(
+                summarizeInternal,
+                id,
+                createParam,
+                undefined,
+                getGCDataFn,
+                getBaseGCDetailsFn,
+            ),
             (id: string) => this.summarizerNode.deleteChild(id),
             this.mc.logger,
             async () => this.garbageCollector.getBaseGCDetails(),
@@ -1835,7 +1835,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
 
         // If it's not message for runtime, bail out right away.
-        if (!isRuntimeMessage(messageArg)) {
+        if (!isUnpackedRuntimeMessage(messageArg)) {
             return;
         }
 
@@ -2283,7 +2283,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public submitDataStoreSignal(address: string, type: string, content: any) {
         const envelope = this.createNewSignalEnvelope(address, type, content);
-         return this.context.submitSignalFn(envelope);
+        return this.context.submitSignalFn(envelope);
     }
 
     public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -2382,7 +2382,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const {
             fullTree = false,
             trackState = true,
-            summaryLogger = this.logger,
+            summaryLogger = this.mc.logger,
             runGC = this.garbageCollector.shouldRunGC,
             runSweep,
             fullGC,
@@ -2496,7 +2496,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * Called by GC to retrieve the package path of the node with the given path. The node should belong to a
      * data store or an attachment blob.
      */
-    public getGCNodePackagePath(nodePath: string): readonly string[] | undefined {
+    public async getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
         switch (this.getNodeType(nodePath)) {
             case GCNodeType.Blob:
                 return ["_blobs"];
@@ -2707,16 +2707,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
-                ? {
-                    proposalHandle: undefined,
-                    ackHandle: this.context.getLoadedFromVersion()?.id,
-                    referenceSequenceNumber: summaryRefSeqNum,
-                }
-                : {
-                    proposalHandle: lastAck.summaryOp.contents.handle,
-                    ackHandle: lastAck.summaryAck.contents.handle,
-                    referenceSequenceNumber: summaryRefSeqNum,
-                };
+                    ? {
+                        proposalHandle: undefined,
+                        ackHandle: this.context.getLoadedFromVersion()?.id,
+                        referenceSequenceNumber: summaryRefSeqNum,
+                    }
+                    : {
+                        proposalHandle: lastAck.summaryOp.contents.handle,
+                        ackHandle: lastAck.summaryAck.contents.handle,
+                        referenceSequenceNumber: summaryRefSeqNum,
+                    };
 
             let handle: string;
             try {
@@ -3116,20 +3116,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 end: (arg0: {
                     getVersionDuration?: number | undefined;
                     getSnapshotDuration?: number | undefined;
-                }) => void; }) => {
-                    const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
-                    const trace = Trace.start();
+                }) => void;
+            }) => {
+            const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
+            const trace = Trace.start();
 
-                    const versions = await this.storage.getVersions(versionId, 1);
-                    assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
-                    stats.getVersionDuration = trace.trace().duration;
+            const versions = await this.storage.getVersions(versionId, 1);
+            assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
+            stats.getVersionDuration = trace.trace().duration;
 
-                    const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
-                    assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
-                    stats.getSnapshotDuration = trace.trace().duration;
+            const maybeSnapshot = await this.storage.getSnapshotTree(versions[0]);
+            assert(!!maybeSnapshot, 0x138 /* "Failed to get snapshot from storage" */);
+            stats.getSnapshotDuration = trace.trace().duration;
 
-                    perfEvent.end(stats);
-                    return maybeSnapshot;
+            perfEvent.end(stats);
+            return maybeSnapshot;
         });
     }
 
@@ -3198,7 +3199,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // because it is a misuse of the API rather than an expected failure.
             throw new UsageError(
                 `Can't summarize, disableSummaries: ${this.summariesDisabled}`,
-                );
+            );
         }
     };
 

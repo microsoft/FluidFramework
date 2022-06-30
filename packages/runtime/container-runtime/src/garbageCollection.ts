@@ -115,12 +115,13 @@ export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 
 /** The event that is logged when unreferenced node is used after a certain time. */
 interface IUnreferencedEvent {
-    eventName: string;
+    usageType: "Changed" | "Loaded" | "Revived";
     id: string;
     type: GCNodeType;
     age: number;
     timeout: number;
     completedGCRuns: number;
+    fromId?: string;
     lastSummaryTime?: number;
     externalRequest?: boolean;
     viaHandle?: boolean;
@@ -191,7 +192,7 @@ export interface IGarbageCollectorCreateParams {
     readonly metadata: IContainerRuntimeMetadata | undefined;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly isSummarizerClient: boolean;
-    readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined;
+    readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
 }
@@ -370,7 +371,7 @@ export class GarbageCollector implements IGarbageCollector {
     // per event per node.
     private readonly loggedUnreferencedEvents: Set<string> = new Set();
     // Queue for unreferenced events that should be logged the next time GC runs.
-    private readonly pendingEventsQueue: IUnreferencedEvent[] = [];
+    private pendingEventsQueue: IUnreferencedEvent[] = [];
 
     // The number of times GC has successfully completed on this instance of GarbageCollector.
     private completedRuns = 0;
@@ -380,7 +381,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly isSummarizerClient: boolean;
 
     /** For a given node path, returns the node's package path. */
-    private readonly getNodePackagePath: (nodePath: string) => readonly string[] | undefined;
+    private readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
     /** Returns the timestamp of the last summary generated for this container. */
     private readonly getLastSummaryTimestampMs: () => number | undefined;
 
@@ -678,7 +679,6 @@ export class GarbageCollector implements IGarbageCollector {
         },
     ): Promise<IGCStats> {
         const {
-            runSweep = this.shouldRunSweep,
             fullGC = this.gcOptions.runFullGC === true || this.summaryStateNeedsReset,
         } = options;
 
@@ -687,42 +687,52 @@ export class GarbageCollector implements IGarbageCollector {
             : this.mc.logger;
 
         return PerformanceEvent.timedExecAsync(logger, { eventName: "GarbageCollection" }, async (event) => {
-            await this.initializeBaseStateP;
-
-            // Let the runtime update its pending state before GC runs.
-            await this.runtime.updateStateBeforeGC();
+            await this.runPreGCSteps();
 
             // Get the runtime's GC data and run GC on the reference graph in it.
             const gcData = await this.runtime.getGCData(fullGC);
             const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
-            const gcStats = this.generateStatsAndLogEvents(gcResult, logger);
 
-            // Update the state since the last GC run. There can be nodes that were referenced between the last and
-            // the current run. We need to identify than and update their unreferenced state if needed.
-            this.updateStateSinceLastRun(gcData, logger);
-
-            // Update the current state of the system based on the GC run.
-            const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
-            this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
-
-            this.runtime.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
-
-            if (runSweep) {
-                // Placeholder for running sweep logic.
-            }
-
-            // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
-            // involving access to deleted data.
-            if (this.testMode) {
-                this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
-            }
-
+            const gcStats = await this.runPostGCSteps(gcData, gcResult, logger);
             event.end({ ...gcStats });
-
             this.completedRuns++;
-
             return gcStats;
         }, { end: true, cancel: "error" });
+    }
+
+    private async runPreGCSteps() {
+        // Ensure that base state has been initialized.
+        await this.initializeBaseStateP;
+        // Let the runtime update its pending state before GC runs.
+        await this.runtime.updateStateBeforeGC();
+    }
+
+    private async runPostGCSteps(gcData: IGarbageCollectionData, gcResult: IGCResult, logger: ITelemetryLogger) {
+        // Generate statistics from the current run. This is done before updating the current state because it
+        // generates some of its data based on previous state of the system.
+        const gcStats = this.generateStats(gcResult);
+
+        // Update the state since the last GC run. There can be nodes that were referenced between the last and
+        // the current run. We need to identify than and update their unreferenced state if needed.
+        this.updateStateSinceLastRun(gcData, logger);
+
+        // Update the current state and update the runtime of all routes or ids that used as per the GC run.
+        const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
+        this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
+        this.runtime.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
+
+        // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
+        // involving access to deleted data.
+        if (this.testMode) {
+            this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
+        }
+
+        // Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
+        // updates its state so that we don't send false positives based on intermediate state. For example, we may get
+        // reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
+        await this.logPendingEvents(logger);
+
+        return gcStats;
     }
 
     /**
@@ -863,13 +873,18 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        this.logIfInactive(
-            reason,
-            nodePath,
-            timestampMs,
-            packagePath,
-            requestHeaders,
-        );
+        const unreferencedState = this.unreferencedNodesState.get(nodePath);
+        if (unreferencedState?.inactive) {
+            this.inactiveNodeUsed(
+                reason,
+                nodePath,
+                unreferencedState,
+                undefined /* fromNodeId */,
+                packagePath,
+                timestampMs,
+                requestHeaders,
+            );
+        }
     }
 
     /**
@@ -888,11 +903,10 @@ export class GarbageCollector implements IGarbageCollector {
         outboundRoutes.push(toNodePath);
         this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
-        // If the node that got referenced is inactive, log an event as that may indicate use-after-delete.
-        this.logIfInactive(
-            "Revived",
-            toNodePath,
-        );
+        const unreferencedState = this.unreferencedNodesState.get(toNodePath);
+        if (unreferencedState?.inactive) {
+            this.inactiveNodeUsed("Revived", toNodePath, unreferencedState, fromNodePath);
+        }
     }
 
     public dispose(): void {
@@ -1009,10 +1023,10 @@ export class GarbageCollector implements IGarbageCollector {
          *    references added new outbound references before getting deleted, we need to detect them.
          * 2. We need new outbound references since last run because some of them may have been deleted later. If those
          *    references added new outbound references before getting deleted, we need to detect them.
-         * 3. We need data from the current run because currently we may not detect when DDSs are referenced:
-         *    - We don't require DDSs handles to be stored in a referenced DDS. For this, we need GC at DDS level
+         * 3. We need data from the current run because currently we may not detect when DDSes are referenced:
+         *    - We don't require DDSes handles to be stored in a referenced DDS. For this, we need GC at DDS level
          *      which is tracked by https://github.com/microsoft/FluidFramework/issues/8470.
-         *    - A new data store may have "root" DDSs already created and we don't detect them today.
+         *    - A new data store may have "root" DDSes already created and we don't detect them today.
          */
         const gcDataSuperSet = concatGarbageCollectionData(this.previousGCDataFromLastRun, currentGCData);
         this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
@@ -1093,25 +1107,11 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Generates the stats of a garbage collection run from the given results of the run. Also, logs any pending events
-     * in the pendingEventsQueue. This should be called before updating the current state because it generates stats
-     * based on previous state of the system.
+     * Generates the stats of a garbage collection run from the given results of the run.
      * @param gcResult - The result of a GC run.
      * @returns the GC stats of the GC run.
      */
-    private generateStatsAndLogEvents(gcResult: IGCResult, logger: ITelemetryLogger): IGCStats {
-        // Log pending events for unreferenced nodes after GC has run. We should have the package data available for
-        // them now since the GC run should have loaded these nodes.
-        let event = this.pendingEventsQueue.shift();
-        while (event !== undefined) {
-            const pkg = this.getNodePackagePath(event.id);
-            logger.sendErrorEvent({
-                ...event,
-                pkg: pkg ? { value: `/${pkg.join("/")}`, tag: TelemetryDataTag.CodeArtifact } : undefined,
-            });
-            event = this.pendingEventsQueue.shift();
-        }
-
+    private generateStats(gcResult: IGCResult): IGCStats {
         const gcStats: IGCStats = {
             nodeCount: 0,
             dataStoreCount: 0,
@@ -1169,18 +1169,26 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Logs an event if a node is inactive and is used.
+     * Called when a node is used. If the node is inactive, queue up an event that will be logged next time GC runs.
      */
-    private logIfInactive(
-        eventType: "Changed" | "Loaded" | "Revived",
+    private inactiveNodeUsed(
+        usageType: "Changed" | "Loaded" | "Revived",
         nodeId: string,
-        currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs(),
+        unreferencedState: UnreferencedStateTracker,
+        fromNodeId?: string,
         packagePath?: readonly string[],
+        currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs(),
         requestHeaders?: IRequestHeader,
     ) {
         // If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
         // logging as nothing interesting would have happened worth logging.
         if (currentReferenceTimestampMs === undefined) {
+            return;
+        }
+
+        // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
+        // summarizer clients if they are based off of user actions (such as scrolling to content for these objects).
+        if (!this.isSummarizerClient && usageType !== "Loaded") {
             return;
         }
 
@@ -1191,43 +1199,68 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
-        // summarizer clients if they are based off of user actions (such as scrolling to content for these objects).
-        if (!this.isSummarizerClient && eventType !== "Loaded") {
+        // A particular event is logged for a given node only once so that it is not too noisy.
+        const uniqueEventId = `${nodeId}-${usageType}`;
+        if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
             return;
         }
+        this.loggedUnreferencedEvents.add(uniqueEventId);
 
-        const eventName = `inactiveObject_${eventType}`;
-        // We log a particular event for a given node only once so that it is not too noisy.
-        const uniqueEventId = `${nodeId}-${eventName}`;
-        const nodeState = this.unreferencedNodesState.get(nodeId);
-        if (nodeState?.inactive && !this.loggedUnreferencedEvents.has(uniqueEventId)) {
-            this.loggedUnreferencedEvents.add(uniqueEventId);
-            // Save all the properties at this point in time so that if we log this later, these values are preserved.
-            const event: IUnreferencedEvent = {
-                eventName,
-                id: nodeId,
-                type: nodeType,
-                age: currentReferenceTimestampMs - nodeState.unreferencedTimestampMs,
-                timeout: this.inactiveTimeoutMs,
-                completedGCRuns: this.completedRuns,
-                lastSummaryTime: this.getLastSummaryTimestampMs(),
-                externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
-                viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
-            };
+        const event: IUnreferencedEvent = {
+            usageType,
+            id: nodeId,
+            type: nodeType,
+            age: currentReferenceTimestampMs - unreferencedState.unreferencedTimestampMs,
+            timeout: this.inactiveTimeoutMs,
+            completedGCRuns: this.completedRuns,
+            lastSummaryTime: this.getLastSummaryTimestampMs(),
+            externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
+            viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
+            fromId: fromNodeId,
+        };
 
-            // If the package data for the node exists, log immediately. Otherwise, queue it and it will be logged the
-            // next time GC runs as the package data should be available then.
-            const pkg = packagePath ?? this.getNodePackagePath(nodeId);
-            if (pkg !== undefined) {
-                this.mc.logger.sendErrorEvent({
-                    ...event,
-                    pkg: { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact },
-                });
-            } else {
-                this.pendingEventsQueue.push(event);
-            }
+        // For summarizer client, queue the event so it is logged the next time GC runs if the event is still valid.
+        // For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
+        // but it's a good signal nonetheless and we can consume it with a grain of salt.
+        if (this.isSummarizerClient) {
+            this.pendingEventsQueue.push(event);
+        } else {
+            this.mc.logger.sendErrorEvent({
+                ...event,
+                eventName: `inactiveObject-${usageType}`,
+                pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+            });
         }
+    }
+
+    /**
+     * Logs pending unreferenced events if they are still valid.
+     */
+    private async logPendingEvents(logger: ITelemetryLogger) {
+        for (const event of this.pendingEventsQueue) {
+            const unreferencedState = this.unreferencedNodesState.get(event.id);
+            // Only log revived event if the node is not inactive anymore. If the node is still inactive, the
+            // reference was from another unreferenced node and we don't care about logging this scenario.
+            if (event.usageType === "Revived" && unreferencedState?.inactive) {
+                continue;
+            }
+
+            // Only log loaded and changed event if the node is still inactive. If the node is not inactive, it was
+            // revived and a revived event will be logged for it.
+            if (event.usageType !== "Revived" && !unreferencedState?.inactive) {
+                continue;
+            }
+
+            const pkg = await this.getNodePackagePath(event.id);
+            const fromPkg = event.fromId ? await this.getNodePackagePath(event.fromId) : undefined;
+            logger.sendErrorEvent({
+                ...event,
+                eventName: `inactiveObject_${event.usageType}`,
+                pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+                fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+            });
+        }
+        this.pendingEventsQueue = [];
     }
 }
 

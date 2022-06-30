@@ -305,7 +305,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         /**
-         * Currently, DDSs are always considered referenced and are not garbage collected. Update the summarizer node's
+         * Currently, DDSes are always considered referenced and are not garbage collected. Update the summarizer node's
          * used routes to contain a route to this channel context.
          * Once we have GC at DDS level, this will be updated to use the passed usedRoutes. See -
          * https://github.com/microsoft/FluidFramework/issues/4611
