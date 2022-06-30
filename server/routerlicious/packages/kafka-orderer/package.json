@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-kafka-orderer",
-  "version": "0.1037.0",
+  "version": "0.1037.1000",
   "description": "Fluid ordering services",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -27,8 +27,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/server-services-core": "^0.1037.0"
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
+    "@fluidframework/server-services-core": "^0.1037.1000-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",

@@ -1228,7 +1228,7 @@ export class GarbageCollector implements IGarbageCollector {
             this.mc.logger.sendErrorEvent({
                 ...event,
                 eventName: `inactiveObject-${usageType}`,
-                pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
+                pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
             });
         }
     }
@@ -1256,8 +1256,8 @@ export class GarbageCollector implements IGarbageCollector {
             logger.sendErrorEvent({
                 ...event,
                 eventName: `inactiveObject_${event.usageType}`,
-                pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
-                fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
+                pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+                fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
             });
         }
         this.pendingEventsQueue = [];

@@ -25,7 +25,7 @@ import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
-export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | IDriverBasicError;
+export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
 // @public
 export enum DriverErrorType {
@@ -37,6 +37,7 @@ export enum DriverErrorType {
     genericError = "genericError",
     genericNetworkError = "genericNetworkError",
     incorrectServerResponse = "incorrectServerResponse",
+    locationRedirection = "locationRedirection",
     offlineError = "offlineError",
     throttlingError = "throttlingError",
     // (undocumented)
@@ -216,6 +217,14 @@ export interface IGenericNetworkError extends IDriverErrorBase {
     readonly errorType: DriverErrorType.genericNetworkError;
     // (undocumented)
     readonly statusCode?: number;
+}
+
+// @public (undocumented)
+export interface ILocationRedirectionError extends IDriverErrorBase {
+    // (undocumented)
+    readonly errorType: DriverErrorType.locationRedirection;
+    // (undocumented)
+    readonly redirectUrl: IResolvedUrl;
 }
 
 // @public (undocumented)
