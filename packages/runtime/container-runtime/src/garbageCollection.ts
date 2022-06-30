@@ -62,10 +62,10 @@ export const gcBlobPrefix = "__gc";
 
 // Feature gate key to turn GC on / off.
 const runGCKey = "Fluid.GarbageCollection.RunGC";
-// Feature gate key to turn GC test mode on / off.
-const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to turn GC sweep on / off.
 const runSweepKey = "Fluid.GarbageCollection.RunSweep";
+// Feature gate key to turn GC test mode on / off.
+const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
@@ -74,9 +74,14 @@ export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionExpiry";
 // Feature gate key to write the gc blob as a handle if the data is the same.
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
+// Feature gate key to turn GC sweep log off.
+const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 
-const defaultInactiveTimeoutMs = 7 * 24 * 60 * 60 * 1000; // 7 days
-export const defaultSessionExpiryDurationMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+// One day in microseconds.
+export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
+
+const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
+export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -113,20 +118,6 @@ export const GCNodeType = {
 };
 export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 
-/** The event that is logged when unreferenced node is used after a certain time. */
-interface IUnreferencedEvent {
-    usageType: "Changed" | "Loaded" | "Revived";
-    id: string;
-    type: GCNodeType;
-    age: number;
-    timeout: number;
-    completedGCRuns: number;
-    fromId?: string;
-    lastSummaryTime?: number;
-    externalRequest?: boolean;
-    viaHandle?: boolean;
-}
-
 /** Defines the APIs for the runtime object to be passed to the garbage collector. */
 export interface IGarbageCollectionRuntime {
     /** Before GC runs, called to notify the runtime to update any pending GC state. */
@@ -156,7 +147,7 @@ export interface IGarbageCollector {
     readonly trackGCState: boolean;
     /** Run garbage collection and update the reference / used state of the system. */
     collectGarbage(
-        options: { logger?: ITelemetryLogger; runGC?: boolean; runSweep?: boolean; fullGC?: boolean; },
+        options: { logger?: ITelemetryLogger; runSweep?: boolean; fullGC?: boolean; },
     ): Promise<IGCStats>;
     /** Summarizes the GC data and returns it as a summary tree. */
     summarize(
@@ -195,58 +186,119 @@ export interface IGarbageCollectorCreateParams {
     readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
+    readonly snapshotCacheExpiryMs?: number;
+}
+
+/** The state of node that is unreferenced. */
+const UnreferencedState = {
+    /** The node is active, i.e., it can become referenced again. */
+    Active: "Active",
+    /** The node is inactive, i.e., it should not become referenced. */
+    Inactive: "Inactive",
+    /** The node is ready to be deleted by the sweep phase. */
+    ReadyForSweep: "ReadyForSweep",
+};
+export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
+
+/** The event that is logged when unreferenced node is used after a certain time. */
+interface IUnreferencedEventProps {
+    usageType: "Changed" | "Loaded" | "Revived";
+    state: "Inactive" | "Deleted";
+    id: string;
+    type: GCNodeType;
+    unrefTime: number;
+    age: number;
+    completedGCRuns: number;
+    fromId?: string;
+    timeout?: number;
+    lastSummaryTime?: number;
+    externalRequest?: boolean;
+    viaHandle?: boolean;
 }
 
 /**
- * Helper class that tracks the state of an unreferenced node such as the time it was unreferenced. It also sets
- * the node's state to inactive if it remains unreferenced for a given amount of time (inactiveTimeoutMs).
+ * Helper class that tracks the state of an unreferenced node such as the time it was unreferenced and if it can
+ * be deleted by the sweep phase.
  */
 class UnreferencedStateTracker {
-    private _inactive: boolean = false;
-    public get inactive(): boolean {
-        return this._inactive;
+    private _state: UnreferencedState = UnreferencedState.Active;
+    public get state(): UnreferencedState {
+        return this._state;
     }
 
-    private timer: Timer | undefined;
+    private inactiveTimer: Timer | undefined;
+    private sweepTimer: ReturnType<typeof setTimeout> | undefined;
 
     constructor(
         public readonly unreferencedTimestampMs: number,
         private readonly inactiveTimeoutMs: number,
+        private readonly sweepTimeoutMs?: number,
         currentReferenceTimestampMs?: number,
     ) {
-        // If there is no current reference timestamp, don't track the node's inactive state. This will happen later
-        // when updateTracking is called with a reference timestamp.
+        // If there is no current reference timestamp, don't track the node's unreferenced state. This will happen
+        // later when updateTracking is called with a reference timestamp.
         if (currentReferenceTimestampMs !== undefined) {
             this.updateTracking(currentReferenceTimestampMs);
         }
     }
 
-    /**
-     * Updates the tracking state based on the provided timestamp.
-     */
+    /* Updates the unreferenced state based on the provided timestamp. */
     public updateTracking(currentReferenceTimestampMs: number) {
         const unreferencedDurationMs = currentReferenceTimestampMs - this.unreferencedTimestampMs;
-        // If the timeout has already expired, the node has become inactive.
-        if (unreferencedDurationMs > this.inactiveTimeoutMs) {
-            this._inactive = true;
-            this.timer?.clear();
+
+        // If the node has been unreferenced for sweep timeout amount of time, update the state to ReadyForSweep.
+        if (this.sweepTimeoutMs !== undefined && unreferencedDurationMs >= this.sweepTimeoutMs) {
+            this._state = UnreferencedState.ReadyForSweep;
+            this.clearTimers();
             return;
         }
 
-        // The node isn't inactive yet. Restart a timer for the duration remaining for it to become inactive.
-        const remainingDurationMs = this.inactiveTimeoutMs - unreferencedDurationMs;
-        if (this.timer === undefined) {
-            this.timer = new Timer(remainingDurationMs, () => { this._inactive = true; });
+        // If the node has been unreferenced for inactive timeoutMs amount of time, update the state to inactive.
+        // Also, start a timer for the sweep timeout.
+        if (unreferencedDurationMs >= this.inactiveTimeoutMs) {
+            this._state = UnreferencedState.Inactive;
+            this.clearTimers();
+
+            if (this.sweepTimeoutMs !== undefined) {
+                setLongTimeout(
+                    this.sweepTimeoutMs - unreferencedDurationMs,
+                    () => { this._state = UnreferencedState.ReadyForSweep; },
+                    (timer) => { this.sweepTimer = timer; },
+                );
+            }
+            return;
         }
-        this.timer.restart(remainingDurationMs);
+
+        // The node is still active. Start the inactive timer for the remaining duration.
+        const remainingDurationMs = this.inactiveTimeoutMs - unreferencedDurationMs;
+        if (this.inactiveTimer === undefined) {
+            const inactiveTimeoutHandler = () => {
+                this._state = UnreferencedState.Inactive;
+                // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
+                if (this.sweepTimeoutMs !== undefined) {
+                    setLongTimeout(
+                        this.sweepTimeoutMs - this.inactiveTimeoutMs,
+                        () => { this._state = UnreferencedState.ReadyForSweep; },
+                        (timer) => { this.sweepTimer = timer; },
+                    );
+                }
+            };
+            this.inactiveTimer = new Timer(remainingDurationMs, () => inactiveTimeoutHandler());
+        }
+        this.inactiveTimer.restart(remainingDurationMs);
     }
 
-    /**
-     * Stop tracking this node. Reset the unreferenced timer, if any, and reset inactive state.
-     */
+    private clearTimers() {
+        this.inactiveTimer?.clear();
+        if (this.sweepTimer !== undefined) {
+            clearTimeout(this.sweepTimer);
+        }
+    }
+
+    /** Stop tracking this node. Reset the unreferenced timers and state, if any. */
     public stopTracking() {
-        this.timer?.clear();
-        this._inactive = false;
+        this.clearTimers();
+        this._state = UnreferencedState.Active;
     }
 }
 
@@ -271,11 +323,6 @@ export class GarbageCollector implements IGarbageCollector {
     public static create(createParams: IGarbageCollectorCreateParams): IGarbageCollector {
         return new GarbageCollector(createParams);
     }
-
-    /**
-     * The time in ms to expire a session for a client for gc.
-     */
-    private readonly sessionExpiryTimeoutMs: number | undefined;
 
     /**
      * Tells whether the GC state needs to be reset in the next summary. We need to do this if:
@@ -360,8 +407,6 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly initializeBaseStateP: Promise<void>;
     // The map of data store ids to their GC details in the base summary returned in getDataStoreGCDetails().
     private readonly baseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
-    // The time after which an unreferenced node is inactive.
-    private readonly inactiveTimeoutMs: number;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
     // The timeout responsible for closing the container when the session has expired
@@ -371,7 +416,7 @@ export class GarbageCollector implements IGarbageCollector {
     // per event per node.
     private readonly loggedUnreferencedEvents: Set<string> = new Set();
     // Queue for unreferenced events that should be logged the next time GC runs.
-    private pendingEventsQueue: IUnreferencedEvent[] = [];
+    private pendingEventsQueue: IUnreferencedEventProps[] = [];
 
     // The number of times GC has successfully completed on this instance of GarbageCollector.
     private completedRuns = 0;
@@ -379,6 +424,13 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly runtime: IGarbageCollectionRuntime;
     private readonly gcOptions: IGCRuntimeOptions;
     private readonly isSummarizerClient: boolean;
+
+    /** The time in ms to expire a session for a client for gc. */
+    private readonly sessionExpiryTimeoutMs: number | undefined;
+    /** The time after which an unreferenced node is inactive. */
+    private readonly inactiveTimeoutMs: number;
+    /** The time after which an unreferenced node is ready to be swept. */
+    private readonly sweepTimeoutMs: number | undefined;
 
     /** For a given node path, returns the node's package path. */
     private readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
@@ -435,24 +487,28 @@ export class GarbageCollector implements IGarbageCollector {
             }
         }
 
-        // If session expiry is enabled, we need to close the container when the timeout expires
-        if (this.sessionExpiryTimeoutMs !== undefined
-            && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
-            // If Test Override config is set, override Session Expiry timeout
+        // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
+        if (this.sessionExpiryTimeoutMs !== undefined && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
+            // If Test Override config is set, override Session Expiry timeout.
             const overrideSessionExpiryTimeoutMs =
                 this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
-            if (overrideSessionExpiryTimeoutMs !== undefined) {
-                this.sessionExpiryTimeoutMs = overrideSessionExpiryTimeoutMs;
-            }
+            const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
 
-            const timeoutMs = this.sessionExpiryTimeoutMs;
-            setLongTimeout(timeoutMs,
-                () => {
-                    this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
-                },
-                (timer) => {
-                    this.sessionExpiryTimer = timer;
-                });
+            setLongTimeout(
+                timeoutMs,
+                () => { this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs)); },
+                (timer) => { this.sessionExpiryTimer = timer; },
+            );
+
+            /**
+             * Sweep timeout is the time after which unreferenced content can be swept.
+             * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer. The buffer is
+             * added to account for any clock skew. We use server timestamps throughout so the skew should be minimal
+             * but make it one day to be safe.
+             */
+            if (createParams.snapshotCacheExpiryMs !== undefined) {
+                this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + createParams.snapshotCacheExpiryMs + oneDayMs;
+            }
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -472,21 +528,21 @@ export class GarbageCollector implements IGarbageCollector {
             && !this.gcOptions.disableGC
         );
 
-        this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
-
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
          * 1. Overall GC or mark phase must be enabled (this.shouldRunGC).
-         * 2. Session expiry and sweep should be enabled for this container. Without session expiry we cannot safely
-         *    delete unreferenced objects. This condition (#2) can be overridden via runSweepKey feature flag.
+         * 2. Sweep timeout should be available. Without this, we wouldn't know when an object should be deleted.
+         * 3. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
+         *    feature flag.
          */
-        this.shouldRunSweep = this.shouldRunGC && (
-            this.mc.config.getBoolean(runSweepKey) ?? (this.sessionExpiryTimeoutMs !== undefined && this.sweepEnabled)
-        );
+        this.shouldRunSweep = this.shouldRunGC
+            && this.sweepTimeoutMs !== undefined
+            && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
+
+        this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
         // Override inactive timeout if test config or gc options to override it is set.
-        this.inactiveTimeoutMs =
-            this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
+        this.inactiveTimeoutMs = this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
             this.gcOptions.inactiveTimeoutMs ??
             defaultInactiveTimeoutMs;
 
@@ -590,6 +646,7 @@ export class GarbageCollector implements IGarbageCollector {
                         new UnreferencedStateTracker(
                             nodeData.unreferencedTimestampMs,
                             this.inactiveTimeoutMs,
+                            this.sweepTimeoutMs,
                             currentReferenceTimestampMs,
                         ),
                     );
@@ -730,7 +787,7 @@ export class GarbageCollector implements IGarbageCollector {
         // Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
         // updates its state so that we don't send false positives based on intermediate state. For example, we may get
         // reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
-        await this.logPendingEvents(logger);
+        await this.logUnreferencedEvents(logger, currentReferenceTimestampMs);
 
         return gcStats;
     }
@@ -873,12 +930,12 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const unreferencedState = this.unreferencedNodesState.get(nodePath);
-        if (unreferencedState?.inactive) {
+        const nodeStateTracker = this.unreferencedNodesState.get(nodePath);
+        if (nodeStateTracker && nodeStateTracker.state !== UnreferencedState.Active) {
             this.inactiveNodeUsed(
                 reason,
                 nodePath,
-                unreferencedState,
+                nodeStateTracker,
                 undefined /* fromNodeId */,
                 packagePath,
                 timestampMs,
@@ -903,9 +960,9 @@ export class GarbageCollector implements IGarbageCollector {
         outboundRoutes.push(toNodePath);
         this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
-        const unreferencedState = this.unreferencedNodesState.get(toNodePath);
-        if (unreferencedState?.inactive) {
-            this.inactiveNodeUsed("Revived", toNodePath, unreferencedState, fromNodePath);
+        const nodeStateTracker = this.unreferencedNodesState.get(toNodePath);
+        if (nodeStateTracker && nodeStateTracker.state !== UnreferencedState.Active) {
+            this.inactiveNodeUsed("Revived", toNodePath, nodeStateTracker, fromNodePath);
         }
     }
 
@@ -966,6 +1023,7 @@ export class GarbageCollector implements IGarbageCollector {
                     new UnreferencedStateTracker(
                         currentReferenceTimestampMs,
                         this.inactiveTimeoutMs,
+                        this.sweepTimeoutMs,
                         currentReferenceTimestampMs,
                     ),
                 );
@@ -1169,12 +1227,12 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * Called when a node is used. If the node is inactive, queue up an event that will be logged next time GC runs.
+     * Called when an inactive node is used after. Queue up an event that will be logged next time GC runs.
      */
     private inactiveNodeUsed(
         usageType: "Changed" | "Loaded" | "Revived",
         nodeId: string,
-        unreferencedState: UnreferencedStateTracker,
+        nodeStateTracker: UnreferencedStateTracker,
         fromNodeId?: string,
         packagePath?: readonly string[],
         currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs(),
@@ -1199,19 +1257,22 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
+        const state = nodeStateTracker.state === UnreferencedState.Inactive ? "Inactive" : "Deleted";
         // A particular event is logged for a given node only once so that it is not too noisy.
-        const uniqueEventId = `${nodeId}-${usageType}`;
+        const uniqueEventId = `${state}-${nodeId}-${usageType}`;
         if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
             return;
         }
         this.loggedUnreferencedEvents.add(uniqueEventId);
 
-        const event: IUnreferencedEvent = {
-            usageType,
+        const propsToLog = {
             id: nodeId,
             type: nodeType,
-            age: currentReferenceTimestampMs - unreferencedState.unreferencedTimestampMs,
-            timeout: this.inactiveTimeoutMs,
+            unrefTime: nodeStateTracker.unreferencedTimestampMs,
+            age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+            timeout: nodeStateTracker.state === UnreferencedState.Inactive
+                ? this.inactiveTimeoutMs
+                : this.sweepTimeoutMs,
             completedGCRuns: this.completedRuns,
             lastSummaryTime: this.getLastSummaryTimestampMs(),
             externalRequest: requestHeaders?.[RuntimeHeaders.externalRequest],
@@ -1223,44 +1284,69 @@ export class GarbageCollector implements IGarbageCollector {
         // For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
         // but it's a good signal nonetheless and we can consume it with a grain of salt.
         if (this.isSummarizerClient) {
-            this.pendingEventsQueue.push(event);
+            this.pendingEventsQueue.push({ ...propsToLog, usageType, state });
         } else {
             this.mc.logger.sendErrorEvent({
-                ...event,
-                eventName: `inactiveObject-${usageType}`,
+                ...propsToLog,
+                eventName: `${state}Object_${usageType}`,
                 pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
             });
         }
     }
 
-    /**
-     * Logs pending unreferenced events if they are still valid.
-     */
-    private async logPendingEvents(logger: ITelemetryLogger) {
-        for (const event of this.pendingEventsQueue) {
-            const unreferencedState = this.unreferencedNodesState.get(event.id);
-            // Only log revived event if the node is not inactive anymore. If the node is still inactive, the
-            // reference was from another unreferenced node and we don't care about logging this scenario.
-            if (event.usageType === "Revived" && unreferencedState?.inactive) {
-                continue;
+    private async logUnreferencedEvents(logger: ITelemetryLogger, currentReferenceTimestampMs?: number) {
+        for (const eventProps of this.pendingEventsQueue) {
+            const { usageType, state, ...propsToLog } = eventProps;
+            /**
+             * Revived event is logged only if the node is active. If the node is not active, the reference to it was
+             * from another unreferenced node and this scenario is not interesting to log.
+             * Loaded and Changed events are logged only if the node is not active. If the node is active, it was
+             * revived and a Revived event will be logged for it.
+             */
+            const nodeStateTracker = this.unreferencedNodesState.get(eventProps.id);
+            const active = nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
+            if ((usageType === "Revived") === active) {
+                const pkg = await this.getNodePackagePath(eventProps.id);
+                const fromPkg = eventProps.fromId ? await this.getNodePackagePath(eventProps.fromId) : undefined;
+                logger.sendErrorEvent({
+                    ...propsToLog,
+                    eventName: `${state}Object_${usageType}`,
+                    pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
+                    fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
+                });
             }
-
-            // Only log loaded and changed event if the node is still inactive. If the node is not inactive, it was
-            // revived and a revived event will be logged for it.
-            if (event.usageType !== "Revived" && !unreferencedState?.inactive) {
-                continue;
-            }
-
-            const pkg = await this.getNodePackagePath(event.id);
-            const fromPkg = event.fromId ? await this.getNodePackagePath(event.fromId) : undefined;
-            logger.sendErrorEvent({
-                ...event,
-                eventName: `inactiveObject_${event.usageType}`,
-                pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
-                fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
-            });
         }
         this.pendingEventsQueue = [];
+
+        if (this.mc.config.getBoolean(disableSweepLogKey) === true || currentReferenceTimestampMs === undefined) {
+            return;
+        }
+
+        this.unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
+            if (nodeStateTracker.state !== UnreferencedState.ReadyForSweep) {
+                return;
+            }
+
+            const nodeType = this.runtime.getNodeType(nodeId);
+            if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
+                return;
+            }
+
+            const uniqueEventId = `Deleted-${nodeId}`;
+            if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
+                return;
+            }
+            this.loggedUnreferencedEvents.add(uniqueEventId);
+            logger.sendErrorEvent({
+                eventName: "GCObjectDeleted",
+                id: nodeId,
+                type: nodeType,
+                age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+                timeout: this.sweepTimeoutMs,
+                completedGCRuns: this.completedRuns,
+                lastSummaryTime: this.getLastSummaryTimestampMs(),
+            });
+        });
     }
 }
 
