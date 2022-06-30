@@ -13,11 +13,11 @@ const metricsEmitter = require('./metrics_emitter');
  */
 class MetricsRetryTask extends RetryTask {
   /**
-   * @see {@link RetryTask#constructor}
-   * @param {object} config @see {@link RetryTask#constructor}
-   * @param {taskFunction} taskFn @see {@link RetryTask#constructor}
-   * @param {string} taskName @see {@link RetryTask#constructor}
-   * @param {string} tableName The table name to use in the metrics.
+   * See {@link RetryTask.constructor}
+   * @param {object} config - See {@link RetryTask.constructor}
+   * @param {taskFunction} taskFn - See {@link RetryTask.constructor}
+   * @param {string} taskName - See {@link RetryTask.constructor}
+   * @param {string} tableName - The table name to use in the metrics.
    */
   constructor(config, taskFn, taskName, tableName) {
     config.intervalFn = retryCount => (

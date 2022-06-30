@@ -203,7 +203,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
      * by verifying that their unreferenced timestamps are updated correctly.
      *
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
-     * The nodes are data stores / DDSs represented by alphabets A, B, C and so on.
+     * The nodes are data stores / DDSes represented by alphabets A, B, C and so on.
      */
     describe("References between summaries", () => {
         /*
@@ -608,7 +608,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         });
 
         /*
-         * Validates that DDSs are referenced even though we don't detect their referenced between summaries. Once we
+         * Validates that DDSes are referenced even though we don't detect their referenced between summaries. Once we
          * do GC at DDS level, this test will fail - https://github.com/microsoft/FluidFramework/issues/8470.
          * 1. Summary 1 at t1. V = [A*]. E = [].
          * 2. DDS B is created. No reference is added to it.
