@@ -10,4 +10,3 @@ export {
 } from "./cursor";
 export * from "./forest";
 export { IEditableForest } from "./editableForest";
-export * from "./checkout";

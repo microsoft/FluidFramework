@@ -3,18 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IForestSubscription } from "./forest";
-import { IEditableForest } from "./editableForest";
+import { IForestSubscription, IEditableForest } from "../forest";
 
-/**
- * Defines a collection of kinds of changes, and how to handle them.
- */
-export interface ChangeFamily<TChangeSet> {
-    readonly noOp: TChangeSet;
-}
-
-export type ChangeSetFrom<TChangeFamily extends ChangeFamily<any>> =
-    TChangeFamily extends ChangeFamily<infer T> ? T : never;
+// TODO: this whole module is very unfinished.
 
 export interface ICheckout extends IForestSubscription {
     /**
