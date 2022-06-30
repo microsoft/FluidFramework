@@ -28,7 +28,7 @@ The current feature focus is on:
     - New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
     - New services (ex: to support permissions, server side indexing etc.)
 
-## Whats missing from existing DDSs?
+## Whats missing from existing DDSes?
 
 `directory` and `map` can not provide merge resolution that guarantees well-formedness of trees while supporting the desired editing APIs (like subsequence move),
 and are missing (and cannot be practically extended to have) efficient ways to handle large data or schema.
@@ -51,7 +51,7 @@ For example, moving part of a sequence from one sequence DDS to another cannot b
 Cross DDS moves also currently can't be as efficient as moves withing a single DDS, and there isn't a good way to do cross DDS history or branching without major framework changes.
 There are also some significant per DDS performance and storage costs that make this approach much more costly than using a single DDS.
 
-One way to think about this new tree DDS is to try and mix some of the Fluid-Framework features (like the ability to checkout a subset of the data) with features from DDSs (ex: lower overhead per item, efficient moves of sub-sequences, transactions).
+One way to think about this new tree DDS is to try and mix some of the Fluid-Framework features (like the ability to checkout a subset of the data) with features from DDSes (ex: lower overhead per item, efficient moves of sub-sequences, transactions).
 If this effort is successful, it might reveal some improved abstractions for modularizing hierarchical collaborative data-structures (perhaps "field kinds"),
 which could make their way back into the framework, enabling some features specific to this tree (ex: history, branching, transactional moves, reduced overhead) to be framework features instead.
 
