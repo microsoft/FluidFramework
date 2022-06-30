@@ -5,7 +5,7 @@
 
 import EventEmitter from "events";
 
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import type { IContainerKillBit, IInventoryList } from "./interfaces";
@@ -32,7 +32,7 @@ export class AppDebug extends EventEmitter {
         private readonly containerKillBit: IContainerKillBit,
     ) {
         super();
-        this.containerKillBit.on("codeDetailsProposed", this.onStateChanged);
+        this.containerKillBit.on("codeDetailsAccepted", this.onStateChanged);
         this.containerKillBit.on("migrated", this.onStateChanged);
     }
 
@@ -54,6 +54,7 @@ const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
     }
 };
 
+// Maybe include an unknown state for pre-initialization?
 export enum SessionState {
     collaborating,
     ending,
@@ -86,7 +87,7 @@ const extractStringData = async (inventoryList: IInventoryList) => {
 
 export class App extends EventEmitter {
     private _sessionState = SessionState.collaborating;
-    public get sessionState(): SessionState {
+    public getSessionState(): SessionState {
         return this._sessionState;
     }
 
@@ -108,6 +109,7 @@ export class App extends EventEmitter {
 
     public constructor(private readonly container: IContainer) {
         super();
+        // Close container after migration?
     }
 
     public readonly initialize = async (initialData?: string) => {
@@ -117,7 +119,8 @@ export class App extends EventEmitter {
 
         this._inventoryList = await getInventoryListFromContainer(this.container);
         this._containerKillBit = await getContainerKillBitFromContainer(this.container);
-        this.containerKillBit.on("codeDetailsProposed", this.onStateChanged);
+        this._sessionState = getStateFromKillBit(this._containerKillBit);
+        this.containerKillBit.on("codeDetailsAccepted", this.onStateChanged);
         this.containerKillBit.on("migrated", this.onStateChanged);
 
         if (initialData !== undefined) {
@@ -136,11 +139,19 @@ export class App extends EventEmitter {
         return extractStringData(this.inventoryList);
     };
 
-    public readonly proposeEndSession = () => {
-        this.containerKillBit.proposeCodeDetails().catch(console.error);
+    public get acceptedCodeDetails() {
+        return this.containerKillBit.acceptedCodeDetails;
+    }
+
+    public readonly proposeCodeDetails = (codeDetails: IFluidCodeDetails) => {
+        this.containerKillBit.proposeCodeDetails(codeDetails).catch(console.error);
     };
 
-    public readonly endSession = () => {
-        this.containerKillBit.setNewContainerId().catch(console.error);
+    public get newContainerId() {
+        return this.containerKillBit.newContainerId;
+    }
+
+    public readonly endSession = (newContainerId: string) => {
+        this.containerKillBit.setNewContainerId(newContainerId).catch(console.error);
     };
 }

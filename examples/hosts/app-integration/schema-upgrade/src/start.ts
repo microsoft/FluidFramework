@@ -4,9 +4,9 @@
  */
 
 import {
+    IContainer,
     IFluidCodeDetails,
     IFluidModuleWithDetails,
-    IHostLoader,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
@@ -31,8 +31,8 @@ function createLoader() {
 
     const load = async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
         const containerRuntimeFactory = source.package === "one"
-            ? new InventoryListContainerRuntimeFactory2()
-            : new InventoryListContainerRuntimeFactory1();
+            ? new InventoryListContainerRuntimeFactory1()
+            : new InventoryListContainerRuntimeFactory2();
 
         return {
             module: { fluidExport: containerRuntimeFactory },
@@ -48,33 +48,19 @@ function createLoader() {
     });
 }
 
-async function start(): Promise<void> {
-    const loader = createLoader();
-    let fetchedData: string | undefined;
-    let app: App;
+const updateTabForContainer = (container: IContainer) => {
+    const resolved = container.resolvedUrl;
+    ensureFluidResolvedUrl(resolved);
+    const containerId = resolved.id;
 
-    // In interacting with the service, we need to be explicit about whether we're creating a new container vs.
-    // loading an existing one.  If loading, we also need to provide the unique ID for the container we are
-    // loading from.
+    // Update the URL with the actual container ID
+    location.hash = containerId;
 
-    // In this app, we'll choose to create a new container when navigating directly to http://localhost:8080.
-    // A newly created container will generate its own ID, which we'll place in the URL hash.
-    // If navigating to http://localhost:8080#containerId, we'll load from the ID in the hash.
+    // Put the container ID in the tab title
+    document.title = containerId;
+};
 
-    // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
-    if (location.hash.length === 0) {
-        fetchedData = await externalDataSource.fetchData();
-        app = await createNewFlow(loader, fetchedData);
-    } else {
-        app = await loadFlow(loader);
-    }
-
-    const migrateContainer = async () => {
-        // await app.saveAndEndSession();
-        const exportedData = await app.exportStringData();
-        await createNewFlow(loader, exportedData);
-    };
-
+const renderApp = (app: App) => {
     // The AppView is what a normal user would see in a normal scenario...
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.render(
@@ -87,58 +73,102 @@ async function start(): Promise<void> {
     ReactDOM.render(
         React.createElement(DebugView, {
             app,
-            importedStringData: fetchedData,
-            migrateContainer: () => { migrateContainer().catch(console.error); },
             externalDataSource,
         }),
         debugDiv,
     );
-}
+};
 
-async function createNewFlow(loader: IHostLoader, initialData: string): Promise<App> {
-    // TODO probably take an argument for which container code to use.
-    const container = await loader.createDetachedContainer({ package: "two" });
-    const app = new App(container);
-    await app.initialize(initialData);
+async function start(): Promise<void> {
+    const loader = createLoader();
+    let createNew: boolean = false;
+    let fetchedData: string | undefined;
+    let initialContainer: IContainer;
 
-    app.on("sessionStateChanged", (sessionState: SessionState) => {
-        if (sessionState === SessionState.ended) {
-            container.close();
+    // In interacting with the service, we need to be explicit about whether we're creating a new container vs.
+    // loading an existing one.  If loading, we also need to provide the unique ID for the container we are
+    // loading from.
+
+    // In this app, we'll choose to create a new container when navigating directly to http://localhost:8080.
+    // A newly created container will generate its own ID, which we'll place in the URL hash.
+    // If navigating to http://localhost:8080#containerId, we'll load from the ID in the hash.
+
+    // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
+    if (location.hash.length === 0) {
+        createNew = true;
+        fetchedData = await externalDataSource.fetchData();
+        initialContainer = await loader.createDetachedContainer({ package: "one" });
+    } else {
+        const containerId = location.hash.substring(1);
+        initialContainer = await loader.resolve({ url: containerId });
+    }
+
+    const getMigratedContainer = async (oldApp: App) => {
+        if (oldApp.getSessionState() !== SessionState.ended) {
+            throw new Error("Tried to get migrated container but migration hasn't happened yet");
         }
-    });
-
-    await container.attach(createTinyliciousCreateNewRequest());
-
-    // Discover the container ID after attaching
-    const resolved = container.resolvedUrl;
-    ensureFluidResolvedUrl(resolved);
-    const containerId = resolved.id;
-
-    // Update the URL with the actual container ID
-    location.hash = containerId;
-
-    // Put the container ID in the tab title
-    document.title = containerId;
-
-    return app;
-}
-
-async function loadFlow(loader: IHostLoader): Promise<App> {
-    const containerId = location.hash.substring(1);
-    const container = await loader.resolve({ url: containerId });
-    const app = new App(container);
-    await app.initialize();
-
-    app.on("sessionStateChanged", (sessionState: SessionState) => {
-        if (sessionState === SessionState.ended) {
-            container.close();
+        const newContainerId = oldApp.newContainerId;
+        if (newContainerId === undefined) {
+            throw new Error("Session ended without a new container being created");
         }
-    });
+        return loader.resolve({ url: newContainerId });
+    };
 
-    // Put the container ID in the tab title
-    document.title = containerId;
+    async function ensureMigrated(_app: App) {
+        const extractedData = await _app.exportStringData();
+        const newContainer = await loader.createDetachedContainer(_app.acceptedCodeDetails);
+        const newApp = new App(newContainer);
+        await newApp.initialize(extractedData);
 
-    return app;
+        // Before attaching, let's check to make sure no one else has already done the migration
+        // To avoid creating unnecessary extra containers.
+        if (_app.getSessionState() === SessionState.ended) {
+            return;
+        }
+
+        await newContainer.attach(createTinyliciousCreateNewRequest());
+
+        // Again, it could be the case that someone else ended the session during our attach.
+        if (_app.getSessionState() === SessionState.ended) {
+            return;
+        }
+
+        // Discover the container ID after attaching
+        const resolved = newContainer.resolvedUrl;
+        ensureFluidResolvedUrl(resolved);
+        const containerId = resolved.id;
+        _app.endSession(containerId);
+        // Here we let the newly created container/app fall out of scope intentionally.
+        // If we don't win the race to set the container, it is the wrong container/app to use anyway
+    }
+
+    const setUpAppForContainer = async (_container: IContainer, initialData?: string) => {
+        const _app = new App(_container);
+        await _app.initialize(initialData);
+
+        _app.on("sessionStateChanged", (sessionState: SessionState) => {
+            if (sessionState === SessionState.ended) {
+                getMigratedContainer(_app).then(async (migratedContainer: IContainer) => {
+                    const migratedApp = await setUpAppForContainer(migratedContainer);
+                    renderApp(migratedApp);
+                    updateTabForContainer(migratedContainer);
+                }).catch(console.error);
+            } else if (sessionState === SessionState.ending) {
+                ensureMigrated(_app).catch(console.error);
+            }
+        });
+
+        return _app;
+    };
+
+    const initialApp = await setUpAppForContainer(initialContainer, fetchedData);
+
+    if (createNew) {
+        await initialContainer.attach(createTinyliciousCreateNewRequest());
+    }
+
+    renderApp(initialApp);
+    updateTabForContainer(initialContainer);
 }
 
 start().catch((error) => console.error(error));

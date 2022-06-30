@@ -5,17 +5,20 @@
 
 import { EventEmitter } from "events";
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 export interface IContainerKillBitEvents extends IEvent {
-    (event: "codeDetailsProposed" | "migrated", listener: () => void);
+    (event: "codeDetailsAccepted" | "migrated", listener: () => void);
 }
 
 export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvents> {
     migrated: boolean;
-    setNewContainerId(): Promise<void>;
+    newContainerId: string | undefined;
+    setNewContainerId(id: string): Promise<void>;
     codeDetailsProposed: boolean;
-    proposeCodeDetails(): Promise<void>;
+    acceptedCodeDetails: IFluidCodeDetails;
+    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<void>;
     volunteerForMigration(): Promise<void>;
     haveMigrationTask(): boolean;
 }

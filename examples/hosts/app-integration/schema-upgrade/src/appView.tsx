@@ -3,38 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useRef, useState } from "react";
-import { App, SessionState } from "./app";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 
+import React, { useEffect, useRef, useState } from "react";
+
+import { App, SessionState } from "./app";
 import type { ExternalDataSource } from "./externalData";
 import { InventoryListView } from "./inventoryView";
 
 export interface IDebugViewProps {
     app: App;
-    // Normally there's no need to display the imported string data, this is for demo purposes only.
-    importedStringData: string | undefined;
-    // End the collaboration session and create a new container using exported data.
-    migrateContainer: () => void;
     externalDataSource: ExternalDataSource;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
     const {
         app,
-        importedStringData,
-        migrateContainer,
         externalDataSource,
     } = props;
 
     return (
         <div>
             <SessionStatusView app={ app } />
-            <ImportedDataView data={ importedStringData } />
-            <ControlsView
-                migrateContainer={ migrateContainer }
-                proposeEndSession={ app.proposeEndSession }
-                endSession={ app.endSession }
-            />
+            <ImportedDataView data={ undefined } />
+            <ControlsView proposeCodeDetails={ app.proposeCodeDetails } />
             <ExternalDataSourceView externalDataSource={ externalDataSource }/>
         </div>
     );
@@ -47,11 +39,11 @@ interface ISessionStatusViewProps {
 const SessionStatusView: React.FC<ISessionStatusViewProps> = (props: ISessionStatusViewProps) => {
     const { app } = props;
 
-    const [sessionState, setSessionState] = useState<SessionState>(app.sessionState);
+    const [sessionState, setSessionState] = useState<SessionState>(app.getSessionState());
 
     useEffect(() => {
         const sessionStateChangedHandler = () => {
-            setSessionState(app.sessionState);
+            setSessionState(app.getSessionState());
         };
         app.on("sessionStateChanged", sessionStateChangedHandler);
         sessionStateChangedHandler();
@@ -87,25 +79,19 @@ const ImportedDataView: React.FC<IImportedDataViewProps> = (props: IImportedData
 };
 
 interface IControlsViewProps {
-    proposeEndSession: () => void;
-    endSession: () => void;
-    // End the collaboration session and create a new container using exported data.
-    migrateContainer: () => void;
+    proposeCodeDetails: (codeDetails: IFluidCodeDetails) => void;
 }
 
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
     const {
-        proposeEndSession,
-        endSession,
-        migrateContainer,
+        proposeCodeDetails,
     } = props;
 
     return (
         <div>
-            <button onClick={ migrateContainer }>Migrate to new container</button>
-            <br />
-            <button onClick={ proposeEndSession }>1. Propose ending collaboration session</button>
-            <button onClick={ endSession }>3. Actually end the collaboration session</button>
+            <button onClick={ () => { proposeCodeDetails({ package: "two" }); } }>
+                Propose code upgrade
+            </button>
         </div>
     );
 };
@@ -147,11 +133,11 @@ export interface IAppViewProps {
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     const { app } = props;
 
-    const [disableInput, setDisableInput] = useState<boolean>(app.sessionState !== SessionState.collaborating);
+    const [disableInput, setDisableInput] = useState<boolean>(app.getSessionState() !== SessionState.collaborating);
 
     useEffect(() => {
         const sessionStateChangedHandler = () => {
-            setDisableInput(app.sessionState !== SessionState.collaborating);
+            setDisableInput(app.getSessionState() !== SessionState.collaborating);
         };
         app.on("sessionStateChanged", sessionStateChangedHandler);
         sessionStateChangedHandler();

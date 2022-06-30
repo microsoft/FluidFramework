@@ -6,6 +6,7 @@
 import { TaskManager } from "@fluid-experimental/task-manager";
 import { Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 
 import type { IContainerKillBit } from "./interfaces";
@@ -19,8 +20,9 @@ const newContainerIdKey = "newContainerId";
 
 export class ContainerKillBit extends DataObject implements IContainerKillBit {
     private _quorum: Quorum | undefined;
-    private _crc: ConsensusRegisterCollection<boolean> | undefined;
+    private _crc: ConsensusRegisterCollection<string> | undefined;
     private _taskManager: TaskManager | undefined;
+    private _newContainerId: string | undefined;
 
     private get quorum() {
         if (this._quorum === undefined) {
@@ -44,20 +46,28 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public get migrated() {
-        return this.crc.read(newContainerIdKey) as boolean;
+        return this.crc.read(newContainerIdKey) !== undefined;
     }
 
-    public async setNewContainerId() {
+    public get newContainerId() {
+        return this._newContainerId;
+    }
+
+    public async setNewContainerId(id: string) {
         // Using a consensus-type data structure here, to make it easier to validate
         // that the setNewContainerId was ack'd and we can have confidence other clients will agree.
-        await this.crc.write(newContainerIdKey, true);
+        await this.crc.write(newContainerIdKey, id);
     }
 
     public get codeDetailsProposed() {
-        return this.quorum.get(codeDetailsProposedKey) as boolean;
+        return this.quorum.get(codeDetailsProposedKey) !== undefined;
     }
 
-    public async proposeCodeDetails() {
+    public get acceptedCodeDetails() {
+        return this.quorum.get(codeDetailsProposedKey) as IFluidCodeDetails;
+    }
+
+    public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
         // Early exit/resolve if already marked.
         if (this.codeDetailsProposed) {
             return;
@@ -77,7 +87,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
             // Even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
             // whether our marking or a remote client's marking writes the flag (though maybe we'd do retry
             // logic if a remote client rejects the local client's mark).
-            this.quorum.set(codeDetailsProposedKey, true);
+            this.quorum.set(codeDetailsProposedKey, codeDetails);
         });
     }
 
@@ -96,19 +106,6 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         this.root.set(quorumKey, quorum.handle);
         this.root.set(crcKey, crc.handle);
         this.root.set(taskManagerKey, taskManager.handle);
-        // TODO: Update if/when .set() returns a promise.
-        const initialSetP = new Promise<void>((resolve) => {
-            const watchForInitialSet = (key: string) => {
-                if (key === codeDetailsProposedKey) {
-                    resolve();
-                    quorum.off("accepted", watchForInitialSet);
-                }
-            };
-            quorum.on("accepted", watchForInitialSet);
-        });
-        quorum.set(codeDetailsProposedKey, false);
-        await initialSetP;
-        await crc.write(newContainerIdKey, false);
     }
 
     protected async hasInitialized() {
@@ -120,12 +117,13 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
 
         this.quorum.on("accepted", (key: string) => {
             if (key === codeDetailsProposedKey) {
-                this.emit("codeDetailsProposed");
+                this.emit("codeDetailsAccepted");
             }
         });
 
-        this.crc.on("atomicChanged", (key) => {
+        this.crc.on("atomicChanged", (key: string, value: string) => {
             if (key === newContainerIdKey) {
+                this._newContainerId = value;
                 this.emit("migrated");
             }
         });
