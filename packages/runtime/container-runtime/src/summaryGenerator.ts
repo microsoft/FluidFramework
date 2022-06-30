@@ -393,8 +393,6 @@ export class SummaryGenerator {
 
                 // pre-0.58 error message prefix: summaryNack
                 const error = new LoggingError(`Received summaryNack: ${message}`, { retryAfterSeconds });
-                logger.sendErrorEvent(
-                    { eventName: "SummaryNack", ...summarizeTelemetryProps, retryAfterSeconds }, error);
 
                 assert(getRetryDelaySecondsFromError(error) === retryAfterSeconds, 0x25f /* "retryAfterSeconds" */);
                 // This will only set resultsBuilder.receivedSummaryAckOrNack, as other promises are already set.
