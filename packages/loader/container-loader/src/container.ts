@@ -16,6 +16,7 @@ import {
     IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
+    IAudience,
     IConnectionDetails,
     IContainer,
     IContainerEvents,
@@ -28,7 +29,6 @@ import {
     IContainerLoadMode,
     IFluidCodeDetails,
     isFluidCodeDetails,
-    IAudience,
 } from "@fluidframework/container-definitions";
 import {
     DataCorruptionError,
