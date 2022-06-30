@@ -31,7 +31,6 @@ import {
     IDocumentService,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -41,6 +40,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     NonRetryableError,
+    isClientMessage,
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
@@ -762,7 +762,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // System messages may have no clientId (but some do, like propose, noop, summarize)
         assert(
             message.clientId !== undefined
-            || isSystemMessage(message),
+            || !(isClientMessage(message)),
             0x0ed /* "non-system message have to have clientId" */,
         );
 
