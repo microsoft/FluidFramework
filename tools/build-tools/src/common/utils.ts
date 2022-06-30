@@ -98,6 +98,7 @@ function printExecError(ret: ExecAsyncResult, command: string, errorPrefix: stri
 
 export function resolveNodeModule(basePath: string, lookupPath: string) {
     let currentBasePath = basePath;
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         const tryPath = path.join(currentBasePath, "node_modules", lookupPath);
         if (existsSync(tryPath)) {
@@ -124,6 +125,7 @@ export function readJsonSync(filename: string) {
 
 export async function lookUpDirAsync(dir: string, callback: (currentDir: string) => Promise<boolean>) {
     let curr = path.resolve(dir);
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         if (await callback(curr)) {
             return curr;
@@ -141,6 +143,7 @@ export async function lookUpDirAsync(dir: string, callback: (currentDir: string)
 
 export function lookUpDirSync(dir: string, callback: (currentDir: string) => boolean) {
     let curr = path.resolve(dir);
+    // eslint-disable-next-line no-constant-condition
     while (true) {
         if (callback(curr)) {
             return curr;

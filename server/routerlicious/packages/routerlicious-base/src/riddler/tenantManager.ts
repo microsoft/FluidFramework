@@ -106,7 +106,7 @@ export class TenantManager {
                 "Tenant is disabled or does not exist.",
                 { [BaseTelemetryProperties.tenantId]: tenantId },
             );
-            return Promise.reject(new Error("Tenant is disabled or does not exist."));
+            throw new NetworkError(404, "Tenant is disabled or does not exist.");
         }
 
         const accessInfo = tenant.customData.externalStorageData?.accessInfo;
@@ -162,7 +162,7 @@ export class TenantManager {
         if (encryptedTenantKey1 == null) {
             winston.error("Tenant key1 encryption failed.");
             Lumberjack.error("Tenant key1 encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
-            return Promise.reject(new Error("Tenant key1 encryption failed."));
+            throw new NetworkError(500, "Tenant key1 encryption failed.");
         }
 
         const tenantKey2 = this.generateTenantKey();
@@ -170,7 +170,7 @@ export class TenantManager {
         if (encryptedTenantKey2 == null) {
             winston.error("Tenant key2 encryption failed.");
             Lumberjack.error("Tenant key2 encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
-            return Promise.reject(new Error("Tenant key2 encryption failed."));
+            throw new NetworkError(500, "Tenant key2 encryption failed.");
         }
 
         const id = await collection.insertOne({
@@ -222,8 +222,14 @@ export class TenantManager {
             customData.externalStorageData.accessInfo = this.encryptAccessInfo(accessInfo);
         }
         await collection.update({ _id: tenantId }, { customData }, null);
-
-        return (await this.getTenantDocument(tenantId)).customData;
+        const tenantDocument = await this.getTenantDocument(tenantId, true);
+        if (tenantDocument.disabled) {
+            Lumberjack.info(
+                "Updated custom data of a disabled tenant",
+                { [BaseTelemetryProperties.tenantId]: tenantId },
+            );
+        }
+        return tenantDocument.customData;
     }
 
     /**
@@ -232,12 +238,21 @@ export class TenantManager {
     public async getTenantKeys(tenantId: string, includeDisabledTenant = false): Promise<ITenantKeys> {
         const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
 
+        if (!tenantDocument) {
+            winston.error(`No tenant found when retrieving keys for tenant id ${tenantId}`);
+            Lumberjack.error(
+                `No tenant found when retrieving keys for tenant id ${tenantId}`,
+                { [BaseTelemetryProperties.tenantId]: tenantId },
+            );
+            throw new NetworkError(403, `Tenant, ${tenantId}, does not exist.`);
+        }
+
         const encryptedTenantKey1 = tenantDocument.key;
         const tenantKey1 = this.secretManager.decryptSecret(encryptedTenantKey1);
         if (tenantKey1 == null) {
             winston.error("Tenant key1 decryption failed.");
             Lumberjack.error("Tenant key1 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
-            return Promise.reject(new Error("Tenant key1 decryption failed."));
+            throw new NetworkError(500, "Tenant key1 decryption failed.");
         }
 
         const encryptedTenantKey2 = tenantDocument.secondaryKey;
@@ -254,7 +269,7 @@ export class TenantManager {
         if (tenantKey2 == null) {
             winston.error("Tenant key2 decryption failed.");
             Lumberjack.error("Tenant key2 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
-            return Promise.reject(new Error("Tenant key2 decryption failed."));
+            throw new NetworkError(500, "Tenant key2 decryption failed.");
         }
 
         return {
@@ -268,7 +283,7 @@ export class TenantManager {
      */
     public async refreshTenantKey(tenantId: string, keyName: string): Promise<ITenantKeys> {
         if (keyName !== KeyName.key1 && keyName !== KeyName.key2) {
-            return Promise.reject(new Error("Key name must be either key1 or key2."));
+            throw new NetworkError(400, "Key name must be either key1 or key2.");
         }
 
         const tenantDocument = await this.getTenantDocument(tenantId, false);
@@ -278,7 +293,7 @@ export class TenantManager {
         if (encryptedNewTenantKey == null) {
             winston.error("Tenant key encryption failed.");
             Lumberjack.error("Tenant key encryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
-            return Promise.reject(new Error("Tenant key encryption failed."));
+            throw new NetworkError(500, "Tenant key encryption failed.");
         }
 
         const tenantKeys = await this.getUpdatedTenantKeys(
@@ -289,8 +304,8 @@ export class TenantManager {
             tenantId);
 
         const updateKey = keyName === KeyName.key2
-                            ? { secondaryKey: encryptedNewTenantKey }
-                            : { key: encryptedNewTenantKey };
+            ? { secondaryKey: encryptedNewTenantKey }
+            : { key: encryptedNewTenantKey };
         const db = await this.mongoManager.getDatabase();
         const collection = db.collection<ITenantDocument>(this.collectionName);
         await collection.update({ _id: tenantId }, updateKey, null);
@@ -314,7 +329,7 @@ export class TenantManager {
             if (decryptedTenantKey1 == null) {
                 winston.error("Tenant key1 decryption failed.");
                 Lumberjack.error("Tenant key1 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
-                return Promise.reject(new Error("Tenant key1 decryption failed."));
+                throw new NetworkError(500, "Tenant key1 decryption failed.");
             }
             return {
                 key1: decryptedTenantKey1,
@@ -338,7 +353,7 @@ export class TenantManager {
         if (decryptedTenantKey2 == null) {
             winston.error("Tenant key2 decryption failed.");
             Lumberjack.error("Tenant key2 decryption failed.", { [BaseTelemetryProperties.tenantId]: tenantId });
-            return Promise.reject(new Error("Tenant key2 decryption failed."));
+            throw new NetworkError(500, "Tenant key2 decryption failed.");
         }
         return {
             key1: newTenantKey,
@@ -382,7 +397,7 @@ export class TenantManager {
         const collection = db.collection<ITenantDocument>(this.collectionName);
 
         const found = await collection.findOne({ _id: tenantId });
-        if (found.disabled && !includeDisabledTenant) {
+        if (!found || found.disabled && !includeDisabledTenant) {
             return null;
         }
 
