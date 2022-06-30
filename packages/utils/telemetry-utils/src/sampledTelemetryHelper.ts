@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+import {
+    IDisposable,
+    ITelemetryGenericEvent,
+    ITelemetryLogger,
+    ITelemetryPerformanceEvent,
+} from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 
 interface Measurements {
@@ -42,7 +47,7 @@ interface CountAndMeasurements { count: number; measurements: Measurements; }
      *                                  all the executions in between generated events.
      */
     public constructor(
-        private readonly eventBase: any,
+        private readonly eventBase: ITelemetryGenericEvent,
         private readonly logger: ITelemetryLogger,
         private readonly sampleThreshold: number,
         private readonly includeAggregateMetrics: boolean = false) {

@@ -45,7 +45,7 @@ describe("SampledTelemetryHelper", () => {
 
     it("only writes event after correct number of samples", () => {
         const sampling = 10;
-        const helper = new SampledTelemetryHelper({}, logger, sampling);
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, sampling);
         for (let i = 0; i < sampling - 1; i++) {
             helper.measure(() => {});
         }
@@ -63,46 +63,47 @@ describe("SampledTelemetryHelper", () => {
     });
 
     it("does not include aggregate properties when it shouldn't", () => {
-        const helper = new SampledTelemetryHelper({}, logger, 1, false);
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, false);
         helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
-        ensurePropertiesExist(event, ["duration", "dimension"], true);
+        ensurePropertiesExist(event, ["eventName", "duration", "dimension"], true);
         assert.strictEqual(event.dimension, "");
     });
 
     it("includes aggregate properties when it should", () => {
-        const helper = new SampledTelemetryHelper({}, logger, 1, true);
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, true);
         helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
         ensurePropertiesExist(event,
-            ["duration", "dimension", "totalDuration", "count", "minDuration", "maxDuration"], true);
+            ["eventName", "duration", "dimension", "totalDuration", "count", "minDuration", "maxDuration"], true);
         assert.strictEqual(event.dimension, "");
         assert.strictEqual(event.count, 1);
     });
 
     it("includes properties from base event when no aggregate properties are included", () => {
-        const helper = new SampledTelemetryHelper({ myProp: "myValue" }, logger, 1, false);
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent", myProp: "myValue" }, logger, 1, false);
         helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
-        ensurePropertiesExist(event, ["duration", "dimension", "myProp"], true);
+        ensurePropertiesExist(event, ["eventName", "duration", "dimension", "myProp"], true);
         assert.strictEqual(event.dimension, "");
     });
 
     it("includes properties from base event when aggregate properties are included", () => {
-        const helper = new SampledTelemetryHelper({ myProp: "myValue" }, logger, 1, true);
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent", myProp: "myValue" }, logger, 1, true);
         helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
         ensurePropertiesExist(event,
-            ["duration", "dimension", "totalDuration", "count", "minDuration", "maxDuration", "myProp"], true);
+            ["eventName", "duration", "dimension", "totalDuration", "count", "minDuration", "maxDuration", "myProp"],
+            true);
         assert.strictEqual(event.dimension, "");
     });
 
     it("tracks dimensions separately", () => {
-        const helper = new SampledTelemetryHelper({}, logger, 3);
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 3);
         const dimension1 = "dimension1";
         const dimension2 = "dimension2";
 
@@ -118,7 +119,7 @@ describe("SampledTelemetryHelper", () => {
     });
 
     it("generates telemetry event from buffered data when disposed", () => {
-        const helper = new SampledTelemetryHelper({}, logger, 5);
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 5);
 
         // Logging several dimensions to make sure they are all flushed
         const dimension1 = "dimension1";
@@ -140,7 +141,7 @@ describe("SampledTelemetryHelper", () => {
     });
 
     it("no event is generated on dispose if there's no pending 'buffered' data", () => {
-        const helper = new SampledTelemetryHelper({}, logger, 2);
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 2);
 
         // Nothing should have been logged after the first call
         helper.measure(() => {});
