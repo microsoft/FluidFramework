@@ -15,7 +15,7 @@ import { defaultGCConfig } from "./gcTestConfigs";
 import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
- * Validates this scenario: When two DDSs in the same datastore has one change, gets summarized, and then gc is called
+ * Validates this scenario: When two DDSes in the same datastore has one change, gets summarized, and then gc is called
  * from loading a new container. We do not want to allow duplicate GC routes to be created in this scenario.
  */
 describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
@@ -35,7 +35,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         await waitForContainerConnection(mainContainer);
     });
 
-    it("Back routes added by GC are removed when passed from data stores to DDSs", async () => {
+    it("Back routes added by GC are removed when passed from data stores to DDSes", async () => {
         const dds = SharedMap.create(mainDataStore._runtime);
         mainDataStore._root.set("dds", dds.handle);
 

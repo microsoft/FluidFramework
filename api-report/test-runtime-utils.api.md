@@ -289,8 +289,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    documentId: string;
-    // (undocumented)
     readonly existing: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -362,7 +360,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get channelsRoutingContext(): IFluidHandleContext;
     // (undocumented)
-    clientId: string | undefined;
+    clientId: string;
     // (undocumented)
     close(): Promise<void>;
     // (undocumented)

@@ -16,14 +16,25 @@ There are a few steps you can take to write a good change note and avoid needing
 
 # 2.0.0
 
-## 2.0.0 Upcoming changes
-
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
 - [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
+- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
 - [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
-- [Deprecate ISummaryAuthor and ISummaryCommitter](#Deprecate-ISummaryAuthor-and-ISummaryCommitter)
+- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+- [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+- [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
+
+### Remove `documentId` field from `MockFluidDataStoreContext`
+
+This field was deprecated and has been removed in this release.
+
+### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
+
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -45,6 +56,9 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 
 ### Remove TelemetryDataTag.PackageData
 `TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
+
+### Remove ConnectionState.Connecting
+`ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
 
 ### Remove ISummaryAuthor and ISummaryCommitter
 See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and`ISummaryCommitter` have never been used they are being depracating.
@@ -206,6 +220,9 @@ Additionally, please note that the `Connecting` state is being renamed to `Catch
 `ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
 `ConnectionState.Connecting` will be removed in the following major release.
 
+### Remove ICodeLoader from `@fluidframework/container-definitions`
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
+
 # 0.59
 
 ## 0.59 Upcoming changes
@@ -219,7 +236,7 @@ Additionally, please note that the `Connecting` state is being renamed to `Catch
 - [Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver](#Deprecated-enableRedeemFallback-from-HostStoragePolicy-in-Odsp-driver)]
 
 ### Remove ICodeLoader interface
-ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 ### IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release
 In major release 1.0, the optional functions `IFluidContainer.connect()` and `IFluidContainer.disconnect()` will be made mandatory functions.
@@ -305,7 +322,7 @@ The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-
 ```
 
 ### Replace ICodeLoader with ICodeDetailsLoader interface
-The interface `ICodeLoader` was deprecated a while ago in previous releases. The alternative for `ICodeLoader` interface is the `ICodeDetailsLoader` interface which can be imported from `@fluidframework/container-definitions`. `ICodeLoader` interface will be removed in the next release.
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 In particular, note the `ILoaderService` and `ILoaderProps` interfaces used with the `Loader` class now only support `ICodeDetailsLoader`. If you were using an `ICodeLoader` with these previously, you'll need to update to an `ICodeDetailsLoader`.
 
@@ -881,7 +898,7 @@ Moved the following interfaces and const from `@fluidframework/core-interface` t
 They are deprecated from `@fluidframework/core-interface` and would be removed in future release. Please import them from `@fluidframework/container-definitions`.
 
 ### Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`
-`IFluidSerializer` should only be used by DDSs to serialize data and they should use the one created by `SharedObject`.
+`IFluidSerializer` should only be used by DDSes to serialize data and they should use the one created by `SharedObject`.
 
 ### Errors thrown to DDS event handlers
 Before this release, exceptions thrown from DDS event handlers resulted in Fluid Framework reporting non-error telemetry event and moving forward as if nothing happened. Starting with this release, such exceptions will result in critical error, i.e. container will be closed with such error and hosting app will be notified via Container's "closed" event. This will either happen immediately (if exception was thrown while processing remote op), or on later usage (if exception was thrown on local change). DDS will go into "broken" state and will keep throwing error on amy attempt to make local changes.
@@ -1857,10 +1874,10 @@ DataObject are now always created when Data Store is created. Full initializatio
 The impact of that change is that all changed objects would get loaded by summarizer container, but would not get initialized. Before this change, summarizer would not be loading any DataObjects.
 This change
 
-1. Ensures that initial summary generated for when data store attaches to container has fully initialized object, with all DDSs created. Before this change this initial snapshot was empty in most cases.
+1. Ensures that initial summary generated for when data store attaches to container has fully initialized object, with all DDSes created. Before this change this initial snapshot was empty in most cases.
 2. Allows DataObjects to modify FluidDataStoreRuntime behavior before it gets registered and used by the rest of the system, including setting various hooks.
 
-But it also puts more constraints on DataObject - its constructor should be light and not do any expensive work (all such work should be done in corresponding initialize methods), or access any data store runtime functionality that requires fully initialized runtime (like loading DDSs will not work in this state)
+But it also puts more constraints on DataObject - its constructor should be light and not do any expensive work (all such work should be done in corresponding initialize methods), or access any data store runtime functionality that requires fully initialized runtime (like loading DDSes will not work in this state)
 
 ### RequestParser
 

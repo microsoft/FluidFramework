@@ -8,14 +8,14 @@ import {
     readFile
 } from "../common";
 
-const filePattern = /^.*?[^_]package-lock\.json$/i; // Ignore _package-lock.json
+const lockFilePattern = /.*?package-lock\.json$/i;
 const urlPattern = /(https?[^"@]+)(\/@.+|\/[^/]+\/-\/.+tgz)/g;
 const versionPattern = /"lockfileVersion"\s*:\s*\b1\b/g;
 
 export const handlers: Handler[] = [
     {
         name: "package-lockfiles-no-private-url",
-        match: filePattern,
+        match: lockFilePattern,
         handler: file => {
             const content = readFile(file);
             const matches = content.match(urlPattern);
@@ -38,10 +38,11 @@ export const handlers: Handler[] = [
     },
     {
         name: "package-lockfiles-npm-version",
-        match: filePattern,
+        match: lockFilePattern,
         handler: file => {
             const content = readFile(file);
-            if (content.match(versionPattern) === null) {
+            const match = content.match(versionPattern);
+            if (match === null) {
                 return `Unexpected 'lockFileVersion' (Please use NPM v6: 'npm i -g npm@latest-6'): ${file}`;
             }
             return;

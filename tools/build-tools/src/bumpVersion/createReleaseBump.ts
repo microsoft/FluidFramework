@@ -9,7 +9,7 @@ import { bumpRepo } from "./bumpVersion";
 import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
 import { runPolicyCheckWithFix } from "./policyCheck";
 import { fatal } from "./utils";
-import { MonoRepoKind } from "../common/monoRepo";
+import { isMonoRepoKind, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
 
@@ -49,19 +49,19 @@ export async function createReleaseBump(context: Context, bumpTypeOverride: Vers
     const depVersions = await context.collectBumpInfo(releaseName);
     const releaseVersion = depVersions.repoVersions.get(releaseName);
     if (!releaseVersion) {
-        fatal(`Missing ${ releaseName } packages`);
+        fatal(`Missing ${releaseName} packages`);
     }
 
     // check the release branch does not already exist
-    const releaseBranchVersion = `${ semver.major(releaseVersion) }.${ semver.minor(releaseVersion) }`;
-    const releaseBranch = `release/${ releaseBranchVersion }`;
+    const releaseBranchVersion = `${semver.major(releaseVersion)}.${semver.minor(releaseVersion)}`;
+    const releaseBranch = `release/${releaseBranchVersion}`;
     const commit = await context.gitRepo.getShaForBranch(releaseBranch);
     if (commit) {
-        fatal(`${ releaseBranch } already exists`);
+        fatal(`${releaseBranch} already exists`);
     }
 
-    const bumpBranch = `branch_bump_${ releaseBranchVersion }_${ Date.now() }`;
-    console.log(`Creating branch ${ bumpBranch }`);
+    const bumpBranch = `branch_bump_${releaseBranchVersion}_${Date.now()}`;
+    console.log(`Creating branch ${bumpBranch}`);
 
     await context.createBranch(bumpBranch);
 
@@ -77,9 +77,9 @@ export async function createReleaseBump(context: Context, bumpTypeOverride: Vers
     console.log(await bumpCurrentBranch(context, bumpType, releaseName, depVersions, virtualPatch));
 
     console.log("======================================================================================================");
-    console.log(`Please create PR for branch ${ bumpBranch } targeting ${ context.originalBranchName } `);
+    console.log(`Please create PR for branch ${bumpBranch} targeting ${context.originalBranchName} `);
     if (context.originalBranchName === "main") {
-        console.log(`After PR is merged, create branch ${ releaseBranch } one commit before the merged PR and push to the repo.`);
+        console.log(`After PR is merged, create branch ${releaseBranch} one commit before the merged PR and push to the repo.`);
     }
     console.log(`Then --release can be use to start the release.`);
 }
@@ -93,15 +93,12 @@ export async function createReleaseBump(context: Context, bumpTypeOverride: Vers
  * @param oldVersions old versions
  */
 async function bumpCurrentBranch(context: Context, versionBump: VersionBumpType, releaseName: string, depVersions: ReferenceVersionBag, virtualPatch: boolean) {
-    let clientNeedBump = false;
-    let serverNeedBump = false;
+    const monoRepoNeedsBump = new Set<MonoRepoKind>();
     const packageNeedBump = new Set<Package>();
     for (const [name] of depVersions) {
         if (depVersions.needBump(name)) {
-            if (name === MonoRepoKind[MonoRepoKind.Client]) {
-                clientNeedBump = true;
-            } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
-                serverNeedBump = true;
+            if (isMonoRepoKind(name)) {
+                monoRepoNeedsBump.add(name);
             } else {
                 const pkg = context.fullPackageMap.get(name);
                 // the generator packages are not part of the full package map
@@ -111,12 +108,13 @@ async function bumpCurrentBranch(context: Context, versionBump: VersionBumpType,
             }
         }
     }
-    const newVersions = await bumpRepo(context, versionBump, clientNeedBump, serverNeedBump, packageNeedBump, virtualPatch, depVersions);
+
+    const newVersions = await bumpRepo(context, versionBump, monoRepoNeedsBump, packageNeedBump, virtualPatch, depVersions);
     const repoState = getRepoStateChange(depVersions.repoVersions, newVersions);
 
     const releaseNewVersion = newVersions.get(releaseName);
     const currentBranchName = await context.gitRepo.getCurrentBranchName();
-    console.log(`  Committing ${ releaseName } version bump to ${ releaseNewVersion } into ${ currentBranchName } `);
-    await context.gitRepo.commit(`[bump] package version to ${ releaseNewVersion } for development after ${ releaseName.toLowerCase() } release\n${ repoState } `, "create bumped version commit");
-    return `Repo Versions in branch ${ currentBranchName }: ${ repoState } `;
+    console.log(`  Committing ${releaseName} version bump to ${releaseNewVersion} into ${currentBranchName} `);
+    await context.gitRepo.commit(`[bump] package version to ${releaseNewVersion} for development after ${releaseName.toLowerCase()} release\n${repoState} `, "create bumped version commit");
+    return `Repo Versions in branch ${currentBranchName}: ${repoState} `;
 }

@@ -237,6 +237,9 @@ export interface ISummaryTreeAssemblerProps {
 }
 
 // @public (undocumented)
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
+
+// @public (undocumented)
 export class LocationRedirectionError extends LoggingError implements ILocationRedirectionError, IFluidErrorBase {
     constructor(message: string, redirectUrl: IResolvedUrl, props: DriverErrorTelemetryProps);
     // (undocumented)

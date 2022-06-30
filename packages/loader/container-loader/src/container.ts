@@ -35,7 +35,7 @@ import {
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
- } from "@fluidframework/container-utils";
+} from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -50,9 +50,10 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
+    isRuntimeMessage,
+    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
-    isSystemMessage,
     IProtocolHandler,
     ProtocolOpHandlerWithClientValidation,
 } from "@fluidframework/protocol-base";
@@ -217,7 +218,9 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on(connectedEventName, callback);
 
-        container.connect();
+        if (container.connectionState === ConnectionState.Disconnected) {
+            container.connect();
+        }
     });
 }
 
@@ -286,14 +289,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end({ ...props, ...loadOptions.loadMode });
                         resolve(container);
                     },
-                    (error) => {
-                        const err = normalizeError(error);
-                        // Depending where error happens, we can be attempting to connect to web socket
-                        // and continuously retrying (consider offline mode)
-                        // Host has no container to close, so it's prudent to do it here
-                        container.close(err);
-                        onClosed(err);
-                    });
+                        (error) => {
+                            const err = normalizeError(error);
+                            // Depending where error happens, we can be attempting to connect to web socket
+                            // and continuously retrying (consider offline mode)
+                            // Host has no container to close, so it's prudent to do it here
+                            container.close(err);
+                            onClosed(err);
+                        });
             }),
             { start: true, end: true, cancel: "generic" },
         );
@@ -401,7 +404,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         return this._protocolHandler;
     }
 
-    private resumedOpProcessingAfterLoad = false;
+    /** During initialization we pause the inbound queues. We track this state to ensure we only call resume once */
+    private inboundQueuePausedFromInit = true;
     private firstConnection = true;
     private readonly connectionTransitionTimes: number[] = [];
     private messageCountAfterDisconnection: number = 0;
@@ -535,7 +539,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     name: typeof name === "string" ? name : undefined,
                 },
                 error);
-            });
+        });
         this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
@@ -678,10 +682,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         }
                         break;
                     case connectedEventName:
-                         if (this.connected) {
+                        if (this.connected) {
                             listener(this.clientId);
-                         }
-                         break;
+                        }
+                        break;
                     case disconnectedEventName:
                         if (!this.connected) {
                             listener();
@@ -912,7 +916,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 throw newError;
             }
         },
-        { start: true, end: true, cancel: "generic" });
+            { start: true, end: true, cancel: "generic" });
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -991,8 +995,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(!this.closed, 0x0d9 /* "Attempting to connect() a closed DeltaManager" */);
 
         // Resume processing ops
-        if (!this.resumedOpProcessingAfterLoad) {
-            this.resumedOpProcessingAfterLoad = true;
+        if (this.inboundQueuePausedFromInit) {
+            this.inboundQueuePausedFromInit = false;
             this._deltaManager.inbound.resume();
             this._deltaManager.inboundSignal.resume();
         }
@@ -1188,13 +1192,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
             switch (loadMode.deltaConnection) {
                 case undefined:
-                    // Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
-                    // If there is gap, we will learn about it once connected, but the gap should be small (if any),
-                    // assuming that resumeInternal() is called quickly after initial container boot.
-                    this.resumeInternal({ reason: "DocumentLoad", fetchOpsFromStorage: false });
-                    break;
                 case "delayed":
-                    this.resumedOpProcessingAfterLoad = true;
+                    assert(this.inboundQueuePausedFromInit, "inboundQueuePausedFromInit should be true");
+                    this.inboundQueuePausedFromInit = false;
                     this._deltaManager.inbound.resume();
                     this._deltaManager.inboundSignal.resume();
                     break;
@@ -1394,7 +1394,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (key === "code" || key === "code2") {
                     if (!isFluidCodeDetails(value)) {
                         this.mc.logger.sendErrorEvent({
-                                eventName: "CodeProposalNotIFluidCodeDetails",
+                            eventName: "CodeProposalNotIFluidCodeDetails",
                         });
                     }
                     this.processCodeProposal().catch((error) => {
@@ -1683,8 +1683,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
         }
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
+            this.mc.logger.sendTelemetryEvent(
+                { eventName: "UnpackedRuntimeMessage", type: message.type });
+        }
         // Forward non system messages to the loaded runtime for processing
-        if (!isSystemMessage(message)) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
             this.context.process(message, local, undefined);
         }
 
