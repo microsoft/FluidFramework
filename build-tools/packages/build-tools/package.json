@@ -11,6 +11,7 @@
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/fluidBuild/fluidBuild.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "fluid-build": "bin/fluid-build",
     "fluid-build-version": "bin/fluid-build-version",
@@ -28,6 +29,7 @@
     "build:genver": "gen-version",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "bump": "node dist/bumpVersion/bumpVersionCli.js",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
