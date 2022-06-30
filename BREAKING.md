@@ -38,6 +38,7 @@ to be `string | undefined`.
 - [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
+- [Remove flush mode tracking in `PendingStateManager`](#remove-flush-mode-tracking-in-pendingstatemanager)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -63,6 +64,12 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 ### Remove ConnectionState.Connecting
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
 
+### Remove `IContainerRuntimeBase.setFlushMode`
+The `setFlushMode` has been removed from `IContainerRuntimeBase`. Please remove all usage of this method as FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
+
+### Remove flush mode tracking and validation in `PendingStateManager`
+The `PendingStateManager` no longer tracks flush mode as it is now an immutable property on the `IContainerRuntimeBase`. Instead, tracking of batches is done explicitly and they are replayed directly through usage of the `orderSequentially` method on `IContainerRuntimeBase`. [See #9481](https://github.com/microsoft/FluidFramework/issues/9481).
+
 # 1.1.0
 
 ## 1.1.0 Upcoming changes
@@ -70,9 +77,6 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 
  ### IContainerRuntime.createRootDataStore is deprecated
  See [#9660](https://github.com/microsoft/FluidFramework/issues/9660). The API is vulnerable to name conflicts, which lead to invalid documents. As a replacement, create a regular datastore using the `IContainerRuntimeBase.createDataStore` function, then alias the datastore by using the `IDataStore.trySetAlias` function and specify a string value to serve as the alias to which the datastore needs to be bound. If successful, "Success" will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
-
-### Remove `IContainerRuntimeBase.setFlushMode`
-The `setFlushMode` has been removed from `IContainerRuntimeBase`. Please remove all usage of this method as FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
 
 # 1.0.0
 

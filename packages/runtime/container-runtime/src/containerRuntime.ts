@@ -1975,7 +1975,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return context.realize();
     }
 
-    public flush(): void {
+    public flush(isImmediateBatch: boolean = false): void {
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
@@ -1987,7 +1987,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Note that this should happen before the `this.needsFlush` check below because in the scenario where we are
         // not connected, `this.needsFlush` will be false but the PendingStateManager might have pending messages and
         // hence needs to track this.
-        this.pendingStateManager.onFlush(this.isImmediateBatching);
+        this.pendingStateManager.onFlush(isImmediateBatch);
 
         // If flush has already been called then exit early
         if (!this.needsFlush) {
@@ -2004,8 +2004,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         return this.deltaSender.flush();
     }
-
-    private isImmediateBatching = false;
 
     public orderSequentially(callback: () => void): void {
         let checkpoint: { rollback: () => void; } | undefined;
@@ -2028,10 +2026,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this._orderSequentiallyCalls--;
         }
 
-        if (!this.currentlyBatching()) {
-            this.isImmediateBatching = true;
-            this.flush();
-            this.isImmediateBatching = false;
+        if (this.flushMode === FlushMode.Immediate && this._orderSequentiallyCalls === 0) {
+            this.flush(true);
         }
     }
 
@@ -2180,6 +2176,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.connected && !this.deltaManager.readOnlyInfo.readonly;
     }
 
+    /**
+     * Are we in the middle of batching ops together?
+     */
     private currentlyBatching() {
         return this.flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls !== 0;
     }

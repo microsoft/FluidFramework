@@ -160,10 +160,13 @@ export class PendingStateManager implements IDisposable {
 
     /**
      * Called when flush() is called on the ContainerRuntime to manually flush messages.
+     * @param isImmediateBatch - add the "flush" message to the pending states even when flushMode is Immediate
      */
     public onFlush(isImmediateBatch: boolean = false) {
-        // If the FlushMode is Immediate, we don't need to track an explicit flush call because every message is
-        // automatically flushed. So, flush is a no-op.
+        /**
+         * If the FlushMode is Immediate, we don't need to track an explicit flush call because every message is
+         * automatically flushed. So, flush is a no-op.
+         */
         if (!isImmediateBatch && this.flushMode === FlushMode.Immediate) {
             return;
         }
@@ -258,9 +261,7 @@ export class PendingStateManager implements IDisposable {
             this.pendingStates.shift();
         }
 
-        /**
-         * This message is the first in a batch if the "batch" property on the metadata is set to true
-         */
+        // This message is the first in a batch if the "batch" property on the metadata is set to true
         if (message.metadata?.batch) {
             // We should not already be processing a batch and there should be no pending batch begin message.
             assert(!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
