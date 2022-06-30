@@ -98,10 +98,10 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
-      "ClassDeclaration_MockDeltaManager": {
+      "ClassDeclaration_MockFluidDataStoreRuntime": {
         "backCompat": false
       },
-      "ClassDeclaration_MockFluidDataStoreRuntime": {
+      "ClassDeclaration_MockDeltaManager": {
         "backCompat": false
       }
     }
