@@ -235,7 +235,7 @@ export class SharedPropertyTree extends SharedObject {
 
 	/**
 	 * This method encodes the given message to the transfer form
-	 * @param change The message to be encoded.
+	 * @param change - The message to be encoded.
  	 */
 	private encodeMessage(change: IPropertyTreeMessage): IPropertyTreeMessage {
 		return this.propertyTreeConfig.encDec.messageEncoder.encode(change);
@@ -243,7 +243,7 @@ export class SharedPropertyTree extends SharedObject {
 
 	/**
  	 * This method decodes message from the transfer form.
-	 * @param transferChange The message to be decoded.
+	 * @param transferChange - The message to be decoded.
      	 */
 	private decodeMessage(transferChange: IPropertyTreeMessage): IPropertyTreeMessage {
 		return this.propertyTreeConfig.encDec.messageEncoder.decode(transferChange);
@@ -434,7 +434,7 @@ export class SharedPropertyTree extends SharedObject {
 
 	/**
 	 * This method encodes the local summary (snapshot) object into the serialized form.
-	 * @param summary The local summary (snapshot)representation.
+	 * @param summary - The local summary (snapshot)representation.
 	 * @returns The serialized summary representation.
 	 */
 	private encodeSummary(summary: ISnapshotSummary) {
@@ -443,7 +443,7 @@ export class SharedPropertyTree extends SharedObject {
 
 	/**
 	 * This method decodes the serialized form of the summary into the local summary (snapshot) object.
-	 * @param serializedSummary  The serialized summary representation.
+	 * @param serializedSummary - The serialized summary representation.
 	 * @returns The local summary (snapshot)representation.
  	 */
 	private decodeSummary(serializedSummary): ISnapshotSummary {
@@ -453,14 +453,14 @@ export class SharedPropertyTree extends SharedObject {
 	/**
  	 * This method writes the log message if the logging is enabled in the extended DDS.
 	 * The logging is not enabled in the default Property DDS
-	 * @param message The message to be logged.
+	 * @param message - The message to be logged.
 	 */
 	protected logIfEnabled(message) {}
 
 	/**
  	 * This method encodes the binary representation of the
  	 * blob.
-	 * @param blob The binary representation of the blob.
+	 * @param blob - The binary representation of the blob.
 	 * @returns The encoded representation of the blob.
  	 */
 	private encodeSummaryBlob(blob: ArrayBuffer): any {
@@ -470,7 +470,7 @@ export class SharedPropertyTree extends SharedObject {
 	/**
  	 * This method decodes the encoded representation of the
 	 * blob.
- 	 * @param blob The encoded representation of the blob.
+ 	 * @param blob - The encoded representation of the blob.
 	 * @returns The binary representation of the blob.
 	 */
 	private decodeSummaryBlob(encoded: any): ArrayBuffer {
