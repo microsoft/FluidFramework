@@ -99,9 +99,13 @@
     "version": "2.0.0",
     "broken": {
       "ClassDeclaration_MockFluidDataStoreRuntime": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
       },
       "ClassDeclaration_MockDeltaManager": {
+        "backCompat": false
+      },
+      "ClassDeclaration_MockFluidDataStoreContext": {
         "backCompat": false
       }
     }
