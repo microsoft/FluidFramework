@@ -1258,7 +1258,6 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         const state = nodeStateTracker.state === UnreferencedState.Inactive ? "Inactive" : "Deleted";
-        // A particular event is logged for a given node only once so that it is not too noisy.
         const uniqueEventId = `${state}-${nodeId}-${usageType}`;
         if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
             return;
@@ -1318,7 +1317,13 @@ export class GarbageCollector implements IGarbageCollector {
         }
         this.pendingEventsQueue = [];
 
-        if (this.mc.config.getBoolean(disableSweepLogKey) === true || currentReferenceTimestampMs === undefined) {
+        /**
+         * For nodes that are ready to sweep, log an event. Until we start running sweep which deletes objects, this
+         * will give us a view into how much deleted content a container has.
+         */
+        if (this.mc.config.getBoolean(disableSweepLogKey) === true
+            || currentReferenceTimestampMs === undefined
+            || this.sweepTimeoutMs === undefined) {
             return;
         }
 
@@ -1337,7 +1342,7 @@ export class GarbageCollector implements IGarbageCollector {
                 return;
             }
             this.loggedUnreferencedEvents.add(uniqueEventId);
-            logger.sendErrorEvent({
+            logger.sendTelemetryEvent({
                 eventName: "GCObjectDeleted",
                 id: nodeId,
                 type: nodeType,
