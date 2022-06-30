@@ -82,6 +82,26 @@ describe("SampledTelemetryHelper", () => {
         assert.strictEqual(event.count, 1);
     });
 
+
+    it("includes properties from base event when no aggregate properties are included", () => {
+        const helper = new SampledTelemetryHelper({ myProp: "myValue" }, logger, false);
+        helper.measure(() => {}, 1);
+        assert.strictEqual(logger.events.length, 1);
+        const event = logger.events[0];
+        ensurePropertiesExist(event, ["duration", "dimension", "myProp"], true);
+        assert.strictEqual(event.dimension, "");
+    });
+
+    it("includes properties from base event when aggregate properties are included", () => {
+        const helper = new SampledTelemetryHelper({ myProp: "myValue" }, logger, true);
+        helper.measure(() => {}, 1);
+        assert.strictEqual(logger.events.length, 1);
+        const event = logger.events[0];
+        ensurePropertiesExist(event,
+            ["duration", "dimension", "aggDuration", "count", "aggMinDuration", "aggMaxDuration", "myProp"], true);
+        assert.strictEqual(event.dimension, "");
+    });
+
     it("tracks dimensions separately", () => {
         const helper = new SampledTelemetryHelper({}, logger);
         const sampling1 = 10;
