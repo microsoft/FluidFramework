@@ -14,6 +14,22 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 2.0.0
+
+## 2.0.0 Upcoming changes
+
+ - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+ - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+
+### Remove `documentId` field from `MockFluidDataStoreContext`
+
+This field has been deprecated and will be removed in a future breaking change.
+
+### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
+
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
+
 # 1.1.0
 
 ## 1.1.0 Upcoming changes
@@ -835,7 +851,7 @@ Moved the following interfaces and const from `@fluidframework/core-interface` t
 They are deprecated from `@fluidframework/core-interface` and would be removed in future release. Please import them from `@fluidframework/container-definitions`.
 
 ### Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`
-`IFluidSerializer` should only be used by DDSs to serialize data and they should use the one created by `SharedObject`.
+`IFluidSerializer` should only be used by DDSes to serialize data and they should use the one created by `SharedObject`.
 
 ### Errors thrown to DDS event handlers
 Before this release, exceptions thrown from DDS event handlers resulted in Fluid Framework reporting non-error telemetry event and moving forward as if nothing happened. Starting with this release, such exceptions will result in critical error, i.e. container will be closed with such error and hosting app will be notified via Container's "closed" event. This will either happen immediately (if exception was thrown while processing remote op), or on later usage (if exception was thrown on local change). DDS will go into "broken" state and will keep throwing error on amy attempt to make local changes.
@@ -1811,10 +1827,10 @@ DataObject are now always created when Data Store is created. Full initializatio
 The impact of that change is that all changed objects would get loaded by summarizer container, but would not get initialized. Before this change, summarizer would not be loading any DataObjects.
 This change
 
-1. Ensures that initial summary generated for when data store attaches to container has fully initialized object, with all DDSs created. Before this change this initial snapshot was empty in most cases.
+1. Ensures that initial summary generated for when data store attaches to container has fully initialized object, with all DDSes created. Before this change this initial snapshot was empty in most cases.
 2. Allows DataObjects to modify FluidDataStoreRuntime behavior before it gets registered and used by the rest of the system, including setting various hooks.
 
-But it also puts more constraints on DataObject - its constructor should be light and not do any expensive work (all such work should be done in corresponding initialize methods), or access any data store runtime functionality that requires fully initialized runtime (like loading DDSs will not work in this state)
+But it also puts more constraints on DataObject - its constructor should be light and not do any expensive work (all such work should be done in corresponding initialize methods), or access any data store runtime functionality that requires fully initialized runtime (like loading DDSes will not work in this state)
 
 ### RequestParser
 

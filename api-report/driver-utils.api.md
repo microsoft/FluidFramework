@@ -236,6 +236,9 @@ export interface ISummaryTreeAssemblerProps {
 }
 
 // @public (undocumented)
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
+
+// @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
 
 // @public (undocumented)
