@@ -16,27 +16,24 @@ There are a few steps you can take to write a good change note and avoid needing
 
 # 2.0.0
 
-## 2.0.0 Upcoming changes
-
- - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
- - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
-
-### Remove `documentId` field from `MockFluidDataStoreContext`
-
-This field has been deprecated and will be removed in a future breaking change.
-
-### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
-
-`clientId` can only ever be of type `string`, so it is superfluous for the type
-to be `string | undefined`.
-
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
 - [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
 - [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
 - [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
+- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+
+### Remove `documentId` field from `MockFluidDataStoreContext`
+
+This field was deprecated and has been removed in this release.
+
+### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
+
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
