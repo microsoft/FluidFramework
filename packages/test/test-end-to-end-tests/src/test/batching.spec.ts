@@ -388,9 +388,9 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
             assert.equal(dirty, expectedState, "The document dirty state is not as expected");
         }
 
-        describe("Automatic flushing of batches via orderSequentially", () => {
+        function testAutomaticFlushingUsingOrderSequentially(options: IContainerRuntimeOptions) {
             beforeEach(async () => {
-                await setupContainers();
+                await setupContainers(options);
             });
 
             it("should clean document dirty state after a batch with single message is sent", async () => {
@@ -477,6 +477,14 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
                 // Verify that the document dirty state is cleaned after the ops are processed.
                 verifyDocumentDirtyState(dataObject1, false);
             });
+        }
+
+        describe("Automatic flushing of batches via orderSequentially [TurnBased]", () => {
+            testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.TurnBased });
+        });
+
+        describe("Automatic flushing of batches via orderSequentially [Immediate]", () => {
+            testAutomaticFlushingUsingOrderSequentially({ flushMode: FlushMode.Immediate });
         });
 
         describe("TurnBased flushing of batches", () => {
