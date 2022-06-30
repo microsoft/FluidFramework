@@ -2,7 +2,7 @@ name: Merge commits to next branch
 
 on:
   schedule:
-    - cron: "0 16-0/2 * * 1-5" # Cron timezone is in UTC
+    - cron: "0 15-23/2 * * 1-5" # Cron timezone is in UTC
 
 env:
   TARGET_BRANCH: next
