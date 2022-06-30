@@ -77,7 +77,7 @@ export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 
-// One day in microseconds.
+// One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
 const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
@@ -203,7 +203,7 @@ export type UnreferencedState = typeof UnreferencedState[keyof typeof Unreferenc
 /** The event that is logged when unreferenced node is used after a certain time. */
 interface IUnreferencedEventProps {
     usageType: "Changed" | "Loaded" | "Revived";
-    state: "Inactive" | "Deleted";
+    state: "inactive" | "deleted";
     id: string;
     type: GCNodeType;
     unrefTime: number;
@@ -1257,7 +1257,7 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const state = nodeStateTracker.state === UnreferencedState.Inactive ? "Inactive" : "Deleted";
+        const state = nodeStateTracker.state === UnreferencedState.Inactive ? "inactive" : "deleted";
         const uniqueEventId = `${state}-${nodeId}-${usageType}`;
         if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
             return;

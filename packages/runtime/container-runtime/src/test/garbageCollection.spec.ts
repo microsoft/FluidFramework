@@ -574,9 +574,9 @@ describe("Garbage Collection Tests", () => {
 
             tests(
                 inactiveTimeoutMs,
-                "GarbageCollector:InactiveObject_Revived",
-                "GarbageCollector:InactiveObject_Changed",
-                "GarbageCollector:InactiveObject_Loaded",
+                "GarbageCollector:inactiveObject_Revived",
+                "GarbageCollector:inactiveObject_Changed",
+                "GarbageCollector:inactiveObject_Loaded",
             );
         });
 
@@ -590,9 +590,9 @@ describe("Garbage Collection Tests", () => {
 
             tests(
                 sweepTimeoutMs,
-                "GarbageCollector:DeletedObject_Revived",
-                "GarbageCollector:DeletedObject_Changed",
-                "GarbageCollector:DeletedObject_Loaded",
+                "GarbageCollector:deletedObject_Revived",
+                "GarbageCollector:deletedObject_Changed",
+                "GarbageCollector:deletedObject_Loaded",
                 snapshotCacheExpiryMs,
                 "GarbageCollector:GCObjectDeleted",
             );
@@ -616,10 +616,10 @@ describe("Garbage Collection Tests", () => {
             await updateAllNodesAndRunGC(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: "GarbageCollector:InactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[2] },
-                    { eventName: "GarbageCollector:InactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[2] },
-                    { eventName: "GarbageCollector:InactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[3] },
-                    { eventName: "GarbageCollector:InactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[3] },
+                    { eventName: "GarbageCollector:inactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[2] },
+                    { eventName: "GarbageCollector:inactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[2] },
+                    { eventName: "GarbageCollector:inactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[3] },
+                    { eventName: "GarbageCollector:inactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[3] },
                 ]),
                 "inactive events not generated as expected",
             );
@@ -629,10 +629,10 @@ describe("Garbage Collection Tests", () => {
             await updateAllNodesAndRunGC(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: "GarbageCollector:DeletedObject_Changed", timeout: sweepTimeoutMs, id: nodes[2] },
-                    { eventName: "GarbageCollector:DeletedObject_Loaded", timeout: sweepTimeoutMs, id: nodes[2] },
-                    { eventName: "GarbageCollector:DeletedObject_Changed", timeout: sweepTimeoutMs, id: nodes[3] },
-                    { eventName: "GarbageCollector:DeletedObject_Loaded", timeout: sweepTimeoutMs, id: nodes[3] },
+                    { eventName: "GarbageCollector:deletedObject_Changed", timeout: sweepTimeoutMs, id: nodes[2] },
+                    { eventName: "GarbageCollector:deletedObject_Loaded", timeout: sweepTimeoutMs, id: nodes[2] },
+                    { eventName: "GarbageCollector:deletedObject_Changed", timeout: sweepTimeoutMs, id: nodes[3] },
+                    { eventName: "GarbageCollector:deletedObject_Loaded", timeout: sweepTimeoutMs, id: nodes[3] },
                 ]),
                 "deleted events not generated as expected",
             );
