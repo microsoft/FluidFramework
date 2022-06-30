@@ -61,7 +61,7 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
 
 ### Remove `aliasing` return value from `AliasResult`
-The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
+The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
 
 # 1.1.0
 
