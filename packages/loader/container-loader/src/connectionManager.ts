@@ -31,6 +31,7 @@ import {
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
     logNetworkFailure,
+    // isRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -840,7 +841,6 @@ export class ConnectionManager implements IConnectionManager {
 
     public sendMessages(messages: IDocumentMessage[]) {
         assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
-
         // If connection is "read" or implicit "read" (got leave op for "write" connection),
         // then op can't make it through - we will get a nack if op is sent.
         // We can short-circuit this process.

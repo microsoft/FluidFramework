@@ -20,6 +20,7 @@ There are a few steps you can take to write a good change note and avoid needing
 
  - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
  - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+ - [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
 
 ### Remove `documentId` field from `MockFluidDataStoreContext`
 
@@ -29,6 +30,10 @@ This field has been deprecated and will be removed in a future breaking change.
 
 `clientId` can only ever be of type `string`, so it is superfluous for the type
 to be `string | undefined`.
+
+### Remove `ConnectionState.Connecting`
+
+`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
 
 # 1.1.0
 
