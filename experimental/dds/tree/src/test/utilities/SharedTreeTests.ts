@@ -1192,8 +1192,12 @@ export function runSharedTreeOperationsTests(
 					);
 					containerRuntimeFactory.processAllMessages();
 					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
-					expect(events.length).equals(2);
-					expect(events[1].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
+
+                    // Other things might have caused things to be written to the logger. Make sure
+                    // to only look at the entries this test cares about.
+                    const eventsToCheck = events.filter((x) => x.isSharedTreeEvent);
+					expect(eventsToCheck.length).equals(2);
+					expect(eventsToCheck[1].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
 				});
 
 				it('is not logged for valid edits', async () => {
