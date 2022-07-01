@@ -147,12 +147,20 @@ export async function performFuzzActions(
 			await finalState.testObjectProvider.ensureSynchronized();
 			const events = finalState.testObjectProvider.logger.reportAndClearTrackedEvents();
 			expect(events.expectedNotFound.length).to.equal(0);
+			for (const event of events.unexpectedErrors) {
+				switch (event.eventName) {
 			// Tolerate failed edit chunk uploads, because they are fire-and-forget and can fail (e.g. the uploading client leaves before upload completes).
-			expect(
-				events.unexpectedErrors.every(
-					(e) => e.eventName === 'fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure'
-				)
-			).to.be.true;
+					case 'fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure':
+					case 'fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound':
+					// Summary nacks can happen as part of normal operation and are handled by the framework
+					case 'fluid:telemetry:Summarizer:Running:SummaryNack':
+					case 'fluid:telemetry:Summarizer:summarizingError':
+					case 'fluid:telemetry:Summarizer:Running:Summarize_cancel':
+						break;
+					default:
+						expect.fail(`Unexpected error event: ${event.eventName}`);
+				}
+			}
 		}
 		const trees = [
 			...finalState.activeCollaborators.map(({ tree }) => tree),
