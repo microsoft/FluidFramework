@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { fail, strict as assert } from "assert";
 import { PropertySet, toRemovalInfo } from "@fluidframework/merge-tree";
 import {
     MockFluidDataStoreRuntime,
     MockContainerRuntimeFactory,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 interface IntervalEventInfo {
     interval: { start: number; end: number; };
@@ -164,7 +164,7 @@ describe("SharedString interval collection event spec", () => {
                     },
                     previousEndpoints: {
                         start: sharedString.localReferencePositionToPosition(previousInterval.start),
-                        end: sharedString.localReferencePositionToPosition(previousInterval.end)
+                        end: sharedString.localReferencePositionToPosition(previousInterval.end),
                     },
                     previousInterval,
                     local,
@@ -268,7 +268,7 @@ describe("SharedString interval collection event spec", () => {
 
     describe("propertyChanged", () => {
         const eventLog: (Omit<IntervalEventInfo, "interval"> & {
-            id: string,
+            id: string;
             deltas: PropertySet;
         })[] = [];
         let intervalId: string;
@@ -281,9 +281,8 @@ describe("SharedString interval collection event spec", () => {
                     op,
                 }),
             );
-            const _intervalId = collection.add(0, 1, IntervalType.SlideOnRemove, { initialProp: "baz" }).getIntervalId();
-            assert(_intervalId);
-            intervalId = _intervalId;
+            intervalId = collection.add(0, 1, IntervalType.SlideOnRemove, { initialProp: "baz" }).getIntervalId()
+                ?? fail("Expected interval to have id");
             containerRuntimeFactory.processAllMessages();
             eventLog.length = 0;
         });
@@ -319,5 +318,4 @@ describe("SharedString interval collection event spec", () => {
 
         // TODO: More interesting tests with pending state
     });
-
 });

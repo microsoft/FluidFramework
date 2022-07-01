@@ -828,7 +828,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     private addIntervalListeners(interval: TInterval) {
-        const cloneRef = (ref: LocalReference) => {
+        const cloneRef = (ref: LocalReferencePosition) => {
             const segment = ref.getSegment();
             if (segment === undefined) {
                 // Cloning is unnecessary: refs which have slid off the string entirely
@@ -841,14 +841,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 ref.getSegment(),
                 ref.getOffset(),
                 ReferenceType.Transient,
-                ref.properties
-            ) as LocalReference;
-        }
+                ref.properties,
+            );
+        };
         if (interval instanceof SequenceInterval) {
             let previousInterval: TInterval & SequenceInterval | undefined;
             interval.addPositionChangeListeners(
                 () => {
-                    assert(!previousInterval, "Invalid interleaving of before/after slide")
+                    assert(!previousInterval, "Invalid interleaving of before/after slide");
                     previousInterval = interval.clone() as TInterval & SequenceInterval;
                     previousInterval.start = cloneRef(previousInterval.start);
                     previousInterval.end = cloneRef(previousInterval.end);
@@ -1059,7 +1059,12 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
      * `op` is defined if and only if the server has acked this change.
      */
     (event: "changeInterval",
-        listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
+        listener: (
+            interval: TInterval,
+            previousInterval: TInterval,
+            local: boolean,
+            op: ISequencedDocumentMessage | undefined
+        ) => void);
     /**
      * This event is invoked whenever an interval is added or removed from the collection.
      * `local` reflects whether the change originated locally.
@@ -1076,7 +1081,13 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
      * `local` reflects whether the change originated locally.
      * `op` is defined if and only if the server has acked this change.
      */
-    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
+    (event: "propertyChanged",
+        listener: (
+            interval: TInterval,
+            propertyDeltas: PropertySet,
+            local: boolean,
+            op: ISequencedDocumentMessage | undefined
+        ) => void);
 }
 
 export class IntervalCollection<TInterval extends ISerializableInterval>
@@ -1507,7 +1518,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         const needsEndUpdate = newEnd !== undefined && !hasPendingEndChange;
 
         if (needsStartUpdate || needsEndUpdate) {
-            // `interval`'s endpoints will get modified in-place, so clone it prior to doing so for later event emission.
+            // `interval`'s endpoints will get modified in-place, so clone it prior to doing so for event emission.
             const oldInterval = interval.clone();
 
             // In this case, where we change the start or end of an interval,
