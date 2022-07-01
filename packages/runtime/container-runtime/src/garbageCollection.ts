@@ -804,45 +804,6 @@ export class GarbageCollector implements IGarbageCollector {
         return gcStats;
     }
 
-    private logSweepEvents(logger: ITelemetryLogger, currentReferenceTimestampMs?: number) {
-        /**
-         * For nodes that are ready to sweep, log an event for now. Until we start running sweep which deletes objects,
-         * this will give us a view into how much deleted content a container has.
-         */
-        if (this.mc.config.getBoolean(disableSweepLogKey) === true
-            || currentReferenceTimestampMs === undefined
-            || this.sweepTimeoutMs === undefined) {
-            return;
-        }
-
-        this.unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
-            if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
-                return;
-            }
-
-            const nodeType = this.runtime.getNodeType(nodeId);
-            if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
-                return;
-            }
-
-            // Log deleted event for each node only once to reduce noise in telemetry.
-            const uniqueEventId = `Deleted-${nodeId}`;
-            if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
-                return;
-            }
-            this.loggedUnreferencedEvents.add(uniqueEventId);
-            logger.sendTelemetryEvent({
-                eventName: "GCObjectDeleted",
-                id: nodeId,
-                type: nodeType,
-                age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
-                timeout: this.sweepTimeoutMs,
-                completedGCRuns: this.completedRuns,
-                lastSummaryTime: this.getLastSummaryTimestampMs(),
-            });
-        });
-    }
-
     /**
      * Summarizes the GC data and returns it as a summary tree.
      * We current write the entire GC state in a single blob. This can be modified later to write multiple
@@ -1275,6 +1236,45 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         return gcStats;
+    }
+
+    /**
+     * For nodes that are ready to sweep, log an event for now. Until we start running sweep which deletes objects,
+     * this will give us a view into how much deleted content a container has.
+     */
+    private logSweepEvents(logger: ITelemetryLogger, currentReferenceTimestampMs?: number) {
+        if (this.mc.config.getBoolean(disableSweepLogKey) === true
+            || currentReferenceTimestampMs === undefined
+            || this.sweepTimeoutMs === undefined) {
+            return;
+        }
+
+        this.unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
+            if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
+                return;
+            }
+
+            const nodeType = this.runtime.getNodeType(nodeId);
+            if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
+                return;
+            }
+
+            // Log deleted event for each node only once to reduce noise in telemetry.
+            const uniqueEventId = `Deleted-${nodeId}`;
+            if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
+                return;
+            }
+            this.loggedUnreferencedEvents.add(uniqueEventId);
+            logger.sendTelemetryEvent({
+                eventName: "GCObjectDeleted",
+                id: nodeId,
+                type: nodeType,
+                age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+                timeout: this.sweepTimeoutMs,
+                completedGCRuns: this.completedRuns,
+                lastSummaryTime: this.getLastSummaryTimestampMs(),
+            });
+        });
     }
 
     /**

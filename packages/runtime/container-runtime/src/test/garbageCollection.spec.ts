@@ -315,19 +315,44 @@ describe("Garbage Collection Tests", () => {
                     { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
                     { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
                 );
-                assert(
-                    mockLogger.matchEvents(expectedEvents),
-                    "all events not generated as expected",
-                );
+                mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
 
                 // Add reference from node 1 to node 3 and validate that we get a revived event.
                 garbageCollector.addedOutboundReference(nodes[1], nodes[3]);
                 await garbageCollector.collectGarbage({});
-                assert(
-                    mockLogger.matchEvents([
-                        { eventName: revivedEventName, timeout, id: nodes[3], pkg: eventPkg, fromId: nodes[1] },
-                    ]),
+                mockLogger.assertMatch(
+                    [{ eventName: revivedEventName, timeout, id: nodes[3], pkg: eventPkg, fromId: nodes[1] }],
                     "revived event not generated as expected",
+                );
+            });
+
+            it("generates only revived event when an inactive node is changed and revived", async () => {
+                const garbageCollector = createGCOverride();
+
+                // Remove node 2's reference from node 1. This should make node 2 and node 3 unreferenced.
+                defaultGCData.gcNodes[nodes[1]] = [];
+
+                await garbageCollector.collectGarbage({});
+
+                // Advance the clock just before the timeout and validate no unexpected events are logged.
+                clock.tick(timeout - 1);
+                await updateAllNodesAndRunGC(garbageCollector);
+                validateNoUnexpectedEvents();
+
+                // Expire the timeout and validate that only revived event is generated for node 2.
+                clock.tick(1);
+                garbageCollector.nodeUpdated(nodes[2], "Changed", Date.now(), testPkgPath);
+                garbageCollector.nodeUpdated(nodes[2], "Loaded", Date.now(), testPkgPath);
+                garbageCollector.addedOutboundReference(nodes[1], nodes[2]);
+                await garbageCollector.collectGarbage({});
+
+                for (const event of mockLogger.events) {
+                    assert.notStrictEqual(event.eventName, changedEventName, "Unexpected changed event logged");
+                    assert.notStrictEqual(event.eventName, loadedEventName, "Unexpected loaded event logged");
+                }
+                mockLogger.assertMatch(
+                    [{ eventName: revivedEventName, timeout, id: nodes[2], pkg: eventPkg, fromId: nodes[1] }],
+                    "revived event not logged as expected",
                 );
             });
 
@@ -355,10 +380,7 @@ describe("Garbage Collection Tests", () => {
                     { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
                     { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
                 );
-                assert(
-                    mockLogger.matchEvents(expectedEvents),
-                    "all events not generated as expected",
-                );
+                mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
 
                 // Update all nodes again. There shouldn't be any more events since for each node the event is only once.
                 await updateAllNodesAndRunGC(garbageCollector);
@@ -403,8 +425,8 @@ describe("Garbage Collection Tests", () => {
                 await garbageCollector.collectGarbage({});
                 // Validate that the sweep ready event is logged when GC runs after load.
                 if (deleteEventName) {
-                    assert(
-                        mockLogger.matchEvents([{ eventName: deleteEventName, timeout, id: nodes[3] }]),
+                    mockLogger.assertMatch(
+                        [{ eventName: deleteEventName, timeout, id: nodes[3] }],
                         "sweep ready event not generated as expected",
                     );
                 }
@@ -413,21 +435,19 @@ describe("Garbage Collection Tests", () => {
                 garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
                 garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
                 await garbageCollector.collectGarbage({});
-                assert(
-                    mockLogger.matchEvents([
+                mockLogger.assertMatch(
+                    [
                         { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
                         { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
-                    ]),
+                    ],
                     "all events not generated as expected",
                 );
 
                 // Add reference from node 2 to node 3 and validate that revived event is logged.
                 garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
                 await garbageCollector.collectGarbage({});
-                assert(
-                    mockLogger.matchEvents([
-                        { eventName: revivedEventName, timeout, id: nodes[3], pkg: eventPkg, fromId: nodes[2] },
-                    ]),
+                mockLogger.assertMatch(
+                    [{ eventName: revivedEventName, timeout, id: nodes[3], pkg: eventPkg, fromId: nodes[2] }],
                     "revived event not generated as expected",
                 );
             });
@@ -467,8 +487,8 @@ describe("Garbage Collection Tests", () => {
 
                 // Validate that the sweep ready event is logged when GC runs after load.
                 if (deleteEventName) {
-                    assert(
-                        mockLogger.matchEvents([{ eventName: deleteEventName, timeout, id: nodes[3] }]),
+                    mockLogger.assertMatch(
+                        [{ eventName: deleteEventName, timeout, id: nodes[3] }],
                         "sweep ready event not generated as expected",
                     );
                 }
@@ -477,21 +497,19 @@ describe("Garbage Collection Tests", () => {
                 garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
                 garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
                 await garbageCollector.collectGarbage({});
-                assert(
-                    mockLogger.matchEvents([
+                mockLogger.assertMatch(
+                    [
                         { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
                         { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
-                    ]),
+                    ],
                     "all events not generated as expected",
                 );
 
                 // Add reference from node 2 to node 3 and validate that revived event is logged.
                 garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
                 await garbageCollector.collectGarbage({});
-                assert(
-                    mockLogger.matchEvents([
-                        { eventName: revivedEventName, timeout, id: nodes[3], pkg: eventPkg, fromId: nodes[2] },
-                    ]),
+                mockLogger.assertMatch(
+                    [{ eventName: revivedEventName, timeout, id: nodes[3], pkg: eventPkg, fromId: nodes[2] }],
                     "revived event not generated as expected",
                 );
             });
@@ -541,12 +559,12 @@ describe("Garbage Collection Tests", () => {
                 await garbageCollector.collectGarbage({});
                  // Validate that the sweep ready event is logged when GC runs after load.
                  if (deleteEventName) {
-                    assert(
-                        mockLogger.matchEvents([
+                    mockLogger.assertMatch(
+                        [
                             { eventName: deleteEventName, timeout, id: nodes[1] },
                             { eventName: deleteEventName, timeout, id: nodes[2] },
                             { eventName: deleteEventName, timeout, id: nodes[3] },
-                        ]),
+                        ],
                         "sweep ready event not generated as expected",
                     );
                 }
@@ -556,12 +574,12 @@ describe("Garbage Collection Tests", () => {
                 garbageCollector.nodeUpdated(nodes[2], "Changed", Date.now(), testPkgPath);
                 garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
                 await garbageCollector.collectGarbage({});
-                assert(
-                    mockLogger.matchEvents([
+                mockLogger.assertMatch(
+                    [
                         { eventName: changedEventName, timeout, id: nodes[1], pkg: eventPkg },
                         { eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
                         { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
-                    ]),
+                    ],
                     "all events not generated as expected",
                 );
             });
@@ -616,26 +634,26 @@ describe("Garbage Collection Tests", () => {
             // Advance the clock to trigger inactive timeout and validate that we get inactive events.
             clock.tick(inactiveTimeoutMs + 1);
             await updateAllNodesAndRunGC(garbageCollector);
-            assert(
-                mockLogger.matchEvents([
+            mockLogger.assertMatch(
+                [
                     { eventName: "GarbageCollector:InactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[2] },
                     { eventName: "GarbageCollector:InactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[2] },
                     { eventName: "GarbageCollector:InactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[3] },
                     { eventName: "GarbageCollector:InactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[3] },
-                ]),
+                ],
                 "inactive events not generated as expected",
             );
 
             // Advance the clock to trigger sweep timeout and validate that we get sweep ready events.
             clock.tick(sweepTimeoutMs - inactiveTimeoutMs);
             await updateAllNodesAndRunGC(garbageCollector);
-            assert(
-                mockLogger.matchEvents([
+            mockLogger.assertMatch(
+                [
                     { eventName: "GarbageCollector:SweepReadyObject_Changed", timeout: sweepTimeoutMs, id: nodes[2] },
                     { eventName: "GarbageCollector:SweepReadyObject_Loaded", timeout: sweepTimeoutMs, id: nodes[2] },
                     { eventName: "GarbageCollector:SweepReadyObject_Changed", timeout: sweepTimeoutMs, id: nodes[3] },
                     { eventName: "GarbageCollector:SweepReadyObject_Loaded", timeout: sweepTimeoutMs, id: nodes[3] },
-                ]),
+                ],
                 "sweep ready events not generated as expected",
             );
         });
@@ -648,28 +666,28 @@ describe("Garbage Collection Tests", () => {
             const garbageCollector = createGarbageCollector();
 
             await garbageCollector.collectGarbage({});
-            assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 0 }]),
+            mockLogger.assertMatch(
+                [{ eventName: gcEndEvent, completedGCRuns: 0 }],
                 "completedGCRuns should be 0 since this event was logged before first GC run completed",
             );
 
             await garbageCollector.collectGarbage({});
-            assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 1 }]),
+            mockLogger.assertMatch(
+                [{ eventName: gcEndEvent, completedGCRuns: 1 }],
                 "completedGCRuns should be 1 since this event was logged after first GC run completed",
             );
 
             await garbageCollector.collectGarbage({});
-            assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 2 }]),
+            mockLogger.assertMatch(
+                [{ eventName: gcEndEvent, completedGCRuns: 2 }],
                 "completedGCRuns should be 2 since this event was logged after second GC run completed",
             );
 
             // The GC run count should reset for new garbage collector.
             const garbageCollector2 = createGarbageCollector();
             await garbageCollector2.collectGarbage({});
-            assert(
-                mockLogger.matchEvents([{ eventName: gcEndEvent, completedGCRuns: 0 }]),
+            mockLogger.assertMatch(
+                [{ eventName: gcEndEvent, completedGCRuns: 0 }],
                 "completedGCRuns should be 0 since this event was logged before first GC run in new garbage collector",
             );
         });
