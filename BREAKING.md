@@ -39,9 +39,14 @@ to be `string | undefined`.
 
 ## 1.1.0 Upcoming changes
 - [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated)
+- [ ISummaryAuthor and ISummaryCommitter are deprecated](#isummaryauthor-and-isummarycommitter-are-deprecated)
 
  ### IContainerRuntime.createRootDataStore is deprecated
  See [#9660](https://github.com/microsoft/FluidFramework/issues/9660). The API is vulnerable to name conflicts, which lead to invalid documents. As a replacement, create a regular datastore using the `IContainerRuntimeBase.createDataStore` function, then alias the datastore by using the `IDataStore.trySetAlias` function and specify a string value to serve as the alias to which the datastore needs to be bound. If successful, "Success" will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
+
+ ### ISummaryAuthor and ISummaryCommitter are deprecated
+  See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and `ISummaryCommitter`
+  are deprecated and will be removed in a future release.
 
 # 1.0.0
 
