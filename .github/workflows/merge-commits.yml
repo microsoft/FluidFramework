@@ -2,7 +2,7 @@ name: Merge commits to next branch
 
 on:
   schedule:
-    - cron: "0 16-24/2 * * 1-5" # Cron timezone is in UTC
+    - cron: "0 15-23/2 * * 1-5" # Cron timezone is in UTC
 
 env:
   TARGET_BRANCH: next
@@ -58,6 +58,7 @@ jobs:
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
         uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
         with:
+          token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           fetch-depth: '0'
       - name: Create branch
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
@@ -147,6 +148,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
         with:
+          token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           fetch-depth: '0'
       - name: Merge next
         run: |
@@ -171,6 +173,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
         with:
+          token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           fetch-depth: '0'
       - name: Push next merge
         run: |

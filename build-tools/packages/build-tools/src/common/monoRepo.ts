@@ -15,6 +15,7 @@ export enum MonoRepoKind {
     Client = "Client",
     Server = "Server",
     Azure = "Azure",
+    BuildTools = "BuildTools",
 }
 
 /**
