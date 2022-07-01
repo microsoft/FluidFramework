@@ -108,14 +108,6 @@
       "ClassDeclaration_MockFluidDataStoreContext": {
         "backCompat": false,
         "forwardCompat": false
-      },
-      "ClassDeclaration_MockContainerRuntimeFactory": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "ClassDeclaration_MockContainerRuntimeFactoryForReconnection": {
-        "backCompat": false,
-        "forwardCompat": false
       }
     }
   }
