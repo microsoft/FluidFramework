@@ -29,4 +29,9 @@
     "deno.enable": false,
     "deno.lint": false,
     "deno.unstable": false,
+    "cSpell.words": [
+        "injective",
+        "losslessly",
+        "unaugmented"
+    ]
 }

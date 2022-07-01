@@ -8,7 +8,7 @@ import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencie
 import { bumpVersionCommand } from "./bumpVersion";
 import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { MonoRepoKind } from "../common/monoRepo";
+import { MonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
 import { Context, isVersionBumpType, VersionBumpType, VersionChangeType } from "./context";
 import { createReleaseBump } from "./createReleaseBump";
 import { GitRepo } from "./gitRepo";
@@ -54,19 +54,21 @@ function parseNameVersion(arg: string | undefined) {
     let extra = false;
 
     if (name === undefined || name.startsWith("--")) {
-        name = MonoRepoKind[MonoRepoKind.Client];
+        name = MonoRepoKind.Client;
     } else {
         extra = true;
     }
 
     const split = name.split("=");
     name = split[0];
-    let v = split[1];
+    const v = split[1];
 
-    if (name.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
-        name = MonoRepoKind[MonoRepoKind.Client];
-    } else if (name.toLowerCase() === MonoRepoKind[MonoRepoKind.Server].toLowerCase()) {
-        name = MonoRepoKind[MonoRepoKind.Server];
+    if (name !== undefined) {
+        for (const monoRepo of supportedMonoRepoValues()) {
+            if (name.toLowerCase() === monoRepo.toLowerCase()) {
+                name = monoRepo;
+            }
+        }
     }
 
     let version: VersionChangeType | undefined;

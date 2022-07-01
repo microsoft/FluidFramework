@@ -95,7 +95,6 @@ declare function get_old_ClassDeclaration_MockContainerRuntimeFactory():
 declare function use_current_ClassDeclaration_MockContainerRuntimeFactory(
     use: TypeOnly<current.MockContainerRuntimeFactory>);
 use_current_ClassDeclaration_MockContainerRuntimeFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntimeFactory());
 
 /*
@@ -108,7 +107,6 @@ declare function get_current_ClassDeclaration_MockContainerRuntimeFactory():
 declare function use_old_ClassDeclaration_MockContainerRuntimeFactory(
     use: TypeOnly<old.MockContainerRuntimeFactory>);
 use_old_ClassDeclaration_MockContainerRuntimeFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockContainerRuntimeFactory());
 
 /*
@@ -121,7 +119,6 @@ declare function get_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnec
 declare function use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
     use: TypeOnly<current.MockContainerRuntimeFactoryForReconnection>);
 use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection());
 
 /*
@@ -134,7 +131,6 @@ declare function get_current_ClassDeclaration_MockContainerRuntimeFactoryForReco
 declare function use_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
     use: TypeOnly<old.MockContainerRuntimeFactoryForReconnection>);
 use_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection());
 
 /*
@@ -207,6 +203,7 @@ declare function get_current_ClassDeclaration_MockDeltaManager():
 declare function use_old_ClassDeclaration_MockDeltaManager(
     use: TypeOnly<old.MockDeltaManager>);
 use_old_ClassDeclaration_MockDeltaManager(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MockDeltaManager());
 
 /*
@@ -360,14 +357,26 @@ use_old_ClassDeclaration_MockObjectStorageService(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MockQuorum": {"forwardCompat": false}
+* "ClassDeclaration_MockQuorumClients": {"forwardCompat": false}
 */
+declare function get_old_ClassDeclaration_MockQuorumClients():
+    TypeOnly<old.MockQuorumClients>;
+declare function use_current_ClassDeclaration_MockQuorumClients(
+    use: TypeOnly<current.MockQuorumClients>);
+use_current_ClassDeclaration_MockQuorumClients(
+    get_old_ClassDeclaration_MockQuorumClients());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MockQuorum": {"backCompat": false}
+* "ClassDeclaration_MockQuorumClients": {"backCompat": false}
 */
+declare function get_current_ClassDeclaration_MockQuorumClients():
+    TypeOnly<current.MockQuorumClients>;
+declare function use_old_ClassDeclaration_MockQuorumClients(
+    use: TypeOnly<old.MockQuorumClients>);
+use_old_ClassDeclaration_MockQuorumClients(
+    get_current_ClassDeclaration_MockQuorumClients());
 
 /*
 * Validate forward compat by using old type in place of current type

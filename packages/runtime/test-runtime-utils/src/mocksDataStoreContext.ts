@@ -37,7 +37,6 @@ import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
-    public documentId: string = undefined as any;
     public isLocalDataStore: boolean = true;
     public packagePath: readonly string[] = undefined as any;
     public options: ILoaderOptions = undefined as any;

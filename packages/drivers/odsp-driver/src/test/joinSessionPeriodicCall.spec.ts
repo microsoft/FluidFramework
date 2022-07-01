@@ -106,7 +106,8 @@ describe("joinSessions Tests", () => {
                 blockSize: 100,
                 maxMessageSize: 16000,
                 summary: {
-                    idleTime: 0,
+                    minIdleTime: 0,
+                    maxIdleTime: 0,
                     maxAckWaitTime: 0,
                     maxOps: 100,
                     maxTime: 10,

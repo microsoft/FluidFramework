@@ -145,7 +145,7 @@ class SnapshotExtractorInPlace extends SnapshotExtractor {
  * When snapshot is read, it will unpack aggregated blobs and provide them transparently to caller.
  */
 export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
-    // Tells data store if it can use incremental summary (i.e. reuse DDSs from previous summary
+    // Tells data store if it can use incremental summary (i.e. reuse DDSes from previous summary
     // when only one DDS changed).
     // The answer has to be know long before we enable actual packing. The reason for the is the following:
     // A the moment when we enable packing, we should assume that all clients out there wil already have bits

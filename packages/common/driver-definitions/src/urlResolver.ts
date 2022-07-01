@@ -43,7 +43,13 @@ export interface IUrlResolver {
     // or do we split the token access from this?
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 
-    // Creates a url for the created container with any data store path given in the relative url.
+    /**
+     * Creates a url for the created container with any data store path given in the relative url.
+     * @param resolvedUrl - resolved url for the container.
+     * @param relativeUrl - relative url containing data store path; '/' represents root path.
+     * @param packageInfoSource - optional, represents container package information to be included in url.
+     * @returns absolute url combining container url with dta store path and optional additional information.
+     */
     getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
         relativeUrl: string,

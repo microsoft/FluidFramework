@@ -48,6 +48,56 @@
                 },
                 "$tslint5"
             ]
+        },
+        {
+            "label": "Build up to current package",
+            "detail": "Runs fluid-build using the package of the current file as target (so all dependencies up to this package are built as necessary).",
+            "type": "process",
+            "command": "node",
+            "args": [
+                "${workspaceRoot}/node_modules/@fluidframework/build-tools/dist/fluidBuild/fluidBuild.js",
+                "--root",
+                "${workspaceRoot}",
+                "--vscode",
+                "${fileDirname}"
+            ],
+            "group": "build",
+            "problemMatcher": [
+                {
+                    "base": "$tsc",
+                    "fileLocation": "absolute"
+                },
+            ]
+        },
+        {
+            "label": "Start tinylicious",
+            "detail": "Starts the tinylicious server from the /server/tinylicious folder. Run the 'Stop tinylicious' task to stop it.",
+            "type": "process",
+            "command": "npm",
+            "args": [
+                "run",
+                "start"
+            ],
+            "group": "none",
+            "options": {
+                "cwd": "${workspaceRoot}/server/tinylicious"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Stop tinylicious",
+            "detail": "Stops the tinylicious server from the /server/tinylicious folder.",
+            "type": "process",
+            "command": "npm",
+            "args": [
+                "run",
+                "stop"
+            ],
+            "group": "none",
+            "options": {
+                "cwd": "${workspaceRoot}/server/tinylicious"
+            },
+            "problemMatcher": []
         }
     ]
 }
