@@ -236,5 +236,5 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
                 });
             }
         });
-}
+    }
 }
