@@ -10,5 +10,12 @@ module.exports = {
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
     },
-    "rules": {}
+    "overrides": [
+        {
+            "files": ["src/test/types/validateAzureClientPrevious.ts"],
+            "rules": {
+                "@typescript-eslint/no-unsafe-argument": "off",
+            },
+        },
+    ],
 }

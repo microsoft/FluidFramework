@@ -11,7 +11,7 @@ import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
 
-const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
     const maybeValue = map.get<T>(key);
     if (maybeValue !== undefined) {
         return maybeValue;
