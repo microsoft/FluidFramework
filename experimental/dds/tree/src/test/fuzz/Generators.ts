@@ -288,11 +288,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 			const forbiddenDescendantId =
 				destination.referenceTrait?.parent ?? destination.referenceSibling ?? fail('Invalid place');
 
-			const unadjustedStartIndex: number = view.findIndexWithinTrait(start);
-			const unadjustedEndIndex: number = view.findIndexWithinTrait(end);
-			const startIndex = unadjustedStartIndex + (start.side === Side.After ? 1 : 0);
-			const endIndex = unadjustedEndIndex + (end.side === Side.After ? 1 : 0);
-
+			const startIndex = view.findIndexWithinTrait(start);
+			const endIndex = view.findIndexWithinTrait(end);
 			const idsInSource = new Set(view.getTrait(start.trait).slice(startIndex, endIndex));
 			for (
 				let current: NodeId | undefined = forbiddenDescendantId;
