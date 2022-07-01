@@ -86,6 +86,7 @@ import {
     IAttachMessage,
     IDataStore,
     ITelemetryContext,
+    AliasResult,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -1075,6 +1076,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly chunkMap: Map<string, string[]>;
 
     private readonly dataStores: DataStores;
+    private readonly pendingAliases: Map<string, Promise<AliasResult>> = new Map<string, Promise<AliasResult>>();
 
     /**
      * True if generating summaries with isolated channels is
@@ -1580,6 +1582,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const wait = typeof request.headers?.[RuntimeHeaders.wait] === "boolean"
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
+
+        const maybePendingAlias = this.pendingAliases.get(id);
+        if (maybePendingAlias !== undefined) {
+            if (!wait) {
+                throw responseToException(create404Response(request), request);
+            }
+
+            await maybePendingAlias;
+        }
 
         const internalId = this.internalId(id);
         const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
