@@ -20,12 +20,10 @@ import {
     IntervalTree,
     ISegment,
     LocalReference,
-    LocalReferencePosition,
     MergeTreeDeltaType,
     PropertiesManager,
     PropertySet,
     RedBlackTree,
-    ReferencePosition,
     ReferenceType,
     refTypeIncludesFlag,
     reservedRangeLabelsKey,
@@ -562,7 +560,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         private readonly label: string,
         private readonly helpers: IIntervalHelpers<TInterval>,
         /** Callback invoked each time one of the endpoints of an interval slides. */
-        private readonly onPositionChange?: (interval: TInterval) => void,
+        private readonly onPositionChange?: (interval: TInterval, previousInterval: TInterval) => void,
     ) {
         // eslint-disable-next-line @typescript-eslint/unbound-method
         this.endIntervalTree = new RedBlackTree<TInterval, TInterval>(helpers.compareEnds);
@@ -830,12 +828,37 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     private addIntervalListeners(interval: TInterval) {
+        const cloneRef = (ref: LocalReference) => {
+            const segment = ref.getSegment();
+            if (segment === undefined) {
+                // Cloning is unnecessary: refs which have slid off the string entirely
+                // never get slid back on. Creation code for refs doesn't accept undefined segment
+                // either, so this must be special-cased.
+                return ref;
+            }
+
+            return this.client.createLocalReferencePosition(
+                ref.getSegment(),
+                ref.getOffset(),
+                ReferenceType.Transient,
+                ref.properties
+            ) as LocalReference;
+        }
         if (interval instanceof SequenceInterval) {
+            let previousInterval: TInterval & SequenceInterval | undefined;
             interval.addPositionChangeListeners(
-                () => this.removeIntervalFromIndex(interval),
                 () => {
+                    assert(!previousInterval, "Invalid interleaving of before/after slide")
+                    previousInterval = interval.clone() as TInterval & SequenceInterval;
+                    previousInterval.start = cloneRef(previousInterval.start);
+                    previousInterval.end = cloneRef(previousInterval.end);
+                    this.removeIntervalFromIndex(interval);
+                },
+                () => {
+                    assert(previousInterval !== undefined, "Invalid interleaving of before/after slide");
                     this.addIntervalToIndex(interval);
-                    this.onPositionChange?.(interval);
+                    this.onPositionChange?.(interval, previousInterval);
+                    previousInterval = undefined;
                 },
             );
         }
@@ -1026,16 +1049,16 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
      * This event is invoked whenever the endpoints of an interval may have changed.
      * This can happen on:
      * - local endpoint modification
-     * - ack of an endpoint modification
-     * - position change due to segment sliding (will always appear as a local change)
+     * - ack of a remote endpoint modification
+     * - position change due to segment sliding (slides due to mergeTree segment deletion will always appear local)
      * The `interval` argument reflects the new values.
-     * `previousEndpoints` contains `ReferencePosition`s at the same location as the interval's original endpoints.
+     * `previousInterval` contains `ReferencePosition`s at the same location as the interval's original endpoints.
      * These references may be transient, so should only be used for location information.
      * `local` reflects whether the change originated locally.
      * `op` is defined if and only if the server has acked this change.
      */
     (event: "changeInterval",
-        listener: (interval: TInterval, previousEndpoints: { start: ReferencePosition, end: ReferencePosition }, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
+        listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
     /**
      * This event is invoked whenever an interval is added or removed from the collection.
      * `local` reflects whether the change originated locally.
@@ -1046,12 +1069,13 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
     /**
      * This event is invoked whenever an interval's properties have changed.
      * `interval` reflects the state of the updated properties.
-     * `propertyDeltas` is a map-like containing all changed key-values.
-     * `previousProps` is the property bag before the change.
+     * `propertyDeltas` is a map-like whose keys contain all values that were changed, and whose
+     * values contain all previous values of the property set.
+     * This object can be used directly in a call to `changeProperties` to revert the property change if desired.
      * `local` reflects whether the change originated locally.
      * `op` is defined if and only if the server has acked this change.
      */
-    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, previousProps: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
+    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void);
 }
 
 export class IntervalCollection<TInterval extends ISerializableInterval>
@@ -1099,7 +1123,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             client,
             label,
             this.helpers,
-            (interval) => this.emit("changeInterval", interval, true, undefined),
+            (interval, previousInterval) => this.emit("changeInterval", interval, previousInterval, true, undefined),
         );
         if (this.savedSerializedIntervals) {
             for (const serializedInterval of this.savedSerializedIntervals) {
@@ -1224,9 +1248,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             serializedInterval.properties = props;
             serializedInterval.properties[reservedIntervalIdKey] = interval.getIntervalId();
             this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
-            this.emit("propertyChanged", interval, deltaProps);
+            this.emit("propertyChanged", interval, deltaProps, true, undefined);
         }
-        this.emit("changeInterval", interval, true, undefined);
     }
 
     public change(id: string, start?: number, end?: number): TInterval | undefined {
@@ -1252,7 +1275,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             };
             this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
             this.addPendingChange(id, serializedInterval);
-            this.emit("changeInterval", newInterval, true, undefined);
+            this.emit("changeInterval", newInterval, interval, true, undefined);
             return newInterval;
         }
         // No interval to change
@@ -1331,55 +1354,62 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             throw new LoggingError("Attach must be called before accessing intervals");
         }
 
-        let interval: TInterval | undefined;
-
         if (local) {
             // This is an ack from the server. Remove the pending change.
             this.removePendingChange(serializedInterval);
-            const id: string = serializedInterval.properties?.[reservedIntervalIdKey];
-            interval = this.getIntervalById(id);
-            if (interval) {
-                // Let the propertyManager prune its pending change-properties set.
-                interval.propertyManager?.ackPendingProperties(
-                    {
-                        type: MergeTreeDeltaType.ANNOTATE,
-                        props: serializedInterval.properties ?? {},
-                    });
+        }
 
-                this.ackInterval(interval, op);
-            }
+        // Note that the ID is in the property bag only to allow us to find the interval.
+        // This API cannot change the ID, and writing to the ID property will result in an exception. So we
+        // strip it out of the properties here.
+        const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties;
+        const interval: TInterval | undefined = this.getIntervalById(id);
+        if (!interval) {
+            // The interval has been removed locally; no-op.
+            return;
+        }
+
+        if (local) {
+            // Let the propertyManager prune its pending change-properties set.
+            interval.propertyManager?.ackPendingProperties(
+                {
+                    type: MergeTreeDeltaType.ANNOTATE,
+                    props: serializedInterval.properties ?? {},
+                });
+
+            this.ackInterval(interval, op);
         } else {
             // If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
             // should be the winning change.
-            // Note that the ID is in the property bag only to allow us to find the interval.
-            // This API cannot change the ID, and writing to the ID property will result in an exception. So we
-            // strip it out of the properties here.
-            const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties;
-            interval = this.getIntervalById(id);
-            if (interval) {
-                let start: number | undefined;
-                let end: number | undefined;
-                // Track pending start/end independently of one another.
-                if (!this.hasPendingChangeStart(id)) {
-                    start = serializedInterval.start;
-                }
-                if (!this.hasPendingChangeEnd(id)) {
-                    end = serializedInterval.end;
-                }
-                if (start !== undefined || end !== undefined) {
-                    // If changeInterval gives us a new interval, work with that one. Otherwise keep working with
-                    // the one we originally found in the tree.
-                    interval = this.localCollection.changeInterval(interval, start, end, op) ?? interval;
-                }
-                const deltaProps = interval.addProperties(newProps, true, op.sequenceNumber);
-                if (this.onDeserialize) {
-                    this.onDeserialize(interval);
-                }
-                this.emit("propertyChanged", interval, deltaProps);
+            let start: number | undefined;
+            let end: number | undefined;
+            // Track pending start/end independently of one another.
+            if (!this.hasPendingChangeStart(id)) {
+                start = serializedInterval.start;
             }
-        }
-        if (interval) {
-            this.emit("changeInterval", interval, local, op);
+            if (!this.hasPendingChangeEnd(id)) {
+                end = serializedInterval.end;
+            }
+
+            let newInterval = interval;
+            if (start !== undefined || end !== undefined) {
+                // If changeInterval gives us a new interval, work with that one. Otherwise keep working with
+                // the one we originally found in the tree.
+                newInterval = this.localCollection.changeInterval(interval, start, end, op) ?? interval;
+            }
+            const deltaProps = newInterval.addProperties(newProps, true, op.sequenceNumber);
+            if (this.onDeserialize) {
+                this.onDeserialize(newInterval);
+            }
+
+            if (newInterval !== interval) {
+                this.emit("changeInterval", newInterval, interval, local, op);
+            }
+
+            const changedProperties = Object.keys(newProps).length > 0;
+            if (changedProperties) {
+                this.emit("propertyChanged", interval, deltaProps, local, op);
+            }
         }
     }
 
@@ -1481,6 +1511,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         const needsEndUpdate = newEnd !== undefined && !hasPendingEndChange;
 
         if (needsStartUpdate || needsEndUpdate) {
+            // `interval`'s endpoints will get modified in-place, so clone it prior to doing so for later event emission.
+            const oldInterval = interval.clone();
+
             // In this case, where we change the start or end of an interval,
             // it is necessary to remove and re-add the interval listeners.
             // This ensures that the correct listeners are added to the ReferencePosition.
@@ -1503,6 +1536,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 }
             }
             this.localCollection.add(interval);
+            this.emit("changeInterval", interval, oldInterval, true, op);
         }
     }
 
