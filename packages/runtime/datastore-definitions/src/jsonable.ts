@@ -7,11 +7,7 @@
  * Used to constrain a type `T` to types that are serializable as JSON.  Produces a
  * compile-time error if `T` contains non-Jsonable members.
  *
- * Typical usage:
- * ```ts
- *      function foo<T>(value: Jsonable<T>) { ... }
- * ```
- *
+ * @remarks
  * Important: `T extends Jsonable<T>` is generally incorrect. (Any value of `T`
  *            extends the JSON serializable subset of itself.)
  *
@@ -26,6 +22,12 @@
  *  - Non-finite numbers (`NaN`, `+/-Infinity`) are also coerced to `null`.
  *
  * Also, `Jsonable<T>` does not prevent the construction of circular references.
+ *
+ * @example
+ * Typical usage:
+ * ```typescript
+ *      function foo<T>(value: Jsonable<T>) { ... }
+ * ```
  */
 export type Jsonable<T = any, TReplaced = void> =
     T extends undefined | null | boolean | number | string | TReplaced
