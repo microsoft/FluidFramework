@@ -288,8 +288,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     createProps?: any;
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated (undocumented)
-    documentId: string;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
@@ -340,6 +338,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 
 // @public
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+    constructor(overrides?: {
+        clientId?: string;
+    });
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -359,7 +360,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get channelsRoutingContext(): IFluidHandleContext;
     // (undocumented)
-    clientId: string | undefined;
+    clientId: string;
     // (undocumented)
     close(): Promise<void>;
     // (undocumented)

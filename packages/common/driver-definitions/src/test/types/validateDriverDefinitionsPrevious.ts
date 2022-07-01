@@ -35,6 +35,7 @@ declare function get_current_TypeAliasDeclaration_DriverError():
 declare function use_old_TypeAliasDeclaration_DriverError(
     use: TypeOnly<old.DriverError>);
 use_old_TypeAliasDeclaration_DriverError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_DriverError());
 
 /*
@@ -59,6 +60,7 @@ declare function get_current_EnumDeclaration_DriverErrorType():
 declare function use_old_EnumDeclaration_DriverErrorType(
     use: TypeOnly<old.DriverErrorType>);
 use_old_EnumDeclaration_DriverErrorType(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_DriverErrorType());
 
 /*
@@ -131,6 +133,7 @@ declare function get_current_InterfaceDeclaration_IAuthorizationError():
 declare function use_old_InterfaceDeclaration_IAuthorizationError(
     use: TypeOnly<old.IAuthorizationError>);
 use_old_InterfaceDeclaration_IAuthorizationError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAuthorizationError());
 
 /*
@@ -227,6 +230,7 @@ declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: TypeOnly<old.IDocumentDeltaConnection>);
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
 /*
@@ -419,6 +423,7 @@ declare function get_current_InterfaceDeclaration_IDriverBasicError():
 declare function use_old_InterfaceDeclaration_IDriverBasicError(
     use: TypeOnly<old.IDriverBasicError>);
 use_old_InterfaceDeclaration_IDriverBasicError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverBasicError());
 
 /*
@@ -443,6 +448,7 @@ declare function get_current_InterfaceDeclaration_IDriverErrorBase():
 declare function use_old_InterfaceDeclaration_IDriverErrorBase(
     use: TypeOnly<old.IDriverErrorBase>);
 use_old_InterfaceDeclaration_IDriverErrorBase(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDriverErrorBase());
 
 /*
@@ -515,6 +521,7 @@ declare function get_current_InterfaceDeclaration_IGenericNetworkError():
 declare function use_old_InterfaceDeclaration_IGenericNetworkError(
     use: TypeOnly<old.IGenericNetworkError>);
 use_old_InterfaceDeclaration_IGenericNetworkError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGenericNetworkError());
 
 /*
@@ -659,6 +666,7 @@ declare function get_current_InterfaceDeclaration_IThrottlingWarning():
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
     use: TypeOnly<old.IThrottlingWarning>);
 use_old_InterfaceDeclaration_IThrottlingWarning(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
 /*
