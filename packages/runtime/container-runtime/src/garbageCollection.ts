@@ -642,6 +642,7 @@ export class GarbageCollector implements IGarbageCollector {
             sessionExpiry: this.sessionExpiryTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
             existing: createParams.existing,
+            trackGCState: this.trackGCState,
             ...this.gcOptions,
         });
         if (this.isSummarizerClient) {
