@@ -21,7 +21,11 @@ import {
     IDocumentServicePolicies,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { canRetryOnError, DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
+import {
+    canRetryOnError,
+    DeltaStreamConnectionForbiddenError,
+    NonRetryableError,
+} from "@fluidframework/driver-utils";
 import { IFacetCodes } from "@fluidframework/odsp-doclib-utils";
 import {
     IClient,

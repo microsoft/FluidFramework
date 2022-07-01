@@ -211,6 +211,9 @@ export class AzureClient {
                 resolvedUrl,
             );
         const storage = await documentService.connectToStorage();
+
+        // External API uses null
+        // eslint-disable-next-line unicorn/no-null
         const versions = await storage.getVersions(null, options?.maxCount ?? MAX_VERSION_COUNT);
 
         return versions.map((item) => {
@@ -258,7 +261,15 @@ export class AzureClient {
             "/",
         );
         return new (class extends FluidContainer {
-            async attach() {
+            /**
+             * See {@link FluidContainer.attach}
+             *
+             * @remarks This is required since the FluidContainer doesn't have knowledge of how the attach will happen
+             * or the id that will be returned.
+             * This exists because we are projecting a separation of server responsibility to the end developer that
+             * doesn't exist in the framework.
+             */
+            public async attach(): Promise<string> {
                 if (this.attachState !== AttachState.Detached) {
                     throw new Error(
                         "Cannot attach container. Container is not in detached state",

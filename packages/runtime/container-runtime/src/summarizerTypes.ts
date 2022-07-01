@@ -152,7 +152,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcBlobNodeCount?: number;
     /** Sum of the sizes of all op contents since the last summary */
     readonly opsSizesSinceLastSummary: number;
-    /** Number of non-system ops since the last summary @see isSystemMessage */
+    /** Number of non-system ops since the last summary. See {@link @fluidframework/protocol-base#isSystemMessage} */
     readonly nonSystemOpsSinceLastSummary: number;
     /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
     readonly summaryNumber: number;
@@ -300,7 +300,7 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 export interface ISummarizer extends
-    IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
+    IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
     /*
      * Asks summarizer to move to exit.
      * Summarizer will finish current processes, which may take a while.
@@ -428,7 +428,10 @@ type SummaryGeneratorOptionalTelemetryProperties =
     /** Delta in sum of op sizes between the current reference sequence number and the reference
      *  sequence number of the last summary */
     "opsSizesSinceLastSummary" |
-    /** Delta between the number of non-system ops since the last summary @see isSystemMessage */
+    /**
+     * Delta between the number of non-system ops since the last summary.
+     * See {@link @fluidframework/protocol-base#isSystemMessage}
+     */
     "nonSystemOpsSinceLastSummary" |
     /** Time it took to generate the summary tree and stats. */
     "generateDuration" |
