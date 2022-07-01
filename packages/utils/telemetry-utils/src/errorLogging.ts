@@ -266,7 +266,7 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof (x?.value) !== "object" && typeof (x?.tag) === "string");
 }
 
-export function parseJSONObject(x: any): TelemetryEventPropertyType {
+export function parseJSONObject(x: any): TelemetryEventPropertyType | null {
     switch(typeof x) {
         case "string":
         case "number":
