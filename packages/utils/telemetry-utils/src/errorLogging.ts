@@ -8,6 +8,7 @@ import {
     ITaggedTelemetryPropertyType,
     ITelemetryLogger,
     ITelemetryProperties,
+    TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
@@ -265,11 +266,22 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof (x?.value) !== "object" && typeof (x?.tag) === "string");
 }
 
-export function isSimpleArray(x: any): boolean {
-    if (!Array.isArray(x)) {
-        return false;
+export function parseJSONObject(x: any): TelemetryEventPropertyType {
+    switch(typeof x) {
+        case "string":
+        case "number":
+        case "boolean":
+        case "undefined":
+            return x;
+        default:
+            if (!Array.isArray(x)) {
+                return null;
+            }
+            if (x.every((val) => typeof val === "string" || "number" || "boolean" || "undefined"))
+                return JSON.stringify(x);
+
     }
-    return x.every((val) => typeof val === "string" || "number" || "boolean" || "undefined");
+
 }
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
@@ -281,27 +293,16 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
             continue;
         }
         const val = obj[key];
-        switch (typeof val) {
-            case "string":
-            case "number":
-            case "boolean":
-            case "undefined":
-                props[key] = val;
-                break;
-            default: {
-                if (isTaggedTelemetryPropertyValue(val)) {
-                    props[key] = val;
-                } else if (isSimpleArray(val)) {
-                    // we will log array object of primitives
-                    props[key] = JSON.stringify(val);
-                } else {
-                    // We don't support logging arbitrary objects
-                    props[key] = "REDACTED (arbitrary object)";
-                    console.error("unSupported Format of Logging Error Property:", val);
-                }
-                break;
-            }
+        if (isTaggedTelemetryPropertyValue(val)) {
+            props[key] = val;
+        } else if (parseJSONObject(val) !== null) {
+            props[key] = parseJSONObject(val);
+        } else {
+            // We don't support logging arbitrary objects
+            props[key] = "REDACTED (arbitrary object)";
+            console.error("unSupported Format of Logging Error Property:", val);
         }
+        break;
     }
     return props;
 }
