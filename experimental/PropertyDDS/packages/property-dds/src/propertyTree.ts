@@ -69,7 +69,7 @@ interface ISnapshot {
 	useMH: boolean;
 	numChunks: number;
 }
-interface ISnapshotSummary {
+export interface ISnapshotSummary {
 	remoteTipView?: SerializedChangeSet;
 	remoteChanges?: IPropertyTreeMessage[];
 	unrebasedRemoteChanges?: Record<string, IRemotePropertyTreeMessage>;
@@ -80,6 +80,33 @@ export interface SharedPropertyTreeOptions {
 	clientFiltering?: boolean;
 	useMH?: boolean;
 }
+
+export interface ISharedPropertyTreeEncDec {
+	messageEncoder: { encode: (IPropertyTreeMessage) => IPropertyTreeMessage;
+		decode: (IPropertyTreeMessage) => IPropertyTreeMessage; };
+	summaryEncoder: { encode: (ISnapshotSummary) => Buffer; decode: (Buffer) => ISnapshotSummary; };
+}
+
+export interface IPropertyTreeConfig {
+	encDec: ISharedPropertyTreeEncDec;
+}
+
+const defaultEncDec: ISharedPropertyTreeEncDec = {
+	messageEncoder: { encode: (msg: IPropertyTreeMessage) => msg,
+		decode: (msg: IPropertyTreeMessage) => msg },
+	summaryEncoder: {
+		encode: (summary: ISnapshotSummary) => {
+			const packr = new Packr();
+			const serializedSummary = packr.pack(summary);
+			return serializedSummary;
+		},
+		decode: (serializedSummary) => {
+			const packr = new Packr();
+			const snapshotSummary = packr.unpack(serializedSummary);
+			return snapshotSummary as ISnapshotSummary;
+		},
+	},
+};
 
 /**
  * Silly DDS example that models a six sided die.
@@ -107,12 +134,14 @@ export class SharedPropertyTree extends SharedObject {
 	skipSequenceNumber: number = -1;
 	headCommitGuid: string = "";
 	useMH: boolean = false;
+	propertyTreeConfig: IPropertyTreeConfig;
 
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		options: SharedPropertyTreeOptions,
+		propertyTreeConfig: IPropertyTreeConfig = { encDec: defaultEncDec },
 	) {
 		super(id, runtime, attributes, "fluid_propertyTree_");
 
@@ -122,6 +151,7 @@ export class SharedPropertyTree extends SharedObject {
 
 		// By default, we currently don't use the MH
 		this.useMH = options.useMH ?? false;
+		this.propertyTreeConfig = propertyTreeConfig;
 	}
 
 	/**
@@ -203,6 +233,22 @@ export class SharedPropertyTree extends SharedObject {
 		}
 	}
 
+	/**
+	 * This method encodes the given message to the transfer form
+	 * @param change - The message to be encoded.
+ 	 */
+	private encodeMessage(change: IPropertyTreeMessage): IPropertyTreeMessage {
+		return this.propertyTreeConfig.encDec.messageEncoder.encode(change);
+	}
+
+	/**
+ 	 * This method decodes message from the transfer form.
+	 * @param transferChange - The message to be decoded.
+     	 */
+	private decodeMessage(transferChange: IPropertyTreeMessage): IPropertyTreeMessage {
+		return this.propertyTreeConfig.encDec.messageEncoder.decode(transferChange);
+	}
+
 	private applyChangeSet(changeSet: SerializedChangeSet, metadata: Metadata) {
 		const _changeSet = new ChangeSet(changeSet);
 		_changeSet._toReversibleChangeSet(this.tipView);
@@ -223,12 +269,12 @@ export class SharedPropertyTree extends SharedObject {
 			useMH: this.useMH,
 		};
 		this._applyLocalChangeSet(change);
-
 		// Queue the op for transmission to the Fluid service.
+		const transferChange = this.encodeMessage(cloneDeep(change));
 		if (this.transmissionsHaveBeenStopped) {
-			this.enqueuedMessages.push(cloneDeep(change));
+			this.enqueuedMessages.push(transferChange);
 		} else {
-			this.submitLocalMessage(cloneDeep(change));
+			this.submitLocalMessage(transferChange);
 		}
 	}
 
@@ -277,7 +323,8 @@ export class SharedPropertyTree extends SharedObject {
 	 */
 	protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
 		if (message.type === MessageType.Operation && message.sequenceNumber > this.skipSequenceNumber) {
-			const content: IRemotePropertyTreeMessage = { ...message.contents, sequenceNumber: message.sequenceNumber };
+			const change: IPropertyTreeMessage = this.decodeMessage(cloneDeep(message.contents));
+			const content: IRemotePropertyTreeMessage = { ...change, sequenceNumber: message.sequenceNumber };
 			switch (content.op) {
 				case OpKind.ChangeSet:
 					// If the op originated locally from this client, we've already accounted for it
@@ -384,6 +431,53 @@ export class SharedPropertyTree extends SharedObject {
 		this.remoteChanges = remoteChanges;
 		this.unrebasedRemoteChanges = unrebasedRemoteChanges;
 	}
+
+	/**
+	 * This method encodes the local summary (snapshot) object into the serialized form.
+	 * @param summary - The local summary (snapshot)representation.
+	 * @returns The serialized summary representation.
+	 */
+	private encodeSummary(summary: ISnapshotSummary) {
+		return this.propertyTreeConfig.encDec.summaryEncoder.encode(summary);
+	}
+
+	/**
+	 * This method decodes the serialized form of the summary into the local summary (snapshot) object.
+	 * @param serializedSummary - The serialized summary representation.
+	 * @returns The local summary (snapshot)representation.
+ 	 */
+	private decodeSummary(serializedSummary): ISnapshotSummary {
+		return this.propertyTreeConfig.encDec.summaryEncoder.decode(serializedSummary);
+	}
+
+	/**
+ 	 * This method writes the log message if the logging is enabled in the extended DDS.
+	 * The logging is not enabled in the default Property DDS
+	 * @param message - The message to be logged.
+	 */
+	protected logIfEnabled(message) {}
+
+	/**
+ 	 * This method encodes the binary representation of the
+ 	 * blob.
+	 * @param blob - The binary representation of the blob.
+	 * @returns The encoded representation of the blob.
+ 	 */
+	private encodeSummaryBlob(blob: ArrayBuffer): any {
+		return bufferToString(blob, "base64");
+	}
+
+	/**
+ 	 * This method decodes the encoded representation of the
+	 * blob.
+ 	 * @param blob - The encoded representation of the blob.
+	 * @returns The binary representation of the blob.
+	 */
+	private decodeSummaryBlob(encoded: any): ArrayBuffer {
+		const buffer = bufferToString(encoded, "utf8");
+		return stringToBuffer(buffer, "base64");
+	}
+
 	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		this.pruneHistory();
 		const snapshot: ISnapshot = {
@@ -403,14 +497,16 @@ export class SharedPropertyTree extends SharedObject {
 				unrebasedRemoteChanges: this.unrebasedRemoteChanges,
 			};
 			const chunkSize = 5000 * 1024; // Default limit seems to be 5MB
-			const packr = new Packr();
-			const serializedSummary = packr.pack(summary);
-
+			let totalBlobsSize = 0;
+			const serializedSummary = this.encodeSummary(summary);
 			for (let pos = 0, i = 0; pos < serializedSummary.length; pos += chunkSize, i++) {
-				builder.addBlob(`summaryChunk_${i}`,
-								bufferToString(serializedSummary.slice(pos, pos + chunkSize), "base64"));
+				const summaryBlob = this.encodeSummaryBlob(serializedSummary.slice(pos, pos + chunkSize));
+				// eslint-disable-next-line @typescript-eslint/dot-notation
+				totalBlobsSize += summaryBlob["length"];
+				builder.addBlob(`summaryChunk_${i}`, summaryBlob);
 				snapshot.numChunks++;
 			}
+			this.logIfEnabled(`Total blobs transfer size: ${totalBlobsSize}`);
 		}
 
 		builder.addBlob("properties", serializer !== undefined
@@ -432,8 +528,7 @@ export class SharedPropertyTree extends SharedObject {
 				// We load all chunks
 				const chunks: ArrayBufferLike[] = await Promise.all(
 					range(snapshot.numChunks).map(async (i) => {
-						const buffer = bufferToString(await storage.readBlob(`summaryChunk_${i}`), "utf8");
-						return stringToBuffer(buffer, "base64");
+						return this.decodeSummaryBlob(await storage.readBlob(`summaryChunk_${i}`));
 					}),
 				);
 
@@ -443,9 +538,7 @@ export class SharedPropertyTree extends SharedObject {
 					serializedSummary.set(new Uint8Array(chunk), offset);
 					return offset + chunk.byteLength;
 				}, 0);
-
-				const packr = new Packr();
-				const snapshotSummary = packr.unpack(serializedSummary);
+				const snapshotSummary = this.decodeSummary(serializedSummary);
 				if (
 					snapshotSummary.remoteChanges === undefined ||
 					snapshotSummary.remoteTipView === undefined ||

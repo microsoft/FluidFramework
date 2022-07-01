@@ -14,13 +14,39 @@ There are a few steps you can take to write a good change note and avoid needing
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 
+# 2.0.0
+
+## 2.0.0 Upcoming changes
+- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+- [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
+- [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
+
+### Remove `documentId` field from `MockFluidDataStoreContext`
+This field has been deprecated and will be removed in a future breaking change.
+
+### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
+
+### Remove `ConnectionState.Connecting`
+`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
+
+### `IContainerRuntime.flush` is deprecated
+`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
 # 1.1.0
 
 ## 1.1.0 Upcoming changes
 - [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated)
+- [ ISummaryAuthor and ISummaryCommitter are deprecated](#isummaryauthor-and-isummarycommitter-are-deprecated)
 
  ### IContainerRuntime.createRootDataStore is deprecated
  See [#9660](https://github.com/microsoft/FluidFramework/issues/9660). The API is vulnerable to name conflicts, which lead to invalid documents. As a replacement, create a regular datastore using the `IContainerRuntimeBase.createDataStore` function, then alias the datastore by using the `IDataStore.trySetAlias` function and specify a string value to serve as the alias to which the datastore needs to be bound. If successful, "Success" will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
+
+ ### ISummaryAuthor and ISummaryCommitter are deprecated
+  See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and `ISummaryCommitter`
+  are deprecated and will be removed in a future release.
 
 # 1.0.0
 
@@ -835,7 +861,7 @@ Moved the following interfaces and const from `@fluidframework/core-interface` t
 They are deprecated from `@fluidframework/core-interface` and would be removed in future release. Please import them from `@fluidframework/container-definitions`.
 
 ### Deprecated `IFluidSerializer` in `IFluidDataStoreRuntime`
-`IFluidSerializer` should only be used by DDSs to serialize data and they should use the one created by `SharedObject`.
+`IFluidSerializer` should only be used by DDSes to serialize data and they should use the one created by `SharedObject`.
 
 ### Errors thrown to DDS event handlers
 Before this release, exceptions thrown from DDS event handlers resulted in Fluid Framework reporting non-error telemetry event and moving forward as if nothing happened. Starting with this release, such exceptions will result in critical error, i.e. container will be closed with such error and hosting app will be notified via Container's "closed" event. This will either happen immediately (if exception was thrown while processing remote op), or on later usage (if exception was thrown on local change). DDS will go into "broken" state and will keep throwing error on amy attempt to make local changes.
@@ -1811,10 +1837,10 @@ DataObject are now always created when Data Store is created. Full initializatio
 The impact of that change is that all changed objects would get loaded by summarizer container, but would not get initialized. Before this change, summarizer would not be loading any DataObjects.
 This change
 
-1. Ensures that initial summary generated for when data store attaches to container has fully initialized object, with all DDSs created. Before this change this initial snapshot was empty in most cases.
+1. Ensures that initial summary generated for when data store attaches to container has fully initialized object, with all DDSes created. Before this change this initial snapshot was empty in most cases.
 2. Allows DataObjects to modify FluidDataStoreRuntime behavior before it gets registered and used by the rest of the system, including setting various hooks.
 
-But it also puts more constraints on DataObject - its constructor should be light and not do any expensive work (all such work should be done in corresponding initialize methods), or access any data store runtime functionality that requires fully initialized runtime (like loading DDSs will not work in this state)
+But it also puts more constraints on DataObject - its constructor should be light and not do any expensive work (all such work should be done in corresponding initialize methods), or access any data store runtime functionality that requires fully initialized runtime (like loading DDSes will not work in this state)
 
 ### RequestParser
 

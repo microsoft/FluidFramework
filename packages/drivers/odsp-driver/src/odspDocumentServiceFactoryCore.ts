@@ -174,7 +174,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
         return this.createDocumentServiceCore(resolvedUrl, createOdspLogger(logger), undefined, clientIsSummarizer);
     }
 
-    private async createDocumentServiceCore(
+    protected async createDocumentServiceCore(
         resolvedUrl: IResolvedUrl,
         odspLogger: TelemetryLogger,
         cacheAndTrackerArg?: ICacheAndTracker,
