@@ -65,7 +65,7 @@
     "crc-32": "1.2.0",
     "debug": "^4.1.1",
     "json-stringify-safe": "^5.0.1",
-    "jsrsasign": "^10.2.0",
+    "jsrsasign": "^10.5.25",
     "jwt-decode": "^3.0.0",
     "querystring": "^0.2.0",
     "sillyname": "^0.1.0",

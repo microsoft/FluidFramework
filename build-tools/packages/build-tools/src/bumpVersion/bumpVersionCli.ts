@@ -230,7 +230,7 @@ function parseOptions(argv: string[]) {
 }
 
 function checkFlagsConflicts() {
-    let command = undefined;
+    let command: string | undefined = undefined;
     if (paramReleaseBump) {
         command = "releaseBump";
     }

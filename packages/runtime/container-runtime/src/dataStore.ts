@@ -26,11 +26,11 @@ export interface IDataStoreAliasMessage {
 
 /**
  * Type guard that returns true if the given alias message is actually an instance of
- * a class which implements @see IDataStoreAliasMessage
+ * a class which implements {@link IDataStoreAliasMessage}
  * @param maybeDataStoreAliasMessage - message object to be validated
- * @returns True if the @see IDataStoreAliasMessage is fully implemented, false otherwise
+ * @returns True if the {@link IDataStoreAliasMessage} is fully implemented, false otherwise
  */
- export const isDataStoreAliasMessage = (
+export const isDataStoreAliasMessage = (
     maybeDataStoreAliasMessage: any,
 ): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
     return typeof maybeDataStoreAliasMessage?.internalId === "string"
@@ -153,7 +153,7 @@ class DataStore implements IDataStore {
 
     private async ackBasedPromise<T>(
         executor: (resolve: (value: T | PromiseLike<T>) => void,
-        reject: (reason?: any) => void) => void,
+            reject: (reason?: any) => void) => void,
     ): Promise<T> {
         let rejectBecauseDispose: () => void;
         return new Promise<T>((resolve, reject) => {

@@ -20,6 +20,7 @@ Options:
 ${commonOptionString}
      --server         Generate package lock for server mono repo (default: client)
      --azure          Generate package lock for azure mono repo (default: client)
+     --build-tools    Generate package lock for build-tools mono repo (default: client)
 `);
 }
 
@@ -52,6 +53,11 @@ function parseOptions(argv: string[]) {
 
         if (arg === "--azure") {
             kind = MonoRepoKind.Azure;
+            continue;
+        }
+
+        if (arg === "--build-tools") {
+            kind = MonoRepoKind.BuildTools;
             continue;
         }
 

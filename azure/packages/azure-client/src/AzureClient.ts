@@ -262,7 +262,7 @@ export class AzureClient {
         );
         return new (class extends FluidContainer {
             /**
-             * @see {@link FluidContainer.attach}
+             * See {@link FluidContainer.attach}
              *
              * @remarks This is required since the FluidContainer doesn't have knowledge of how the attach will happen
              * or the id that will be returned.
