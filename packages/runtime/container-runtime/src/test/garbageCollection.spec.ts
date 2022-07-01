@@ -39,7 +39,7 @@ import { dataStoreAttributesBlobName, IContainerRuntimeMetadata } from "../summa
 describe("Garbage Collection Tests", () => {
     const testPkgPath = ["testPkg"];
     // The package data is tagged in the telemetry event.
-    const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.PackageData };
+    const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.CodeArtifact };
     // Nodes in the reference graph.
     const nodes: string[] = [
         "/node1",
@@ -302,18 +302,19 @@ describe("Garbage Collection Tests", () => {
                 // Expire the timeout and validate that all events for node 2 and node 3 are logged.
                 clock.tick(1);
                 await updateAllNodesAndRunGC(garbageCollector);
-                const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [
-                    { eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
-                    { eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg },
-                    { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
-                    { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
-                ];
+                const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
                 if (deleteEventName) {
                     expectedEvents.push(
                         { eventName: deleteEventName, timeout, id: nodes[2] },
                         { eventName: deleteEventName, timeout, id: nodes[3] },
                     );
                 }
+                expectedEvents.push(
+                    { eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
+                    { eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg },
+                    { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
+                    { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
+                );
                 assert(
                     mockLogger.matchEvents(expectedEvents),
                     "all events not generated as expected",
@@ -346,13 +347,14 @@ describe("Garbage Collection Tests", () => {
                 // Expire the timeout and validate that all events for node 2 and node 3 are logged.
                 clock.tick(1);
                 await updateAllNodesAndRunGC(garbageCollector);
-                const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [
-                    { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
-                    { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
-                ];
+                const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
                 if (deleteEventName) {
                     expectedEvents.push({ eventName: deleteEventName, timeout, id: nodes[3] });
                 }
+                expectedEvents.push(
+                    { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
+                    { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
+                );
                 assert(
                     mockLogger.matchEvents(expectedEvents),
                     "all events not generated as expected",
@@ -399,11 +401,11 @@ describe("Garbage Collection Tests", () => {
                 defaultGCData.gcNodes[nodes[2]] = [];
 
                 await garbageCollector.collectGarbage({});
-                // Validate that the deleted event is logged when GC runs after load.
+                // Validate that the sweep ready event is logged when GC runs after load.
                 if (deleteEventName) {
                     assert(
                         mockLogger.matchEvents([{ eventName: deleteEventName, timeout, id: nodes[3] }]),
-                        "deleted event not generated as expected",
+                        "sweep ready event not generated as expected",
                     );
                 }
 
@@ -463,11 +465,11 @@ describe("Garbage Collection Tests", () => {
                 defaultGCData.gcNodes[nodes[2]] = [];
                 await garbageCollector.collectGarbage({});
 
-                // Validate that the deleted event is logged when GC runs after load.
+                // Validate that the sweep ready event is logged when GC runs after load.
                 if (deleteEventName) {
                     assert(
                         mockLogger.matchEvents([{ eventName: deleteEventName, timeout, id: nodes[3] }]),
-                        "deleted event not generated as expected",
+                        "sweep ready event not generated as expected",
                     );
                 }
 
@@ -537,7 +539,7 @@ describe("Garbage Collection Tests", () => {
                 defaultGCData.gcNodes[nodes[2]] = [];
 
                 await garbageCollector.collectGarbage({});
-                 // Validate that the deleted event is logged when GC runs after load.
+                 // Validate that the sweep ready event is logged when GC runs after load.
                  if (deleteEventName) {
                     assert(
                         mockLogger.matchEvents([
@@ -545,7 +547,7 @@ describe("Garbage Collection Tests", () => {
                             { eventName: deleteEventName, timeout, id: nodes[2] },
                             { eventName: deleteEventName, timeout, id: nodes[3] },
                         ]),
-                        "deleted event not generated as expected",
+                        "sweep ready event not generated as expected",
                     );
                 }
 
@@ -565,7 +567,7 @@ describe("Garbage Collection Tests", () => {
             });
         };
 
-        describe("inactive events", () => {
+        describe("Inactive events", () => {
             const inactiveTimeoutMs = 500;
 
             beforeEach(() => {
@@ -574,13 +576,13 @@ describe("Garbage Collection Tests", () => {
 
             tests(
                 inactiveTimeoutMs,
-                "GarbageCollector:inactiveObject_Revived",
-                "GarbageCollector:inactiveObject_Changed",
-                "GarbageCollector:inactiveObject_Loaded",
+                "GarbageCollector:InactiveObject_Revived",
+                "GarbageCollector:InactiveObject_Changed",
+                "GarbageCollector:InactiveObject_Loaded",
             );
         });
 
-        describe("Deleted events", () => {
+        describe("Sweep ready events", () => {
             const snapshotCacheExpiryMs = 500;
             const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
 
@@ -590,15 +592,15 @@ describe("Garbage Collection Tests", () => {
 
             tests(
                 sweepTimeoutMs,
-                "GarbageCollector:deletedObject_Revived",
-                "GarbageCollector:deletedObject_Changed",
-                "GarbageCollector:deletedObject_Loaded",
+                "GarbageCollector:SweepReadyObject_Revived",
+                "GarbageCollector:SweepReadyObject_Changed",
+                "GarbageCollector:SweepReadyObject_Loaded",
                 snapshotCacheExpiryMs,
                 "GarbageCollector:GCObjectDeleted",
             );
         });
 
-        it("generates both inactive and swept events when nodes are used after time out", async () => {
+        it("generates both inactive and sweep ready events when nodes are used after time out", async () => {
             const inactiveTimeoutMs = 500;
             const snapshotCacheExpiryMs = 500;
             const sweepTimeoutMs = defaultSessionExpiryDurationMs + snapshotCacheExpiryMs + oneDayMs;
@@ -616,25 +618,25 @@ describe("Garbage Collection Tests", () => {
             await updateAllNodesAndRunGC(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: "GarbageCollector:inactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[2] },
-                    { eventName: "GarbageCollector:inactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[2] },
-                    { eventName: "GarbageCollector:inactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[3] },
-                    { eventName: "GarbageCollector:inactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[3] },
+                    { eventName: "GarbageCollector:InactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[2] },
+                    { eventName: "GarbageCollector:InactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[2] },
+                    { eventName: "GarbageCollector:InactiveObject_Changed", timeout: inactiveTimeoutMs, id: nodes[3] },
+                    { eventName: "GarbageCollector:InactiveObject_Loaded", timeout: inactiveTimeoutMs, id: nodes[3] },
                 ]),
                 "inactive events not generated as expected",
             );
 
-            // Advance the clock to trigger sweep timeout and validate that we get deleted events.
+            // Advance the clock to trigger sweep timeout and validate that we get sweep ready events.
             clock.tick(sweepTimeoutMs - inactiveTimeoutMs);
             await updateAllNodesAndRunGC(garbageCollector);
             assert(
                 mockLogger.matchEvents([
-                    { eventName: "GarbageCollector:deletedObject_Changed", timeout: sweepTimeoutMs, id: nodes[2] },
-                    { eventName: "GarbageCollector:deletedObject_Loaded", timeout: sweepTimeoutMs, id: nodes[2] },
-                    { eventName: "GarbageCollector:deletedObject_Changed", timeout: sweepTimeoutMs, id: nodes[3] },
-                    { eventName: "GarbageCollector:deletedObject_Loaded", timeout: sweepTimeoutMs, id: nodes[3] },
+                    { eventName: "GarbageCollector:SweepReadyObject_Changed", timeout: sweepTimeoutMs, id: nodes[2] },
+                    { eventName: "GarbageCollector:SweepReadyObject_Loaded", timeout: sweepTimeoutMs, id: nodes[2] },
+                    { eventName: "GarbageCollector:SweepReadyObject_Changed", timeout: sweepTimeoutMs, id: nodes[3] },
+                    { eventName: "GarbageCollector:SweepReadyObject_Loaded", timeout: sweepTimeoutMs, id: nodes[3] },
                 ]),
-                "deleted events not generated as expected",
+                "sweep ready events not generated as expected",
             );
         });
     });

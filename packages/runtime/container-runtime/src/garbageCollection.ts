@@ -196,14 +196,14 @@ const UnreferencedState = {
     /** The node is inactive, i.e., it should not become referenced. */
     Inactive: "Inactive",
     /** The node is ready to be deleted by the sweep phase. */
-    ReadyForSweep: "ReadyForSweep",
+    SweepReady: "SweepReady",
 };
 export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
 
 /** The event that is logged when unreferenced node is used after a certain time. */
 interface IUnreferencedEventProps {
     usageType: "Changed" | "Loaded" | "Revived";
-    state: "inactive" | "deleted";
+    state: UnreferencedState;
     id: string;
     type: GCNodeType;
     unrefTime: number;
@@ -231,8 +231,11 @@ class UnreferencedStateTracker {
 
     constructor(
         public readonly unreferencedTimestampMs: number,
+        /** The time after which node transitions to Inactive state. */
         private readonly inactiveTimeoutMs: number,
+        /** The time after which node transitions to SweepReady state; undefined if session expiry is disabled. */
         private readonly sweepTimeoutMs?: number,
+        /** The current reference timestamp; undefined if no ops have ever been processed which can happen in tests. */
         currentReferenceTimestampMs?: number,
     ) {
         // If there is no current reference timestamp, don't track the node's unreferenced state. This will happen
@@ -246,9 +249,9 @@ class UnreferencedStateTracker {
     public updateTracking(currentReferenceTimestampMs: number) {
         const unreferencedDurationMs = currentReferenceTimestampMs - this.unreferencedTimestampMs;
 
-        // If the node has been unreferenced for sweep timeout amount of time, update the state to ReadyForSweep.
+        // If the node has been unreferenced for sweep timeout amount of time, update the state to SweepReady.
         if (this.sweepTimeoutMs !== undefined && unreferencedDurationMs >= this.sweepTimeoutMs) {
-            this._state = UnreferencedState.ReadyForSweep;
+            this._state = UnreferencedState.SweepReady;
             this.clearTimers();
             return;
         }
@@ -262,7 +265,7 @@ class UnreferencedStateTracker {
             if (this.sweepTimeoutMs !== undefined) {
                 setLongTimeout(
                     this.sweepTimeoutMs - unreferencedDurationMs,
-                    () => { this._state = UnreferencedState.ReadyForSweep; },
+                    () => { this._state = UnreferencedState.SweepReady; },
                     (timer) => { this.sweepTimer = timer; },
                 );
             }
@@ -278,7 +281,7 @@ class UnreferencedStateTracker {
                 if (this.sweepTimeoutMs !== undefined) {
                     setLongTimeout(
                         this.sweepTimeoutMs - this.inactiveTimeoutMs,
-                        () => { this._state = UnreferencedState.ReadyForSweep; },
+                        () => { this._state = UnreferencedState.SweepReady; },
                         (timer) => { this.sweepTimer = timer; },
                     );
                 }
@@ -546,6 +549,11 @@ export class GarbageCollector implements IGarbageCollector {
             this.gcOptions.inactiveTimeoutMs ??
             defaultInactiveTimeoutMs;
 
+        // Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
+        if (this.sweepTimeoutMs !== undefined && this.inactiveTimeoutMs > this.sweepTimeoutMs) {
+            throw new UsageError("inactive timeout should not be greated than the sweep timeout");
+        }
+
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
         this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
 
@@ -778,6 +786,10 @@ export class GarbageCollector implements IGarbageCollector {
         this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
         this.runtime.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
 
+        // Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will
+        // delete these objects here instead.
+        this.logSweepEvents(logger, currentReferenceTimestampMs);
+
         // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
         // involving access to deleted data.
         if (this.testMode) {
@@ -787,9 +799,48 @@ export class GarbageCollector implements IGarbageCollector {
         // Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
         // updates its state so that we don't send false positives based on intermediate state. For example, we may get
         // reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
-        await this.logUnreferencedEvents(logger, currentReferenceTimestampMs);
+        await this.logUnreferencedEvents(logger);
 
         return gcStats;
+    }
+
+    private logSweepEvents(logger: ITelemetryLogger, currentReferenceTimestampMs?: number) {
+        /**
+         * For nodes that are ready to sweep, log an event for now. Until we start running sweep which deletes objects,
+         * this will give us a view into how much deleted content a container has.
+         */
+        if (this.mc.config.getBoolean(disableSweepLogKey) === true
+            || currentReferenceTimestampMs === undefined
+            || this.sweepTimeoutMs === undefined) {
+            return;
+        }
+
+        this.unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
+            if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
+                return;
+            }
+
+            const nodeType = this.runtime.getNodeType(nodeId);
+            if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
+                return;
+            }
+
+            // Log deleted event for each node only once to reduce noise in telemetry.
+            const uniqueEventId = `Deleted-${nodeId}`;
+            if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
+                return;
+            }
+            this.loggedUnreferencedEvents.add(uniqueEventId);
+            logger.sendTelemetryEvent({
+                eventName: "GCObjectDeleted",
+                id: nodeId,
+                type: nodeType,
+                age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+                timeout: this.sweepTimeoutMs,
+                completedGCRuns: this.completedRuns,
+                lastSummaryTime: this.getLastSummaryTimestampMs(),
+            });
+        });
     }
 
     /**
@@ -1240,7 +1291,8 @@ export class GarbageCollector implements IGarbageCollector {
     ) {
         // If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
         // logging as nothing interesting would have happened worth logging.
-        if (currentReferenceTimestampMs === undefined) {
+        // If the node is active, skip logging.
+        if (currentReferenceTimestampMs === undefined || nodeStateTracker.state === UnreferencedState.Active) {
             return;
         }
 
@@ -1257,7 +1309,7 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const state = nodeStateTracker.state === UnreferencedState.Inactive ? "inactive" : "deleted";
+        const state = nodeStateTracker.state;
         const uniqueEventId = `${state}-${nodeId}-${usageType}`;
         if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
             return;
@@ -1288,12 +1340,12 @@ export class GarbageCollector implements IGarbageCollector {
             this.mc.logger.sendErrorEvent({
                 ...propsToLog,
                 eventName: `${state}Object_${usageType}`,
-                pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
+                pkg: packagePath ? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
             });
         }
     }
 
-    private async logUnreferencedEvents(logger: ITelemetryLogger, currentReferenceTimestampMs?: number) {
+    private async logUnreferencedEvents(logger: ITelemetryLogger) {
         for (const eventProps of this.pendingEventsQueue) {
             const { usageType, state, ...propsToLog } = eventProps;
             /**
@@ -1310,48 +1362,12 @@ export class GarbageCollector implements IGarbageCollector {
                 logger.sendErrorEvent({
                     ...propsToLog,
                     eventName: `${state}Object_${usageType}`,
-                    pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
-                    fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.PackageData } : undefined,
+                    pkg: pkg ? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
+                    fromPkg: fromPkg ? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact } : undefined,
                 });
             }
         }
         this.pendingEventsQueue = [];
-
-        /**
-         * For nodes that are ready to sweep, log an event. Until we start running sweep which deletes objects, this
-         * will give us a view into how much deleted content a container has.
-         */
-        if (this.mc.config.getBoolean(disableSweepLogKey) === true
-            || currentReferenceTimestampMs === undefined
-            || this.sweepTimeoutMs === undefined) {
-            return;
-        }
-
-        this.unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
-            if (nodeStateTracker.state !== UnreferencedState.ReadyForSweep) {
-                return;
-            }
-
-            const nodeType = this.runtime.getNodeType(nodeId);
-            if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
-                return;
-            }
-
-            const uniqueEventId = `Deleted-${nodeId}`;
-            if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
-                return;
-            }
-            this.loggedUnreferencedEvents.add(uniqueEventId);
-            logger.sendTelemetryEvent({
-                eventName: "GCObjectDeleted",
-                id: nodeId,
-                type: nodeType,
-                age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
-                timeout: this.sweepTimeoutMs,
-                completedGCRuns: this.completedRuns,
-                lastSummaryTime: this.getLastSummaryTimestampMs(),
-            });
-        });
     }
 }
 
