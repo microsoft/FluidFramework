@@ -144,13 +144,6 @@ export class List<T> {
         return (this.next === this);
     }
 
-    /**
-     * @deprecated - use unshift
-     */
-    public push(data: T): void {
-        this.unshift(data);
-    }
-
     public unshift(data: T): void {
         const entry = ListMakeEntry(data);
         entry.data = data;

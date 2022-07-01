@@ -21,6 +21,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
+import { SummarizeReason } from "./summaryGenerator";
+import { ISummaryConfigurationHeuristics } from ".";
 
 /**
  * @deprecated - This will be removed in a later release.
@@ -98,7 +100,9 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     /** clientId of parent (non-summarizing) container that owns summarizer container */
     readonly summarizerClientId: string | undefined;
     closeFn(): void;
+    /** @deprecated 1.0, please remove all implementations and usage */
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
+    /** @deprecated 1.0, please remove all implementations and usage */
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
 }
 
@@ -150,10 +154,6 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcTotalBlobsSize?: number;
     /** The number of gc blobs in this summary. */
     readonly gcBlobNodeCount?: number;
-    /** Sum of the sizes of all op contents since the last summary */
-    readonly opsSizesSinceLastSummary: number;
-    /** Number of non-system ops since the last summary. See {@link @fluidframework/protocol-base#isSystemMessage} */
-    readonly nonSystemOpsSinceLastSummary: number;
     /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
     readonly summaryNumber: number;
 }
@@ -361,6 +361,18 @@ export interface ISummarizeHeuristicData {
     /** Most recent summary that received an ack */
     readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
 
+    /** Number of runtime ops since last summary */
+    numRuntimeOps: number;
+
+    /** Number of non-runtime ops since last summary */
+    numNonRuntimeOps: number;
+
+    /** Cumulative size in bytes of all the ops since the last summary */
+    totalOpsSize: number;
+
+    /** Wether or not this instance contains adjusted metrics due to missing op data */
+    hasMissingOpData: boolean;
+
     /**
      * Updates lastAttempt and lastSuccessfulAttempt based on the last summary.
      * @param lastSummary - last ack summary
@@ -381,7 +393,10 @@ export interface ISummarizeHeuristicData {
 
 /** Responsible for running heuristics determining when to summarize. */
 export interface ISummarizeHeuristicRunner {
-    /** Runs the heuristic to determine if it should try to summarize */
+    /** Start specific heuristic trackers (ex: idle timer) */
+    start(): void;
+
+    /** Runs the heuristics to determine if it should try to summarize */
     run(): void;
 
     /** Runs a different heuristic to check if it should summarize before closing */
@@ -408,6 +423,19 @@ export type ISummarizeTelemetryProperties =
     Pick<ITelemetryProperties, ISummarizeTelemetryRequiredProperties> &
     Partial<Pick<ITelemetryProperties, ISummarizeTelemetryOptionalProperties>>;
 
+/** Strategy used to heuristically determine when we should run a summary */
+export interface ISummaryHeuristicStrategy {
+    /** Summarize reason for this summarize heuristic strategy (ex: "maxTime") */
+    summarizeReason: Readonly<SummarizeReason>;
+
+    /**
+     * Determines if this strategy's summarize criteria been met
+     * @param configuration - summary configuration we are to check against
+     * @param heuristicData - heuristic data used to confirm conditions are met
+     */
+    shouldRunSummary(configuration: ISummaryConfigurationHeuristics, heuristicData: ISummarizeHeuristicData): boolean;
+}
+
 type SummaryGeneratorRequiredTelemetryProperties =
     /** True to generate the full tree with no handle reuse optimizations */
     "fullTree" |
@@ -428,11 +456,10 @@ type SummaryGeneratorOptionalTelemetryProperties =
     /** Delta in sum of op sizes between the current reference sequence number and the reference
      *  sequence number of the last summary */
     "opsSizesSinceLastSummary" |
-    /**
-     * Delta between the number of non-system ops since the last summary.
-     * See {@link @fluidframework/protocol-base#isSystemMessage}
-     */
-    "nonSystemOpsSinceLastSummary" |
+    /** Delta between the number of non-runtime ops since the last summary */
+    "nonRuntimeOpsSinceLastSummary" |
+    /** Wether or not this instance contains adjusted metrics due to missing op data */
+    "hasMissingOpData" |
     /** Time it took to generate the summary tree and stats. */
     "generateDuration" |
     /** The handle returned by storage pointing to the uploaded summary tree. */
