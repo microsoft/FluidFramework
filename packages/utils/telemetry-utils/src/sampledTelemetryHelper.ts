@@ -74,7 +74,7 @@ interface CountAndMeasurements { count: number; measurements: Measurements; }
         m.measurements.duration = duration;
 
         if (this.includeAggregateMetrics) {
-            m.measurements.count = (m.measurements.count ?? 0) + 1;
+            m.measurements.count = m.count;
             m.measurements.totalDuration = (m.measurements.totalDuration ?? 0) + duration;
             m.measurements.minDuration = Math.min(m.measurements.minDuration ?? Infinity, duration);
             m.measurements.maxDuration = Math.max(m.measurements.maxDuration ?? 0, duration);
