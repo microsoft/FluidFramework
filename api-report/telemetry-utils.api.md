@@ -236,7 +236,7 @@ export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, 
 
 // @public
 export class SampledTelemetryHelper implements IDisposable {
-    constructor(eventBase: any, logger: ITelemetryLogger, sampleThreshold: number, includeAggregateMetrics?: boolean);
+    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryLogger, sampleThreshold: number, includeAggregateMetrics?: boolean);
     // (undocumented)
     dispose(error?: Error | undefined): void;
     // (undocumented)

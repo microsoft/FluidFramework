@@ -25,6 +25,8 @@ import {
 import {
     ChildLogger,
     EventEmitterWithErrorHandling,
+    loggerToMonitoringContext,
+    MonitoringContext,
     SampledTelemetryHelper,
 } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
@@ -52,6 +54,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      * Telemetry logger for the shared object
      */
     protected readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     /**
      * Connection state
@@ -99,25 +102,33 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             id,
             runtime.IFluidHandleContext);
 
-        this.logger = ChildLogger.create(
+        this.mc = loggerToMonitoringContext(ChildLogger.create(
             runtime.logger,
             undefined,
             { all: { sharedObjectId: uuid() } },
-        );
+        ));
+        this.logger = this.mc.logger;
 
         [this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
 
         this.attachListeners();
     }
 
+    /**
+     * This function is only supposed to be called from SharedObjectCore's constructor and
+     * depends on a few things being set already. assert() calls make sure of it.
+     * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
+     * to variables to avoid complaints from TypeScript.
+     */
     private setUpSampledTelemetryHelpers(): SampledTelemetryHelper[] {
+        assert(this.mc !== undefined && this.logger !== undefined, "this.mc and/or this.logger has not been set");
         const opProcessingHelper = new SampledTelemetryHelper(
             {
                 eventName: "ddsOpProcessing",
                 category: "performance",
             },
             this.logger,
-            10,
+            this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 100,
             true);
         const callbacksHelper = new SampledTelemetryHelper(
             {
@@ -125,7 +136,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
                 category: "performance",
             },
             this.logger,
-            10,
+            this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 100,
             true);
 
         this.runtime.on("dispose", () => {
