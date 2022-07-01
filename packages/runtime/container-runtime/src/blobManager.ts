@@ -63,6 +63,8 @@ export interface IBlobManagerLoadInfo {
     redirectTable?: [string, string][];
 }
 
+// Restrict the IContainerRuntime interface to the subset required by BlobManager.  This helps to make
+// the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime =
     Pick<IContainerRuntime, "attachState" | "connected" | "logger"> & TypedEventEmitter<IContainerRuntimeEvents>;
 
