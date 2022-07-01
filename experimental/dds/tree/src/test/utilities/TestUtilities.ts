@@ -678,10 +678,8 @@ export async function withContainerOffline<TReturn>(
 	action: () => TReturn
 ): Promise<{ actionReturn: TReturn; pendingLocalState: string }> {
 	await provider.ensureSynchronized();
-	// await waitForSummary(container);
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
 	const pendingLocalState = container.closeAndGetPendingLocalState();
-	// provider.opProcessingController.resumeProcessing(container);
 	return { actionReturn, pendingLocalState };
 }

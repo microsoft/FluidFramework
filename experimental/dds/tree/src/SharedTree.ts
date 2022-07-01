@@ -1590,16 +1590,16 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 							}
 							case WriteFormat.v0_1_1: {
 								assert(this.stashedIdCompressor !== null, 'Stashed op applied after expected window');
-								// Allocate
+								// Use a temporary compressor that will help translate the stashed ops
 								this.stashedIdCompressor ??= IdCompressor.deserialize(
 									this.idCompressor.serialize(false),
 									stashedSessionId,
 									sharedTreeOp.idRange.attributionId
 								);
-								// Ack
+								// Pretend (from the perspective of the temporary compressor) that the stashed ops have been sequenced
 								this.stashedIdCompressor.finalizeCreationRange(sharedTreeOp.idRange);
 								const stashedIdContext = getNodeIdContext(this.stashedIdCompressor);
-								// Apply
+								// Use a normalizer to translate all node IDs in the stashed ops
 								const normalizer: NodeIdNormalizer<OpSpaceNodeId> = {
 									localSessionId: this.idCompressor.localSessionId,
 									normalizeToSessionSpace: (id, _sessionId) => {

@@ -45,6 +45,7 @@ export interface TreeLeave {
 	index: number;
 }
 
+/** Applies an edit after disconnecting the container, then rejoins */
 export interface TreeStash {
 	type: 'stash';
 	contents: FuzzChange;

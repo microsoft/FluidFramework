@@ -5,8 +5,6 @@
 
 import { expect } from 'chai';
 import { IContainer } from '@fluidframework/container-definitions';
-import { requestFluidObject } from '@fluidframework/runtime-utils';
-import { ITestFluidObject, ITestObjectProvider } from '@fluidframework/test-utils';
 import { fail } from '../../Common';
 import { ChangeInternal, Edit, WriteFormat } from '../../persisted-types';
 import type { EditLog } from '../../EditLog';
@@ -70,11 +68,13 @@ export function runPendingLocalStateTests(
 			await testObjectProvider.opProcessingController.processIncoming(container);
 
 			const pendingLocalState = container.closeAndGetPendingLocalState();
-			const loader = testObjectProvider.makeTestLoader();
+			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
+				testObjectProvider,
+				pendingLocalState,
+				id: documentId,
+				writeFormat: WriteFormat.v0_1_1,
+			});
 
-			const container2 = await loader.resolve({ url }, pendingLocalState);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, '/');
-			const tree2 = await dataObject2.getSharedObject<SharedTree>(documentId);
 			await testObjectProvider.ensureSynchronized();
 
 			const editLog = tree2.edits as EditLog;
@@ -107,7 +107,6 @@ export function runPendingLocalStateTests(
 				testObjectProvider,
 				writeFormat: treeVersion,
 			});
-			const url = (await stashingContainer.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');
 			await testObjectProvider.ensureSynchronized();
 			const initialEditLogLength = stashingTree.edits.length;
 
@@ -132,13 +131,16 @@ export function runPendingLocalStateTests(
 			);
 			await testObjectProvider.ensureSynchronized();
 			const observerAfterStash = observerTree.currentView;
-			const loader = testObjectProvider.makeTestLoader();
 
 			// Simulate reconnect of user 1; a new container will be created which passes the stashed local state in its
 			// load request.
-			const stashingContainer2 = await loader.resolve({ url }, pendingLocalState);
-			const dataObject2 = await requestFluidObject<ITestFluidObject>(stashingContainer2, '/');
-			const stashingTree2 = await dataObject2.getSharedObject<SharedTree>(documentId);
+			const { tree: stashingTree2 } = await setUpLocalServerTestSharedTree({
+				testObjectProvider,
+				pendingLocalState,
+				id: documentId,
+				writeFormat: treeVersion,
+			});
+
 			expect((stashingTree2.edits as unknown as EditLog<ChangeInternal>).isLocalEdit(edit.id)).to.be.true; // Kludge
 
 			await testObjectProvider.ensureSynchronized();
@@ -187,11 +189,7 @@ export function runPendingLocalStateTests(
 
 		it('works across summaries', async () => {
 			// 1. Create a client
-			const {
-				testObjectProvider,
-				container: container0,
-				tree: tree0,
-			} = await setUpLocalServerTestSharedTree({
+			const { testObjectProvider, tree: tree0 } = await setUpLocalServerTestSharedTree({
 				id: documentId,
 				writeFormat: WriteFormat.v0_0_2,
 			});
@@ -261,6 +259,8 @@ export function runPendingLocalStateTests(
 				});
 			}
 
+			const smallTreeTraitLabel = '3b9e2dd8-def4-45fb-88bc-0df48df62314' as TraitLabel;
+
 			/** Insert some arbitrary data */
 			function insertSmallTree(tree: SharedTree): EditId {
 				return tree.applyEdit(
@@ -302,17 +302,18 @@ export function runPendingLocalStateTests(
 							},
 						],
 						StablePlace.atEndOf({
-							label: '3b9e2dd8-def4-45fb-88bc-0df48df62314' as TraitLabel,
+							label: smallTreeTraitLabel,
 							parent: tree.currentView.root,
 						})
 					)
 				).id;
 			}
 
+			/** Counts the number of trees that were inserted by `insertSmallTree` */
 			function countSmallTrees(tree: SharedTree): number {
 				return (
 					tree.currentView.getTrait({
-						label: '3b9e2dd8-def4-45fb-88bc-0df48df62314' as TraitLabel,
+						label: smallTreeTraitLabel,
 						parent: tree.currentView.root,
 					}).length / 2
 				);

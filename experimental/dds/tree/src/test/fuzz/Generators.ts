@@ -103,7 +103,7 @@ const defaultEditConfig: Required<EditGenerationConfig> = {
 const makeEditGenerator = (
 	passedConfig: EditGenerationConfig,
 	passedJoinConfig: JoinGenerationConfig,
-	type: 'edit' | 'stash'
+	stashOps = false
 ): AsyncGenerator<Operation, FuzzTestState> => {
 	const config = { ...defaultEditConfig, ...passedConfig };
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
@@ -378,10 +378,11 @@ const makeEditGenerator = (
 		if (contents === done) {
 			return done;
 		}
-		if (type === 'stash') {
+
+		if (stashOps) {
 			const joinConfig = { ...defaultJoinConfig, ...passedJoinConfig };
 			return {
-				type,
+				type: 'stash',
 				contents,
 				index,
 				summarizeHistory: random.pick(joinConfig.summarizeHistory),
@@ -389,7 +390,7 @@ const makeEditGenerator = (
 			};
 		}
 
-		return { type, contents, index };
+		return { type: 'edit', contents, index };
 	};
 };
 
@@ -420,14 +421,14 @@ export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncG
 	const atLeastOneActiveClient: AcceptanceCondition<FuzzTestState> = ({ activeCollaborators }) =>
 		activeCollaborators.length > 0;
 	const opWeights: AsyncWeights<Operation, FuzzTestState> = [
-		[makeEditGenerator(config.editConfig, config.joinConfig, 'edit'), config.editWeight, atLeastOneActiveClient],
+		[makeEditGenerator(config.editConfig, config.joinConfig), config.editWeight, atLeastOneActiveClient],
 		[
 			makeJoinGenerator(config.joinConfig),
 			config.joinWeight,
 			collaboratorsMatches((count) => count < maximumCollaborators),
 		],
 		[leaveGenerator, config.leaveWeight, atLeastOneClient],
-		[makeEditGenerator(config.editConfig, config.joinConfig, 'stash'), config.stashWeight, atLeastOneActiveClient],
+		[makeEditGenerator(config.editConfig, config.joinConfig, true), config.stashWeight, atLeastOneActiveClient],
 		[{ type: 'synchronize' }, config.synchronizeWeight, atLeastOneClient],
 	];
 	return createWeightedAsyncGenerator(opWeights);
