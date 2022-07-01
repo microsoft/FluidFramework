@@ -80,12 +80,29 @@ export type SetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, 
  *
  * This interface is designed to be easy to implement.
  * Use {@link Rebaser} for an ergonomic wrapper around this.
+ *
+ * TODO: more fully document all axioms Rebaser assumes about implementations.
+ * Be clear about which of these are required for coherence, and which are desired for good semantics.
  */
 export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
     _typeCheck?: Covariant<TChange> & Contravariant<TFinalChange> & Invariant<TChangeSet>;
 
+    /**
+     * TChangeSet must form a [group](https://en.wikipedia.org/wiki/Group_(mathematics)).
+     *
+     * Calling compose with [] gives the identity element.
+     * This function must use a an associative composition operation to compose all the provided changes.
+     *
+     * A whole batch of changes is provided at once instead of
+     * just a pair to allow the implementation to be more optimized.
+     */
     compose(...changes: TChangeSet[]): TChangeSet;
 
+    /**
+     * Returns the inverse of `changes`.
+     *
+     * `compose(changes, inverse(changes))` must return compose().
+     */
     invert(changes: TChangeSet): TChangeSet;
 
     rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
