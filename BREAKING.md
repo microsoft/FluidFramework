@@ -61,8 +61,7 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
 
 ### Remove ISummaryAuthor and ISummaryCommitter
-See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and`ISummaryCommitter` have never
-been used so they are being removed.
+See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and`ISummaryCommitter` have never been used they are being depracating.
 
 # 1.1.0
 
