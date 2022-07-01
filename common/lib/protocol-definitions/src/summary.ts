@@ -8,7 +8,7 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 /**
- * @deprecated - ISummaryAuthor has never been used anywhere and is unlikely to be used in the
+ * @deprecated ISummaryAuthor has never been used anywhere and is unlikely to be used in the
  * future so it is being depracated.
  */
 export interface ISummaryAuthor {
@@ -19,7 +19,7 @@ export interface ISummaryAuthor {
 }
 
 /**
- * @deprecated - ISummaryCommitter has never been used anywhere and is unlikely to be used in the
+ * @deprecated ISummaryCommitter has never been used anywhere and is unlikely to be used in the
  * future so it is being depracated.
  */
 export interface ISummaryCommitter {
