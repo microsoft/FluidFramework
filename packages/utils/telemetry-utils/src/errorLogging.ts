@@ -267,7 +267,7 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 }
 
 export function parseJSONObject(x: any): TelemetryEventPropertyType | null {
-    switch(typeof x) {
+    switch (typeof x) {
         case "string":
         case "number":
         case "boolean":
@@ -277,8 +277,9 @@ export function parseJSONObject(x: any): TelemetryEventPropertyType | null {
             if (!Array.isArray(x)) {
                 return null;
             }
-            if (x.every((val) => typeof val === "string" || "number" || "boolean" || "undefined"))
+            if (x.every((val) => typeof val === "string" || "number" || "boolean" || "undefined")) {
                 return JSON.stringify(x);
+            }
     }
 }
 /**
