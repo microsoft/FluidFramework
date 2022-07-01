@@ -279,9 +279,7 @@ export function parseJSONObject(x: any): TelemetryEventPropertyType {
             }
             if (x.every((val) => typeof val === "string" || "number" || "boolean" || "undefined"))
                 return JSON.stringify(x);
-
     }
-
 }
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
