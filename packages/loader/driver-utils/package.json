@@ -115,6 +115,9 @@
       },
       "ClassDeclaration_GenericNetworkError": {
         "backCompat": false
+      },
+      "ClassDeclaration_DeltaStreamConnectionForbiddenError": {
+        "forwardCompat": false
       }
     }
   }
