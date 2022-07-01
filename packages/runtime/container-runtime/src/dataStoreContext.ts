@@ -231,6 +231,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
+    // @ts-expect-error - This shouldn't be referenced in the current version, but needs to be here for back-compat
+    private readonly bindToContext: () => void;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
     protected pending: ISequencedDocumentMessage[] | undefined = [];
@@ -277,6 +279,11 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         this._attachState = this.containerRuntime.attachState !== AttachState.Detached && this.existing ?
             this.containerRuntime.attachState : AttachState.Detached;
+
+        this.bindToContext = () => {
+            assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
+            this.makeLocallyVisible();
+        };
 
         const thisSummarizeInternal =
             async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
