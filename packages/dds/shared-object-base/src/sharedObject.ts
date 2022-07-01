@@ -495,6 +495,16 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      */
     protected abstract applyStashedOp(content: any): unknown;
 
+    /**
+     * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
+     * it should not be called from outside the class. Support for that scenario might be removed in the fuutre.
+     *
+     * @internal
+     *
+     * @param event - The event to emit.
+     * @param args - Arguments to pass to the event listeners.
+     * @returns `true` if the event had listeners, `false` otherwise.
+     */
     public emit(event: EventEmitterEventType, ...args: any[]): boolean {
         return this.callbacksHelper.measure(() => super.emit(event, ...args));
     }

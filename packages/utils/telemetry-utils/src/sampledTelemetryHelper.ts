@@ -101,10 +101,7 @@ interface CountAndMeasurements { count: number; measurements: Measurements; }
             };
 
             this.logger.sendPerformanceEvent(telemetryEvent);
-            this.measurementsMap.set(dimension, {
-                count: 0,
-                measurements: { duration: 0 },
-            });
+            this.measurementsMap.delete(dimension);
         }
     }
 
