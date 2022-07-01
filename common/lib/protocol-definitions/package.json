@@ -66,6 +66,14 @@
       },
       "InterfaceDeclaration_IClientConfiguration": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryAuthor": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISummaryCommitter": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
