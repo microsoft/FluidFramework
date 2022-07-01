@@ -10,6 +10,7 @@ import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
+import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
@@ -168,6 +169,12 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
     driverVersion: string | undefined;
 };
 
+// @public
+export class EmptyDocumentDeltaStorageService implements IDocumentDeltaStorageService {
+    // (undocumented)
+    fetchMessages(from: number, _to: number | undefined, _abortSignal?: AbortSignal, _cachedOnly?: boolean, _fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
+}
+
 // @public (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 
@@ -234,6 +241,9 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentM
 export interface ISummaryTreeAssemblerProps {
     unreferenced?: true;
 }
+
+// @public (undocumented)
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
@@ -404,6 +414,13 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
     readonly errorType = DriverErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
+}
+
+// @public
+export class UsageError extends LoggingError implements IFluidErrorBase {
+    constructor(message: string);
+    // (undocumented)
+    readonly errorType = "usageError";
 }
 
 // @public

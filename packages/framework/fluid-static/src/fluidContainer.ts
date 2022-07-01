@@ -10,11 +10,15 @@ import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
 /**
- * Events emitted from IFluidContainer.
+ * Events emitted from {@link IFluidContainer}.
+ *
+ *  @remarks
+ *
+ * The following is the list of events emitted.
  *
  * ### "connected"
  *
- * The connected event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
+ * The "connected" event is emitted when the `IFluidContainer` completes connecting to the Fluid service.
  *
  * #### Listener signature
  *
@@ -24,7 +28,7 @@ import { RootDataObject } from "./rootDataObject";
  *
  * ### "dispose"
  *
- * The dispose event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
+ * The "dispose" event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
  *
  * #### Listener signature
  *
@@ -34,7 +38,7 @@ import { RootDataObject } from "./rootDataObject";
  *
  * ### "disconnected"
  *
- * The disconnected event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
+ * The "disconnected" event is emitted when the `IFluidContainer` becomes disconnected from the Fluid service.
  *
  * #### Listener signature
  *
@@ -44,7 +48,7 @@ import { RootDataObject } from "./rootDataObject";
  *
  * ### "saved"
  *
- * The saved event is emitted when the `IFluidContainer` has local changes acknowledged by the service.
+ * The "saved" event is emitted when the `IFluidContainer` has local changes acknowledged by the service.
  *
  * #### Listener signature
  *
@@ -54,7 +58,7 @@ import { RootDataObject } from "./rootDataObject";
  *
  * ### "dirty"
  *
- * The dirty event is emitted when the `IFluidContainer` has local changes that have not yet
+ * The "dirty" event is emitted when the `IFluidContainer` has local changes that have not yet
  * been acknowledged by the service.
  *
  * #### Listener signature
@@ -68,8 +72,8 @@ export interface IFluidContainerEvents extends IEvent {
 }
 
 /**
- * The IFluidContainer provides an entrypoint into the client side of collaborative Fluid data.  It provides access
- * to the data as well as status on the collaboration session.
+ * Provides an entrypoint into the client side of collaborative Fluid data.
+ * Provides access to the data as well as status on the collaboration session.
  */
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     /**
@@ -77,7 +81,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      */
     readonly connectionState: ConnectionState;
 
-     /**
+    /**
      * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
      * You should always check the `isDirty` flag before closing the container or navigating away from the page.
      * Closing the container while `isDirty === true` may result in the loss of operations that have not yet been
@@ -94,7 +98,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
      * service. In some cases this can be due to lack of network connection. If the network connection is down,
      * it needs to be restored for the pending changes to be acknowledged.
      */
-     readonly isDirty: boolean;
+    readonly isDirty: boolean;
 
     /**
      * Whether the container is disposed, which permanently disables it.
@@ -102,8 +106,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly disposed: boolean;
 
     /**
-     * The collection of data objects and DDSes that were specified by the schema. These data objects and DDSes exist
-     * for the lifetime of the container.
+     * The collection of data objects and Distributed Data Stores (DDSes) that were specified by the schema.
+     * These data objects and DDSes exist for the lifetime of the container.
      */
     readonly initialObjects: LoadableObjectRecord;
 
@@ -114,26 +118,46 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
     readonly attachState: AttachState;
 
     /**
-     * A newly created container starts detached from the collaborative service.  Calling attach() uploads the
-     * new container to the service and connects to the collaborative service.
+     * A newly created container starts detached from the collaborative service.
+     * Calling `attach()` uploads the new container to the service and connects to the collaborative service.
+     *
+     * @remarks This should only be called when the container is in the
+     * {@link @fluidframework/container-definitions#AttachState.Detatched} state.
+     *
+     * This can be determined by observing {@link IFluidContainer.attachState}.
+     *
      * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
      */
     attach(): Promise<string>;
 
     /**
-     * Attempts to connect the container to the delta stream and process ops
+     * Attempts to connect the container to the delta stream and process operations.
+     * Will throw an error if unsuccessful.
+     *
+     * @remarks This should only be called when the container is in the
+     * {@link @fluidframework/container-definitions#ConnectionState.Disconnected} state.
+     *
+     * This can be determined by observing {@link IFluidContainer.connectionState}.
      */
     connect(): void;
 
     /**
-     * Disconnects the container from the delta stream and stops processing ops
+     * Disconnects the container from the delta stream and stops processing operations.
+     *
+     * @remarks This should only be called when the container is in the
+     * {@link @fluidframework/container-definitions#ConnectionState.Connected} state.
+     *
+     * This can be determined by observing {@link IFluidContainer.connectionState}.
      */
     disconnect(): void;
 
     /**
-     * Create a new data object or DDS of the specified type.  In order to share the data object or DDS with other
+     * Create a new data object or Distributed Data Store (DDS) of the specified type.
+     *
+     * @remarks In order to share the data object or DDS with other
      * collaborators and retrieve it later, store its handle in a collection like a SharedDirectory from your
      * initialObjects.
+     *
      * @param objectClass - The class of data object or DDS to create
      */
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
@@ -145,7 +169,10 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 }
 
 /**
- * Implementation of the IFluidContainer.
+ * Base {@link IFluidContainer} implementation.
+ *
+ * @remarks Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
+ * will need to utilize or provide a service-specific implementation of this type that implements that method.
  */
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
@@ -202,7 +229,13 @@ export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> imp
     }
 
     /**
-     * {@inheritDoc IFluidContainer.attach}
+     * Incomplete base implementation of {@link IFluidContainer.attach}.
+     * @remarks Note: this implementation will unconditionally throw.
+     * Consumers who rely on this will need to utilize or provide a service specific implementation of this base type
+     * that provides an implementation of this method.
+     *
+     * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
+     * but internally this separation is not there.
      */
     public async attach(): Promise<string> {
         throw new Error("Cannot attach container. Container is not in detached state");

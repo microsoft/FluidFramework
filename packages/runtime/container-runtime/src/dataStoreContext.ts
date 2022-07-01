@@ -704,7 +704,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public abstract generateAttachMessage(): IAttachMessage;
 
-    protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
+    public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     /**
      * @deprecated - Sets the datastore as root, for aliasing purposes: #7948
@@ -858,7 +858,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         };
     });
 
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         return this.initialSnapshotDetailsP;
     }
 
@@ -947,7 +947,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         return message;
     }
 
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         let snapshot = this.snapshotTree;
         let attributes: ReadFluidDataStoreAttributes;
         let isRootDataStore = false;
@@ -1050,7 +1050,7 @@ export class LocalDetachedFluidDataStoreContext
         }
     }
 
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (this.detachedRuntimeCreation) {
             throw new Error("Detached Fluid Data Store context can't be realized! Please attach runtime first!");
         }
