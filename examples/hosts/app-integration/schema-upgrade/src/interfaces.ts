@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { EventEmitter } from "events";
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { SharedString } from "@fluidframework/sequence";
+import { IContainer } from "@fluidframework/container-definitions";
 
 export interface IContainerKillBitEvents extends IEvent {
     (event: "markedForDestruction" | "dead", listener: () => void);
@@ -18,6 +18,11 @@ export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvent
     markForDestruction(): Promise<void>;
     volunteerForDestruction(): Promise<void>;
     haveDestructionTask(): boolean;
+}
+
+export interface IDataMigrationService {
+    readonly containerKillBit: IContainerKillBit;
+    saveAndEndSession(inventoryList: IInventoryList): Promise<string | undefined>;
 }
 
 export interface IInventoryItem extends EventEmitter {
@@ -39,4 +44,13 @@ export interface IInventoryList extends EventEmitter {
      * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
      */
     on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this;
+}
+
+// Fluid container with data and services
+export interface IContainerDetails {
+    containerId: string;
+    container: IContainer;
+    fetchedData?: string;
+    inventoryList: IInventoryList;
+    services: { dataMigration: IDataMigrationService; };
 }

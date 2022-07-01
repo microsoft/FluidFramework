@@ -2,36 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IContainer, IFluidCodeDetails, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-
 import React from "react";
 
-import { extractStringData, fetchData, applyStringData, writeData } from "../dataHelpers";
-import type { IContainerKillBit, IInventoryList } from "../interfaces";
-import { TinyliciousService } from "../tinyliciousService";
-import {
-    containerKillBitId,
-    InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
-} from "../version1";
-import {
-    InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
-} from "../version2";
+import { createContainer, loadContainer } from "../containerUtils";
+import { extractStringData, writeData } from "../dataHelpers";
+import type { IContainerDetails } from "../interfaces";
 
 import { ContainerView } from "./containerView";
-
-async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
-    // Since we're using a ContainerRuntimeFactoryWithDefaultDataStore, our inventory list is available at the URL "/".
-    return requestFluidObject<IInventoryList>(container, { url: "/" });
-}
-
-async function getContainerKillBitFromContainer(container: IContainer): Promise<IContainerKillBit> {
-    // Our kill bit is available at the URL containerKillBitId.
-    return requestFluidObject<IContainerKillBit>(container, { url: containerKillBitId });
-}
 
 // In interacting with the service, we need to be explicit about whether we're creating a new container vs.
 // loading an existing one.  If loading, we also need to provide the unique ID for the container we are
@@ -43,68 +20,20 @@ async function getContainerKillBitFromContainer(container: IContainer): Promise<
 
 // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
 export const App: React.FC = () => {
-    // initialize the application by instantiating the backend service and loader
-    const [loader, setLoader] = React.useState<Loader>();
-    React.useEffect(() => {
-        const tinyliciousService = new TinyliciousService();
-        const load = async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
-            const useNewVersion = source.config?.version === "2.0";
-            const containerRuntimeFactory = useNewVersion
-                ? new InventoryListContainerRuntimeFactory2()
-                : new InventoryListContainerRuntimeFactory1();
-            return {
-                module: { fluidExport: containerRuntimeFactory },
-                details: { package: "no-dynamic-package", config: {} },
-            };
-        };
-        const theLoader = new Loader({
-            urlResolver: tinyliciousService.urlResolver,
-            documentServiceFactory: tinyliciousService.documentServiceFactory,
-            codeLoader: { load },
-        });
-        setLoader(theLoader);
-    }, []);
+    const [appState, setAppState] = React.useState<IContainerDetails>();
 
-    // the application state combining the container and data components
-    const [appState, setAppState] = React.useState<{
-        containerId: string;
-        fetchedData?: string;
-        container: IContainer;
-        inventoryList: IInventoryList;
-        containerKillBit: IContainerKillBit;
-    }>();
     // the core effect to bootstrap the application by loading/creating a container
     React.useEffect(() => {
-        if (loader === undefined) {
-            return;
-        }
-        const createContainer = async () => {
-            const fetchedData = await fetchData();
-            const container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
-            const inventoryList = await getInventoryListFromContainer(container);
-            const containerKillBit = await getContainerKillBitFromContainer(container);
-            await applyStringData(inventoryList, fetchedData);
-            await container.attach(createTinyliciousCreateNewRequest());
-
-            // Discover the container ID after attaching
-            const resolved = container.resolvedUrl;
-            ensureFluidResolvedUrl(resolved);
-
-            // Update the application state
-            setAppState({ containerId: resolved.id, fetchedData, container, inventoryList, containerKillBit });
-        };
-        const loadContainer = async (containerId: string) => {
-            const container = await loader.resolve({ url: containerId });
-            const containerKillBit = await getContainerKillBitFromContainer(container);
-            const inventoryList = await getInventoryListFromContainer(container);
-            setAppState({ containerId, container, inventoryList, containerKillBit });
-        };
         if (location.hash.length === 0) {
-            createContainer().catch(console.error);
+            createContainer()
+                .then((details) => setAppState({ ...details }))
+                .catch(console.error);
         } else {
-            loadContainer(location.hash.substring(1)).catch(console.error);
+            loadContainer(location.hash.substring(1))
+                .then((details) => setAppState({ ...details }))
+                .catch(console.error);
         }
-    }, [loader]);
+    }, []);
 
     React.useEffect(() => {
         if (appState?.containerId !== undefined) {
@@ -138,66 +67,29 @@ export const App: React.FC = () => {
         if (appState === undefined) {
             return;
         }
-        const { containerKillBit, inventoryList } = appState;
-
-        if (!containerKillBit.markedForDestruction) {
-            await containerKillBit.markForDestruction();
-        }
-
-        if (containerKillBit.dead) {
-            return undefined;
-        }
-
-        // After the quorum proposal is accepted, our system doesn't allow further edits to the string
-        // So we can immediately get the data out even before taking the lock.
-        const stringData = await extractStringData(inventoryList);
-        if (containerKillBit.dead) {
-            return stringData;
-        }
-
-        await containerKillBit.volunteerForDestruction();
-        if (containerKillBit.dead) {
-            return stringData;
-        }
-
-        await writeData(stringData);
-        if (!containerKillBit.haveDestructionTask()) {
-            throw new Error("Lost task during write");
-        } else {
-            await containerKillBit.setDead();
-        }
-        return stringData;
+        const { services, inventoryList } = appState;
+        const fetchedData = await services.dataMigration.saveAndEndSession(inventoryList);
+        return fetchedData;
     }, [appState]);
 
     const migrateContainer = React.useCallback(async () => {
-        if (loader === undefined || appState === undefined) {
+        if (appState === undefined) {
             return;
         }
-        let { container } = appState;
-        // 1. End the current session, export data from the container and close it
-        const fetchedData = await saveAndEndSession();
-        container.close();
-        // 2. Create a new detached container with code version 2.0
-        container = await loader.createDetachedContainer({
-            package: "no-dynamic-package", config: { version: "2.0" },
-        });
-        const inventoryList = await getInventoryListFromContainer(container);
-        const containerKillBit = await getContainerKillBitFromContainer(container);
-        // 3. Hydrate the container with transformed data
-        if (fetchedData !== undefined) {
-            await applyStringData(inventoryList, fetchedData);
-            inventoryList.addItem("migrated", 13);
-        }
-        // 4. Go live!
-        await container.attach(createTinyliciousCreateNewRequest());
+        const { container, services, inventoryList } = appState;
 
-        // Discover the container ID after attaching
-        const resolved = container.resolvedUrl;
-        ensureFluidResolvedUrl(resolved);
+        // 1. End the current session, export data from the container and close it
+        const fetchedData = await services.dataMigration.saveAndEndSession(inventoryList);
+
+        // 2. Close the container instance
+        container.close();
+
+        // 3. Create a new container instance and seed it with exported data
+        const containerDetails = await createContainer("2.0", fetchedData);
 
         // Update the application state with new container and components
-        setAppState({ containerId: resolved.id, fetchedData, container, inventoryList, containerKillBit });
-    }, [loader, appState, saveAndEndSession]);
+        setAppState(containerDetails);
+    }, [appState]);
 
     if (appState === undefined) {
         // do not render anything until the container is ready
@@ -211,7 +103,7 @@ export const App: React.FC = () => {
             importedStringData={appState.fetchedData}
             inventoryList={appState.inventoryList}
             writeToExternalStorage={writeToExternalStorage}
-            containerKillBit={appState.containerKillBit}
+            containerKillBit={appState.services.dataMigration.containerKillBit}
             saveAndEndSession={saveAndEndSession}
             migrateContainer={migrateContainer}
         />
