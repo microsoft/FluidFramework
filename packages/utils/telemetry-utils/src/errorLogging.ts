@@ -294,7 +294,7 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
         if (isTaggedTelemetryPropertyValue(val)) {
             props[key] = val;
         } else if (parseJSONObject(val) !== null) {
-            props[key] = parseJSONObject(val);
+            props[key] = parseJSONObject(val) as TelemetryEventPropertyType;
         } else {
             // We don't support logging arbitrary objects
             props[key] = "REDACTED (arbitrary object)";
