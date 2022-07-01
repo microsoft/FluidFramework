@@ -41,6 +41,7 @@ export interface IContainerRuntime extends IProvideContainerRuntime, IProvideFlu
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    // @deprecated
     flush(): void;
     // (undocumented)
     readonly flushMode: FlushMode;

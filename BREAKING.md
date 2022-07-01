@@ -17,23 +17,23 @@ There are a few steps you can take to write a good change note and avoid needing
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
-
- - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
- - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
- - [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
+- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+- [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
+- [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
 
 ### Remove `documentId` field from `MockFluidDataStoreContext`
-
 This field has been deprecated and will be removed in a future breaking change.
 
 ### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
-
 `clientId` can only ever be of type `string`, so it is superfluous for the type
 to be `string | undefined`.
 
 ### Remove `ConnectionState.Connecting`
-
 `ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
+
+### `IContainerRuntime.flush` is deprecated
+`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
 
 # 1.1.0
 
