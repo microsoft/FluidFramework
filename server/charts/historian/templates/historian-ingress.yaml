@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ template "historian.fullname" . }}
@@ -23,6 +23,9 @@ spec:
    http:
      paths:
      - path: /
+       pathType: ImplementationSpecific
        backend:
-         serviceName: {{ template "historian.fullname" . }}
-         servicePort: 80
+         service:
+           name: {{ template "historian.fullname" . }}
+           port:
+             number: 80

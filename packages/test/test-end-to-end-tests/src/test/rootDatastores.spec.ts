@@ -25,7 +25,7 @@ import {
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { Loader } from "@fluidframework/container-loader";
-import { GenericError } from "@fluidframework/container-utils";
+import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
@@ -299,6 +299,23 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
+        it("Aliases with slashes are not supported", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
+
+            const aliasResult1 = await ds1.trySetAlias(alias);
+
+            let error: Error | undefined;
+            try {
+                await ds2.trySetAlias(`${alias}/${alias}`);
+            } catch (err) {
+                error = err as Error;
+            }
+
+            assert.equal(aliasResult1, "Success");
+            assert.ok(error instanceof UsageError);
+        });
+
         it("Aliasing a datastore is idempotent", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -309,6 +326,40 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal(aliasResult2, "Success");
 
             assert.ok(await getRootDataStore(dataObject1, alias));
+        });
+
+        it("Aliasing a datastore while aliasing", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds3 = await runtimeOf(dataObject1).createDataStore(packageName);
+
+            const alias1 = "alias1";
+            const [aliasResult1, aliasResult2] = await Promise.all([
+                ds1.trySetAlias(alias1),
+                ds1.trySetAlias(alias1),
+            ]);
+
+            assert.equal(aliasResult1, "Success");
+            assert.equal(aliasResult2, "Success");
+            assert.ok(await getRootDataStore(dataObject1, alias1));
+
+            const alias2 = "alias2";
+            const [aliasResult3, aliasResult4] = await Promise.all([
+                ds2.trySetAlias(alias2),
+                ds2.trySetAlias(alias2 + alias2),
+            ]);
+
+            assert.equal(aliasResult3, "Success");
+            assert.equal(aliasResult4, "AlreadyAliased");
+            assert.ok(await getRootDataStore(dataObject1, alias2));
+
+            const [aliasResult5, aliasResult6] = await Promise.all([
+                ds3.trySetAlias(alias1),
+                ds3.trySetAlias(alias1 + alias1),
+            ]);
+
+            assert.equal(aliasResult5, "Conflict");
+            assert.equal(aliasResult6, "AlreadyAliased");
         });
 
         it("Aliasing a previously aliased datastore will fail", async () => {
@@ -401,7 +452,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                             summaryConfigOverrides: {
                                 ...DefaultSummaryConfiguration,
                                 ...{
-                                    idleTime: IdleDetectionTime,
+                                    minIdleTime: IdleDetectionTime,
+                                    maxIdleTime: IdleDetectionTime,
                                     maxTime: IdleDetectionTime * 12,
                                     initialSummarizerDelayMs: 10,
                                 },

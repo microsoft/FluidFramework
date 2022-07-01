@@ -67,7 +67,9 @@ export interface IMockContainerRuntimePendingMessage {
 
 // @public
 export class InsecureTokenProvider implements ITokenProvider {
-    constructor(tenantKey: string, user: IUser);
+    constructor(
+    tenantKey: string,
+    user: IUser);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -285,8 +287,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    documentId: string;
-    // (undocumented)
     readonly existing: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -338,6 +338,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 
 // @public
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+    constructor(overrides?: {
+        clientId?: string;
+    });
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -355,7 +358,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get channelsRoutingContext(): IFluidHandleContext;
     // (undocumented)
-    clientId: string | undefined;
+    clientId: string;
     // (undocumented)
     close(): Promise<void>;
     // (undocumented)

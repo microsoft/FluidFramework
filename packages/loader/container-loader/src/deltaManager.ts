@@ -31,7 +31,6 @@ import {
     IDocumentService,
     DriverErrorType,
 } from "@fluidframework/driver-definitions";
-import { isSystemMessage } from "@fluidframework/protocol-base";
 import {
     IDocumentMessage,
     ISequencedDocumentMessage,
@@ -41,6 +40,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
     NonRetryableError,
+    isClientMessage,
 } from "@fluidframework/driver-utils";
 import {
     ThrottlingWarning,
@@ -105,6 +105,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private lastProcessedMessage: ISequencedDocumentMessage | undefined;
     private baseTerm: number = 0;
 
+    /**
+     * Track down the ops size.
+    */
+    private opsSize: number = 0;
     private prevEnqueueMessagesReason: string | undefined;
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
 
@@ -198,6 +202,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             return -1;
         }
 
+        this.opsSize += message.contents.length;
+
         this.messageBuffer.push(message);
 
         this.emit("submitOp", message);
@@ -226,6 +232,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get connectionProps(): ITelemetryProperties {
         return {
             sequenceNumber: this.lastSequenceNumber,
+            opsSize: this.opsSize > 0 ? this.opsSize : undefined,
             ...this.connectionManager.connectionProps,
         };
     }
@@ -267,8 +274,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     ) {
         super();
         const props: IConnectionManagerFactoryArgs = {
-            incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) =>
-                this.enqueueMessages(messages, reason),
+            incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
+                try {
+                    this.enqueueMessages(messages, reason);
+                } catch (error) {
+                    this.logger.sendErrorEvent({ eventName: "EnqueueMessages_Exception" }, error);
+                    this.close(normalizeError(error));
+                }
+            },
             signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
             reconnectionDelayHandler: (delayMs: number, error: unknown) =>
                 this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
@@ -330,6 +343,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // across multiple connections. Right now we assume runtime will not submit any ops in disconnected
         // state. As requirements change, so should these checks.
         assert(this.messageBuffer.length === 0, 0x0e9 /* "messageBuffer is not empty on new connection" */);
+
+        this.opsSize = 0;
 
         this.emit(
             "connect",
@@ -747,7 +762,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         // System messages may have no clientId (but some do, like propose, noop, summarize)
         assert(
             message.clientId !== undefined
-            || isSystemMessage(message),
+            || !(isClientMessage(message)),
             0x0ed /* "non-system message have to have clientId" */,
         );
 

@@ -62,6 +62,8 @@ describe("Runtime", () => {
                 maxTime: 5000 * 12, // 1 min (active)
                 maxOps: 1000, // 1k ops (active)
                 minOpsForLastSummaryAttempt: 50,
+                minIdleTime: 5000, // 5 sec (idle)
+                maxIdleTime: 5000, // This must remain the same as minIdleTime for tests to pass nicely
                 nonRuntimeOpWeight: 0.1,
                 runtimeOpWeight: 1.0,
                 ...summaryCommon,
@@ -208,8 +210,6 @@ describe("Runtime", () => {
                                 dataStoreCount: 0,
                                 summarizedDataStoreCount: 0,
                                 unreferencedBlobSize: 0,
-                                opsSizesSinceLastSummary: 0,
-                                nonSystemOpsSinceLastSummary: 0,
                                 summaryNumber: 0,
                             },
                             handle: "test-handle",
@@ -295,7 +295,7 @@ describe("Runtime", () => {
                     await emitNextOp();
 
                     // too early, should not run yet
-                    await tickAndFlushPromises(summaryConfig.idleTime - 1);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime - 1);
                     assertRunCounts(0, 0, 0);
 
                     // now should run
@@ -304,25 +304,25 @@ describe("Runtime", () => {
 
                     // should not run, because our summary hasnt been acked/nacked yet
                     await emitNextOp();
-                    await tickAndFlushPromises(summaryConfig.idleTime);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
                     assertRunCounts(1, 0, 0);
 
                     // should run, because another op has come in, and our summary has been acked
                     await emitAck();
                     await emitNextOp();
-                    await tickAndFlushPromises(summaryConfig.idleTime);
+                    await tickAndFlushPromises(summaryConfig.minIdleTime);
                     assertRunCounts(2, 0, 0);
                 });
 
                 it("Should summarize after configured active time when not pending", async () => {
-                    const idlesPerActive = Math.floor((summaryConfig.maxTime + 1) / (summaryConfig.idleTime - 1));
-                    const remainingTime = (summaryConfig.maxTime + 1) % (summaryConfig.idleTime - 1);
+                    const idlesPerActive = Math.floor((summaryConfig.maxTime + 1) / (summaryConfig.minIdleTime - 1));
+                    const remainingTime = (summaryConfig.maxTime + 1) % (summaryConfig.minIdleTime - 1);
                     await emitNextOp();
 
                     // too early should not run yet
                     for (let i = 0; i < idlesPerActive; i++) {
                         // prevent idle from triggering with periodic ops
-                        await tickAndFlushPromises(summaryConfig.idleTime - 1);
+                        await tickAndFlushPromises(summaryConfig.minIdleTime - 1);
                         await emitNextOp();
                     }
                     await tickAndFlushPromises(remainingTime - 1);
@@ -337,7 +337,7 @@ describe("Runtime", () => {
                     // should not run because our summary hasnt been acked/nacked yet
                     for (let i = 0; i < idlesPerActive; i++) {
                         // prevent idle from triggering with periodic ops
-                        await tickAndFlushPromises(summaryConfig.idleTime - 1);
+                        await tickAndFlushPromises(summaryConfig.minIdleTime - 1);
                         await emitNextOp();
                     }
                     await tickAndFlushPromises(remainingTime);
@@ -1068,14 +1068,14 @@ describe("Runtime", () => {
                     await emitNextOp(summaryConfig.maxOps + 1);
                     assertRunCounts(0, 0, 0, "should not summarize after maxOps");
 
-                    await tickAndFlushPromises(summaryConfig.idleTime + 1);
-                    assertRunCounts(0, 0, 0, "should not summarize after idleTime");
+                    await tickAndFlushPromises(summaryConfig.minIdleTime + 1);
+                    assertRunCounts(0, 0, 0, "should not summarize after minIdleTime");
 
                     await tickAndFlushPromises(summaryConfig.maxTime + 1);
                     assertRunCounts(0, 0, 0, "should not summarize after maxTime");
 
                     await emitNextOp(summaryConfig.maxOps * 3 + 10000);
-                    await tickAndFlushPromises(summaryConfig.maxTime * 3 + summaryConfig.idleTime * 3 + 10000);
+                    await tickAndFlushPromises(summaryConfig.maxTime * 3 + summaryConfig.minIdleTime * 3 + 10000);
                     assertRunCounts(0, 0, 0, "make extra sure");
                 });
 

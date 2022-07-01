@@ -308,7 +308,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     }
 
     private rejectDeferredRealize(reason: string, packageName?: string): never {
-        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.PackageData } });
+        throw new LoggingError(reason, { packageName: { value: packageName, tag: TelemetryDataTag.CodeArtifact } });
     }
 
     public async realize(): Promise<IFluidDataStoreChannel> {
@@ -317,7 +317,12 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.channelDeferred = new Deferred<IFluidDataStoreChannel>();
             this.realizeCore(this.existing).catch((error) => {
                 const errorWrapped = DataProcessingError.wrapIfUnrecognized(error, "realizeFluidDataStoreContext");
-                errorWrapped.addTelemetryProperties({ fluidDataStoreId: { value: this.id, tag: "PackageData" } });
+                errorWrapped.addTelemetryProperties({
+                    fluidDataStoreId: {
+                        value: this.id,
+                        tag: TelemetryDataTag.CodeArtifact,
+                    },
+                });
                 this.channelDeferred?.reject(errorWrapped);
                 this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
             });
@@ -679,7 +684,10 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         } catch (error) {
             this.channelDeferred?.reject(error);
             this.logger.sendErrorEvent(
-                { eventName: "BindRuntimeError", fluidDataStoreId: { value: this.id, tag: "PackageData" } },
+                { eventName: "BindRuntimeError", fluidDataStoreId: {
+                    value: this.id,
+                    tag: TelemetryDataTag.CodeArtifact,
+                } },
                 error);
         }
     }
@@ -693,7 +701,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
     public abstract generateAttachMessage(): IAttachMessage;
 
-    protected abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
+    public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
     /**
      * @deprecated - Sets the datastore as root, for aliasing purposes: #7948
@@ -846,7 +854,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         };
     });
 
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         return this.initialSnapshotDetailsP;
     }
 
@@ -934,7 +942,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         return message;
     }
 
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         let snapshot = this.snapshotTree;
         let attributes: ReadFluidDataStoreAttributes;
         let isRootDataStore = false;
@@ -1031,7 +1039,7 @@ export class LocalDetachedFluidDataStoreContext
         }
     }
 
-    protected async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+    public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
         if (this.detachedRuntimeCreation) {
             throw new Error("Detached Fluid Data Store context can't be realized! Please attach runtime first!");
         }

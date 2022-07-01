@@ -499,23 +499,15 @@ export interface ISummaryTree {
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @public
 export interface ITokenClaims {
-    // (undocumented)
     documentId: string;
-    // (undocumented)
     exp: number;
-    // (undocumented)
     iat: number;
-    // (undocumented)
     jti?: string;
-    // (undocumented)
     scopes: string[];
-    // (undocumented)
     tenantId: string;
-    // (undocumented)
     user: IUser;
-    // (undocumented)
     ver: string;
 }
 
@@ -574,7 +566,6 @@ export interface IUploadedSummaryDetails {
 
 // @public
 export interface IUser {
-    // (undocumented)
     id: string;
 }
 
@@ -630,13 +621,10 @@ export enum NackErrorType {
     ThrottlingError = "ThrottlingError"
 }
 
-// @public (undocumented)
+// @public
 export enum ScopeType {
-    // (undocumented)
     DocRead = "doc:read",
-    // (undocumented)
     DocWrite = "doc:write",
-    // (undocumented)
     SummaryWrite = "summary:write"
 }
 

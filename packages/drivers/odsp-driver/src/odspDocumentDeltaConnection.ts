@@ -128,7 +128,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
             this.isPendingInitialConnection = false;
 
             // Explicitly cast error to the specified event args type to ensure type compatibility
-            this.emit("server_disconnect", error as IFluidErrorBase & OdspError);
+            this.emit("server_disconnect", error);
             this.closeSocket();
         });
     }
@@ -460,7 +460,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             };
         }
 
-        this.socketReference!.once("server_disconnect", this.serverDisconnectHandler);
+        this.socketReference!.on("server_disconnect", this.serverDisconnectHandler);
 
         this.socket.on("get_ops_response", (result: IGetOpsResponse) => {
             const messages = result.messages;
@@ -553,21 +553,20 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             case "nack":
                 // per client / document nack handling
                 super.addTrackedListener(event, (clientIdOrDocumentId: string, nacks: INack[]) => {
-                    if (clientIdOrDocumentId.length === 0 ||
+                    const handle = clientIdOrDocumentId.length === 0 ||
                         clientIdOrDocumentId === this.documentId ||
-                        (this.hasDetails && clientIdOrDocumentId === this.clientId)) {
-                        const nackContent = nacks[0]?.content;
-                        if (nackContent !== undefined) {
-                            const { code, type, message, retryAfter } = nackContent;
-                            this.logger.sendTelemetryEvent({
-                                eventName: "ServerNack",
-                                code,
-                                type,
-                                message,
-                                retryAfterSeconds: retryAfter,
-                                clientId: this.clientId,
-                            });
-                        }
+                        (clientIdOrDocumentId === this.clientId);
+                    const { code, type, message, retryAfter } = nacks[0]?.content ?? {};
+                    this.logger.sendTelemetryEvent({
+                        eventName: "ServerNack",
+                        code,
+                        type,
+                        message,
+                        retryAfterSeconds: retryAfter,
+                        clientId: this.clientId,
+                        handle,
+                    });
+                    if (handle) {
                         this.emit("nack", clientIdOrDocumentId, nacks);
                     }
                 });
@@ -585,9 +584,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     protected disconnect(socketProtocolError: boolean, reason: IAnyDriverError) {
         const socket = this.socketReference;
         assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
-        this.socketReference = undefined;
 
-        this.socket.off("server_disconnect", this.serverDisconnectHandler);
+        this.socketReference?.off("server_disconnect", this.serverDisconnectHandler);
+        this.socketReference = undefined;
 
         if (!socketProtocolError && this.hasDetails) {
             // tell the server we are disconnecting this client from the document
