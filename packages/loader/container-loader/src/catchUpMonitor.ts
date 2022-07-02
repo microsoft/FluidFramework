@@ -74,26 +74,3 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
         this.deltaManager.off("op", this.opHandler);
     }
 }
-
-/** Monitor that always notifies listeners immediately */
-export class ImmediateCatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> implements ICatchUpMonitor {
-    constructor() {
-        super();
-        this.on("newListener", (event: string, listener) => {
-            if (event === "caughtUp") {
-                const caughtUpListener = listener as CaughtUpListener;
-                caughtUpListener();
-            }
-        });
-    }
-
-    public disposed: boolean = false;
-    public dispose() {
-        if (this.disposed) {
-            return;
-        }
-        this.disposed = true;
-
-        this.removeAllListeners();
-    }
-}
