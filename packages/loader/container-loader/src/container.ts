@@ -100,7 +100,12 @@ import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { ConnectionStateHandler } from "./connectionStateHandler";
+import {
+    IConnectionStateHandler,
+    ConnectionStateHandler,
+    ConnectionStateCatchup,
+    IConnectionStateHandlerInputs,
+} from "./connectionStateHandler";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { BlobOnlyStorage, ContainerStorageAdapter } from "./containerStorageAdapter";
@@ -420,7 +425,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
     private lastVisible: number | undefined;
     private readonly visibilityEventHandler: (() => void) | undefined;
-    private readonly connectionStateHandler: ConnectionStateHandler;
+    private readonly connectionStateHandler: IConnectionStateHandler;
 
     private setAutoReconnectTime = performance.now();
 
@@ -462,7 +467,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     public get connected(): boolean {
-        return this.connectionStateHandler.connected;
+        return this.connectionStateHandler.connectionState === ConnectionState.Connected;
     }
 
     /**
@@ -477,8 +482,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * The server provided id of the client.
      * Set once this.connected is true, otherwise undefined
      */
+    private _clientId: string | undefined;
     public get clientId(): string | undefined {
-        return this.connectionStateHandler.clientId;
+        return this._clientId;
     }
 
     /**
@@ -602,11 +608,25 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             summarizeProtocolTree,
         };
 
-        this.connectionStateHandler = new ConnectionStateHandler(
+        const deltaManagerForCatchingUp =
+        this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true ?
+            this.deltaManager
+            : undefined;
+
+        this.connectionStateHandler = new ConnectionStateCatchup(
             {
+                logger: this.mc.logger,
                 quorumClients: () => this._protocolHandler?.quorum,
-                logConnectionStateChangeTelemetry: (value, oldState, reason) =>
-                    this.logConnectionStateChangeTelemetry(value, oldState, reason),
+                connectionStateChanged: (value, oldState, reason) => {
+                    if (value === ConnectionState.Connected) {
+                        this._clientId = this.connectionStateHandler.pendingClientId;
+                    }
+                    this.connectionStateChanged(value, oldState, reason);
+                    // Fire events only if container is fully loaded and not closed
+                    if (this._lifecycleState === "loaded" && value !== ConnectionState.CatchingUp) {
+                        this.propagateConnectionState();
+                    }
+                },
                 shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
                 maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
                 logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => {
@@ -618,15 +638,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
                 },
-                connectionStateChanged: () => {
-                    // Fire events only if container is fully loaded and not closed
-                    if (this._lifecycleState === "loaded") {
-                        this.propagateConnectionState();
-                    }
-                },
             },
-            this.mc.logger,
-            config.serializedContainerState?.clientId,
+            (handler: IConnectionStateHandlerInputs) => new ConnectionStateHandler(
+                handler,
+                config.serializedContainerState?.clientId),
+            deltaManagerForCatchingUp,
         );
 
         this.on(savedContainerEvent, () => {
@@ -1506,15 +1522,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 this._audience.addMember(priorClient.clientId, priorClient.client);
             }
 
-            const deltaManagerForCatchingUp =
-                this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true ?
-                    this.deltaManager
-                    : undefined;
-
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,
-                deltaManagerForCatchingUp,
             );
         });
 
@@ -1560,7 +1570,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             prefetchType);
     }
 
-    private logConnectionStateChangeTelemetry(
+    private connectionStateChanged(
         value: ConnectionState,
         oldState: ConnectionState,
         reason?: string,

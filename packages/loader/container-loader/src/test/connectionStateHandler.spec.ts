@@ -91,12 +91,11 @@ describe("ConnectionStateHandler Tests", () => {
         protocolHandler = new ProtocolOpHandler(0, 0, 1, [], [], [], (key, value) => 0);
         shouldClientJoinWrite = false;
         handlerInputs = {
-            logConnectionStateChangeTelemetry: () => undefined,
+            connectionStateChanged: () => undefined,
             maxClientLeaveWaitTime: expectedTimeout,
             quorumClients: () => protocolHandler.quorum,
             shouldClientJoinWrite: () => shouldClientJoinWrite,
             logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => { throw new Error(`logConnectionIssue: ${eventName} ${JSON.stringify(details)}`); },
-            connectionStateChanged: () => {},
         };
         connectionStateHandler = new ConnectionStateHandler(
             handlerInputs,
