@@ -27,6 +27,8 @@ import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframew
 import { Loader } from "@fluidframework/container-loader";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IDataStore } from "@fluidframework/runtime-definitions";
+import { IFluidRouter } from "@fluidframework/core-interfaces";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -360,6 +362,33 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             assert.equal(aliasResult5, "Conflict");
             assert.equal(aliasResult6, "AlreadyAliased");
+        });
+
+        it("Trying to create an alias datastore will always return the same datastore", async () => {
+            const datastores: IFluidRouter[] = [];
+            const createAliasedDataStore = async (id: string) => {
+                try {
+                    return getRootDataStore(dataObject1, id);
+                } catch (err) {
+                    const newDataStore = await runtimeOf(dataObject1).createDataStore(packageName);
+                    await newDataStore.trySetAlias(id);
+                    datastores.push(newDataStore);
+                    return getRootDataStore(dataObject1, id);
+                }
+            };
+
+            await Promise.all([
+                createAliasedDataStore(alias),
+                createAliasedDataStore(alias),
+                createAliasedDataStore(alias),
+                createAliasedDataStore(alias),
+                createAliasedDataStore(alias),
+                createAliasedDataStore(alias),
+                createAliasedDataStore(alias),
+                createAliasedDataStore(alias),
+            ]);
+
+            assert.equal(datastores.length, 1);
         });
 
         it("Aliasing a previously aliased datastore will fail", async () => {

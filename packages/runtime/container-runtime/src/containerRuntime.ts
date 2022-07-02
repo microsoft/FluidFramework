@@ -2058,7 +2058,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             internalId,
             this,
             this.dataStores,
-            this.mc.logger);
+            this.mc.logger,
+            this.pendingAliases);
     }
 
     /**
@@ -2105,7 +2106,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
         const internalId = uuid();
         const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-        const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.dataStores, this.mc.logger);
+        const aliasedDataStore = channelToDataStore(
+            dataStore,
+            internalId,
+            this,
+            this.dataStores,
+            this.mc.logger,
+            this.pendingAliases);
         const result = await aliasedDataStore.trySetAlias(alias);
         if (result !== "Success") {
             throw new GenericError(
@@ -2167,7 +2174,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 hasProps: props !== undefined,
             });
         }
-        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
+        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger, this.pendingAliases);
     }
 
     public async _createDataStoreWithProps(
