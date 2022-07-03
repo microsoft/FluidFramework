@@ -41,6 +41,7 @@ to be `string | undefined`.
 - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
 - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
 
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
@@ -66,6 +67,10 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 
 ### Remove ConnectionState.Connecting
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
+
+### Remove IFluidDataStoreChannel.bindToContext and related types
+`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
+See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
 
 # 1.1.0
 
