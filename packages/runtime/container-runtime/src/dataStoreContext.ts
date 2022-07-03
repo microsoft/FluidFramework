@@ -231,6 +231,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
+    // back-compat (for tests) - can be removed in 2.0.0-alpha.2.0.0, or earlier if compat tests drop n/n-2 coverage
     // @ts-expect-error - This shouldn't be referenced in the current version, but needs to be here for back-compat
     private readonly bindToContext: () => void;
     protected channel: IFluidDataStoreChannel | undefined;
