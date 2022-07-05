@@ -39,6 +39,11 @@ module.exports = {
         "unicorn/empty-brace-spaces": "off",
         "unicorn/prevent-abbreviations": "off",
 
+        // Disallows the `any` type.
+        // Using the `any` type defeats the purpose of using TypeScript.
+        // When `any` is used, all compiler type checks around that value are ignored.
+        "@typescript-eslint/no-explicit-any": "error",
+
         /**
          * Requires explicit typing for anything exported from a module. Explicit types for function return
          * values and arguments makes it clear to any calling code what is the module boundary's input and
