@@ -278,6 +278,15 @@ export class Packages {
         return packages;
     }
 
+    /**
+     * Loads all packages found under the specified glob path. Ignores files in node_modules.
+     *
+     * @param globPath The glob path to search for package.json files.
+     * @param group The release group (monorepo) the packages are associated with.
+     * @param ignoredGlobs Glob paths that should be ignored. Note: `**\/node_modules/**` is always ignored.
+     * @param monoRepo A {@link MonoRepo} instance that will be associated with the packages.
+     * @returns An array containing all the packages that were found under the globPath.
+     */
     public static loadGlob(globPath: string, group: MonoRepoKind, ignoredGlobs: string[] | undefined, monoRepo?: MonoRepo,): Package[] {
         const packages: Package[] = [];
 
