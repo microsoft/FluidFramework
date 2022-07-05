@@ -57,8 +57,8 @@ forming its own release group):
 -   [./docs](./docs): The code and content for <https://fluidframework.com>.
 
 Dependencies between packages in various layers of the system are enforced via a build step called
-[layer-check](./tools/build-tools/src/layerCheck). You can view the full list of packages and layers in
-[docs/PACKAGES.md](./docs/PACKAGES.md).
+[layer-check](./build-tools/packages/build-tools/src/layerCheck). You can view the full list of packages and layers in
+[PACKAGES.md](./PACKAGES.md).
 
 ## Building
 

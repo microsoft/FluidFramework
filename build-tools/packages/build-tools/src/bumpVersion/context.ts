@@ -76,7 +76,7 @@ export class Context {
 
         const depVersions =
             new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
-        const pendingDepCheck = [];
+        const pendingDepCheck: Package[] = [];
         const processMonoRepo = (monoRepo: MonoRepo) => {
             console.log(monoRepo);
             pendingDepCheck.push(...monoRepo.packages);

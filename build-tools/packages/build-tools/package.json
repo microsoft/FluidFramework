@@ -1,16 +1,17 @@
 {
   "name": "@fluidframework/build-tools",
-  "version": "0.2.0",
-  "description": "Fluid Build tool",
+  "version": "0.3.0",
+  "description": "Fluid Build tools",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "tools/build-tools"
+    "directory": "build-tools/packages/build-tools"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "main": "dist/fluidBuild/fluidBuild.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "fluid-build": "bin/fluid-build",
     "fluid-build-version": "bin/fluid-build-version",
@@ -23,9 +24,12 @@
     "fluid-type-validator": "bin/fluid-type-validator"
   },
   "scripts": {
-    "build": "tsc -b && npm run build:test",
+    "build": "npm run build:genver && npm run build:compile && npm run lint",
+    "build:compile": "tsc -b && npm run build:test",
+    "build:genver": "gen-version",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "bump": "node dist/bumpVersion/bumpVersionCli.js",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -34,10 +38,10 @@
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
-    "policy-check": "cd ../.. && node tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
-    "policy-check:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
+    "policy-check": "cd ../.. && node build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
+    "policy-check:debug": "cd ../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:fix": "npm run policy-check -- -r",
-    "policy-check:fix:debug": "cd ../.. && node --inspect-brk tools/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
+    "policy-check:fix:debug": "cd ../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000"
   },
   "dependencies": {
@@ -56,12 +60,13 @@
     "npm-package-json-lint": "^6.0.0",
     "replace-in-file": "^6.0.0",
     "rimraf": "^2.6.2",
-    "semver": "^7.1.2",
+    "semver": "^7.3.7",
     "shelljs": "^0.8.4",
     "sort-package-json": "1.54.0",
     "ts-morph": "^7.1.2"
   },
   "devDependencies": {
+    "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@types/async": "^3.2.6",
     "@types/fs-extra": "^8.1.0",
@@ -70,10 +75,10 @@
     "@types/lodash.isequal": "^4.5.5",
     "@types/lodash.merge": "^4.6.6",
     "@types/minimatch": "3.0.5",
-    "@types/mocha": "^9.1.1",
+    "@types/mocha": "^9.0.0",
     "@types/node": "^14.18.0",
     "@types/rimraf": "^2.0.3",
-    "@types/semver": "^7.1.0",
+    "@types/semver": "^7.3.10",
     "@types/shelljs": "^0.8.8",
     "@types/webpack": "^4.41.22",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
