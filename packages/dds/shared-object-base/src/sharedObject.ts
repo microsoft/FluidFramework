@@ -506,7 +506,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
     /**
      * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
-     * it should not be called from outside the class. Support for that scenario might be removed in the fuutre.
+     * specifically to emit events that are part of the public interface of the DDS (i.e. those that can have listeners
+     * attached to them by the consumers of the DDS). It should not be called from outside the class or to emit events
+     * which are only internal to the DDS. Support for calling it from outside the DDS instance might be removed in the
+     * future.
      *
      * @internal
      *
