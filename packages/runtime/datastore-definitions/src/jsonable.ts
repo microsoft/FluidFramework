@@ -26,7 +26,7 @@
  * @example
  * Typical usage:
  * ```typescript
- *      function foo<T>(value: Jsonable<T>) { ... }
+ * function foo<T>(value: Jsonable<T>) { ... }
  * ```
  */
 export type Jsonable<T = any, TReplaced = void> =
