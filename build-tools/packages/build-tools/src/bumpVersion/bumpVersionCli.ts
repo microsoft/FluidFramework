@@ -290,7 +290,7 @@ async function main() {
 
         switch (command) {
             case "releaseBump":
-                await createReleaseBump(MonoRepoKind.Client, context, paramReleaseVersion, paramVirtualPatch);
+                await createReleaseBump(context, paramReleaseVersion, paramVirtualPatch);
                 break;
             case "dep":
                 console.log("Bumping dependencies");
