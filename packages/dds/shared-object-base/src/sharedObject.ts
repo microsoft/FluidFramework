@@ -148,7 +148,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 100,
             true);
 
-        this.runtime.on("dispose", () => {
+        this.runtime.once("dispose", () => {
             this.callbacksHelper.dispose();
             this.opProcessingHelper.dispose();
         });
