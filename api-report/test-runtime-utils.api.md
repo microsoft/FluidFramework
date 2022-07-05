@@ -275,8 +275,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
-    bindToContext(): void;
-    // (undocumented)
     clientDetails: IClientDetails;
     // (undocumented)
     clientId: string | undefined;
@@ -288,8 +286,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     createProps?: any;
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated (undocumented)
-    documentId: string;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
@@ -314,6 +310,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    makeLocallyVisible(): void;
     // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
@@ -340,6 +338,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 
 // @public
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+    constructor(overrides?: {
+        clientId?: string;
+    });
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -355,11 +356,9 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     bindChannel(channel: IChannel): void;
     // (undocumented)
-    bindToContext(): void;
-    // (undocumented)
     get channelsRoutingContext(): IFluidHandleContext;
     // (undocumented)
-    clientId: string | undefined;
+    clientId: string;
     // (undocumented)
     close(): Promise<void>;
     // (undocumented)
@@ -405,6 +404,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     set local(local: boolean);
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;
     // (undocumented)

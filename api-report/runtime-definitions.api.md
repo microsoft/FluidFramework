@@ -31,7 +31,7 @@ import { SummaryTree } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
 // @public
-export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
+export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 // @public (undocumented)
 export const blobCountPropertyName = "BlobCount";
@@ -132,13 +132,11 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // @deprecated (undocumented)
     attachGraph(): void;
     readonly attachState: AttachState;
-    // @deprecated (undocumented)
-    bindToContext(): void;
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     // (undocumented)
     readonly id: string;
-    makeVisibleAndAttachGraph?(): void;
+    makeVisibleAndAttachGraph(): void;
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     processSignal(message: any, local: boolean): void;
     reSubmit(type: string, content: any, localOpMetadata: unknown): any;
@@ -156,8 +154,6 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly attachState: AttachState;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    // @deprecated (undocumented)
-    bindToContext(): void;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
@@ -185,7 +181,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     readonly isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
-    makeLocallyVisible?(): void;
+    makeLocallyVisible(): void;
     // (undocumented)
     readonly options: ILoaderOptions;
     readonly packagePath: readonly string[];

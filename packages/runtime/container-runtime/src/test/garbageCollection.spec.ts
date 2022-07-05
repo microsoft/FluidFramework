@@ -50,6 +50,7 @@ describe("Garbage Collection Tests", () => {
 
     const mockLogger: MockLogger = new MockLogger();
     const mc = mixinMonitoringContext(mockLogger, sessionStorageConfigProvider.value);
+    let closeCalled = false;
 
     const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
     let injectedSettings = {};
@@ -115,7 +116,6 @@ describe("Garbage Collection Tests", () => {
 
     describe("Session expiry", () => {
         const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
-        let closeCalled = false;
 
         beforeEach(() => {
             closeCalled = false;
