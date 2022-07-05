@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { Context, isVersionBumpType, VersionChangeType } from "./context";
+import { Context, VersionChangeType, VersionChangeTypeExtended } from "./context";
 import { getRepoStateChange, VersionBag } from "./versionBag";
-import { fatal, exec } from "./utils";
+import { fatal, exec, adjustVersion, VersionScheme } from "./utils";
 import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getPackageShortName } from "./releaseVersion";
@@ -72,57 +72,6 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
     }
 }
 
-
-/**
- * Translate a VersionChangeType for the virtual patch scenario where we overload a beta version number
- * to include all of major, minor, and patch.  Actual semver type is not translated
- * "major" maps to "minor" with "patch" = 1000 (<N + 1>.0.0 -> 0.<N + 1>.1000)
- * "minor" maps to "patch" * 1000 (x.<N + 1>.0 -> 0.x.<N + 1>000)
- * "patch" is unchanged (but remember the final patch number holds "minor" * 1000 + the incrementing "patch")
- */
-function translateVirtualVersion(
-    versionBump: VersionChangeType,
-    versionString: string,
-    virtualPatch: boolean,
-): VersionChangeType {
-    if (!virtualPatch) {
-        return versionBump;
-    }
-
-    // Virtual patch can only be used for a major/minor/patch bump and not a specific version
-    if (!isVersionBumpType(versionBump)) {
-        fatal("Can only use virtual patches when doing major/minor/patch bumps");
-    }
-
-    const virtualVersion = semver.parse(versionString);
-    if (!virtualVersion) {
-        fatal("unable to deconstruct package version for virtual patch");
-    }
-    if (virtualVersion.major !== 0) {
-        fatal("Can only use virtual patches with major version 0");
-    }
-
-    switch (versionBump) {
-        case "major": {
-            virtualVersion.minor += 1;
-            // the "minor" component starts at 1000 to work around issues padding to
-            // 4 digits using 0s with semvers
-            virtualVersion.patch = 1000;
-            break;
-        }
-        case "minor": {
-            virtualVersion.patch += 1000;
-            break;
-        }
-        case "patch": {
-            virtualVersion.patch += 1;
-            break;
-        }
-    }
-
-    virtualVersion.format(); // semver must be reformated after edits
-    return virtualVersion;
-}
 /**
  * Bump version of packages in the repo
  *
@@ -130,34 +79,60 @@ function translateVirtualVersion(
  */
 export async function bumpRepo(
     context: Context,
-    versionBump: VersionChangeType,
+    versionBump: VersionChangeTypeExtended,
     monoReposNeedBump: Set<MonoRepoKind>,
     packageNeedBump: Set<Package>,
     virtualPatch: boolean,
-    versionBag: VersionBag,
+    versionBag?: VersionBag
 ) {
-    const bumpMonoRepo = async (repoVersionBump: VersionChangeType, monoRepo: MonoRepo) => {
+    /**
+     * Gets the version for a package. If a versionBag was provided, it will be searched for the package. Otherwise, the
+     * value is assumed to be a monorepo, so the context is searched.
+     *
+     * @returns A version string.
+     */
+    const getVersion = (key: MonoRepoKind | string): string => {
+        let ver = "";
+        if (versionBag !== undefined && !versionBag.isEmpty()) {
+            ver = versionBag.get(key);
+        } else if (isMonoRepoKind(key)) {
+            // console.log(`getting version from repo`)
+            const repo = context.repo.monoRepos.get(key);
+            if (repo === undefined) {
+                fatal(`repo not found: ${key}`);
+            }
+            ver = repo.version;
+        } else {
+            fatal(`${key} is not a valid MonoRepoKind`);
+        }
+        return ver;
+    }
+
+    const bumpMonoRepo = async (repoVersionBump: VersionChangeType | semver.SemVer, monoRepo: MonoRepo) => {
         return exec(`npx lerna version ${repoVersionBump} --no-push --no-git-tag-version -y && npm run build:genver`, monoRepo.repoPath, "bump mono repo");
     }
 
+    const scheme: VersionScheme = virtualPatch ? "virtualPatch" : "semver";
     const vPatchLogString = virtualPatch ? " using virtual patches" : "";
 
     for (const monoRepo of monoReposNeedBump) {
-        console.log(`  Bumping ${monoRepo} version${vPatchLogString}`);
+        console.log(`  Bumping ${monoRepo}${vPatchLogString}...`);
         // Translate the versionBump into the appropriate change for virtual patch versioning
-        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get(monoRepo), virtualPatch);
+        const ver = getVersion(monoRepo);
+        assert(ver, "ver is missing");
+        const adjVer = await adjustVersion(ver, versionBump, scheme);
         const toBump = context.repo.monoRepos.get(monoRepo);
         assert(toBump !== undefined, `No monorepo with name '${toBump}'`);
         if (toBump !== undefined) {
-            await bumpLegacyDependencies(context, translatedVersionBump);
-            await bumpMonoRepo(translatedVersionBump, toBump);
+            await bumpLegacyDependencies(context, adjVer);
+            await bumpMonoRepo(adjVer, toBump);
         }
     }
 
     for (const pkg of packageNeedBump) {
-        console.log(`  Bumping ${pkg.name}${vPatchLogString}`);
+        console.log(`  Bumping ${pkg.name}${vPatchLogString}...`);
         // Translate the versionBump into the appropriate change for virtual patch versioning
-        const translatedVersionBump = translateVirtualVersion(versionBump, versionBag.get(pkg.name), virtualPatch);
+        const translatedVersionBump = await adjustVersion(getVersion(pkg.name), versionBump, scheme);
         let cmd = `npm version ${translatedVersionBump}`;
         if (pkg.getScript("build:genver")) {
             cmd += " && npm run build:genver";
@@ -169,6 +144,9 @@ export async function bumpRepo(
     return context.collectVersions(true);
 }
 
+/**
+ * Note: this function does nothing if called with versionBump !== "patch".
+ */
 async function bumpLegacyDependencies(context: Context, versionBump: VersionChangeType) {
     if (versionBump !== "patch") {
         // Assumes that we want N/N-1 testing
