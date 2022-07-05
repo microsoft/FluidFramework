@@ -29,13 +29,13 @@ import {
 import { create404Response, RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import {
     SharedString,
-    SparseMatrix,
 } from "@fluidframework/sequence";
 import { SharedSummaryBlock } from "@fluidframework/shared-summary-block";
 import {
     SharedIntervalCollection,
     SharedNumberSequence,
     SharedObjectSequence,
+    SparseMatrix,
 } from "@fluid-experimental/sequence-deprecated";
 import { UnknownChannelFactory } from "./unknownChannel";
 
