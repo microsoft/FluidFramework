@@ -109,7 +109,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     get connected(): boolean;
     protected didAttach(): void;
     protected dirty(): void;
-    // (undocumented)
+    // @internal
     emit(event: EventEmitterEventType, ...args: any[]): boolean;
     // (undocumented)
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
