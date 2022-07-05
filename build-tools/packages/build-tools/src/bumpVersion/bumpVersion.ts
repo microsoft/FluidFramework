@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Context, isVersionBumpType, VersionChangeType } from "./context";
+import { Context, VersionChangeType, VersionChangeTypeExtended } from "./context";
 import { getRepoStateChange, VersionBag } from "./versionBag";
 import { fatal, exec, adjustVersion, VersionScheme } from "./utils";
 import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
@@ -79,13 +79,36 @@ export async function bumpVersion(context: Context, bump: string[], version: Ver
  */
 export async function bumpRepo(
     context: Context,
-    versionBump: VersionChangeType,
+    versionBump: VersionChangeTypeExtended,
     monoReposNeedBump: Set<MonoRepoKind>,
     packageNeedBump: Set<Package>,
     virtualPatch: boolean,
-    versionBag: VersionBag,
+    versionBag?: VersionBag
 ) {
-    const bumpMonoRepo = async (repoVersionBump: VersionChangeType, monoRepo: MonoRepo) => {
+    /**
+     * Gets the version for a package. If a versionBag was provided, it will be searched for the package. Otherwise, the
+     * value is assumed to be a monorepo, so the context is searched.
+     *
+     * @returns A version string.
+     */
+    const getVersion = (key: MonoRepoKind | string): string => {
+        let ver = "";
+        if (versionBag !== undefined && !versionBag.isEmpty()) {
+            ver = versionBag.get(key);
+        } else if (isMonoRepoKind(key)) {
+            // console.log(`getting version from repo`)
+            const repo = context.repo.monoRepos.get(key);
+            if (repo === undefined) {
+                fatal(`repo not found: ${key}`);
+            }
+            ver = repo.version;
+        } else {
+            fatal(`${key} is not a valid MonoRepoKind`);
+        }
+        return ver;
+    }
+
+    const bumpMonoRepo = async (repoVersionBump: VersionChangeType | semver.SemVer, monoRepo: MonoRepo) => {
         return exec(`npx lerna version ${repoVersionBump} --no-push --no-git-tag-version -y && npm run build:genver`, monoRepo.repoPath, "bump mono repo");
     }
 
