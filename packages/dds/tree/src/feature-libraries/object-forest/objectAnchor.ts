@@ -2,8 +2,8 @@ import { assert } from "@fluidframework/common-utils";
 import {
     Anchor,
     ITreeSubscriptionCursorState,
-} from "../forest";
-import { PathShared } from "../rebase";
+} from "../../forest";
+import { PathShared } from "../../rebase";
 
 // Currently unused,
 // but would be useful if we stop having anchors just hold onto nodes and use rebase like a real version will.

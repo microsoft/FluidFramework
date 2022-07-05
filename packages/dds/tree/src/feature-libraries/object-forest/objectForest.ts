@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { DisposingDependee, ObservingDependent, recordDependency, SimpleDependee } from "../dependency-tracking";
+import { DisposingDependee, ObservingDependent, recordDependency, SimpleDependee } from "../../dependency-tracking";
 import {
     ITreeCursor, ITreeSubscriptionCursor, NodeId,
     Anchor, IEditableForest,
@@ -12,9 +12,9 @@ import {
     TreeNavigationResult,
     Value,
     FieldLocation, TreeLocation,
-} from "../forest";
-import { FieldKey, TreeType, DetachedRange } from "../tree";
-import { brand } from "../util";
+} from "../../forest";
+import { FieldKey, TreeType, DetachedRange } from "../../tree";
+import { brand } from "../../util";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
     public readonly anchors: Set<ObjectAnchor> = new Set();
