@@ -169,9 +169,10 @@ export class BlobManager {
         // If we are detached, we will not have storage IDs, only undefined
         const havePendingBlobs = ids.delete(undefined);
 
-        // We should not have undefined entries in the table unless we are detached
+        // For a detached container, entries are inserted into the redirect table with an undefined storage ID.
+        // For an attached container, entries are inserted w/storage ID after the BlobAttach op round-trips.
         assert(!havePendingBlobs || this.runtime.attachState === AttachState.Detached && ids.size === 0,
-            "redirect table must not have an undefined value while attached");
+            "'redirectTable' must contain only undefined while detached / defined values while attached");
 
         return ids as Set<string>;
     }
