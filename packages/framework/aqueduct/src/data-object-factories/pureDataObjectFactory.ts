@@ -74,7 +74,7 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
     // Create object right away.
     // This allows object to register various callbacks with runtime before runtime
     // becomes globally available. But it's not full initialization - constructor can't
-    // access DDSs or other services of runtime as objects are not fully initialized.
+    // access DDSes or other services of runtime as objects are not fully initialized.
     // In order to use object, we need to go through full initialization by calling finishInitialization().
     const scope: FluidObject<IFluidDependencySynthesizer> = context.scope;
     const dependencyContainer = new DependencyContainer(scope.IFluidDependencySynthesizer);
@@ -82,14 +82,14 @@ async function createDataObject<TObj extends PureDataObject, I extends DataObjec
     const instance = new ctor({ runtime, context, providers, initProps });
 
     // if it's a newly created object, we need to wait for it to finish initialization
-    // as that results in creation of DDSs, before it gets attached, providing atomic
+    // as that results in creation of DDSes, before it gets attached, providing atomic
     // guarantee of creation.
     // WARNING: we can't do the same (yet) for already existing PureDataObject!
     // This will result in deadlock, as it tries to resolve internal handles, but any
     // handle resolution goes through root (container runtime), which can't route it back
     // to this data store, as it's still not initialized and not known to container runtime yet.
     // In the future, we should address it by using relative paths for handles and be able to resolve
-    // local DDSs while data store is not fully initialized.
+    // local DDSes while data store is not fully initialized.
     if (!existing) {
         await instance.finishInitialization(existing);
     }

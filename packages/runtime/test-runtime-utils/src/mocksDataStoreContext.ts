@@ -37,6 +37,10 @@ import { v4 as uuid } from "uuid";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
+    /**
+     * @deprecated This field is currently unused and will be removed in an
+     * upcoming breaking change
+     */
     public documentId: string = undefined as any;
     public isLocalDataStore: boolean = true;
     public packagePath: readonly string[] = undefined as any;

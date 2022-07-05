@@ -56,7 +56,7 @@ export enum BindState {
 export namespace ConnectionState {
     export type CatchingUp = 1;
     export type Connected = 2;
-    // @deprecated (undocumented)
+    // @deprecated
     export type Connecting = 1;
     export type Disconnected = 0;
     export type EstablishingConnection = 3;
@@ -84,7 +84,6 @@ export interface ContainerWarning extends IErrorBase {
 export interface IAudience extends EventEmitter {
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
-    // (undocumented)
     on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
 }
 
