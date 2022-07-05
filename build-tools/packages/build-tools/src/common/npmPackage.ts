@@ -6,6 +6,7 @@
 import { queue } from "async";
 import * as chalk from "chalk";
 import * as fs from "fs";
+import { hasMagic, sync as globSync } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
 import { logStatus, logVerbose } from "./logging";
@@ -21,7 +22,7 @@ import {
     lookUpDirSync,
     isSameFileOrDir,
 } from "./utils"
-import { MonoRepo } from "./monoRepo";
+import { MonoRepo, MonoRepoKind } from "./monoRepo";
 import { options } from "../fluidBuild/options";
 
 export type ScriptDependencies = { [key: string]: string[] };
@@ -143,7 +144,7 @@ export class Package {
     }
 
     public get combinedDependencies() {
-        const it = function* (packageJson: IPackage) {
+        const it = function*(packageJson: IPackage) {
             for (const item in packageJson.dependencies) {
                 yield ({ name: item, version: packageJson.dependencies[item], dev: false });
             }
@@ -274,6 +275,30 @@ export class Packages {
                 }
             }
         });
+        return packages;
+    }
+
+    public static loadGlob(globPath: string, group: MonoRepoKind, ignoredGlobs: string[] | undefined, monoRepo?: MonoRepo,): Package[] {
+        const packages: Package[] = [];
+
+        if (hasMagic(globPath)) {
+            if (ignoredGlobs === undefined) {
+                ignoredGlobs = [];
+            }
+            ignoredGlobs.push("**/node_modules/**");
+
+            const globPkg = globPath + "/package.json";
+            for (const pkg of globSync(globPkg, { ignore: ignoredGlobs })) {
+                console.log(`Loading from glob: ${pkg}`);
+                packages.push(new Package(pkg, group, monoRepo));
+            }
+        } else {
+            // Assume a path to a single package
+            const packageJsonFileName = path.join(globPath, "package.json");
+            if (existsSync(packageJsonFileName)) {
+                return [new Package(packageJsonFileName, group, monoRepo)];
+            }
+        }
         return packages;
     }
 
