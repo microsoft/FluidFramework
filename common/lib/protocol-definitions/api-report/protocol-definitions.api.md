@@ -416,7 +416,7 @@ export interface ISummaryAttachment {
     type: SummaryType.Attachment;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ISummaryAuthor {
     // (undocumented)
     date: string;
@@ -434,7 +434,7 @@ export interface ISummaryBlob {
     type: SummaryType.Blob;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ISummaryCommitter {
     // (undocumented)
     date: string;

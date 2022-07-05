@@ -9,19 +9,19 @@ Before understanding the details of how GC works, lets take a look at how to add
 
     `Root` objects can never be deleted so be careful and only create them if they should live forever.
   - Store a handle ([IFluidHandle](../../../common/lib/core-interfaces/src/handles.ts)) to the object in a referenced DDS that supports handle in its data. For example, a data store's handle can be stored in a referenced `SharedMap` DDS.
-- All references to unused Fluid objects should be removed so that they can be deleted by GC. To remove an object's reference, all its handles should be removed from referenced DDSs.
+- All references to unused Fluid objects should be removed so that they can be deleted by GC. To remove an object's reference, all its handles should be removed from referenced DDSes.
 
-> Note that there should be at least one `root` data store with one or more DDSs in a Fluid document so that other objects' handles can be stored in it.
+> Note that there should be at least one `root` data store with one or more DDSes in a Fluid document so that other objects' handles can be stored in it.
 
 ## GC algorithm
 The GC algorithm runs in two phases:
 
 ### Mark phase
 In this phase, the GC algorithm identifies all Fluid objects that are unreferenced and marks them as such:
-- It starts at the root data stores and marks them, and all their DDSs as referenced.
-    > Note: Currently all DDSs are considered as root so they are always referenced. This may change in the future.
-- It finds the handles stored in DDSs from #1 and marks the objects corresponding to the handles as referenced.
-- It finds the handles stored in DDSs from #2 and marks the objects corresponding to the handles as referenced and so on until it has scanned all objects.
+- It starts at the root data stores and marks them, and all their DDSes as referenced.
+    > Note: Currently all DDSes are considered as root so they are always referenced. This may change in the future.
+- It finds the handles stored in DDSes from #1 and marks the objects corresponding to the handles as referenced.
+- It finds the handles stored in DDSes from #2 and marks the objects corresponding to the handles as referenced and so on until it has scanned all objects.
 - All the objects in the system that are not marked as referenced in the above steps are marked as unreferenced.
 
 Mark phase is enabled by default for a container. It is enabled during creation of the container runtime and remains enabled throughout its lifetime. Basically, this setting is persisted in the summary and cannot be changed.

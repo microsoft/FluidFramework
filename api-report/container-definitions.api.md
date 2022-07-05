@@ -56,7 +56,7 @@ export enum BindState {
 export namespace ConnectionState {
     export type CatchingUp = 1;
     export type Connected = 2;
-    // @deprecated (undocumented)
+    // @deprecated
     export type Connecting = 1;
     export type Disconnected = 0;
     export type EstablishingConnection = 3;

@@ -126,7 +126,7 @@ export interface Covariant<T> {
  */
 export interface Bivariant<T> {
 	/**
-	 * @see {@link Bivariant}
+	 * See {@link Bivariant}
 	 */
 	_constrainToBivariant?(_: T): void;
 }
