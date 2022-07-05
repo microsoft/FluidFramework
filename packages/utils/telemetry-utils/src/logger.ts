@@ -166,7 +166,13 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
-        this.sendTelemetryEventCore({ ...event, category: "error" }, error);
+        this.sendTelemetryEventCore({
+            // ensure the error field has some value,
+            // this can and will be overridden by event, or error
+            error: event.eventName,
+            ...event,
+            category: "error",
+        }, error);
     }
 
     /**
