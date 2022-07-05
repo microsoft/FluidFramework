@@ -41,7 +41,7 @@ export interface IEventProvider<TEvent extends IEvent> {
 }
 
 /**
- * Allows an interface to extend an interfaces that already extends an IEventProvider
+ * Allows an interface to extend interfaces that already extend an {@link IEventProvider}.
  *
  * @example
  *``` typescript

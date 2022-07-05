@@ -20,7 +20,7 @@ import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @public (undocumented)
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
-    // @internal (undocumented)
+    // @internal
     protected createServiceMember(audienceMember: IClient): AzureMember;
 }
 
@@ -90,9 +90,7 @@ export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
 
 // @public
 export interface AzureMember<T = any> extends IMember {
-    // (undocumented)
     additionalDetails?: T;
-    // (undocumented)
     userName: string;
 }
 
@@ -100,6 +98,12 @@ export interface AzureMember<T = any> extends IMember {
 export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
     tenantId: string;
     type: "remote";
+}
+
+// @public
+export interface AzureUser<T = any> extends IUser {
+    additionalDetails?: T;
+    name: string;
 }
 
 // @public

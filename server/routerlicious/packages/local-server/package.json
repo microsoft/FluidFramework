@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-local-server",
-  "version": "0.1036.5000",
+  "version": "0.1037.0",
   "description": "Fluid local server implementation",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -57,18 +57,18 @@
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/server-lambdas": "^0.1036.5000",
-    "@fluidframework/server-memory-orderer": "^0.1036.5000",
-    "@fluidframework/server-services-client": "^0.1036.5000",
-    "@fluidframework/server-services-core": "^0.1036.5000",
-    "@fluidframework/server-services-telemetry": "^0.1036.5000",
-    "@fluidframework/server-test-utils": "^0.1036.5000",
+    "@fluidframework/server-lambdas": "^0.1037.0",
+    "@fluidframework/server-memory-orderer": "^0.1037.0",
+    "@fluidframework/server-services-client": "^0.1037.0",
+    "@fluidframework/server-services-core": "^0.1037.0",
+    "@fluidframework/server-services-telemetry": "^0.1037.0",
+    "@fluidframework/server-test-utils": "^0.1037.0",
     "debug": "^4.1.1",
-    "jsrsasign": "^10.2.0",
+    "jsrsasign": "^10.5.25",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
+    "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/jsrsasign": "^8.0.8",

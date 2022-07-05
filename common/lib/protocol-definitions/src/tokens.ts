@@ -8,7 +8,7 @@ import { IUser } from "./users";
 /**
  * {@link https://jwt.io/introduction/ | JSON Web Token (JWT)} Claims
  *
- * @see {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4}
+ * See {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4}
  */
 export interface ITokenClaims {
     /**
@@ -38,7 +38,7 @@ export interface ITokenClaims {
      * Indicates when the authentication for this token occurred.
      * Expressed in {@link https://en.wikipedia.org/wiki/Unix_time | Unix Time}.
      *
-     * @see {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6}
+     * See {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6}
      */
     iat: number;
 
@@ -47,7 +47,7 @@ export interface ITokenClaims {
      * Identifies the expiration time on or after which the token must not be accepted for processing.
      * Expressed in {@link https://en.wikipedia.org/wiki/Unix_time | Unix Time}.
      *
-     * @see https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
+     * See {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4}
      */
     exp: number;
 
@@ -61,7 +61,7 @@ export interface ITokenClaims {
      * "JWT ID"
      * A unique identifier for the token.
      *
-     * @see {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7}
+     * See {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7}
      */
     jti?: string;
 }

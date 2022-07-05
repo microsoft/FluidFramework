@@ -122,6 +122,8 @@ export interface IContainerRuntime extends
 
     /**
      * Flushes any ops currently being batched to the loader
+     * @deprecated - This will be removed in a later release. If a more manual flushing process is needed,
+     * move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
      */
     flush(): void;
 

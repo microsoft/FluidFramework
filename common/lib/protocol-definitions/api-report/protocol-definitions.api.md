@@ -415,7 +415,7 @@ export interface ISummaryAttachment {
     type: SummaryType.Attachment;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ISummaryAuthor {
     date: IsoDate;
     email: string;
@@ -430,7 +430,7 @@ export interface ISummaryBlob {
     type: SummaryType.Blob;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ISummaryCommitter {
     date: IsoDate;
     email: string;

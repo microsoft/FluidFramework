@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-utils",
-  "version": "0.1036.5000",
+  "version": "0.1037.0",
   "description": "Fluid server services shared utilities",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -52,9 +52,9 @@
   },
   "dependencies": {
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/server-services-client": "^0.1036.5000",
-    "@fluidframework/server-services-core": "^0.1036.5000",
-    "@fluidframework/server-services-telemetry": "^0.1036.5000",
+    "@fluidframework/server-services-client": "^0.1037.0",
+    "@fluidframework/server-services-core": "^0.1037.0",
+    "@fluidframework/server-services-telemetry": "^0.1037.0",
     "debug": "^4.1.1",
     "express": "^4.16.3",
     "ioredis": "^4.24.2",
@@ -69,9 +69,9 @@
     "winston": "^3.6.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
+    "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/server-test-utils": "^0.1036.5000",
+    "@fluidframework/server-test-utils": "^0.1037.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",
     "@types/ioredis": "^4.22.0",

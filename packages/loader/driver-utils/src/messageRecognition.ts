@@ -8,8 +8,13 @@ import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluid
  *
  * @param message-message
  * @returns whether or not the message type is one listed below
+ * "op"
+ * "summarize"
+ * "propose"
+ * "reject"
+ * "noop"
  */
-export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage) {
+export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
     if (isRuntimeMessage(message)) {
         return true;
     }
@@ -27,7 +32,38 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
  *
  * @param message-message
  * @returns whether or not the message type is one listed below
+ * "op"
+ * "summarize"
  */
-export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage) {
+export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
     return message.type === MessageType.Operation || message.type === MessageType.Summarize;
+}
+
+enum RuntimeMessage {
+    FluidDataStoreOp = "component",
+    Attach = "attach",
+    ChunkedOp = "chunkedOp",
+    BlobAttach = "blobAttach",
+    Rejoin = "rejoin",
+    Alias = "alias",
+    Operation = "op",
+}
+
+/**
+ *
+ * @param message-message
+ * @returns whether or not the message type is one listed below (legacy)
+ * "component"
+ * "attach"
+ * "chunkedOp"
+ * "blobAttach"
+ * "rejoin"
+ * "alias"
+ * "op"
+ */
+export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
+    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
+        return true;
+    }
+    return false;
 }

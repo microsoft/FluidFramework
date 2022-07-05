@@ -10,7 +10,7 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 /**
- * TODO
+ * @deprecated ISummaryAuthor is deprecated and will be removed in a future release.
  */
 export interface ISummaryAuthor {
     /**
@@ -30,7 +30,7 @@ export interface ISummaryAuthor {
 }
 
 /**
- * TODO
+ * @deprecated ISummaryCommitter is deprecated and will be removed in a future release.
  */
 export interface ISummaryCommitter {
     /**
