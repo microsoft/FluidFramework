@@ -135,7 +135,7 @@ class ParamFactory {
 
   /**
    * Prepare parameters to call AWS.DynamoDB.putItem.
-   * @see http://docs.aws.amazon.com/goto/AWSJavaScriptSDK/dynamodb-2012-08-10/PutItem
+   * See {@link http://docs.aws.amazon.com/goto/AWSJavaScriptSDK/dynamodb-2012-08-10/PutItem}
    * @param {string} tableName The table name.
    * @param {object} params A row to persist in the table. At a minimum, the row must contain
    *   attributes matching the table's primary key.

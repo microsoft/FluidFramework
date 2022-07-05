@@ -5,8 +5,10 @@
         "node_modules"
     ],
     "compilerOptions": {
+        "jsx": "react",
         "rootDir": "./src",
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "types": ["react"]
     },
     "include": [
         "src/**/*"

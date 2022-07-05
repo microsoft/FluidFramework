@@ -5,8 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "flub",
+            "program": "${workspaceFolder}/tools/build-cli/bin/dev",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "bump",
+                "write",
+                "-g",
+                "client",
+                "-t",
+                "current"
+            ],
+        },
+        {
             "name": "layer-check",
-            "program": "${workspaceFolder}/tools/build-tools/dist/layerCheck/layerCheck.js",
+            "program": "${workspaceFolder}/build-tools/packages/build-tools/dist/layerCheck/layerCheck.js",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
