@@ -27,7 +27,6 @@ import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframew
 import { Loader } from "@fluidframework/container-loader";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IDataStore } from "@fluidframework/runtime-definitions";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
@@ -364,32 +363,33 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal(aliasResult6, "AlreadyAliased");
         });
 
-        it("Trying to create an alias datastore will always return the same datastore", async () => {
-            const datastores: IFluidRouter[] = [];
-            const createAliasedDataStore = async (id: string) => {
-                try {
-                    return getRootDataStore(dataObject1, id);
-                } catch (err) {
-                    const newDataStore = await runtimeOf(dataObject1).createDataStore(packageName);
-                    await newDataStore.trySetAlias(id);
-                    datastores.push(newDataStore);
-                    return getRootDataStore(dataObject1, id);
-                }
-            };
+        it.only("Trying to create multiple datastores aliased to the same value on the same client " +
+            "will always return the same datastore", async () => {
+                const datastores: IFluidRouter[] = [];
+                const createAliasedDataStore = async (id: string) => {
+                    try {
+                        return getRootDataStore(dataObject1, id);
+                    } catch (err) {
+                        const newDataStore = await runtimeOf(dataObject1).createDataStore(packageName);
+                        datastores.push(newDataStore);
+                        await newDataStore.trySetAlias(id);
+                        return getRootDataStore(dataObject1, id);
+                    }
+                };
 
-            await Promise.all([
-                createAliasedDataStore(alias),
-                createAliasedDataStore(alias),
-                createAliasedDataStore(alias),
-                createAliasedDataStore(alias),
-                createAliasedDataStore(alias),
-                createAliasedDataStore(alias),
-                createAliasedDataStore(alias),
-                createAliasedDataStore(alias),
-            ]);
+                await Promise.all([
+                    createAliasedDataStore(alias),
+                    createAliasedDataStore(alias),
+                    createAliasedDataStore(alias),
+                    createAliasedDataStore(alias),
+                    createAliasedDataStore(alias),
+                    createAliasedDataStore(alias),
+                    createAliasedDataStore(alias),
+                    createAliasedDataStore(alias),
+                ]);
 
-            assert.equal(datastores.length, 1);
-        });
+                assert.equal(datastores.length, 1);
+            });
 
         it("Aliasing a previously aliased datastore will fail", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);

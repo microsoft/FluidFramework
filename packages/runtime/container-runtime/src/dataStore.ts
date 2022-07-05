@@ -43,8 +43,7 @@ export const channelToDataStore = (
     runtime: ContainerRuntime,
     datastores: DataStores,
     logger: ITelemetryLogger,
-    pendingAliases: Map<string, Promise<AliasResult>>,
-): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger, pendingAliases);
+): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger);
 
 enum AliasState {
     Aliased = "Aliased",
@@ -55,6 +54,8 @@ enum AliasState {
 class DataStore implements IDataStore {
     private aliasState: AliasState = AliasState.None;
     private alias: string | undefined;
+    private readonly pendingAliases: Map<string, Promise<AliasResult>>;
+    private aliasResult: Promise<AliasResult> | undefined;
 
     async trySetAlias(alias: string): Promise<AliasResult> {
         if (alias.includes("/")) {
@@ -64,13 +65,12 @@ class DataStore implements IDataStore {
         switch (this.aliasState) {
             // If we're already aliasing, check if it's for the same value and return
             // the stored promise, otherwise return 'AlreadyAliased'
-            case AliasState.Aliasing: {
-                const pendingAlias = this.pendingAliases.get(alias);
-                assert(pendingAlias !== undefined,
+            case AliasState.Aliasing:
+                assert(this.aliasResult !== undefined,
                     0x316 /* There should be a cached promise of in-progress aliasing */);
-                await pendingAlias;
+                await this.aliasResult;
                 return this.alias === alias ? "Success" : "AlreadyAliased";
-            }
+
             // If this datastore is already aliased, return true only if this
             // is a repeated call for the same alias
             case AliasState.Aliased:
@@ -93,11 +93,9 @@ class DataStore implements IDataStore {
         }
 
         this.aliasState = AliasState.Aliasing;
-        const aliasPromise = this.trySetAliasInternal(alias);
-        this.pendingAliases.set(alias, aliasPromise);
-        const result = await aliasPromise;
-        this.pendingAliases.delete(alias);
-        return result;
+        this.aliasResult = this.trySetAliasInternal(alias);
+        this.pendingAliases.set(alias, this.aliasResult);
+        return this.aliasResult;
     }
 
     async trySetAliasInternal(alias: string): Promise<AliasResult> {
@@ -147,6 +145,8 @@ class DataStore implements IDataStore {
             }, error);
             this.aliasState = AliasState.None;
             return false;
+        }).finally(() => {
+            this.pendingAliases.delete(alias);
         });
 
         return aliased ? "Success" : "Conflict";
@@ -162,8 +162,10 @@ class DataStore implements IDataStore {
         private readonly runtime: ContainerRuntime,
         private readonly datastores: DataStores,
         private readonly logger: ITelemetryLogger,
-        private readonly pendingAliases: Map<string, Promise<AliasResult>>;
-    ) { }
+    ) {
+        this.pendingAliases = datastores.pendingAliases;
+    }
+
     public get IFluidRouter() { return this.fluidDataStoreChannel; }
 
     private async ackBasedPromise<T>(

@@ -86,7 +86,6 @@ import {
     IAttachMessage,
     IDataStore,
     ITelemetryContext,
-    AliasResult,
 } from "@fluidframework/runtime-definitions";
 import {
     addBlobToSummary,
@@ -1076,7 +1075,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly chunkMap: Map<string, string[]>;
 
     private readonly dataStores: DataStores;
-    private readonly pendingAliases: Map<string, Promise<AliasResult>> = new Map<string, Promise<AliasResult>>();
 
     /**
      * True if generating summaries with isolated channels is
@@ -1575,7 +1573,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private internalId(maybeAlias: string): string {
-        return this.dataStores.aliases().get(maybeAlias) ?? maybeAlias;
+        return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
     }
 
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
@@ -1583,14 +1581,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
 
-        const maybePendingAlias = this.pendingAliases.get(id);
-        if (maybePendingAlias !== undefined) {
-            if (!wait) {
-                throw responseToException(create404Response(request), request);
-            }
-
-            await maybePendingAlias;
-        }
+        await this.dataStores.waitIfPendingAlias(id, request, wait);
 
         const internalId = this.internalId(id);
         const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
@@ -1658,7 +1649,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
 
-        const dataStoreAliases = this.dataStores.aliases();
+        const dataStoreAliases = this.dataStores.aliases;
         if (dataStoreAliases.size > 0) {
             addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
         }
@@ -1948,6 +1939,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+        await this.dataStores.waitIfPendingAlias(id, { url: id }, wait);
         const internalId = this.internalId(id);
         const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
@@ -2058,8 +2050,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             internalId,
             this,
             this.dataStores,
-            this.mc.logger,
-            this.pendingAliases);
+            this.mc.logger);
     }
 
     /**
@@ -2111,8 +2102,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             internalId,
             this,
             this.dataStores,
-            this.mc.logger,
-            this.pendingAliases);
+            this.mc.logger);
         const result = await aliasedDataStore.trySetAlias(alias);
         if (result !== "Success") {
             throw new GenericError(
@@ -2174,7 +2164,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 hasProps: props !== undefined,
             });
         }
-        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger, this.pendingAliases);
+        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
 
     public async _createDataStoreWithProps(
