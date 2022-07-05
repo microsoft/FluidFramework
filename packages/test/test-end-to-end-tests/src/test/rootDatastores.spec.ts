@@ -363,7 +363,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal(aliasResult6, "AlreadyAliased");
         });
 
-        it.only("Trying to create multiple datastores aliased to the same value on the same client " +
+        it("Trying to create multiple datastores aliased to the same value on the same client " +
             "will always return the same datastore", async () => {
                 const datastores: IFluidRouter[] = [];
                 const createAliasedDataStore = async () => {
@@ -378,9 +378,12 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                     }
                 };
 
-                for (let i = 0; i < 10; i++) {
-                    await createAliasedDataStore();
-                }
+                await Promise.all([
+                    await createAliasedDataStore(),
+                    await createAliasedDataStore(),
+                    await createAliasedDataStore(),
+                    await createAliasedDataStore(),
+                ]);
 
                 assert.equal(datastores.length, 1);
             });
