@@ -27,7 +27,8 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     /**
      * Local map of focus status for clients
      *
-     * ```
+     * @example
+     * ```typescript
      * Map<userId, Map<clientid, hasFocus>>
      * ```
      */
