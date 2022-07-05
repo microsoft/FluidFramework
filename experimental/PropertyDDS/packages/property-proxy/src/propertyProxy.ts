@@ -102,11 +102,10 @@ export namespace PropertyProxy {
      * Insertion of new properties into the workspace is triggered
      * if the specified property name does not yet exist on the parent and the parent is dynamic.
      * @example
-     * ```
-     *
+     * ```typescript
      * // The data can be accessed and modified using standard JavaScript syntax. Operations directly
      * // happen on the PropertyTree data, nothing is cached.
-     * import {PropertyProxy} from '@fluid-experimental/property-proxy';
+     * import { PropertyProxy } from '@fluid-experimental/property-proxy';
      *
      * // Given a workspace that contains some properties: someVector2D (with x = 1 and y = 2),
      * // someArray (storing [1, 2, 3, 4], ...
