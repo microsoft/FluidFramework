@@ -67,7 +67,7 @@ interface CountAndMeasurements { count: number; measurements: Measurements; }
 
         let m = this.measurementsMap.get(dimension);
         if (m === undefined) {
-            m = { count: 0, measurements: { duration: 0 } };
+            m = { count: 0, measurements: { duration: -1 } };
             this.measurementsMap.set(dimension, m);
         }
         m.count++;
