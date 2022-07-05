@@ -101,8 +101,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const createDataStoreWithProps = async (dataObject: ITestFluidObject, id: string, root: boolean) =>
         runtimeOf(dataObject)._createDataStoreWithProps(packageName, {}, id, root);
 
-    const getRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
-        runtimeOf(dataObject).getRootDataStore(id);
+    const getRootDataStore = async (dataObject: ITestFluidObject, id: string, wait = true) =>
+        runtimeOf(dataObject).getRootDataStore(id, wait);
 
     const corruptedAPIAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
         new Promise<boolean>((resolve, reject) => {
@@ -366,27 +366,21 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         it.only("Trying to create multiple datastores aliased to the same value on the same client " +
             "will always return the same datastore", async () => {
                 const datastores: IFluidRouter[] = [];
-                const createAliasedDataStore = async (id: string) => {
+                const createAliasedDataStore = async () => {
                     try {
-                        return getRootDataStore(dataObject1, id);
+                        const datastore = await getRootDataStore(dataObject1, alias, /* wait */ false);
+                        return datastore;
                     } catch (err) {
                         const newDataStore = await runtimeOf(dataObject1).createDataStore(packageName);
                         datastores.push(newDataStore);
-                        await newDataStore.trySetAlias(id);
-                        return getRootDataStore(dataObject1, id);
+                        await newDataStore.trySetAlias(alias);
+                        return getRootDataStore(dataObject1, alias);
                     }
                 };
 
-                await Promise.all([
-                    createAliasedDataStore(alias),
-                    createAliasedDataStore(alias),
-                    createAliasedDataStore(alias),
-                    createAliasedDataStore(alias),
-                    createAliasedDataStore(alias),
-                    createAliasedDataStore(alias),
-                    createAliasedDataStore(alias),
-                    createAliasedDataStore(alias),
-                ]);
+                for (let i = 0; i < 10; i++) {
+                    await createAliasedDataStore();
+                }
 
                 assert.equal(datastores.length, 1);
             });

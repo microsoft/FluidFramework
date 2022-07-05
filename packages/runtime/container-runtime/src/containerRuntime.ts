@@ -1581,8 +1581,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
 
-        await this.dataStores.waitIfPendingAlias(id, request, wait);
-
+        await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
 
@@ -1939,7 +1938,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
-        await this.dataStores.waitIfPendingAlias(id, { url: id }, wait);
+        await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
@@ -2097,12 +2096,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
         const internalId = uuid();
         const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-        const aliasedDataStore = channelToDataStore(
-            dataStore,
-            internalId,
-            this,
-            this.dataStores,
-            this.mc.logger);
+        const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.dataStores, this.mc.logger);
         const result = await aliasedDataStore.trySetAlias(alias);
         if (result !== "Success") {
             throw new GenericError(

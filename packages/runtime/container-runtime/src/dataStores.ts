@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger, ITelemetryBaseLogger, IDisposable } from "@fluidframework/common-definitions";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
-import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import {
     ISequencedDocumentMessage,
@@ -183,15 +183,9 @@ export class DataStores implements IDisposable {
         return this.pendingAliasMap;
     }
 
-    public async waitIfPendingAlias(maybeAlias: string, request: IRequest, wait: boolean) {
-        const maybePendingAlias = this.pendingAliases.get(maybeAlias);
-        if (maybePendingAlias !== undefined) {
-            if (!wait) {
-                throw responseToException(create404Response(request), request);
-            }
-
-            await maybePendingAlias;
-        }
+    public async waitIfPendingAlias(maybeAlias: string): Promise<AliasResult> {
+        const pendingAliasPromise = this.pendingAliases.get(maybeAlias);
+        return pendingAliasPromise === undefined ? "Success" : pendingAliasPromise;
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
