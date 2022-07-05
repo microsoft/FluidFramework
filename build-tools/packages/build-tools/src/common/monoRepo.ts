@@ -12,28 +12,26 @@ import { execWithErrorAsync, rimrafWithErrorAsync, existsSync, readJsonSync } fr
  * in the fluid-build section of the root package.json.
  */
 export enum MonoRepoKind {
-    Client = "Client",
-    Server = "Server",
-    Azure = "Azure",
-    BuildTools = "BuildTools",
+    Client = "client",
+    Server = "server",
+    Azure = "azure",
+    BuildTools = "build-tools",
 }
 
 /**
  * A type guard used to determine if a string is a MonoRepoKind.
  */
-export function isMonoRepoKind(str: unknown): str is MonoRepoKind {
-    return typeof str === "string" && sentenceCase(str) in MonoRepoKind;
-}
-
-function sentenceCase(str: string) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+export function isMonoRepoKind(str: string): str is MonoRepoKind {
+    const list = Object.values<string>(MonoRepoKind);
+    const isMonoRepoValue = list.includes(str);
+    return isMonoRepoValue;
 }
 
 /**
  * An iterator that returns only the Enum values of MonoRepoKind.
  */
 export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
-    for(const [, flag] of Object.entries(MonoRepoKind)) {
+    for (const [, flag] of Object.entries(MonoRepoKind)) {
         yield flag;
     }
 }
@@ -50,7 +48,7 @@ export class MonoRepo {
         for (const dir of lerna.packages as string[]) {
             // TODO: other glob pattern?
             const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
-            this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), MonoRepoKind[kind], ignoredDirs, this));
+            this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), kind, ignoredDirs, this));
         }
         this.version = lerna.version;
     }
@@ -64,7 +62,7 @@ export class MonoRepo {
     }
 
     public async install() {
-        console.log(`${MonoRepoKind[this.kind]}: Installing - npm i`);
+        console.log(`${this.kind}: Installing - npm i`);
         const installScript = "npm i";
         return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
     }

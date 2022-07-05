@@ -71,30 +71,29 @@ export class Context {
         return versions;
     }
 
-    public async collectVersionInfo(releaseName: string) {
+    public async collectVersionInfo(releaseGroup: MonoRepoKind | string) {
         console.log("  Resolving published dependencies");
 
         const depVersions =
             new ReferenceVersionBag(this.repo.resolvedRoot, this.fullPackageMap, this.collectVersions());
         const pendingDepCheck: Package[] = [];
         const processMonoRepo = (monoRepo: MonoRepo) => {
-            console.log(monoRepo);
             pendingDepCheck.push(...monoRepo.packages);
             // Fake these for printing.
             const firstClientPackage = monoRepo.packages[0];
             depVersions.add(firstClientPackage, firstClientPackage.version);
         };
 
-        if (isMonoRepoKind(releaseName)) {
-            const repoKind = MonoRepoKind[releaseName];
+        if (isMonoRepoKind(releaseGroup)) {
+            const repoKind = releaseGroup;
             if (repoKind === MonoRepoKind.Server) {
                 assert(this.repo.serverMonoRepo, "Attempted to collect server info on a Fluid repo with no server directory");
             }
             processMonoRepo(this.repo.monoRepos.get(repoKind)!);
         } else {
-            const pkg = this.fullPackageMap.get(releaseName);
+            const pkg = this.fullPackageMap.get(releaseGroup);
             if (!pkg) {
-                fatal(`Can't find package ${releaseName} to release`);
+                fatal(`Can't find package ${releaseGroup} to release`);
             }
             pendingDepCheck.push(pkg);
             depVersions.add(pkg, pkg.version);
@@ -120,10 +119,10 @@ export class Context {
                         // If it is the same repo, there are all related, and we would have added them to the pendingDepCheck as a set already.
                         // Just verify that the two package has the same version and the dependency has the same version
                         if (pkg.version !== depBuildPackage.version) {
-                            fatal(`Inconsistent package version within ${MonoRepoKind[pkg.monoRepo!.kind].toLowerCase()} monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep}@${depBuildPackage.version}`);
+                            fatal(`Inconsistent package version within ${pkg.monoRepo!.kind} monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep}@${depBuildPackage.version}`);
                         }
                         if (version !== `^${depBuildPackage.version}`) {
-                            fatal(`Inconsistent version dependency within ${MonoRepoKind[pkg.monoRepo!.kind].toLowerCase()} monorepo in ${pkg.name}\n  actual: ${dep}@${version}\n  expected: ${dep}@^${depBuildPackage.version}`);
+                            fatal(`Inconsistent version dependency within ${pkg.monoRepo!.kind} monorepo in ${pkg.name}\n  actual: ${dep}@${version}\n  expected: ${dep}@^${depBuildPackage.version}`);
                         }
                         continue;
                     }
