@@ -28,6 +28,7 @@ import {
     loggerToMonitoringContext,
     MonitoringContext,
     SampledTelemetryHelper,
+    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
@@ -102,12 +103,20 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
             id,
             runtime.IFluidHandleContext);
 
-        this.mc = loggerToMonitoringContext(ChildLogger.create(
+        this.logger = ChildLogger.create(
             runtime.logger,
             undefined,
-            { all: { sharedObjectId: uuid() } },
-        ));
-        this.logger = this.mc.logger;
+            {
+                all: {
+                    sharedObjectId: uuid(),
+                    ddsType: {
+                        value: this.attributes.type,
+                        tag: TelemetryDataTag.CodeArtifact,
+                    },
+                },
+            },
+        );
+        this.mc = loggerToMonitoringContext(this.logger);
 
         [this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
 
