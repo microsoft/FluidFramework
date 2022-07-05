@@ -11,6 +11,7 @@ import { UsageError } from "@fluidframework/container-utils";
 import {
     addProperties,
     Client,
+    compareReferencePositions,
     ConflictAction,
     createMap,
     ICombiningOp,
@@ -19,15 +20,18 @@ import {
     IntervalNode,
     IntervalTree,
     ISegment,
-    LocalReference,
     MergeTreeDeltaType,
+    minReferencePosition,
     PropertiesManager,
     PropertySet,
     RedBlackTree,
+    LocalReferencePosition,
     ReferenceType,
     refTypeIncludesFlag,
     reservedRangeLabelsKey,
     UnassignedSequenceNumber,
+    maxReferencePosition,
+    createDetachedLocalReferencePosition,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
@@ -277,8 +281,9 @@ export class SequenceInterval implements ISerializableInterval {
     public propertyManager: PropertiesManager;
 
     constructor(
-        public start: LocalReference,
-        public end: LocalReference,
+        private readonly client: Client,
+        public start: LocalReferencePosition,
+        public end: LocalReferencePosition,
         public intervalType: IntervalType,
         props?: PropertySet,
     ) {
@@ -323,8 +328,8 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     public serialize(client: Client): ISerializedInterval {
-        const startPosition = this.start.toPosition();
-        const endPosition = this.end.toPosition();
+        const startPosition = client.localReferencePositionToPosition(this.start);
+        const endPosition = client.localReferencePositionToPosition(this.end);
         const serializedInterval: ISerializedInterval = {
             end: endPosition,
             intervalType: this.intervalType,
@@ -340,7 +345,7 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     public clone() {
-        return new SequenceInterval(this.start, this.end, this.intervalType, this.properties);
+        return new SequenceInterval(this.client, this.start, this.end, this.intervalType, this.properties);
     }
 
     public compare(b: SequenceInterval) {
@@ -366,16 +371,16 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     public compareStart(b: SequenceInterval) {
-        return this.start.compare(b.start);
+        return compareReferencePositions(this.start, b.start);
     }
 
     public compareEnd(b: SequenceInterval) {
-        return this.end.compare(b.end);
+        return compareReferencePositions(this.end, b.end);
     }
 
     public overlaps(b: SequenceInterval) {
-        const result = (this.start.compare(b.end) <= 0) &&
-            (this.end.compare(b.start) >= 0);
+        const result = (compareReferencePositions(this.start, b.end) <= 0) &&
+            (compareReferencePositions(this.end, b.start) >= 0);
         return result;
     }
 
@@ -388,8 +393,8 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     public union(b: SequenceInterval) {
-        return new SequenceInterval(this.start.min(b.start),
-            this.end.max(b.end), this.intervalType);
+        return new SequenceInterval(this.client, minReferencePosition(this.start, b.start),
+            maxReferencePosition(this.end, b.end), this.intervalType);
     }
 
     public addProperties(
@@ -403,8 +408,8 @@ export class SequenceInterval implements ISerializableInterval {
     }
 
     public overlapsPos(bstart: number, bend: number) {
-        const startPos = this.start.toPosition();
-        const endPos = this.start.toPosition();
+        const startPos = this.client.localReferencePositionToPosition(this.start);
+        const endPos = this.client.localReferencePositionToPosition(this.end);
         return (endPos > bstart) && (startPos < bend);
     }
 
@@ -420,20 +425,17 @@ export class SequenceInterval implements ISerializableInterval {
 
         let startRef = this.start;
         if (start !== undefined) {
-            startRef = createPositionReference(this.start.getClient(), start, getRefType(this.start.refType), op);
+            startRef = createPositionReference(this.client, start, getRefType(this.start.refType), op);
             startRef.addProperties(this.start.properties);
         }
 
         let endRef = this.end;
         if (end !== undefined) {
-            endRef = createPositionReference(this.end.getClient(), end, getRefType(this.end.refType), op);
+            endRef = createPositionReference(this.client, end, getRefType(this.end.refType), op);
             endRef.addProperties(this.end.properties);
         }
 
-        startRef.pairedRef = endRef;
-        endRef.pairedRef = startRef;
-
-        const newInterval = new SequenceInterval(startRef, endRef, this.intervalType);
+        const newInterval = new SequenceInterval(this.client, startRef, endRef, this.intervalType);
         if (this.properties) {
             newInterval.initializeProperties();
             this.propertyManager.copyTo(this.properties, newInterval.properties, newInterval.propertyManager);
@@ -455,23 +457,23 @@ function createPositionReferenceFromSegoff(
     client: Client,
     segoff: { segment: ISegment | undefined; offset: number | undefined; },
     refType: ReferenceType,
-    op?: ISequencedDocumentMessage): LocalReference {
+    op?: ISequencedDocumentMessage): LocalReferencePosition {
     if (segoff.segment) {
         const ref = client.createLocalReferencePosition(segoff.segment, segoff.offset, refType, undefined);
-        return ref as LocalReference;
+        return ref;
     } else {
         if (!op && !refTypeIncludesFlag(refType, ReferenceType.Transient)) {
             throw new UsageError("Non-transient references need segment");
         }
-        return new LocalReference(client, undefined, 0, refType);
     }
+    return createDetachedLocalReferencePosition(refType);
 }
 
 function createPositionReference(
     client: Client,
     pos: number,
     refType: ReferenceType,
-    op?: ISequencedDocumentMessage): LocalReference {
+    op?: ISequencedDocumentMessage): LocalReferencePosition {
     let segoff;
     if (op) {
         assert((refType & ReferenceType.SlideOnRemove) !== 0, 0x2f5 /* op create references must be SlideOnRemove */);
@@ -515,15 +517,13 @@ function createSequenceInterval(
 
     const startLref = createPositionReference(client, start, beginRefType, op);
     const endLref = createPositionReference(client, end, endRefType, op);
-    startLref.pairedRef = endLref;
-    endLref.pairedRef = startLref;
     const rangeProp = {
         [reservedRangeLabelsKey]: [label],
     };
     startLref.addProperties(rangeProp);
     endLref.addProperties(rangeProp);
 
-    const ival = new SequenceInterval(startLref, endLref, intervalType, rangeProp);
+    const ival = new SequenceInterval(client, startLref, endLref, intervalType, rangeProp);
     return ival;
 }
 
@@ -871,7 +871,8 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 }
 
-const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number => a.end.compare(b.end);
+const compareSequenceIntervalEnds = (a: SequenceInterval, b: SequenceInterval): number =>
+    compareReferencePositions(a.end, b.end);
 
 class SequenceIntervalCollectionFactory
     implements IValueFactory<IntervalCollection<SequenceInterval>> {
@@ -1343,11 +1344,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return entries && entries.length !== 0;
     }
 
-    /** @deprecated - use ackChange */
-    public changeInterval(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
-        return this.ackChange(serializedInterval, local, op);
-    }
-
     /** @internal */
     public ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage) {
         if (!this.attached) {
@@ -1466,15 +1462,15 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         return rebased;
     }
 
-    private getSlideToSegment(lref: LocalReference) {
-        const segoff = { segment: lref.segment, offset: lref.offset };
+    private getSlideToSegment(lref: LocalReferencePosition) {
+        const segoff = { segment: lref.getSegment(), offset: lref.getOffset() };
         const newSegoff = this.client.getSlideToSegment(segoff);
         const value: { segment: ISegment | undefined; offset: number | undefined; } | undefined
             = (segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset) ? undefined : newSegoff;
         return value;
     }
 
-    private setSlideOnRemove(lref: LocalReference) {
+    private setSlideOnRemove(lref: LocalReferencePosition) {
         let refType = lref.refType;
         refType = refType & ~ReferenceType.StayOnRemove;
         refType = refType | ReferenceType.SlideOnRemove;
@@ -1516,7 +1512,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
             // In this case, where we change the start or end of an interval,
             // it is necessary to remove and re-add the interval listeners.
-            // This ensures that the correct listeners are added to the ReferencePosition.
+            // This ensures that the correct listeners are added to the LocalReferencePosition.
             this.localCollection.removeExistingInterval(interval);
 
             if (needsStartUpdate) {
@@ -1538,14 +1534,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             this.localCollection.add(interval);
             this.emit("changeInterval", interval, oldInterval, true, op);
         }
-    }
-
-    /** @deprecated - use ackAdd */
-    public addInternal(
-        serializedInterval: ISerializedInterval,
-        local: boolean,
-        op: ISequencedDocumentMessage) {
-        return this.ackAdd(serializedInterval, local, op);
     }
 
     /** @internal */
@@ -1584,14 +1572,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         this.emit("addInterval", interval, local, op);
 
         return interval;
-    }
-
-    /** @deprecated - use ackDelete */
-    public deleteInterval(
-        serializedInterval: ISerializedInterval,
-        local: boolean,
-        op: ISequencedDocumentMessage): void {
-        return this.ackDelete(serializedInterval, local, op);
     }
 
     /** @internal */
