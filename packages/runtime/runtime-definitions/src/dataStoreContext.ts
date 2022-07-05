@@ -97,10 +97,9 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  * 'Conflict' - there is already a datastore bound to the provided alias. To acquire a handle to it,
  * use the `IContainerRuntime.getRootDataStore` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
- * 'Aliasing' (deprecated) - this value is never returned.
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  */
- export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
+ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
  * A fluid router with the capability of being assigned an alias

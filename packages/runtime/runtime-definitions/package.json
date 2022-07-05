@@ -57,6 +57,9 @@
   "typeValidation": {
     "version": "2.0.0",
     "broken": {
+      "TypeAliasDeclaration_AliasResult": {
+        "forwardCompat": false
+      },
       "InterfaceDeclaration_IFluidDataStoreContext": {
         "backCompat": false,
         "forwardCompat": false

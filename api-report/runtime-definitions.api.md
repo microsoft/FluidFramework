@@ -31,7 +31,7 @@ import { SummaryTree } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 
 // @public
-export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
+export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 // @public (undocumented)
 export const blobCountPropertyName = "BlobCount";
