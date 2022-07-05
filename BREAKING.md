@@ -26,7 +26,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
-- [Remove flush mode tracking in `PendingStateManager`](#remove-flush-mode-tracking-in-pendingstatemanager)
 
 ### Remove `documentId` field from `MockFluidDataStoreContext`
 
@@ -62,10 +61,7 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
 
 ### Remove `IContainerRuntimeBase.setFlushMode`
-The `setFlushMode` has been removed from `IContainerRuntimeBase`. Please remove all usage of this method as FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
-
-### Remove flush mode tracking and validation in `PendingStateManager`
-The `PendingStateManager` no longer tracks flush mode as it is now an immutable property on the `IContainerRuntimeBase`. Instead, tracking of batches is done explicitly and they are replayed directly through usage of the `orderSequentially` method on `IContainerRuntimeBase`. [See #9481](https://github.com/microsoft/FluidFramework/issues/9481).
+The `setFlushMode` has been removed from `IContainerRuntimeBase`. Please remove all usage of this method as FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
 
 # 1.1.0
 
