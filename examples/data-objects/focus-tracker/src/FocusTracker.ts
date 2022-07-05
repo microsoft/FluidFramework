@@ -12,17 +12,20 @@ import {
     IServiceAudience,
 } from "fluid-framework";
 
-export interface IFocusTrackerEvents extends IEvent {
+export interface IMouseFocusTrackerEvents extends IEvent {
     (event: "focusChanged", listener: () => void): void;
+    (event: "mousePositionChanged", listener: () => void): void;
 }
+
 
 /**
  * Example of using the audience with signals to track focus state of connected clients
  * without writing changes to a DDS.
  */
-export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+export class MouseFocusTracker extends TypedEventEmitter<IMouseFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
     private static readonly focusRequestType = "focusRequest";
+    private static readonly mouseSignalType ="positionChanged";
 
     /**
      * Local map of focus status for clients
@@ -32,6 +35,15 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
      * ```
      */
     private readonly focusMap = new Map<string, Map<string, boolean>>();
+
+    /**
+     * Local map of mouse position status for clients
+     *
+     * ```
+     * Map<userId, Map<clientid, hasFocus>>
+     * ```
+     */
+    private readonly posMap = new Map<string, Map<string,[number, number]>>();
 
     private readonly onFocusSignalFn = (clientId: string, payload: any) => {
         const userId: string = payload.userId;
@@ -46,6 +58,20 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         this.emit("focusChanged");
     };
 
+    private readonly onMouseSignalFn = (clientId: string, payload: any) => {
+        const userId: string = payload.userId;
+        const position: [number,number] = payload.pos;
+
+        let clientIdMap = this.posMap.get(userId);
+        if (clientIdMap === undefined) {
+            clientIdMap = new Map<string, [number, number]>();
+            this.posMap.set(userId, clientIdMap);
+        }
+        clientIdMap.set(clientId, position);
+        this.emit("mousePositionChanged");
+
+    };
+
     public constructor(
         container: IFluidContainer,
         public readonly audience: IServiceAudience<IMember>,
@@ -55,25 +81,39 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 
         this.audience.on("memberAdded", (clientId: string, member: IMember) => {
             this.emit("focusChanged");
+            this.emit("mousePositionChanged");
         });
         this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
-            const clientIdMap = this.focusMap.get(member.userId);
-            if (clientIdMap !== undefined) {
-                clientIdMap.delete(clientId);
-                if (clientIdMap.size === 0) {
+            const focusClientIdMap = this.focusMap.get(member.userId);
+            const mouseClientIdMap = this.posMap.get(member.userId);
+            if (focusClientIdMap !== undefined) {
+                focusClientIdMap.delete(clientId);
+                if (focusClientIdMap.size === 0) {
                     this.focusMap.delete(member.userId);
                 }
             }
+            if (mouseClientIdMap !== undefined) {
+                mouseClientIdMap.delete(clientId);
+                if (mouseClientIdMap.size === 0) {
+                    this.posMap.delete(member.userId);
+                }
+            }
+            this.emit("mousePositionChanged");
             this.emit("focusChanged");
         });
 
         this.signalManager.on("error", (error) => {
             this.emit("error", error);
         });
-        this.signalManager.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
+        this.signalManager.onSignal(MouseFocusTracker.mouseSignalType, (clientId, local, payload) => {
+            this.onMouseSignalFn(clientId, payload);
+
+        });
+        this.signalManager.onSignal(MouseFocusTracker.focusSignalType, (clientId, local, payload) => {
             this.onFocusSignalFn(clientId, payload);
         });
-        this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
+
+        this.signalManager.onSignal(MouseFocusTracker.focusRequestType, () => {
             this.sendFocusSignal(document.hasFocus());
         });
         window.addEventListener("focus", () => {
@@ -82,11 +122,25 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         window.addEventListener("blur", () => {
             this.sendFocusSignal(false);
         });
-
-        container.on("connected", () => {
-            this.signalManager.submitSignal(FocusTracker.focusRequestType);
+        window.addEventListener("mousemove", (e) => {
+            console.log("mouse moving");
+            this.sendMouseSignal([e.clientX, e.clientY]);
         });
-        this.signalManager.submitSignal(FocusTracker.focusRequestType);
+        container.on("connected", () => {
+            this.signalManager.submitSignal(MouseFocusTracker.focusRequestType);
+        });
+        this.signalManager.submitSignal(MouseFocusTracker.focusRequestType);
+    }
+
+    /**
+     * Alert all connected clients that there has been a change to a client's mouse position
+     */
+
+    private sendMouseSignal(position: [number, number] | undefined) {
+        this.signalManager.submitSignal(
+            MouseFocusTracker.mouseSignalType,
+            { userId: this.audience.getMyself()?.userId, pos: position },
+        );
     }
 
     /**
@@ -94,16 +148,16 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
      */
     private sendFocusSignal(hasFocus: boolean) {
         this.signalManager.submitSignal(
-            FocusTracker.focusSignalType,
+            MouseFocusTracker.focusSignalType,
             { userId: this.audience.getMyself()?.userId, focus: hasFocus },
         );
     }
 
     /**
-     * Get a copy of the internal presences map
+     * Get a copy of the internal focus presences map
      * @returns The map copy
      */
-    public getPresences(): Map<string, Map<string, boolean>> {
+    public getFocusPresences(): Map<string, Map<string, boolean>> {
         // deep copy to prevent outside shenanigans
         const mapCopy = new Map<string, Map<string, boolean>>();
         this.focusMap.forEach((value, key) => {
@@ -114,13 +168,13 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 
     /**
      *
-     * @returns Preformatted string of presence info for all users
+     * @returns Preformatted string of focus presence info for all users
      */
-    public getPresencesString(newLineSeparator: string = "\n"): string {
+    public getFocusPresencesString(newLineSeparator: string = "\n"): string {
         const statuses: string[] = [];
         this.audience.getMembers().forEach((member, userId) => {
             member.connections.forEach((connection) => {
-                const focus = this.getPresenceForUser(userId, connection.id);
+                const focus = this.getFocusPresenceForUser(userId, connection.id);
                 const prefix = `User ${member.userId} (${(member as any).userName}) client ${connection.id}:`;
                 if (focus === undefined) {
                     statuses.push(`${prefix} unknown focus`);
@@ -134,7 +188,46 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         return statuses.join(newLineSeparator);
     }
 
-    public getPresenceForUser(userId: string, clientId: string): boolean | undefined {
+    /**
+     * Get a copy of the internal mouse position presences map
+     * @returns The map copy
+     */
+
+    public getFocusPresenceForUser(userId: string, clientId: string): boolean | undefined {
         return this.focusMap.get(userId)?.get(clientId);
+    }
+
+    /**
+     * Get a copy of the internal mouse position presences map
+     * @returns The map copy
+     */
+    public getMousePresences(): Map<string, Map<string, [number, number]>> {
+        // deep copy to prevent outside shenanigans
+        const mapCopy = new Map<string, Map<string, [number, number]>>();
+        this.posMap.forEach((value, key) => {
+            mapCopy.set(key, new Map(value));
+        });
+        return mapCopy;
+    }
+
+    public getMousePresencesString(newLineSeparator: string = "\n"): Map<string, [number, number]> {
+        const statuses: Map<string, [number, number]> = new Map <string, [number,number]>();
+        this.audience.getMembers().forEach((member, userId) => {
+            member.connections.forEach((connection) => {
+                const position = this.getMousePresenceForUser(userId, connection.id);
+                if (position === undefined) {
+                }
+                else {
+                    statuses.set((member as any).userName, position);
+                }
+            });
+        });
+
+        return statuses;
+
+    }
+
+    public getMousePresenceForUser(userId: string, clientId: string): [number, number] | undefined {
+        return this.posMap.get(userId)?.get(clientId);
     }
 }
