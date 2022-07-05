@@ -50,7 +50,7 @@ export function prereleaseSatisfies(packageVersion: string, range: string) {
 }
 
 /**
- * Translate a VersionChangeType for the virtual patch scenario where we overload a beta version number
+ * Translate a {@link VersionChangeType} for the virtual patch scenario where we overload a beta version number
  * to include all of major, minor, and patch.  Actual semver type is not translated
  * "major" maps to "minor" with "patch" = 1000 (<N + 1>.0.0 -> 0.<N + 1>.1000)
  * "minor" maps to "patch" * 1000 (x.<N + 1>.0 -> 0.x.<N + 1>000)

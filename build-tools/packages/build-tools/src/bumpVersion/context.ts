@@ -189,7 +189,7 @@ export class Context {
     /**
      * Returns the packages that belong to the specified release group.
      *
-     * @param releaseGroup The release group to filter by
+     * @param releaseGroup - The release group to filter by
      * @returns An array of packages that belong to the release group
      */
     public packagesForReleaseGroup(releaseGroup: MonoRepoKind) {
