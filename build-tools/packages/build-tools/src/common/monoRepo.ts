@@ -13,21 +13,19 @@ import { execWithErrorAsync, existsSync, readJsonSync, rimrafWithErrorAsync } fr
  * in the fluid-build section of the root package.json.
  */
 export enum MonoRepoKind {
-    Client = "Client",
-    Server = "Server",
-    Azure = "Azure",
-    BuildTools = "BuildTools",
+    Client = "client",
+    Server = "server",
+    Azure = "azure",
+    BuildTools = "build-tools",
 }
 
 /**
  * A type guard used to determine if a string is a MonoRepoKind.
  */
-export function isMonoRepoKind(str: unknown): str is MonoRepoKind {
-    return typeof str === "string" && sentenceCase(str) in MonoRepoKind;
-}
-
-function sentenceCase(str: string) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+export function isMonoRepoKind(str: string): str is MonoRepoKind {
+    const list = Object.values<string>(MonoRepoKind);
+    const isMonoRepoValue = list.includes(str);
+    return isMonoRepoValue;
 }
 
 /**
@@ -124,7 +122,7 @@ export class MonoRepo {
     }
 
     public async install() {
-        console.log(`${MonoRepoKind[this.kind]}: Installing - npm i`);
+        console.log(`${this.kind}: Installing - npm i`);
         const installScript = "npm i";
         return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
     }
