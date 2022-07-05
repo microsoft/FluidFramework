@@ -3,7 +3,7 @@
         "ci": {
             "opRatePerMin": 10,
             "progressIntervalMs": 15000,
-            "numClients": 120,
+            "numClients": 10,
             "totalSendCount": 10000,
             "totalBlobCount": 480,
             "blobSize": 256,
@@ -27,20 +27,20 @@
         "full": {
             "opRatePerMin": 1920,
             "progressIntervalMs": 1500000,
-            "numClients": 60,
+            "numClients": 10,
             "totalSendCount": 200000,
             "readWriteCycleMs": 30000,
             "faultInjectionMinMs": 0,
             "faultInjectionMaxMs": 150000
         },
         "mini": {
-            "opRatePerMin": 60,
-            "progressIntervalMs": 5000,
-            "numClients": 2,
-            "totalSendCount": 30,
+            "opRatePerMin": 120,
+            "progressIntervalMs": 15000,
+            "numClients": 4,
+            "totalSendCount": 60,
             "readWriteCycleMs": 10000,
             "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 50000,
+            "faultInjectionMaxMs": 150000,
             "optionOverrides":{
                 "odsp":{
                     "configurations":{

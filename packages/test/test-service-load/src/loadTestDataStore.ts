@@ -253,6 +253,7 @@ export class LoadTestDataStoreModel {
                 if (v.key.startsWith(this.partnerBlobKeyPrefix)) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     this.root.get<IFluidHandle>(v.key)?.get();
+                    console.log("i'm reading", this.readCount++);
                 }
             });
         }
@@ -277,6 +278,8 @@ export class LoadTestDataStoreModel {
         return p;
     }
 
+    private writeCount = 0;
+    private readCount = 0;
     /**
      * Upload a unique attachment blob and store the handle in a unique key on the root map
      */
@@ -288,6 +291,7 @@ export class LoadTestDataStoreModel {
             assert(buffer.byteLength === blobSize, "incorrect buffer size");
             const handle = await this.runtime.uploadBlob(buffer);
             this.root.set(this.blobKey(blobNumber), handle);
+            console.log("write", this.writeCount++);
         }
     }
 

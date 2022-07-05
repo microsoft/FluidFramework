@@ -55,16 +55,14 @@ async function main() {
     const profileArg: string = commander.profile;
     const url: string = commander.url;
     const runId: number = commander.runId;
-    const log: string | undefined = commander.log;
+    // const log: string | undefined = commander.log;
     const verbose: boolean = commander.verbose ?? false;
     const seed: number = commander.seed;
     const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
 
     const profile = getProfile(profileArg);
 
-    if (log !== undefined) {
-        process.env.DEBUG = log;
-    }
+    process.env.DEBUG = "reading*";
 
     if (url === undefined) {
         console.error("Missing --url argument needed to run child process");
