@@ -32,11 +32,6 @@ import {
  * Please do not modify existing entries for backwards compatibility.
  */
 export enum TelemetryDataTag {
-    /**
-     * Data containing terms from code packages that may have been dynamically loaded
-     * @deprecated 1.0, will be removed in next release (see issue #6603). Use `TelemetryDataTag.CodeArtifact` instead.
-     */
-    PackageData = "PackageData",
     /** Data containing terms or IDs from code packages that may have been dynamically loaded */
     CodeArtifact = "CodeArtifact",
     /** Personal data of a variety of classifications that pertains to the user */
@@ -249,8 +244,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                     // No tag means we can log plainly
                     newEvent[key] = value;
                     break;
-                case TelemetryDataTag.PackageData:
-                    // For Microsoft applications, PackageData is safe for now
+                case "PackageData": // For back-compat
+                case TelemetryDataTag.CodeArtifact:
+                    // For Microsoft applications, CodeArtifact is safe for now
                     // (we don't load 3P code in 1P apps)
                     newEvent[key] = value;
                     break;
