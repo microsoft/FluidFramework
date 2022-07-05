@@ -23,7 +23,7 @@
         },
         {
             "name": "layer-check",
-            "program": "${workspaceFolder}/tools/build-tools/dist/layerCheck/layerCheck.js",
+            "program": "${workspaceFolder}/build-tools/packages/build-tools/dist/layerCheck/layerCheck.js",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
