@@ -66,10 +66,10 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 
 ### IntervalCollection event semantics changed
 
-The events emitted by IntervalCollection have changed to have more consistent semantics:
+The semantics of events emitted by IntervalCollection were changed to be more consistent:
 
 - propertyChanged events receive the same "isLocal" and op information that other events received
-- changeInterval events will no longer take place for changes that impact an interval's properties only
+- changeInterval events will no longer take place for changes that impact an interval's properties only. Clients that need to perform work on such changes should listen to "propertyChanged" events instead.
 - For local changes, changeInterval events will only be emitted on initial application of the change (as opposed to the
   previous behavior, which fired an event on the local application of a change as well as on server ack of that change))
 - changeInterval events now receive information about the interval's previous position.
