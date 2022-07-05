@@ -50,3 +50,15 @@ export type ChildCollection = FieldKey | RootRange;
  * they are only valid within the edit in which they were created.
  */
 export type DetachedRange = Opaque<Brand<number, "tree.DetachedRange">>;
+
+/**
+ * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.
+ * TODO: make families of changes per field kind. Build editing APIs from that.
+ * TODO: factor ChangeRebaser implementations to support adding new field kinds.
+ */
+export interface FieldKind {
+    readonly name: string;
+    readonly description: string;
+    readonly minimumChildren: number;
+    readonly maximumChildren: number;
+}
