@@ -155,12 +155,9 @@ export class DefaultMap<T> {
         const iterator = {
             next(): IteratorResult<[string, any]> {
                 const nextVal = localEntriesIterator.next();
-                if (nextVal.done) {
-                    return { value: undefined, done: true };
-                } else {
-                    // Unpack the stored value
-                    return { value: [nextVal.value[0], nextVal.value[1].value], done: false };
-                }
+                return nextVal.done
+                    ? { value: undefined, done: true }
+                    : { value: [nextVal.value[0], nextVal.value[1].value], done: false }; // Unpack the stored value
             },
             [Symbol.iterator]() {
                 return this;
@@ -178,12 +175,9 @@ export class DefaultMap<T> {
         const iterator = {
             next(): IteratorResult<any> {
                 const nextVal = localValuesIterator.next();
-                if (nextVal.done) {
-                    return { value: undefined, done: true };
-                } else {
-                    // Unpack the stored value
-                    return { value: nextVal.value.value, done: false };
-                }
+                return nextVal.done
+                    ? { value: undefined, done: true }
+                    : { value: nextVal.value.value, done: false }; // Unpack the stored value
             },
             [Symbol.iterator]() {
                 return this;
@@ -214,10 +208,8 @@ export class DefaultMap<T> {
      * {@inheritDoc ISharedMap.get}
      */
     public get(key: string): T {
-        let localValue = this.data.get(key);
-        if (!this.data.has(key)) {
-            localValue = this.createCore(key, true);
-        }
+        const localValue = this.data.get(key) ?? this.createCore(key, true);
+
         return localValue.value;
     }
 

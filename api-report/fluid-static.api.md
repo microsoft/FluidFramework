@@ -110,39 +110,31 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new (...args: any[]) 
 // @public
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
-// @public (undocumented)
+// @public
 export class RootDataObject extends DataObject<{
     InitialState: RootDataObjectProps;
 }> {
-    // (undocumented)
     create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
-    // (undocumented)
     protected hasInitialized(): Promise<void>;
-    // (undocumented)
     protected initializingFirstTime(props: RootDataObjectProps): Promise<void>;
-    // (undocumented)
     get initialObjects(): LoadableObjectRecord;
 }
 
-// @public (undocumented)
+// @public
 export interface RootDataObjectProps {
-    // (undocumented)
     initialObjects: LoadableObjectClassRecord;
 }
 
 // @public
 export abstract class ServiceAudience<M extends IMember = IMember> extends TypedEventEmitter<IServiceAudienceEvents<M>> implements IServiceAudience<M> {
-    constructor(container: IContainer);
-    // (undocumented)
+    constructor(
+    container: IContainer);
     protected readonly audience: IAudience;
-    // (undocumented)
     protected readonly container: IContainer;
-    // (undocumented)
     protected abstract createServiceMember(audienceMember: IClient): M;
     getMembers(): Map<string, M>;
     getMyself(): M | undefined;
     protected lastMembers: Map<string, M>;
-    // (undocumented)
     protected shouldIncludeAsMember(member: IClient): boolean;
 }
 

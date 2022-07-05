@@ -601,7 +601,7 @@ export abstract class BaseProperty {
      */
     _setId(in_id) {
         if (!_.isString(in_id) && !_.isNumber(in_id)) {
-            throw new Error(MSG.ID_STRING_OR_NUMBER + in_id);
+            throw new TypeError(MSG.ID_STRING_OR_NUMBER + in_id);
         }
 
         if (this._parent !== undefined) {
@@ -1135,7 +1135,7 @@ export abstract class BaseProperty {
         };
         if (in_options !== undefined) {
             if (typeof in_options !== 'object') {
-                throw new Error(MSG.SERIALIZE_TAKES_OBJECT);
+                throw new TypeError(MSG.SERIALIZE_TAKES_OBJECT);
             }
             Object.assign(opts, in_options);
         }

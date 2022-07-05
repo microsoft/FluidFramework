@@ -16,7 +16,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReference, _validateReferenceType } from "./localReference";
+import { LocalReference, LocalReferencePosition } from "./localReference";
 import {
     CollaborationWindow,
     compareStrings,
@@ -333,12 +333,12 @@ export class Client {
     }
 
     public createLocalReferencePosition(
-        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
-    ): ReferencePosition {
+        segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined,
+    ): LocalReferencePosition {
         return this.mergeTree.createLocalReferencePosition(segment, offset, refType, properties, this);
     }
 
-    public removeLocalReferencePosition(lref: ReferencePosition) {
+    public removeLocalReferencePosition(lref: LocalReferencePosition) {
         return this.mergeTree.removeLocalReferencePosition(lref);
     }
 
@@ -722,7 +722,7 @@ export class Client {
         seqNumberFrom: number,
         localSeq: number,
     ): number {
-        assert(localSeq <= this.mergeTree.collabWindow.localSeq, "localSeq greater than collab window");
+        assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
         let segment: ISegment | undefined;
         let posAccumulated = 0;
         let offset = pos;
@@ -735,7 +735,8 @@ export class Client {
             || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
 
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
-            assert(seg.seq !== undefined || seg.localSeq !== undefined, "Either seq or localSeq should be defined");
+            assert(seg.seq !== undefined || seg.localSeq !== undefined,
+                0x301 /* Either seq or localSeq should be defined */);
             segment = seg;
 
             if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
@@ -749,7 +750,7 @@ export class Client {
             return posAccumulated <= pos;
         });
 
-        assert(segment !== undefined, "No segment found");
+        assert(segment !== undefined, 0x302 /* No segment found */);
         const seqNumberTo = this.getCollabWindow().currentSeq;
         if ((segment.removedSeq !== undefined &&
              segment.removedSeq !== UnassignedSequenceNumber &&
@@ -759,7 +760,7 @@ export class Client {
             offset = 0;
         }
 
-        assert(0 <= offset && offset < segment.cachedLength, "Invalid offset");
+        assert(0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
         return this.findReconnectionPosition(segment, localSeq) + offset;
     }
 
@@ -802,9 +803,15 @@ export class Client {
                 case MergeTreeDeltaType.INSERT:
                     assert(segment.seq === UnassignedSequenceNumber,
                         0x037 /* "Segment already has assigned sequence number" */);
+                    let segInsertOp = segment;
+                    if (typeof resetOp.seg === "object" && resetOp.seg.props !== undefined) {
+                        segInsertOp = segment.clone();
+                        segInsertOp.properties = resetOp.seg.props;
+                    }
                     newOp = createInsertSegmentOp(
                         segmentPosition,
-                        segment);
+                        segInsertOp,
+                    );
                     break;
 
                 case MergeTreeDeltaType.REMOVE:
