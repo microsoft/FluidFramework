@@ -112,16 +112,17 @@ function translateVirtualVersion(
 export type VersionScheme = "semver" | "internal" | "virtualPatch";
 
 /**
+ * Adjusts the provided version according to the bump type and version scheme. Returns the adjusted version.
  *
  * @param version The input version.
  * @param bumpType The type of bump,
  * @param scheme The version scheme to use.
  * @returns An adjusted version as a semver.SemVer.
  */
-export const adjustVersion = async (
+export function adjustVersion(
     version: string | semver.SemVer | undefined,
     bumpType: VersionChangeTypeExtended,
-    scheme: VersionScheme): Promise<semver.SemVer> => {
+    scheme: VersionScheme): semver.SemVer {
     const sv = semver.parse(version);
     assert(sv !== null, `Not a valid semver: ${version}`);
     switch (scheme) {
