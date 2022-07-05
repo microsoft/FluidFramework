@@ -161,8 +161,9 @@ affected by the operation, the type of the operation, and the properties that we
 ```typescript
 sharedString.on("sequenceDelta", ({ deltaOperation, ranges, isLocal }) => {
     if (isLocal) {
-        // ex: app code may have already synced local operations to their model at the time they were applied
-        return;
+        // undo-redo implementations frequently will only concern themselves with local ops: only operations submitted
+        // by the local client should be undoable by the current user
+        addOperationToUndoStack(deltaOperation, ranges);
     }
 
     if (deltaOperation === MergeTreeDeltaType.INSERT) {
