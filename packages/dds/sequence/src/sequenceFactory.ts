@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
     IJSONSegment,
-    ISegment,
     Marker,
     TextSegment,
 } from "@fluidframework/merge-tree";

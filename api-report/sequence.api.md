@@ -502,7 +502,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
     // @deprecated (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // @deprecated (undocumented)
-    static segmentFromSpec(segSpec: IJSONSegment): ISegment | undefined;
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number> | undefined;
     // @deprecated (undocumented)
     static Type: string;
     // @deprecated (undocumented)
