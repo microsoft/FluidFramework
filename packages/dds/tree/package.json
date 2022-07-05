@@ -16,8 +16,8 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "bench": "npm run clean && npm run tsc && npm run build:test && mocha --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\" \"./dist/test/**/*.js\"",
-    "bench:profile": "npm run clean && npm run tsc && npm run build:test && node --prof ../../../node_modules/.bin/mocha --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\" \"./dist/test/**/*.js\" && node --prof-process isolate-0x*-v8.log > profile.txt && rm isolate-0x*-v8.log && cat profile.txt",
+    "bench": "mocha --recursive dist/test --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\"",
+    "bench:profile": "node --recursive dist/test --prof ../../../node_modules/.bin/mocha --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\" && node --prof-process isolate-0x*-v8.log > profile.txt && rm isolate-0x*-v8.log && cat profile.txt",
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",

@@ -15,7 +15,7 @@ export function generateCanada(rnd: Source) {
     const uniform = (source: Source, min: number, max: number) =>
         () => source() * (max - min) + min;
 
-    // Map uniform distribution in the range [0..1) to a normal distribution.
+    // Map uniform distribution in the range [0..1) to a normal distribution
     // https://en.wikipedia.org/wiki/Marsaglia_polar_method
     const normal = (source: Source, mu = 0, sigma = 1) => {
         return () => {
@@ -43,9 +43,8 @@ export function generateCanada(rnd: Source) {
     let last_x = -65;
     let last_y = 43;
 
-    // 'canada.json' has 480 segments of varying length.  To generate similar geometry,
-    // we map generate segments of the same length using Brownian motion.
-    const coordinates = [
+    // The geometry of 'canada.json' is encoded as 480 segments of varying length.
+    const segmentLengths = [
         14, 33, 18, 23, 10, 28, 9, 28, 279, 221, 11, 86, 28, 19, 26, 23, 24, 38, 24, 9, 30, 20, 27, 21, 19, 25, 24, 20,
         19, 18, 34, 19, 28, 12, 38, 30, 91, 17, 23, 28, 22, 24, 19, 44, 21, 19, 21, 24, 21, 24, 15, 20, 28, 18, 474,
         17, 19, 12, 12, 1436, 31, 27, 26, 40, 21, 20, 27, 21, 19, 18, 24, 20, 65, 27, 36, 21, 27, 28, 24, 17, 20, 17,
@@ -64,14 +63,19 @@ export function generateCanada(rnd: Source) {
         23, 54, 399, 22, 534, 31, 37, 18, 38, 46, 205, 70, 18, 18, 20, 18, 37, 20, 40, 49, 13, 102, 93, 72, 25, 16, 64,
         17, 14, 87, 837, 39, 23, 40, 57, 1162, 16, 39, 16, 17, 1584, 15, 26, 27, 26, 34, 601, 35, 58, 87, 115, 24, 51,
         51, 178, 23, 38, 24, 26, 131, 25, 251, 43, 475, 67, 24, 32, 1447, 21, 19, 5276,
-    ].map((len: number) => {
+    ];
+
+    // To generate geometry similar to 'canada.json', we map the array of segment lengths to
+    // an array of segments, where the coordinates of each segment is randomly generated using
+    // Brownian motion.
+    const segments = segmentLengths.map((len: number) => {
         const clamp = (min: number, value: number, max: number) =>
             Math.max(Math.min(value, max), min);
 
         // An interesting detail of 'canada.json' is that coordinates typically have ~6 digits of
         // precision, followed by ~8 consecutive zeros or nines, and then a couple additional digits.
-        // We recreate this by truncating to 6 digits of precision and then adding/subtracting a very
-        // small value.
+        // We generate similar coordinates by truncating values to 6 digits of precision and then
+        // adding a very small amount of noise.
         const noise = (x: number) =>
             (Math.trunc(x * 1000000) / 1000000) + noiseDist();
 
@@ -86,7 +90,7 @@ export function generateCanada(rnd: Source) {
         features: [{
             type: "Feature",
             properties: { name: "Canada" },
-            geometry: { type: "Polygon", coordinates },
+            geometry: { type: "Polygon", coordinates: segments },
         }],
     };
 }
