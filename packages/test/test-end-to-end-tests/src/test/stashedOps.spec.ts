@@ -5,8 +5,8 @@
 
 import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
+import { SharedCell } from "@fluidframework/cell";
 import {
     ReferenceType,
     reservedMarkerIdKey,
@@ -32,7 +32,12 @@ import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
-const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()], [stringId, SharedString.getFactory()]];
+const cellId = "cellKey";
+const registry: ChannelFactoryRegistry = [
+    [mapId, SharedMap.getFactory()],
+    [stringId, SharedString.getFactory()],
+    [cellId, SharedCell.getFactory()]];
+
 const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
@@ -148,6 +153,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     let container1: IContainer;
     let map1: SharedMap;
     let string1: SharedString;
+    let cell1: SharedCell;
     let waitForSummary: () => Promise<void>;
 
     beforeEach(async () => {
@@ -161,6 +167,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         url = await container1.getAbsoluteUrl("");
         const dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         map1 = await dataStore1.getSharedObject<SharedMap>(mapId);
+        cell1 = await dataStore1.getSharedObject<SharedCell>(cellId);
         string1 = await dataStore1.getSharedObject<SharedString>(stringId);
         string1.insertText(0, "hello");
 
@@ -195,6 +202,22 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(map2.get(testKey), testValue);
     });
 
+    it("resends cell op", async function() {
+        const pendingOps = await getPendingOps(provider, false, async (c, d, map) => {
+            const cell = await d.getSharedObject<SharedCell>(cellId);
+            cell.set(testValue);
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(cell1.get(), testValue);
+        assert.strictEqual(cell2.get(), testValue);
+    });
+
     it("doesn't resend successful op", async function() {
         const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
             map.set(testKey, "something unimportant");
@@ -211,6 +234,25 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
         assert.strictEqual(map1.get(testKey), testValue);
         assert.strictEqual(map2.get(testKey), testValue);
+    });
+
+    it("doesn't resend successful cell op", async function() {
+        const pendingOps = await getPendingOps(provider, true, async (c, d, map) => {
+            const cell = await d.getSharedObject<SharedCell>(cellId);
+            cell.set("something unimportant");
+        });
+
+        cell1.set(testValue);
+        await provider.ensureSynchronized();
+
+        // load with pending ops, which it should not resend because they were already sent successfully
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+
+        await provider.ensureSynchronized();
+        assert.strictEqual(cell1.get(), testValue);
+        assert.strictEqual(cell2.get(), testValue);
     });
 
     it("resends a lot of ops", async function() {
@@ -515,17 +557,18 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const newMapId = "newMap";
         let id;
         const pendingOps = await getPendingOps(provider, false, async (container, d, m) => {
-            const runtime = (container as any).context.runtime as IContainerRuntime;
+            const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+            const runtime = defaultDataStore.context.containerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
-            const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
+            const dataStore: ITestFluidObject = await requestFluidObject<ITestFluidObject>(router, "/");
             id = dataStore.context.id;
 
             const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            defaultDataStore.root.set("someDataStore", dataStore.handle);
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -542,7 +585,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it("doesn't resend successful attach op", async function() {
         const newMapId = "newMap";
         const pendingOps = await getPendingOps(provider, true, async (container, d, m) => {
-            const runtime = (container as any).context.runtime as IContainerRuntime;
+            const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+            const runtime = defaultDataStore.context.containerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
             const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
@@ -551,7 +595,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            defaultDataStore.root.set("someDataStore", dataStore.handle);
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -728,7 +772,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         let id;
         // stash attach op
         const pendingOps = await getPendingOps(provider, false, async (container, d, m) => {
-            const runtime = (container as any).context.runtime as IContainerRuntime;
+            const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+            const runtime = defaultDataStore.context.containerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
             const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
@@ -738,7 +783,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            defaultDataStore.root.set("someDataStore", dataStore.handle);
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -831,9 +876,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it.skip("can stash between summary op and ack", async function() {
         map1.set("test op 1", "test op 1");
         const container = await provider.loadTestContainer(testContainerConfig);
-        const pendingOps = await new Promise<string>((res) => container.on("op", (op) => {
+        const pendingOps = await new Promise<string>((resolve, reject) => container.on("op", (op) => {
             if (op.type === "summarize") {
-                res(container.closeAndGetPendingLocalState());
+                resolve(container.closeAndGetPendingLocalState());
             }
         }));
 

@@ -13,7 +13,6 @@ import {
 import {
     IAudience,
     IDeltaManager,
-    BindState,
     AttachState,
     ILoaderOptions,
 } from "@fluidframework/container-definitions";
@@ -232,7 +231,9 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     protected registry: IFluidDataStoreRegistry | undefined;
 
     protected detachedRuntimeCreation = false;
-    public readonly bindToContext: () => void;
+    // back-compat (for tests) - can be removed in 2.0.0-alpha.2.0.0, or earlier if compat tests drop n/n-2 coverage
+    // @ts-expect-error - This shouldn't be referenced in the current version, but needs to be here for back-compat
+    private readonly bindToContext: () => void;
     protected channel: IFluidDataStoreChannel | undefined;
     private loaded = false;
     protected pending: ISequencedDocumentMessage[] | undefined = [];
@@ -260,7 +261,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
     constructor(
         props: IFluidDataStoreContextProps,
         private readonly existing: boolean,
-        private bindState: BindState,
         public readonly isLocalDataStore: boolean,
         private readonly makeLocallyVisibleFn: () => void,
     ) {
@@ -282,11 +282,8 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
             this.containerRuntime.attachState : AttachState.Detached;
 
         this.bindToContext = () => {
-            assert(this.bindState === BindState.NotBound, 0x13b /* "datastore context is already in bound state" */);
-            this.bindState = BindState.Binding;
             assert(this.channel !== undefined, 0x13c /* "undefined channel on datastore context" */);
             this.makeLocallyVisible();
-            this.bindState = BindState.Bound;
         };
 
         const thisSummarizeInternal =
@@ -791,7 +788,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         super(
             props,
             true /* existing */,
-            BindState.Bound,
             false /* isLocalDataStore */,
             () => {
                 throw new Error("Already attached");
@@ -900,7 +896,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
         super(
             props,
             props.snapshotTree !== undefined ? true : false /* existing */,
-            props.snapshotTree ? BindState.Bound : BindState.NotBound,
             true /* isLocalDataStore */,
             props.makeLocallyVisibleFn,
         );
@@ -1048,13 +1043,7 @@ export class LocalDetachedFluidDataStoreContext
         super.bindRuntime(dataStoreChannel);
 
         if (await this.isRoot()) {
-            // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
-            // For older versions, we still have to call bindToContext.
-            if (dataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
-                dataStoreChannel.makeVisibleAndAttachGraph();
-            } else {
-                dataStoreChannel.bindToContext();
-            }
+            dataStoreChannel.makeVisibleAndAttachGraph();
         }
     }
 

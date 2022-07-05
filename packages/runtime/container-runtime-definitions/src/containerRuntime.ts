@@ -26,17 +26,9 @@ import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
-    IDataStore,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-
-/**
- * @deprecated - This will be removed once https://github.com/microsoft/FluidFramework/issues/9127 is fixed.
- */
-export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-    fluidDataStoreChannel?: { bindToContext?(): void; };
-}
 
 /**
  * @deprecated - This will be removed in a later release.
