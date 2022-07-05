@@ -284,8 +284,9 @@ export interface IDirectoryEvents extends IEvent {
 }
 
 /**
- * Interface describing a shared directory.
- * TODO: what are the semantics of this?
+ * Provides a hierarchical organization of map-like data structures as SubDirectories.
+ * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
+ * SubDirectories can be retrieved for use as working directories.
  */
 export interface ISharedDirectory extends
     ISharedObject<ISharedDirectoryEvents & IDirectoryEvents>,
@@ -356,8 +357,13 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 }
 
 /**
- * Shared map interface
- * TODO: what are the semantics of this?
+ * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
+ * and retrieving values that JavaScript developers are accustomed to with the
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
+ * However, the keys of a SharedMap must be strings, and the values must either be a JSON-serializable object or a
+ * {@link @fluidframework/shared-object-base#SharedObjectHandle}.
+ *
+ * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
  */
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     /**
@@ -392,7 +398,9 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  * If type is a value type then it must be amongst the types registered via registerValueType or we won't know how
  * to serialize/deserialize it (we rely on its factory via .load() and .store()).  Its value will be type-dependent.
  * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
- * channel ID. This type is legacy and deprecated.
+ * channel ID.
+ *
+ * @deprecated TODO: what is intended to be used instead?
  */
 export interface ISerializableValue {
     /**
