@@ -30,8 +30,10 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
      * Source and destination can both walk this to find common ancestor,
      * then rebase across using changes found on walk.
      */
-    private readonly branches: Map<RevisionTag, { before: RevisionTag; change: SetFromChangeRebaser<TChangeRebaser>; }>
-        = new Map();
+    private readonly revisionTree: Map<
+        RevisionTag,
+        { before: RevisionTag; change: ChangeSetFromChangeRebaser<TChangeRebaser>; }
+    > = new Map();
 
     public constructor(public readonly rebaser: TChangeRebaser) {
         // TODO
@@ -41,17 +43,26 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
      * Rebase `changes` from being applied to the `from` state to able to be applied to the `to` state.
      * @returns a RevisionTag for the state after applying changes to `to`, and the rebased changes themselves.
      */
-    public rebase(changes: ChangeFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag):
-        [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>] {
-        const initalChangeset: SetFromChangeRebaser<TChangeRebaser> = this.rebaser.import(changes);
+    public rebase(
+        changes: ChangeFromChangeRebaser<TChangeRebaser>,
+        from: RevisionTag,
+        to: RevisionTag,
+    ): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>] {
+        const initalChangeset: ChangeSetFromChangeRebaser<TChangeRebaser> =
+            this.rebaser.import(changes);
         if (from !== to) {
             throw Error("Not implemented"); // TODO: rebase
         }
         const over = this.rebaser.compose([]);
-        const finalChangeset: SetFromChangeRebaser<TChangeRebaser> = this.rebaser.rebase(initalChangeset, over);
+        const finalChangeset: ChangeSetFromChangeRebaser<TChangeRebaser> =
+            this.rebaser.rebase(initalChangeset, over);
         const newRevision = this.makeRevision();
-        this.branches.set(newRevision, { before: to, change: finalChangeset });
-        const output: FinalFromChangeRebaser<TChangeRebaser> = this.rebaser.export(finalChangeset);
+        this.revisionTree.set(newRevision, {
+            before: to,
+            change: finalChangeset,
+        });
+        const output: FinalFromChangeRebaser<TChangeRebaser> =
+            this.rebaser.export(finalChangeset);
         return [newRevision, output];
     }
 
@@ -66,14 +77,23 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
 
 // TODO: managing the types with these is not working well (inferring any for methods in Rebaser). Do something else.
 
-export type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> =
-    TChangeRebaser extends ChangeRebaser<infer TChange, any, any> ? TChange : never;
+export type ChangeFromChangeRebaser<
+    TChangeRebaser extends ChangeRebaser<any, any, any>,
+    > = TChangeRebaser extends ChangeRebaser<infer TChange, any, any>
+    ? TChange
+    : never;
 
-export type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> =
-    TChangeRebaser extends ChangeRebaser<any, infer TFinal, any> ? TFinal : never;
+export type FinalFromChangeRebaser<
+    TChangeRebaser extends ChangeRebaser<any, any, any>,
+    > = TChangeRebaser extends ChangeRebaser<any, infer TFinal, any>
+    ? TFinal
+    : never;
 
-export type SetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> =
-    TChangeRebaser extends ChangeRebaser<any, any, infer TState> ? TState : never;
+export type ChangeSetFromChangeRebaser<
+    TChangeRebaser extends ChangeRebaser<any, any, any>,
+    > = TChangeRebaser extends ChangeRebaser<any, any, infer TChangeSet>
+    ? TChangeSet
+    : never;
 
 /**
  * Rebasing logic for a particular kind of change.
@@ -85,7 +105,9 @@ export type SetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, 
  * Be clear about which of these are required for coherence, and which are desired for good semantics.
  */
 export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
-    _typeCheck?: Covariant<TChange> & Contravariant<TFinalChange> & Invariant<TChangeSet>;
+    _typeCheck?: Covariant<TChange> &
+    Contravariant<TFinalChange> &
+    Invariant<TChangeSet>;
 
     /**
      * TChangeSet must form a [group](https://en.wikipedia.org/wiki/Group_(mathematics)).
