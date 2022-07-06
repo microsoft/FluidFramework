@@ -201,8 +201,12 @@ async function getClient() {
 })().catch(e => {
     if (e.message.includes("'az' is not recognized as an internal or external command")) {
         console.error(`ERROR: Azure CLI is not installed. Install it and run 'az login' before running this tool.`);
-    } else {
-        console.error(`FATAL ERROR: ${e.stack}`);
+        exit(0);
+    } else if(e.message.includes("The subscription of 'fluid' doesn't exist in cloud 'AzureCloud'.")) {
+        console.error(`ERROR: Could not find the Azure Subscription for Fluid. Did you run 'az login' already?`);
+        exit(0);
     }
+
+    console.error(`FATAL ERROR: ${e.stack}`);
     process.exit(-1);
 });
