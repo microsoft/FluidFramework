@@ -13,10 +13,12 @@
             ],
             "type": "node",
             "args": [
-                "info",
-                "-g",
-                "build-tools",
+                "bump",
+                "deps",
+                "-p",
+                "@fluidframework/build-common",
             ],
+            "runtimeExecutable": "C:/Users/tylerbu/scoop/apps/nvs/current/nodejs/node/14.19.1/x64/node.EXE"
         },
         {
             "name": "fluid-bump-version",

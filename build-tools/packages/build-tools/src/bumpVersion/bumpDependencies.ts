@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import * as semver from "semver";
 import { Context } from "./context";
 import { VersionBag } from "./versionBag";
 import { fatal, prereleaseSatisfies } from "./utils";
@@ -97,8 +97,7 @@ export function getReleasedPrereleaseDependencies(context: Context) {
     const bumpPackageMap = new Map<string, { pkg: Package, rangeSpec: string }>();
     for (const pkg of context.repo.packages.packages) {
         for (const dep of pkg.combinedDependencies) {
-            // detect if the dependency include prerelease.  This doesn't work if it is range
-            if (dep.version.includes("-")) {
+            if (semver.prerelease(dep.version) !== null) {
                 const depPackage = context.fullPackageMap.get(dep.name);
                 // The prerelease dependence doesn't match the live version, assume that it is released already
                 if (depPackage && !prereleaseSatisfies(depPackage.version, dep.version)) {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
+export { bumpDependencies, cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
 export {
     bumpRepo
 } from "./bumpVersion/bumpVersion";

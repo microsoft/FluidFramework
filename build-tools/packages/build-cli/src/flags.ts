@@ -36,6 +36,14 @@ export const packageSelectorFlag = Flags.build({
     description: "package",
     // Can't be used with release groups.
     exclusive: ["g"],
+    multiple: false,
+    parse: async (input) => {
+        const split = input.split("=");
+        const dep = split[0];
+        const version = split[1];
+        // return "";
+        return { dep, version };
+    }
 });
 
 /**
