@@ -185,6 +185,9 @@ export class BlobManager {
         let storageId;
         if (this.runtime.attachState === AttachState.Detached) {
             assert(this.redirectTable.has(blobId), "requesting unknown blobs");
+            
+            // Blobs created while the container is detached are stored in IDetachedBlobStorage.
+            // The 'IDocumentStorageService.readBlob()' call below will retrieve these via localId.
             storageId = blobId;
         } else {
             storageId = this.redirectTable.get(blobId);
