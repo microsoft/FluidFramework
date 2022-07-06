@@ -274,20 +274,24 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
  */
 // eslint-disable-next-line @rushstack/no-new-null
 function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
+    if(isPrimitive(x)){
+        return x;
+    }
+    if (Array.isArray(x) && x.every((val) => isPrimitive(val))) {
+        return JSON.stringify(x);
+    }
+    return null;
+}
+
+function isPrimitive(x:any): boolean {
     switch (typeof x) {
         case "string":
         case "number":
         case "boolean":
         case "undefined":
-            return x;
+            return true;
         default:
-            if (!Array.isArray(x)) {
-                return null;
-            }
-            if (x.every((val) => filterValidTelemetryProps(val) !== null)) {
-                return JSON.stringify(x);
-            }
-            return null;
+            return false;
     }
 }
 /**
@@ -301,7 +305,9 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
         }
         const val = obj[key];
         const validProp = filterValidTelemetryProps(val);
-        if (isTaggedTelemetryPropertyValue(val)) {
+        const validTaggedProp = filterValidTelemetryProps(val.value);
+        if (isTaggedTelemetryPropertyValue(val) && validTaggedProp !== null) {
+            val.value = validTaggedProp;
             props[key] = val;
         } else if (validProp !== null) {
             props[key] = validProp;
