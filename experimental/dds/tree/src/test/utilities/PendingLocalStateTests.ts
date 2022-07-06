@@ -13,6 +13,7 @@ import { Change, StablePlace } from '../../ChangeTypes';
 import { TreeView } from '../../TreeView';
 import { EditId, NodeId, TraitLabel } from '../../Identifiers';
 import {
+    applyNoop,
 	getEditLogInternal,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
@@ -47,8 +48,6 @@ export function runPendingLocalStateTests(
 				testObjectProvider,
 				writeFormat: WriteFormat.v0_1_1,
 			});
-
-			const url = (await container.getAbsoluteUrl('/')) ?? fail('Container unable to resolve "/".');
 
 			await testObjectProvider.ensureSynchronized();
 			await testObjectProvider.opProcessingController.pauseProcessing();
@@ -188,6 +187,8 @@ export function runPendingLocalStateTests(
 		}
 
 		it('works across summaries', async () => {
+			const smallTreeTraitLabel = '3b9e2dd8-def4-45fb-88bc-0df48df62314' as TraitLabel;
+
 			// 1. Create a client
 			const { testObjectProvider, tree: tree0 } = await setUpLocalServerTestSharedTree({
 				id: documentId,
@@ -228,6 +229,11 @@ export function runPendingLocalStateTests(
 			expect(countSmallTrees(tree)).to.equal(2);
 			expect(countSmallTrees(tree2)).to.equal(2);
 
+            // Tolerate `InitialElectedClientNotFound` error
+            const events = testObjectProvider.logger.reportAndClearTrackedEvents();
+            expect(events.unexpectedErrors.length).to.equal(1);
+            expect(events.unexpectedErrors[0].eventName).to.equal('fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound');
+
 			/** Go offline, do something, then rejoin with pending local state */
 			async function stash(
 				container: IContainer,
@@ -258,8 +264,6 @@ export function runPendingLocalStateTests(
 					});
 				});
 			}
-
-			const smallTreeTraitLabel = '3b9e2dd8-def4-45fb-88bc-0df48df62314' as TraitLabel;
 
 			/** Insert some arbitrary data */
 			function insertSmallTree(tree: SharedTree): EditId {
@@ -318,6 +322,34 @@ export function runPendingLocalStateTests(
 					}).length / 2
 				);
 			}
+		});
+
+		it('cleans up temporary translation state', async () => {
+            function hasTemporaryStashState(tree: SharedTree): boolean {
+                const state = (tree as unknown as { stashedIdCompressor?: unknown }).stashedIdCompressor;
+                return state !== undefined && state !== null;
+            }
+
+			const {
+				container: stashingContainer,
+				tree,
+				testObjectProvider,
+			} = await setUpLocalServerTestSharedTree({});
+			await testObjectProvider.ensureSynchronized();
+
+			const { pendingLocalState } = await withContainerOffline(
+				testObjectProvider,
+				stashingContainer,
+				() => applyNoop(tree)
+			);
+			await testObjectProvider.ensureSynchronized();
+
+			const { tree: tree2 } = await setUpLocalServerTestSharedTree({
+				testObjectProvider,
+				pendingLocalState,
+			});
+
+            expect(hasTemporaryStashState(tree2)).to.be.false;
 		});
 	});
 }

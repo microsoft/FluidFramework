@@ -35,6 +35,7 @@ import {
 	OpSpaceNodeId,
 	isDetachedSequenceId,
 	AttributionId,
+    SessionId,
 } from './Identifiers';
 import { initialTree } from './InitialTree';
 import {
@@ -75,7 +76,6 @@ import {
 	WriteFormat,
 	TreeNodeSequence,
 	InternalizedChange,
-	stashedSessionId,
 } from './persisted-types';
 import { serialize, SummaryContents } from './Summary';
 import {
@@ -353,6 +353,9 @@ export interface StashedLocalOpMetadata {
 	/** A modified version of the edit in an edit op that should be resubmitted rather than the original edit */
 	transformedEdit?: Edit<ChangeInternal>;
 }
+
+/** The SessionId of the temporary IdCompressor that records stashed ops */
+const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
 
 /**
  * A [distributed tree](../Readme.md).
@@ -1590,12 +1593,18 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 							}
 							case WriteFormat.v0_1_1: {
 								assert(this.stashedIdCompressor !== null, 'Stashed op applied after expected window');
-								// Use a temporary compressor that will help translate the stashed ops
-								this.stashedIdCompressor ??= IdCompressor.deserialize(
-									this.idCompressor.serialize(false),
-									stashedSessionId,
-									sharedTreeOp.idRange.attributionId
-								);
+                                if (this.stashedIdCompressor === undefined) {
+                                    // Use a temporary compressor that will help translate the stashed ops
+                                    this.stashedIdCompressor = IdCompressor.deserialize(
+                                        this.idCompressor.serialize(false),
+                                        stashedSessionId,
+                                        sharedTreeOp.idRange.attributionId
+                                    );
+                                    // Once all stashed ops have been applied, clear the temporary state
+                                    this.runtime.on('connected', () => {
+                                        this.stashedIdCompressor = null;
+                                    });
+                                }
 								// Pretend (from the perspective of the temporary compressor) that the stashed ops have been sequenced
 								this.stashedIdCompressor.finalizeCreationRange(sharedTreeOp.idRange);
 								const stashedIdContext = getNodeIdContext(this.stashedIdCompressor);

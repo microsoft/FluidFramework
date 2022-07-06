@@ -481,9 +481,6 @@ export const reservedIdCount = 10;
 // This UUID must never change
 export const ghostSessionId = '79590933-1c70-4fda-817a-adab57c20318' as SessionId;
 
-/** The SessionId of the temporary IdCompressor that records stashed ops */
-export const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
-
 /** Accepts either a node or a node's identifier, and returns the identifier */
 function getNodeId<TId>(node: TId | NodeData<TId>): TId {
 	return (node as NodeData<TId>).identifier ?? (node as TId);
