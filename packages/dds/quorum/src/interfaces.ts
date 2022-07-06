@@ -31,13 +31,17 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
      * Gets the accepted value for the given key.
      * @param key - The key to retrieve from
      */
-    get(key: string): unknown;
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    get(key: string): any;
 
     /**
      * Gets the pending value for the given key.
      * @param key - The key to retrieve from
      */
-    getPending(key: string): unknown;
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getPending(key: string): any;
 
     /**
      * Sets the value for the given key.  After setting the value, it will be in "pending" state until all connected
