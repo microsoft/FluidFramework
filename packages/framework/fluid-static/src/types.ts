@@ -54,9 +54,10 @@ export type LoadableObjectCtor<T extends IFluidLoadable> = new(...args: any[]) =
  */
 export interface ContainerSchema {
     /**
-     * initialObjects defines loadable objects that will be created when the Container
-     * is first created. It uses the key as the id and the value as the loadable object to create.
+     * Defines loadable objects that will be created when the `Container` is first created.
+     * It uses the key as the id and the value as the loadable object to create.
      *
+     * @example
      * In the example below two objects will be created when the Container is first
      * created. One with id "map1" that will return a `SharedMap` and the other with
      * id "pair1" that will return a `KeyValueDataObject`.
@@ -87,8 +88,6 @@ export interface ContainerSchema {
  * {@link IServiceAudience.getMembers} method will emit events.
  *
  * @remarks
- *
- *  @remarks
  *
  * The following is the list of events emitted.
  *

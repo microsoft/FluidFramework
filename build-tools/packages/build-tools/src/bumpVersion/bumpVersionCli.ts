@@ -116,13 +116,7 @@ function parseOptions(argv: string[]) {
             const dep = split[0];
             const version = split[1];
 
-            if (dep.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
-                paramBumpDepPackages.set(MonoRepoKind[MonoRepoKind.Client], version);
-            } else if (dep.toLowerCase() === MonoRepoKind[MonoRepoKind.Server].toLowerCase()) {
-                paramBumpDepPackages.set(MonoRepoKind[MonoRepoKind.Server], version);
-            } else {
-                paramBumpDepPackages.set(dep, version);
-            }
+            paramBumpDepPackages.set(dep, version);
             continue;
         }
 
@@ -296,7 +290,7 @@ async function main() {
 
         switch (command) {
             case "releaseBump":
-                await createReleaseBump(context, paramReleaseVersion, paramVirtualPatch);
+                await createReleaseBump(MonoRepoKind.Client, context, paramReleaseVersion, paramVirtualPatch);
                 break;
             case "dep":
                 console.log("Bumping dependencies");

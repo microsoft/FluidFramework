@@ -22,6 +22,19 @@
             ],
         },
         {
+            "name": "fluid-bump-version",
+            "program": "${workspaceFolder}/build-tools/packages/build-tools/dist/bumpVersion/bumpVersionCli.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "-d",
+                "@fluidframework/common-utils@^0.33.1000",
+            ],
+        },
+        {
             "name": "layer-check",
             "program": "${workspaceFolder}/build-tools/packages/build-tools/dist/layerCheck/layerCheck.js",
             "request": "launch",
