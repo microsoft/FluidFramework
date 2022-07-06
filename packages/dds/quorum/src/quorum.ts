@@ -205,14 +205,18 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
      * {@inheritDoc IQuorum.get}
      */
-    public get(key: string): unknown {
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public get(key: string): any {
         return this.values.get(key)?.accepted?.value;
     }
 
     /**
      * {@inheritDoc IQuorum.getPending}
      */
-    public getPending(key: string): unknown {
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public getPending(key: string): any {
         // TODO: Should this return differently for "nothing pending" vs. "delete pending"?
         // Maybe return the QuorumValue itself?
         return this.values.get(key)?.pending?.value;
@@ -221,7 +225,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
      * {@inheritDoc IQuorum.set}
      */
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     public set(key: string, value: unknown): void {
         const currentValue = this.values.get(key);
         // Early-exit if we can't submit a valid proposal (there's already a pending proposal)
