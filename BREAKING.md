@@ -16,6 +16,25 @@ There are a few steps you can take to write a good change note and avoid needing
 
 # 2.0.0
 
+## 2.0.0 Upcoming changes
+- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+- [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
+- [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
+
+### Remove `documentId` field from `MockFluidDataStoreContext`
+This field has been deprecated and will be removed in a future breaking change.
+
+### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
+
+### Remove `ConnectionState.Connecting`
+`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
+
+### `IContainerRuntime.flush` is deprecated
+`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
@@ -26,15 +45,8 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
 - [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
-
-### Remove `documentId` field from `MockFluidDataStoreContext`
-
-This field was deprecated and has been removed in this release.
-
-### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
-
-`clientId` can only ever be of type `string`, so it is superfluous for the type
-to be `string | undefined`.
+- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
+- [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -63,13 +75,26 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 ### Remove ISummaryAuthor and ISummaryCommitter
 See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and`ISummaryCommitter` are deprecated and will be removed in a future release.
 
+### Remove IFluidDataStoreChannel.bindToContext and related types
+`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
+See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
+
+### Remove `aliasing` return value from `AliasResult`
+The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
+
+
 # 1.1.0
 
 ## 1.1.0 Upcoming changes
 - [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated)
+- [ ISummaryAuthor and ISummaryCommitter are deprecated](#isummaryauthor-and-isummarycommitter-are-deprecated)
 
  ### IContainerRuntime.createRootDataStore is deprecated
  See [#9660](https://github.com/microsoft/FluidFramework/issues/9660). The API is vulnerable to name conflicts, which lead to invalid documents. As a replacement, create a regular datastore using the `IContainerRuntimeBase.createDataStore` function, then alias the datastore by using the `IDataStore.trySetAlias` function and specify a string value to serve as the alias to which the datastore needs to be bound. If successful, "Success" will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
+
+ ### ISummaryAuthor and ISummaryCommitter are deprecated
+  See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and `ISummaryCommitter`
+  are deprecated and will be removed in a future release.
 
 # 1.0.0
 

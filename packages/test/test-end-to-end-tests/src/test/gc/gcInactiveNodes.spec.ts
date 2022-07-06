@@ -21,9 +21,9 @@ import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gc
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
 describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
-    const revivedEvent = "fluid:telemetry:ContainerRuntime:inactiveObject_Revived";
-    const changedEvent = "fluid:telemetry:ContainerRuntime:inactiveObject_Changed";
-    const loadedEvent = "fluid:telemetry:ContainerRuntime:inactiveObject_Loaded";
+    const revivedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Revived";
+    const changedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Changed";
+    const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";
     const inactiveTimeoutMs = 100;
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
@@ -138,8 +138,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             // Load the data store and validate that we get loadedEvent.
             await summarizerRuntime.resolveHandle({ url });
             await summarize(summarizerRuntime);
-            assert(
-                mockLogger.matchEvents([
+            mockLogger.assertMatch(
+                [
                     {
                         eventName: changedEvent,
                         timeout: inactiveTimeoutMs,
@@ -152,7 +152,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
                         id: url,
                         pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
                     },
-                ]),
+                ],
                 "changed and loaded events not generated as expected",
             );
 
@@ -165,8 +165,8 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             // Revive the inactive data store and validate that we get the revivedEvent event.
             defaultDataStore._root.set("dataStore1", dataObject.handle);
             await summarize(summarizerRuntime);
-            assert(
-                mockLogger.matchEvents([
+            mockLogger.assertMatch(
+                [
                     {
                         eventName: revivedEvent,
                         timeout: inactiveTimeoutMs,
@@ -174,7 +174,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
                         pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
                         fromId: defaultDataStore._root.handle.absolutePath,
                     },
-                ]),
+                ],
                 "revived event not generated as expected",
             );
         });
@@ -216,14 +216,14 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             // Retrieve the blob in the summarizer client now and validate that we get the loadedEvent.
             await summarizerBlobHandle.get();
             await summarize(summarizerRuntime);
-            assert(
-                mockLogger.matchEvents([
+            mockLogger.assertMatch(
+            [
                     {
                         eventName: loadedEvent,
                         timeout: inactiveTimeoutMs,
                         id: summarizerBlobHandle.absolutePath,
                     },
-                ]),
+                ],
                 "updated event not generated as expected for attachment blobs",
             );
 
@@ -231,14 +231,14 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             defaultDataStore._root.set("blob", blobHandle);
             await provider.ensureSynchronized();
             await summarize(summarizerRuntime);
-            assert(
-                mockLogger.matchEvents([
+            mockLogger.assertMatch(
+                [
                     {
                         eventName: revivedEvent,
                         timeout: inactiveTimeoutMs,
                         id: summarizerBlobHandle.absolutePath,
                     },
-                ]),
+                ],
                 "revived event not generated as expected for attachment blobs",
             );
         });
@@ -252,7 +252,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
          * via the running summarizer's logger.
          */
         itExpects("can generate events for data stores that are not loaded", [
-            { eventName: "fluid:telemetry:Summarizer:Running:inactiveObject_Revived", timeout: inactiveTimeoutMs },
+            { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Revived", timeout: inactiveTimeoutMs },
         ], async () => {
             const waitForSummary = async (summarizer: ISummarizer) => {
                 await provider.ensureSynchronized();

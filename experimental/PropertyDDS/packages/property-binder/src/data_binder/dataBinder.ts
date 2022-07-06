@@ -142,7 +142,7 @@ const _popUserData = function(in_context: Utils.TraversalContext) {
  * These data bindings are notified of the modification and removal of the underlying property.
  *
  * @example
- * ```
+ * ```typescript
  * const databinder = new DataBinder(propertyTree);
  * databinder.defineDataBinding(...);
  *
