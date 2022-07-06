@@ -11,30 +11,37 @@ import { Package } from "../common/npmPackage";
 import { FluidRepo } from "../common/fluidRepo";
 
 /**
- * Bump cross package/monorepo dependencies
+ * Bump cross-release group dependencies.
  *
- * Go all the packages in the repo and update the dependencies to the packages specified version to the one currently in the repo
+ * @remarks
  *
- * @param repo the repo to operate one
- * @param bumpDepPackages update dependencies to these set of packages to current in repo version
- * @param updateLock whether to update the lock file (by npm i) or not
- * @param release make dependencies target release version instead of pre-release versions (e.g. ^0.16.0 vs ^0.16.0-0)
+ * Update the dependencies on the packages specified to a specific version, or the latest version if not specified.
+ *
+ * @param context - The repo {@link Context}.
+ * @param commitMessage - The commit message to use when committing changes. This must be provided if `commit` is true.
+ * @param commit - If true, commit the changes to a new branch.
+ * @param bumpDepPackages - A map of package names to the version that dependencies on that package should be set to.
+ * @param updateLock - If true, update the lock file by running `npm install` automatically.
+ * @param release - If true, make dependencies target release version instead of pre-release versions (e.g. ^0.16.0 vs
+ * ^0.16.0-0)
+ * @param releaseGroup - Only update dependencies within this release group. If not specified, operates on the whole
+ * repo.
  */
 export async function bumpDependencies(
     context: Context,
-    commitMessage: string,
     bumpDepPackages: Map<string, string | undefined>,
-    updateLock: boolean,
+    updateLock: boolean = false,
     commit: boolean = false,
-    release: boolean = false,
+    commitMessage?: string,
+    release: boolean = true,
     releaseGroup?: MonoRepoKind,
 ) {
     const suffix = release ? "" : "-0";
-    const filteredPackages = await context.repo.packages.filteredPackages(releaseGroup);
-    const bumpPackages = filteredPackages.map(pkg => {
+    const bumpPackages = context.repo.packages.packages.map(pkg => {
+        // const matchName = pkg.name;
         const matchName = pkg.monoRepo ? pkg.monoRepo.kind : pkg.name;
         const matched = bumpDepPackages.has(matchName);
-        // Only add the suffix if it is not user specified
+        // Only add the suffix if the version is not user specified
         const version = bumpDepPackages.get(matchName) ?? `${pkg.version}${suffix}`;
         return { matched, pkg, version };
     }).filter(rec => rec.matched);
@@ -42,17 +49,23 @@ export async function bumpDependencies(
         fatal("Unable to find dependencies to bump");
     }
 
+    if (commitMessage === undefined && commit === true) {
+        fatal("No commit message was provided.");
+    }
+
     const bumpPackageMap = new Map(bumpPackages.map(rec => [rec.pkg.name, { pkg: rec.pkg, rangeSpec: `^${rec.version}` }]));
-    return bumpDependenciesCore(context, filteredPackages, commitMessage, bumpPackageMap, updateLock, commit, release);
+    const filteredPackages = await context.repo.packages.filteredPackages(releaseGroup);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return bumpDependenciesCore(context, filteredPackages, bumpPackageMap, updateLock, commit, commitMessage!, release);
 }
 
 async function bumpDependenciesCore(
     context: Context,
     filteredPackages: Package[],
-    commitMessage: string,
     bumpPackageMap: Map<string, { pkg: Package, rangeSpec: string }>,
     updateLock: boolean,
     commit: boolean,
+    commitMessage: string,
     release: boolean,
 ) {
     let changed = false;
@@ -128,10 +141,15 @@ export async function cleanPrereleaseDependencies(context: Context, updateLock: 
     console.log(`Updating released prerelease dependencies`
         + `\n${Array.from(releasedPrereleaseDependencies.keys()).join("\n  ")}`);
 
-    await bumpDependenciesCore(context,
+    await bumpDependenciesCore(
+        context,
         context.repo.packages.packages,
+        releasedPrereleaseDependencies,
+        updateLock,
+        commit,
         "Remove prelease dependencies on release packages",
-        releasedPrereleaseDependencies, updateLock, commit, false);
+        false,
+    );
 }
 
 /**

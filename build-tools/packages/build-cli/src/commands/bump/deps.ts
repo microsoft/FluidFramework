@@ -4,7 +4,11 @@
  */
 
 import { Flags } from "@oclif/core";
-import { bumpDependencies, cleanPrereleaseDependencies, isMonoRepoKind, MonoRepoKind } from "@fluidframework/build-tools";
+import {
+    bumpDependencies,
+    cleanPrereleaseDependencies,
+    isMonoRepoKind,
+} from "@fluidframework/build-tools";
 import { BaseBumpCommand } from "../bump";
 import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
 
@@ -24,8 +28,17 @@ export default class DepsCommand extends BaseBumpCommand {
             char: "l",
             default: false,
             description: "Bump pre-release packages to release versions if possible.",
-            hidden: false,
             exclusive: ["package"],
+        }),
+        install: Flags.boolean({
+            char: "i",
+            default: false,
+            description: "Update the lock file by running 'npm install' automatically.",
+        }),
+        commit: Flags.boolean({
+            char: "c",
+            default: false,
+            description: "Commit the changes to a new branch.",
         }),
     };
 
@@ -44,20 +57,29 @@ export default class DepsCommand extends BaseBumpCommand {
         }
 
         const packagesToBump = new Map<string, string | undefined>();
-        if (Array.isArray(flags.package)) {
-            for (const { dep, version } of flags.package) {
-                packagesToBump.set(dep, version);
-            }
-        } else {
-            const { dep, version } = flags.package;
-            packagesToBump.set(dep, version);
-        }
+        const { dep, version } = flags.package;
+        packagesToBump.set(dep, version);
 
         // eslint-disable-next-line unicorn/prefer-ternary
         if (flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)) {
-            await bumpDependencies(context, "Bump dependencies version", packagesToBump, false, false, false, flags.releaseGroup);
+            await bumpDependencies(
+                context,
+                packagesToBump,
+                false,
+                false,
+                "Bump dependencies version",
+                false,
+                flags.releaseGroup,
+            );
         } else {
-            await bumpDependencies(context, "Bump dependencies version", packagesToBump, false, false, false);
+            await bumpDependencies(
+                context,
+                packagesToBump,
+                false,
+                false,
+                "Bump dependencies version",
+                false,
+            );
         }
     }
 }

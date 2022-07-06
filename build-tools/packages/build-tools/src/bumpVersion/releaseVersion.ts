@@ -151,7 +151,7 @@ async function postRelease(context: Context, tagNames: string, packageNames: str
 
     // Fix the pre-release dependency and update package lock
     const fixPrereleaseCommitMessage = `Also remove pre-release dependencies for ${packageNames}`;
-    const message = await bumpDependencies(context, fixPrereleaseCommitMessage, bumpDep, updateLock, false, true);
+    const message = await bumpDependencies(context, bumpDep, updateLock, false, fixPrereleaseCommitMessage, true);
     await bumpVersion(context, [...bumpDep.keys()], "patch", packageNames, virtualPatch, message ?
         `\n\n${fixPrereleaseCommitMessage}\n${message}` : "");
 
