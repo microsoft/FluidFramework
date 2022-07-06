@@ -14,7 +14,7 @@ import {
     ISharedObjectRegistry,
 } from "@fluidframework/datastore";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreRuntime, IChannelFactory } from "@fluidframework/datastore-definitions";
 import {
@@ -28,6 +28,27 @@ import { IAgentScheduler, IAgentSchedulerEvents } from "./agent";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;
+
+const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+    const maybeValue = map.get<T>(key);
+    if (maybeValue !== undefined) {
+        return maybeValue;
+    }
+
+    return new Promise((resolve) => {
+        const handler = (changed: IValueChanged) => {
+            if (changed.key === key) {
+                map.off("valueChanged", handler);
+                const value = map.get<T>(changed.key);
+                if (value === undefined) {
+                    throw new Error("Unexpected valueChanged result");
+                }
+                resolve(value);
+            }
+        };
+        map.on("valueChanged", handler);
+    });
+};
 
 const schedulerId = "scheduler";
 
@@ -43,7 +64,7 @@ export class AgentScheduler extends TypedEventEmitter<IAgentSchedulerEvents> imp
             root.set(schedulerId, consensusRegisterCollection.handle);
         } else {
             root = await runtime.getChannel("root") as ISharedMap;
-            const handle = root.get(schedulerId);
+            const handle = await mapWait<IFluidHandle<ConsensusRegisterCollection<string | null>>>(root, schedulerId);
             assert(handle !== undefined, 0x116 /* "Missing handle on scheduler load" */);
             consensusRegisterCollection = await handle.get();
         }
