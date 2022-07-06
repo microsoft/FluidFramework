@@ -13,18 +13,19 @@ import { releaseGroupFlag } from "../flags";
  * The root `info` command.
  */
 export default class InfoCommand extends BaseCommand {
-    static description = "Get info about the repo, release groups, and packages";
+    static description = "Get info about the repo, release groups, and packages.";
 
     static flags = {
         ...super.flags,
         releaseGroup: releaseGroupFlag({
             required: false,
         }),
-        all: Flags.boolean({
-            char: "a",
-            default: false,
-            description: "Get info about all release groups.",
-            exclusive: ["g"],
+        private: Flags.boolean({
+            char: "p",
+            default: true,
+            required: false,
+            description: "Include private packages (default true).",
+            allowNo: true,
         }),
     };
 
@@ -38,6 +39,10 @@ export default class InfoCommand extends BaseCommand {
 
         if (flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)) {
             packages = context.packagesForReleaseGroup(flags.releaseGroup);
+        }
+
+        if(!flags.private) {
+            packages = packages.filter((p) => !p.packageJson.private);
         }
 
         const data: (string | MonoRepoKind | undefined)[][] = [

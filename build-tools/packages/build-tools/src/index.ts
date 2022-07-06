@@ -5,7 +5,7 @@
 
 export { cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
 export {
-    bumpRepo, setReleaseGroupVersion
+    bumpRepo
 } from "./bumpVersion/bumpVersion";
 export {
     Context, VersionBumpType, VersionBumpTypeExtended
