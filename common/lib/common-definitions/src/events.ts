@@ -22,6 +22,8 @@ export interface IEventProvider<TEvent extends IEvent> {
 
 /**
  * Allow an interface to extend an interfaces that already extends an IEventProvider
+ *
+ * @example
  *``` typescript
  * interface AEvents extends IEvent{
  *  (event: "a-event",listener: (a: number)=>void);
