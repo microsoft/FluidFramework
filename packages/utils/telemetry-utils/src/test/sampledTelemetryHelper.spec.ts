@@ -10,6 +10,7 @@ import {
     ITelemetryGenericEvent,
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
+    ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper";
 
@@ -35,6 +36,9 @@ class TestLogger implements ITelemetryLogger {
     }
     supportsTags?: true | undefined;
 }
+
+const standardEventProperties = ["eventName", "duration", "count"];
+const aggregateProperties = ["totalDuration", "minDuration", "maxDuration"];
 
 describe("SampledTelemetryHelper", () => {
     let logger: TestLogger;
@@ -67,8 +71,8 @@ describe("SampledTelemetryHelper", () => {
         helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
-        ensurePropertiesExist(event, ["eventName", "duration", "dimension"], true);
-        assert.strictEqual(event.dimension, "");
+        ensurePropertiesExist(event, standardEventProperties, true);
+        assert.strictEqual(event.count, 1);
     });
 
     it("includes aggregate properties when it should", () => {
@@ -76,9 +80,7 @@ describe("SampledTelemetryHelper", () => {
         helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
-        ensurePropertiesExist(event,
-            ["eventName", "duration", "dimension", "totalDuration", "count", "minDuration", "maxDuration"], true);
-        assert.strictEqual(event.dimension, "");
+        ensurePropertiesExist(event, [...standardEventProperties, ...aggregateProperties], true);
         assert.strictEqual(event.count, 1);
     });
 
@@ -87,8 +89,9 @@ describe("SampledTelemetryHelper", () => {
         helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
-        ensurePropertiesExist(event, ["eventName", "duration", "dimension", "myProp"], true);
-        assert.strictEqual(event.dimension, "");
+        ensurePropertiesExist(event, [...standardEventProperties, "myProp"], true);
+        assert.strictEqual(event.count, 1);
+        assert.strictEqual(event.myProp, "myValue");
     });
 
     it("includes properties from base event when aggregate properties are included", () => {
@@ -96,48 +99,57 @@ describe("SampledTelemetryHelper", () => {
         helper.measure(() => {});
         assert.strictEqual(logger.events.length, 1);
         const event = logger.events[0];
-        ensurePropertiesExist(event,
-            ["eventName", "duration", "dimension", "totalDuration", "count", "minDuration", "maxDuration", "myProp"],
-            true);
-        assert.strictEqual(event.dimension, "");
+        ensurePropertiesExist(event, [...standardEventProperties, ...aggregateProperties, "myProp"], true);
+        assert.strictEqual(event.count, 1);
+        assert.strictEqual(event.myProp, "myValue");
     });
 
-    it("tracks dimensions separately", () => {
-        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 3);
-        const dimension1 = "dimension1";
-        const dimension2 = "dimension2";
+    it("tracks buckets separately and includes per-bucket properties", () => {
+        const bucket1 = "bucket1";
+        const bucket2 = "bucket2";
+        const bucketProperties: Map<string, ITelemetryProperties> = new Map<string, ITelemetryProperties>([
+            [bucket1, { prop1: "value1" }],
+            [bucket2, { prop2: "value2" }],
+        ]);
+
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 3, false, bucketProperties);
 
         for (let i = 0; i < 9; i++) {
-            helper.measure(() => {}, dimension1);
+            helper.measure(() => {}, bucket1);
         }
         for (let i = 0; i < 7; i++) {
-            helper.measure(() => {}, dimension2);
+            helper.measure(() => {}, bucket2);
         }
 
-        assert.strictEqual(logger.events.filter((x) => x.dimension === dimension1).length, 3);
-        assert.strictEqual(logger.events.filter((x) => x.dimension === dimension2).length, 2);
+        assert.strictEqual(logger.events.filter((x) => x.prop1 === "value1").length, 3);
+        assert.strictEqual(logger.events.filter((x) => x.prop2 === "value2").length, 2);
     });
 
     it("generates telemetry event from buffered data when disposed", () => {
-        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 5);
+        // Logging several buckets to make sure they are all flushed. We can only distingush the events based on the
+        // custom properties added to the event for each bucket
+        const bucket1 = "bucket1";
+        const bucket2 = "bucket2";
+        const bucketProperties: Map<string, ITelemetryProperties> = new Map<string, ITelemetryProperties>([
+            [bucket1, { prop1: "value1" }],
+            [bucket2, { prop2: "value2" }],
+        ]);
 
-        // Logging several dimensions to make sure they are all flushed
-        const dimension1 = "dimension1";
-        const dimension2 = "dimension2";
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 5, false, bucketProperties);
 
         // Only measure 4 times when we need 5 samples before writing the telemetry event
         for (let i = 0; i < 4; i++) {
-            helper.measure(() => {}, dimension1);
-            helper.measure(() => {}, dimension2);
+            helper.measure(() => {}, bucket1);
+            helper.measure(() => {}, bucket2);
         }
 
         // Nothing should have been logged yet
         assert.strictEqual(logger.events.length, 0);
 
-        // After disposing, there should be one event for each dimension
+        // After disposing, there should be one event for each bucket
         helper.dispose();
-        assert.strictEqual(logger.events.filter((x) => x.dimension === dimension1).length, 1);
-        assert.strictEqual(logger.events.filter((x) => x.dimension === dimension2).length, 1);
+        assert.strictEqual(logger.events.filter((x) => x.prop1 === "value1").length, 1);
+        assert.strictEqual(logger.events.filter((x) => x.prop2 === "value2").length, 1);
     });
 
     it("no event is generated on dispose if there's no pending 'buffered' data", () => {

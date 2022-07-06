@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -137,15 +137,19 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
                 category: "performance",
             },
             this.logger,
-            this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 100,
-            true);
+            this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 10,
+            true,
+            new Map<string, ITelemetryProperties>([
+                ["local", { localOp: true }],
+                ["remote", { localOp: false }],
+            ]));
         const callbacksHelper = new SampledTelemetryHelper(
             {
                 eventName: "ddsEventCallbacks",
                 category: "performance",
             },
             this.logger,
-            this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 100,
+            this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 10,
             true);
 
         this.runtime.once("dispose", () => {

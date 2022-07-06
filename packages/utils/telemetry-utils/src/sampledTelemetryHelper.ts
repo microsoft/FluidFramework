@@ -8,6 +8,7 @@ import {
     ITelemetryGenericEvent,
     ITelemetryLogger,
     ITelemetryPerformanceEvent,
+    ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
 
@@ -16,14 +17,31 @@ interface Measurements {
     // telemetry event, changes should be considered carefully. The optional properties should
     // only be populated if 'includeAggregateMetrics' is true.
 
+    /**
+     * The duration of the latest execution.
+     */
     duration: number;
-    count?: number;
+
+    /**
+     * The number of executions since the last time an event was generated.
+     */
+    count: number;
+
+    /**
+     * Total duration across all the executions since the last event was generated.
+     */
     totalDuration?: number;
+
+    /**
+     * Min duration across all the executions since the last event was generated.
+     */
     minDuration?: number;
+
+    /**
+     * Max duration across all the executions since the last event was generated.
+     */
     maxDuration?: number;
 }
-
-interface CountAndMeasurements { count: number; measurements: Measurements; }
 
 /**
  * Helper class that executes a specified code block and writes an
@@ -35,60 +53,68 @@ interface CountAndMeasurements { count: number; measurements: Measurements; }
  export class SampledTelemetryHelper implements IDisposable {
     disposed: boolean = false;
 
-    private readonly measurementsMap = new Map<string, CountAndMeasurements>();
+    private readonly measurementsMap = new Map<string, Measurements>();
 
     /**
-     * @param eventBase - Custom properties to include in the telemetry performance event when it is written.
-     * @param logger - The logger to use to write the telemetry performance event.
-     * @param sampleThreshold - Telemetry performance events will be generated every time we hit this many
-     *                          executions of the code block.
-     * @param includeAggregateMetrics - If set to `true`, the telemetry performance event will include aggregated
-     *                                  metrics (execution count, total duration, min duration, max duration) for
-     *                                  all the executions in between generated events.
+     * @param eventBase -
+     * Custom properties to include in the telemetry performance event when it is written.
+     * @param logger -
+     * The logger to use to write the telemetry performance event.
+     * @param sampleThreshold -
+     * Telemetry performance events will be generated every time we hit this many executions of the code block.
+     * @param includeAggregateMetrics -
+     * If set to `true`, the telemetry performance event will include aggregated metrics (total duration, min duration,
+     * max duration) for all the executions in between generated events.
+     * @param perBucketProperties -
+     * Map of strings that represent different buckets (which can be specified when calling the 'measure' method), to
+     * properties which should be added to the telemetry event for that bucket. If a bucket being measured does not
+     * have an entry in this map, no additional properties will be added to its telemetry events.
      */
     public constructor(
         private readonly eventBase: ITelemetryGenericEvent,
         private readonly logger: ITelemetryLogger,
         private readonly sampleThreshold: number,
-        private readonly includeAggregateMetrics: boolean = false) {
+        private readonly includeAggregateMetrics: boolean = false,
+        private readonly perBucketProperties = new Map<string, ITelemetryProperties>()) {
     }
 
     /**
-     * @param codeToMeasure - The code to be executed and measured.
-     * @param dimension - A key to track executions of the code block separately. Each different
-     *                    value of this parameter has a separate set of executions and metrics tracked
-     *                    by the class. If no such distinction needs to be made, do not provide a value.
+     * @param codeToMeasure -
+     * The code to be executed and measured.
+     * @param bucket -
+     * A key to track executions of the code block separately. Each different value of this parameter has a separate
+     * set of executions and metrics tracked by the class. If no such distinction needs to be made, do not provide a
+     * value.
      * @returns Whatever the passed-in code block returns.
      */
-    public measure<T>(codeToMeasure: () => T, dimension: string = ""): T {
+    public measure<T>(codeToMeasure: () => T, bucket: string = ""): T {
         const start = performance.now();
         const returnValue = codeToMeasure();
         const duration = performance.now() - start;
 
-        let m = this.measurementsMap.get(dimension);
+        let m = this.measurementsMap.get(bucket);
         if (m === undefined) {
-            m = { count: 0, measurements: { duration: -1 } };
-            this.measurementsMap.set(dimension, m);
+            m = { count: 0, duration: -1 };
+            this.measurementsMap.set(bucket, m);
         }
         m.count++;
-        m.measurements.duration = duration;
+        m.duration = duration;
 
         if (this.includeAggregateMetrics) {
-            m.measurements.count = m.count;
-            m.measurements.totalDuration = (m.measurements.totalDuration ?? 0) + duration;
-            m.measurements.minDuration = Math.min(m.measurements.minDuration ?? duration, duration);
-            m.measurements.maxDuration = Math.max(m.measurements.maxDuration ?? 0, duration);
+            m.totalDuration = (m.totalDuration ?? 0) + duration;
+            m.minDuration = Math.min(m.minDuration ?? duration, duration);
+            m.maxDuration = Math.max(m.maxDuration ?? 0, duration);
         }
 
         if (m.count >= this.sampleThreshold) {
-            this.flushDimension(dimension);
+            this.flushBucket(bucket);
         }
 
         return returnValue;
     }
 
-    private flushDimension(dimension: string) {
-        const measurements = this.measurementsMap.get(dimension);
+    private flushBucket(bucket: string) {
+        const measurements = this.measurementsMap.get(bucket);
         if (measurements === undefined) {
             return;
         }
@@ -96,16 +122,22 @@ interface CountAndMeasurements { count: number; measurements: Measurements; }
         if (measurements.count !== 0) {
             const telemetryEvent: ITelemetryPerformanceEvent = {
                 ...this.eventBase,
-                ...measurements.measurements,
-                dimension,
+                ...measurements,
             };
 
+            const bucketProperties = this.perBucketProperties.get(bucket);
+            if (bucketProperties !== undefined) {
+                Object.keys(bucketProperties).forEach((key) => {
+                    telemetryEvent[key] = bucketProperties[key];
+                });
+            }
+
             this.logger.sendPerformanceEvent(telemetryEvent);
-            this.measurementsMap.delete(dimension);
+            this.measurementsMap.delete(bucket);
         }
     }
 
     public dispose(error?: Error | undefined): void {
-        this.measurementsMap.forEach((_, k) => this.flushDimension(k));
+        this.measurementsMap.forEach((_, k) => this.flushBucket(k));
     }
 }

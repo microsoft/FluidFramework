@@ -236,13 +236,13 @@ export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, 
 
 // @public
 export class SampledTelemetryHelper implements IDisposable {
-    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryLogger, sampleThreshold: number, includeAggregateMetrics?: boolean);
+    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryLogger, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
     // (undocumented)
     dispose(error?: Error | undefined): void;
     // (undocumented)
     disposed: boolean;
     // (undocumented)
-    measure<T>(codeToMeasure: () => T, dimension?: string): T;
+    measure<T>(codeToMeasure: () => T, bucket?: string): T;
 }
 
 // @public
