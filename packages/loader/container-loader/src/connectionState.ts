@@ -18,12 +18,6 @@ export enum ConnectionState {
     EstablishingConnection = 3,
 
     /**
-     * See {@link ConnectionState.CatchingUp}, which is the new name for this state.
-     * @deprecated - This state itself is not gone, just being renamed. Please use {@link ConnectionState.CatchingUp}.
-     */
-    Connecting = 1,
-
-    /**
      * The container has an inbound connection only, and is catching up to the latest known state from the service.
      */
     CatchingUp = 1,

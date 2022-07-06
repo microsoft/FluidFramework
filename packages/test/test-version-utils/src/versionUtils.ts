@@ -247,6 +247,12 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
         } else if (requested === -2) {
             return "^0.58.0-0";
         }
+    } else if (version.major === 2) {
+        if (requested === -1) {
+            return "^1.0.0-0";
+        } else if (requested === -2) {
+            return "^0.59.0-0";
+        }
     }
     return `^${version.major}.${version.minor + requested}.0-0`;
 }

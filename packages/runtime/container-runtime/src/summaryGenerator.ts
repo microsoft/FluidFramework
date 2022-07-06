@@ -264,28 +264,7 @@ export class SummaryGenerator {
                 opsSinceLastAttempt: referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
                 opsSinceLastSummary,
             };
-            if (summaryData.stage !== "base") {
-                summarizeTelemetryProps = {
-                    ...summarizeTelemetryProps,
-                    ...summaryData.summaryStats,
-                    generateDuration: summaryData.generateDuration,
-                };
-
-                if (summaryData.stage !== "generate") {
-                    summarizeTelemetryProps = {
-                        ...summarizeTelemetryProps,
-                        handle: summaryData.handle,
-                        uploadDuration: summaryData.uploadDuration,
-                    };
-
-                    if (summaryData.stage !== "upload") {
-                        summarizeTelemetryProps = {
-                            ...summarizeTelemetryProps,
-                            clientSequenceNumber: summaryData.clientSequenceNumber,
-                        };
-                    }
-                }
-            }
+            summarizeTelemetryProps = this.addSummaryDataToTelemetryProps(summaryData, summarizeTelemetryProps);
 
             if (summaryData.stage !== "submit") {
                 return fail("submitSummaryFailure", summaryData.error, summarizeTelemetryProps);
@@ -406,6 +385,45 @@ export class SummaryGenerator {
         } finally {
             this.pendingAckTimer.clear();
         }
+    }
+
+    private addSummaryDataToTelemetryProps(
+        summaryData: SubmitSummaryResult,
+        initialProps: SummaryGeneratorTelemetry,
+    ): SummaryGeneratorTelemetry {
+        switch (summaryData.stage) {
+            case "base": return initialProps;
+
+            case "generate": return {
+                ...initialProps,
+                ...summaryData.summaryStats,
+                generateDuration: summaryData.generateDuration,
+            };
+
+            case "upload": return {
+                ...initialProps,
+                ...summaryData.summaryStats,
+                generateDuration: summaryData.generateDuration,
+                handle: summaryData.handle,
+                uploadDuration: summaryData.uploadDuration,
+            };
+
+            case "submit": return {
+                ...initialProps,
+                ...summaryData.summaryStats,
+                generateDuration: summaryData.generateDuration,
+                handle: summaryData.handle,
+                uploadDuration: summaryData.uploadDuration,
+                clientSequenceNumber: summaryData.clientSequenceNumber,
+                hasMissingOpData: this.heuristicData.hasMissingOpData,
+                opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
+                nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
+            };
+
+            default: assert(true, "Unexpected summary stage");
+        }
+
+        return initialProps;
     }
 
     private summarizeTimerHandler(time: number, count: number) {

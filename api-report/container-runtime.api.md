@@ -383,8 +383,6 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly gcBlobNodeCount?: number;
     readonly gcStateUpdatedDataStoreCount?: number;
     readonly gcTotalBlobsSize?: number;
-    readonly nonSystemOpsSinceLastSummary: number;
-    readonly opsSizesSinceLastSummary: number;
     readonly summarizedDataStoreCount: number;
     readonly summaryNumber: number;
 }
@@ -534,9 +532,9 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     closeFn(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // (undocumented)
+    // @deprecated (undocumented)
     on(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     removeListener(event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void): this;
     readonly summarizerClientId: string | undefined;
 }
@@ -603,10 +601,15 @@ export interface ISummaryConfigurationDisableSummarizer {
 
 // @public (undocumented)
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
+    // @deprecated (undocumented)
     idleTime: number;
+    maxIdleTime: number;
     maxOps: number;
     maxTime: number;
+    minIdleTime: number;
     minOpsForLastSummaryAttempt: number;
+    nonRuntimeOpWeight: number;
+    runtimeOpWeight: number;
     // (undocumented)
     state: "enabled";
 }
@@ -629,7 +632,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 // @public (undocumented)
 export interface ISummaryRuntimeOptions {
-    // (undocumented)
+    // @deprecated (undocumented)
     disableIsolatedChannels?: boolean;
     // @deprecated (undocumented)
     disableSummaries?: boolean;

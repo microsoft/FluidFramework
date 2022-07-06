@@ -8,6 +8,7 @@ import { BaseSegment, ISegment, Marker, MergeTree } from "./mergeTree";
 import { IJSONSegment } from "./ops";
 import { PropertySet } from "./properties";
 import { LocalReferenceCollection } from "./localReference";
+import { refHasTileLabel } from "./referencePositions";
 
 // Maximum length of text segment to be considered to be merged with other segment.
 // Maximum segment length is at least 2x of it (not taking into account initial segment creation).
@@ -266,7 +267,7 @@ export class MergeTreeTextHelper {
                 }
             } else if (isTextAndMarkerAccumulator(accumText)) {
                 const marker = segment as Marker;
-                if (marker.hasTileLabel(accumText.parallelMarkerLabel)) {
+                if (refHasTileLabel(marker, accumText.parallelMarkerLabel)) {
                     accumText.parallelMarkers.push(marker);
                     accumText.parallelText.push(accumText.textSegment.text);
                     accumText.textSegment.text = "";

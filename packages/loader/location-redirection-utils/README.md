@@ -1,5 +1,5 @@
-# @fluidframework/routerlicious-host
+# @fluidframework/location-redirection-utils
 
-WARNING: This package is deprecated and will be removed in an upcoming release.
+Shared utilities for handling location change of container on server.
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
