@@ -73,7 +73,7 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
 
 ### Remove ISummaryAuthor and ISummaryCommitter
-See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and`ISummaryCommitter` are deprecated and will be removed in a future release.
+`ISummaryAuthor` and`ISummaryCommitter` have been removed in this release. See [#10456](https://github.com/microsoft/FluidFramework/issues/10456) for details.
 
 ### Remove IFluidDataStoreChannel.bindToContext and related types
 `bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
