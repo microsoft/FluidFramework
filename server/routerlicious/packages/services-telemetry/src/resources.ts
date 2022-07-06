@@ -37,7 +37,6 @@ export enum QueuedMessageProperties {
 }
 
 export enum HttpProperties {
-    bodySize = "bodySize",
     driverVersion = "driverVersion",
     method = "method",
     pathCategory = "pathCategory",
