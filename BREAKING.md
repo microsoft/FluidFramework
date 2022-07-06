@@ -17,26 +17,36 @@ There are a few steps you can take to write a good change note and avoid needing
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
-
- - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
- - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+- [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
+- [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
 
 ### Remove `documentId` field from `MockFluidDataStoreContext`
-
 This field has been deprecated and will be removed in a future breaking change.
 
 ### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
-
 `clientId` can only ever be of type `string`, so it is superfluous for the type
 to be `string | undefined`.
+
+### Remove `ConnectionState.Connecting`
+`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
+
+### `IContainerRuntime.flush` is deprecated
+`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
 
 # 1.1.0
 
 ## 1.1.0 Upcoming changes
 - [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated)
+- [ ISummaryAuthor and ISummaryCommitter are deprecated](#isummaryauthor-and-isummarycommitter-are-deprecated)
 
  ### IContainerRuntime.createRootDataStore is deprecated
  See [#9660](https://github.com/microsoft/FluidFramework/issues/9660). The API is vulnerable to name conflicts, which lead to invalid documents. As a replacement, create a regular datastore using the `IContainerRuntimeBase.createDataStore` function, then alias the datastore by using the `IDataStore.trySetAlias` function and specify a string value to serve as the alias to which the datastore needs to be bound. If successful, "Success" will be returned, and a call to `getRootDataStore` with the alias as parameter will return the same datastore.
+
+ ### ISummaryAuthor and ISummaryCommitter are deprecated
+  See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and `ISummaryCommitter`
+  are deprecated and will be removed in a future release.
 
 # 1.0.0
 

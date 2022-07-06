@@ -30,7 +30,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "postinstall": "npm run postinstall:lerna",
-    "layer-check": "fluid-layer-check --info ../tools/build-tools/data/layerInfo.json",
+    "layer-check": "fluid-layer-check --info ../build-tools/packages/build-tools/data/layerInfo.json",
     "lerna": "lerna",
     "lint": "lerna run lint --no-sort --stream -- -- -- --color",
     "lint:fix": "lerna run lint:fix --no-sort --stream -- -- -- --color",
