@@ -14,6 +14,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
 /**
  * Utilities for manipulating the typescript typechecker.
  *
+ * @remarks
  * Note: much of this library (the variance parts)
  * will be able to be replaced with Typescript 4.7 explicit variance annotations.
  *
@@ -42,7 +43,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * This library provides types that can be used on a protected member of a class to add the desired constraints.
  *
  * Typical usages (use one field like this at the top of a class):
- * ```
+ * ```typescript
  * protected _typeCheck?: MakeNominal;
  * protected _typeCheck?: Contravariant<T>;
  * protected _typeCheck?: Covariant<T>;
@@ -70,11 +71,12 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
 /**
  * Use this as the type of a protected field to cause a type to use nominal typing instead of structural.
  *
- * ```
+ * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
+ *
+ * @example
+ * ```typescript
  * protected _typeCheck?: MakeNominal;
  * ```
- *
- * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
  *
  * @public
  */
@@ -83,7 +85,8 @@ export interface MakeNominal { }
 /**
  * Constrain generic type parameters to Contravariant.
  *
- * ```
+ * @example
+ * ```typescript
  * protected _typeCheck?: Contravariant<T>;
  * ```
  *
@@ -96,7 +99,8 @@ export interface Contravariant<T> {
 /**
  * Constrain generic type parameters to Covariant.
  *
- * ```
+ * @example
+ * ```typescript
  * protected _typeCheck?: Covariant<T>;
  * ```
  *
@@ -113,7 +117,8 @@ export interface Covariant<T> {
  * it only prevents assignment between types when neither of the two Ts extends the
  * other.
  *
- * ```
+ * @example
+ * ```typescript
  * protected _typeCheck?: Bivariant<T>;
  * ```
  *
@@ -129,7 +134,8 @@ export interface Bivariant<T> {
 /**
  * Constrain generic type parameters to Invariant.
  *
- * ```
+ * @example
+ * ```typescript
  * protected _typeCheck?: Invariant<T>;
  * ```
  *

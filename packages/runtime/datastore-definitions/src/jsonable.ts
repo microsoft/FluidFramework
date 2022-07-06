@@ -7,11 +7,7 @@
  * Used to constrain a type `T` to types that are serializable as JSON.
  * Produces a compile-time error if `T` contains non-Jsonable members.
  *
- * Typical usage:
- * ```ts
- *      function foo<T>(value: Jsonable<T>) { ... }
- * ```
- *
+ * @remarks
  * Note that this does NOT prevent using of values with non-json compatible data,
  * it only prevents using values with types that include non-json compatible data.
  * This means that one can, for example, pass an a value typed with json compatible
@@ -35,6 +31,12 @@
  *
  * Using `Jsonable` (with no type parameters) or `Jsonable<any>` is just a type alias for `any`
  * and should not be used if type safety is desired.
+ *
+ * @example
+ * Typical usage:
+ * ```ts
+ *      function foo<T>(value: Jsonable<T>) { ... }
+ * ```
  */
 export type Jsonable<T = any, TReplaced = void> =
     T extends undefined | null | boolean | number | string | TReplaced

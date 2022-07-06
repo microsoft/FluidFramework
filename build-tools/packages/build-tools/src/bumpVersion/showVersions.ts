@@ -6,7 +6,7 @@
 import { Context } from "./context";
 import { ReferenceVersionBag } from "./versionBag";
 import { fatal } from "./utils";
-import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
 import { strict as assert } from "assert";
@@ -23,11 +23,11 @@ export async function showVersions(context: Context, name: string, publishedVers
         };
         const depVersions = new ReferenceVersionBag(context.repo.resolvedRoot, context.fullPackageMap, context.collectVersions());
         let pkg: Package | undefined;
-        if (name === MonoRepoKind[MonoRepoKind.Client]) {
-            await processMonoRepo(context.repo.clientMonoRepo);
-        } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
-            assert(context.repo.serverMonoRepo, "Attempted show server versions on a Fluid repo with no server directory");
-            await processMonoRepo(context.repo.serverMonoRepo!);
+        if (isMonoRepoKind(name)) {
+            if (name === MonoRepoKind.Server) {
+                assert(context.repo.serverMonoRepo, "Attempted show server versions on a Fluid repo with no server directory");
+            }
+            await processMonoRepo(context.repo.monoRepos.get(name)!);
         } else {
             pkg = context.fullPackageMap.get(name);
             if (!pkg) {
