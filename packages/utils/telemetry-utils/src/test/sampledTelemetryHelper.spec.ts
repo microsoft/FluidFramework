@@ -125,6 +125,27 @@ describe("SampledTelemetryHelper", () => {
         assert.strictEqual(logger.events.filter((x) => x.prop2 === "value2").length, 2);
     });
 
+    it("bucket properties do not override measurement properties", () => {
+        // If the names of the properties specified by the consumers for a bucket overlap with the names
+        // of the standard properties we put in the telemetry events, our values should not be overwritten
+        // by the custom properties.
+
+        const bucket1 = "bucket1";
+        const bucketProperties: Map<string, ITelemetryProperties> = new Map<string, ITelemetryProperties>([
+            // Here just using a duration value that we can be sure will not be the actual value, to make sure the
+            // actuals is different from this one (since it's much harder to guarantee an exact duration
+            // value to test for equality).
+            [bucket1, { duration: 1000, count: 1000 }],
+        ]);
+
+        const helper = new SampledTelemetryHelper({ eventName: "testEvent" }, logger, 1, false, bucketProperties);
+        helper.measure(() => {}, bucket1);
+        assert.strictEqual(logger.events.length, 1);
+        const event = logger.events[0];
+        assert.strictEqual(event.count, 1);
+        assert(event.duration !== bucketProperties.get("bucket1")!.duration);
+    });
+
     it("generates telemetry event from buffered data when disposed", () => {
         // Logging several buckets to make sure they are all flushed. We can only distingush the events based on the
         // custom properties added to the event for each bucket

@@ -68,7 +68,10 @@ interface Measurements {
      * @param perBucketProperties -
      * Map of strings that represent different buckets (which can be specified when calling the 'measure' method), to
      * properties which should be added to the telemetry event for that bucket. If a bucket being measured does not
-     * have an entry in this map, no additional properties will be added to its telemetry events.
+     * have an entry in this map, no additional properties will be added to its telemetry events. The following keys are
+     * reserved for use by this class: "duration", "count", "totalDuration", "minDuration", "maxDuration". If any of
+     * them is specified as a key in one of the ITelemetryProperties objects in this map, that key-value pair will be
+     * ignored.
      */
     public constructor(
         private readonly eventBase: ITelemetryGenericEvent,
@@ -124,8 +127,8 @@ interface Measurements {
 
             const telemetryEvent: ITelemetryPerformanceEvent = {
                 ...this.eventBase,
-                ...measurements,
                 ...bucketProperties, // If the bucket doesn't exist and this is undefined, things work as expected
+                ...measurements,
             };
 
             this.logger.sendPerformanceEvent(telemetryEvent);
