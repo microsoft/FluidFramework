@@ -177,7 +177,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        it.only("Root datastore creation with aliasing turned on", async () => {
+        it("Root datastore creation with aliasing turned on", async () => {
             // Containers need to be recreated in order for the settings to be picked up
             await reset();
             await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
