@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isMonoRepoKind, MonoRepoKind } from "@fluidframework/build-tools";
+import { isMonoRepoKind, MonoRepoKind, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { table } from "table";
 import { BaseCommand } from "../base";
@@ -21,11 +21,11 @@ export default class InfoCommand extends BaseCommand {
             required: false,
         }),
         private: Flags.boolean({
+            allowNo: true,
             char: "p",
             default: true,
-            required: false,
             description: "Include private packages (default true).",
-            allowNo: true,
+            required: false,
         }),
     };
 
@@ -34,14 +34,14 @@ export default class InfoCommand extends BaseCommand {
     async run(): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { args, flags } = await this.parse(InfoCommand);
-        const context = await this.getContext();
-        let packages = [...context.fullPackageMap.values()];
+        const context = await this.getContext(flags.verbose);
+        let packages =
+            flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)
+                ? context.packagesForReleaseGroup(flags.releaseGroup)
+                : [...context.fullPackageMap.values()];
 
-        if (flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)) {
-            packages = context.packagesForReleaseGroup(flags.releaseGroup);
-        }
-
-        if(!flags.private) {
+        // Filter out private packages
+        if (!flags.private) {
             packages = packages.filter((p) => !p.packageJson.private);
         }
 
