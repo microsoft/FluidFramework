@@ -747,10 +747,10 @@ export class Foo extends Bar {
 ###### Linking to an imported member from another package
 
 ```typescript
-import { Bar } from '@intentional/Baz'
+import { Bar } from 'baz'
 
 /**
- * Foo implementation of {@link @intentional/Baz#Bar}.
+ * Foo implementation of {@link baz#Bar}.
  */
 export class Foo extends Bar {
 	...
