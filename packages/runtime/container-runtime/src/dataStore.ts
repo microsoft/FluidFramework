@@ -43,7 +43,8 @@ export const channelToDataStore = (
     runtime: ContainerRuntime,
     datastores: DataStores,
     logger: ITelemetryLogger,
-): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger);
+    alreadyAliased?: boolean,
+): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger, alreadyAliased);
 
 enum AliasState {
     Aliased = "Aliased",
@@ -162,8 +163,10 @@ class DataStore implements IDataStore {
         private readonly runtime: ContainerRuntime,
         private readonly datastores: DataStores,
         private readonly logger: ITelemetryLogger,
+        alreadyAliased: boolean,
     ) {
         this.pendingAliases = datastores.pendingAliases;
+        this.aliasState = alreadyAliased ? AliasState.Aliased : AliasState.None;
     }
 
     public get IFluidRouter() { return this.fluidDataStoreChannel; }

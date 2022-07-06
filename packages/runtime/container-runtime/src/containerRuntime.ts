@@ -1938,6 +1938,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+        return this.getRootDataStoreChannel(id, wait);
+    }
+
+    private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
         await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const context = await this.dataStores.getDataStore(internalId, wait);
@@ -2095,27 +2099,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
         const internalId = uuid();
-        const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-        const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.dataStores, this.mc.logger);
-        const result = await aliasedDataStore.trySetAlias(alias);
-        if (result !== "Success") {
-            throw new GenericError(
-                "dataStoreAliasFailure",
-                undefined /* error */,
-                {
-                    alias: {
-                        value: alias,
-                        tag: TelemetryDataTag.UserData,
-                    },
-                    internalId: {
-                        value: internalId,
-                        tag: TelemetryDataTag.PackageData,
-                    },
-                    aliasResult: result,
-                });
-        }
 
-        return aliasedDataStore;
+        try {
+            // A similar call may have been initiated by the same client, so we should try to get
+            // a possible existing aliased datastore first.
+            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
+            return channelToDataStore(existingDataStore, internalId, this, this.dataStores, this.mc.logger, true);
+        } catch (err) {
+            const newChannel = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
+            const newDataStore = channelToDataStore(newChannel, internalId, this, this.dataStores, this.mc.logger);
+            const aliasResult = await newDataStore.trySetAlias(alias);
+            if (aliasResult === "Success") {
+                return newDataStore;
+            }
+
+            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
+            return channelToDataStore(existingDataStore, internalId, this, this.dataStores, this.mc.logger, true);
+        }
     }
 
     public createDetachedRootDataStore(

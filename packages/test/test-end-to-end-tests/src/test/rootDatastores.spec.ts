@@ -23,11 +23,12 @@ import {
     DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { Loader } from "@fluidframework/container-loader";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -176,52 +177,16 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        it("Root datastore creation with aliasing turned on throws exception", async () => {
+        it.only("Root datastore creation with aliasing turned on", async () => {
             // Containers need to be recreated in order for the settings to be picked up
             await reset();
             await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
 
-            await createRootDataStore(dataObject1, "2");
-            let error: Error | undefined;
-            try {
-                await createRootDataStore(dataObject2, "2");
-            } catch (err) {
-                error = err as Error;
-            }
-
-            assert.ok(error instanceof GenericError);
-            assert.deepEqual(
-                error.getTelemetryProperties().alias,
-                {
-                    value: "2",
-                    tag: TelemetryDataTag.UserData,
-                });
-            assert.equal(error.getTelemetryProperties().aliasResult, "Conflict");
-            assert.ok(await getRootDataStore(dataObject1, "2"));
-        });
-
-        it("Root datastore creation with aliasing turned on and legacy API throws exception", async () => {
-            // Containers need to be recreated in order for the settings to be picked up
-            await reset();
-            await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
-
-            await createRootDataStore(dataObject1, "2");
-            let error: Error | undefined;
-            try {
-                await createDataStoreWithProps(dataObject2, "2", true /* root */);
-            } catch (err) {
-                error = err as Error;
-            }
-
-            assert.ok(error instanceof GenericError);
-            assert.deepEqual(
-                error.getTelemetryProperties().alias,
-                {
-                    value: "2",
-                    tag: TelemetryDataTag.UserData,
-                });
-            assert.equal(error.getTelemetryProperties().aliasResult, "Conflict");
-            assert.ok(await getRootDataStore(dataObject1, "2"));
+            const ds1 = await createRootDataStore(dataObject1, "2");
+            const ds2 = await createRootDataStore(dataObject2, "2");
+            const ds3 = await createDataStoreWithProps(dataObject2, "2", true /* root */);
+            const internalIDs = new Set([ds1, ds2, ds3].map((ds) => (ds.IFluidRouter as IFluidDataStoreChannel).id));
+            assert.equal(internalIDs.size, 1);
         });
 
         it("Root datastore creation with aliasing turned on and legacy API returns already aliased datastore", async () => {
