@@ -38,6 +38,11 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 }
 
 /**
+ * Default error message sent to API consumer when an unknown error is encountered.
+ */
+export const defaultErrorMessage = "Internal Server Error";
+
+/**
  * Helper function to handle a promise that should be returned to the user.
  * @param resultP - Promise whose resolved value or rejected error will send with appropriate status codes.
  * @param response - Express Response used for writing response body, headers, and status.
@@ -76,7 +81,7 @@ export function handleResponse<T>(
             } else {
                 // Mask unexpected internal errors in outgoing response.
                 Lumberjack.error("Unexpected error when processing HTTP Request", undefined, error);
-                response.status(errorStatus ?? 400).json("Internal Server Error");
+                response.status(errorStatus ?? 400).json(defaultErrorMessage);
             }
         });
 }
