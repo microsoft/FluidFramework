@@ -266,7 +266,14 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
     return (typeof (x?.value) !== "object" && typeof (x?.tag) === "string");
 }
 
-export function parseJSONObject(x: any): TelemetryEventPropertyType | null {
+/**
+ * Filter loggable telemetry properties
+ * @param x - any telemetry prop
+ * @returns - as-is if x is primitive. returns stringified if x is an array of primitive.
+ * otherwise returns null since this is what we support at the moment.
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
     switch (typeof x) {
         case "string":
         case "number":
@@ -277,9 +284,10 @@ export function parseJSONObject(x: any): TelemetryEventPropertyType | null {
             if (!Array.isArray(x)) {
                 return null;
             }
-            if (x.every((val) => typeof val === "string" || "number" || "boolean" || "undefined")) {
+            if (x.every((val) => filterValidTelemetryProps(val) !== null)) {
                 return JSON.stringify(x);
             }
+            return null;
     }
 }
 /**
@@ -292,16 +300,16 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
             continue;
         }
         const val = obj[key];
+        const validProp = filterValidTelemetryProps(val);
         if (isTaggedTelemetryPropertyValue(val)) {
             props[key] = val;
-        } else if (parseJSONObject(val) !== null) {
-            props[key] = parseJSONObject(val) as TelemetryEventPropertyType;
+        } else if (validProp !== null) {
+            props[key] = validProp;
         } else {
             // We don't support logging arbitrary objects
             props[key] = "REDACTED (arbitrary object)";
-            console.error("unSupported Format of Logging Error Property:", val);
+            console.error(`UnSupported Format of Logging Error Property for key ${key}:`, val);
         }
-        break;
     }
     return props;
 }

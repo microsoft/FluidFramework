@@ -298,10 +298,12 @@ describe("Error Logging", () => {
             errorAsAny.p1 = { one: 1 };
             errorAsAny.p4 = null;
             errorAsAny.p5 = ["a", "b", "c", 1, true, undefined];
+            errorAsAny.p6 = ["a", "b", "c", null];
             const props = loggingError.getTelemetryProperties();
             assert.strictEqual(props.p1, "REDACTED (arbitrary object)");
             assert.strictEqual(props.p4, "REDACTED (arbitrary object)");
             assert.strictEqual(props.p5, `["a","b","c",1,true,null]`);
+            assert.strictEqual(props.p6, "REDACTED (arbitrary object)");
         });
         it("addTelemetryProperties - Does not overwrite base class Error fields (untagged)", () => {
             const loggingError = new LoggingError("myMessage");
