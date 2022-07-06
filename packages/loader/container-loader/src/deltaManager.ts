@@ -727,8 +727,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                             // Likely to be an issue with Fluid Services. Content does not match previous client
                             // knowledge about this file. If the file is overwritten for any reason, this error can be
                             // hit. One example is that some clients could be submitting ops to two different service
-                            // instances that record different values for the same sequence number and submit it to the
-                            // same file.
+                            // instances such that the same sequence number is reused for two different ops.
                             // pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
                             "Found two messages with the same sequenceNumber but different payloads. Likely to be a "
                             + "service issue",
