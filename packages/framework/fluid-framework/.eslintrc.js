@@ -9,13 +9,5 @@ module.exports = {
     ],
     "parserOptions": {
         "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
-    },
-    "overrides": [
-        {
-            "files": ["src/test/types/validateFluidFrameworkPrevious.ts"],
-            "rules": {
-                "@typescript-eslint/no-explicit-any": "off",
-            }
-        }
-    ]
+    }
 }

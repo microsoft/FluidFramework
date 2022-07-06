@@ -94,7 +94,15 @@ module.exports = {
             "rules": {
                 "editorconfig/indent": "off", // We use tsfmt for "official" formatting.
             }
-        }
+        },
+        {
+            // Rules only for type validation files
+            "files": ["**/types/*validate*Previous.ts"],
+            "rules": {
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-unsafe-argument": "off",
+            }
+        },
     ]
 };
 
