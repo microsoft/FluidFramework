@@ -70,6 +70,9 @@ export class RestLessServer {
         let definedNewContentType: boolean = false;
         const parseAndSetHeader = (header: string) => {
             const { name, value } = decodeHeader(header);
+            if (!name || value === undefined) {
+                return;
+            }
             if (name.toLowerCase() === "content-type") {
                 definedNewContentType = true;
             }
