@@ -161,7 +161,7 @@
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-extra-non-null-assertion": [
             "error"
