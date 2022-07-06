@@ -17,7 +17,15 @@ import * as semver from "semver";
  * Create release bump branch based on the repo state for either main or next branches,bump minor version immediately
  * and push it to `main` and the new release branch to remote
  */
-export async function createReleaseBump(whatToBump: MonoRepoKind, context: Context, bumpTypeOverride: VersionBumpType | undefined, virtualPatch: boolean, skipPolicyCheck = false, skipUpToDateCheck = false, skipInstall=false) {
+export async function createReleaseBump(
+    whatToBump: MonoRepoKind,
+    context: Context,
+    bumpTypeOverride: VersionBumpType | undefined,
+    virtualPatch: boolean,
+    skipPolicyCheck = false,
+    skipUpToDateCheck = false,
+    skipInstall = false,
+) {
     if (!skipPolicyCheck && context.originalBranchName === "main") {
         // run policy check before creating release branch for main.
         // right now this only does assert short codes
