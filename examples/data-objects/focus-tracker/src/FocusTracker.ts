@@ -13,10 +13,8 @@ import {
 } from "fluid-framework";
 
 export interface IMouseFocusTrackerEvents extends IEvent {
-    (event: "focusChanged", listener: () => void): void;
-    (event: "mousePositionChanged", listener: () => void): void;
+    (event: "focusChanged" | "mousePositionChanged", listener: () => void): void;
 }
-
 
 /**
  * Example of using the audience with signals to track focus state of connected clients
@@ -25,7 +23,7 @@ export interface IMouseFocusTrackerEvents extends IEvent {
 export class MouseFocusTracker extends TypedEventEmitter<IMouseFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
     private static readonly focusRequestType = "focusRequest";
-    private static readonly mouseSignalType ="positionChanged";
+    private static readonly mouseSignalType = "positionChanged";
 
     /**
      * Local map of focus status for clients
@@ -43,7 +41,7 @@ export class MouseFocusTracker extends TypedEventEmitter<IMouseFocusTrackerEvent
      * Map<userId, Map<clientid, hasFocus>>
      * ```
      */
-    private readonly posMap = new Map<string, Map<string,[number, number]>>();
+    private readonly posMap = new Map<string, Map<string, [number, number]>>();
 
     private readonly onFocusSignalFn = (clientId: string, payload: any) => {
         const userId: string = payload.userId;
@@ -60,7 +58,7 @@ export class MouseFocusTracker extends TypedEventEmitter<IMouseFocusTrackerEvent
 
     private readonly onMouseSignalFn = (clientId: string, payload: any) => {
         const userId: string = payload.userId;
-        const position: [number,number] = payload.pos;
+        const position: [number, number] = payload.pos;
 
         let clientIdMap = this.posMap.get(userId);
         if (clientIdMap === undefined) {
@@ -69,7 +67,6 @@ export class MouseFocusTracker extends TypedEventEmitter<IMouseFocusTrackerEvent
         }
         clientIdMap.set(clientId, position);
         this.emit("mousePositionChanged");
-
     };
 
     public constructor(
@@ -107,7 +104,6 @@ export class MouseFocusTracker extends TypedEventEmitter<IMouseFocusTrackerEvent
         });
         this.signalManager.onSignal(MouseFocusTracker.mouseSignalType, (clientId, local, payload) => {
             this.onMouseSignalFn(clientId, payload);
-
         });
         this.signalManager.onSignal(MouseFocusTracker.focusSignalType, (clientId, local, payload) => {
             this.onFocusSignalFn(clientId, payload);
@@ -211,20 +207,18 @@ export class MouseFocusTracker extends TypedEventEmitter<IMouseFocusTrackerEvent
     }
 
     public getMousePresencesString(newLineSeparator: string = "\n"): Map<string, [number, number]> {
-        const statuses: Map<string, [number, number]> = new Map <string, [number,number]>();
+        const statuses: Map<string, [number, number]> = new Map <string, [number, number]>();
         this.audience.getMembers().forEach((member, userId) => {
             member.connections.forEach((connection) => {
                 const position = this.getMousePresenceForUser(userId, connection.id);
                 if (position === undefined) {
-                }
-                else {
+                } else {
                     statuses.set((member as any).userName, position);
                 }
             });
         });
 
         return statuses;
-
     }
 
     public getMousePresenceForUser(userId: string, clientId: string): [number, number] | undefined {

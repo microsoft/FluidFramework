@@ -25,7 +25,7 @@ const containerSchema: ContainerSchema = {
     },
 };
 
-function renderFocusPresence(MouseFocusTracker: MouseFocusTracker, div: HTMLDivElement) {
+function renderFocusPresence(focusTracker: MouseFocusTracker, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "left";
     wrapperDiv.style.margin = "70px";
@@ -36,27 +36,26 @@ function renderFocusPresence(MouseFocusTracker: MouseFocusTracker, div: HTMLDivE
 
     const onFocusChanged = () => {
         focusDiv.innerHTML = `
-            Current user: ${(MouseFocusTracker.audience.getMyself() as TinyliciousMember)?.userName}</br>
-            ${MouseFocusTracker.getFocusPresencesString("</br>")}
+            Current user: ${(focusTracker.audience.getMyself() as TinyliciousMember)?.userName}</br>
+            ${focusTracker.getFocusPresencesString("</br>")}
         `;
     };
 
     onFocusChanged();
-    MouseFocusTracker.on("focusChanged", onFocusChanged);
+    focusTracker.on("focusChanged", onFocusChanged);
 
     wrapperDiv.appendChild(focusDiv);
 }
 
-function renderMousePresence(mouseTracker : MouseFocusTracker, div:HTMLDivElement){
-
+function renderMousePresence(mouseTracker: MouseFocusTracker, div: HTMLDivElement) {
     const onPositionChanged = () => {
-      div.innerHTML = '';
-      mouseTracker.getMousePresencesString().forEach(function(value, key){
+      div.innerHTML = "";
+      mouseTracker.getMousePresencesString().forEach((value, key) => {
           const posDiv = document.createElement("div");
           posDiv.textContent = key;
           posDiv.style.position = "absolute";
-          posDiv.style.left = value[0]+'px';
-          posDiv.style.top = value[1]+'px';
+          posDiv.style.left = `${value[0]}px`;
+          posDiv.style.top = `${value[1]}px`;
           div.appendChild(posDiv);
       });
     };
