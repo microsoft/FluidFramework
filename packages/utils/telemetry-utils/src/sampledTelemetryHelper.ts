@@ -120,17 +120,13 @@ interface Measurements {
         }
 
         if (measurements.count !== 0) {
+            const bucketProperties = this.perBucketProperties.get(bucket);
+
             const telemetryEvent: ITelemetryPerformanceEvent = {
                 ...this.eventBase,
                 ...measurements,
+                ...bucketProperties, // If the bucket doesn't exist and this is undefined, things work as expected
             };
-
-            const bucketProperties = this.perBucketProperties.get(bucket);
-            if (bucketProperties !== undefined) {
-                Object.keys(bucketProperties).forEach((key) => {
-                    telemetryEvent[key] = bucketProperties[key];
-                });
-            }
 
             this.logger.sendPerformanceEvent(telemetryEvent);
             this.measurementsMap.delete(bucket);
