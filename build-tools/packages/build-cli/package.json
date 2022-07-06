@@ -48,11 +48,13 @@
   "dependencies": {
     "@fluidframework/build-tools": "^0.3.0",
     "@oclif/core": "^1.9.5",
+    "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
-    "semver": "^7.3.7"
+    "semver": "^7.3.7",
+    "table": "^6.8.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
@@ -86,10 +88,15 @@
   },
   "oclif": {
     "bin": "flub",
-    "dirname": "tools/build-cli",
+    "dirname": "flub",
     "commands": "./dist/commands",
+    "additionalHelpFlags": [
+      "-h"
+    ],
     "plugins": [
-      "@oclif/plugin-help"
+      "@oclif/plugin-commands",
+      "@oclif/plugin-help",
+      "@oclif/plugin-not-found"
     ],
     "topicSeparator": " ",
     "topics": {}

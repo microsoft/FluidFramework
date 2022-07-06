@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { isMonoRepoKind, MonoRepoKind } from "@fluidframework/build-tools";
+import { Flags } from "@oclif/core";
+import { table } from "table";
 import { BaseCommand } from "../base";
+import { releaseGroupFlag } from "../flags";
 
 /**
  * The root `info` command.
@@ -13,6 +17,15 @@ export default class InfoCommand extends BaseCommand {
 
     static flags = {
         ...super.flags,
+        releaseGroup: releaseGroupFlag({
+            required: false,
+        }),
+        all: Flags.boolean({
+            char: "a",
+            default: false,
+            description: "Get info about all release groups.",
+            exclusive: ["g"],
+        }),
     };
 
     static args = [];
@@ -20,7 +33,31 @@ export default class InfoCommand extends BaseCommand {
     async run(): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { args, flags } = await this.parse(InfoCommand);
+        const context = await this.getContext();
+        let packages = [...context.fullPackageMap.values()];
 
-        this.error(`Not yet implemented`);
+        if (flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)) {
+            packages = context.packagesForReleaseGroup(flags.releaseGroup);
+        }
+
+        const data: (string | MonoRepoKind | undefined)[][] = [
+            ["Release group", "Name", "Private", "Version"],
+        ];
+        for (const pkg of packages) {
+            data.push([
+                pkg.monoRepo?.kind ?? "n/a",
+                pkg.name,
+                pkg.packageJson.private ? "-private-" : "",
+                pkg.monoRepo ? pkg.monoRepo.version : pkg.version,
+            ]);
+        }
+
+        const output = table(data, {
+            columns: [{ alignment: "left" }, { alignment: "left" }, { alignment: "center" }],
+            singleLine: true,
+        });
+
+        this.log(`\n${output}`);
+        this.log(`Total package count: ${packages.length}`);
     }
 }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
 /**
@@ -21,8 +22,8 @@ export const rootPathFlag = Flags.build({
 export const releaseGroupFlag = Flags.build({
     char: "g",
     description: "release group",
-    options: ["Azure", "Client", "Server"], // releaseGroupOptions,
-    parse: async (str: string, _: never) => str.charAt(0).toUpperCase() + str.slice(1),
+    options: [...supportedMonoRepoValues()], // releaseGroupOptions,
+    parse: async (str: string, _: never) => str.toLowerCase(),
     // Can't be used with individual packages.
     exclusive: ["p"],
 });
