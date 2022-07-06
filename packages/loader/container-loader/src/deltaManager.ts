@@ -724,8 +724,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                         // This looks like a data corruption but the culprit has been found instead
                         // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
+                            // Likely to be an issue with Fluid Services. Content does not match previous client
+                            // knowledge about this file. One example is that some clients could be submitting ops to
+                            // two different services that record different values for the same sequence number and
+                            // submit it to the same file.
                             // pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
-                            "Found two messages with the same sequenceNumber but different payloads",
+                            "Found two messages with the same sequenceNumber but different payloads. Likely to be a "
+                            + "service issue",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connectionManager.clientId,
