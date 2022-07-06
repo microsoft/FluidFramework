@@ -116,12 +116,18 @@ async function execAsync(command, options) {
 
 class AzCliKeyVaultClient {
     static async get() {
-        try {
-            await execAsync("az account set --subscription Fluid");
-            return new AzCliKeyVaultClient();
-        } catch (e) {
-            return undefined;
-        }
+
+        await execAsync("az account set --subscription Fluid");
+        return new AzCliKeyVaultClient();
+
+        // Disabling fallback to REST client while we decide how to streamline the getkeys tool
+
+        // try {
+        //     await execAsync("az account set --subscription Fluid");
+        //     return new AzCliKeyVaultClient();
+        // } catch (e) {
+        //     return undefined;
+        // }
     }
 
     async getSecrets(vaultName) {
@@ -153,12 +159,16 @@ class MsRestAzureKeyVaultClinet {
 }
 
 async function getClient() {
-    const primary = await AzCliKeyVaultClient.get();
-    if (primary !== undefined) {
-        console.log("Using Azure CLI");
-        return primary;
-    }
-    return MsRestAzureKeyVaultClinet.get();
+    return await AzCliKeyVaultClient.get();
+
+    // Disabling fallback to REST client while we decide how to streamline the getkeys tool
+
+    // const primary = await AzCliKeyVaultClient.get();
+    // if (primary !== undefined) {
+    //     console.log("Using Azure CLI");
+    //     return primary;
+    // }
+    // return MsRestAzureKeyVaultClinet.get();
 }
 
 (async () => {
