@@ -3,7 +3,7 @@
 
 ## TSDoc Format
 
-Use [TSDoc](https://github.com/Microsoft/tsdoc) syntax when writing TypeScript code within the Fluid Framework.
+Use [TSDoc](https://tsdoc.org/) syntax when writing TypeScript code within the Fluid Framework.
 
 **Note**: TSDoc is still under active development / design.
 Many syntactical elements are still under active design.
@@ -23,7 +23,7 @@ export class Foo {
 
 	/**
 	 * Creates a {@link Baz} from {@link bar} and the provided {@link qux}.
-     * 
+     *
 	 * @param qux - Contains the extra information needed to create the Baz.
 	 */
 	public createBaz(qux: Qux): Baz {
@@ -83,11 +83,11 @@ This documentation attempts to custom indent parameter constraints.
 ```typescript
 /**
  * Moves the element by the provided offsets.
- * 
+ *
  * @param xOffset - Offset along the x-axis to move the item.
  *                Must be \>= {@link xMin}.
  *                Must be \<= {@link xMax}.
- * 
+ *
  * @param yOffset - Offset along the y-axis to move the item.
  *                Must be \>= {@link yMin}.
  *                Must be \<= {@link yMax}.
@@ -104,11 +104,11 @@ Instead, simply line-wrapping and indenting the documentation contents of each p
 ```typescript
 /**
  * Moves the element by the provided offsets.
- * 
+ *
  * @param xOffset - Offset along the x-axis to move the item.
  * Must be \>= {@link xMin}.
  * Must be \<= {@link xMax}.
- * 
+ *
  * @param yOffset - Offset along the y-axis to move the item.
  * Must be \>= {@link yMin}.
  * Must be \<= {@link yMax}.
@@ -135,7 +135,7 @@ If you wish to include a bulleted or numbered list in your documentation, you wi
 ```typescript
 /**
  * Updates the contents by applying the following steps in sequence:
- * 
+ *
  * 1. clears obsolete content
  * 2. appends new content
  * 3. invokes provided callback for content element
@@ -156,11 +156,11 @@ This will produce Markdown like the following:
 ```typescript
 /**
  * Updates the contents by applying the following steps in sequence:
- * 
+ *
  * 1. clears obsolete content
- * 
+ *
  * 2. appends new content
- * 
+ *
  * 3. invokes provided callback for content element
  */
 function update(callback: Callback) {
@@ -206,11 +206,11 @@ Notes:
 ```typescript
 /**
  * Rotates each element of each of the provided shapes by the specified rotation.
- * 
+ *
  * @param shapes - The shapes to be rotated.
  * Note: the elements of the list are rotated in place, so this list’s contents are mutated.
  * The number of elements is not changed.
- * 
+ *
  * @param clockwiseRotationInDegrees - Must be on [0, 360).
  */
 public rotateEntries(shapes: ShapeList, clockwiseRotationInDegrees: number): void;
@@ -234,7 +234,7 @@ Additionally helps with IDE hover-over behaviors.
 ```typescript
 /**
  * Rotates each element of each of the provided shapes by the specified rotation.
- * 
+ *
  * @param shapes - The shapes to be rotated.
  * @param clockwiseRotationInDegrees - Must be on [0, 360).
  * @returns A list parallel to the provided {@link ShapeList} whose elements are that of those shapes, rotated by the specified rotation.
@@ -276,7 +276,7 @@ export interface Foo {
 
 /**
  * ...
- * 
+ *
  * @typeParam Supplementary type semantics of T not represented by Foo.
  */
 export function bar<T extends Foo>(input: T): Baz {
@@ -296,7 +296,7 @@ There are two reasonable approaches here, but one is definitely preferred when p
 ```typescript
 /**
  * ...
- * 
+ *
  * @typeParam T Semantic documentation for union type: `Bar | Baz | undefined`.
  */
 export function Foo<T extends Bar | Baz | undefined>(input: T): number {
@@ -347,7 +347,7 @@ In these cases, it is often useful to offer a separate, more detailed explanatio
 ```typescript
 /**
  * Calculates the nth value of the Fibonacci Sequence.
- * 
+ *
  * @remarks This function uses the naive, recursive implementation.
  * This should not be used in performance-critical code.
  */
@@ -379,7 +379,7 @@ These blocks are often a good place to put TODO comments that consumers of the c
 ```typescript
 /**
  * Creates an {@link Element} from this.
- * 
+ *
  * @privateRemarks Note that it would be possible to memoize the results of this.
  * If this is ever shown to be performance critical, this can be updated to do so.
  */
@@ -410,7 +410,7 @@ The following example is a trivial one, but it illustrates the idea, and offers 
 ````typescript
 /**
  * Calculates and returns the square root of the provided value.
- * 
+ *
  * @example
  * ```typescript
  * squareRoot(4); // Returns 2
@@ -429,7 +429,7 @@ Though API extractor gives examples containing leading non-code lines, these don
 ````typescript
 /**
  * Calculates and returns the square root of the provided value.
- * 
+ *
  * @example
  * Returns 2
  * ```typescript
@@ -458,7 +458,7 @@ This tag should always be followed with any information a developer would need t
 ```typescript
 /**
  * Standard foo documentation.
- * 
+ *
  * @deprecated Please use {@link bar} instead.
  */
 export function foo() {
@@ -483,7 +483,7 @@ interface Foo {
 
     /**
      * ...
-     * 
+     *
      * @defaultValue 1
      */
     bar?: number;
@@ -536,7 +536,7 @@ export class Foo {}
 export class Foo {
 	/**
 	 * Creates an {@link Bar} from this.
-     * 
+     *
 	 * @sealed This member may be used, but must not be overridden.
 	 */
 	public createBar(): Bar {
@@ -564,7 +564,7 @@ It is recommended that any subclass which extends a member annotated with `@virt
 public class Foo {
 	/**
 	 * Creates an {@link Bar} from this.
-     * 
+     *
 	 * @virtual This implementation is naive. Subclasses may wish to do something smarter.
 	 */
 	public createBar(): Bar {
@@ -596,7 +596,7 @@ Clearly declaring a member as being an override of some base class member makes 
 public class Baz: Foo {
 	/**
 	 * Creates an {@link Bar} from this.
-     * 
+     *
 	 * @override
 	 */
 	public createBar(): Bar {
@@ -626,7 +626,7 @@ This tag **_should not_** be used on any class member which already configured a
 ```typescript
 /**
  * ...
- * 
+ *
  * @readonly
  */
 public readonly foo: Bar;
@@ -637,7 +637,7 @@ public readonly foo: Bar;
 ```typescript
 /**
  * ...
- * 
+ *
  * @readonly
  */
 public foo: Bar;
@@ -656,7 +656,7 @@ A comment with this tag should only appear once, and only in the `index.ts` file
 ```typescript
 /**
  * ...
- * 
+ *
  * @packageDocumentation
  */
 
@@ -677,7 +677,7 @@ It is a useful signal to the consumer as to how the property should be used.
 ```typescript
 /**
  * This event is fired whenever the button is clicked.
- * 
+ *
  * @eventProperty
  */
 public get clicked(): Event {
@@ -831,7 +831,7 @@ Note that this syntax works for both [{@link}](#link) and the [{@inheritDoc}](#i
 ```typescript
 /**
  * ...
- * 
+ *
  * Also see {@link https://bar.baz | Baz}.
  */
 export class Foo {
