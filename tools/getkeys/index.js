@@ -199,6 +199,10 @@ async function getClient() {
 
     console.warn(`\nFor the new environment to take effect, please restart your terminal.\n`)
 })().catch(e => {
-    console.error(`FATAL ERROR: ${e.stack}`);
+    if (e.message.includes("'az' is not recognized as an internal or external command")) {
+        console.error(`ERROR: Azure CLI is not installed. Install it and run 'az login' before running this tool.`);
+    } else {
+        console.error(`FATAL ERROR: ${e.stack}`);
+    }
     process.exit(-1);
 });
