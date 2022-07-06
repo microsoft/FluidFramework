@@ -23,6 +23,9 @@ import { Value, ITreeCursor } from "./cursor";
  * An immutable forest.
  * Enforces single parenting, and allows querying the parent.
  *
+ * It is an error to use any ITreeCursor with a IForestSnapshot
+ * other than one produced by or for that specific IForestSnapshot.
+ *
  * @public
  */
  export interface IForestSnapshot {
@@ -30,11 +33,6 @@ import { Value, ITreeCursor } from "./cursor";
      * @returns the node associated with `id`. Should not be used if there is no node with the provided id.
      */
     get(id: NodeId): ITreeCursor;
-
-    /**
-     * @returns the node associated with `id`, or undefined if there is none
-     */
-    tryGet(id: NodeId): ITreeCursor | undefined;
 
     /**
      * @returns the parent of `id`. Should not be used if there is no node with id or if id refers to the root node.
@@ -49,8 +47,6 @@ import { Value, ITreeCursor } from "./cursor";
     /**
      * Compares two forests for equality.
      * @param forest - the other forest to compare to this one
-     * @param comparator - a function which returns true if two objects of type ForestNode are equivalent,
-     * false otherwise
      * @returns true iff the forests are equal.
      */
     equals(forest: IForestSnapshot): boolean;
