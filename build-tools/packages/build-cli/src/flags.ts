@@ -43,7 +43,7 @@ export const packageSelectorFlag = Flags.build({
         const version = split[1];
         // return "";
         return { dep, version };
-    }
+    },
 });
 
 /**

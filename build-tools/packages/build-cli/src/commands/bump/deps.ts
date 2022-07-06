@@ -24,7 +24,7 @@ export default class DepsCommand extends BaseBumpCommand {
             default: false,
             description: "Bump pre-release packages to release versions if possible.",
             hidden: false,
-            exclusive: ["package"]
+            exclusive: ["package"],
         }),
     };
 
@@ -34,7 +34,7 @@ export default class DepsCommand extends BaseBumpCommand {
         const context = await this.getContext();
 
         if (flags.prerelease) {
-            cleanPrereleaseDependencies(context, false, false);
+            await cleanPrereleaseDependencies(context, false, false);
             this.exit();
         }
 
@@ -52,12 +52,6 @@ export default class DepsCommand extends BaseBumpCommand {
             packagesToBump.set(dep, version);
         }
 
-        await bumpDependencies(
-            context,
-            "Bump dependencies version",
-            packagesToBump,
-            false,
-            false,
-        );
+        await bumpDependencies(context, "Bump dependencies version", packagesToBump, false, false);
     }
 }

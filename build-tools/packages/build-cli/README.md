@@ -65,12 +65,13 @@ Bump the dependencies version of specified package or release group
 
 ```
 USAGE
-  $ flub bump deps [-r <value>] [-v] [-l]
+  $ flub bump deps [-r <value>] [-v] [-l | [-p <value> | ]]
 
 FLAGS
-  -l, --prerelease    Bump pre-release packages to release versions if possible.
-  -r, --root=<value>  Root directory of the Fluid repo (default: env _FLUID_ROOT_).
-  -v, --verbose       Verbose logging.
+  -l, --prerelease       Bump pre-release packages to release versions if possible.
+  -p, --package=<value>  package
+  -r, --root=<value>     Root directory of the Fluid repo (default: env _FLUID_ROOT_).
+  -v, --verbose          Verbose logging.
 
 DESCRIPTION
   Bump the dependencies version of specified package or release group
