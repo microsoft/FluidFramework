@@ -137,7 +137,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
                 category: "performance",
             },
             this.logger,
-            this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 10,
+            this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 100,
             true,
             new Map<string, ITelemetryProperties>([
                 ["local", { localOp: true }],
@@ -149,7 +149,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
                 category: "performance",
             },
             this.logger,
-            this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 10,
+            this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 100,
             true);
 
         this.runtime.once("dispose", () => {
