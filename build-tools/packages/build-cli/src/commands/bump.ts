@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Command, Flags } from "@oclif/core";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, packageSelectorFlag, releaseGroupFlag } from "../flags";
 
@@ -14,8 +15,8 @@ export abstract class BaseBumpCommand extends BaseCommand {
 
     static flags = {
         ...super.flags,
-        releaseGroup: releaseGroupFlag(),
-        package: packageSelectorFlag(),
+        // releaseGroup: releaseGroupFlag(),
+        // package: packageSelectorFlag(),
     };
 }
 

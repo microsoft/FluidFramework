@@ -18,8 +18,10 @@ export default class DepsCommand extends BaseBumpCommand {
     static flags = {
         ...super.flags,
         prerelease: Flags.boolean({
+            char: "l",
             default: false,
             description: "Bump pre-release packages to release versions if possible.",
+            hidden: false,
         }),
     };
 
