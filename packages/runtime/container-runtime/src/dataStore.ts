@@ -43,7 +43,7 @@ export const channelToDataStore = (
     runtime: ContainerRuntime,
     datastores: DataStores,
     logger: ITelemetryLogger,
-    alreadyAliased?: boolean,
+    alreadyAliased: boolean = false,
 ): IDataStore => new DataStore(fluidDataStoreChannel, internalId, runtime, datastores, logger, alreadyAliased);
 
 enum AliasState {
