@@ -39,7 +39,12 @@ export abstract class BaseCommand extends Command {
             this.log(`Repo: ${resolvedRoot}`);
             this.log(`Branch: ${branch}`);
 
-            this._context = new Context(gitRepo, "github.com/microsoft/FluidFramework", branch, logVerbose);
+            this._context = new Context(
+                gitRepo,
+                "github.com/microsoft/FluidFramework",
+                branch,
+                logVerbose,
+            );
         }
 
         return this._context;
