@@ -4,9 +4,9 @@
  */
 
 import { Flags } from "@oclif/core";
-import { bumpDependencies, cleanPrereleaseDependencies } from "@fluidframework/build-tools";
+import { bumpDependencies, cleanPrereleaseDependencies, isMonoRepoKind, MonoRepoKind } from "@fluidframework/build-tools";
 import { BaseBumpCommand } from "../bump";
-import { packageSelectorFlag } from "../../flags";
+import { packageSelectorFlag, releaseGroupFlag } from "../../flags";
 
 /**
  * The `bump deps` command. This command is equivalent to `fluid-bump-version --dep`.
@@ -19,6 +19,7 @@ export default class DepsCommand extends BaseBumpCommand {
     static flags = {
         ...super.flags,
         package: packageSelectorFlag(),
+        releaseGroup: releaseGroupFlag(),
         prerelease: Flags.boolean({
             char: "l",
             default: false,
@@ -52,6 +53,11 @@ export default class DepsCommand extends BaseBumpCommand {
             packagesToBump.set(dep, version);
         }
 
-        await bumpDependencies(context, "Bump dependencies version", packagesToBump, false, false);
+        // eslint-disable-next-line unicorn/prefer-ternary
+        if (flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)) {
+            await bumpDependencies(context, "Bump dependencies version", packagesToBump, false, false, false, flags.releaseGroup);
+        } else {
+            await bumpDependencies(context, "Bump dependencies version", packagesToBump, false, false, false);
+        }
     }
 }

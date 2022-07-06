@@ -20,9 +20,18 @@ import { FluidRepo } from "../common/fluidRepo";
  * @param updateLock whether to update the lock file (by npm i) or not
  * @param release make dependencies target release version instead of pre-release versions (e.g. ^0.16.0 vs ^0.16.0-0)
  */
-export async function bumpDependencies(context: Context, commitMessage: string, bumpDepPackages: Map<string, string | undefined>, updateLock: boolean, commit: boolean = false, release: boolean = false) {
+export async function bumpDependencies(
+    context: Context,
+    commitMessage: string,
+    bumpDepPackages: Map<string, string | undefined>,
+    updateLock: boolean,
+    commit: boolean = false,
+    release: boolean = false,
+    releaseGroup?: MonoRepoKind,
+) {
     const suffix = release ? "" : "-0";
-    const bumpPackages = context.repo.packages.packages.map(pkg => {
+    const filteredPackages = await context.repo.packages.filteredPackages(releaseGroup);
+    const bumpPackages = filteredPackages.map(pkg => {
         const matchName = pkg.monoRepo ? pkg.monoRepo.kind : pkg.name;
         const matched = bumpDepPackages.has(matchName);
         // Only add the suffix if it is not user specified
@@ -34,11 +43,12 @@ export async function bumpDependencies(context: Context, commitMessage: string, 
     }
 
     const bumpPackageMap = new Map(bumpPackages.map(rec => [rec.pkg.name, { pkg: rec.pkg, rangeSpec: `^${rec.version}` }]));
-    return bumpDependenciesCore(context, commitMessage, bumpPackageMap, updateLock, commit, release);
+    return bumpDependenciesCore(context, filteredPackages, commitMessage, bumpPackageMap, updateLock, commit, release);
 }
 
 async function bumpDependenciesCore(
     context: Context,
+    filteredPackages: Package[],
     commitMessage: string,
     bumpPackageMap: Map<string, { pkg: Package, rangeSpec: string }>,
     updateLock: boolean,
@@ -49,7 +59,7 @@ async function bumpDependenciesCore(
     const updateLockPackage: Package[] = [];
 
     const changedVersion = new VersionBag();
-    for (const pkg of context.repo.packages.packages) {
+    for (const pkg of filteredPackages) {
         if (await bumpPackageDependencies(pkg, bumpPackageMap, release, changedVersion)) {
             updateLockPackage.push(pkg);
             changed = true;
@@ -119,6 +129,7 @@ export async function cleanPrereleaseDependencies(context: Context, updateLock: 
         + `\n${Array.from(releasedPrereleaseDependencies.keys()).join("\n  ")}`);
 
     await bumpDependenciesCore(context,
+        context.repo.packages.packages,
         "Remove prelease dependencies on release packages",
         releasedPrereleaseDependencies, updateLock, commit, false);
 }

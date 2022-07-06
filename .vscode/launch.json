@@ -16,7 +16,9 @@
                 "bump",
                 "deps",
                 "-p",
-                "@fluidframework/build-common",
+                "@fluidframework/build-common=1.5.0",
+                "-g",
+                "azure",
             ],
             "runtimeExecutable": "C:/Users/tylerbu/scoop/apps/nvs/current/nodejs/node/14.19.1/x64/node.EXE"
         },
