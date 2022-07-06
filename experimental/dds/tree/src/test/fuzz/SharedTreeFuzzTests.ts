@@ -151,6 +151,7 @@ export async function performFuzzActions(
 				switch (event.eventName) {
 					// Tolerate failed edit chunk uploads, because they are fire-and-forget and can fail (e.g. the uploading client leaves before upload completes).
 					case 'fluid:telemetry:FluidDataStoreRuntime:SharedTree:EditChunkUploadFailure':
+					// TODO:#1120
 					case 'fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound':
 					// Summary nacks can happen as part of normal operation and are handled by the framework
 					case 'fluid:telemetry:Summarizer:Running:SummaryNack':

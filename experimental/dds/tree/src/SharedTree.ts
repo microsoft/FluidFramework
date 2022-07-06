@@ -35,7 +35,7 @@ import {
 	OpSpaceNodeId,
 	isDetachedSequenceId,
 	AttributionId,
-    SessionId,
+	SessionId,
 } from './Identifiers';
 import { initialTree } from './InitialTree';
 import {
@@ -1593,18 +1593,18 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 							}
 							case WriteFormat.v0_1_1: {
 								assert(this.stashedIdCompressor !== null, 'Stashed op applied after expected window');
-                                if (this.stashedIdCompressor === undefined) {
-                                    // Use a temporary compressor that will help translate the stashed ops
-                                    this.stashedIdCompressor = IdCompressor.deserialize(
-                                        this.idCompressor.serialize(false),
-                                        stashedSessionId,
-                                        sharedTreeOp.idRange.attributionId
-                                    );
-                                    // Once all stashed ops have been applied, clear the temporary state
-                                    this.runtime.on('connected', () => {
-                                        this.stashedIdCompressor = null;
-                                    });
-                                }
+								if (this.stashedIdCompressor === undefined) {
+									// Use a temporary compressor that will help translate the stashed ops
+									this.stashedIdCompressor = IdCompressor.deserialize(
+										this.idCompressor.serialize(false),
+										stashedSessionId,
+										sharedTreeOp.idRange.attributionId
+									);
+									// Once all stashed ops have been applied, clear the temporary state
+									this.runtime.on('connected', () => {
+										this.stashedIdCompressor = null;
+									});
+								}
 								// Pretend (from the perspective of the temporary compressor) that the stashed ops have been sequenced
 								this.stashedIdCompressor.finalizeCreationRange(sharedTreeOp.idRange);
 								const stashedIdContext = getNodeIdContext(this.stashedIdCompressor);

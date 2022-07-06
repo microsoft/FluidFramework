@@ -13,7 +13,7 @@ import { Change, StablePlace } from '../../ChangeTypes';
 import { TreeView } from '../../TreeView';
 import { EditId, NodeId, TraitLabel } from '../../Identifiers';
 import {
-    applyNoop,
+	applyNoop,
 	getEditLogInternal,
 	LocalServerSharedTreeTestingComponents,
 	LocalServerSharedTreeTestingOptions,
@@ -229,10 +229,12 @@ export function runPendingLocalStateTests(
 			expect(countSmallTrees(tree)).to.equal(2);
 			expect(countSmallTrees(tree2)).to.equal(2);
 
-            // Tolerate `InitialElectedClientNotFound` error
-            const events = testObjectProvider.logger.reportAndClearTrackedEvents();
-            expect(events.unexpectedErrors.length).to.equal(1);
-            expect(events.unexpectedErrors[0].eventName).to.equal('fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound');
+			// Tolerate `InitialElectedClientNotFound` error (TODO:#1120)
+			const events = testObjectProvider.logger.reportAndClearTrackedEvents();
+			expect(events.unexpectedErrors.length).to.equal(1);
+			expect(events.unexpectedErrors[0].eventName).to.equal(
+				'fluid:telemetry:OrderedClientElection:InitialElectedClientNotFound'
+			);
 
 			/** Go offline, do something, then rejoin with pending local state */
 			async function stash(
@@ -325,22 +327,17 @@ export function runPendingLocalStateTests(
 		});
 
 		it('cleans up temporary translation state', async () => {
-            function hasTemporaryStashState(tree: SharedTree): boolean {
-                const state = (tree as unknown as { stashedIdCompressor?: unknown }).stashedIdCompressor;
-                return state !== undefined && state !== null;
-            }
+			// Glass box test to ensure that SharedTree doesn't hold on to temporary stashed op
+			// translation state for longer than necessary
+			function clearedTemporaryStashState(tree: SharedTree): boolean {
+				return (tree as unknown as { stashedIdCompressor?: unknown }).stashedIdCompressor === null;
+			}
 
-			const {
-				container: stashingContainer,
-				tree,
-				testObjectProvider,
-			} = await setUpLocalServerTestSharedTree({});
+			const { container: stashingContainer, tree, testObjectProvider } = await setUpLocalServerTestSharedTree({});
 			await testObjectProvider.ensureSynchronized();
 
-			const { pendingLocalState } = await withContainerOffline(
-				testObjectProvider,
-				stashingContainer,
-				() => applyNoop(tree)
+			const { pendingLocalState } = await withContainerOffline(testObjectProvider, stashingContainer, () =>
+				applyNoop(tree)
 			);
 			await testObjectProvider.ensureSynchronized();
 
@@ -349,7 +346,7 @@ export function runPendingLocalStateTests(
 				pendingLocalState,
 			});
 
-            expect(hasTemporaryStashState(tree2)).to.be.false;
+			expect(clearedTemporaryStashState(tree2)).to.be.true;
 		});
 	});
 }
