@@ -44,9 +44,9 @@ to be `string | undefined`.
 - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
 - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+- [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
 - [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
 - [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
-
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -72,12 +72,16 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
 ### Remove ConnectionState.Connecting
 `ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
 
+### Remove ISummaryAuthor and ISummaryCommitter
+See [#10456](https://github.com/microsoft/FluidFramework/issues/10456). `ISummaryAuthor` and`ISummaryCommitter` are deprecated and will be removed in a future release.
+
 ### Remove IFluidDataStoreChannel.bindToContext and related types
 `bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
 See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
 
 ### Remove `aliasing` return value from `AliasResult`
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
+
 
 # 1.1.0
 
