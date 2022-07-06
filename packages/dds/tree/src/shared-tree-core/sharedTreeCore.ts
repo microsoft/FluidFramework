@@ -69,7 +69,7 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
 /**
  * Observes Changesets (after rebase), after writes data into summaries when requested.
  */
-export interface Index<TChangeset> extends SummaryElement {
+export interface Index<TChangeset> {
     _typeCheck: Invariant<TChangeset>;
 
     /**
