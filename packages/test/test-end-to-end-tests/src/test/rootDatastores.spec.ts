@@ -184,9 +184,18 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             const ds1 = await createRootDataStore(dataObject1, "2");
             const ds2 = await createRootDataStore(dataObject2, "2");
-            const ds3 = await createDataStoreWithProps(dataObject2, "2", true /* root */);
-            const internalIDs = new Set([ds1, ds2, ds3].map((ds) => (ds.IFluidRouter as IFluidDataStoreChannel).id));
+            const ds3 = await createDataStoreWithProps(dataObject1, "2", true /* root */);
+            const ds4 = await createDataStoreWithProps(dataObject2, "2", true /* root */);
+            // All aliased datastores are the same
+            const internalIDs = new Set([ds1, ds2, ds3, ds4].map((ds) => (ds.IFluidRouter as IFluidDataStoreChannel).id));
             assert.equal(internalIDs.size, 1);
+
+            // Cannot re-alias an aliased datastore
+            const aliasResults = await Promise.all([
+                ds3.trySetAlias("1"),
+                ds4.trySetAlias("1"),
+            ]);
+            assert(aliasResults.every((x) => x === "AlreadyAliased"));
         });
 
         it("Root datastore creation with aliasing turned on and legacy API returns already aliased datastore", async () => {
