@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Flags } from "@oclif/core";
+import { cleanPrereleaseDependencies } from "@fluidframework/build-tools";
 import { BaseBumpCommand } from "../bump";
 
 /**
@@ -15,13 +17,21 @@ export default class DepsCommand extends BaseBumpCommand {
 
     static flags = {
         ...super.flags,
+        prerelease: Flags.boolean({
+            default: false,
+            description: "Bump pre-release packages to release versions if possible.",
+        }),
     };
 
     public async run(): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { args, flags } = await this.parse(DepsCommand);
+        const context = await this.getContext();
 
-        this.log(`hello from deps`);
-        this.error(`Not yet implemented`, { exit: 100 });
+        if (flags.prerelease) {
+            await cleanPrereleaseDependencies(context, false, false);
+        } else {
+            this.error(`Not yet implemented.`);
+        }
     }
 }
