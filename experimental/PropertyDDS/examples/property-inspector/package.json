@@ -70,8 +70,8 @@
     "@types/uuid": "^8.3.0",
     "jsonwebtoken": "^8.4.0",
     "lodash": "^4.17.21",
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "react-virtualized-auto-sizer": "^1.0.2"
   },
   "devDependencies": {
