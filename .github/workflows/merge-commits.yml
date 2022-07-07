@@ -13,10 +13,10 @@ env:
 jobs:
   check-pr:
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'microsoft'
+    # if: github.repository_owner == 'microsoft'
     steps:
       - run: npm install @octokit/core
-      - name: Check PR using octokit
+      - name: Check PR exists using octokit
         uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
         id: check-pr-exists
         with:
@@ -38,10 +38,12 @@ jobs:
               }
             }
             return false;
+    outputs:
+      EXISTS: ${{ steps.check-pr-exists.outputs.result }}
   dequeue:
     runs-on: ubuntu-latest
     needs: [ check-pr-exists ]
-    if: needs.check-pr-exists.result == 'false'
+    if: needs.check-pr-exists.outputs.EXISTS == 'false'
     steps:
       - run: npm install @azure/storage-queue
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
