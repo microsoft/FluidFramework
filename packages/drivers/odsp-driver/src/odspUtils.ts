@@ -122,8 +122,9 @@ export async function fetchHelper(
         };
     }, (error) => {
         const online = isOnline();
-        const errorText = `${error}`;
-
+        let errorText = `${error}`;
+        const spoRegex = /(http.*\.sharepoint(-df)*\.com)/;
+        errorText = errorText.toLowerCase().replace(spoRegex, "REDACTED (sharepoint url)");
         // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
             throw new RetryableError(
