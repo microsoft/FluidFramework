@@ -4,3 +4,5 @@
  */
 
 export * from "./object-forest";
+export * from "./defaultRebaser";
+export * from "./forestIndex";
