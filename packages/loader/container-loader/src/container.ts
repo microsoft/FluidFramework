@@ -228,6 +228,12 @@ const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
+/**
+ * Helper function to report to telemetry cases where operation takes longer than expected (1s)
+ * @param logger - logger to use
+ * @param eventName - event name
+ * @param action - functor to call and measure
+ */
 async function ReportIfTooLong(logger: ITelemetryLogger, eventName: string, action: () => Promise<void>) {
     const event = PerformanceEvent.start(logger, { eventName });
     await action();
