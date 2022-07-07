@@ -18,4 +18,4 @@
 export * from "./interfaces";
 export * from "./map";
 export * from "./directory";
-export { LocalValueMaker } from "./localValues";
+export { LocalValueMaker, ILocalValue } from "./localValues";
