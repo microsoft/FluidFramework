@@ -111,7 +111,7 @@ export class DeltaQueue<T>
      * not already started.
      */
     private ensureProcessing() {
-        if (!this.paused && this.processingPromise === undefined) {
+        if (this.anythingToProcess() && this.processingPromise === undefined) {
             // Use a resolved promise to start the processing on a separate stack.
             this.processingPromise = Promise.resolve().then(() => {
                 this.processDeltas();
@@ -122,33 +122,37 @@ export class DeltaQueue<T>
         }
     }
 
+    private anythingToProcess() {
+        return this.q.length !== 0 && !this.paused && this.error === undefined;
+    }
+
     /**
      * Executes the delta processing loop until a stop condition is reached.
      */
     private processDeltas() {
-        const start = performance.now();
-        let count = 0;
+        try {
+            const start = performance.now();
+            let count = 0;
 
-        // For grouping to work we must process all local messages immediately and in the single turn.
-        // So loop over them until no messages to process, we have become paused, or hit an error.
-        while (!(this.q.length === 0 || this.paused || this.error !== undefined)) {
-            // Get the next message in the queue
-            const next = this.q.shift();
-            count++;
-            // Process the message.
-            try {
+            // For grouping to work we must process all local messages immediately and in the single turn.
+            // So loop over them until no messages to process, we have become paused, or hit an error.
+            while (this.anythingToProcess()) {
+                // Get the next message in the queue
+                const next = this.q.shift();
+                count++;
+                // Process the message.
                 // We know next is defined since we did a length check just prior to shifting.
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 this.worker(next!);
                 this.emit("op", next);
-            } catch (error) {
-                this.error = error;
-                this.emit("error", error);
             }
-        }
 
-        if (this.q.length === 0) {
-            this.emit("idle", count, performance.now() - start);
+            if (this.q.length === 0) {
+                this.emit("idle", count, performance.now() - start);
+            }
+        } catch (error) {
+            this.error = error;
+            this.emit("error", error);
         }
     }
 }
