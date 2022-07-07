@@ -27,6 +27,9 @@ export interface IProgress {
      */
     cancel?: AbortSignal;
 
+    /** A string to describe what would cause the AbortSignal to trigger */
+    cancelDescription?: string;
+
     /**
      * Called whenever api returns cancellable error and the call is going to be retried.
      * Any exception thrown from this call back result in cancellation of operation
@@ -67,16 +70,20 @@ export async function runWithRetry<T>(
             }
 
             if (progress.cancel?.aborted === true) {
+                const cancelDescription = progress.cancelDescription;
                 logger.sendTelemetryEvent({
                     eventName: `${fetchCallName}_runWithRetryAborted`,
                     retry: numRetries,
                     duration: performance.now() - startTime,
                     fetchCallName,
+                    cancelDescription,
                 }, err);
+
+                // Disregard the retryable error from the previous attempt and throw a new error for the cancellation
                 throw new NonRetryableError(
-                    `runWithRetry was Aborted for ${fetchCallName}`,
+                    `runWithRetry for [${fetchCallName}] was aborted with cancelDescription [${cancelDescription}]`,
                     DriverErrorType.genericError,
-                    { driverVersion: pkgVersion, fetchCallName },
+                    { driverVersion: pkgVersion, fetchCallName, cancelDescription },
                 );
             }
 

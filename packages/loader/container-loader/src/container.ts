@@ -857,6 +857,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.mc.logger,
                         {
                             cancel: this.closeSignal,
+                            cancelDescription: "ContainerClose",
                         }, // progress
                     );
                 }
