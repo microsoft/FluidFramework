@@ -13,22 +13,15 @@
 /** An array of objects describing how members should be combined. */
 const memberCombineInstructions = [
     {
-        package: "@fluidframework/test-client-utils",
-        sourceImports: new Map([
-            ["@fluidframework/test-runtime-utils", ["InsecureTokenProvider"]],
-        ])
-    },
-    {
         package: "@fluidframework/azure-client",
         sourceImports: new Map([
             ["@fluidframework/routerlicious-driver", ["ITokenProvider", "ITokenResponse"]],
             ["@fluidframework/protocol-definitions", ["ScopeType", "ITokenClaims", "IUser"]],
         ])
-    },
-    {
-        package: "@fluidframework/fluid-static",
+    },{
+        package: "@fluidframework/azure-service-utils",
         sourceImports: new Map([
-            ["@fluidframework/container-definitions", ["IAudience"]],
+            ["@fluidframework/protocol-definitions", ["IUser", "ScopeType"]],
         ])
     },
     {
@@ -36,6 +29,12 @@ const memberCombineInstructions = [
         cleanOrigMembers: true,
         sourceImports: new Map([
             ["@fluidframework/container-definitions", ["AttachState"]],
+        ])
+    },
+    {
+        package: "@fluidframework/test-client-utils",
+        sourceImports: new Map([
+            ["@fluidframework/test-runtime-utils", ["InsecureTokenProvider"]],
         ])
     },
 ];
