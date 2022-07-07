@@ -1,17 +1,37 @@
 {
-  "name": "@fluidx/ediscovery-runner-app",
-  "version": "0.0.0",
+  "name": "@fluidframework/ediscovery-runner-app",
+  "version": "0.1.0",
   "description": "Utility for exporting fluid files for e-discovery",
-  "private": true,
+  "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
-    "url": "https://office.visualstudio.com/DefaultCollection/OC/_git/office-bohemia"
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "tools/ediscovery-runner-app"
   },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "main": "dist/eDiscoveryRunnerApp.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "clean": "just-scripts clean",
-    "build": "just-scripts build",
-    "lint": "just-scripts lint",
-    "bundle": "just-scripts bundle"
+    "build": "npm run build:genver && npm run build:compile && npm run lint",
+    "build:compile": "tsc -b && npm run build:test",
+    "build:genver": "gen-version",
+    "build:test": "tsc --project ./src/test/tsconfig.json",
+    "bump": "node dist/bumpVersion/bumpVersionCli.js",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
+    "eslint": "eslint --format stylish src",
+    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
+    "layer-check:doc": "node dist/layerCheck/layerCheck.js --root ../.. --md",
+    "lint": "npm run eslint",
+    "lint:fix": "npm run eslint:fix",
+    "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
+    "policy-check": "cd ../.. && node build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
+    "policy-check:debug": "cd ../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
+    "policy-check:fix": "npm run policy-check -- -r",
+    "policy-check:fix:debug": "cd ../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
+    "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000"
   },
   "devDependencies": {
     "@types/node": "^16.11.12",
