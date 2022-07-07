@@ -40,8 +40,8 @@
     "postpack": "shx rm -f oclif.manifest.json",
     "prettier": "prettier --check \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
     "prettier:fix": "prettier --write \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
-    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
-    "posttest": "npm run lint",
+    "test": "npm run test:mocha",
+    "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\"",
     "tsc": "tsc -b",
     "version": "npm run build:readme && git add README.md"
   },

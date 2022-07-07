@@ -53,7 +53,7 @@ export default class DepsCommand extends BaseBumpCommand {
         }
 
         if (flags.package === undefined) {
-            this.error("No dependency provided.");
+            this.error("No dependency provided.", { exit: 5 });
         }
 
         const packagesToBump = new Map<string, string | undefined>();
