@@ -29,7 +29,7 @@ trigger:
     - next
   paths:
     include:
-    - tools/build-tools
+    - build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
@@ -47,7 +47,7 @@ pr:
     - release/*
   paths:
     include:
-    - tools/build-tools
+    - build-tools
     - tools/pipelines/build-build-tools.yml
     - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
@@ -59,10 +59,35 @@ extends:
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    buildDirectory: tools/build-tools
+    buildDirectory: build-tools
     tagName:
     taskBuild: build
     taskBuildDocs: false
-    taskLint: false
-    taskTest: false
+    taskLint: true
+    taskTest: test
     buildNumberInPatch: true
+    poolBuild: Large
+    cgSubDirectory: packages
+    checkoutSubmodules: true
+    taskBundleAnalysis: false
+
+    preCG:
+    - task: UseNode@1
+      displayName: Use Node 14.x
+      inputs:
+        version: 14.x
+    - task: Npm@1
+      displayName: npm ci
+      inputs:
+        command: 'custom'
+        customCommand: 'ci --ignore-scripts'
+        customRegistry: 'useNpmrc'
+    - task: Bash@3
+      displayName: 'Generate Mono repo package json'
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Generate the package/package lock for the lerna project so we would scan it.
+          node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --build-tools
+          cp build-tools/repo-package.json build-tools/packages/package.json
+          cp build-tools/repo-package-lock.json build-tools/packages/package-lock.json

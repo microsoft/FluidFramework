@@ -42,16 +42,6 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @public (undocumented)
-export enum BindState {
-    // (undocumented)
-    Binding = "Binding",
-    // (undocumented)
-    Bound = "Bound",
-    // (undocumented)
-    NotBound = "NotBound"
-}
-
 // @public
 export namespace ConnectionState {
     export type CatchingUp = 1;

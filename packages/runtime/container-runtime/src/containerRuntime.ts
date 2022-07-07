@@ -2091,13 +2091,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel. For
-        // older versions, we still have to call bindToContext.
-        if (fluidDataStore.makeVisibleAndAttachGraph !== undefined) {
-            fluidDataStore.makeVisibleAndAttachGraph();
-        } else {
-            fluidDataStore.bindToContext();
-        }
+        fluidDataStore.makeVisibleAndAttachGraph();
         return fluidDataStore;
     }
 
@@ -2177,13 +2171,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
-            // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
-            // For older versions, we still have to call bindToContext.
-            if (fluidDataStore.makeVisibleAndAttachGraph !== undefined) {
-                fluidDataStore.makeVisibleAndAttachGraph();
-            } else {
-                fluidDataStore.bindToContext();
-            }
+            fluidDataStore.makeVisibleAndAttachGraph();
             this.logger.sendTelemetryEvent({
                 eventName: "Root datastore with props",
                 hasProps: props !== undefined,

@@ -414,32 +414,12 @@ export interface ISummaryAttachment {
     type: SummaryType.Attachment;
 }
 
-// @public (undocumented)
-export interface ISummaryAuthor {
-    // (undocumented)
-    date: string;
-    // (undocumented)
-    email: string;
-    // (undocumented)
-    name: string;
-}
-
 // @public
 export interface ISummaryBlob {
     // (undocumented)
     content: string | Uint8Array;
     // (undocumented)
     type: SummaryType.Blob;
-}
-
-// @public (undocumented)
-export interface ISummaryCommitter {
-    // (undocumented)
-    date: string;
-    // (undocumented)
-    email: string;
-    // (undocumented)
-    name: string;
 }
 
 // @public (undocumented)

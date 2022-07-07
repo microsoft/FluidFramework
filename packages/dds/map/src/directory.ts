@@ -268,7 +268,7 @@ export class DirectoryFactory {
  * SubDirectories can be retrieved for use as working directories.
  *
  * @example
- * ```ts
+ * ```typescript
  * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
  * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
  * mySubDir.get("foo"); // returns val1

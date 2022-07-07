@@ -721,11 +721,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                     const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
-                        // This looks like a data corruption but the culprit has been found instead
-                        // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
+                            // This looks like a data corruption but the culprit was that the file was overwritten
+                            // in storage.  See PR #5882.
+                            // Likely to be an issue with Fluid Services. Content does not match previous client
+                            // knowledge about this file. If the file is overwritten for any reason, this error can be
+                            // hit. One example is that some clients could be submitting ops to two different service
+                            // instances such that the same sequence number is reused for two different ops.
                             // pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
-                            "Found two messages with the same sequenceNumber but different payloads",
+                            "Found two messages with the same sequenceNumber but different payloads. Likely to be a "
+                            + "service issue",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connectionManager.clientId,
