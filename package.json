@@ -129,6 +129,7 @@
       "common-utils": "common/lib/common-utils",
       "protocol-def": "common/lib/protocol-definitions",
       "azure": "azure",
+      "build-tools": "build-tools",
       "server": "server/routerlicious",
       "client": {
         "directory": "",

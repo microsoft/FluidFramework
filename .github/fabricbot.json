@@ -6,7 +6,6 @@
       "capabilityId": "ScheduledSearch",
       "subCapability": "ScheduledSearch",
       "version": "1.1",
-      "id": "r7GVxnL0t",
       "config": {
         "frequency": [
           {
@@ -139,7 +138,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "pOLj5BYPD",
       "config": {
         "conditions": {
           "operator": "and",
@@ -210,7 +208,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "f6ha861-_",
       "config": {
         "conditions": {
           "operator": "and",
@@ -264,7 +261,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "izG7jFkvP",
       "config": {
         "conditions": {
           "operator": "and",
@@ -444,8 +440,7 @@
             "parameters": {}
           }
         ]
-      },
-      "id": "dL-FvUaIz"
+      }
     },
     {
       "taskType": "scheduled",
@@ -549,8 +544,7 @@
             "parameters": {}
           }
         ]
-      },
-      "id": "QxEcWj2mkx"
+      }
     },
     {
       "taskType": "scheduled",
@@ -689,8 +683,7 @@
             "parameters": {}
           }
         ]
-      },
-      "id": "q_VIe1nWhU"
+      }
     },
     {
       "taskType": "trigger",
@@ -699,8 +692,7 @@
       "version": "1.0",
       "config": {
         "taskName": "Cleanse emails"
-      },
-      "id": "7Jjq5HF5oG"
+      }
     },
     {
       "taskType": "trigger",
@@ -708,8 +700,8 @@
       "subCapability": "AutoMerge",
       "version": "1.0",
       "config": {
-        "taskName": "Automatically merge pull requests",
-        "label": "automerge",
+        "taskName": "Automatically squash-merge pull requests in next",
+        "label": "msftbot: merge-next",
         "silentMode": false,
         "minMinutesOpen": 480,
         "mergeType": "squash",
@@ -718,17 +710,16 @@
         "enforceDMPAsStatus": true,
         "removeLabelOnPush": true,
         "usePrDescriptionAsCommitMessage": true,
-        "requireAllStatuses": false
+        "requireAllStatuses": false,
+        "conditionalMergeTypes": []
       },
-      "id": "-5oLtB6T9Z",
-      "disabled": true
+      "disabled": false
     },
     {
       "taskType": "trigger",
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "nir-Swuam",
       "config": {
         "conditions": {
           "operator": "or",
@@ -884,8 +875,7 @@
             "parameters": {}
           }
         ]
-      },
-      "id": "n_C97f95U"
+      }
     },
     {
       "taskType": "scheduled",
@@ -1008,8 +998,7 @@
             }
           }
         ]
-      },
-      "id": "aOj9L_2xS"
+      }
     },
     {
       "taskType": "scheduled",
@@ -1146,8 +1135,7 @@
             "parameters": {}
           }
         ]
-      },
-      "id": "bk0BGfnIDJ"
+      }
     },
     {
       "taskType": "trigger",
@@ -1202,8 +1190,7 @@
           "issues",
           "project_card"
         ]
-      },
-      "id": "UEDdPHqilQ"
+      }
     },
     {
       "taskType": "trigger",
@@ -1235,15 +1222,13 @@
         "eventNames": [
           "issue_comment"
         ]
-      },
-      "id": "k-TqMCCcHy"
+      }
     },
     {
       "taskType": "trigger",
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "WDB1_lN-p",
       "config": {
         "conditions": {
           "operator": "and",
@@ -1294,7 +1279,6 @@
       "capabilityId": "ScheduledSearch",
       "subCapability": "ScheduledSearch",
       "version": "1.1",
-      "id": "bF75sfkK1",
       "config": {
         "frequency": [
           {
@@ -1399,7 +1383,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "W-UNUGWM3",
       "config": {
         "conditions": {
           "operator": "and",
@@ -1447,7 +1430,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "PullRequestResponder",
       "version": "1.0",
-      "id": "GLXse_rmRajdIwrjVnftc",
       "config": {
         "conditions": {
           "operator": "and",
@@ -1500,7 +1482,6 @@
       "capabilityId": "ScheduledSearch",
       "subCapability": "ScheduledSearch",
       "version": "1.1",
-      "id": "dORjBMeuOzXNENEUrW0K3",
       "config": {
         "frequency": [
           {
@@ -1612,7 +1593,6 @@
       "capabilityId": "ScheduledSearch",
       "subCapability": "ScheduledSearch",
       "version": "1.1",
-      "id": "QgeHB_DzYjPfnfZG4xlMu",
       "config": {
         "frequency": [
           {
@@ -1711,7 +1691,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "FP71VFkeyEGlzaNeRlN_e",
       "config": {
         "conditions": {
           "operator": "and",
@@ -1768,7 +1747,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "IssueCommentResponder",
       "version": "1.0",
-      "id": "3OqrilqP0BlLclukn2Y9b",
       "config": {
         "conditions": {
           "operator": "and",
@@ -1801,7 +1779,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "rKYnUjCMSKOiNV9wki_Ot",
       "config": {
         "conditions": {
           "operator": "and",
@@ -1836,7 +1813,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "CUkI8ICSmu_LW4EWuCcww",
       "config": {
         "conditions": {
           "operator": "and",
@@ -1875,7 +1851,6 @@
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
-      "id": "e6uT6Y_DKJLV8TTp8lZvY",
       "config": {
         "conditions": {
           "operator": "and",

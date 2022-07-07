@@ -23,7 +23,7 @@ import { FluidRepo } from "../common/fluidRepo";
 export async function bumpDependencies(context: Context, commitMessage: string, bumpDepPackages: Map<string, string | undefined>, updateLock: boolean, commit: boolean = false, release: boolean = false) {
     const suffix = release ? "" : "-0";
     const bumpPackages = context.repo.packages.packages.map(pkg => {
-        const matchName = pkg.monoRepo ? MonoRepoKind[pkg.monoRepo.kind] : pkg.name;
+        const matchName = pkg.monoRepo ? pkg.monoRepo.kind : pkg.name;
         const matched = bumpDepPackages.has(matchName);
         // Only add the suffix if it is not user specified
         const version = bumpDepPackages.get(matchName) ?? `${pkg.version}${suffix}`;
