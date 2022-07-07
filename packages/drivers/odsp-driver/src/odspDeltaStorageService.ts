@@ -35,13 +35,14 @@ export class OdspDeltaStorageService {
      * @param from - inclusive
      * @param to - exclusive
      * @param telemetryProps - properties to add when issuing telemetry events
+     * @param reason - reason for fetching ops
      * @returns ops retrieved & info if result was partial (i.e. more is available)
      */
      public async get(
         from: number,
         to: number,
         telemetryProps: ITelemetryProperties,
-        fetchReason?: string,
+        reason?: string,
     ): Promise<IDeltasFetchResult> {
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
@@ -78,7 +79,7 @@ export class OdspDeltaStorageService {
                 },
                 "ops",
                 true,
-                fetchReason,
+                reason,
             );
             clearTimeout(timer);
             const deltaStorageResponse = response.content;
@@ -99,6 +100,7 @@ export class OdspDeltaStorageService {
                 from,
                 to,
                 ...telemetryProps,
+                reason,
             });
 
             // It is assumed that server always returns all the ops that it has in the range that was requested.

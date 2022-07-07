@@ -410,7 +410,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         if (prefetchType !== "none") {
             const cacheOnly = prefetchType === "cached";
-            await this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber);
+            await this.fetchMissingDeltasCore(`DocumentOpen_${prefetchType}`, cacheOnly);
 
             // Keep going with fetching ops from storage once we have all cached ops in.
             // But do not block load and make this request async / not blocking this api.
@@ -418,7 +418,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // (which in most cases will happen when we are done processing cached ops)
             if (cacheOnly) {
                 // fire and forget
-                this.fetchMissingDeltas("DocumentOpen");
+                this.fetchMissingDeltas("PostDocumentOpen");
             }
         }
 
@@ -453,6 +453,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private async getDeltas(
         from: number, // inclusive
         to: number | undefined, // exclusive
+        fetchReason: string,
         callback: (messages: ISequencedDocumentMessage[]) => void,
         cacheOnly: boolean) {
         const docService = this.serviceProvider();
@@ -473,7 +474,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // received through delta stream. Validate that before moving forward.
             if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
                 this.logger.sendPerformanceEvent({
-                    reason: this.fetchReason,
+                    reason: fetchReason,
                     eventName: "ExtraStorageCall",
                     early: true,
                     from,
@@ -521,7 +522,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 to, // exclusive
                 controller.signal,
                 cacheOnly,
-                this.fetchReason);
+                fetchReason);
 
             // eslint-disable-next-line no-constant-condition
             while (true) {
@@ -871,6 +872,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             await this.getDeltas(
                 from,
                 to,
+                fetchReason,
                 (messages) => {
                     this.refreshDelayInfo(this.deltaStorageDelayId);
                     this.enqueueMessages(messages, fetchReason);

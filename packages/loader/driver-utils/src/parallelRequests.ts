@@ -354,6 +354,9 @@ export class Queue<T> implements IStream<T> {
  * @param telemetryEvent - telemetry event used to track consecutive batch of requests
  * @param strongTo - tells if ops in range from...to have to be there and have to be retrieved.
  * If false, returning less ops would mean we reached end of file.
+ * @param logger - logger object to use to log progress & errors
+ * @param signal - cancelation signal
+ * @param reason - reason for fetching ops
  * @returns - an object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
@@ -362,7 +365,7 @@ async function getSingleOpBatch(
     strongTo: boolean,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
-    fetchReason?: string):
+    reason?: string):
         Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[]; }> {
     let lastSuccessTime: number | undefined;
 
@@ -426,7 +429,7 @@ async function getSingleOpBatch(
                     retry,
                     duration: performance.now() - startTime,
                     retryAfter,
-                    fetchReason,
+                    reason,
                 },
                 error);
 
@@ -446,6 +449,18 @@ async function getSingleOpBatch(
     return nothing;
 }
 
+/**
+ * Request ops from storage
+ * @param get - Getter callback to get individual batches
+ * @param concurrency - Number of concurrent requests to make
+ * @param fromTotal - starting sequence number to fetch (inclusive)
+ * @param toTotal - max (exclusive) sequence number to fetch
+ * @param payloadSize - Payload size
+ * @param logger - Logger to log progress and errors
+ * @param signal - Cancelation signal
+ * @param reason - Reason for fetching ops
+ * @returns - Messages fetched
+ */
 export function requestOps(
     get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
     concurrency: number,
@@ -454,7 +469,7 @@ export function requestOps(
     payloadSize: number,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
-    fetchReason?: string,
+    reason?: string,
 ): IStream<ISequencedDocumentMessage[]> {
     let requests = 0;
     let lastFetch: number | undefined;
@@ -469,7 +484,7 @@ export function requestOps(
     const telemetryEvent = PerformanceEvent.start(logger, {
         eventName: "GetDeltas",
         ...propsTotal,
-        fetchReason,
+        reason,
     });
 
     const manager = new ParallelRequests<ISequencedDocumentMessage>(
@@ -485,7 +500,7 @@ export function requestOps(
                 strongTo,
                 logger,
                 signal,
-                fetchReason,
+                reason,
             );
         },
         (deltas: ISequencedDocumentMessage[]) => {

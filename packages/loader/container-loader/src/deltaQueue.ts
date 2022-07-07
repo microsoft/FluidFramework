@@ -4,7 +4,7 @@
  */
 
 import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
-import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 
 export interface IDeltaQueueWriter<T> {
@@ -30,7 +30,7 @@ export class DeltaQueue<T>
      * When processing is ongoing, holds a deferred that will resolve once processing stops.
      * Undefined when not processing.
      */
-    private processingDeferred: Deferred<void> | undefined;
+    private processingPromise: Promise<void> | undefined;
 
     public get disposed(): boolean {
         return this.isDisposed;
@@ -48,13 +48,11 @@ export class DeltaQueue<T>
     }
 
     public get idle(): boolean {
-        return this.processingDeferred === undefined && this.q.length === 0;
+        return this.processingPromise === undefined && this.q.length === 0;
     }
 
     public async waitTillProcessingDone(): Promise<void> {
-        if (this.processingDeferred !== undefined) {
-            return this.processingDeferred.promise;
-        }
+        return this.processingPromise;
     }
 
     /**
@@ -113,17 +111,14 @@ export class DeltaQueue<T>
      * not already started.
      */
     private ensureProcessing() {
-        if (!this.paused && this.processingDeferred === undefined) {
-            this.processingDeferred = new Deferred<void>();
+        if (!this.paused && this.processingPromise === undefined) {
             // Use a resolved promise to start the processing on a separate stack.
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.resolve().then(() => {
+            this.processingPromise = Promise.resolve().then(() => {
                 this.processDeltas();
-                if (this.processingDeferred !== undefined) {
-                    this.processingDeferred.resolve();
-                    this.processingDeferred = undefined;
-                }
+                assert(this.processingPromise !== undefined, "invariant");
+                this.processingPromise = undefined;
             });
+            assert(this.processingPromise !== undefined, "invariant");
         }
     }
 
