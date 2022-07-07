@@ -124,9 +124,6 @@ class DataStore implements IDataStore {
         const aliased = await this.ackBasedPromise<boolean>((resolve) => {
             this.runtime.submitDataStoreAliasOp(message, resolve);
         }).then((succeeded) => {
-            // Explicitly Lock-out future attempts of aliasing,
-            // regardless of result
-            this.aliasState = AliasState.Aliased;
             if (succeeded) {
                 this.alias = alias;
             }
@@ -144,12 +141,13 @@ class DataStore implements IDataStore {
                     tag: TelemetryDataTag.PackageData,
                 },
             }, error);
-            this.aliasState = AliasState.None;
+
             return false;
         }).finally(() => {
             this.pendingAliases.delete(alias);
         });
 
+        this.aliasState = aliased? AliasState.Aliased : AliasState.None;
         return aliased ? "Success" : "Conflict";
     }
 

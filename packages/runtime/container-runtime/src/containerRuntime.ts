@@ -2104,7 +2104,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // A similar call may have been initiated by the same client, so we should try to get
             // a possible existing aliased datastore first.
             const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
-            return channelToDataStore(existingDataStore, internalId, this, this.dataStores, this.mc.logger, true);
+            return channelToDataStore(
+                existingDataStore,
+                internalId,
+                this,
+                this.dataStores,
+                this.mc.logger,
+                true, // AlreadyAliased. This will block further alias attempts for the datastore
+            );
         } catch (err) {
             const newChannel = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
             const newDataStore = channelToDataStore(newChannel, internalId, this, this.dataStores, this.mc.logger);
@@ -2114,7 +2121,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
-            return channelToDataStore(existingDataStore, internalId, this, this.dataStores, this.mc.logger, true);
+            return channelToDataStore(
+                existingDataStore,
+                internalId,
+                this,
+                this.dataStores,
+                this.mc.logger,
+                true, // AlreadyAliased. This will block further alias attempts for the datastore
+            );
         }
     }
 

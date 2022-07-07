@@ -362,6 +362,27 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
                 assert.equal(datastores.length, 1);
             });
 
+        it("Aliasing a datastore during an alias operation with the same name", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+
+            const [aliasResult1, aliasResult2] = await Promise.all([
+                ds1.trySetAlias(alias),
+                ds2.trySetAlias(alias),
+            ]);
+
+            assert.equal(aliasResult1, "Success");
+            assert.equal(aliasResult2, "Conflict");
+
+            const [aliasResult3, aliasResult4] = await Promise.all([
+                ds1.trySetAlias(alias + alias),
+                ds2.trySetAlias(alias + alias),
+            ]);
+
+            assert.equal(aliasResult3, "AlreadyAliased");
+            assert.equal(aliasResult4, "Success");
+        });
+
         it("Aliasing a previously aliased datastore will fail", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -374,7 +395,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        it("Aliasing a datastore which previously failed to alias will fail", async () => {
+        it("Aliasing a datastore which previously failed to alias will succeed", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -384,7 +405,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             assert.equal(aliasResult1, "Success");
             assert.equal(aliasResult2, "Conflict");
-            assert.equal(aliasResult3, "AlreadyAliased");
+            assert.equal(aliasResult3, "Success");
 
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
