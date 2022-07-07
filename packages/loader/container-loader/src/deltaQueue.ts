@@ -157,6 +157,6 @@ export class DeltaQueue<T>
         if (this.q.length === 0) {
             this.emit("idle", count, duration);
         }
-        return {count, duration };
+        return { count, duration };
     }
 }
