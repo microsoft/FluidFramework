@@ -1135,7 +1135,7 @@ export type MergeTreeDeltaType = typeof MergeTreeDeltaType[keyof typeof MergeTre
 // @public (undocumented)
 export type MergeTreeMaintenanceCallback = (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;
 
-// @public (undocumented)
+// @public
 export const MergeTreeMaintenanceType: {
     readonly APPEND: -1;
     readonly SPLIT: -2;

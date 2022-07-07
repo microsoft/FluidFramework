@@ -124,8 +124,8 @@ async function releasePackages(context: Context, packages: Package[], updateLock
 }
 
 async function releaseMonoRepo(context: Context, monoRepo: MonoRepo, updateLock: boolean, virtualPatch: boolean) {
-    const kind = MonoRepoKind[monoRepo.kind];
-    const kindLowerCase = MonoRepoKind[monoRepo.kind].toLowerCase();
+    const kind = monoRepo.kind;
+    const kindLowerCase = monoRepo.kind.toLowerCase();
     const tagName = `${kindLowerCase}_v${monoRepo.version}`;
     await context.gitRepo.fetchTags();
     if ((await context.gitRepo.getTags(tagName)).trim() !== tagName) {

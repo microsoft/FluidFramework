@@ -7,4 +7,8 @@ export {
     EmptyKey,
     FieldKey,
     TreeType,
+    ChildLocation,
+    DetachedRange,
+    ChildCollection,
+    RootRange,
 } from "./types";

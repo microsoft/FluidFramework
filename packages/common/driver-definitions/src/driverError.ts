@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IResolvedUrl } from "./urlResolver";
+
 /**
  * Driver Error types
  * Lists types that are likely to be used by all drivers
@@ -75,6 +77,12 @@ export enum DriverErrorType {
       * The document is read-only and delta stream connection is forbidden.
       */
      deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
+
+    /**
+     * The location of file/container can change on server. So if the file location moves and we try to access the old
+     * location, then this error is thrown to let the client know about the new location info.
+     */
+    locationRedirection = "locationRedirection",
 }
 
 /**
@@ -110,6 +118,11 @@ export interface IAuthorizationError extends IDriverErrorBase {
     readonly tenantId?: string;
 }
 
+export interface ILocationRedirectionError extends IDriverErrorBase {
+    readonly errorType: DriverErrorType.locationRedirection;
+    readonly redirectUrl: IResolvedUrl;
+}
+
 /**
  * Having this uber interface without types that have their own interfaces
  * allows compiler to differentiate interfaces based on error type
@@ -131,4 +144,5 @@ export type DriverError =
     | IThrottlingWarning
     | IGenericNetworkError
     | IAuthorizationError
+    | ILocationRedirectionError
     | IDriverBasicError;

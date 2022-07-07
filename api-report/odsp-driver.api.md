@@ -107,7 +107,7 @@ export function isSpoUrl(url: string): boolean;
 export const locatorQueryParamName = "nav";
 
 // @public (undocumented)
-export const OdcApiSiteOrigin = "https://api.onedrive.com";
+export const OdcApiSiteOrigin = "https://my.microsoftpersonalcontent.com";
 
 // @public (undocumented)
 export const OdcFileSiteOrigin = "https://1drv.ms";

@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
-  "main": "dist/fluidBuild/fluidBuild.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
     "fluid-build": "bin/fluid-build",
