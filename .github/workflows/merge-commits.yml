@@ -124,7 +124,10 @@ jobs:
               owner: 'microsoft',
               repo: 'FluidFramework',
               title: 'Automation: Main Next Integrate',
-              body: 'This commit is queued for getting merged with the next branch. Please make sure to resolve any conflicts/CI failures seen on this PR. Thank you!',
+              body: 'The aim of this pull request is to sync main and next branch. The expectation from the assignee is as follows:
+                1. Acknowledge the pull request by adding a comment -- "Actively working on it"
+                2. Resolve any merge conflicts/CI failures see locally.
+                You can also find more information about how to resolve build failures and conflicts: https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation',
               head: sha,
               base: 'next'
             });
