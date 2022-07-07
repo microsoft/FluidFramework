@@ -305,9 +305,7 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
         }
         const val = obj[key];
         const validProp = filterValidTelemetryProps(val);
-        const validTaggedProp = filterValidTelemetryProps(val.value);
-        if (isTaggedTelemetryPropertyValue(val) && validTaggedProp !== null) {
-            val.value = validTaggedProp;
+        if (isTaggedTelemetryPropertyValue(val)) {
             props[key] = val;
         } else if (validProp !== null) {
             props[key] = validProp;
