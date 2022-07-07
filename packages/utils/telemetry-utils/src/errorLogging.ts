@@ -274,16 +274,16 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
  */
 // eslint-disable-next-line @rushstack/no-new-null
 function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
-    if(isPrimitive(x)){
-        return x;
-    }
     if (Array.isArray(x) && x.every((val) => isPrimitive(val))) {
         return JSON.stringify(x);
+    }
+    if (isPrimitive(x)) {
+        return x;
     }
     return null;
 }
 
-function isPrimitive(x:any): boolean {
+function isPrimitive(x: any): x is TelemetryEventPropertyType {
     switch (typeof x) {
         case "string":
         case "number":

@@ -132,9 +132,6 @@ export function isFluidError(e: any): e is IFluidErrorBase;
 // @public
 export const isILoggingError: (x: any) => x is ILoggingError;
 
-// @public (undocumented)
-export function parseJSONObject(x: any): TelemetryEventPropertyTypes;
-
 // @public
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType;
 
