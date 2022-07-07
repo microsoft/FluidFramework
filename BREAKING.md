@@ -43,7 +43,7 @@ to be `string | undefined`.
 
  ### Added locationRedirection errorType in DriverErrorType enum
  Added locationRedirection errorType in DriverErrorType enum. This error tells that the location of file on server has changed.
- This error will not be thrown in 1.x.x version but we are just adding it in the type for now. This will be thrown from 2.x.x onward.
+ This error will not be thrown in 1.x.x version but we are just adding it in the type for now. This will be thrown from 2.x.x onward. For consumers of errors(in any version due to dynamic driver loading), this needs to be handled as a separate type where an error message banner could be shown etc. Consumers can also choose to not do any action as far as they recognize this error at runtime and not faulter when they receive this error. Ex. if you have a switch statement which does not have this errorType as a case and throw error in default case, then you need to add a case so that it does not throw any error. However this error is not yet emitted from `Fluid Framework`, so in a way it is non breaking.
 
  ### Added ILocationRedirectionError error in DriverError type
  Added ILocationRedirectionError error in DriverError. This error tells that the location of file on server has changed. In case of Odsp, the domain of file changes on server.
