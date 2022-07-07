@@ -4,7 +4,8 @@
  */
 
 /**
- * This package contains the interfaces and types concerning the {@link Loader} and loading the {@link Container}.
+ * This package contains the interfaces and types concerning the {@link ILoader | Loader} and loading the
+ * {@link IContainer | Container}.
  *
  * @packageDocumentation
  */
