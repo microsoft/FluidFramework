@@ -65,8 +65,8 @@ export default class DepsCommand extends BaseBumpCommand {
             await bumpDependencies(
                 context,
                 packagesToBump,
-                false,
-                false,
+                flags.install,
+                flags.commit,
                 "Bump dependencies version",
                 false,
                 flags.releaseGroup,
@@ -75,8 +75,8 @@ export default class DepsCommand extends BaseBumpCommand {
             await bumpDependencies(
                 context,
                 packagesToBump,
-                false,
-                false,
+                flags.install,
+                flags.commit,
                 "Bump dependencies version",
                 false,
             );
