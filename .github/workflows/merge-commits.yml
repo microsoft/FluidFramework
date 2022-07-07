@@ -13,7 +13,7 @@ env:
 jobs:
   check-pr:
     runs-on: ubuntu-latest
-    # if: github.repository_owner == 'microsoft'
+    if: github.repository_owner == 'microsoft'
     steps:
       - run: npm install @octokit/core
       - name: Check PR exists using octokit
@@ -26,13 +26,13 @@ jobs:
             const token = `${{ secrets.GITHUB_TOKEN }}`;
             const octokit = new Octokit({ auth: token });
             const data = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
-              owner: 'sonalivdeshpande',
+              owner: 'microsoft',
               repo: 'FluidFramework'
             });
             console.log("data----", data);
             console.log("items----", data.items);
             console.log("length---", data.items.length);
-            for(var i=0; i<data.items.length; i++) {
+            for(let i=0; i<data.items.length; i++) {
               if(data.items[i].title.startsWith('Automation: Main Next Integrate')) {
                 return true;
               }
