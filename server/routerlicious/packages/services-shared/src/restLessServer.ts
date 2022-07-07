@@ -102,7 +102,7 @@ export class RestLessServer {
         } else {
             request.body = bodyField;
         }
-        request.headers["content-length"] = request.body ? request.body.length : undefined;
+        request.headers["content-length"] = request.body ? `${(request.body as string).length}` : undefined;
     }
 
     private parseRequestBody(request: IncomingMessageEx): void {
