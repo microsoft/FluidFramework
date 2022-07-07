@@ -1194,7 +1194,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             switch (loadMode.deltaConnection) {
                 case undefined:
                 case "delayed":
-                    assert(this.inboundQueuePausedFromInit, "inboundQueuePausedFromInit should be true");
+                    assert(this.inboundQueuePausedFromInit, 0x346 /* inboundQueuePausedFromInit should be true */);
                     this.inboundQueuePausedFromInit = false;
                     this._deltaManager.inbound.resume();
                     this._deltaManager.inboundSignal.resume();
