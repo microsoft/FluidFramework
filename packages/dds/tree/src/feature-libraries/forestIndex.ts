@@ -7,7 +7,7 @@ import { Index, SummaryElement } from "../shared-tree-core";
 import { Invariant } from "../util";
 
 /**
- * Index which provides a an editable forest for the current state fo the document.
+ * Index which provides an editable forest for the current state for the document.
  *
  * Maintains part of the document in memory, but can fetch more on demand.
  *
