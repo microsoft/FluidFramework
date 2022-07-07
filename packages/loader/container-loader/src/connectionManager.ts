@@ -626,10 +626,8 @@ export class ConnectionManager implements IConnectionManager {
      * Cancel in-progress connection attempt.
      */
     private cancelConnection() {
-        assert(
-            this.pendingConnection !== undefined,
-            0x345, /* this.pendingConnection is undefined when trying to cancel */
-        );
+        assert(this.pendingConnection !== undefined,
+            0x345 /* this.pendingConnection is undefined when trying to cancel */);
         this.pendingConnection.abort();
         this.pendingConnection = undefined;
         this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
