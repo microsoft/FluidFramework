@@ -94,6 +94,16 @@
   },
   "typeValidation": {
     "version": "1.2.0",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_ThrottlingError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_AuthorizationError": {
+        "backCompat": false
+      },
+      "ClassDeclaration_GenericNetworkError": {
+        "backCompat": false
+      }
+    }
   }
 }
