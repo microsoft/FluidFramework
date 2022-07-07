@@ -72,7 +72,7 @@ interface IDirectoryMessageHandler {
 /**
  * Operation indicating a value should be set for a key.
  */
-interface IDirectorySetOperation {
+export interface IDirectorySetOperation {
     /**
      * String identifier of the operation type.
      */
@@ -97,7 +97,7 @@ interface IDirectorySetOperation {
 /**
  * Operation indicating a key should be deleted from the directory.
  */
-interface IDirectoryDeleteOperation {
+export interface IDirectoryDeleteOperation {
     /**
      * String identifier of the operation type.
      */
@@ -117,12 +117,12 @@ interface IDirectoryDeleteOperation {
 /**
  * An operation on a specific key within a directory
  */
-type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
+export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
  */
-interface IDirectoryClearOperation {
+export interface IDirectoryClearOperation {
     /**
      * String identifier of the operation type.
      */
@@ -137,12 +137,12 @@ interface IDirectoryClearOperation {
 /**
  * An operation on one or more of the keys within a directory
  */
-type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
+export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
  */
-interface IDirectoryCreateSubDirectoryOperation {
+export interface IDirectoryCreateSubDirectoryOperation {
     /**
      * String identifier of the operation type.
      */
@@ -162,7 +162,7 @@ interface IDirectoryCreateSubDirectoryOperation {
 /**
  * Operation indicating a subdirectory should be deleted.
  */
-interface IDirectoryDeleteSubDirectoryOperation {
+export interface IDirectoryDeleteSubDirectoryOperation {
     /**
      * String identifier of the operation type.
      */
@@ -182,7 +182,8 @@ interface IDirectoryDeleteSubDirectoryOperation {
 /**
  * An operation on the subdirectories within a directory
  */
-type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
+export type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation
+    | IDirectoryDeleteSubDirectoryOperation;
 
 /**
  * Any operation on a directory

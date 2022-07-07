@@ -555,6 +555,4 @@ export type ReadOnlyInfo = {
     readonly storageOnly: boolean;
 };
 
-// (No @packageDocumentation comment for this package)
-
 ```
