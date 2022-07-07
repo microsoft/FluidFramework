@@ -74,7 +74,7 @@ export async function runWithRetry<T>(
                     fetchCallName,
                 }, err);
                 throw new NonRetryableError(
-                    "runWithRetry was Aborted",
+                    `runWithRetry was Aborted for ${fetchCallName}`,
                     DriverErrorType.genericError,
                     { driverVersion: pkgVersion, fetchCallName },
                 );
