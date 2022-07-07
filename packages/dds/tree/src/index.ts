@@ -6,6 +6,7 @@
 export { EmptyKey, FieldKey, TreeType } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, Value } from "./forest";
+export { LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier } from "./schema";
 
 export {
     Brand,
@@ -16,4 +17,6 @@ export {
     Invariant,
     Contravariant,
     Covariant,
+    ExtractFromOpaque,
+    isAny,
 } from "./util";
