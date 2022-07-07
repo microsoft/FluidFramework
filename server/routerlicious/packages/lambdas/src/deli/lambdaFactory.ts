@@ -27,7 +27,7 @@ import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import { Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda, createSessionMetric } from "../utils";
+import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
@@ -94,7 +94,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             throw error;
         }
 
-        if (!document || document.scheduledDeletionTime) {
+        if (!isDocumentValid(document)) {
             // (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
             // Document sessions can be joined (via Alfred) after a document is functionally deleted.
             context.log?.error(
@@ -104,8 +104,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             return new NoOpLambda(context);
         }
         const sessionOrdererUrl = document.session?.ordererUrl;
-        if (this.serviceConfiguration.externalOrdererUrl && document.session
-            && sessionOrdererUrl !== this.serviceConfiguration.externalOrdererUrl) {
+        if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
             // Session for this document exists in another location.
             context.log?.error(
                 `Received attempt to connect to session existing in different location: ${sessionOrdererUrl}`,

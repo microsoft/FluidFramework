@@ -26,7 +26,7 @@ import {
 import { IDocumentSystemMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import { LumberEventName } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda, createSessionMetric } from "../utils";
+import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
@@ -89,7 +89,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 this.documentCollection.findOne({ documentId, tenantId }),
             ]);
 
-            if (!document || document.scheduledDeletionTime) {
+            if (!isDocumentValid(document)) {
                 // Document sessions can be joined (via Alfred) after a document is functionally deleted.
                 // If the document doesn't exist or is marked for deletion then we trivially accept every message.
                 context.log?.error(
@@ -99,19 +99,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 return new NoOpLambda(context);
             }
             const sessionOrdererUrl = document.session?.ordererUrl;
-            if (this.serviceConfiguration.externalOrdererUrl && document.session
-                && sessionOrdererUrl !== this.serviceConfiguration.externalOrdererUrl) {
+            if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
                 // Session for this document exists in another location.
                 context.log?.error(
                     `Received attempt to connect to session existing in different location: ${sessionOrdererUrl}`,
                     { messageMetaData },
                 );
-                return new NoOpLambda(context);
-            }
-
-            // If the document doesn't exist or is marked for deletion then we trivially accept every message
-            if (!document || document.scheduledDeletionTime) {
-                context.log?.info(`Creating NoOpLambda due to missing document`, { messageMetaData });
                 return new NoOpLambda(context);
             }
 
