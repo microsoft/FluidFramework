@@ -367,9 +367,13 @@ export class BlobManager {
 
         if (local) {
             if (message.metadata.localId === undefined) {
-                // since there is no local ID, we submitted this while online
+                // The current op was submitted while offline.  However, it's possible that a
+                // disconnection happened after submitting the op and we have also created a
+                // localId / pending entry.  We should remove this entry to avoid generating a
+                // second attach op.  The linear search is acceptable since we drain the
+                // 'pendingBlobs' prior to finishing the connection, so typically 'pendingBlobs'
+                // will be empty when processing local ops that were created while online.
                 for (const [id, entry] of this.pendingBlobs) {
-                    // check status because we may have transitioned to offline flow since submitting this op
                     if (entry.storageId === message.metadata.blobId &&
                         entry.status === PendingBlobStatus.OnlinePendingOp) {
                         entry.handleP.resolve(this.getBlobHandle(message.metadata.blobId));
