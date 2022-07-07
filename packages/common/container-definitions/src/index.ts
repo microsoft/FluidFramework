@@ -2,6 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/**
+ * This package contains the interfaces and types concerning the {@link Loader} and loading the {@link Container}.
+ *
+ * @packageDocumentation
+ */
+
 export * from "./audience";
 export * from "./browserPackage";
 export * from "./deltas";
