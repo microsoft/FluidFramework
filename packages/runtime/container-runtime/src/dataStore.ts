@@ -147,7 +147,7 @@ class DataStore implements IDataStore {
             this.pendingAliases.delete(alias);
         });
 
-        this.aliasState = aliased? AliasState.Aliased : AliasState.None;
+        this.aliasState = aliased ? AliasState.Aliased : AliasState.None;
         return aliased ? "Success" : "Conflict";
     }
 
