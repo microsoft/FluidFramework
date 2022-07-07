@@ -3,6 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export * from "./runnerFactory";
-export * from "./runner";
-export * from "./services";
+export * from "./deltaService";

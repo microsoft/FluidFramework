@@ -18,7 +18,6 @@ import {
     IThrottleAndUsageStorageManager,
     IWebServer,
     IWebServerFactory,
-    MongoManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -27,6 +26,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
+import { DeltaService } from "./services";
 
 export class AlfredRunner implements IRunner {
     private server: IWebServer;
@@ -46,7 +46,7 @@ export class AlfredRunner implements IRunner {
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
-        private readonly operationsDbMongoManager: MongoManager,
+        private readonly deltaService: DeltaService,
         private readonly producer: IProducer,
         private readonly metricClientConfig: any,
         private readonly documentsCollection: ICollection<IDocument>,
@@ -65,7 +65,7 @@ export class AlfredRunner implements IRunner {
             this.singleUseTokenCache,
             this.storage,
             this.appTenants,
-            this.operationsDbMongoManager,
+            this.deltaService,
             this.producer,
             this.documentsCollection);
         alfred.set("port", this.port);

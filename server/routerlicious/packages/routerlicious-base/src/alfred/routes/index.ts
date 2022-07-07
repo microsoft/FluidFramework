@@ -7,7 +7,6 @@ import {
     IDocumentStorage,
     IProducer,
     ITenantManager,
-    MongoManager,
     IThrottler,
     ICache,
     ICollection,
@@ -16,6 +15,7 @@ import {
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { DeltaService } from "../services";
 import * as api from "./api";
 
 export interface IRoutes {
@@ -28,7 +28,7 @@ export function create(
     tenantManager: ITenantManager,
     throttler: IThrottler,
     singleUseTokenCache: ICache,
-    operationsDbMongoManager: MongoManager,
+    deltaService: DeltaService,
     storage: IDocumentStorage,
     producer: IProducer,
     appTenants: IAlfredTenant[],
@@ -40,7 +40,7 @@ export function create(
             throttler,
             singleUseTokenCache,
             storage,
-            operationsDbMongoManager,
+            deltaService,
             producer,
             appTenants,
             documentsCollection,

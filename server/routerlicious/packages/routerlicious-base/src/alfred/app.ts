@@ -8,7 +8,6 @@ import {
     IDocumentStorage,
     IProducer,
     ITenantManager,
-    MongoManager,
     IThrottler,
     ICache,
     ICollection,
@@ -30,6 +29,7 @@ import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
+import { DeltaService } from "./services";
 
 export function create(
     config: Provider,
@@ -38,7 +38,7 @@ export function create(
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    operationsDbMongoManager: MongoManager,
+    deltaService: DeltaService,
     producer: IProducer,
     documentsCollection: ICollection<IDocument>) {
     // Maximum REST request size
@@ -91,7 +91,7 @@ export function create(
         tenantManager,
         throttler,
         singleUseTokenCache,
-        operationsDbMongoManager,
+        deltaService,
         storage,
         producer,
         appTenants,

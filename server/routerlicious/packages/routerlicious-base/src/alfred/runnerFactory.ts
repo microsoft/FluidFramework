@@ -22,6 +22,7 @@ import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { AlfredRunner } from "./runner";
+import { DeltaService } from "./services";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
     private readonly webSocketServer: ws.Server;
@@ -92,6 +93,7 @@ export class AlfredResources implements core.IResources {
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
+        public deltaService: DeltaService,
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
@@ -371,6 +373,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             storage,
             appTenants,
             operationsDbMongoManager,
+            new DeltaService(operationsDbMongoManager, tenantManager),
             port,
             documentsCollectionName,
             metricClientConfig,
@@ -395,7 +398,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.storage,
             resources.clientManager,
             resources.appTenants,
-            resources.mongoManager,
+            resources.deltaService,
             resources.producer,
             resources.metricClientConfig,
             resources.documentsCollection,

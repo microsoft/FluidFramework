@@ -11,12 +11,12 @@ import {
     IProducer,
     ITenantManager,
     IThrottler,
-    MongoManager,
 } from "@fluidframework/server-services-core";
 import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { DeltaService } from "../../services";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
@@ -27,12 +27,12 @@ export function create(
     throttler: IThrottler,
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
-    operationsDbMongoManager: MongoManager,
+    deltaService: DeltaService,
     producer: IProducer,
     appTenants: IAlfredTenant[],
     documentsCollection: ICollection<IDocument>): Router {
     const router: Router = Router();
-    const deltasRoute = deltas.create(config, tenantManager, operationsDbMongoManager, appTenants, throttler);
+    const deltasRoute = deltas.create(config, tenantManager, deltaService, appTenants, throttler);
     const documentsRoute = documents.create(
         storage,
         appTenants,
