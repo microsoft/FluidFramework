@@ -286,8 +286,10 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     peek(): T | undefined;
     resume(): void;
     toArray(): T[];
-    // (undocumented)
-    waitTillProcessingDone(): Promise<void>;
+    waitTillProcessingDone(): Promise<{
+        count: number;
+        duration: number;
+    }>;
 }
 
 // @public

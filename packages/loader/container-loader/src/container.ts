@@ -234,11 +234,15 @@ const getCodeProposal =
  * @param eventName - event name
  * @param action - functor to call and measure
  */
-async function ReportIfTooLong(logger: ITelemetryLogger, eventName: string, action: () => Promise<void>) {
+async function ReportIfTooLong(
+    logger: ITelemetryLogger,
+    eventName: string,
+    action: () => Promise<ITelemetryProperties>,
+) {
     const event = PerformanceEvent.start(logger, { eventName });
-    await action();
+    const props = await action();
     if (event.duration > 1000) {
-        event.end();
+        event.end(props);
     }
 }
 
@@ -1200,7 +1204,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 await ReportIfTooLong(
                     this.mc.logger,
                     "WaitOps",
-                    async () => opsBeforeReturnP);
+                    async () => { await opsBeforeReturnP; return {}; });
                 await ReportIfTooLong(
                     this.mc.logger,
                     "WaitOpProcessing",

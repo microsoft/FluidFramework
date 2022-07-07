@@ -30,7 +30,7 @@ export class DeltaQueue<T>
      * When processing is ongoing, holds a deferred that will resolve once processing stops.
      * Undefined when not processing.
      */
-    private processingPromise: Promise<void> | undefined;
+    private processingPromise: Promise<{ count: number; duration: number; }> | undefined;
 
     public get disposed(): boolean {
         return this.isDisposed;
@@ -51,8 +51,8 @@ export class DeltaQueue<T>
         return this.processingPromise === undefined && this.q.length === 0;
     }
 
-    public async waitTillProcessingDone(): Promise<void> {
-        return this.processingPromise;
+    public async waitTillProcessingDone() {
+        return this.processingPromise ?? { count: 0, duration: 0 };
     }
 
     /**
@@ -96,7 +96,7 @@ export class DeltaQueue<T>
         this.pauseCount++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
-        return this.waitTillProcessingDone();
+        await this.waitTillProcessingDone();
     }
 
     public resume(): void {
@@ -114,11 +114,18 @@ export class DeltaQueue<T>
         if (this.anythingToProcess() && this.processingPromise === undefined) {
             // Use a resolved promise to start the processing on a separate stack.
             this.processingPromise = Promise.resolve().then(() => {
-                this.processDeltas();
-                assert(this.processingPromise !== undefined, "invariant");
+                assert(this.processingPromise !== undefined, "reentrancy?");
+                const result = this.processDeltas();
+                assert(this.processingPromise !== undefined, "reentrancy?");
+                return result;
+            }).catch((error) => {
+                this.error = error;
+                this.emit("error", error);
+                return { count: 0, duration: 0 };
+            }).finally(() => {
                 this.processingPromise = undefined;
             });
-            assert(this.processingPromise !== undefined, "invariant");
+            assert(this.processingPromise !== undefined, "processDeltas() should run async");
         }
     }
 
@@ -130,29 +137,26 @@ export class DeltaQueue<T>
      * Executes the delta processing loop until a stop condition is reached.
      */
     private processDeltas() {
-        try {
-            const start = performance.now();
-            let count = 0;
+        const start = performance.now();
+        let count = 0;
 
-            // For grouping to work we must process all local messages immediately and in the single turn.
-            // So loop over them until no messages to process, we have become paused, or hit an error.
-            while (this.anythingToProcess()) {
-                // Get the next message in the queue
-                const next = this.q.shift();
-                count++;
-                // Process the message.
-                // We know next is defined since we did a length check just prior to shifting.
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.worker(next!);
-                this.emit("op", next);
-            }
-
-            if (this.q.length === 0) {
-                this.emit("idle", count, performance.now() - start);
-            }
-        } catch (error) {
-            this.error = error;
-            this.emit("error", error);
+        // For grouping to work we must process all local messages immediately and in the single turn.
+        // So loop over them until no messages to process, we have become paused, or hit an error.
+        while (this.anythingToProcess()) {
+            // Get the next message in the queue
+            const next = this.q.shift();
+            count++;
+            // Process the message.
+            // We know next is defined since we did a length check just prior to shifting.
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.worker(next!);
+            this.emit("op", next);
         }
+
+        const duration = performance.now() - start;
+        if (this.q.length === 0) {
+            this.emit("idle", count, duration);
+        }
+        return {count, duration };
     }
 }
