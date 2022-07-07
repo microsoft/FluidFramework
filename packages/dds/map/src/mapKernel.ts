@@ -32,6 +32,7 @@ interface IMapMessageHandler {
         op: IMapOperation,
         local: boolean,
         localOpMetadata: unknown,
+        isStashedOp: boolean,
     ): void;
 
     /**
@@ -455,13 +456,13 @@ export class MapKernel {
         op: IMapOperation,
         local: boolean,
         localOpMetadata: unknown,
-    ): boolean {
+        isStashedOp: boolean,
+    ): unknown {
         const handler = this.messageHandlers.get(op.type);
         if (handler === undefined) {
-            return false;
+            throw new Error("no IMapOperation handler found");
         }
-        handler.process(op, local, localOpMetadata);
-        return true;
+        return handler.process(op, local, localOpMetadata, isStashedOp);
     }
 
     /**
@@ -596,7 +597,11 @@ export class MapKernel {
         op: IMapKeyOperation,
         local: boolean,
         localOpMetadata: unknown,
+        isStashedOp: boolean,
     ): boolean {
+        if (isStashedOp) {
+            return true;
+        }
         if (this.pendingClearMessageIds.length > 0) {
             if (local) {
                 assert(localOpMetadata !== undefined && isMapKeyLocalOpMetadata(localOpMetadata) &&
@@ -638,8 +643,8 @@ export class MapKernel {
         messageHandlers.set(
             "clear",
             {
-                process: (op: IMapClearOperation, local, localOpMetadata) => {
-                    if (local) {
+                process: (op: IMapClearOperation, local, localOpMetadata, isStashedOp) => {
+                    if (local && !isStashedOp) {
                         assert(isClearLocalOpMetadata(localOpMetadata),
                             0x015 /* "pendingMessageId is missing from the local client's clear operation" */);
                         const pendingClearMessageId = this.pendingClearMessageIds.shift();
@@ -651,7 +656,9 @@ export class MapKernel {
                         this.clearExceptPendingKeys();
                         return;
                     }
+                    // const copy = this.isAttached() ? new Map<string, ILocalValue>(this.data) : undefined;
                     this.clearCore(local);
+                    return this.getClearLocalOpMetadata(op);
                 },
                 submit: (op: IMapClearOperation, localOpMetadata: unknown) => {
                     assert(isClearLocalOpMetadata(localOpMetadata), 0x2fc /* Invalid localOpMetadata for clear */);
@@ -669,11 +676,12 @@ export class MapKernel {
         messageHandlers.set(
             "delete",
             {
-                process: (op: IMapDeleteOperation, local, localOpMetadata) => {
-                    if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
+                process: (op: IMapDeleteOperation, local, localOpMetadata, isStashedOp) => {
+                    if (!this.needProcessKeyOperation(op, local, localOpMetadata, isStashedOp)) {
                         return;
                     }
-                    this.deleteCore(op.key, local);
+                    const previousValue = this.deleteCore(op.key, local);
+                    return this.getKeyLocalOpMetadata(op, previousValue);
                 },
                 submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -686,14 +694,19 @@ export class MapKernel {
         messageHandlers.set(
             "set",
             {
-                process: (op: IMapSetOperation, local, localOpMetadata) => {
-                    if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
+                process: (op: IMapSetOperation, local, localOpMetadata, isStashedOp) => {
+                    if (!this.needProcessKeyOperation(op, local, localOpMetadata, isStashedOp)) {
                         return;
                     }
 
                     // needProcessKeyOperation should have returned false if local is true
                     const context = this.makeLocal(op.key, op.value);
-                    this.setCore(op.key, context, local);
+                    const previousValue = this.setCore(op.key, context, local);
+                    if (isStashedOp) {
+                        // eslint-disable-next-line no-param-reassign
+                        localOpMetadata = this.getKeyLocalOpMetadata(op, previousValue);
+                    }
+                    return localOpMetadata;
                 },
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -718,7 +731,7 @@ export class MapKernel {
      * @param op - The clear message
      */
     private submitMapClearMessage(op: IMapClearOperation, previousMap?: Map<string, ILocalValue>): void {
-        const metadata = { type: "clear", pendingMessageId: this.getMapClearMessageId(), previousMap };
+        const metadata = this.getClearLocalOpMetadata(op, previousMap);
         this.submitMessage(op, metadata);
     }
 
@@ -739,11 +752,20 @@ export class MapKernel {
      * @param previousValue - The value of the key before this op
      */
     private submitMapKeyMessage(op: IMapKeyOperation, previousValue?: ILocalValue): void {
+        const localMetadata = this.getKeyLocalOpMetadata(op, previousValue);
+        this.submitMessage(op, localMetadata);
+    }
+
+    private getClearLocalOpMetadata(op: IMapClearOperation, previousMap?: Map<string, ILocalValue>): unknown {
+        return { type: "clear", pendingMessageId: this.getMapClearMessageId(), previousMap };
+    }
+
+    private getKeyLocalOpMetadata(op: IMapKeyOperation, previousValue?: ILocalValue): unknown {
         const pendingMessageId = this.getMapKeyMessageId(op);
         const localMetadata = previousValue ?
             { type: "edit", pendingMessageId, previousValue } :
             { type: "add", pendingMessageId };
-        this.submitMessage(op, localMetadata);
+        return localMetadata;
     }
 
     /**

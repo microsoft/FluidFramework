@@ -90,6 +90,7 @@ const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCa
     const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
     [...Array(lots).keys()].map((i) => dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i));
+    // map.set("another", "value");
 
     await args.ensureSynchronized();
     await args.opProcessingController.pauseProcessing(container);
@@ -171,6 +172,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         cell1 = await dataStore1.getSharedObject<SharedCell>(cellId);
         string1 = await dataStore1.getSharedObject<SharedString>(stringId);
         string1.insertText(0, "hello");
+        // map1.set("in", "beforeEach");
 
         waitForSummary = async () => {
             await new Promise<void>((resolve, reject) => {

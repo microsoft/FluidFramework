@@ -355,8 +355,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @internal
      */
     protected applyStashedOp(content: any): unknown {
-        this.kernel.tryProcessMessage(content, false, undefined);
-        return this.kernel.tryGetStashedOpLocalMetadata(content);
+        return this.kernel.tryProcessMessage(content, true, undefined, true);
+        // return this.kernel.tryGetStashedOpLocalMetadata(content);
     }
 
     /**
@@ -365,7 +365,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      */
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         if (message.type === MessageType.Operation) {
-            this.kernel.tryProcessMessage(message.contents, local, localOpMetadata);
+            this.kernel.tryProcessMessage(message.contents, local, localOpMetadata, false);
         }
     }
 
