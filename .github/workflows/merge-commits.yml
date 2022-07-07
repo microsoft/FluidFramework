@@ -11,9 +11,37 @@ env:
   EMAIL: banana-bot@outlook.com
 
 jobs:
-  dequeue:
+  check-pr:
     runs-on: ubuntu-latest
     if: github.repository_owner == 'microsoft'
+    steps:
+      - run: npm install @octokit/core
+      - name: Check PR using octokit
+        uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
+        id: check-pr-exists
+        with:
+          token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
+          script: |
+            const { Octokit } = require("@octokit/core");
+            const token = `${{ secrets.GITHUB_TOKEN }}`;
+            const octokit = new Octokit({ auth: token });
+            const data = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
+              owner: 'sonalivdeshpande',
+              repo: 'FluidFramework'
+            });
+            console.log("data----", data);
+            console.log("items----", data.items);
+            console.log("length---", data.items.length);
+            for(var i=0; i<data.items.length; i++) {
+              if(data.items[i].title.startsWith('Automation: Main Next Integrate')) {
+                return true;
+              }
+            }
+            return false;
+  dequeue:
+    runs-on: ubuntu-latest
+    needs: [ check-pr-exists ]
+    if: needs.check-pr-exists.result == 'false'
     steps:
       - run: npm install @azure/storage-queue
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
@@ -93,7 +121,7 @@ jobs:
             const newPr = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
               owner: 'microsoft',
               repo: 'FluidFramework',
-              title: 'Main Next Integrate',
+              title: 'Automation: Main Next Integrate',
               body: 'This commit is queued for getting merged with the next branch. Please make sure to resolve any conflicts/CI failures seen on this PR. Thank you!',
               head: sha,
               base: 'next'
