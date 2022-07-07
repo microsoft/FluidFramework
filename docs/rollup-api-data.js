@@ -10,7 +10,19 @@
  * file.
  */
 
-/** An array of objects describing how members should be combined. */
+/**
+ * An array of objects describing how members should be combined.
+ *
+ * This can be considered a workaround simulating API-Extractor's
+ * {@link https://api-extractor.com/pages/configs/api-extractor_json/#bundledpackages | bundledPackages} feature,
+ * which currently has at least one issue preventing us from using it.
+ *
+ * See this issue for more details: {@link https://github.com/microsoft/rushstack/issues/3521}.
+ *
+ * Once that issue is resolved, we probably want to just leverage package bundling, instead of directly
+ * editing the API reports.
+ *
+ */
 const memberCombineInstructions = [
     {
         package: "@fluidframework/azure-client",
