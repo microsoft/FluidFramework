@@ -121,7 +121,7 @@ export function checkoutTests(
 
 			// Is invalid after an invalid edit
 			expect(() =>
-				checkout.applyChanges(...Change.insertTree(testTree.left, StablePlace.after(testTree.left)))
+				checkout.applyChanges(Change.insertTree(testTree.left, StablePlace.after(testTree.left)))
 			).throws('Locally constructed edits must be well-formed and valid.');
 			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 			checkout.abortEdit();
@@ -146,7 +146,7 @@ export function checkoutTests(
 				},
 				{ side: Side.After }
 			);
-			expect(() => checkout.applyChanges(...malformedMove)).throws(
+			expect(() => checkout.applyChanges(malformedMove)).throws(
 				'Locally constructed edits must be well-formed and valid.'
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
@@ -171,7 +171,7 @@ export function checkoutTests(
 
 			// tryApplyEdit aborts when applying an invalid edit and returns undefined
 			expect(
-				checkout.tryApplyEdit(...Change.insertTree(simpleTestTree.left, StablePlace.after(simpleTestTree.left)))
+				checkout.tryApplyEdit(Change.insertTree(simpleTestTree.left, StablePlace.after(simpleTestTree.left)))
 			).to.be.undefined;
 
 			// Next edit is unaffected
@@ -223,7 +223,7 @@ export function checkoutTests(
 
 			// Is invalid after an invalid edit
 			expect(() =>
-				checkout.applyChanges(...Change.insertTree(testTree.left, StablePlace.after(testTree.left)))
+				checkout.applyChanges(Change.insertTree(testTree.left, StablePlace.after(testTree.left)))
 			).throws('Locally constructed edits must be well-formed and valid.');
 			expect(checkout.getEditStatus()).equals(EditStatus.Invalid);
 
@@ -255,7 +255,7 @@ export function checkoutTests(
 				},
 				{ side: Side.After }
 			);
-			expect(() => checkout.applyChanges(...malformedMove)).throws(
+			expect(() => checkout.applyChanges(malformedMove)).throws(
 				'Locally constructed edits must be well-formed and valid.'
 			);
 			expect(checkout.getEditStatus()).equals(EditStatus.Malformed);
@@ -466,7 +466,7 @@ export function checkoutTests(
 
 			const newLeftNode = simpleTestTree.buildLeaf(simpleTestTree.generateNodeId());
 			checkout.openEdit();
-			checkout.applyChanges(...setTrait(simpleTestTree.left.traitLocation, [newLeftNode]));
+			checkout.applyChanges(setTrait(simpleTestTree.left.traitLocation, [newLeftNode]));
 
 			// Concurrently, the second client deletes the right node. This will not conflict with the operation performed
 			// on the left trait on the first client.
@@ -526,7 +526,7 @@ export function checkoutTests(
 			checkout.openEdit();
 			// Move the left node to after the right node
 			checkout.applyChanges(
-				...Change.move(StableRange.only(simpleTestTree.left), StablePlace.after(simpleTestTree.right))
+				Change.move(StableRange.only(simpleTestTree.left), StablePlace.after(simpleTestTree.right))
 			);
 
 			// Concurrently, the second client deletes the right node. This will conflict with the move operation by the first client.

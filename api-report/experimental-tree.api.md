@@ -155,7 +155,11 @@ export enum ChangeTypeInternal {
 export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
     protected constructor(tree: SharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler);
     abortEdit(): void;
+    applyChanges(changes: Change[]): void;
+    // (undocumented)
     applyChanges(...changes: Change[]): void;
+    applyEdit(changes: Change[]): EditId;
+    // (undocumented)
     applyEdit(...changes: Change[]): EditId;
     closeEdit(): EditId;
     // (undocumented)
@@ -175,7 +179,11 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
     revert(editId: EditId): void;
     readonly tree: SharedTree;
+    protected tryApplyChangesInternal(changes: ChangeInternal[]): EditStatus;
+    // (undocumented)
     protected tryApplyChangesInternal(...changes: ChangeInternal[]): EditStatus;
+    tryApplyEdit(changes: Change[]): EditId | undefined;
+    // (undocumented)
     tryApplyEdit(...changes: Change[]): EditId | undefined;
     // (undocumented)
     abstract waitForEditsToSubmit(): Promise<void>;
