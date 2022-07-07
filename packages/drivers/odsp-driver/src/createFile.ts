@@ -12,7 +12,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
     IFileEntry,
-    InstrumentedStorageTokenFetcher,
     IOdspResolvedUrl,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
@@ -32,7 +31,6 @@ import {
     getOrigin,
     maxUmpPostBodySize,
 } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
@@ -41,6 +39,7 @@ import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ClpCompliantAppHeader } from "./contractsPublic";
+import { InstrumentedStorageTokenFetcher, ISnapshotContents } from "./contractsInternal";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;

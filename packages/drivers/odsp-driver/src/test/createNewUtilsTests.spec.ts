@@ -10,7 +10,8 @@ import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes } from "@fluidframework/od
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { EpochTracker } from "../epochTracker";
-import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
+import { ISnapshotContents } from "../contractsInternal";
 import { INewFileInfo, createCacheSnapshotKey } from "../odspUtils";
 import { LocalPersistentCache } from "../odspCache";
 import { mockFetchOk } from "./mockFetch";

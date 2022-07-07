@@ -5,7 +5,7 @@
 
 import * as api from "@fluidframework/protocol-definitions";
 import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshotContents } from "./contractsInternal";
 
 /** https://portal.microsofticm.com/imp/v3/incidents/details/308931013/home
  * The commits property was removed from protocol-definitions but in order to support back compat, we will

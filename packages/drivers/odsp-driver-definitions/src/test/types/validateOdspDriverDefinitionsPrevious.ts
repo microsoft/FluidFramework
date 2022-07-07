@@ -184,30 +184,6 @@ use_old_InterfaceDeclaration_IFileEntry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_InstrumentedStorageTokenFetcher": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_InstrumentedStorageTokenFetcher():
-    TypeOnly<old.InstrumentedStorageTokenFetcher>;
-declare function use_current_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
-    use: TypeOnly<current.InstrumentedStorageTokenFetcher>);
-use_current_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
-    get_old_TypeAliasDeclaration_InstrumentedStorageTokenFetcher());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_InstrumentedStorageTokenFetcher": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_InstrumentedStorageTokenFetcher():
-    TypeOnly<current.InstrumentedStorageTokenFetcher>;
-declare function use_old_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
-    use: TypeOnly<old.InstrumentedStorageTokenFetcher>);
-use_old_TypeAliasDeclaration_InstrumentedStorageTokenFetcher(
-    get_current_TypeAliasDeclaration_InstrumentedStorageTokenFetcher());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IOdspError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IOdspError():

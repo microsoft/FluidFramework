@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshotContents } from "./contractsInternal";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { ISnapshotTreeEx } from "./contracts";
 import {

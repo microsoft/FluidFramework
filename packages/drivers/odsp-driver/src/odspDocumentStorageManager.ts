@@ -22,7 +22,6 @@ import {
     IOdspResolvedUrl,
     ISnapshotOptions,
     OdspErrorType,
-    InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import {
     IDocumentStorageGetVersionsResponse,
@@ -37,12 +36,12 @@ import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
 } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker } from "./epochTracker";
 import { OdspSummaryUploadManager } from "./odspSummaryUploadManager";
 import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase";
+import { InstrumentedStorageTokenFetcher, ISnapshotContents } from "./contractsInternal";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 

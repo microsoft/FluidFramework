@@ -30,12 +30,11 @@ import {
     TokenFetcher,
     ICacheEntry,
     snapshotKey,
-    InstrumentedStorageTokenFetcher,
     IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions";
 import { fetch } from "./fetch";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { IOdspSnapshot } from "./contracts";
+import { InstrumentedStorageTokenFetcher } from "./contractsInternal";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";
 
@@ -242,36 +241,17 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger) =>
             },
         });
 
-export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
-    let numTrees = 0;
-    let numBlobs = 0;
-    let encodedBlobsSize = 0;
-    let decodedBlobsSize = 0;
-    for (const tree of snapshot.trees) {
-        for (const treeEntry of tree.entries) {
-            if (treeEntry.type === "blob") {
-                numBlobs++;
-            } else if (treeEntry.type === "tree") {
-                numTrees++;
-            }
-        }
-    }
-    if (snapshot.blobs !== undefined) {
-        for (const blob of snapshot.blobs) {
-            decodedBlobsSize += blob.size;
-            encodedBlobsSize += blob.content.length;
-        }
-    }
-    return { numTrees, numBlobs, encodedBlobsSize, decodedBlobsSize };
-}
-
 export function toInstrumentedOdspTokenFetcher(
     logger: ITelemetryLogger,
     resolvedUrlParts: IOdspUrlParts,
     tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
     throwOnNullToken: boolean,
 ): InstrumentedStorageTokenFetcher {
-    return async (options: TokenFetchOptions, name: string, alwaysRecordTokenFetchTelemetry: boolean = false) => {
+    return async (
+                options: TokenFetchOptions,
+                name: string,
+                alwaysRecordTokenFetchTelemetry: boolean = false,
+                telemetryProps?: ITelemetryProperties) => {
         // Telemetry note: if options.refresh is true, there is a potential perf issue:
         // Host should optimize and provide non-expired tokens on all critical paths.
         // Exceptions: race conditions around expiration, revoked tokens, host that does not care
@@ -283,6 +263,7 @@ export function toInstrumentedOdspTokenFetcher(
                 attempts: options.refresh ? 2 : 1,
                 hasClaims: !!options.claims,
                 hasTenantId: !!options.tenantId,
+                ...telemetryProps,
             },
             async (event) => tokenFetcher({
                 ...options,

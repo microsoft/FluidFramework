@@ -36,7 +36,6 @@ import {
     TokenFetchOptions,
     IEntry,
     HostStoragePolicy,
-    InstrumentedStorageTokenFetcher,
     OdspErrorType,
 } from "@fluidframework/odsp-driver-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
@@ -52,6 +51,7 @@ import { EpochTracker } from "./epochTracker";
 import { OpsCache } from "./opsCaching";
 import { RetryErrorsStorageAdapter } from "./retryErrorsStorageAdapter";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { InstrumentedStorageTokenFetcher } from "./contractsInternal";
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected

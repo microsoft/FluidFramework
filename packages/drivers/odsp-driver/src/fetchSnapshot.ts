@@ -13,7 +13,6 @@ import {
     IOdspResolvedUrl,
     ISnapshotOptions,
     OdspErrorType,
-    InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { isRuntimeMessage, NonRetryableError } from "@fluidframework/driver-utils";
@@ -27,12 +26,12 @@ import {
     getWithRetryForTokenRefreshRepeat,
     IOdspResponse,
 } from "./odspUtils";
-import { ISnapshotContents } from "./odspPublicUtils";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser";
 import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser";
 import { ReadBuffer } from "./ReadBufferUtils";
 import { EpochTracker } from "./epochTracker";
 import { pkgVersion } from "./packageVersion";
+import { InstrumentedStorageTokenFetcher, ISnapshotContents } from "./contractsInternal";
 
 /**
  * Enum to support different types of snapshot formats.

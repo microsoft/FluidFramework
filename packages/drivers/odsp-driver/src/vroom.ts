@@ -5,13 +5,14 @@
 
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { InstrumentedStorageTokenFetcher, IOdspUrlParts } from "@fluidframework/odsp-driver-definitions";
 import { ISocketStorageDiscovery } from "./contracts";
 import { getOrigin, TokenFetchOptionsEx } from "./odspUtils";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { runWithRetry } from "./retryUtils";
+import { InstrumentedStorageTokenFetcher } from "./contractsInternal";
 
 interface IJoinSessionBody {
     requestSocketToken: boolean;

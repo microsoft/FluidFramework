@@ -7,7 +7,7 @@ import { v4 as uuid } from "uuid";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
 import { stringToBuffer, unreachableCase } from "@fluidframework/common-utils";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshotContents } from "./contractsInternal";
 import { ISnapshotTreeEx } from "./contracts";
 
 /**

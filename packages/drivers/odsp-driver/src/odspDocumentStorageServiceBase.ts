@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext, LoaderCachingPolicy } from "@fluidframework/driver-definitions";
 import * as api from "@fluidframework/protocol-definitions";
 import { defaultCacheExpiryTimeoutMs } from "./epochTracker";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshotContents } from "./contractsInternal";
 
 /* eslint-disable max-len */
 

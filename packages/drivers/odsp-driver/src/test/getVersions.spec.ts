@@ -19,7 +19,8 @@ import {
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
 import { INewFileInfo } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
-import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
+import { getHashedDocumentId } from "../odspPublicUtils";
+import { ISnapshotContents } from "../contractsInternal";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService, defaultSummarizerCacheExpiryTimeout } from "../odspDocumentStorageManager";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";

@@ -8,7 +8,6 @@ import { v4 as uuid } from "uuid";
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { IDeltasFetchResult, IDocumentDeltaStorageService } from "@fluidframework/driver-definitions";
 import {
     requestOps,
@@ -17,6 +16,7 @@ import {
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getWithRetryForTokenRefresh } from "./odspUtils";
+import { InstrumentedStorageTokenFetcher } from "./contractsInternal";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -41,13 +41,18 @@ export class OdspDeltaStorageService {
         from: number,
         to: number,
         telemetryProps: ITelemetryProperties,
-        fetchReason?: string,
+        reason?: string,
     ): Promise<IDeltasFetchResult> {
         return getWithRetryForTokenRefresh(async (options) => {
             // Note - this call ends up in getSocketStorageDiscovery() and can refresh token
             // Thus it needs to be done before we call getStorageToken() to reduce extra calls
             const baseUrl = this.buildUrl(from, to);
-            const storageToken = await this.getStorageToken(options, "DeltaStorage");
+            const storageToken = await this.getStorageToken(
+                options, // options
+                "DeltaStorage", // name
+                false, // alwaysRecordTokenFetchTelemetry
+                { reason }, // telemetryProps
+            );
 
             const formBoundary = uuid();
             let postBody = `--${formBoundary}\r\n`;
@@ -78,7 +83,7 @@ export class OdspDeltaStorageService {
                 },
                 "ops",
                 true,
-                fetchReason,
+                reason,
             );
             clearTimeout(timer);
             const deltaStorageResponse = response.content;

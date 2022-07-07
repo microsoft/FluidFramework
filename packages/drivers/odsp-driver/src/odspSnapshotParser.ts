@@ -6,7 +6,7 @@
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IOdspSnapshot, IOdspSnapshotCommit, ISnapshotTreeEx } from "./contracts";
-import { ISnapshotContents } from "./odspPublicUtils";
+import { ISnapshotContents } from "./contractsInternal";
 
 /**
  * Build a tree hierarchy base on a flat tree
