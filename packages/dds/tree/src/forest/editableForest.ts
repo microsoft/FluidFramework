@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { StoredSchemaRepository } from "../schema";
 import { FieldKey, DetachedRange } from "../tree";
 import { Value, ITreeCursor } from "./cursor";
 import { IForestSubscription, NodeId } from "./forest";
@@ -17,6 +18,10 @@ import { IForestSubscription, NodeId } from "./forest";
  * TODO: improve these APIs, addressing the above.
  */
 export interface IEditableForest extends IForestSubscription {
+
+    // Overrides field from IForestSubscription adding editing support.
+    readonly schema: StoredSchemaRepository;
+
     /**
      * Adds the supplied nodes to the forest.
      * @param nodes - the sequence of nodes to add to the forest.

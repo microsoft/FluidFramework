@@ -4,7 +4,9 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { DisposingDependee, ObservingDependent, recordDependency, SimpleDependee } from "../../dependency-tracking";
+import {
+    DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
+} from "../../dependency-tracking";
 import {
     ITreeCursor, ITreeSubscriptionCursor, NodeId,
     Anchor, IEditableForest,
@@ -13,13 +15,16 @@ import {
     Value,
     FieldLocation, TreeLocation,
 } from "../../forest";
+import { StoredSchemaRepository } from "../../schema";
 import { FieldKey, TreeType, DetachedRange } from "../../tree";
 import { brand } from "../../util";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
+    private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
     public readonly anchors: Set<ObjectAnchor> = new Set();
     public readonly root: Anchor = new RootAnchor();
     public readonly rootField: DetachedRange = this.newRange();
+    public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
 
     private readonly roots: Map<DetachedRange, ObjectField> = new Map();
 
@@ -48,6 +53,8 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     public constructor() {
         super("object-forest.ObjectForest");
         this.roots.set(this.rootField, []);
+        // Invalidate forest if schema change.
+        recordDependency(this.dependent, this.schema);
     }
 
     private nextRange = 0;

@@ -4,6 +4,7 @@
  */
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
+import { SchemaRepository } from "../schema";
 import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
 /**
@@ -31,6 +32,14 @@ export interface IForestSubscription extends Dependee {
     // but then accessing it would reduce the ability to mutate in place as an optimization.
     // Maybe add an explicit getter with a perf disclaimer? For now just expose subset of functionality:
     // current(): IForestSnapshot;
+
+    /**
+     * Schema used within this forest.
+     * All data must conform to these schema.
+     *
+     * The root's schema is tracked under {@link rootFieldKey}.
+     */
+    readonly schema: SchemaRepository & Dependee;
 
     /**
      * Allocates a cursor in the "cleared" state.
