@@ -275,4 +275,26 @@ describe("Tests for Epoch Tracker", () => {
             await epochTracker.get(cacheEntry1) === undefined,
             "Entry in cache should be absent because it was epoch 409");
     });
+
+    it("Check for resolved url on LocationRedirection error", async () => {
+        let success: boolean = true;
+        const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
+        try {
+            await mockFetchSingle(
+                async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
+                async () => createResponse(
+                    { "x-fluid-epoch": "epoch1" },
+                    { error: { "message": "locationMoved", "@error.redirectLocation": newSiteUrl } },
+                    404,
+                ));
+        } catch (error: any) {
+            success = false;
+            assert.strictEqual(error.errorType, DriverErrorType.locationRedirection,
+                "Error should be locationRedirection error");
+            const newResolvedUrl: IOdspResolvedUrl = error.redirectUrl;
+            assert.strictEqual(newResolvedUrl.siteUrl, newSiteUrl, "New site url should match");
+            assert.strictEqual(newResolvedUrl.driveId, driveId, "driveId should remain same");
+        }
+        assert.strictEqual(success, false, "Fetching should not succeed!!");
+    });
 });

@@ -12,7 +12,7 @@ import {
     throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspError, OdspErrorType } from "@fluidframework/odsp-driver-definitions";
+import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
@@ -279,7 +279,7 @@ describe("Odsp Error", () => {
         };
         const error: any = createOdspNetworkErrorWithResponse(
             "The site has been moved to a new location.", 404, undefined, JSON.stringify(responseText));
-        assert.strictEqual(error.errorType, OdspErrorType.locationRedirection, "Error type should be locationRedirection");
+        assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError, "Error type should be locationRedirection");
         assert.strictEqual(error.redirectLocation, redirectLocation, "Site location should match");
         assert.strictEqual(error.statusCode, 404, "Status code should match");
     });
