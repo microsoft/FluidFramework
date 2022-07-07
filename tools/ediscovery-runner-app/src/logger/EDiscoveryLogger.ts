@@ -1,0 +1,32 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import * as fs from "fs";
+import { ITelemetryBaseEvent, ITelemetryErrorEvent, ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+
+/**
+ * TODO: Look at FileLogger class in stress tests
+ */
+export default class EDiscoveryLogger implements ITelemetryBaseLogger {
+  public supportsTags?: true | undefined;
+  
+  private _fileName: string;
+
+  public constructor(fileName: string) {
+    this._fileName = fileName;
+  }
+
+  
+  /**
+   * Appending each line to file right away for now
+   * @param event - TODO
+   */
+  public send(event: ITelemetryBaseEvent): void {
+    const logEvent = JSON.stringify(event);
+    console.log(logEvent);
+
+    fs.appendFileSync(this._fileName, `${logEvent}\n`);
+  }
+}

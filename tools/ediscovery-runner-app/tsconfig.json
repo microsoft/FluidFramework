@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "lib/",
+    "target": "es2017",
+    "module": "commonjs",
+    "composite": true,
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../office-bohemia-build-tools/tsconfig.json"
+    }
+  ]
+}

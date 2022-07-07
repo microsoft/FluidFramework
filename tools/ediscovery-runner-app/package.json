@@ -1,0 +1,30 @@
+{
+  "name": "@fluidx/ediscovery-runner-app",
+  "version": "0.0.0",
+  "description": "Utility for exporting fluid files for e-discovery",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://office.visualstudio.com/DefaultCollection/OC/_git/office-bohemia"
+  },
+  "scripts": {
+    "clean": "just-scripts clean",
+    "build": "just-scripts build",
+    "lint": "just-scripts lint",
+    "bundle": "just-scripts bundle"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.12",
+    "@types/yargs": "^15.0.10",
+    "esbuild": "^0.14.11",
+    "webpack": "^5.33.2"
+  },
+  "dependencies": {
+    "@fluidframework/common-definitions": "^0.20.1",
+    "azure-devops-node-api": "^10.1.2",
+    "jest": "28.1.1",
+    "jszip": "^3.7.0",
+    "tslib": "^2.1.0",
+    "yargs": "^16.1.1"
+  }
+}
