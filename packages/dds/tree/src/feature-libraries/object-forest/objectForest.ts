@@ -41,7 +41,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         // Currently we assume you only ever need to access a root of you know it exists.
         // Thus we do not track observation of the existence of the root, and error if it does not exists.
         const root = this.roots.get(item);
-        assert(root !== undefined, "ObjectForest.getRoot only valid for existing roots");
+        assert(root !== undefined, 0x335 /* ObjectForest.getRoot only valid for existing roots */);
         return root;
     }
 
@@ -79,9 +79,9 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     tryGet(
         destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent | undefined,
     ): TreeNavigationResult {
-        assert(destination instanceof ObjectAnchor, "ObjectForest must only be given its own Anchors");
-        assert(cursorToMove instanceof Cursor, "ObjectForest must only be given its own Cursor type");
-        assert(cursorToMove.forest === this, "ObjectForest must only be given its own Cursor");
+        assert(destination instanceof ObjectAnchor, 0x336 /* ObjectForest must only be given its own Anchors */);
+        assert(cursorToMove instanceof Cursor, 0x337 /* ObjectForest must only be given its own Cursor type */);
+        assert(cursorToMove.forest === this, 0x338 /* ObjectForest must only be given its own Cursor */);
         const node = destination.find(this, observer);
         if (node === undefined) {
             return TreeNavigationResult.NotFound;
@@ -133,7 +133,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 abstract class ObjectAnchor implements Anchor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
     free(): void {
-        assert(this.state === ITreeSubscriptionCursorState.Current, "Anchor must not be double freed");
+        assert(this.state === ITreeSubscriptionCursorState.Current, 0x339 /* Anchor must not be double freed */);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 
@@ -170,7 +170,7 @@ class ObjectNode {
     public readonly children: Map<FieldKey, ObjectField> = new Map();
     public constructor(public type: TreeType, public value: Value = undefined) { }
     free(): void {
-        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Anchor must not be double freed");
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33a /* Anchor must not be double freed */);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 }
@@ -200,7 +200,7 @@ class Cursor implements ITreeSubscriptionCursor {
     private siblings?: ObjectNode[];
 
     public clear(): void {
-        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Cursor must not be freed");
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33b /* Cursor must not be freed */);
         this.root = undefined;
         this.state = ITreeSubscriptionCursorState.Cleared;
         this.parentStack.length = 0;
@@ -210,7 +210,7 @@ class Cursor implements ITreeSubscriptionCursor {
     }
 
     public set(root: DetachedRange, index: number): void {
-        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Cursor must not be freed");
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33c /* Cursor must not be freed */);
         this.clear();
         this.root = root;
         this.state = ITreeSubscriptionCursorState.Current;
@@ -219,8 +219,8 @@ class Cursor implements ITreeSubscriptionCursor {
     }
 
     getNode(): ObjectNode {
-        assert(this.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
-        assert(this.parentStack.length > 0, "Cursor must be current to be used");
+        assert(this.state === ITreeSubscriptionCursorState.Current, 0x33d /* Cursor must be current to be used */);
+        assert(this.parentStack.length > 0, 0x33e /* Cursor must be current to be used */);
         return this.parentStack[this.parentStack.length - 1];
     }
 
@@ -240,7 +240,7 @@ class Cursor implements ITreeSubscriptionCursor {
         throw new Error("Method not implemented.");
     }
     free(): void {
-        assert(this.state !== ITreeSubscriptionCursorState.Freed, "Cursor must not be double freed");
+        assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
     buildAnchor(): Anchor {
@@ -259,7 +259,7 @@ class Cursor implements ITreeSubscriptionCursor {
         return TreeNavigationResult.NotFound;
     }
     seek(offset: number): { result: TreeNavigationResult; moved: number; } {
-        assert(this.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
+        assert(this.state === ITreeSubscriptionCursorState.Current, 0x340 /* Cursor must be current to be used */);
         const index = offset + this.indexStack[this.indexStack.length - 1];
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const child = this.siblings![index];
@@ -272,7 +272,7 @@ class Cursor implements ITreeSubscriptionCursor {
         return { result: TreeNavigationResult.NotFound, moved: offset };
     }
     up(): TreeNavigationResult {
-        assert(this.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
+        assert(this.state === ITreeSubscriptionCursorState.Current, 0x341 /* Cursor must be current to be used */);
         if (this.parentStack.length === 0) {
             return TreeNavigationResult.NotFound;
         }

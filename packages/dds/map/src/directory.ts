@@ -1278,7 +1278,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                 0x00f /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
             const pendingClearMessageId = this.pendingClearMessageIds.shift();
             assert(pendingClearMessageId === localOpMetadata.pendingMessageId,
-                "pendingMessageId does not match");
+                0x32a /* pendingMessageId does not match */);
             return;
         }
         this.clearExceptPendingKeys();
@@ -1397,11 +1397,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public resubmitClearMessage(op: IDirectoryClearOperation, localOpMetadata: unknown): void {
-        assert(isClearLocalOpMetadata(localOpMetadata), "Invalid localOpMetadata for clear");
+        assert(isClearLocalOpMetadata(localOpMetadata), 0x32b /* Invalid localOpMetadata for clear */);
         // We don't reuse the metadata pendingMessageId but send a new one on each submit.
         const pendingClearMessageId = this.pendingClearMessageIds.shift();
         assert(pendingClearMessageId === localOpMetadata.pendingMessageId,
-            "pendingMessageId does not match");
+            0x32c /* pendingMessageId does not match */);
         this.submitClearMessage(op, localOpMetadata.previousStorage);
     }
 
@@ -1439,12 +1439,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public resubmitKeyMessage(op: IDirectoryKeyOperation, localOpMetadata: unknown): void {
-        assert(isKeyEditLocalOpMetadata(localOpMetadata), "Invalid localOpMetadata in submit");
+        assert(isKeyEditLocalOpMetadata(localOpMetadata), 0x32d /* Invalid localOpMetadata in submit */);
 
         // clear the old pending message id
         const pendingMessageIds = this.pendingKeys.get(op.key);
         assert(pendingMessageIds !== undefined && pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-            "Unexpected pending message received");
+            0x32e /* Unexpected pending message received */);
         pendingMessageIds.shift();
         if (pendingMessageIds.length === 0) {
             this.pendingKeys.delete(op.key);
@@ -1511,12 +1511,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public resubmitSubDirectoryMessage(op: IDirectorySubDirectoryOperation, localOpMetadata: unknown): void {
-        assert(isSubDirLocalOpMetadata(localOpMetadata), "Invalid localOpMetadata for sub directory op");
+        assert(isSubDirLocalOpMetadata(localOpMetadata), 0x32f /* Invalid localOpMetadata for sub directory op */);
 
         // clear the old pending message id
         const pendingMessageIds = this.pendingSubDirectories.get(op.subdirName);
         assert(pendingMessageIds !== undefined && pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-            "Unexpected pending message received");
+            0x330 /* Unexpected pending message received */);
         pendingMessageIds.shift();
         if (pendingMessageIds.length === 0) {
             this.pendingSubDirectories.delete(op.subdirName);
@@ -1683,7 +1683,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                     0x011 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageIds = this.pendingKeys.get(op.key);
                 assert(pendingMessageIds !== undefined && pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-                    "Unexpected pending message received");
+                    0x331 /* Unexpected pending message received */);
                 pendingMessageIds.shift();
                 if (pendingMessageIds.length === 0) {
                     this.pendingKeys.delete(op.key);
@@ -1718,7 +1718,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                     0x012 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageIds = this.pendingSubDirectories.get(op.subdirName);
                 assert(pendingMessageIds !== undefined && pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-                    "Unexpected pending message received");
+                    0x332 /* Unexpected pending message received */);
                 pendingMessageIds.shift();
                 if (pendingMessageIds.length === 0) {
                     this.pendingSubDirectories.delete(op.subdirName);

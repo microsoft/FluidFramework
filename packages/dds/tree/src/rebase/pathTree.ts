@@ -46,7 +46,7 @@ export class PathShared<TParent extends ChildCollection = ChildCollection> {
     }
 
     public insert(start: number, paths: PathNode, length: number) {
-        assert(paths.parent instanceof PathCollection, "PathShared.splice can only insert detached ranges");
+        assert(paths.parent instanceof PathCollection, 0x333 /* PathShared.splice can only insert detached ranges */);
         // TODO: implement.
     }
 }
