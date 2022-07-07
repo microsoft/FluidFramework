@@ -12,6 +12,7 @@ import { Change } from './ChangeTypes';
 import { SharedTree } from './SharedTree';
 import { GenericTransaction, TransactionInternal } from './TransactionInternal';
 import { CachingLogViewer } from './LogViewer';
+import { RestOrArray, unwrapRestOrArray } from './Common';
 
 /**
  * An event emitted by a `Transaction` to indicate a state change. See {@link TransactionEvents} for event argument information.
@@ -86,9 +87,9 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	 */
 	public apply(...changes: Change[]): EditStatus;
 	public apply(changes: Change[]): EditStatus;
-	public apply(headOrChanges: Change | Change[], ...tail: Change[]): EditStatus {
+	public apply(...changesOrArray: RestOrArray<Change>): EditStatus {
 		if (this.isOpen) {
-			const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
+			const changes = unwrapRestOrArray(changesOrArray);
 			if (changes.length > 0) {
 				const previousView = this.currentView;
 				this.transaction.applyChanges(changes.map((c) => this.tree.internalizeChange(c)));
