@@ -283,6 +283,7 @@ function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
     return null;
 }
 
+// checking type of x, returns false if x is null
 function isPrimitive(x: any): x is TelemetryEventPropertyType {
     switch (typeof x) {
         case "string":
@@ -304,6 +305,7 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
             continue;
         }
         const val = obj[key];
+        // ensure only valid props get logged, since props of logging error could be in any shape
         const validProp = filterValidTelemetryProps(val);
         if (isTaggedTelemetryPropertyValue(val)) {
             props[key] = val;
