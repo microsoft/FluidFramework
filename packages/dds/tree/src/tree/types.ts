@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema";
 import { Brand, Opaque } from "../util";
 
-export type FieldKey = Brand<number | string, "FieldKey">;
-export type TreeType = Brand<number | string, "TreeType">;
+export type FieldKey = LocalFieldKey | GlobalFieldKey;
+export type TreeType = TreeSchemaIdentifier;
 
 /**
  * The empty key ("") is used for unnamed relationships, such as the indexer
