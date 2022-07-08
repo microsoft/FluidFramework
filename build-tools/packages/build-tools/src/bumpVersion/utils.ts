@@ -114,9 +114,9 @@ export type VersionScheme = "semver" | "internal" | "virtualPatch";
 /**
  * Adjusts the provided version according to the bump type and version scheme. Returns the adjusted version.
  *
- * @param version The input version.
- * @param bumpType The type of bump,
- * @param scheme The version scheme to use.
+ * @param version - The input version.
+ * @param bumpType - The type of bump.
+ * @param scheme - The version scheme to use.
  * @returns An adjusted version as a semver.SemVer.
  */
 export function adjustVersion(

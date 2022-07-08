@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { EmptyKey, ITreeCursor, TreeNavigationResult } from "../..";
 import { FieldKey } from "../../tree";
-import { JsonCursor, JsonType } from "./jsonCursor";
+import {
+    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+// TODO: organize this in a more valid way
+// eslint-disable-next-line import/no-internal-modules
+} from "../schema/examples/JsonDomainSchema";
+
+import { JsonCursor } from "./jsonCursor";
 
 /**
  * Extract a JS object tree from the contents of the given ITreeCursor.  Assumes that ITreeCursor
@@ -16,11 +22,11 @@ export function extract(reader: ITreeCursor): any {
     const type = reader.type;
 
     switch (type) {
-        case JsonType.Number:
-        case JsonType.Boolean:
-        case JsonType.String:
+        case jsonNumber.name:
+        case jsonBoolean.name:
+        case jsonString.name:
             return reader.value;
-        case JsonType.Array: {
+        case jsonArray.name: {
             const length = reader.length(EmptyKey);
             const result = new Array(length);
             for (let index = 0; index < result.length; index++) {
@@ -32,17 +38,17 @@ export function extract(reader: ITreeCursor): any {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-return
             return result;
         }
-        case JsonType.Object: {
+        case jsonObject.name: {
             const result: any = {};
             for (const key of reader.keys) {
                 assert.equal(reader.down(key, 0), TreeNavigationResult.Ok);
-                result[key] = extract(reader);
+                result[key as string] = extract(reader);
                 assert.equal(reader.up(), TreeNavigationResult.Ok);
             }
             return result;
         }
         default: {
-            assert.equal(type, JsonType.Null);
+            assert.equal(type, jsonNull.name);
             return null;
         }
     }
@@ -91,7 +97,7 @@ describe("ITreeCursor", () => {
 
             tests.forEach(([name, key]) => {
                 it(`permits offset of zero with ${name} map key`, () => {
-                    const cursor = new JsonCursor({ [key]: 0 });
+                    const cursor = new JsonCursor({ [key as string]: 0 });
                     assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
                     assert.deepEqual(cursor.seek(0), { result: TreeNavigationResult.Ok, moved: 0 });
@@ -99,7 +105,7 @@ describe("ITreeCursor", () => {
                 });
 
                 it(`disallows non-zero offset with ${name} map key`, () => {
-                    const cursor = new JsonCursor({ [key]: 0 });
+                    const cursor = new JsonCursor({ [key as string]: 0 });
                     assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
                     assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.NotFound, moved: 0 });
@@ -146,8 +152,8 @@ describe("ITreeCursor", () => {
     });
 
     describe("TreeNavigationResult", () => {
-        const notFoundKey = "notFound" as const as FieldKey;
-        const foundKey = "found" as const as FieldKey;
+        const notFoundKey = "notFound" as FieldKey;
+        const foundKey = "found" as FieldKey;
 
         function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
             assert(0 <= index && index < cursor.length(key),
@@ -166,7 +172,7 @@ describe("ITreeCursor", () => {
         }
 
         it("Missing key in map returns NotFound", () => {
-            const cursor = new JsonCursor({ [foundKey]: true });
+            const cursor = new JsonCursor({ [foundKey as string]: true });
             expectNotFound(cursor, notFoundKey);
 
             // A failed navigation attempt should leave the cursor in a valid state.  Verify
@@ -175,7 +181,7 @@ describe("ITreeCursor", () => {
         });
 
         it("Out of bounds map index returns NotFound", () => {
-            const cursor = new JsonCursor({ [foundKey]: true });
+            const cursor = new JsonCursor({ [foundKey as string]: true });
             expectNotFound(cursor, foundKey, 1);
 
             // A failed navigation attempt should leave the cursor in a valid state.  Verify

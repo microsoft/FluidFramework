@@ -143,6 +143,4 @@ export type SharedObjectClass<T extends IFluidLoadable> = {
     readonly getFactory: () => IChannelFactory;
 } & LoadableObjectCtor<T>;
 
-// (No @packageDocumentation comment for this package)
-
 ```
