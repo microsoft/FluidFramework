@@ -109,8 +109,7 @@ import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, Quorum
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
-// eslint-disable-next-line import/order
-import { AbortSignal } from "abort-controller";
+import { AbortSignal } from "./abortControllerShim";
 
 const detachedContainerRefSeqNumber = 0;
 
