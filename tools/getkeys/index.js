@@ -43,10 +43,10 @@ async function saveEnv(env) {
     // However, the environment will be inherited when their preferred shell is
     // launched from the login shell.
     const shell = process.env.SHELL;
-    const shellName = shell && path.basename(shell);
+    const shellName = shell && path.basename(shell, path.extname(shell));
     switch (shellName) {
         // Gitbash on windows will appear as bash.exe
-        case "bash" | "bash.exe":
+        case "bash":
             return exportToShellRc(
                 // '.bash_profile' is used for the "login shell" ('bash -l').
                 process.env.TERM_PROGRAM === "Apple_Terminal"
