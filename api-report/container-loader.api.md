@@ -67,10 +67,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     closeAndGetPendingLocalState(): string;
     // (undocumented)
     get closed(): boolean;
-    // Warning: (ae-forgotten-export) The symbol "AbortSignal" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    get closeSignal(): AbortSignal_2;
+    get closeSignal(): AbortSignal;
     // (undocumented)
     connect(): void;
     // (undocumented)

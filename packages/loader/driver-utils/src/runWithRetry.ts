@@ -8,7 +8,6 @@ import { delay, performance, unreachableCase } from "@fluidframework/common-util
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "./network";
 import { pkgVersion } from "./packageVersion";
-import { AbortSignal } from "./abortControllerShim";
 
 /**
  * @deprecated - use IProgress2
@@ -31,7 +30,6 @@ export interface IProgress {
     /**
      * Called whenever api returns cancellable error and the call is going to be retried.
      * Any exception thrown from this call back result in cancellation of operation
-     * and propagation of thrown exception.
      * @param delayInMs - delay before next retry. This value will depend on internal back-off logic,
      * as well as information provided by service (like 429 error asking to wait for some time before retry)
      * @param error - error object returned from the call.
@@ -57,9 +55,9 @@ export interface IProgress2 {
      * @param delayInMs - delay before next retry. This value will depend on internal back-off logic,
      * as well as information provided by service (like 429 error asking to wait for some time before retry)
      * @param error - error object returned from the call.
-     * @returns - A reason for aborting the operation, or undefined to continue retrying
+     * @returns - true to continue retrying, false to abort.
      */
-    onRetry?(delayInMs: number, error: unknown): string | undefined;
+    onRetry?(delayInMs: number, error: unknown): boolean;
 }
 
 export type RunResult<T> = {
@@ -70,7 +68,6 @@ export type RunResult<T> = {
     error: unknown;
 } | {
     status: "aborted";
-    reason: string;
 };
 
 export async function runWithRetry2<T>(
@@ -91,48 +88,44 @@ export async function runWithRetry2<T>(
                 status: "succeeded",
                 result,
             };
-        } catch (err) {
+        } catch (error) {
             // If it is not retriable, then just throw the error.
-            if (!canRetryOnError(err)) {
+            if (!canRetryOnError(error)) {
                 logger.sendTelemetryEvent({
                     eventName: `${fetchCallName}_cancel`,
                     retry: numRetries,
                     duration: performance.now() - startTime,
                     fetchCallName,
-                }, err);
+                }, error);
                 return {
                     status: "failed",
-                    error: err,
+                    error,
                 };
             }
 
             if (progress.cancel?.aborted === true) {
-                const reason = progress.cancel.reason;
                 logger.sendTelemetryEvent({
                     eventName: `${fetchCallName}_runWithRetryAborted`,
                     retry: numRetries,
                     duration: performance.now() - startTime,
                     fetchCallName,
-                    reason,
-                }, err);
+                }, error);
 
                 return {
                     status: "aborted",
-                    reason: reason?.toString() ?? "UNSPECIFIED",
                 };
             }
 
             numRetries++;
-            lastError = err;
+            lastError = error;
             // If the error is throttling error, then wait for the specified time before retrying.
             // If the waitTime is not specified, then we start with retrying immediately to max of 8s.
-            retryAfterMs = getRetryDelayFromError(err) ?? Math.min(retryAfterMs * 2, 8000);
+            retryAfterMs = getRetryDelayFromError(error) ?? Math.min(retryAfterMs * 2, 8000);
             if (progress.onRetry) {
-                const abortReason = progress.onRetry(retryAfterMs, err);
-                if (abortReason !== undefined) {
+                const shouldContinue = progress.onRetry(retryAfterMs, error);
+                if (!shouldContinue) {
                     return {
                         status: "aborted",
-                        reason: abortReason,
                     };
                 }
             }
@@ -160,12 +153,12 @@ export async function runWithRetry<T>(
 ): Promise<T> {
     const progress2: IProgress2 = {
         cancel: progress.cancel,
-        onRetry(delayInMs: number, error: unknown): string | undefined {
+        onRetry(delayInMs: number, error: unknown): boolean {
             try {
                 progress.onRetry?.(delayInMs, error);
-                return undefined;
-            } catch (e: any) {
-                return e.message as string;
+                return true;
+            } catch (e: unknown) {
+                return false;
             }
         },
     };
@@ -178,9 +171,9 @@ export async function runWithRetry<T>(
             throw runResult.error;
         case "aborted":
             throw new NonRetryableError(
-                `runWithRetry for [${fetchCallName}] was aborted due to reason [${runResult.reason}]`,
+                `runWithRetry for [${fetchCallName}] was aborted`,
                 DriverErrorType.genericError,
-                { driverVersion: pkgVersion, fetchCallName, reason: runResult.reason },
+                { driverVersion: pkgVersion, fetchCallName },
             );
         default:
             unreachableCase(runResult);

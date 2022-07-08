@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import {
     ITelemetryLogger,
@@ -51,8 +52,7 @@ import { DeltaQueue } from "./deltaQueue";
 import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
-} from "./contracts";
-import { AbortController } from "./abortControllerShim";
+ } from "./contracts";
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;

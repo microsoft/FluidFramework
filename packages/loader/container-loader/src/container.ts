@@ -48,10 +48,10 @@ import {
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
+    runWithRetry2,
     isFluidResolvedUrl,
     isRuntimeMessage,
     isUnpackedRuntimeMessage,
-    runWithRetry2,
 } from "@fluidframework/driver-utils";
 import {
     IProtocolHandler,
@@ -109,7 +109,6 @@ import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, Quorum
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
-import { AbortSignal } from "./abortControllerShim";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -863,14 +862,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
                     switch (runResult.status) {
                         case "succeeded":
-                            return runResult.result;
+                            this.service = runResult.result;
+                            break;
                         case "failed":
                             throw runResult.error;
                         case "aborted":
                             throw new GenericError(
-                                `Container.attach() was aborted [${runResult.reason}]`,
-                                undefined /* error */,
-                                { reason: runResult.reason },
+                                // We know the reason since we use closeSignal above but don't pass an onRetry callback
+                                `Container.attach() was aborted because the container was closed`,
                             );
                         default:
                             unreachableCase(runResult);
