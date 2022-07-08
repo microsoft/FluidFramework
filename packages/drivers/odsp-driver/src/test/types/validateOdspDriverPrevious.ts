@@ -455,7 +455,6 @@ declare function get_old_VariableDeclaration_OdcApiSiteOrigin():
 declare function use_current_VariableDeclaration_OdcApiSiteOrigin(
     use: TypeOnly<typeof current.OdcApiSiteOrigin>);
 use_current_VariableDeclaration_OdcApiSiteOrigin(
-    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_OdcApiSiteOrigin());
 
 /*
@@ -468,7 +467,6 @@ declare function get_current_VariableDeclaration_OdcApiSiteOrigin():
 declare function use_old_VariableDeclaration_OdcApiSiteOrigin(
     use: TypeOnly<typeof old.OdcApiSiteOrigin>);
 use_old_VariableDeclaration_OdcApiSiteOrigin(
-    // @ts-expect-error compatibility expected to be broken
     get_current_VariableDeclaration_OdcApiSiteOrigin());
 
 /*
