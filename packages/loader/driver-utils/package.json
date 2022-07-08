@@ -74,7 +74,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
-    "@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@1.1.0",
+    "@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@1.2.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.2.1",
     "@fluidframework/runtime-utils": "^1.2.1",
@@ -93,17 +93,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.2.0",
-    "broken": {
-      "ClassDeclaration_ThrottlingError": {
-        "backCompat": false
-      },
-      "ClassDeclaration_AuthorizationError": {
-        "backCompat": false
-      },
-      "ClassDeclaration_GenericNetworkError": {
-        "backCompat": false
-      }
-    }
+    "version": "1.2.1",
+    "broken": {}
   }
 }
