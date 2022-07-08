@@ -33,7 +33,7 @@ interface IMapMessageHandler {
         local: boolean,
         localOpMetadata: unknown,
         isStashedOp: boolean,
-    ): unknown;
+    ): unknown | void;
 
     /**
      * Communicate the operation to remote clients.
