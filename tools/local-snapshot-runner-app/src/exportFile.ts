@@ -5,7 +5,7 @@
 
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import * as fs from "fs";
-import EDiscoveryLogger from "./logger/EDiscoveryLogger";
+import FileLogger from "./logger/FileLogger";
 import { getArgsValidationError } from "./getArgsValidationError";
 import { convertFluidFile } from "./convertFluidFile";
 
@@ -21,11 +21,11 @@ export async function exportFile(
     throw new Error("Telemetry file already exists.");
   }
 
-  const logger = ChildLogger.create(new EDiscoveryLogger(telemetryFile), "EDiscovery-Runner-App");
+  const logger = ChildLogger.create(new FileLogger(telemetryFile), "LocalSnapshotRunnerApp");
 
   try {
     const argsValidationError = getArgsValidationError(inputFile, outputFolder, scenario, props);
-    if (!!argsValidationError) {
+    if (argsValidationError) {
       logger.sendErrorEvent({
         eventName: "Client_ArgsValidationError",
         message: argsValidationError

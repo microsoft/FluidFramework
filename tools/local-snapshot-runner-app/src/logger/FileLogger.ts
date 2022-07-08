@@ -4,12 +4,12 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryBaseEvent, ITelemetryErrorEvent, ITelemetryGenericEvent, ITelemetryBaseLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 /**
  * TODO: Look at FileLogger class in stress tests
  */
-export default class EDiscoveryLogger implements ITelemetryBaseLogger {
+export default class FileLogger implements ITelemetryBaseLogger {
   public supportsTags?: true | undefined;
   
   private _fileName: string;

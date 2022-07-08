@@ -10,7 +10,7 @@ export function getArgsValidationError(
   outputFolder: string,
   scenario: string,
   props: string
-): string {
+): string | undefined {
   if (props) {
     const propsArr = props.split(",");
     for (let i = 0; i < propsArr.length; i += 1) {
@@ -43,5 +43,5 @@ export function getArgsValidationError(
     return "Scenario name is missing.";
   }
 
-  return "";
+  return undefined;
 }

@@ -6,17 +6,17 @@
 import * as yargs from "yargs";
 import { exportFile } from "./exportFile";
 
-function eDiscoveryRunnerApp() {
+function localSnapshotRunnerApp() {
   yargs
     .strict()
     .version(false)
     .command(
       "exportFile",
-      "Generate the eDiscovery output for a fluid file",
+      "Generate an output for a local snapshot",
       (yargs) =>
         yargs
           .option("inputFile", {
-            describe: "Name of the file containing ODSP snapshot",
+            describe: "Name of the file containing local ODSP snapshot",
             type: "string",
             demandOption: true
           })
@@ -46,4 +46,4 @@ function eDiscoveryRunnerApp() {
     .demandCommand().argv;
 }
 
-eDiscoveryRunnerApp();
+localSnapshotRunnerApp();
