@@ -117,13 +117,16 @@ export class DeltaQueue<T>
                 assert(this.processingPromise !== undefined, "reentrancy?");
                 const result = this.processDeltas();
                 assert(this.processingPromise !== undefined, "reentrancy?");
+                // WARNING: Do not move next line to .finally() clause!
+                // It runs async and creates a race condition where incoming ensureProcessing() call observes
+                // from previous run while previous run is over (but finally clause was not scheduled yet)
+                this.processingPromise = undefined;
                 return result;
             }).catch((error) => {
                 this.error = error;
+                this.processingPromise = undefined;
                 this.emit("error", error);
                 return { count: 0, duration: 0 };
-            }).finally(() => {
-                this.processingPromise = undefined;
             });
             assert(this.processingPromise !== undefined, "processDeltas() should run async");
         }

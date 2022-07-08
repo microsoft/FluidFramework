@@ -356,7 +356,7 @@ export class Queue<T> implements IStream<T> {
  * If false, returning less ops would mean we reached end of file.
  * @param logger - logger object to use to log progress & errors
  * @param signal - cancelation signal
- * @param reason - reason for fetching ops
+ * @param scenarioName - reason for fetching ops
  * @returns - an object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
@@ -365,7 +365,7 @@ async function getSingleOpBatch(
     strongTo: boolean,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
-    reason?: string):
+    scenarioName?: string):
         Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[]; }> {
     let lastSuccessTime: number | undefined;
 
@@ -429,7 +429,7 @@ async function getSingleOpBatch(
                     retry,
                     duration: performance.now() - startTime,
                     retryAfter,
-                    reason,
+                    reason: scenarioName,
                 },
                 error);
 
@@ -458,7 +458,7 @@ async function getSingleOpBatch(
  * @param payloadSize - Payload size
  * @param logger - Logger to log progress and errors
  * @param signal - Cancelation signal
- * @param reason - Reason for fetching ops
+ * @param scenarioName - Reason for fetching ops
  * @returns - Messages fetched
  */
 export function requestOps(
@@ -469,7 +469,7 @@ export function requestOps(
     payloadSize: number,
     logger: ITelemetryLogger,
     signal?: AbortSignal,
-    reason?: string,
+    scenarioName?: string,
 ): IStream<ISequencedDocumentMessage[]> {
     let requests = 0;
     let lastFetch: number | undefined;
@@ -484,7 +484,7 @@ export function requestOps(
     const telemetryEvent = PerformanceEvent.start(logger, {
         eventName: "GetDeltas",
         ...propsTotal,
-        reason,
+        reason: scenarioName,
     });
 
     const manager = new ParallelRequests<ISequencedDocumentMessage>(
@@ -500,7 +500,7 @@ export function requestOps(
                 strongTo,
                 logger,
                 signal,
-                reason,
+                scenarioName,
             );
         },
         (deltas: ISequencedDocumentMessage[]) => {
