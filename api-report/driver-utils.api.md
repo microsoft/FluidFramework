@@ -219,10 +219,19 @@ export class InsecureUrlResolver implements IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface IProgress {
     cancel?: AbortSignal;
+    cancelDescription?: string;
     onRetry?(delayInMs: number, error: any): void;
+}
+
+// @public (undocumented)
+export interface IProgress2 {
+    cancel?: AbortSignal & {
+        reason: string;
+    };
+    onRetry?(delayInMs: number, error: unknown): string | undefined;
 }
 
 // @public (undocumented)
@@ -369,7 +378,22 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
 }
 
 // @public (undocumented)
+export type RunResult<T> = {
+    status: "succeeded";
+    result: T;
+} | {
+    status: "failed";
+    error: unknown;
+} | {
+    status: "aborted";
+    reason: string;
+};
+
+// @public @deprecated (undocumented)
 export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
+
+// @public (undocumented)
+export function runWithRetry2<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress2): Promise<RunResult<T>>;
 
 // @public (undocumented)
 export abstract class SnapshotExtractor {
