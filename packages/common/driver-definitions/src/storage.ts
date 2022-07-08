@@ -65,7 +65,7 @@ export type IStreamResult<T> = { done: true; } | { done: false; value: T; };
 /**
  * Read interface for the Queue
  */
- export interface IStream<T> {
+export interface IStream<T> {
     read(): Promise<IStreamResult<T>>;
 }
 
@@ -83,7 +83,7 @@ export interface IDocumentDeltaStorageService {
      *  of Op on wire and known seq number. It should not contain any PII. It can be logged by
      *  spo which could help in debugging sessions if any issue occurs.
      */
-     fetchMessages(from: number,
+    fetchMessages(from: number,
         to: number | undefined,
         abortSignal?: AbortSignal,
         cachedOnly?: boolean,
@@ -117,13 +117,20 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 
     /**
      * Returns the snapshot tree.
+     * @param version - Version of the snapshot to be fetched.
+     * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
+     *  in debugging purposes to see why this call was made.
      */
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
 
     /**
      * Retrieves all versions of the document starting at the specified versionId - or null if from the head
+     * @param versionId - Version id of the requested version.
+     * @param count - Number of the versions to be fetched.
+     * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
+     *  in debugging purposes to see why this call was made.
      */
-    getVersions(versionId: string | null, count: number): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
 
     /**
      * Creates a blob out of the given buffer
@@ -298,7 +305,7 @@ export interface IDocumentServiceFactory {
     /**
      * Creates the document service after extracting different endpoints URLs from a resolved URL.
      *
-     * @param resolvedUrl - Endpoint URL data. @see {@link IResolvedUrl}.
+     * @param resolvedUrl - Endpoint URL data. See {@link IResolvedUrl}.
      * @param logger - Optional telemetry logger to which telemetry events will be forwarded.
      * @param clientIsSummarizer - Whether or not the client is the
      * {@link https://fluidframework.com/docs/concepts/summarizer/ | summarizer}.
@@ -306,7 +313,7 @@ export interface IDocumentServiceFactory {
      *
      * @returns An instance of {@link IDocumentService}.
      */
-     createDocumentService(
+    createDocumentService(
         resolvedUrl: IResolvedUrl,
         logger?: ITelemetryBaseLogger,
         clientIsSummarizer?: boolean,
@@ -317,7 +324,7 @@ export interface IDocumentServiceFactory {
      *
      * @param createNewSummary - Summary used to create file. If undefined, an empty file will be created and a summary
      * should be posted later, before connecting to ordering service.
-     * @param createNewResolvedUrl - Endpoint URL data. @see {@link IResolvedUrl}.
+     * @param createNewResolvedUrl - Endpoint URL data. See {@link IResolvedUrl}.
      * @param logger - Optional telemetry logger to which telemetry events will be forwarded.
      * @param clientIsSummarizer - Whether or not the client is the
      * {@link https://fluidframework.com/docs/concepts/summarizer/ | summarizer}.

@@ -37,19 +37,16 @@ import { BenchmarkData } from "./Reporter";
  * @public
  */
 export function benchmark(args: BenchmarkArguments): Test {
-    const defaults: Required<BenchmarkOptions> = {
-        maxBenchmarkDurationSeconds: 5,
-        minSampleCount: 5,
-        minSampleDurationSeconds: 0,
-        type: BenchmarkType.Measurement,
-        only: false,
-        before: () => {},
-        after: () => {},
+    const options: Required<BenchmarkOptions> = {
+        maxBenchmarkDurationSeconds: args.maxBenchmarkDurationSeconds ?? 5,
+        minSampleCount: args.minSampleCount ?? 5,
+        minSampleDurationSeconds: args.minSampleDurationSeconds ?? 0,
+        type: args.type ?? BenchmarkType.Measurement,
+        only: args.only ?? false,
+        before: args.before ?? (() => {}),
+        after: args.after ?? (() => {}),
     };
-    const options: Required<BenchmarkOptions> = Object.assign(defaults, args);
     const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
-    const beforeBenchmark = options.before ?? options.before;
-    const afterBenchmark = options.after ?? options.after;
     const typeTag = BenchmarkType[options.type];
     const qualifiedTitle = `${performanceTestSuiteTag} @${typeTag} ${args.title}`;
 
@@ -105,7 +102,7 @@ export function benchmark(args: BenchmarkArguments): Test {
 
         // Create and run a benchmark if we are in perfMode, else run the passed in function normally
         if (isInPerformanceTestingMode) {
-            await beforeBenchmark?.();
+            await options.before();
 
             const benchmarkOptions: Benchmark.Options = {
                 maxTime: options.maxBenchmarkDurationSeconds,
@@ -114,17 +111,14 @@ export function benchmark(args: BenchmarkArguments): Test {
                 defer: isAsync,
             };
 
-            let benchmarkFunction: (deferred: { resolve: Mocha.Done; }) => void | Promise<unknown>;
-            if (isAsync) {
-                // We have to do a little translation because the Benchmark library expects callback-based
-                // asynchronicity.
-                benchmarkFunction = async (deferred: { resolve: Mocha.Done; }) => {
+            const benchmarkFunction: (deferred: { resolve: Mocha.Done; }) => void | Promise<unknown> = isAsync
+                ? async (deferred: { resolve: Mocha.Done; }) => {
+                    // We have to do a little translation because the Benchmark library expects callback-based
+                    // asynchronicity.
                     await argsBenchmarkFn();
                     deferred.resolve();
-                };
-            } else {
-                benchmarkFunction = argsBenchmarkFn;
-            }
+                }
+                : argsBenchmarkFn;
 
             await new Promise<void>((resolve) => {
                 const benchmarkInstance = new Benchmark(args.title, benchmarkFunction, benchmarkOptions);
@@ -146,7 +140,7 @@ export function benchmark(args: BenchmarkArguments): Test {
 
                     test.emit("benchmark end", stats);
 
-                    await afterBenchmark?.();
+                    await options.after();
                     resolve();
                 });
                 benchmarkInstance.run();
@@ -154,9 +148,9 @@ export function benchmark(args: BenchmarkArguments): Test {
             return;
         }
 
-        await beforeBenchmark?.();
+        await options.before();
         await argsBenchmarkFn();
-        await afterBenchmark?.();
+        await options.after();
         await Promise.resolve();
     });
     return test;

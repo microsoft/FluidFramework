@@ -51,7 +51,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
                 readonly objectStorage: ChannelStorageService;
             }>,
     ) {
-        assert(!this.id.includes("/"), "Channel context ID cannot contain slashes");
+        assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
     }
 
     public async getChannel(): Promise<IChannel> {
@@ -145,7 +145,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         /**
-         * Currently, DDSs are always considered referenced and are not garbage collected.
+         * Currently, DDSes are always considered referenced and are not garbage collected.
          * Once we have GC at DDS level, this channel context's used routes will be updated as per the passed
          * value. See - https://github.com/microsoft/FluidFramework/issues/4611
          */

@@ -7,6 +7,9 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
+/**
+ * @deprecated ISummaryAuthor is deprecated and will be removed in a future release.
+ */
 export interface ISummaryAuthor {
     name: string;
     email: string;
@@ -14,6 +17,9 @@ export interface ISummaryAuthor {
     date: string;
 }
 
+/**
+ * @deprecated ISummaryCommitter is deprecated and will be removed in a future release.
+ */
 export interface ISummaryCommitter {
     name: string;
     email: string;

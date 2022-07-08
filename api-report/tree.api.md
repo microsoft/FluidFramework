@@ -28,17 +28,27 @@ export interface Covariant<T> {
     _removeContravariance?: T;
 }
 
-// Warning: (ae-forgotten-export) The symbol "ExtractFromOpaque" needs to be exported by the entry point index.d.ts
-//
+// @public
+export const EmptyKey: FieldKey;
+
+// @public
+export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
+
 // @public
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
 // @public (undocumented)
-export type FieldKey = Brand<number | string, "FieldKey">;
+export type FieldKey = LocalFieldKey | GlobalFieldKey;
+
+// @public
+export type GlobalFieldKey = Opaque<Brand<string, "tree.GlobalFieldKey">>;
 
 // @public
 export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 }
+
+// @public
+export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
 export interface ITreeCursor {
@@ -47,10 +57,17 @@ export interface ITreeCursor {
     keys: Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
+    seek(offset: number): {
+        result: TreeNavigationResult;
+        moved: number;
+    };
     readonly type: TreeType;
     up(): TreeNavigationResult;
-    readonly value: undefined | Serializable;
+    readonly value: Value;
 }
+
+// @public
+export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @public
 export interface MakeNominal {
@@ -66,8 +83,14 @@ export const enum TreeNavigationResult {
     Pending = 0
 }
 
+// @public
+export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
+
 // @public (undocumented)
-export type TreeType = Brand<number | string, "TreeType">;
+export type TreeType = TreeSchemaIdentifier;
+
+// @public
+export type Value = undefined | Serializable;
 
 // (No @packageDocumentation comment for this package)
 

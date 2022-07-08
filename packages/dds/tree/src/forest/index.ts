@@ -6,4 +6,7 @@
 export {
     ITreeCursor,
     TreeNavigationResult,
+    Value,
 } from "./cursor";
+export * from "./forest";
+export { IEditableForest, FieldLocation, TreeLocation } from "./editableForest";

@@ -52,7 +52,7 @@ export interface IHttpServerConfig {
      * A value of 0 will disable the timeout behavior on incoming connections.
      * Default: 0 (disabled)
      */
-     connectionTimeoutMs?: number;
+    connectionTimeoutMs: number;
 }
 
 const defaultHttpServerConfig: IHttpServerConfig = {
@@ -60,7 +60,7 @@ const defaultHttpServerConfig: IHttpServerConfig = {
 };
 const createAndConfigureHttpServer = (
     requestListener: RequestListener,
-    httpServerConfig: IHttpServerConfig | undefined,
+    httpServerConfig: Partial<IHttpServerConfig> | undefined,
 ): http.Server => {
     const server = http.createServer(requestListener);
     server.timeout = httpServerConfig?.connectionTimeoutMs ?? defaultHttpServerConfig.connectionTimeoutMs;
@@ -99,6 +99,6 @@ export class BasicWebServerFactory implements core.IWebServerFactory {
         const server = createAndConfigureHttpServer(requestListener, this.httpServerConfig);
         const httpServer = new HttpServer(server);
 
-        return new WebServer(httpServer, null);
+        return new WebServer(httpServer, (null as unknown) as core.IWebSocketServer);
     }
 }

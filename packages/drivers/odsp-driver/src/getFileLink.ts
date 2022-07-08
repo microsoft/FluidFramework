@@ -86,11 +86,6 @@ async function getFileLinkCore(
 ): Promise<string> {
     const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, identityType === "Consumer");
 
-    // ODC canonical link does not require any additional processing
-    if (identityType === "Consumer") {
-        return fileItem.webUrl;
-    }
-
     // ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
     return PerformanceEvent.timedExecAsync(
         logger,

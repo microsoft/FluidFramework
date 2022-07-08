@@ -371,7 +371,6 @@ declare function get_current_InterfaceDeclaration_IDocumentStorageService():
 declare function use_old_InterfaceDeclaration_IDocumentStorageService(
     use: TypeOnly<old.IDocumentStorageService>);
 use_old_InterfaceDeclaration_IDocumentStorageService(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentStorageService());
 
 /*
@@ -517,6 +516,30 @@ declare function use_old_InterfaceDeclaration_IGenericNetworkError(
     use: TypeOnly<old.IGenericNetworkError>);
 use_old_InterfaceDeclaration_IGenericNetworkError(
     get_current_InterfaceDeclaration_IGenericNetworkError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILocationRedirectionError": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ILocationRedirectionError():
+    TypeOnly<old.ILocationRedirectionError>;
+declare function use_current_InterfaceDeclaration_ILocationRedirectionError(
+    use: TypeOnly<current.ILocationRedirectionError>);
+use_current_InterfaceDeclaration_ILocationRedirectionError(
+    get_old_InterfaceDeclaration_ILocationRedirectionError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILocationRedirectionError": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ILocationRedirectionError():
+    TypeOnly<current.ILocationRedirectionError>;
+declare function use_old_InterfaceDeclaration_ILocationRedirectionError(
+    use: TypeOnly<old.ILocationRedirectionError>);
+use_old_InterfaceDeclaration_ILocationRedirectionError(
+    get_current_InterfaceDeclaration_ILocationRedirectionError());
 
 /*
 * Validate forward compat by using old type in place of current type
