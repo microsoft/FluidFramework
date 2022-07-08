@@ -19,7 +19,6 @@ module.exports = {
             "files": ["src/assertionShortCodesMap.ts"],
             "rules": {
                 "@typescript-eslint/comma-dangle": "off",
-                "no-template-curly-in-string": "off",
             }
         }
     ],

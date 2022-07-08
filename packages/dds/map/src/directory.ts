@@ -1276,7 +1276,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         this.throwIfDisposed();
         if (local) {
             assert(isClearLocalOpMetadata(localOpMetadata),
-                0x00f /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
+                0x00f /* pendingMessageId is missing from the local client's operation */);
             const pendingClearMessageId = this.pendingClearMessageIds.shift();
             assert(pendingClearMessageId === localOpMetadata.pendingMessageId,
                 0x32a /* pendingMessageId does not match */);
