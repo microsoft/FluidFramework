@@ -12,3 +12,6 @@ export {
     ChildCollection,
     RootRange,
 } from "./types";
+
+export * from "./pathTree";
+export * from "./anchorSet";
