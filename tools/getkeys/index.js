@@ -117,7 +117,7 @@ async function execAsync(command, options) {
 class AzCliKeyVaultClient {
     static async get() {
 
-        await execAsync("az account set --subscription Fluid");
+        await execAsync("az ad signed-in-user show");
         return new AzCliKeyVaultClient();
 
         // Disabling fallback to REST client while we decide how to streamline the getkeys tool
@@ -201,9 +201,6 @@ async function getClient() {
 })().catch(e => {
     if (e.message.includes("'az' is not recognized as an internal or external command")) {
         console.error(`ERROR: Azure CLI is not installed. Install it and run 'az login' before running this tool.`);
-        exit(0);
-    } else if(e.message.includes("The subscription of 'fluid' doesn't exist in cloud 'AzureCloud'.")) {
-        console.error(`ERROR: Could not find the Azure Subscription for Fluid. Did you run 'az login' already?`);
         exit(0);
     }
 
