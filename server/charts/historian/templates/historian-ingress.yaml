@@ -9,23 +9,23 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
   annotations:
-    kubernetes.io/ingress.class: {{ .Values.historian.ingressClass }}
-    ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.org/client-max-body-size: "100m"
-    ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
 spec:
- tls:
- - hosts:
-   - {{ .Values.historian.host }}
-   secretName: {{ .Values.historian.cert }}
- rules:
- - host: {{ .Values.historian.host }}
-   http:
-     paths:
-     - path: /
-       pathType: ImplementationSpecific
-       backend:
-         service:
-           name: {{ template "historian.fullname" . }}
-           port:
-             number: 80
+  ingressClassName: {{ .Values.historian.ingressClass }}
+  tls:
+  - hosts:
+    - {{ .Values.historian.host }}
+    secretName: {{ .Values.historian.cert }}
+  rules:
+  - host: {{ .Values.historian.host }}
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: {{ template "historian.fullname" . }}
+            port:
+              number: 80

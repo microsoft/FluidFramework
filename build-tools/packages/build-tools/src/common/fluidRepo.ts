@@ -49,7 +49,7 @@ export class FluidRepo {
         return this.monoRepos.get(MonoRepoKind.Azure);
     }
 
-    constructor(public readonly resolvedRoot: string, services: boolean) {
+    constructor(public readonly resolvedRoot: string, services: boolean, logVerbose = false) {
         const packageManifest = getPackageManifest(resolvedRoot);
 
         // Expand to full IFluidRepoPackage and full path
@@ -72,7 +72,7 @@ export class FluidRepo {
             const item = normalizeEntry(packageManifest.repoPackages[group]);
             if (isMonoRepoKind(group)) {
                 const { directory, ignoredDirs } = item as IFluidRepoPackage;
-                const monorepo = new MonoRepo(group, directory, ignoredDirs);
+                const monorepo = new MonoRepo(group, directory, ignoredDirs, logVerbose);
                 this.monoRepos.set(group, monorepo);
                 loadedPackages.push(...monorepo.packages);
             } else if (group !== "services" || services) {
