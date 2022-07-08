@@ -18,7 +18,7 @@ import {
     ISummaryTreeWithStats,
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { Throttler, formExponentialFn } from "./throttler";
+import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 
 /**
  * This class represents blob (long string)
@@ -52,6 +52,23 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
     public bind(handle: IFluidHandle) {
         throw new Error("Cannot bind to blob handle");
+    }
+}
+
+class CancellableThrottler {
+    constructor(private readonly throttler: IThrottler) { }
+    private cancelP = new Deferred<void>();
+
+    public async getDelay(): Promise<void> {
+        return Promise.race([
+            this.cancelP.promise,
+            new Promise<void>((resolve) => setTimeout(resolve, this.throttler.getDelay())),
+        ]);
+    }
+
+    public cancel() {
+        this.cancelP.resolve();
+        this.cancelP = new Deferred<void>();
     }
 }
 
@@ -98,21 +115,41 @@ export class BlobManager {
      */
     private readonly redirectTable: Map<string, string | undefined>;
 
-    // Blobs which have not been uploaded or for which we have not yet seen a BlobAttach op round-trip
+    /**
+     * Blobs which have not been uploaded or for which we have not yet seen a BlobAttach op round-trip.
+     * Until we see the op round-trip, there is a possibility we may need to re-upload the blob, so
+     * we must save it. This is true for both the online and offline flow.
+     */
     private readonly pendingBlobs: Map<string, PendingBlob> = new Map();
 
-    private readonly retryThrottler = new Throttler(
+    /**
+     * Track ops in flight for online flow. Used to avoid searching pendingBlobs since BlobAttach ops
+     * don't include local ID in online flow.
+     */
+    private readonly opsInFlight: Map<string, string[]> = new Map();
+
+    private readonly retryThrottler = new CancellableThrottler(new Throttler(
         60 * 1000, // 60 sec delay window
         30 * 1000, // 30 sec max delay
         // throttling function increases exponentially (0ms, 40ms, 80ms, 160ms, etc)
         formExponentialFn({ coefficient: 20, initialDelay: 0 }),
-    );
+    ));
 
     constructor(
         private readonly routeContext: IFluidHandleContext,
         snapshot: IBlobManagerLoadInfo,
         private readonly getStorage: () => IDocumentStorageService,
-        private readonly sendBlobAttachOp: (blobId?: string, localId?: string) => void,
+        /**
+         * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which
+         * the blob is deleted. The BlobAttach op notifies the server that blob is in use. The server
+         * will then not delete the blob as long as it is listed as referenced in future summaries.
+         * The summarizing client will know to include the storage ID in the summary when it sees the op.
+         *
+         * The op may also include a local ID to inform all clients of the relation to the storage
+         * ID, without knowledge of which they cannot request the blob from storage. This is also
+         * included in the redirect table in the summary.
+         */
+        private readonly sendBlobAttachOp: (storageId?: string, localId?: string) => void,
         // To be called when a blob node is requested. blobPath is the path of the blob's node in GC's graph. It's
         // of the format `/<BlobManager.basePath>/<blobId>`.
         private readonly gcNodeUpdated: (blobPath: string) => void,
@@ -136,6 +173,7 @@ export class BlobManager {
      * Upload blobs added while offline. This must be completed before connecting and resubmitting ops.
      */
     public async onConnected() {
+        this.retryThrottler.cancel();
         await PerformanceEvent.timedExecAsync(this.logger, {
                 eventName: "BlobUploadOnConnected",
                 count: this.pendingOfflineUploadCount,
@@ -246,6 +284,8 @@ export class BlobManager {
         assert(this.runtime.attachState === AttachState.Attached,
             "For clarity and paranoid defense against adding future attachment states");
 
+        // Create a local ID for each blob. This is used to support blobs if/when the client goes
+        // offline since we don't have the ID from storage yet. If online flow succeeds this won't be used.
         const localId = uuid();
         const pendingEntry: PendingBlob = {
             blob,
@@ -284,8 +324,12 @@ export class BlobManager {
                     entry.handleP.resolve(this.getBlobHandle(response.id));
                     this.pendingBlobs.delete(localId);
                 } else {
+                    // Check for still-pending duplicates too; if an op is already in flight we can wait for that one
+                    if (!this.opsInFlight.has(response.id)) {
+                        this.sendBlobAttachOp(response.id);
+                    }
+                    this.opsInFlight.set(response.id, (this.opsInFlight.get(response.id) ?? []).concat(localId));
                     entry.status = PendingBlobStatus.OnlinePendingOp;
-                    this.sendBlobAttachOp(response.id);
                 }
             } else if (entry.status === PendingBlobStatus.OfflinePendingUpload) {
                 // We already submitted a BlobAttach op for this blob when it was transitioned to offline flow
@@ -306,11 +350,11 @@ export class BlobManager {
         const entry = this.pendingBlobs.get(localId);
         assert(!!entry, "Must have pending blob entry for blob which failed to upload");
         if (!this.runtime.connected) {
-            this.transitionToOffline(localId);
+            if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
+                this.transitionToOffline(localId);
+            }
             // we are probably not connected to storage but start another upload request in case we are
-            const delay = this.retryThrottler.getDelay();
-            entry.uploadP = new Promise<void>((res) => setTimeout(res, delay))
-                .then(async () => this.uploadBlob(localId, entry.blob));
+            entry.uploadP = this.retryThrottler.getDelay().then(async () => this.uploadBlob(localId, entry.blob));
             return entry.uploadP;
         } else {
             entry.handleP.reject(error);
@@ -325,7 +369,7 @@ export class BlobManager {
         assert([PendingBlobStatus.OnlinePendingUpload, PendingBlobStatus.OnlinePendingOp].includes(entry.status),
             "Blob must be in online flow to transition to offline flow");
 
-        entry.status = PendingBlobStatus.OnlinePendingUpload
+        entry.status = entry.status === PendingBlobStatus.OnlinePendingUpload
             ? PendingBlobStatus.OfflinePendingUpload
             : PendingBlobStatus.OfflinePendingOp;
 
@@ -367,25 +411,26 @@ export class BlobManager {
 
         if (local) {
             if (message.metadata.localId === undefined) {
-                // The current op was submitted while offline.  However, it's possible that a
-                // disconnection happened after submitting the op and we have also created a
-                // localId / pending entry.  We should remove this entry to avoid generating a
-                // second attach op.  The linear search is acceptable since we drain the
-                // 'pendingBlobs' prior to finishing the connection, so typically 'pendingBlobs'
-                // will be empty when processing local ops that were created while online.
-                for (const [id, entry] of this.pendingBlobs) {
-                    if (entry.storageId === message.metadata.blobId &&
-                        entry.status === PendingBlobStatus.OnlinePendingOp) {
-                        entry.handleP.resolve(this.getBlobHandle(message.metadata.blobId));
-                        this.pendingBlobs.delete(id);
+                // Since there is no local ID, we know this op was submitted while online.
+                const waitingBlobs = this.opsInFlight.get(message.metadata.blobId);
+                assert(!!waitingBlobs, "local online BlobAttach op with no pending blob");
+                waitingBlobs.forEach((localId) => {
+                    const pendingBlobEntry = this.pendingBlobs.get(localId);
+                    assert(pendingBlobEntry !== undefined, "local online BlobAttach op with no pending blob entry");
+
+                    // It's possible we transitioned to offline flow while waiting for this op.
+                    if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
+                        pendingBlobEntry.handleP.resolve(this.getBlobHandle(message.metadata.blobId));
+                        this.pendingBlobs.delete(localId);
                     }
-                }
+                });
             } else {
+                // Each local ID is unique; get the pending blob entry and delete it
                 const pendingBlobEntry = this.pendingBlobs.get(message.metadata.localId);
                 assert(pendingBlobEntry !== undefined, 0x1f8 /* "local BlobAttach op with no pending blob" */);
                 assert(pendingBlobEntry.status === PendingBlobStatus.OfflinePendingOp,
                     "Unexpected pending blob status");
-                this.pendingBlobs.delete(message.metadata.blobId);
+                this.pendingBlobs.delete(message.metadata.localId);
             }
         }
     }
