@@ -64,6 +64,30 @@ use_old_EnumDeclaration_ClpCompliantAppHeader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createLocalOdspDocumentServiceFactory": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createLocalOdspDocumentServiceFactory():
+    TypeOnly<typeof old.createLocalOdspDocumentServiceFactory>;
+declare function use_current_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
+    use: TypeOnly<typeof current.createLocalOdspDocumentServiceFactory>);
+use_current_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
+    get_old_FunctionDeclaration_createLocalOdspDocumentServiceFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createLocalOdspDocumentServiceFactory": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createLocalOdspDocumentServiceFactory():
+    TypeOnly<typeof current.createLocalOdspDocumentServiceFactory>;
+declare function use_old_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
+    use: TypeOnly<typeof old.createLocalOdspDocumentServiceFactory>);
+use_old_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
+    get_current_FunctionDeclaration_createLocalOdspDocumentServiceFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_createOdspCreateContainerRequest": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_createOdspCreateContainerRequest():
