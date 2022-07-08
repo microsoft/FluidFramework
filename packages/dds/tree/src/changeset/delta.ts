@@ -10,7 +10,7 @@
  * with a minimum amount of backtracking over the contents of the tree. This a boon for both code simplicity and
  * performance.
  *
- * 2. Make it impossible to represent nonsensical cases (e.g., content being inserted within a deleted portion of the
+ * 2. Make it impossible to represent meaningless cases (e.g., content being inserted within a deleted portion of the
  * tree). This both safeguard readers from having to handle such cases, and forces writers to critically examine their
  * logic.
  *
@@ -42,7 +42,11 @@
  * - It would lead the consumer of the format first build the inserted subtree, then traverse it again from its root to
  * apply the relevant `MoveIn` marks.
  *
- * 3. 
+ * 3. The types of modify marks are specialized to constrain the kinds of marks that can appear below them.
+ *
+ * If modify marks were not specialized then it would be possible to represent meaningless cases and consumers of this
+ * format would have to either provide implementations for them or detect when they they occur. By specializing the
+ * types we move this "detection" to the Typescript compiler.
  */
 export type Delta = (Offset | Modify | Delete | MoveOut | MoveIn | Insert)[];
 

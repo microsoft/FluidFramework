@@ -11,7 +11,7 @@
  * that are being inserted.
  *
  * The second challenge, is that of the inability of the visitor to move-in content that has yet to be moved-out.
- * This leads to a two-pass algorithm, but there are two choices that can be made:
+ * This leads to a two-pass algorithm, but there are two degrees for freedom to consider:
  * 1) Whether inserts should be performed in the first pass whenever possible (some are not: insert below a move-ins
  *   for which we have not yet seen the matching move-out).
  * Pros: The path above the insertion point is walked once instead of twice
@@ -20,8 +20,8 @@
  *
  * 2) Whether move-ins for which we have the move-out content should be performed in the first pass.
  * Pros: The path above the move-in point is walked once instead of twice
- * Cons: We now have to record which of the move-ins we did not perform in the first pass. We build a trie of those to
- * reduce the amount of sifting we have to do on the second pass.
+ * Cons: We now have to record which of the move-ins we did not perform in the first pass. We could build a trie of
+ * those to reduce the amount of sifting we have to do on the second pass.
  *
  * The presence of a move table, which lists the src and dst paths for each move, could be leveraged to make some of
  * these option more efficient:
