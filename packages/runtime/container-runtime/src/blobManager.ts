@@ -160,13 +160,13 @@ export class BlobManager {
         this.redirectTable = this.load(snapshot);
     }
 
-    public get pendingOfflineUploadCount(): number {
+    private get pendingOfflineUploads() {
         return Array.from(this.pendingBlobs.values())
-            .filter((e) => e.status === PendingBlobStatus.OfflinePendingUpload).length;
+            .filter((e) => e.status === PendingBlobStatus.OfflinePendingUpload);
     }
 
     public get hasPendingOfflineUploads(): boolean {
-        return this.pendingOfflineUploadCount > 0;
+        return this.pendingOfflineUploads.length > 0;
     }
 
     /**
@@ -174,11 +174,11 @@ export class BlobManager {
      */
     public async onConnected() {
         this.retryThrottler.cancel();
+        const pendingUploads = this.pendingOfflineUploads.map(async (e) => e.uploadP);
         await PerformanceEvent.timedExecAsync(this.logger, {
                 eventName: "BlobUploadOnConnected",
-                count: this.pendingOfflineUploadCount,
-            }, async () => Promise.all(Array.from(this.pendingBlobs.values())
-                    .filter((e) => e.status === PendingBlobStatus.OfflinePendingUpload).map(async (e) => e.uploadP)),
+                count: pendingUploads.length,
+            }, async () => Promise.all(pendingUploads),
             { start: true, end: true },
         );
     }
@@ -426,10 +426,8 @@ export class BlobManager {
                 });
             } else {
                 // Each local ID is unique; get the pending blob entry and delete it
-                const pendingBlobEntry = this.pendingBlobs.get(message.metadata.localId);
-                assert(pendingBlobEntry !== undefined, 0x1f8 /* "local BlobAttach op with no pending blob" */);
-                assert(pendingBlobEntry.status === PendingBlobStatus.OfflinePendingOp,
-                    "Unexpected pending blob status");
+                assert(this.pendingBlobs.get(message.metadata.localId)?.status === PendingBlobStatus.OfflinePendingOp,
+                    0x1f8 /* "local BlobAttach op with no pending blob" */);
                 this.pendingBlobs.delete(message.metadata.localId);
             }
         }
