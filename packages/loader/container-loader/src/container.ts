@@ -48,10 +48,10 @@ import {
     isOnline,
     ensureFluidResolvedUrl,
     combineAppAndProtocolSummary,
-    runWithRetry,
     isFluidResolvedUrl,
     isRuntimeMessage,
     isUnpackedRuntimeMessage,
+    runWithRetry2,
 } from "@fluidframework/driver-utils";
 import {
     IProtocolHandler,
@@ -109,6 +109,7 @@ import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, Quorum
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
+import { AbortSignal } from "./abortControllerShim";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -846,7 +847,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (this.service === undefined) {
                     assert(this.client.details.type !== summarizerClientType,
                         0x2c4 /* "client should not be summarizer before container is created" */);
-                    this.service = await runWithRetry(
+                    const runResult = await runWithRetry2(
                         async () => this.serviceFactory.createContainer(
                             summary,
                             createNewResolvedUrl,
@@ -857,9 +858,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         this.mc.logger,
                         {
                             cancel: this.closeSignal,
-                            cancelDescription: "ContainerClose",
                         }, // progress
                     );
+
+                    switch (runResult.status) {
+                        case "succeeded":
+                            return runResult.result;
+                        case "failed":
+                            throw runResult.error;
+                        case "aborted":
+                            throw new GenericError(
+                                `Container.attach() was aborted [${runResult.reason}]`,
+                                undefined /* error */,
+                                { reason: runResult.reason },
+                            );
+                        default:
+                            unreachableCase(runResult);
+                    }
                 }
                 const resolvedUrl = this.service.resolvedUrl;
                 ensureFluidResolvedUrl(resolvedUrl);

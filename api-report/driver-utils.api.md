@@ -221,16 +221,15 @@ export class InsecureUrlResolver implements IUrlResolver {
 
 // @public @deprecated (undocumented)
 export interface IProgress {
-    cancel?: AbortSignal;
+    // Warning: (ae-forgotten-export) The symbol "AbortSignal" needs to be exported by the entry point index.d.ts
+    cancel?: AbortSignal_2;
     cancelDescription?: string;
     onRetry?(delayInMs: number, error: any): void;
 }
 
 // @public (undocumented)
 export interface IProgress2 {
-    cancel?: AbortSignal & {
-        reason: string;
-    };
+    cancel?: AbortSignal_2;
     onRetry?(delayInMs: number, error: unknown): string | undefined;
 }
 
@@ -390,10 +389,10 @@ export type RunResult<T> = {
 };
 
 // @public @deprecated (undocumented)
-export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
+export function runWithRetry<T>(api: (cancel?: AbortSignal_2) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
 
 // @public (undocumented)
-export function runWithRetry2<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress2): Promise<RunResult<T>>;
+export function runWithRetry2<T>(api: (cancel?: AbortSignal_2) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress2): Promise<RunResult<T>>;
 
 // @public (undocumented)
 export abstract class SnapshotExtractor {

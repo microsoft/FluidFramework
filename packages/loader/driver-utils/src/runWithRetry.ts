@@ -6,9 +6,9 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { delay, performance, unreachableCase } from "@fluidframework/common-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { canRetryOnError, getRetryDelayFromError } from "./network";
+import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "./network";
 import { pkgVersion } from "./packageVersion";
-import { NonRetryableError } from ".";
+import { AbortSignal } from "./abortControllerShim";
 
 /**
  * @deprecated - use IProgress2
@@ -27,9 +27,6 @@ export interface IProgress {
      *    - runWithRetry
      */
     cancel?: AbortSignal;
-
-    /** A string to describe what would cause the AbortSignal to trigger */
-    cancelDescription?: string;
 
     /**
      * Called whenever api returns cancellable error and the call is going to be retried.
@@ -53,7 +50,7 @@ export interface IProgress2 {
      *    - driver (RateLimiter)
      *    - runWithRetry
      */
-    cancel?: AbortSignal & { reason: string; };
+    cancel?: AbortSignal;
 
     /**
      * Called whenever api returns cancellable error and the call is going to be retried.
@@ -110,16 +107,18 @@ export async function runWithRetry2<T>(
             }
 
             if (progress.cancel?.aborted === true) {
+                const reason = progress.cancel.reason;
                 logger.sendTelemetryEvent({
                     eventName: `${fetchCallName}_runWithRetryAborted`,
                     retry: numRetries,
                     duration: performance.now() - startTime,
                     fetchCallName,
+                    reason,
                 }, err);
 
                 return {
                     status: "aborted",
-                    reason: progress.cancel?.reason ?? "UNSPECIFIED",
+                    reason: reason?.toString() ?? "UNSPECIFIED",
                 };
             }
 
@@ -160,7 +159,7 @@ export async function runWithRetry<T>(
     progress: IProgress,
 ): Promise<T> {
     const progress2: IProgress2 = {
-        cancel: Object.assign(progress.cancel, { reason: "UNSPECIFIED" }),
+        cancel: progress.cancel,
         onRetry(delayInMs: number, error: unknown): string | undefined {
             try {
                 progress.onRetry?.(delayInMs, error);
