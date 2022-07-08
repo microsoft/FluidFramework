@@ -83,7 +83,7 @@ extends:
         customCommand: 'ci'
         customRegistry: 'useNpmrc'
         workingDir: '$(Build.SourcesDirectory)/build-tools'
-    # Build the build-tools locally so it can be used to generate the monorepo package.json
+    # Build the build-tools locally so it can be used to generate the monorepo package.jsonnode
     - task: Npm@1
       displayName: 'npm run build:compile'
       inputs:
