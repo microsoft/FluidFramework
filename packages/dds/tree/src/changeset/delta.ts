@@ -4,7 +4,32 @@
  */
 
 /**
- * This format is designed with the following goals in mind:
+ * This format describes changes that must be applied to a document tree in order to update it. Instances of this format
+ * are generated based on incoming changesets and consumed by a view layer (e.g., Forest) to update itself.
+ *
+ * Because this format is only meant for updating document state, it does not fully represent user intentions and is not
+ * fit to be rebased in the face of concurrent changes. Instead this format is used to describe the end product of
+ * rebasing user intentions over concurrent edits.
+ *
+ * This format is self-contained in the following ways:
+ *
+ * 1. It uses integer indices (offsets, technically) to describe necessary changes. As such, it does not rely on
+ * document nodes being randomly accessible by ID.
+ *
+ * 2. This format does not require historical information in order to apply the changes it describes. For example, if a
+ * user undoes the deletion of a subtree, then the Delta generated for the undo edit will contain all information
+ * necessary to re-create the subtree from scratch.
+ *
+ * This format can be generated from any Changeset without having access to the current document state.
+ *
+ * This format is meant to serve as the lowest common denominator to represent state changes resulting from any kind
+ * of operation on any kind of field. This means all such operations must be expressible in terms of this format.
+ *
+ * Future work:
+ * - Define where and how field-specific and operation-specific metadata is meant to be represented.
+ * - Add a move table to describe the src and dst paths of move operations.
+ *
+ * Within the above design constrains, this format is designed with the following goals in mind:
  *
  * 1. Make it easy to walk both a document tree and the delta tree to apply the changes described in the delta
  * with a minimum amount of backtracking over the contents of the tree. This a boon for both code simplicity and
@@ -42,7 +67,9 @@
  * - It would lead the consumer of the format first build the inserted subtree, then traverse it again from its root to
  * apply the relevant `MoveIn` marks.
  *
- * 3. The types of modify marks are specialized to constrain the kinds of marks that can appear below them.
+ * 3. Modifications to subtrees that are also being deleted or moved are represented within the marks that describe such
+ * deletions or movements. This makes it possible specialize the type of the modifications in order to constrain the
+ * kinds of marks that can appear below them.
  *
  * If modify marks were not specialized then it would be possible to represent meaningless cases and consumers of this
  * format would have to either provide implementations for them or detect when they they occur. By specializing the
@@ -53,47 +80,76 @@ export type Delta = (Offset | Modify | Delete | MoveOut | MoveIn | Insert)[];
 export const type: unique symbol = Symbol("Delta.type");
 export const setValue: unique symbol = Symbol("Delta.setValue");
 
+/**
+ * Describes modifications made to a subtree that is otherwise untouched (i.e., not being inserted, deleted, or moved).
+ */
 export interface Modify {
 	[type]: typeof MarkType.Modify;
 	[setValue]?: Value;
 	[key: FieldKey]: Delta;
 }
 
+/**
+ * Describes modifications made to a subtree that is being deleted.
+ */
 export interface ModifyDel {
 	[type]: typeof MarkType.Modify; // Use more specific value?
 	[key: FieldKey]: (Offset | ModifyDel | MoveOut)[];
 }
 
-export interface ModifyOut {
+/**
+ * Describes modifications made to a subtree that is being moved out.
+ */
+ export interface ModifyOut {
 	[type]: typeof MarkType.Modify;
 	[setValue]?: Value;
 	[key: FieldKey]: (Offset | ModifyOut | Delete | MoveOut)[];
 }
 
-export interface ModifyIn {
+/**
+ * Describes modifications made to a subtree that is being moved in.
+ */
+ export interface ModifyIn {
 	[type]: typeof MarkType.Modify;
 	[key: FieldKey]: (Offset | ModifyIn | MoveIn | Insert)[];
 }
 
+/**
+ * Describes the deletion of a contiguous range of node.
+ * Includes descriptions of the modifications made to those nodes (if any).
+ */
 export interface Delete {
 	[type]: typeof MarkType.Delete;
 	count: number;
 	modify?: (Offset | ModifyDel)[];
 }
 
-export interface MoveOut {
+/**
+ * Describes the moving out of a contiguous range of node.
+ * Includes descriptions of the modifications made to those nodes (if any).
+ */
+ export interface MoveOut {
 	[type]: typeof MarkType.MoveOut;
 	count: number;
 	moveId: MoveId;
 	modify?: (Offset | ModifyOut)[];
 }
 
-export interface MoveIn {
+/**
+ * Describes the moving in of a contiguous range of node.
+ * Includes descriptions of the modifications made to those nodes (if any).
+ */
+ export interface MoveIn {
 	[type]: typeof MarkType.MoveIn;
 	moveId: MoveId;
 	modify?: (Offset | ModifyIn)[];
 }
 
+/**
+ * Describes the insertion of a contiguous range of node.
+ * Includes descriptions of the modifications made to those nodes (if any). Those are represented as `MoveIn` marks
+ * within `ProtoField`s.
+ */
 export interface Insert {
 	[type]: typeof MarkType.Insert;
 	content: ProtoTree[];
