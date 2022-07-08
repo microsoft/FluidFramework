@@ -5,7 +5,7 @@
 
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITenantManager, MongoManager } from "@fluidframework/server-services-core";
+import { ISequencedOperationMessage, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
 
 export class DeltaService {
     constructor(
@@ -64,10 +64,8 @@ export class DeltaService {
 
     private async queryDeltas(collectionName: string, query: any, sort: any): Promise<ISequencedDocumentMessage[]> {
         const db = await this.mongoManager.getDatabase();
-        // eslint-disable-next-line @typescript-eslint/await-thenable
-        const collection = await db.collection<any>(collectionName);
+        const collection = db.collection<ISequencedOperationMessage>(collectionName);
         const dbDeltas = await collection.find(query, sort);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return dbDeltas.map((delta) => delta.operation);
     }
 
