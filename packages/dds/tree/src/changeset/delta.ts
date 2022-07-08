@@ -3,150 +3,128 @@
  * Licensed under the MIT License.
  */
 
-export type If<Bool, T1, T2 = never> = Bool extends true ? T1 : T2;
+/**
+ * This format is designed with the following goals in mind:
+ *
+ * 1. Make it easy to walk both a document tree and the delta tree to apply the changes described in the delta
+ * with a minimum amount of backtracking over the contents of the tree. This a boon for both code simplicity and
+ * performance.
+ *
+ * 2. Make it impossible to represent nonsensical cases (e.g., content being inserted within a deleted portion of the
+ * tree). This both safeguard readers from having to handle such cases, and forces writers to critically examine their
+ * logic.
+ *
+ * 3. Make the representation terse when possible.
+ *
+ * These goals are reflected in the following design choices:
+ *
+ * 1. All marks that apply to field elements are represented in a single linear structure where marks that affect later
+ * element of the document field appear after marks that affect earlier elements of the document field.
+ *
+ * If the marks were not ordered in this fashion then a consumer would need to backtrack within the document field.
+ *
+ * If the marks were represented in multiple such linear structures then either backtracking would be necessary (when
+ * iterating over one structure fully, then the next) or it would be necessary to maintain a pointer within each such
+ * linear structure and advance them in lock-step (like in a k-way merge-sort but more fiddly because of the offsets).
+ *
+ * The drawback of this design choice is that it relies heavily on polymorphism: for each mark encountered a reader has
+ * to check which kind of mark it is. This is a source of code and time complexity in the reader code and adds a memory
+ * overhead to the format since each mark has to carry a tag field to announce what kind of mark it is. Some of the
+ * complexity is reduced by design choice #3.
+ *
+ * 2. `MoveIn` marks in inserted portions of the document are inlined in their corresponding `ProtoField`.
+ *
+ * If the MoveIn marks were represented in a separate sub-structure (like they are under moved-in portions of the tree)
+ * then the representation would forced to describe the path to them (in the form field keys and field offsets) from
+ * the root of the inserted portion of the tree. This would have two adverse effects:
+ * - It would make the format less terse since this same path information would be redundant (it is already included in
+ * the ProtoTree).
+ * - It would lead the consumer of the format first build the inserted subtree, then traverse it again from its root to
+ * apply the relevant `MoveIn` marks.
+ *
+ * 3. 
+ */
+export type Delta = (Offset | Modify | Delete | MoveOut | MoveIn | Insert)[];
 
-export interface SetValue {
-	type: "SetValue";
-	value: Value;
+export const type: unique symbol = Symbol("Delta.type");
+export const setValue: unique symbol = Symbol("Delta.setValue");
+
+export interface Modify {
+	[type]: typeof MarkType.Modify;
+	[setValue]?: Value;
+	[key: FieldKey]: Delta;
 }
 
-export interface Modify<TInner = Mark, AllowSetValue extends boolean = true> {
-	type?: "Modify";
-	/**
-	 * We need this setValue (in addition to the SetValue mark because non-leaf nodes can have values)
-	 */
-	value?: If<AllowSetValue, Value>;
-	modify?: { [key: string]: (Offset | TInner | Modify<TInner, AllowSetValue>)[]; };
+export interface ModifyDel {
+	[type]: typeof MarkType.Modify; // Use more specific value?
+	[key: FieldKey]: (Offset | ModifyDel | MoveOut)[];
 }
 
-export type TraitMarks = (Offset | Mark)[];
-
-export type ModsMark =
-	| SetValue
-	| Modify;
-export type AttachMark =
-	| Insert
-	| MoveIn;
-export type DetachMark =
-	| MoveOut
-	| Delete;
-export type SegmentMark =
-	| AttachMark
-	| DetachMark;
-export type ObjMark =
-	| ModsMark
-	| SegmentMark;
-
-export type Mark =
-	| ObjMark;
-
-export interface HasMods {
-	mods?: (Offset | ModsMark)[];
+export interface ModifyOut {
+	[type]: typeof MarkType.Modify;
+	[setValue]?: Value;
+	[key: FieldKey]: (Offset | ModifyOut | Delete | MoveOut)[];
 }
 
-export interface Insert extends HasMods {
-	type: "Insert";
-	content: ProtoNode[];
+export interface ModifyIn {
+	[type]: typeof MarkType.Modify;
+	[key: FieldKey]: (Offset | ModifyIn | MoveIn | Insert)[];
 }
 
-export interface MoveIn extends HasMods, HasOpId {
-	type: "MoveIn";
+export interface Delete {
+	[type]: typeof MarkType.Delete;
+	count: number;
+	modify?: (Offset | ModifyDel)[];
 }
 
-export interface Delete extends HasLength {
-	type: "Delete";
-	/**
-	 * Applying a Delete over existing Modify marks has the follow effects on them and their descendants:
-	 * (These effects are also applied to Modify marks over which a slice-deletion is performed)
-	 * - setValue: removed
-	 * - SetValue: replaced by an offset of 1
-	 * - Insert: removed
-	 * - MoveIn from MoveOut: MoveIn is removed, the corresponding MoveOut becomes a Delete
-	 * - MoveIn from MoveOutStart: MoveIn is removed, the corresponding MoveOutStart becomes a StartDelete
-	 * - Delete: replaced by an offset
-	 * - MoveOut: preserved as is
-	 * - MoveOutStart+End: preserved as is
-	 */
-	mods?: (Offset | Modify<MoveOut, false>)[];
+export interface MoveOut {
+	[type]: typeof MarkType.MoveOut;
+	count: number;
+	moveId: MoveId;
+	modify?: (Offset | ModifyOut)[];
+}
+
+export interface MoveIn {
+	[type]: typeof MarkType.MoveIn;
+	moveId: MoveId;
+	modify?: (Offset | ModifyIn)[];
+}
+
+export interface Insert {
+	[type]: typeof MarkType.Insert;
+	content: ProtoTree[];
 }
 
 /**
- * Used for set-like ranges and atomic ranges.
+ * The contents of a subtree to be created
  */
-export interface MoveOut extends HasLength, HasOpId {
-	type: "MoveOut";
-	/**
-	 * Applying a MoveOut over existing Modify marks has the follow effects on them and their descendants:
-	 * (These effects are also applied to Modify marks over which a slice-move-out is performed)
-	 * - setValue: transplanted to the target location of the move.
-	 * - SetValue: replaced by an offset of 1 and transplanted to the target location of the move.
-	 * - Insert: transplanted to the target location of the move.
-	 * - MoveIn from MoveOut: transplanted to the target location of the move. The corresponding MoveOut
-	 *   is updated.
-	 * - MoveIn from MoveOutStart: transplanted to transplanted to the target location of the move. The
-	 *   corresponding MoveOutStart is updated.
-	 * - Delete: replaced by an offset
-	 * - MoveOut: preserved as is
-	 * - MoveOutStart+End: preserved as is
-	 */
-	mods?: (Offset | Modify<MoveOut, false>)[];
-}
-
-export interface HasOpId {
-	/**
-	 * The ID of the corresponding MoveIn/MoveOut/End/SliceStart.
-	 */
-	op: OpId;
-}
-
-/**
- * The contents of a node to be created
- */
-export interface ProtoNode {
+export interface ProtoTree {
 	id: string;
 	type?: string;
 	value?: Value;
-	traits?: ProtoTraits;
+	fields?: ProtoFields;
 }
 
 /**
- * The traits of a node to be created
+ * The fields of a subtree to be created
  */
-export interface ProtoTraits {
-	[key: string]: ProtoTrait;
+export interface ProtoFields {
+	[key: FieldKey]: ProtoField;
 }
 
-/**
- * TODO: update this doc comment.
- * A trait within a node to be created.
- * May include MoveIn segments if content that was not inserted as part of this change gets moved into
- * the inserted subtree. That MoveIn segment may itself contain other kinds of segments.
- *
- * Other kinds of segments are unnecessary at this layer:
- * - Modify & SetValue:
- *   - for a ProtoNode the new value overwrites the original
- *   - for a moved-in node the new value is represented by a nested Modify or SetValue mark
- * - Insert:
- *   - inserted ProtoNodes are added to the relevant ProtoTrait
- * - Delete:
- *   - deleted ProtoNodes are removed from the relevant ProtoTrait
- *   - deleted moved-in nodes are deleted at their original location and the MoveIn segment is removed/truncated
- * - MoveOut:
- *   - Moved out ProtoNodes are removed from the relevant ProtoTrait and a corresponding insert is created
- *   - Moved out moved-in nodes redirected to avoid the intermediate step (the MoveIn segment is removed/truncated)
- */
-export type ProtoTrait = (ProtoNode | MoveIn)[];
+export type ProtoField = (ProtoTree | MoveIn)[];
 
-export interface HasLength {
-    /**
-     * Omit if 1.
-     */
-    length?: number;
-}
-
-export type OpId = number;
+export type MoveId = number;
 export type Offset = number;
 export type Index = number;
 export type Value = number | string | boolean;
 export type NodeId = string;
-export type TraitLabel = string;
+export type FieldKey = string;
+
+export const MarkType = {
+	Modify: 0,
+	Insert: 1,
+	Delete: 2,
+	MoveOut: 3,
+	MoveIn: 4,
+} as const;
