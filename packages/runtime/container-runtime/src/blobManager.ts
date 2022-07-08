@@ -472,7 +472,7 @@ export class BlobManager {
             const detached = this.runtime.attachState === AttachState.Detached;
             // If we are detached, we don't have storage IDs yet, so set to undefined
             // Otherwise, set identity (id -> id) entries
-            snapshot.ids.map((entry) => table.set(entry, detached ? undefined : entry));
+            snapshot.ids.forEach((entry) => table.set(entry, detached ? undefined : entry));
         }
         return table;
     }
@@ -493,20 +493,16 @@ export class BlobManager {
             gcData.gcNodes[this.getBlobGCNodePath(blobId)] = [];
         });
 
-        /**
-         * For all blobs in the redirect table, the handle returned on creation is based off of the localId. So, these
-         * nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
-         * must also be marked referenced. So, we add a route from the localId node to the storageId node.
-         * Note that because of de-duping, there can be multiple localIds that all redirect to the same storageId or
-         * a blob may be referenced via its storageId handle.
-         */
-        if (this.redirectTable !== undefined) {
-            for (const [localId, storageId] of this.redirectTable) {
-                assert(!!storageId, "Must be attached to get GC data");
-                // Add node for the localId and add a route to the storageId node. The storageId node will have been
-                // added above when adding nodes for this.blobIds.
-                gcData.gcNodes[this.getBlobGCNodePath(localId)] = [this.getBlobGCNodePath(storageId)];
-            }
+        // For some blobs, the handle returned on creation is based off of the localId. So, these
+        // nodes can be referenced by storing the localId handle. When that happens, the corresponding storageId node
+        // must also be marked referenced. So, we add a route from the localId node to the storageId node.
+        // Note that because of de-duping, there can be multiple localIds that all redirect to the same storageId or
+        // a blob may be referenced via its storageId handle.
+        for (const [localId, storageId] of this.redirectTable) {
+            assert(!!storageId, "Must be attached to get GC data");
+            // Add node for the localId and add a route to the storageId node. The storageId node will have been
+            // added above when adding nodes for this.blobIds.
+            gcData.gcNodes[this.getBlobGCNodePath(localId)] = [this.getBlobGCNodePath(storageId)];
         }
 
         return gcData;
@@ -544,6 +540,7 @@ export class BlobManager {
             builder.addAttachment(blobId);
         });
 
+        // Any non-identity entries in the table need to be saved in the summary
         if (this.redirectTable.size > blobIds.length) {
             builder.addBlob(
                 BlobManager.redirectTableBlobName,
