@@ -12,6 +12,11 @@ import { UpPath } from "./pathTree";
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 /**
+ * A way to refer to a particular tree location within a {@link Rebaser} instance's revision.
+ */
+export type Anchor = Brand<number, "rebaser.Anchor">;
+
+/**
  * A collection of branches which can rebase changes between them.
  */
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
@@ -50,10 +55,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
     ): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>] {
         const initalChangeset: ChangeSetFromChangeRebaser<TChangeRebaser> =
             this.rebaser.import(changes);
-        if (from !== to) {
-            throw Error("Not implemented"); // TODO: rebase
-        }
-        const over = this.rebaser.compose([]);
+        const over = this.getResolutionPath(from, to);
         const finalChangeset: ChangeSetFromChangeRebaser<TChangeRebaser> =
             this.rebaser.rebase(initalChangeset, over);
         const newRevision = this.makeRevision();
@@ -64,6 +66,38 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
         const output: FinalFromChangeRebaser<TChangeRebaser> =
             this.rebaser.export(finalChangeset);
         return [newRevision, output];
+    }
+
+    /**
+     * Modifies `anchors` to be valid at the destination.
+     */
+    public rebaseAnchors(
+        anchors: AnchorSet,
+        from: RevisionTag,
+        to: RevisionTag,
+    ): void {
+        const over = this.getResolutionPath(from, to);
+        this.rebaser.rebaseAnchors(anchors, over);
+    }
+
+    // Separated out for easier testing
+    private getRawResolutionPath(
+        from: RevisionTag,
+        to: RevisionTag,
+    ): ChangeSetFromChangeRebaser<TChangeRebaser>[] {
+        if (from !== to) {
+            throw Error("Not implemented"); // TODO: rebase
+        }
+        return [];
+    }
+
+    private getResolutionPath(
+        from: RevisionTag,
+        to: RevisionTag,
+    ): ChangeSetFromChangeRebaser<TChangeRebaser> {
+        // TODO: fix typing
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.rebaser.compose(...this.getRawResolutionPath(from, to));
     }
 
     /**
@@ -129,6 +163,11 @@ export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
 
     rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
 
+    // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
+    // This isn't ideal, but it might be fine?
+    // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
+    rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
+
     import(change: TChange): TChangeSet;
 
     export(change: TChangeSet): TFinalChange;
@@ -144,18 +183,33 @@ export enum FinalChangeStatus {
     commuted,
 }
 
-export interface AnchorLocator<TAnchor> {
+/**
+ * Collection of Anchors at a specific revision.
+ *
+ * See {@link Rebaser} for how to update across revisions.
+ */
+export class AnchorSet {
+    public constructor() {
+        throw Error("Not implemented"); // TODO
+    }
+
     /**
      * TODO: support extra/custom return types for specific anchor types:
-     * for now caller must rely on dat in anchor + returned node location
+     * for now caller must rely on data in anchor + returned node location
      * (not ideal for anchors for places or ranges instead of nodes).
      */
-    locate(anchor: TAnchor): UpPath;
+    public locate(anchor: Anchor): UpPath | undefined {
+        throw Error("Not implemented"); // TODO
+    }
 
-    forget(anchor: TAnchor): void;
+    public forget(anchor: Anchor): void {
+        throw Error("Not implemented"); // TODO
+    }
 
     /**
      * TODO: add API to UpPath (maybe extend as AnchorPath to allow building without having to copy here?)
      */
-    track(path: UpPath): TAnchor;
+    public track(path: UpPath): Anchor {
+        throw Error("Not implemented"); // TODO
+    }
 }
