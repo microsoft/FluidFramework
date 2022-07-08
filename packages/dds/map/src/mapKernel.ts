@@ -42,7 +42,6 @@ interface IMapMessageHandler {
      */
     submit(op: IMapOperation, localOpMetadata: unknown): void;
 
-    getStashedOpLocalMetadata(op: IMapOperation): unknown;
 }
 
 /**
@@ -436,14 +435,6 @@ export class MapKernel {
         return true;
     }
 
-    public tryGetStashedOpLocalMetadata(op: any): unknown {
-        const handler = this.messageHandlers.get(op.type);
-        if (handler === undefined) {
-            throw new Error("no apply stashed op handler");
-        }
-        return handler.getStashedOpLocalMetadata(op as IMapOperation);
-    }
-
     /**
      * Process the given op if a handler is registered.
      * @param op - The message to process
@@ -668,10 +659,6 @@ export class MapKernel {
                         0x2fd /* pendingMessageId does not match */);
                     this.submitMapClearMessage(op, localOpMetadata.previousMap);
                 },
-                getStashedOpLocalMetadata: (op: IMapClearOperation) => {
-                    // We don't reuse the metadata pendingMessageId but send a new one on each submit.
-                    return { type: "clear", pendingMessageId: this.getMapClearMessageId() };
-                },
             });
         messageHandlers.set(
             "delete",
@@ -685,10 +672,6 @@ export class MapKernel {
                 },
                 submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);
-                },
-                getStashedOpLocalMetadata: (op: IMapDeleteOperation) => {
-                    // We don't reuse the metadata pendingMessageId but send a new one on each submit.
-                    return { type: "edit", pendingMessageId: this.getMapKeyMessageId(op) };
                 },
             });
         messageHandlers.set(
@@ -710,10 +693,6 @@ export class MapKernel {
                 },
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);
-                },
-                getStashedOpLocalMetadata: (op: IMapSetOperation) => {
-                    // We don't reuse the metadata pendingMessageId but send a new one on each submit.
-                    return { type: "edit", pendingMessageId: this.getMapKeyMessageId(op) };
                 },
             });
 
