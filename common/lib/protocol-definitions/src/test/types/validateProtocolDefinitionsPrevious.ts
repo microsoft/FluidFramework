@@ -251,6 +251,7 @@ declare function get_current_InterfaceDeclaration_IClientConfiguration():
 declare function use_old_InterfaceDeclaration_IClientConfiguration(
     use: TypeOnly<old.IClientConfiguration>);
 use_old_InterfaceDeclaration_IClientConfiguration(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IClientConfiguration());
 
 /*
@@ -371,6 +372,7 @@ declare function get_current_InterfaceDeclaration_IConnected():
 declare function use_old_InterfaceDeclaration_IConnected(
     use: TypeOnly<old.IConnected>);
 use_old_InterfaceDeclaration_IConnected(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnected());
 
 /*
@@ -1072,26 +1074,14 @@ use_old_InterfaceDeclaration_ISummaryAttachment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryAuthor": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryAuthor": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISummaryAuthor():
-    TypeOnly<old.ISummaryAuthor>;
-declare function use_current_InterfaceDeclaration_ISummaryAuthor(
-    use: TypeOnly<current.ISummaryAuthor>);
-use_current_InterfaceDeclaration_ISummaryAuthor(
-    get_old_InterfaceDeclaration_ISummaryAuthor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryAuthor": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryAuthor": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISummaryAuthor():
-    TypeOnly<current.ISummaryAuthor>;
-declare function use_old_InterfaceDeclaration_ISummaryAuthor(
-    use: TypeOnly<old.ISummaryAuthor>);
-use_old_InterfaceDeclaration_ISummaryAuthor(
-    get_current_InterfaceDeclaration_ISummaryAuthor());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1120,50 +1110,26 @@ use_old_InterfaceDeclaration_ISummaryBlob(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryCommitter": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryCommitter": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISummaryCommitter():
-    TypeOnly<old.ISummaryCommitter>;
-declare function use_current_InterfaceDeclaration_ISummaryCommitter(
-    use: TypeOnly<current.ISummaryCommitter>);
-use_current_InterfaceDeclaration_ISummaryCommitter(
-    get_old_InterfaceDeclaration_ISummaryCommitter());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryCommitter": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryCommitter": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISummaryCommitter():
-    TypeOnly<current.ISummaryCommitter>;
-declare function use_old_InterfaceDeclaration_ISummaryCommitter(
-    use: TypeOnly<old.ISummaryCommitter>);
-use_old_InterfaceDeclaration_ISummaryCommitter(
-    get_current_InterfaceDeclaration_ISummaryCommitter());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryConfiguration": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryConfiguration": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISummaryConfiguration():
-    TypeOnly<old.ISummaryConfiguration>;
-declare function use_current_InterfaceDeclaration_ISummaryConfiguration(
-    use: TypeOnly<current.ISummaryConfiguration>);
-use_current_InterfaceDeclaration_ISummaryConfiguration(
-    get_old_InterfaceDeclaration_ISummaryConfiguration());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryConfiguration": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryConfiguration": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISummaryConfiguration():
-    TypeOnly<current.ISummaryConfiguration>;
-declare function use_old_InterfaceDeclaration_ISummaryConfiguration(
-    use: TypeOnly<old.ISummaryConfiguration>);
-use_old_InterfaceDeclaration_ISummaryConfiguration(
-    get_current_InterfaceDeclaration_ISummaryConfiguration());
 
 /*
 * Validate forward compat by using old type in place of current type

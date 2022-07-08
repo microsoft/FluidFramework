@@ -378,6 +378,11 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
  */
 export class MockFluidDataStoreRuntime extends EventEmitter
     implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
+    constructor(overrides?: { clientId?: string; }) {
+        super();
+        this.clientId = overrides?.clientId ?? uuid();
+    }
+
     public get IFluidHandleContext(): IFluidHandleContext { return this; }
     public get rootRoutingContext(): IFluidHandleContext { return this; }
     public get channelsRoutingContext(): IFluidHandleContext { return this; }
@@ -389,7 +394,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
     public readonly id: string = uuid();
     public readonly existing: boolean = undefined as any;
     public options: ILoaderOptions = {};
-    public clientId: string | undefined = uuid();
+    public clientId: string;
     public readonly path = "";
     public readonly connected = true;
     public deltaManager = new MockDeltaManager();
@@ -442,7 +447,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter
         return;
     }
 
-    public bindToContext(): void {
+    public makeVisibleAndAttachGraph(): void {
         return;
     }
 
