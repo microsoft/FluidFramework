@@ -52,7 +52,8 @@ import {
     IConnectionManagerFactoryArgs,
     IConnectionManager,
 } from "./contracts";
-import { AbortController } from "./abortControllerShim";
+// eslint-disable-next-line import/order
+import { AbortController } from "abort-controller";
 
 export interface IConnectionArgs {
     mode?: ConnectionMode;

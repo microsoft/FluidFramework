@@ -8,7 +8,8 @@ import { delay, performance, unreachableCase } from "@fluidframework/common-util
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError, NonRetryableError } from "./network";
 import { pkgVersion } from "./packageVersion";
-import { AbortSignal } from "./abortControllerShim";
+// eslint-disable-next-line import/order
+import { AbortSignal } from "abort-controller";
 
 /**
  * @deprecated - use IProgress2
