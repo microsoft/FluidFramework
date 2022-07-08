@@ -39,9 +39,12 @@
  * tree). This both safeguard readers from having to handle such cases, and forces writers to critically examine their
  * logic.
  *
- * 3. Make the representation terse when possible.
+ * 3. Make the format terse.
  *
- * These goals are reflected in the following design choices:
+ * 4. Make the format uniform.
+ *
+ * These goals are reflected in the following design choices (this is very much optional reading for users of this
+ * format):
  *
  * 1. All marks that apply to field elements are represented in a single linear structure where marks that affect later
  * element of the document field appear after marks that affect earlier elements of the document field.
@@ -74,6 +77,36 @@
  * If modify marks were not specialized then it would be possible to represent meaningless cases and consumers of this
  * format would have to either provide implementations for them or detect when they they occur. By specializing the
  * types we move this "detection" to the Typescript compiler.
+ *
+ * 4. Modifications of deleted and moved-out nodes are represented using modify marks within `Delete` and `MoveOut`
+ * marks. This is in opposition to a structure where the fact that a modified node is being deleted or moved-out would
+ * be represented a `Modify` mark like so:
+ * ```typescript
+ * interface ModifyAndDelete {
+ *   [type]: typeof MarkType.ModifyAndDelete;
+ *   [key: FieldKey]: (Offset | ModifyDel | MoveOut)[];
+ * }
+ * interface ModifyAndMoveOut {
+ *   [type]: typeof MarkType.ModifyAndMoveOut;
+ *   [moveId]: MoveId;
+ *   [key: FieldKey]: (Offset | ModifyOut | MoveOut)[];
+ * }
+ * export interface Delete {
+ *   [type]: typeof MarkType.Delete;
+ *   count: number;
+ * }
+ * export interface MoveOut {
+ *   [type]: typeof MarkType.MoveOut;
+ *   count: number;
+ *   moveId: MoveId;
+ * }
+ * ```
+ * Note the absence of modify information in `Delete` and `MoveOut` above.
+ *
+ * The benefit of the chosen representation over the alternative are two-fold:
+ * - It leads to less splitting of moved and deleted ranges of nodes.
+ * - It makes the format more uniform since modifications to moved-in subtrees must be represented with modifications
+ * marks within a `MoveIn` mark.
  */
 export type Delta = (Offset | Modify | Delete | MoveOut | MoveIn | Insert)[];
 
