@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { GenericError } from "@fluidframework/container-utils";
 import {
     IDocumentStorageService,
@@ -18,7 +18,7 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
-import { runWithRetry } from "@fluidframework/driver-utils";
+import { runWithRetry2 } from "@fluidframework/driver-utils";
 
 export class RetriableDocumentStorageService implements IDocumentStorageService, IDisposable {
     private _disposed = false;
@@ -98,22 +98,25 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         );
     }
 
-    private checkStorageDisposed() {
-        if (this._disposed) {
-            // pre-0.58 error message: storageServiceDisposedCannotRetry
-            throw new GenericError("Storage Service is disposed. Cannot retry", { canRetry: false });
-        }
-        return undefined;
-    }
-
     private async runWithRetry<T>(api: () => Promise<T>, callName: string): Promise<T> {
-        return runWithRetry(
+        const runResult = await runWithRetry2(
             api,
             callName,
             this.logger,
             {
-                onRetry: () => this.checkStorageDisposed(),
+                onRetry: () => !this._disposed, // Don't continue if we're disposed
             },
         );
+        switch (runResult.status) {
+            case "succeeded":
+                return runResult.result;
+            case "failed":
+                throw runResult.error;
+            case "aborted":
+                // pre-0.58 error message: storageServiceDisposedCannotRetry
+                throw new GenericError("Storage Service is disposed. Cannot retry", { canRetry: false });
+            default:
+                unreachableCase(runResult);
+        }
     }
 }
