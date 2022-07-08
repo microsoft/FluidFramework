@@ -9,7 +9,7 @@ import { IDocument, IServiceConfiguration } from "@fluidframework/server-service
  * Whether a document exists and is not functionally deleted.
  */
 export function isDocumentValid(document: IDocument): boolean {
-    return !!document && document.scheduledDeletionTime !== undefined;
+    return !!document && !document.scheduledDeletionTime;
 }
 
 /**
