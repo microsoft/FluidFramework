@@ -91,7 +91,7 @@ extends:
       displayName: 'Generate Mono repo package json'
       inputs:
         targetType: 'inline'
-        workingDir: ${{ parameters.buildDirectory }}
+        workingDir: '$(Build.SourcesDirectory)/build-tools'
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
           node packages/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --build-tools
