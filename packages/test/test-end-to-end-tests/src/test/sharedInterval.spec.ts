@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { LocalReference, PropertySet } from "@fluidframework/merge-tree";
+import { DetachedReferencePosition, PropertySet } from "@fluidframework/merge-tree";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -40,8 +40,8 @@ const assertIntervalsHelper = (
         `findOverlappingIntervals() must return the expected number of intervals`);
 
     for (const actualInterval of actual) {
-        const start = sharedString.localRefToPos(actualInterval.start);
-        const end = sharedString.localRefToPos(actualInterval.end);
+        const start = sharedString.localReferencePositionToPosition(actualInterval.start);
+        const end = sharedString.localReferencePositionToPosition(actualInterval.end);
         let found = false;
 
         // console.log(`[${start},${end}): ${sharedString.getText().slice(start, end)}`);
@@ -250,7 +250,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
             sharedString.removeRange(0, len);
             await provider.ensureSynchronized();
-            assertIntervals([{ start: LocalReference.DetachedPosition, end: LocalReference.DetachedPosition }]);
+            assertIntervals([{ start: DetachedReferencePosition, end: DetachedReferencePosition }]);
         });
 
         it("replace before is excluded", async () => {

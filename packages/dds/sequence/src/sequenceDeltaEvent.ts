@@ -25,12 +25,6 @@ import {
  * They will not take into any future modifications performed to the underlying sequence and merge tree.
  */
 export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
-    /**
-     * @deprecated - Events no longer fire when the change they correspond to had no impact (e.g. a remote delete
-     * event for a range that had already been deleted locally).
-     * Clients can therefore assume this property is false.
-     */
-    public readonly isEmpty: boolean;
     public readonly deltaOperation: TOperation;
     private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
     private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
@@ -41,7 +35,6 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
         private readonly mergeTreeClient: Client,
     ) {
         assert(deltaArgs.deltaSegments.length > 0, 0x2d8 /* "Empty change event should not be emitted." */);
-        this.isEmpty = false;
         this.deltaOperation = deltaArgs.operation;
 
         this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(
