@@ -271,6 +271,7 @@ stages:
                 codeCoverageTool: Cobertura
                 summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                 reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
+                failIfCoverageEmpty: true
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
           # Test - Upload results
