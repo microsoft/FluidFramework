@@ -97,6 +97,7 @@ extends:
         workingDir: '$(Build.SourcesDirectory)/build-tools'
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
+          cd build-tools
           node packages/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --build-tools
           cp repo-package.json packages/package.json
           cp repo-package-lock.json packages/package-lock.json
