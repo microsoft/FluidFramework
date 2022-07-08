@@ -60,7 +60,7 @@ const testContainerConfig: ITestContainerConfig = {
     },
 };
 
-const lots = 30;
+const lots = 3;
 const testKey = "test key";
 const testKey2 = "another test key";
 const testValue = "test value";

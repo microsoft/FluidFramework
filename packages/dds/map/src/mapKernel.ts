@@ -33,7 +33,7 @@ interface IMapMessageHandler {
         local: boolean,
         localOpMetadata: unknown,
         isStashedOp: boolean,
-    ): void;
+    ): unknown;
 
     /**
      * Communicate the operation to remote clients.
@@ -590,11 +590,8 @@ export class MapKernel {
         localOpMetadata: unknown,
         isStashedOp: boolean,
     ): boolean {
-        if (isStashedOp) {
-            return true;
-        }
         if (this.pendingClearMessageIds.length > 0) {
-            if (local) {
+            if (local && !isStashedOp) {
                 assert(localOpMetadata !== undefined && isMapKeyLocalOpMetadata(localOpMetadata) &&
                     localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
                     0x013 /* "Received out of order op when there is an unackd clear message" */);
@@ -603,6 +600,9 @@ export class MapKernel {
             return false;
         }
 
+        if (isStashedOp) {
+            return true;
+        }
         const pendingKeyMessageId = this.pendingKeys.get(op.key);
         if (pendingKeyMessageId !== undefined) {
             // Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
@@ -647,9 +647,11 @@ export class MapKernel {
                         this.clearExceptPendingKeys();
                         return;
                     }
-                    // const copy = this.isAttached() ? new Map<string, ILocalValue>(this.data) : undefined;
+                    const copy = this.isAttached() ? new Map<string, ILocalValue>(this.data) : undefined;
                     this.clearCore(local);
-                    return this.getClearLocalOpMetadata(op);
+                    if (isStashedOp) {
+                        return this.getClearLocalOpMetadata(op, copy);
+                    }
                 },
                 submit: (op: IMapClearOperation, localOpMetadata: unknown) => {
                     assert(isClearLocalOpMetadata(localOpMetadata), 0x2fc /* Invalid localOpMetadata for clear */);
@@ -668,7 +670,9 @@ export class MapKernel {
                         return;
                     }
                     const previousValue = this.deleteCore(op.key, local);
-                    return this.getKeyLocalOpMetadata(op, previousValue);
+                    if (isStashedOp) {
+                        return this.getKeyLocalOpMetadata(op, previousValue);
+                    }
                 },
                 submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -686,10 +690,8 @@ export class MapKernel {
                     const context = this.makeLocal(op.key, op.value);
                     const previousValue = this.setCore(op.key, context, local);
                     if (isStashedOp) {
-                        // eslint-disable-next-line no-param-reassign
-                        localOpMetadata = this.getKeyLocalOpMetadata(op, previousValue);
+                        return this.getKeyLocalOpMetadata(op, previousValue);
                     }
-                    return localOpMetadata;
                 },
                 submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);
