@@ -94,7 +94,6 @@ extends:
       displayName: 'Generate Mono repo package json'
       inputs:
         targetType: 'inline'
-        workingDir: '$(Build.SourcesDirectory)/build-tools'
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
           cd build-tools
