@@ -148,7 +148,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         error?: any) {
         const newEvent = { ...event };
         if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(newEvent, error, false);
+            TelemetryLogger.prepareErrorObject(newEvent, error, true);
         }
 
         // Will include Nan & Infinity, but probably we do not care
@@ -166,13 +166,12 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+        // ensure the error field has some value even if no error object is given (will generate stack too)
+        const errorForLogging = error ?? event.eventName;
         this.sendTelemetryEventCore({
-            // ensure the error field has some value,
-            // this can and will be overridden by event, or error
-            error: event.eventName,
             ...event,
             category: "error",
-        }, error);
+        }, errorForLogging);
     }
 
     /**

@@ -67,15 +67,15 @@ describe("TelemetryLogger", () => {
                     (k) => {
                         const e = typeof expected[k] === "function" ? expected[k]() : expected[k];
                         assert.strictEqual(
-                        event[k],
-                        e,
-                        `${k} value does not match.
-                         actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`);
+                            event[k],
+                            e,
+                            `${k} value does not match.
+                            actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`);
                 });
-                // +2 for category and event name
+                // +3 for category, event name and stack
                 assert.strictEqual(
                     eventKeys.length,
-                    propsKeys.length + 2,
+                    propsKeys.length + 3,
                     `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
@@ -96,15 +96,44 @@ describe("TelemetryLogger", () => {
                     (k) => {
                         const e = typeof expected[k] === "function" ? expected[k]() : expected[k];
                         assert.strictEqual(
-                        event[k],
-                        e,
-                        `${k} value does not match.
-                         actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`);
+                            event[k],
+                            e,
+                            `${k} value does not match.
+                            actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`);
                 });
-                // +2 for category and event name
+                // +3 for category, event name and stack
                 assert.strictEqual(
                     eventKeys.length,
-                    propsKeys.length + 2,
+                    propsKeys.length + 3,
+                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
+            }
+        });
+
+        it("sendErrorEvent with error object", () => {
+            for (const props of propertyCases) {
+                const logger = new TestTelemetryLogger("namespace", props);
+                logger.sendErrorEvent({ eventName: "whatever" }, new Error("bad"));
+                assert.strictEqual(logger.events.length, 1);
+                const event = logger.events[0];
+                assert.strictEqual(event.category, "error");
+                assert.strictEqual(event.eventName, "namespace:whatever");
+                const eventKeys = Object.keys(event);
+                // should include error props too
+                const expected = { error: "bad", ... props?.all, ... props?.error };
+                const propsKeys = Object.keys(expected);
+                propsKeys.forEach(
+                    (k) => {
+                        const e = typeof expected[k] === "function" ? expected[k]() : expected[k];
+                        assert.strictEqual(
+                            event[k],
+                            e,
+                            `${k} value does not match.
+                            actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`);
+                });
+                // +3 for category, event name and stack
+                assert.strictEqual(
+                    eventKeys.length,
+                    propsKeys.length + 3,
                     `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
