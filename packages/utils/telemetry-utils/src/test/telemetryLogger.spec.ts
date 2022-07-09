@@ -32,8 +32,7 @@ propertyCases.push(...errorCases);
 propertyCases.push(undefined);
 
 describe("TelemetryLogger", () => {
-    //* ONLY
-    describe.only("Properties", () => {
+    describe("Properties", () => {
         it("send", () => {
             for (const props of propertyCases) {
                 const logger = new TestTelemetryLogger("namespace", props);

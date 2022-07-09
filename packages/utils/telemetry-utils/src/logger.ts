@@ -148,7 +148,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         error?: any) {
         const newEvent = { ...event };
         if (error !== undefined) {
-            TelemetryLogger.prepareErrorObject(newEvent, error, true);
+            TelemetryLogger.prepareErrorObject(newEvent, error, true /* fetchStack */);
         }
 
         // Will include Nan & Infinity, but probably we do not care
