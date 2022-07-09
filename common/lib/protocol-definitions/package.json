@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-definitions",
-  "version": "0.1028.3000",
+  "version": "0.1029.1000",
   "description": "Fluid protocol definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -55,7 +55,26 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.1028.3000",
-    "broken": {}
+    "version": "0.1029.1000",
+    "broken": {
+      "InterfaceDeclaration_IConnected": {
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ISummaryConfiguration": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "InterfaceDeclaration_IClientConfiguration": {
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ISummaryAuthor": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedInterfaceDeclaration_ISummaryCommitter": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }

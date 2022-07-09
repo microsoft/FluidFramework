@@ -327,7 +327,8 @@ export async function setUpLocalServerTestSharedTree(
 					summaryConfigOverrides: {
 						...DefaultSummaryConfiguration,
 						...{
-							idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
+							minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
+							maxIdleTime: 1000,
 							maxTime: 1000 * 12,
 							initialSummarizerDelayMs: 0,
 						},
