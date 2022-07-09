@@ -56,9 +56,17 @@ describe("Error Logging", () => {
             const error = new Error("boom");
             error.name = "MyErrorName";
             TelemetryLogger.prepareErrorObject(event, error, false);
-            assert(event.error === "boom");
+            assert.equal(event.error, "boom", "event.error should contain the error message");
+            assert.equal(event.message, undefined, "event.message should be undefined for plain Error object");
             assert((event.stack as string).includes("MyErrorName"));
             assert(!(event.stack as string).includes("boom"));
+        });
+        it("LoggingError: message added to event twice", () => {
+            const event = freshEvent();
+            const error = new LoggingError("boom");
+            TelemetryLogger.prepareErrorObject(event, error, false);
+            assert.equal(event.error, "boom", "event.error should contain the error message");
+            assert.equal(event.message, "boom", "event.message should contain the error message");
         });
         it("containsPII (legacy) is ignored", () => {
             // Previously, setting containsPII = true on an error obj would (attempt to) redact its message

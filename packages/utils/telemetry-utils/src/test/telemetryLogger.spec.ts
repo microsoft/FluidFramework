@@ -32,7 +32,8 @@ propertyCases.push(...errorCases);
 propertyCases.push(undefined);
 
 describe("TelemetryLogger", () => {
-    describe("Properties", () => {
+    //* ONLY
+    describe.only("Properties", () => {
         it("send", () => {
             for (const props of propertyCases) {
                 const logger = new TestTelemetryLogger("namespace", props);
@@ -42,12 +43,11 @@ describe("TelemetryLogger", () => {
                 assert.strictEqual(event.category, "anything");
                 assert.strictEqual(event.eventName, "namespace:whatever");
                 const eventKeys = Object.keys(event);
-                const propsKeys = Object.keys(props?.all ?? {});
-                // +2 for category and event name
-                assert.strictEqual(
-                    eventKeys.length,
-                    propsKeys.length + 2,
-                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
+                const expectedKeys = [...Object.keys(props?.all ?? {}), "category", "eventName"];
+                assert.deepStrictEqual(
+                    eventKeys.sort(),
+                    expectedKeys.sort(),
+                    `event:\n${JSON.stringify(event)}\nprops\n${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
 
@@ -72,11 +72,11 @@ describe("TelemetryLogger", () => {
                             `${k} value does not match.
                             actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`);
                 });
-                // +3 for category, event name and stack
-                assert.strictEqual(
-                    eventKeys.length,
-                    propsKeys.length + 3,
-                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
+                const expectedKeys = [...propsKeys, "category", "eventName"];
+                assert.deepStrictEqual(
+                    eventKeys.sort(),
+                    expectedKeys.sort(),
+                    `event:\n${JSON.stringify(event)}\nprops\n${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
 
@@ -101,40 +101,11 @@ describe("TelemetryLogger", () => {
                             `${k} value does not match.
                             actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`);
                 });
-                // +3 for category, event name and stack
-                assert.strictEqual(
-                    eventKeys.length,
-                    propsKeys.length + 3,
-                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
-            }
-        });
-
-        it("sendErrorEvent with error object", () => {
-            for (const props of propertyCases) {
-                const logger = new TestTelemetryLogger("namespace", props);
-                logger.sendErrorEvent({ eventName: "whatever" }, new Error("bad"));
-                assert.strictEqual(logger.events.length, 1);
-                const event = logger.events[0];
-                assert.strictEqual(event.category, "error");
-                assert.strictEqual(event.eventName, "namespace:whatever");
-                const eventKeys = Object.keys(event);
-                // should include error props too
-                const expected = { error: "bad", ... props?.all, ... props?.error };
-                const propsKeys = Object.keys(expected);
-                propsKeys.forEach(
-                    (k) => {
-                        const e = typeof expected[k] === "function" ? expected[k]() : expected[k];
-                        assert.strictEqual(
-                            event[k],
-                            e,
-                            `${k} value does not match.
-                            actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`);
-                });
-                // +3 for category, event name and stack
-                assert.strictEqual(
-                    eventKeys.length,
-                    propsKeys.length + 3,
-                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
+                const expectedKeys = [...propsKeys, "category", "eventName"];
+                assert.deepStrictEqual(
+                    eventKeys.sort(),
+                    expectedKeys.sort(),
+                    `event:\n${JSON.stringify(event)}\nprops\n${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
 
@@ -164,11 +135,11 @@ describe("TelemetryLogger", () => {
                         `${k} value does not match.
                          actual: ${JSON.stringify(event[k])} expected: ${JSON.stringify(e)}`);
                 });
-                // +4 for category, event name, message and stack
-                assert.strictEqual(
-                    eventKeys.length,
-                    propsKeys.length + 4,
-                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
+                const expectedKeys = [...propsKeys, "category", "eventName", "errorType", "stack"];
+                assert.deepStrictEqual(
+                    eventKeys.sort(),
+                    expectedKeys.sort(),
+                    `event:\n${JSON.stringify(event)}\nprops\n${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
 
@@ -182,11 +153,11 @@ describe("TelemetryLogger", () => {
                 assert.strictEqual(event.eventName, "namespace:whatever");
                 const eventKeys = Object.keys(event);
                 const propsKeys = Object.keys(props?.all ?? {});
-                // +2 for category and event name
-                assert.strictEqual(
-                    eventKeys.length,
-                    propsKeys.length + 2,
-                    `actual:\n${JSON.stringify(event)}\nexpected:${props ? JSON.stringify(props) : "undefined"}`);
+                const expectedKeys = [...propsKeys, "category", "eventName"];
+                assert.deepStrictEqual(
+                    eventKeys.sort(),
+                    expectedKeys.sort(),
+                    `event:\n${JSON.stringify(event)}\nprops\n${props ? JSON.stringify(props) : "undefined"}`);
             }
         });
     });
