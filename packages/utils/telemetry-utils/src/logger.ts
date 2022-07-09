@@ -167,7 +167,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
         // ensure the error field has some value even if no error object is given (will generate stack too)
-        const errorForLogging = error ?? event.eventName;
+        const errorForLogging = error ?? event.error ?? event.eventName;
         this.sendTelemetryEventCore({
             ...event,
             category: "error",
