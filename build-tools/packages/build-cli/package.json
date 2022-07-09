@@ -22,7 +22,6 @@
   "files": [
     "/bin",
     "/dist",
-    "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
   "scripts": {
@@ -47,12 +46,14 @@
   },
   "dependencies": {
     "@fluidframework/build-tools": "^0.3.0",
+    "@fluid-internal/version-tools": "^0.3.0",
     "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
+    "inquirer": "^9.0.0",
     "semver": "^7.3.7",
     "table": "^6.8.0"
   },
@@ -60,12 +61,13 @@
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@types/chai": "^4",
+    "@types/inquirer": "^8.2.1",
     "@types/mocha": "^9.0.0",
     "@types/node": "^14.18.0",
     "@types/semver": "^7.3.10",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
-    "chai": "^4",
+    "chai": "^4.2.0",
     "eslint": "~8.6.0",
     "eslint-config-oclif": "^4",
     "eslint-config-oclif-typescript": "^1.0.2",
@@ -96,7 +98,8 @@
     "plugins": [
       "@oclif/plugin-commands",
       "@oclif/plugin-help",
-      "@oclif/plugin-not-found"
+      "@oclif/plugin-not-found",
+      "@fluid-internal/version-tools"
     ],
     "topicSeparator": " ",
     "topics": {}

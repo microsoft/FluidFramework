@@ -45,6 +45,5 @@ export const bumpTypeFlag = Flags.build({
     char: "t",
     description: "bump type",
     options: ["major", "minor", "patch", "current"],
-    default: "current",
     required: true,
 });
