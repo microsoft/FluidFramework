@@ -116,138 +116,159 @@
  * transaction that moves content from "foo" to "bar" then moves that same content from "bar" to "baz"). This
  * makes the format less terse and harder to reason about.
  */
-export type Delta = PositionedMarks;
+export namespace Delta {
+	/**
+	 * Represents the change made to a document.
+	 */
+	export type Root = PositionedMarks;
 
-/**
- * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes is not
- * represented explicitly. It corresponds to the sum of the following:
- * - The offsets of all preceding marks
- * - The number of nodes affected by all preceding marks, this is computed as follows:
- *   - Modify marks affect a single node
- *   - Delete marks affect `Delete.count` nodes
- *   - MoveOut marks affect `MoveOut.count` nodes
- * - The offset of the given mark
- */
-export type PositionedMarks<TMark = Mark> = MarkWithOffset<TMark>[];
+	/**
+	 * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
+	 * applying any of the changes, is not represented explicitly. It corresponds to the sum of the following:
+	 * - The offsets of all preceding marks
+	 * - The number of nodes affected by all preceding marks, this is computed as follows:
+	 *   - Modify marks affect a single node
+	 *   - Delete marks affect `Delete.count` nodes
+	 *   - MoveOut marks affect `MoveOut.count` nodes
+	 * - The offset of the given mark
+	 */
+	export type PositionedMarks<TMark = Mark> = MarkWithOffset<TMark>[];
 
-export const type: unique symbol = Symbol("Delta.type");
-export const setValue: unique symbol = Symbol("Delta.setValue");
+	export const type: unique symbol = Symbol("Delta.type");
+	export const setValue: unique symbol = Symbol("Delta.setValue");
 
-export type Mark = Modify | Delete | MoveOut | MoveIn | Insert;
+	export type Mark = Modify | Delete | MoveOut | MoveIn | Insert;
 
-/**
- * See PositionedMarks.
- */
-export interface MarkWithOffset<TMark = Mark> {
-	offset: Offset;
-	mark: TMark;
+	/**
+	 * See PositionedMarks.
+	 */
+	export interface MarkWithOffset<TMark = Mark> {
+		offset: Offset;
+		mark: TMark;
+	}
+
+	/**
+	 * Describes modifications made to a subtree that is otherwise untouched (i.e., not being inserted, deleted, or
+	 * moved).
+	 */
+	export interface Modify {
+		[type]: typeof MarkType.Modify;
+		[setValue]?: Value;
+		[key: FieldKey]: PositionedMarks;
+	}
+
+	/**
+	 * Describes modifications made to a subtree that is being deleted.
+	 */
+	export interface ModifyDeleted {
+		[type]: typeof MarkType.Modify;
+		[key: FieldKey]: PositionedMarks<ModifyDeleted | MoveOut>;
+	}
+
+	/**
+	 * Describes modifications made to a subtree that is being moved out.
+	 */
+	export interface ModifyMovedOut {
+		[type]: typeof MarkType.Modify;
+		[setValue]?: Value;
+		[key: FieldKey]: PositionedMarks<ModifyMovedOut | Delete | MoveOut>;
+	}
+
+	/**
+	 * Describes modifications made to a subtree that is being moved in.
+	 */
+	export interface ModifyMovedIn {
+		[type]: typeof MarkType.Modify;
+		[key: FieldKey]: PositionedMarks<ModifyMovedIn | MoveIn | Insert>;
+	}
+
+	/**
+	 * Describes modifications made to a subtree that is being inserted.
+	 */
+	export interface ModifyInserted {
+		[type]: typeof MarkType.Modify;
+		[key: FieldKey]: PositionedMarks<ModifyMovedIn | MoveIn>;
+	}
+
+	/**
+	 * Describes the deletion of a contiguous range of node.
+	 * Includes descriptions of the modifications made to those nodes (if any).
+	 */
+	export interface Delete {
+		[type]: typeof MarkType.Delete;
+		count: number;
+		modify?: PositionedMarks<ModifyDeleted>;
+	}
+
+	/**
+	 * Describes the moving out of a contiguous range of node.
+	 * Includes descriptions of the modifications made to those nodes (if any).
+	 */
+	export interface MoveOut {
+		[type]: typeof MarkType.MoveOut;
+		count: number;
+		/**
+		 * The delta should carry exactly one `MoveIn` mark with the same move ID.
+		 */
+		moveId: MoveId;
+		modify?: PositionedMarks<ModifyMovedOut>;
+	}
+
+	/**
+	 * Describes the moving in of a contiguous range of node.
+	 * Includes descriptions of the modifications made to those nodes (if any).
+	 */
+	export interface MoveIn {
+		[type]: typeof MarkType.MoveIn;
+		/**
+		 * The delta should carry exactly one `MoveOut` mark with the same move ID.
+		 */
+		moveId: MoveId;
+		modify?: PositionedMarks<ModifyMovedIn>;
+	}
+
+	/**
+	 * Describes the insertion of a contiguous range of node.
+	 * Includes descriptions of the modifications made to those nodes (if any). Those are represented as `MoveIn` marks
+	 * within `ProtoField`s.
+	 */
+	export interface Insert {
+		[type]: typeof MarkType.Insert;
+		content: ProtoNode[];
+		modify?: PositionedMarks<ModifyInserted>;
+	}
+
+	/**
+	 * The contents of a subtree to be created
+	 */
+	export interface ProtoNode {
+		id: string;
+		type?: string;
+		value?: Value;
+		fields?: ProtoFields;
+	}
+
+	/**
+	 * The fields of a subtree to be created
+	 */
+	export interface ProtoFields {
+		[key: FieldKey]: ProtoField;
+	}
+
+	export type ProtoField = ProtoNode[];
+
+	export type MoveId = number;
+	export type Offset = number;
+	export type Index = number;
+	export type Value = number | string | boolean | undefined;
+	export type NodeId = string;
+	export type FieldKey = string;
+
+	export const MarkType = {
+		Modify: 0,
+		Insert: 1,
+		Delete: 2,
+		MoveOut: 3,
+		MoveIn: 4,
+	} as const;
 }
-
-/**
- * Describes modifications made to a subtree that is otherwise untouched (i.e., not being inserted, deleted, or moved).
- */
-export interface Modify {
-	[type]: typeof MarkType.Modify;
-	[setValue]?: Value;
-	[key: FieldKey]: Delta;
-}
-
-/**
- * Describes modifications made to a subtree that is being deleted.
- */
-export interface ModifyDel {
-	[type]: typeof MarkType.Modify; // Use more specific value?
-	[key: FieldKey]: PositionedMarks<ModifyDel | MoveOut>;
-}
-
-/**
- * Describes modifications made to a subtree that is being moved out.
- */
- export interface ModifyOut {
-	[type]: typeof MarkType.Modify;
-	[setValue]?: Value;
-	[key: FieldKey]: PositionedMarks<ModifyOut | Delete | MoveOut>;
-}
-
-/**
- * Describes modifications made to a subtree that is being moved in.
- */
- export interface ModifyIn {
-	[type]: typeof MarkType.Modify;
-	[key: FieldKey]: PositionedMarks<ModifyIn | MoveIn | Insert>;
-}
-
-/**
- * Describes the deletion of a contiguous range of node.
- * Includes descriptions of the modifications made to those nodes (if any).
- */
-export interface Delete {
-	[type]: typeof MarkType.Delete;
-	count: number;
-	modify?: PositionedMarks<ModifyDel>;
-}
-
-/**
- * Describes the moving out of a contiguous range of node.
- * Includes descriptions of the modifications made to those nodes (if any).
- */
- export interface MoveOut {
-	[type]: typeof MarkType.MoveOut;
-	count: number;
-	moveId: MoveId;
-	modify?: PositionedMarks<ModifyOut>;
-}
-
-/**
- * Describes the moving in of a contiguous range of node.
- * Includes descriptions of the modifications made to those nodes (if any).
- */
- export interface MoveIn {
-	[type]: typeof MarkType.MoveIn;
-	moveId: MoveId;
-	modify?: PositionedMarks<ModifyIn>;
-}
-
-/**
- * Describes the insertion of a contiguous range of node.
- * Includes descriptions of the modifications made to those nodes (if any). Those are represented as `MoveIn` marks
- * within `ProtoField`s.
- */
-export interface Insert {
-	[type]: typeof MarkType.Insert;
-	content: ProtoTree[];
-}
-
-/**
- * The contents of a subtree to be created
- */
-export interface ProtoTree {
-	id: string;
-	type?: string;
-	value?: Value;
-	fields?: ProtoFields;
-}
-
-/**
- * The fields of a subtree to be created
- */
-export interface ProtoFields {
-	[key: FieldKey]: ProtoField;
-}
-
-export type ProtoField = (ProtoTree | MoveIn)[];
-
-export type MoveId = number;
-export type Offset = number;
-export type Index = number;
-export type Value = number | string | boolean;
-export type NodeId = string;
-export type FieldKey = string;
-
-export const MarkType = {
-	Modify: 0,
-	Insert: 1,
-	Delete: 2,
-	MoveOut: 3,
-	MoveIn: 4,
-} as const;
