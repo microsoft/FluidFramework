@@ -370,8 +370,8 @@ export class RateLimiter {
 // @public
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
-// @public (undocumented)
-export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
+// @public
+export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
 
 // @public (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {

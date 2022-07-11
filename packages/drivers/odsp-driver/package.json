@@ -101,8 +101,6 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {
-      "VariableDeclaration_OdcApiSiteOrigin": {"forwardCompat": false, "backCompat": false}
-    }
+    "broken": { }
   }
 }

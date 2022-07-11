@@ -16,10 +16,6 @@ export interface IFocusTrackerEvents extends IEvent {
     (event: "focusChanged", listener: () => void): void;
 }
 
-/**
- * Example of using the audience with signals to track focus state of connected clients
- * without writing changes to a DDS.
- */
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
     private static readonly focusRequestType = "focusRequest";
@@ -54,14 +50,11 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     ) {
         super();
 
-        this.audience.on("memberAdded", (clientId: string, member: IMember) => {
-            this.emit("focusChanged");
-        });
         this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
-            const clientIdMap = this.focusMap.get(member.userId);
-            if (clientIdMap !== undefined) {
-                clientIdMap.delete(clientId);
-                if (clientIdMap.size === 0) {
+            const focusClientIdMap = this.focusMap.get(member.userId);
+            if (focusClientIdMap !== undefined) {
+                focusClientIdMap.delete(clientId);
+                if (focusClientIdMap.size === 0) {
                     this.focusMap.delete(member.userId);
                 }
             }
@@ -74,6 +67,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         this.signalManager.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
             this.onFocusSignalFn(clientId, payload);
         });
+
         this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
             this.sendFocusSignal(document.hasFocus());
         });
@@ -83,7 +77,6 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         window.addEventListener("blur", () => {
             this.sendFocusSignal(false);
         });
-
         container.on("connected", () => {
             this.signalManager.submitSignal(FocusTracker.focusRequestType);
         });
@@ -100,42 +93,24 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         );
     }
 
-    /**
-     * Get a copy of the internal presences map
-     * @returns The map copy
-     */
-    public getPresences(): Map<string, Map<string, boolean>> {
-        // deep copy to prevent outside shenanigans
-        const mapCopy = new Map<string, Map<string, boolean>>();
-        this.focusMap.forEach((value, key) => {
-            mapCopy.set(key, new Map(value));
-        });
-        return mapCopy;
-    }
-
-    /**
-     *
-     * @returns Preformatted string of presence info for all users
-     */
-    public getPresencesString(newLineSeparator: string = "\n"): string {
-        const statuses: string[] = [];
+    public getFocusPresences(): Map<string, boolean> {
+        const statuses: Map<string, boolean> = new Map <string, boolean>();
         this.audience.getMembers().forEach((member, userId) => {
             member.connections.forEach((connection) => {
-                const focus = this.getPresenceForUser(userId, connection.id);
-                const prefix = `User ${member.userId} (${(member as any).userName}) client ${connection.id}:`;
-                if (focus === undefined) {
-                    statuses.push(`${prefix} unknown focus`);
-                } else if (focus === true) {
-                    statuses.push(`${prefix} has focus`);
-                } else {
-                    statuses.push(`${prefix} missing focus`);
+                const focus = this.getFocusPresenceForUser(userId, connection.id);
+                if (focus !== undefined) {
+                    statuses.set((member as any).userName, focus);
                 }
             });
         });
-        return statuses.join(newLineSeparator);
+        return statuses;
     }
 
-    public getPresenceForUser(userId: string, clientId: string): boolean | undefined {
+    /**
+     * Get a copy of the internal mouse position presences map
+     * @returns The map copy
+     */
+    public getFocusPresenceForUser(userId: string, clientId: string): boolean | undefined {
         return this.focusMap.get(userId)?.get(clientId);
     }
 }

@@ -272,8 +272,10 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     peek(): T | undefined;
     resume(): void;
     toArray(): T[];
-    // (undocumented)
-    waitTillProcessingDone(): Promise<void>;
+    waitTillProcessingDone(): Promise<{
+        count: number;
+        duration: number;
+    }>;
 }
 
 // @public
@@ -540,7 +542,5 @@ export type ReadOnlyInfo = {
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
 };
-
-// (No @packageDocumentation comment for this package)
 
 ```

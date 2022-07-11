@@ -171,8 +171,8 @@ export interface IContainerRuntimeBase extends
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
 
     /**
-     * Creates detached data store context. only after context.attachRuntime() is called,
-     * data store initialization is considered compete.
+     * Creates detached data store context. Only after context.attachRuntime() is called,
+     * data store initialization is considered complete.
      */
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
 

@@ -10,25 +10,30 @@
  * file.
  */
 
-/** An array of objects describing how members should be combined. */
+/**
+ * An array of objects describing how members should be combined.
+ *
+ * This can be considered a workaround simulating API-Extractor's
+ * {@link https://api-extractor.com/pages/configs/api-extractor_json/#bundledpackages | bundledPackages} feature,
+ * which currently has at least one issue preventing us from using it.
+ *
+ * See this issue for more details: {@link https://github.com/microsoft/rushstack/issues/3521}.
+ *
+ * Once that issue is resolved, we probably want to just leverage package bundling, instead of directly
+ * editing the API reports.
+ *
+ */
 const memberCombineInstructions = [
-    {
-        package: "@fluidframework/test-client-utils",
-        sourceImports: new Map([
-            ["@fluidframework/test-runtime-utils", ["InsecureTokenProvider"]],
-        ])
-    },
     {
         package: "@fluidframework/azure-client",
         sourceImports: new Map([
             ["@fluidframework/routerlicious-driver", ["ITokenProvider", "ITokenResponse"]],
             ["@fluidframework/protocol-definitions", ["ScopeType", "ITokenClaims", "IUser"]],
         ])
-    },
-    {
-        package: "@fluidframework/fluid-static",
+    },{
+        package: "@fluidframework/azure-service-utils",
         sourceImports: new Map([
-            ["@fluidframework/container-definitions", ["IAudience"]],
+            ["@fluidframework/protocol-definitions", ["IUser", "ScopeType"]],
         ])
     },
     {
@@ -36,6 +41,12 @@ const memberCombineInstructions = [
         cleanOrigMembers: true,
         sourceImports: new Map([
             ["@fluidframework/container-definitions", ["AttachState"]],
+        ])
+    },
+    {
+        package: "@fluidframework/test-client-utils",
+        sourceImports: new Map([
+            ["@fluidframework/test-runtime-utils", ["InsecureTokenProvider"]],
         ])
     },
 ];

@@ -82,6 +82,18 @@ See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluid
 ### Remove `aliasing` return value from `AliasResult`
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
 
+# 1.2.0
+
+## 1.2.0 Upcoming changes
+- [ Added locationRedirection errorType in DriverErrorType enum](#Added-locationRedirection-errorType-in-DriverErrorType-enum)
+- [ Added ILocationRedirectionError error in DriverError type](#Added-ILocationRedirectionError-error-in-DriverError-type)
+
+ ### Added locationRedirection errorType in DriverErrorType enum
+ Added locationRedirection errorType in DriverErrorType enum. This error tells that the location of file on server has changed.
+ This error will not be thrown in 1.x.x version but we are just adding it in the type for now. This will be thrown from 2.x.x onward. For consumers of errors(in any version due to dynamic driver loading), this needs to be handled as a separate type where an error message banner could be shown etc. Consumers can also choose to not do any action as far as they recognize this error at runtime and not faulter when they receive this error. Ex. if you have a switch statement which does not have this errorType as a case and throw error in default case, then you need to add a case so that it does not throw any error. However this error is not yet emitted from `Fluid Framework`, so in a way it is non breaking.
+
+ ### Added ILocationRedirectionError error in DriverError type
+ Added ILocationRedirectionError error in DriverError. This error tells that the location of file on server has changed. In case of Odsp, the domain of file changes on server.
 
 # 1.1.0
 

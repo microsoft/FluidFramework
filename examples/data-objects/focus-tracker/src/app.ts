@@ -14,6 +14,7 @@ import {
     TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
+import { MouseTracker } from "./MouseTracker";
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
@@ -37,7 +38,7 @@ function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
     const onFocusChanged = () => {
         focusDiv.innerHTML = `
             Current user: ${(focusTracker.audience.getMyself() as TinyliciousMember)?.userName}</br>
-            ${focusTracker.getPresencesString("</br>")}
+            ${getFocusPresencesString("</br>", focusTracker)}
         `;
     };
 
@@ -46,6 +47,42 @@ function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 
     wrapperDiv.appendChild(focusDiv);
 }
+
+function getFocusPresencesString(newLineSeparator: string = "\n", focusTracker: FocusTracker): string {
+    const focusString: string[] = [];
+
+    focusTracker.getFocusPresences().forEach((focus, userName) => {
+        const prefix = `User ${userName}:`;
+        if (focus === undefined) {
+            focusString.push(`${prefix} unknown focus`);
+        } else if (focus === true) {
+            focusString.push(`${prefix} has focus`);
+        } else {
+            focusString.push(`${prefix} missing focus`);
+        }
+    });
+    return focusString.join(newLineSeparator);
+}
+
+function renderMousePresence(mouseTracker: MouseTracker, focusTracker: FocusTracker, div: HTMLDivElement) {
+    const onPositionChanged = () => {
+      div.innerHTML = "";
+      mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
+          const posDiv = document.createElement("div");
+          posDiv.textContent = userName;
+          posDiv.style.position = "absolute";
+          posDiv.style.left = `${mousePosition.x}px`;
+          posDiv.style.top = `${mousePosition.y}px`;
+          if (focusTracker.getFocusPresences().get(userName) === true) {
+            posDiv.style.fontWeight = "bold";
+          }
+          div.appendChild(posDiv);
+      });
+    };
+
+    onPositionChanged();
+    mouseTracker.on("mousePositionChanged", onPositionChanged);
+  }
 
 async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
@@ -71,13 +108,20 @@ async function start(): Promise<void> {
     document.title = containerId;
 
     // Render page focus information for audience members
-    const contentDiv = document.getElementById("content") as HTMLDivElement;
+    const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
+    const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
     const focusTracker = new FocusTracker(
         container,
         services.audience,
         container.initialObjects.signalManager as SignalManager,
     );
+    const mouseTracker = new MouseTracker(
+        container,
+        services.audience,
+        container.initialObjects.signalManager as SignalManager,
+    );
     renderFocusPresence(focusTracker, contentDiv);
+    renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
 }
 
 start().catch(console.error);
