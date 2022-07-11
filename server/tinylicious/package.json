@@ -57,7 +57,7 @@
     "express": "^4.16.3",
     "isomorphic-git": "^1.8.2",
     "json-stringify-safe": "^5.0.1",
-    "level": "^6.0.1",
+    "level": "^8.0.0",
     "level-sublevel": "6.6.4",
     "lodash": "^4.17.21",
     "morgan": "^1.8.1",
