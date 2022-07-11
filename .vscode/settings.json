@@ -18,9 +18,10 @@
     "typescript.format.placeOpenBraceOnNewLineForControlBlocks": false,
     "typescript.tsdk": "node_modules/typescript/lib",
 
-    // Autodetecting TSC tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
+    // Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
     // (See https://github.com/Microsoft/vscode/issues/34387)
     "typescript.tsc.autoDetect": "off",
+    "npm.autoDetect": "off",
 
     "files.associations": {
         "tools/pipelines/*.yml": "azure-pipelines"
@@ -29,4 +30,9 @@
     "deno.enable": false,
     "deno.lint": false,
     "deno.unstable": false,
+    "cSpell.words": [
+        "injective",
+        "losslessly",
+        "unaugmented"
+    ]
 }

@@ -105,16 +105,21 @@ export function fail(message: string = defaultFailMessage, containsPII = false):
  * Asserts a value is not undefined, and returns the value.
  * Use when violations are logic errors in the program.
  *
+ * @remarks
  * When practical, prefer the pattern `x ?? fail('message')` over `assertNotUndefined(x, 'message')`.
- * Using `?? fail` allows for message formatting without incurring the cost of formatting the message in the non failing case
- * (ex:
- * ```
+ * Using `?? fail` allows for message formatting without incurring the cost of formatting the message
+ * in the non failing case.
+ *
+ * Example:
+ * ```typescript
  * x ?? fail(`x should exist for ${y}`)
  * ```
- * ). Additionally the `?? fail` avoids an extra call/stack frame in the non failing case.
+ *
+ * Additionally the `?? fail` avoids an extra call/stack frame in the non failing case.
  *
  * Another pattern to prefer over `assertNotUndefined(x, 'message')` is `assert(x !== undefined)`.
- * This pattern is preferred because it is more general (same approach works with typeof, instance of, comparison to other values etc.).
+ * This pattern is preferred because it is more general (same approach works with typeof, instance of,
+ * comparison to other values etc.).
  *
  * @param value - Value to assert against is non undefined.
  * @param message - Message to be printed if assertion fails.
@@ -148,8 +153,9 @@ export function assign<T, K extends keyof never, V>(object: T, property: K, valu
 /**
  * Redefine a property to have the given value. This is simply a type-safe wrapper around
  * `Object.defineProperty`, but it is useful for caching public getters on first read.
+ *
  * @example
- * ```
+ * ```typescript
  * // `randomOnce()` will return a random number, but always the same random number.
  * {
  *   get randomOnce(): number {
@@ -378,7 +384,8 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
 }
 
 /**
- * ```
+ * @example
+ * ```typescript
  * function (thing: ObjectWithMaybeFoo) {
  * 	   const x: MyActualType = {
  * 	       bar: 3
@@ -388,7 +395,6 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
  * 	    copyPropertyIfDefined(thing, x, 'foo');
  * }
  * ```
- * @returns
  */
 
 function breakOnDifference(): { break: boolean } {

@@ -91,7 +91,14 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
 }
 
 /**
- * Encapsulates the return codes of the aliasing API
+ * Encapsulates the return codes of the aliasing API.
+ *
+ * 'Success' - the datastore has been successfully aliased. It can now be used.
+ * 'Conflict' - there is already a datastore bound to the provided alias. To acquire a handle to it,
+ * use the `IContainerRuntime.getRootDataStore` function. The current datastore should be discarded
+ * and will be garbage collected. The current datastore cannot be aliased to a different value.
+ * 'Aliasing' (deprecated) - this value is never returned.
+ * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  */
  export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
 
@@ -102,7 +109,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
     /**
      * Attempt to assign an alias to the datastore.
      * If the operation succeeds, the datastore can be referenced
-     * by the supplied alias.
+     * by the supplied alias and will not be garbage collected.
      *
      * @param alias - Given alias for this datastore.
      */
@@ -165,8 +172,8 @@ export interface IContainerRuntimeBase extends
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
 
     /**
-     * Creates detached data store context. only after context.attachRuntime() is called,
-     * data store initialization is considered compete.
+     * Creates detached data store context. Only after context.attachRuntime() is called,
+     * data store initialization is considered complete.
      */
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
 

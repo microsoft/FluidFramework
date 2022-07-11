@@ -53,6 +53,9 @@ import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
+// @public
+export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
+
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
@@ -131,7 +134,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
     // @internal
-    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[]);
+    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2);
     // @internal (undocumented)
     ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval;
     // @internal (undocumented)
@@ -181,8 +184,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     rebaseLocalInterval(opName: string, serializedInterval: ISerializedInterval, localSeq: number): ISerializedInterval;
     // (undocumented)
     removeIntervalById(id: string): TInterval;
-    // (undocumented)
-    serializeInternal(): ISerializedInterval[];
+    // @internal (undocumented)
+    serializeInternal(): ISerializedIntervalCollectionV2;
 }
 
 // @public (undocumented)
@@ -242,6 +245,16 @@ export interface ISerializedInterval {
     sequenceNumber: number;
     // (undocumented)
     start: number;
+}
+
+// @internal (undocumented)
+export interface ISerializedIntervalCollectionV2 {
+    // (undocumented)
+    intervals: CompressedSerializedInterval[];
+    // (undocumented)
+    label: string;
+    // (undocumented)
+    version: 2;
 }
 
 // @public (undocumented)
@@ -771,7 +784,5 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     static readonly typeString: string;
 }
-
-// (No @packageDocumentation comment for this package)
 
 ```

@@ -328,6 +328,40 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
+        it("Aliasing a datastore while aliasing", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds3 = await runtimeOf(dataObject1).createDataStore(packageName);
+
+            const alias1 = "alias1";
+            const [aliasResult1, aliasResult2] = await Promise.all([
+                ds1.trySetAlias(alias1),
+                ds1.trySetAlias(alias1),
+            ]);
+
+            assert.equal(aliasResult1, "Success");
+            assert.equal(aliasResult2, "Success");
+            assert.ok(await getRootDataStore(dataObject1, alias1));
+
+            const alias2 = "alias2";
+            const [aliasResult3, aliasResult4] = await Promise.all([
+                ds2.trySetAlias(alias2),
+                ds2.trySetAlias(alias2 + alias2),
+            ]);
+
+            assert.equal(aliasResult3, "Success");
+            assert.equal(aliasResult4, "AlreadyAliased");
+            assert.ok(await getRootDataStore(dataObject1, alias2));
+
+            const [aliasResult5, aliasResult6] = await Promise.all([
+                ds3.trySetAlias(alias1),
+                ds3.trySetAlias(alias1 + alias1),
+            ]);
+
+            assert.equal(aliasResult5, "Conflict");
+            assert.equal(aliasResult6, "AlreadyAliased");
+        });
+
         it("Aliasing a previously aliased datastore will fail", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 

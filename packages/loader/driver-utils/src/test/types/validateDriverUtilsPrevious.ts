@@ -352,6 +352,30 @@ use_old_TypeAliasDeclaration_DriverErrorTelemetryProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_EmptyDocumentDeltaStorageService": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_EmptyDocumentDeltaStorageService():
+    TypeOnly<old.EmptyDocumentDeltaStorageService>;
+declare function use_current_ClassDeclaration_EmptyDocumentDeltaStorageService(
+    use: TypeOnly<current.EmptyDocumentDeltaStorageService>);
+use_current_ClassDeclaration_EmptyDocumentDeltaStorageService(
+    get_old_ClassDeclaration_EmptyDocumentDeltaStorageService());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_EmptyDocumentDeltaStorageService": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_EmptyDocumentDeltaStorageService():
+    TypeOnly<current.EmptyDocumentDeltaStorageService>;
+declare function use_old_ClassDeclaration_EmptyDocumentDeltaStorageService(
+    use: TypeOnly<old.EmptyDocumentDeltaStorageService>);
+use_old_ClassDeclaration_EmptyDocumentDeltaStorageService(
+    get_current_ClassDeclaration_EmptyDocumentDeltaStorageService());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_emptyMessageStream": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_emptyMessageStream():
@@ -708,6 +732,30 @@ declare function use_old_InterfaceDeclaration_ISummaryTreeAssemblerProps(
     use: TypeOnly<old.ISummaryTreeAssemblerProps>);
 use_old_InterfaceDeclaration_ISummaryTreeAssemblerProps(
     get_current_InterfaceDeclaration_ISummaryTreeAssemblerProps());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isUnpackedRuntimeMessage": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isUnpackedRuntimeMessage():
+    TypeOnly<typeof old.isUnpackedRuntimeMessage>;
+declare function use_current_FunctionDeclaration_isUnpackedRuntimeMessage(
+    use: TypeOnly<typeof current.isUnpackedRuntimeMessage>);
+use_current_FunctionDeclaration_isUnpackedRuntimeMessage(
+    get_old_FunctionDeclaration_isUnpackedRuntimeMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isUnpackedRuntimeMessage": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isUnpackedRuntimeMessage():
+    TypeOnly<typeof current.isUnpackedRuntimeMessage>;
+declare function use_old_FunctionDeclaration_isUnpackedRuntimeMessage(
+    use: TypeOnly<typeof old.isUnpackedRuntimeMessage>);
+use_old_FunctionDeclaration_isUnpackedRuntimeMessage(
+    get_current_FunctionDeclaration_isUnpackedRuntimeMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1164,6 +1212,30 @@ declare function use_old_ClassDeclaration_ThrottlingError(
     use: TypeOnly<old.ThrottlingError>);
 use_old_ClassDeclaration_ThrottlingError(
     get_current_ClassDeclaration_ThrottlingError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_UsageError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_UsageError():
+    TypeOnly<old.UsageError>;
+declare function use_current_ClassDeclaration_UsageError(
+    use: TypeOnly<current.UsageError>);
+use_current_ClassDeclaration_UsageError(
+    get_old_ClassDeclaration_UsageError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_UsageError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_UsageError():
+    TypeOnly<current.UsageError>;
+declare function use_old_ClassDeclaration_UsageError(
+    use: TypeOnly<old.UsageError>);
+use_old_ClassDeclaration_UsageError(
+    get_current_ClassDeclaration_UsageError());
 
 /*
 * Validate forward compat by using old type in place of current type
