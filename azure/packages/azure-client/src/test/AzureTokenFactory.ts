@@ -6,9 +6,9 @@
 import { AzureFunctionTokenProvider } from "..";
 
 export function createAzureTokenProvider(): AzureFunctionTokenProvider {
-	const fnUrl = process.env.azure__fluid__relay__service__function__url as string;
-	return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
-		userId: "foo",
-		userName: "bar",
-	});
+    const fnUrl = process.env.azure__fluid__relay__service__function__url as string;
+    return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
+        userId: "foo",
+        userName: "bar",
+    });
 }

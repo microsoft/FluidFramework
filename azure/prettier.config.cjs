@@ -4,7 +4,6 @@ module.exports = {
 	semi: true,
 	singleQuote: false,
 	trailingComma: "all",
-	useTabs: true,
 	overrides: [
 		{
 			files: "lerna.json",

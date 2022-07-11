@@ -49,44 +49,44 @@ import { v4 as uuid } from "uuid";
  * Default: `1.0`.
  */
 export function generateToken(
-	tenantId: string,
-	key: string,
-	scopes: ScopeType[],
-	documentId?: string,
-	user?: IUser,
-	lifetime: number = 60 * 60,
-	ver: string = "1.0",
+    tenantId: string,
+    key: string,
+    scopes: ScopeType[],
+    documentId?: string,
+    user?: IUser,
+    lifetime: number = 60 * 60,
+    ver: string = "1.0",
 ): string {
-	let userClaim = user ? user : generateUser();
-	if (userClaim.id === "" || userClaim.id === undefined) {
-		userClaim = generateUser();
-	}
+    let userClaim = user ? user : generateUser();
+    if (userClaim.id === "" || userClaim.id === undefined) {
+        userClaim = generateUser();
+    }
 
-	// Current time in seconds
-	const now = Math.round(Date.now() / 1000);
-	const docId = documentId ?? "";
+    // Current time in seconds
+    const now = Math.round(Date.now() / 1000);
+    const docId = documentId ?? "";
 
-	const claims: ITokenClaims & { jti: string } = {
-		documentId: docId,
-		scopes,
-		tenantId,
-		user: userClaim,
-		iat: now,
-		exp: now + lifetime,
-		ver,
-		jti: uuid(),
-	};
+    const claims: ITokenClaims & { jti: string } = {
+        documentId: docId,
+        scopes,
+        tenantId,
+        user: userClaim,
+        iat: now,
+        exp: now + lifetime,
+        ver,
+        jti: uuid(),
+    };
 
-	const utf8Key = { utf8: key };
+    const utf8Key = { utf8: key };
 
-	return jsrsasign.jws.JWS.sign(
-		// External API uses null
-		// eslint-disable-next-line unicorn/no-null
-		null,
-		JSON.stringify({ alg: "HS256", typ: "JWT" }),
-		claims,
-		utf8Key,
-	);
+    return jsrsasign.jws.JWS.sign(
+        // External API uses null
+        // eslint-disable-next-line unicorn/no-null
+        null,
+        JSON.stringify({ alg: "HS256", typ: "JWT" }),
+        claims,
+        utf8Key,
+    );
 }
 
 /**
@@ -94,10 +94,10 @@ export function generateToken(
  * random UUID for its {@link @fluidframework/protocol-definitions#IUser.id} and `name` properties.
  */
 export function generateUser(): IUser {
-	const randomUser = {
-		id: uuid(),
-		name: uuid(),
-	};
+    const randomUser = {
+        id: uuid(),
+        name: uuid(),
+    };
 
-	return randomUser;
+    return randomUser;
 }
