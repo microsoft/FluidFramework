@@ -42,8 +42,8 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
         attributes: IDocumentAttributes,
         quorumSnapshot: IQuorumSnapshot,
         sendProposal: (key: string, value: any) => number,
-        readonly audience: IAudience,
         initialClients: ISignalClient[],
+        readonly audience: IAudience,
     ) {
         super(
             attributes.minimumSequenceNumber,
