@@ -61,8 +61,8 @@ export async function getFileLink(
             if (!canRetryOnError(err)) {
                 // Delete from the cache to permit retrying later.
                 fileLinkCache.delete(cacheKey);
-                throw err;
             }
+            throw err;
         }
 
         // We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
