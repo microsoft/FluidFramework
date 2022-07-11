@@ -16,6 +16,11 @@ export interface IMouseTrackerEvents extends IEvent {
     (event: "mousePositionChanged", listener: () => void): void;
 }
 
+export interface IMousePosition {
+    x: number;
+    y: number;
+}
+
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     private static readonly mouseSignalType = "positionChanged";
 
@@ -26,15 +31,15 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
      * Map<userId, Map<clientid, position>>
      * ```
      */
-    private readonly posMap = new Map<string, Map<string, [number, number]>>();
+    private readonly posMap = new Map<string, Map<string, IMousePosition>>();
 
     private readonly onMouseSignalFn = (clientId: string, payload: any) => {
         const userId: string = payload.userId;
-        const position: [number, number] = payload.pos;
+        const position: IMousePosition = payload.pos;
 
         let clientIdMap = this.posMap.get(userId);
         if (clientIdMap === undefined) {
-            clientIdMap = new Map<string, [number, number]>();
+            clientIdMap = new Map<string, IMousePosition>();
             this.posMap.set(userId, clientIdMap);
         }
         clientIdMap.set(clientId, position);
@@ -66,22 +71,26 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
             this.onMouseSignalFn(clientId, payload);
         });
         window.addEventListener("mousemove", (e) => {
-            this.sendMouseSignal([e.clientX, e.clientY]);
+            const position: IMousePosition = {
+                x: e.clientX,
+                y: e.clientY,
+            };
+            this.sendMouseSignal(position);
         });
     }
 
     /**
      * Alert all connected clients that there has been a change to a client's mouse position
      */
-    private sendMouseSignal(position: [number, number] | undefined) {
+    private sendMouseSignal(position: IMousePosition | undefined) {
         this.signalManager.submitSignal(
             MouseTracker.mouseSignalType,
             { userId: this.audience.getMyself()?.userId, pos: position },
         );
     }
 
-    public getMousePresences(): Map<string, [number, number]> {
-        const statuses: Map<string, [number, number]> = new Map <string, [number, number]>();
+    public getMousePresences(): Map<string, IMousePosition> {
+        const statuses: Map<string, IMousePosition> = new Map <string, IMousePosition>();
         this.audience.getMembers().forEach((member, userId) => {
             member.connections.forEach((connection) => {
                 const position = this.getMousePresenceForUser(userId, connection.id);
@@ -93,7 +102,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
         return statuses;
     }
 
-    public getMousePresenceForUser(userId: string, clientId: string): [number, number] | undefined {
+    public getMousePresenceForUser(userId: string, clientId: string): IMousePosition | undefined {
         return this.posMap.get(userId)?.get(clientId);
     }
 }

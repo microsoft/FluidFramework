@@ -67,13 +67,13 @@ function getFocusPresencesString(newLineSeparator: string = "\n", focusTracker: 
 function renderMousePresence(mouseTracker: MouseTracker, focusTracker: FocusTracker, div: HTMLDivElement) {
     const onPositionChanged = () => {
       div.innerHTML = "";
-      mouseTracker.getMousePresences().forEach((value, key) => {
+      mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
           const posDiv = document.createElement("div");
-          posDiv.textContent = key;
+          posDiv.textContent = userName;
           posDiv.style.position = "absolute";
-          posDiv.style.left = `${value[0]}px`;
-          posDiv.style.top = `${value[1]}px`;
-          if (focusTracker.getFocusPresences().get(key) === true) {
+          posDiv.style.left = `${mousePosition.x}px`;
+          posDiv.style.top = `${mousePosition.y}px`;
+          if (focusTracker.getFocusPresences().get(userName) === true) {
             posDiv.style.fontWeight = "bold";
           }
           div.appendChild(posDiv);
