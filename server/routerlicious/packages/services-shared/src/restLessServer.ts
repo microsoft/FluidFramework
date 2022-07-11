@@ -16,6 +16,7 @@ export const decodeHeader = (
 };
 
 type IncomingMessageEx = IncomingMessage & { body?: any; };
+type RequestField = undefined | string | string[];
 
 /**
  * Server for communicating with a "RestLess" client.
@@ -57,19 +58,25 @@ export class RestLessServer {
 
     private translateRequestFields(request: IncomingMessageEx, fields: Record<string, any>): void {
         // Parse and override HTTP Method
-        const methodOverrideField = fields[
+        const methodOverrideField: RequestField = fields[
             RestLessFieldNames.Method
-        ] as string[] | string;
+        ];
+        if (!methodOverrideField) {
+            throw new NetworkError(400, "Invalid RestLess Method Property");
+        }
         if (methodOverrideField instanceof Array) {
             request.method = methodOverrideField[0];
         } else {
             request.method = methodOverrideField;
         }
         // Parse and add HTTP Headers
-        const headerField: string | string[] = fields[RestLessFieldNames.Header];
+        const headerField: RequestField = fields[RestLessFieldNames.Header];
         let definedNewContentType: boolean = false;
         const parseAndSetHeader = (header: string) => {
             const { name, value } = decodeHeader(header);
+            if (!name || value === undefined) {
+                return;
+            }
             if (name.toLowerCase() === "content-type") {
                 definedNewContentType = true;
             }
@@ -87,7 +94,7 @@ export class RestLessServer {
             request.headers["content-type"] = "application/json";
         }
         // Parse and replace request body
-        const bodyField: string[] | string = fields[RestLessFieldNames.Body];
+        const bodyField: RequestField = fields[RestLessFieldNames.Body];
         // Tell body-parser middleware not to parse the body
         (request as any)._body = true;
         if (bodyField instanceof Array) {
@@ -95,6 +102,7 @@ export class RestLessServer {
         } else {
             request.body = bodyField;
         }
+        request.headers["content-length"] = request.body ? `${(request.body as string).length}` : undefined;
     }
 
     private parseRequestBody(request: IncomingMessageEx): void {
@@ -102,13 +110,13 @@ export class RestLessServer {
             // TODO: not as robust as body-parser middleware,
             // but body-parser only compatible with request streams, and req stream is exhausted by now
             const contentType = request.headers["content-type"]?.toLowerCase();
-            if (contentType.includes("application/json")) {
+            if (contentType?.includes("application/json")) {
                 try {
                     request.body = JSON.parse(request.body);
                 } catch (e) {
                     throw new NetworkError(400, "Failed to parse json body");
                 }
-            } else if (contentType.includes("application/x-www-form-urlencoded")) {
+            } else if (contentType?.includes("application/x-www-form-urlencoded")) {
                 try {
                     request.body = qs.parse(request.body);
                 } catch (e) {

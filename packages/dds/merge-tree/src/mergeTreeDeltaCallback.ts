@@ -15,15 +15,31 @@ import { ISegment } from "./mergeTree";
 export type MergeTreeDeltaOperationType =
     typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE;
 
-// Note: Assigned negative integers to avoid clashing with MergeTreeDeltaType
+/**
+ * Enum-like constant defining the types of "maintenance" events on a merge tree.
+ * Maintenance events correspond to structural segment changes or acks of pending segments.
+ *
+ * Note: these values are assigned negative integers to avoid clashing with `MergeTreeDeltaType`.
+ */
 export const MergeTreeMaintenanceType = {
+    /**
+     * Notification that a segment "append" has occurred, i.e. two adjacent segments have been merged.
+     * BEWARE: `deltaSegments` on the corresponding event will contain both the merged segment and the latter
+     * segment, pre-merge.
+     * For example, if the merge tree originally had two adjacent segments [A][B] and called A.append(B) to get
+     * segment [AB], `deltaSegments` would contain [AB] and [B].
+     */
     APPEND: -1,
+    /**
+     * Notification that a segment has been split in two.
+     * `deltaSegments` on the corresponding event will contain the resulting two segments.
+     */
     SPLIT: -2,
     /**
-     * Notification that a segment has been unlinked from the MergeTree.  This occurs during
-     * Zamboni when:
-     *
-     *    b) The segment's tracking collection is empty (e.g., not being tracked for undo/redo).
+     * Notification that a segment has been unlinked (i.e. removed) from the MergeTree.
+     * This occurs on leaf segments during Zamboni when the segment's tracking collection is empty
+     * (e.g., not being tracked for undo/redo).
+     * It also occurs on internal merge tree segments when re-packing children to maintain tree balancing invariants.
      */
     UNLINK: -3,
     /**
