@@ -1263,7 +1263,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a clear operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1289,7 +1288,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a delete operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1310,7 +1308,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a set operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1337,7 +1334,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a create subdirectory operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1358,7 +1354,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a delete subdirectory operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1751,7 +1746,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * Clear implementation used for both locally sourced clears as well as incoming remote clears.
      * @param local - Whether the message originated from the local client
-     * @param op - The message if from a remote clear, or null if from a local clear
      */
     private clearCore(local: boolean) {
         this._storage.clear();
