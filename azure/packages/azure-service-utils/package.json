@@ -15,7 +15,7 @@
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "npm run build:genver && npm run format && concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:docs": "api-extractor run --local",
@@ -29,7 +29,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "concurrently npm:eslint npm:prettier",
+		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"prettier": "prettier --check \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
 		"prettier:fix": "prettier --write \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
