@@ -49,7 +49,7 @@ export async function getFileLink(
     }
 
     const fileLinkGenerator = async function() {
-        let fileLinkCore;
+        let fileLinkCore: string;
         try {
             fileLinkCore = await runWithRetry(
                 async () => getFileLinkCore(getToken, odspUrlParts, identityType, logger),
@@ -57,7 +57,8 @@ export async function getFileLink(
                 logger,
             );
         } catch (err) {
-            // runWithRetry will throw a non retriable error after it hits the max number of attempts or encounters an unexpected error type
+            // runWithRetry throws a non retriable error after it hits the max # of attempts
+            // or encounters an unexpected error type
             if (!canRetryOnError(err)) {
                 // Delete from the cache to permit retrying later.
                 fileLinkCache.delete(cacheKey);
