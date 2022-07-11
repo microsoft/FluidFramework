@@ -228,13 +228,12 @@ async function main() {
     const repo = new FluidRepo(resolvedRoot, false);
     timer.time("Package scan completed");
 
-    if (kind === MonoRepoKind.Client) {
-        await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);
-    } else if (kind === MonoRepoKind.Server && repo.serverMonoRepo) {
-        await generateMonoRepoInstallPackageJson(repo.serverMonoRepo);
-    } else if (kind === MonoRepoKind.Azure && repo.azureMonoRepo) {
-        await generateMonoRepoInstallPackageJson(repo.azureMonoRepo);
+    const releaseGroup = repo.monoRepos.get(kind);
+    if(releaseGroup === undefined) {
+        throw new Error(`release group couldn't be found.`);
     }
+
+    await generateMonoRepoInstallPackageJson(releaseGroup);
 }
 
 main().catch(error => {

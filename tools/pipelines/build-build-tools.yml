@@ -80,14 +80,23 @@ extends:
       displayName: npm ci
       inputs:
         command: 'custom'
-        customCommand: 'ci --ignore-scripts'
+        customCommand: 'ci'
         customRegistry: 'useNpmrc'
+        workingDir: '$(Build.SourcesDirectory)/build-tools'
+    # Build the build-tools locally so it can be used to generate the monorepo package.json
+    - task: Npm@1
+      displayName: 'npm run build:compile'
+      inputs:
+        command: 'custom'
+        customCommand: 'run build:compile'
+        workingDir: '$(Build.SourcesDirectory)/build-tools'
     - task: Bash@3
       displayName: 'Generate Mono repo package json'
       inputs:
         targetType: 'inline'
         script: |
           # Generate the package/package lock for the lerna project so we would scan it.
-          node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --build-tools
-          cp build-tools/repo-package.json build-tools/packages/package.json
-          cp build-tools/repo-package-lock.json build-tools/packages/package-lock.json
+          cd build-tools
+          node packages/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js --build-tools
+          cp repo-package.json packages/package.json
+          cp repo-package-lock.json packages/package-lock.json
