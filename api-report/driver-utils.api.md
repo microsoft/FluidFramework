@@ -19,6 +19,7 @@ import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definiti
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
+import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -244,6 +245,17 @@ export interface ISummaryTreeAssemblerProps {
 
 // @public (undocumented)
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
+
+// @public (undocumented)
+export class LocationRedirectionError extends LoggingError implements ILocationRedirectionError, IFluidErrorBase {
+    constructor(message: string, redirectUrl: IResolvedUrl, props: DriverErrorTelemetryProps);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.locationRedirection;
+    // (undocumented)
+    readonly redirectUrl: IResolvedUrl;
+}
 
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
