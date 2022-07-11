@@ -74,7 +74,8 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
     return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
 
-export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
+// export type IReadContainerRuntimeMetadata = IContainerRuntimeMetadata | IOldContainerRuntimeMetadata;
+export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IOldContainerRuntimeMetadata, IGCMetadata {
     readonly summaryFormatVersion: 1;
     /** The last message processed at the time of summary. Only primitive property types are added to the summary. */
     readonly message: ISummaryMetadataMessage | undefined;
@@ -82,13 +83,15 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
     readonly disableIsolatedChannels?: true;
     /** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
     readonly summaryNumber?: number;
+}
+
+export interface IOldContainerRuntimeMetadata {
     /**
      * @deprecated - User summaryNumber instead.
      * Counter of the last summary happened, increments every time we summarize
      */
-    readonly summaryCount?: number;
+     readonly summaryCount?: number;
 }
-
 export interface ICreateContainerMetadata {
     /** Runtime version of the container when it was first created */
     createContainerRuntimeVersion?: string;
