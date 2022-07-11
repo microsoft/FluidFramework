@@ -107,6 +107,14 @@
  * - It leads to less splitting of moved and deleted ranges of nodes.
  * - It makes the format more uniform since modifications to moved-in subtrees must be represented with modifications
  * marks within a `MoveIn` mark.
+ *
+ * 5. `MoveIn` marks are represented in the location where the content being moved resides in the input context that
+ * the delta is applied to, and `MoveOut` marks are represented in the location where the content being moved should
+ * reside after the delta is applied.
+ *
+ * The alternative would be to allow such marks to appear in temporary locations (e.g., in field "bar" for a
+ * transaction that moves content from "foo" to "bar" then moves that same content from "bar" to "baz"). This
+ * makes the format less terse and harder to reason about.
  */
 export type Delta = (Offset | Modify | Delete | MoveOut | MoveIn | Insert)[];
 
