@@ -76,54 +76,66 @@ function firstPass(delta: Delta.Root, props: PassProps): void {
 	let index = startIndex ?? 0;
 	for (const { offset, mark } of delta) {
 		index += offset;
-		switch (mark[Delta.type]) {
+		// Inline into the `switch(...)` once we upgrade to TS 4.7
+		const type = mark[Delta.type];
+		switch (type) {
 			case Delta.MarkType.Delete: {
+				// Remove cast once we upgrade to TS 4.7
+				const deleteMark = mark as Delta.Delete;
 				if (mark.modify !== undefined) {
 					firstPass(mark.modify, { ...props, startIndex: index });
 				}
-				visitor.onDelete(index, mark);
+				visitor.onDelete(index, deleteMark);
 				break;
 			}
 			case Delta.MarkType.MoveOut: {
-				moveInfo.set(mark.moveId, mark);
+				// Remove cast once we upgrade to TS 4.7
+				const moveOutMark = mark as Delta.MoveOut;
+				moveInfo.set(moveOutMark.moveId, moveOutMark);
 				if (mark.modify !== undefined) {
 					firstPass(mark.modify, { ...props, startIndex: index });
 				}
-				visitor.onMoveOut(index, mark);
+				visitor.onMoveOut(index, moveOutMark);
 				break;
 			}
 			case Delta.MarkType.Modify: {
+				// Remove cast once we upgrade to TS 4.7
+				const modifyMark = mark as Delta.Modify;
 				visitor.enterNode(index);
-				recurse(mark, { visitor, moveInfo }, firstPass);
+				recurse(modifyMark, { visitor, moveInfo }, firstPass);
 				visitor.exitNode(index);
 				index += 1;
 				break;
 			}
 			case Delta.MarkType.Insert: {
-				visitor.onInsert(index, mark);
+				// Remove cast once we upgrade to TS 4.7
+				const insertMark = mark as Delta.Insert;
+				visitor.onInsert(index, insertMark);
 				if (mark.modify !== undefined) {
 					firstPass(mark.modify, { ...props, startIndex: index });
 				}
-				index += mark.content.length;
+				index += insertMark.content.length;
 				break;
 			}
 			case Delta.MarkType.MoveIn: {
 				// Handled in the second pass
 				break;
 			}
-			default: neverCase(mark[Delta.type]);
+			default: neverCase(type);
 		}
 	}
 }
 
-const NO_MATCHING_MOVEOUT_ERR = "Encountered a MoveIn mark for which there is not corresponding MoveOut mark";
+const NO_MATCHING_MOVE_OUT_ERR = "Encountered a MoveIn mark for which there is not corresponding MoveOut mark";
 
 function secondPass(delta: Delta.Root, props: PassProps): void {
 	const { startIndex, visitor, moveInfo } = props;
 	let index = startIndex ?? 0;
 	for (const { offset, mark } of delta) {
 		index += offset;
-		switch (mark[Delta.type]) {
+		// Inline into the `switch(...)` once we upgrade to TS 4.7
+		const type = mark[Delta.type];
+		switch (type) {
 			case Delta.MarkType.Delete: {
 				// Handled in the first pass
 				break;
@@ -133,28 +145,34 @@ function secondPass(delta: Delta.Root, props: PassProps): void {
 				break;
 			}
 			case Delta.MarkType.Modify: {
+				// Remove cast once we upgrade to TS 4.7
+				const modifyMark = mark as Delta.Modify;
 				visitor.enterNode(index);
-				recurse(mark, { ...props, startIndex: 0 }, secondPass);
+				recurse(modifyMark, { ...props, startIndex: 0 }, secondPass);
 				visitor.exitNode(index);
 				index += 1;
 				break;
 			}
 			case Delta.MarkType.Insert: {
+				// Remove cast once we upgrade to TS 4.7
+				const insertMark = mark as Delta.Insert;
 				// Handled in the first pass
-				index += mark.content.length;
+				index += insertMark.content.length;
 				break;
 			}
 			case Delta.MarkType.MoveIn: {
-				visitor.onMoveIn(index, mark);
+				// Remove cast once we upgrade to TS 4.7
+				const moveInMark = mark as Delta.MoveIn;
+				visitor.onMoveIn(index, moveInMark);
 				if (mark.modify !== undefined) {
 					// Note that this may call visitor callbacks with an index that is less than index + moveOut.count
 					secondPass(mark.modify, { ...props, startIndex: index });
 				}
-				const moveOut = moveInfo.get(mark.moveId) ?? fail(NO_MATCHING_MOVEOUT_ERR);
+				const moveOut = moveInfo.get(moveInMark.moveId) ?? fail(NO_MATCHING_MOVE_OUT_ERR);
 				index += moveOut.count;
 				break;
 			}
-			default: neverCase(mark[Delta.type]);
+			default: neverCase(type);
 		}
 	}
 }
