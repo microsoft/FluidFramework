@@ -32,7 +32,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 
     private readonly dependees: Map<ObjectField | ObjectNode, DisposingDependee> = new Map();
 
-    // All cursors that are in the "CUrrent" state. Must be em,pty when editing.
+    // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
 
     public constructor() {
