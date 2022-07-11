@@ -119,8 +119,14 @@
 export type Delta = PositionedMarks;
 
 /**
- * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes is the sum of
- * the offsets of that MarkWithOffset and all previous ones.
+ * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes is not
+ * represented explicitly. It corresponds to the sum of the following:
+ * - The offsets of all preceding marks
+ * - The number of nodes affected by all preceding marks, this is computed as follows:
+ *   - Modify marks affect a single node
+ *   - Delete marks affect `Delete.count` nodes
+ *   - MoveOut marks affect `MoveOut.count` nodes
+ * - The offset of the given mark
  */
 export type PositionedMarks<TMark = Mark> = MarkWithOffset<TMark>[];
 
