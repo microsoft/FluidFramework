@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { NonRetryableError } from "@fluidframework/driver-utils";
+import { canRetryOnError, NonRetryableError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -49,11 +49,21 @@ export async function getFileLink(
     }
 
     const fileLinkGenerator = async function() {
-        const fileLinkCore = await runWithRetry(
-            async () => getFileLinkCore(getToken, odspUrlParts, identityType, logger),
-            "getFileLinkCore",
-            logger,
-        );
+        let fileLinkCore;
+        try {
+            fileLinkCore = await runWithRetry(
+                async () => getFileLinkCore(getToken, odspUrlParts, identityType, logger),
+                "getFileLinkCore",
+                logger,
+            );
+        } catch (err) {
+            // runWithRetry will throw a non retriable error after it hits the max number of attempts or encounters an unexpected error type
+            if (!canRetryOnError(err)) {
+                // Delete from the cache to permit retrying later.
+                fileLinkCache.delete(cacheKey);
+                throw err;
+            }
+        }
 
         // We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
         assert(fileLinkCore !== undefined, 0x292 /* "Unexpected undefined result from getFileLinkCore" */);
