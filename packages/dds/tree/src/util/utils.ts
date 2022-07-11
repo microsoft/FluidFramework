@@ -12,3 +12,22 @@ export function clone<T>(original: T): T {
 export function fail(message: string): never {
     throw new Error(message);
 }
+
+/**
+ * Used as a default branch in switch statements to enforce that all possible branches are accounted for.
+ *
+ * Example:
+ * ```typescript
+ * const bool: true | false = ...;
+ * switch(bool) {
+ *   case true: {...}
+ *   case false: {...}
+ *   default: neverCase(bool);
+ * }
+ * ```
+ *
+ * @param never - The switch value
+ */
+ export function neverCase(never: never): never {
+	fail("neverCase was called");
+}
