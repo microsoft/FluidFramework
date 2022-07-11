@@ -304,36 +304,29 @@ export class OdspTestDriver implements ITestDriver {
      *  container id is the hashed id generated using driveId and itemId. Container id is not the filename.
      */
     async createContainerUrl(testId: string): Promise<string> {
-        try {
-            if (!this.testIdToUrl.has(testId)) {
-                const url = await this.createContainerUrlNoCache(testId);
-                this.testIdToUrl.set(testId, url);
-            }
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.testIdToUrl.get(testId)!;
-        } catch (_) {
-            return "DocWithGivenTestIDDoesNotExist";
+        if (!this.testIdToUrl.has(testId)) {
+            const siteUrl = this.config.siteUrl;
+            const driveItem = await getDriveItemByRootFileName(
+                this.config.siteUrl,
+                undefined,
+                `/${this.config.directory}/${testId}.fluid`,
+                {
+                    accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
+                    refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
+                },
+                false,
+                this.config.driveId);
+
+            this.testIdToUrl.set(
+                testId,
+                this.api.createOdspUrl({
+                    ...driveItem,
+                    siteUrl,
+                    dataStorePath: "/",
+                }));
         }
-    }
-
-    private async createContainerUrlNoCache(testId: string) {
-        const siteUrl = this.config.siteUrl;
-        const driveItem = await getDriveItemByRootFileName(
-            this.config.siteUrl,
-            undefined,
-            `/${this.config.directory}/${testId}.fluid`,
-            {
-                accessToken: await this.getStorageToken({ siteUrl, refresh: false }),
-                refreshTokenFn: async () => this.getStorageToken({ siteUrl, refresh: false }),
-            },
-            false,
-            this.config.driveId);
-
-        return this.api.createOdspUrl({
-            ...driveItem,
-            siteUrl,
-            dataStorePath: "/",
-        });
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return this.testIdToUrl.get(testId)!;
     }
 
     createDocumentServiceFactory(): IDocumentServiceFactory {
