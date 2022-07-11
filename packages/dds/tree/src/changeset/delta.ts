@@ -116,10 +116,26 @@
  * transaction that moves content from "foo" to "bar" then moves that same content from "bar" to "baz"). This
  * makes the format less terse and harder to reason about.
  */
-export type Delta = (Offset | Modify | Delete | MoveOut | MoveIn | Insert)[];
+export type Delta = PositionedMarks;
+
+/**
+ * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes is the sum of
+ * the offsets of that MarkWithOffset and all previous ones.
+ */
+export type PositionedMarks<TMark = Mark> = MarkWithOffset<TMark>[];
 
 export const type: unique symbol = Symbol("Delta.type");
 export const setValue: unique symbol = Symbol("Delta.setValue");
+
+export type Mark = Modify | Delete | MoveOut | MoveIn | Insert;
+
+/**
+ * See PositionedMarks.
+ */
+export interface MarkWithOffset<TMark = Mark> {
+	offset: Offset;
+	mark: TMark;
+}
 
 /**
  * Describes modifications made to a subtree that is otherwise untouched (i.e., not being inserted, deleted, or moved).
@@ -135,7 +151,7 @@ export interface Modify {
  */
 export interface ModifyDel {
 	[type]: typeof MarkType.Modify; // Use more specific value?
-	[key: FieldKey]: (Offset | ModifyDel | MoveOut)[];
+	[key: FieldKey]: PositionedMarks<ModifyDel | MoveOut>;
 }
 
 /**
@@ -144,7 +160,7 @@ export interface ModifyDel {
  export interface ModifyOut {
 	[type]: typeof MarkType.Modify;
 	[setValue]?: Value;
-	[key: FieldKey]: (Offset | ModifyOut | Delete | MoveOut)[];
+	[key: FieldKey]: PositionedMarks<ModifyOut | Delete | MoveOut>;
 }
 
 /**
@@ -152,7 +168,7 @@ export interface ModifyDel {
  */
  export interface ModifyIn {
 	[type]: typeof MarkType.Modify;
-	[key: FieldKey]: (Offset | ModifyIn | MoveIn | Insert)[];
+	[key: FieldKey]: PositionedMarks<ModifyIn | MoveIn | Insert>;
 }
 
 /**
@@ -162,7 +178,7 @@ export interface ModifyDel {
 export interface Delete {
 	[type]: typeof MarkType.Delete;
 	count: number;
-	modify?: (Offset | ModifyDel)[];
+	modify?: PositionedMarks<ModifyDel>;
 }
 
 /**
@@ -173,7 +189,7 @@ export interface Delete {
 	[type]: typeof MarkType.MoveOut;
 	count: number;
 	moveId: MoveId;
-	modify?: (Offset | ModifyOut)[];
+	modify?: PositionedMarks<ModifyOut>;
 }
 
 /**
@@ -183,7 +199,7 @@ export interface Delete {
  export interface MoveIn {
 	[type]: typeof MarkType.MoveIn;
 	moveId: MoveId;
-	modify?: (Offset | ModifyIn)[];
+	modify?: PositionedMarks<ModifyIn>;
 }
 
 /**
