@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "assert";
-import { neverCase } from "../util";
+import { fail, neverCase } from "../util";
 import { Delta } from "./delta";
 
 /**
