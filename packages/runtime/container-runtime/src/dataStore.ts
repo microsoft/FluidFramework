@@ -121,34 +121,41 @@ class DataStore implements IDataStore {
             return localResult ? "Success" : "Conflict";
         }
 
-        const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-            this.runtime.submitDataStoreAliasOp(message, resolve);
-        }).then((succeeded) => {
-            if (succeeded) {
-                this.alias = alias;
-            }
+        const aliased = await this
+            .ackBasedPromise<boolean>((resolve) => {
+                this.runtime.submitDataStoreAliasOp(message, resolve);
+            })
+            .catch((error) => {
+                this.logger.sendErrorEvent({
+                    eventName: "AliasingException",
+                    alias: {
+                        value: alias,
+                        tag: TelemetryDataTag.UserData,
+                    },
+                    internalId: {
+                        value: this.internalId,
+                        tag: TelemetryDataTag.PackageData,
+                    },
+                }, error);
 
-            return succeeded;
-        }).catch((error) => {
-            this.logger.sendErrorEvent({
-                eventName: "AliasingException",
-                alias: {
-                    value: alias,
-                    tag: TelemetryDataTag.UserData,
-                },
-                internalId: {
-                    value: this.internalId,
-                    tag: TelemetryDataTag.PackageData,
-                },
-            }, error);
+                return false;
+            }).finally(() => {
+                this.pendingAliases.delete(alias);
+            });
 
-            return false;
-        }).finally(() => {
-            this.pendingAliases.delete(alias);
-        });
+        if (!aliased) {
+            this.reset();
+            return "Conflict";
+        }
 
-        this.aliasState = aliased ? AliasState.Aliased : AliasState.None;
-        return aliased ? "Success" : "Conflict";
+        this.alias = alias;
+        this.aliasState = AliasState.Aliased;
+        return "Success";
+    }
+
+    private reset() {
+        this.aliasState = AliasState.None;
+        this.aliasResult = undefined;
     }
 
     async request(request: IRequest): Promise<IResponse> {
