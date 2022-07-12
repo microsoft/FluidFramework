@@ -420,7 +420,7 @@ export class SummaryGenerator {
                 nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
             };
 
-            default: assert(true, "Unexpected summary stage");
+            default: assert(true, 0x34e /* Unexpected summary stage */);
         }
 
         return initialProps;

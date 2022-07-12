@@ -130,7 +130,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      * to variables to avoid complaints from TypeScript.
      */
     private setUpSampledTelemetryHelpers(): SampledTelemetryHelper[] {
-        assert(this.mc !== undefined && this.logger !== undefined, "this.mc and/or this.logger has not been set");
+        assert(this.mc !== undefined && this.logger !== undefined, 0x348 /* this.mc and/or this.logger has not been set */);
         const opProcessingHelper = new SampledTelemetryHelper(
             {
                 eventName: "ddsOpProcessing",
