@@ -2,6 +2,7 @@
 assets/doc-models/*.json
 bin/
 content/docs/apis/
+data/allPackages.yml
 node_modules/
 public/
 scripts/api-documenter/temp

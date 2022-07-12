@@ -207,6 +207,7 @@ The site theme/template lives in `themes/thxvscode`.
 | `build:api-documenter:default` | --- |
 | `build:api-documenter:win32` | --- |
 | `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
+| `build:comprehensive-package-list-data` | `node generate-comprehensive-package-list.js` |
 | `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
 | `ci:build` | `npm run download && npm run build` |
