@@ -249,13 +249,20 @@ export class LoadTestDataStoreModel {
         const partnerBlobCount = Math.trunc(config.testConfig.totalBlobCount ?? 0 / config.testConfig.numClients) +
             (this.partnerId < (config.testConfig.totalBlobCount ?? 0 % config.testConfig.numClients) ? 1 : 0);
         if (partnerBlobCount > 0) {
-            this.root.on("valueChanged", (v) => {
-                if (v.key.startsWith(this.partnerBlobKeyPrefix)) {
+            // this.root.on("valueChanged", (v) => {
+            //     if (v.key.startsWith(this.partnerBlobKeyPrefix)) {
+            //         // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            //         this.root.get<IFluidHandle>(v.key)?.get();
+            //         console.error("i'm reading", this.readCount++);
+            //     }
+            // });
+            for (const key of this.root.keys()) {
+                if (key.startsWith(this.partnerBlobKeyPrefix)) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.root.get<IFluidHandle>(v.key)?.get();
-                    console.log("i'm reading", this.readCount++);
+                     this.root.get<IFluidHandle>(key)?.get();
+                     console.log("i'm reading", key);
                 }
-            });
+            }
         }
     }
 
@@ -278,8 +285,6 @@ export class LoadTestDataStoreModel {
         return p;
     }
 
-    private writeCount = 0;
-    private readCount = 0;
     /**
      * Upload a unique attachment blob and store the handle in a unique key on the root map
      */
@@ -291,7 +296,7 @@ export class LoadTestDataStoreModel {
             assert(buffer.byteLength === blobSize, "incorrect buffer size");
             const handle = await this.runtime.uploadBlob(buffer);
             this.root.set(this.blobKey(blobNumber), handle);
-            console.log("write", this.writeCount++);
+            console.log("write");
         }
     }
 
