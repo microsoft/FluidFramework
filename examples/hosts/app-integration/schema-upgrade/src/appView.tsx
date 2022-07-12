@@ -7,8 +7,9 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import { App, SessionState } from "./app";
+import { App } from "./app";
 import type { ExternalDataSource } from "./externalData";
+import { SessionState } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
 export interface IDebugViewProps {

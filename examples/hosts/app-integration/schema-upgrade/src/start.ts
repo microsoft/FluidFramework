@@ -15,9 +15,10 @@ import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-d
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { App, SessionState } from "./app";
+import { App } from "./app";
 import { AppView, DebugView } from "./appView";
 import { externalDataSource } from "./externalData";
+import { SessionState } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,

@@ -5,10 +5,12 @@
 
 import EventEmitter from "events";
 
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { IContainerKillBit, IInventoryList } from "./interfaces";
+import type { IApp, IAppEvents, IContainerKillBit, IInventoryList } from "./interfaces";
+import { SessionState } from "./interfaces";
 import { containerKillBitId } from "./version1";
 
 async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
@@ -54,13 +56,6 @@ const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
     }
 };
 
-// Maybe include an unknown state for pre-initialization?
-export enum SessionState {
-    collaborating,
-    migrating,
-    ended,
-}
-
 // These helper functions produce and consume the same stringified form of the data.
 function parseStringData(stringData: string) {
     const itemStrings = stringData.split("\n");
@@ -92,7 +87,7 @@ const extractStringData = async (inventoryList: IInventoryList) => {
  * is specially designed for the specific container code.  It seems likely that a bootloader layer might want to
  * exist to bridge the gap between loading the container and being sure the App is the right type for the container.
  */
-export class App extends EventEmitter {
+export class App extends TypedEventEmitter<IAppEvents> implements IApp {
     private _sessionState = SessionState.collaborating;
     public getSessionState(): SessionState {
         return this._sessionState;
