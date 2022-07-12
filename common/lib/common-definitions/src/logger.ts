@@ -11,6 +11,9 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
 // General best practice is to explicitly log the fields you care about from objects
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
+// Extended/lenient set of TelemetryEventPropertyType to accept flat arrays of primitives
+export type TelemetryEventPropertyTypeExt = TelemetryEventPropertyType | (string | number | boolean)[];
+
 /**
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
@@ -23,6 +26,9 @@ export interface ITaggedTelemetryPropertyType {
 export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
+export interface ITelemetryPropertiesExt {
+    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType | TelemetryEventPropertyTypeExt;
+}
 
 /**
  * Base interface for logging telemetry statements.
@@ -31,6 +37,11 @@ export interface ITelemetryProperties {
  * @param eventName - name of the event.
  */
 export interface ITelemetryBaseEvent extends ITelemetryProperties {
+    category: string;
+    eventName: string;
+}
+// Base interface for logging telemetry statements allowing flat arrays containing primitives.
+export interface ITelemetryBaseEventExt extends ITelemetryPropertiesExt {
     category: string;
     eventName: string;
 }
