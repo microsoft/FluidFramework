@@ -17,6 +17,16 @@ export const decodeHeader = (
 
 type IncomingMessageEx = IncomingMessage & { body?: any; };
 
+interface IRestLessServerOptions {
+    /**
+     * Request body size limit in number of bytes or as a string to
+     * be passed to the [bytes](https://www.npmjs.com/package/bytes) library.
+     * Only verified when parsing request body as a stream.
+     * Default: 1gb
+     */
+    requestSizeLimit: number | string;
+}
+
 /**
  * Server for communicating with a "RestLess" client.
  * Translates a "RestLess" HTTP request into a typical RESTful HTTP format
@@ -29,6 +39,7 @@ export class RestLessServer {
     public async translate(
         request: IncomingMessageEx,
         response: ServerResponse,
+        options?: Partial<IRestLessServerOptions>,
     ): Promise<IncomingMessageEx> {
         // Ensure it's intended to be RestLess
         if (!RestLessServer.isRestLess(request)) {
@@ -40,6 +51,7 @@ export class RestLessServer {
             await new Promise<void>((resolve, reject) =>
                 urlencoded(
                     {
+                        limit: options?.requestSizeLimit ?? "1gb",
                         extended: true,
                         // urlencoded does not recognize content-type: application/x-www-form-urlencoded;restless
                         type: (req) => req.headers["content-type"]?.startsWith("application/x-www-form-urlencoded"),
