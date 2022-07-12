@@ -115,6 +115,13 @@
  * The alternative would be to allow such marks to appear in temporary locations (e.g., in field "bar" for a
  * transaction that moves content from "foo" to "bar" then moves that same content from "bar" to "baz"). This
  * makes the format less terse and harder to reason about.
+ *
+ * 6. MoveIn marks are not inlined within `ProtoFields`.
+ *
+ * Inlining them would force the consuming code to detect `MoveIn` marks within the `ProtoFields` and handle them
+ * within the context of the insert. This would be cumbersome because either the code that is responsible for consuming
+ * the `ProtoFields` would need to be aware of and have the context to handle `MoveIn`, or some caller of that code
+ * would need to find and extract such `MoveIn` marks ahead to calling that code.
  */
 export namespace Delta {
 	/**
