@@ -107,7 +107,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     }
 
     /**
-     * Get a copy of the internal mouse position presences map
+     * Get a copy of the internal focus status map
      * @returns The map copy
      */
     public getFocusPresenceForUser(userId: string, clientId: string): boolean | undefined {
