@@ -40,7 +40,9 @@ import { Delta } from "./delta";
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 	const moveInfo: MoveOutInfo = new Map();
 	firstPass(delta, { visitor, moveInfo });
-	secondPass(delta, { visitor, moveInfo });
+	if (moveInfo.size > 0) {
+		secondPass(delta, { visitor, moveInfo });
+	}
 }
 
 type MoveOutInfo = Map<Delta.MoveId, Delta.MoveOut>;
