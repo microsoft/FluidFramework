@@ -12,11 +12,10 @@ import {
     Anchor, IEditableForest,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
-    Value,
     FieldLocation, TreeLocation, isFieldLocation,
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
-import { FieldKey, TreeType, DetachedRange, AnchorSet } from "../../tree";
+import { FieldKey, TreeType, DetachedRange, AnchorSet, Value } from "../../tree";
 import { brand, fail } from "../../util";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
@@ -111,15 +110,27 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange {
-        throw new Error("Method not implemented.");
-    }
-    setValue(nodeId: NodeId, value: any): void {
         this.beforeChange();
-        throw new Error("Method not implemented.");
+        const field: ObjectField = this.lookupField(range, false);
+        assertValidIndex(startIndex, field, false);
+        assertValidIndex(endIndex, field, false);
+        assert(startIndex <= endIndex, "detached range's end must be after it's start");
+        const newRange = this.newRange();
+        const newField = field.splice(startIndex, endIndex - startIndex);
+        this.roots.set(newRange, newField);
+        return newRange;
     }
-    delete(ids: DetachedRange): void {
+    setValue(nodeId: NodeId, value: Value): void {
         this.beforeChange();
-        throw new Error("Method not implemented.");
+        const node = this.lookupNodeId(nodeId);
+        node.value = value;
+    }
+    delete(range: DetachedRange): void {
+        this.beforeChange();
+        // TODO: maybe define this to leave the forest with an empty root field?
+        assert(range !== this.rootField, "root field can not be deleted");
+        const deleted = this.roots.delete(range);
+        assert(deleted, "deleted range must exist in forest");
     }
     allocateCursor(): Cursor {
         return new Cursor(this);
@@ -330,7 +341,6 @@ class Cursor implements ITreeSubscriptionCursor {
     }
 
     get value(): Value {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.getNode().value;
     }
 
@@ -342,7 +352,7 @@ class Cursor implements ITreeSubscriptionCursor {
     }
 
     fork(observer?: ObservingDependent | undefined): ITreeSubscriptionCursor {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented."); // TODO
     }
     free(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);

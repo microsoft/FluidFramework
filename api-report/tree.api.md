@@ -91,7 +91,11 @@ export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 export type TreeType = TreeSchemaIdentifier;
 
 // @public
-export type Value = undefined | Serializable;
+export interface TreeValue extends Serializable {
+}
+
+// @public
+export type Value = undefined | TreeValue;
 
 // (No @packageDocumentation comment for this package)
 

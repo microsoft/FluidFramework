@@ -4,8 +4,8 @@
  */
 
 import { StoredSchemaRepository } from "../schema";
-import { AnchorSet, FieldKey, DetachedRange } from "../tree";
-import { Value, ITreeCursor } from "./cursor";
+import { AnchorSet, FieldKey, DetachedRange, Value } from "../tree";
+import { ITreeCursor } from "./cursor";
 import { IForestSubscription, NodeId } from "./forest";
 
 /**
