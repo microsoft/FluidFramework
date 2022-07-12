@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
+import { IEvent } from "@fluidframework/common-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+
+export interface IExternalDataSourceEvents extends IEvent {
+    (event: "dataWritten", listener: (data: string) => void);
+}
 
 /**
  * Class to let us fake having an external data source and abstract the particulars of its implementation.
@@ -11,7 +16,7 @@ import EventEmitter from "events";
  * Here we make it an event emitter just so we can render a reasonable debug view on it for demo purposes -- in those
  * more-realistic cases there's not an expectation that the data source pushes updates or anything.
  */
-export class ExternalDataSource extends EventEmitter {
+export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
     private externalInventoryData: string;
 
     public constructor() {

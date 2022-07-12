@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import EventEmitter from "events";
-
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -21,29 +19,6 @@ async function getInventoryListFromContainer(container: IContainer): Promise<IIn
 async function getContainerKillBitFromContainer(container: IContainer): Promise<IContainerKillBit> {
     // Our kill bit is available at the URL containerKillBitId.
     return requestFluidObject<IContainerKillBit>(container, { url: containerKillBitId });
-}
-
-export class AppDebug extends EventEmitter {
-    private _sessionState = SessionState.collaborating;
-    public get sessionState(): SessionState {
-        return this._sessionState;
-    }
-
-    public constructor(
-        public readonly inventoryList: IInventoryList,
-        private readonly containerKillBit: IContainerKillBit,
-    ) {
-        super();
-        this.containerKillBit.on("codeDetailsAccepted", this.onStateChanged);
-        this.containerKillBit.on("migrated", this.onStateChanged);
-    }
-
-    private readonly onStateChanged = () => {
-        const newState = getStateFromKillBit(this.containerKillBit);
-        // assert new state !== old state
-        this._sessionState = newState;
-        this.emit("sessionStateChanged", this._sessionState);
-    };
 }
 
 const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
