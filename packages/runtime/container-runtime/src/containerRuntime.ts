@@ -43,7 +43,6 @@ import {
     TaggedLoggerAdapter,
     MonitoringContext,
     loggerToMonitoringContext,
-    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
