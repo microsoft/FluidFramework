@@ -236,23 +236,28 @@ export const loadPackage = (modulePath: string, pkg: string) =>
  * generally negative to move back versions (eg. -1).
  * Note: If the requested number is a string then that will be the returned value
  */
-export function getRequestedRange(baseVersion: string, requested?: number | string): string {
+ export function getRequestedRange(baseVersion: string, requested?: number | string): string {
     if (requested === undefined || requested === 0) { return baseVersion; }
     if (typeof requested === "string") { return requested; }
+
     const version = new semver.SemVer(baseVersion);
-    // ask for prerelease in case we just bumped the version and haven't release the previous version yet.
-    if (version.major === 1) {
-        if (requested === -1) {
-            return "^0.59.0-0";
-        } else if (requested === -2) {
-            return "^0.58.0-0";
-        }
-    } else if (version.major === 2) {
-        if (requested === -1) {
-            return "^1.0.0-0";
-        } else if (requested === -2) {
-            return "^0.59.0-0";
-        }
+
+    // calculate requested major version number
+    const requestedMajorVersion = version.major + requested;
+    // if the major version number is bigger than 0 then return it as normal
+    if (requestedMajorVersion > 0) {
+        return `^${requestedMajorVersion}.0.0-0`;
     }
-    return `^${version.major}.${version.minor + requested}.0-0`;
+    // if the major version number is <= 0 then we return the equivalent pre-releases
+    const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+    const subtractFromMinor = requestedMajorVersion;
+
+    const requestedMinorVersion =
+    lastPrereleaseVersion.minor - subtractFromMinor;
+    // too old a version / non existing version requested
+    if (requestedMinorVersion <= 0) {
+        // cap at min version
+        return "^0.0.1-0";
+    }
+    return `^0.${requestedMinorVersion}.0-0`;
 }
