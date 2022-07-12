@@ -10,4 +10,6 @@ describe("Get the major version number above or below the baseVersion", () => {
     assert.strictEqual(getRequestedRange("^1.0.0", -2), "^0.58.0-0");
     assert.strictEqual(getRequestedRange("^1.0.0", 1), "^2.0.0-0");
     assert.strictEqual(getRequestedRange("^2.0.0", -1), "^1.0.0-0");
+    assert.strictEqual(getRequestedRange("^2.0.0", 0), "^2.0.0");
+    assert.strictEqual(getRequestedRange("^2.0.0", undefined), "^2.0.0");
 });
