@@ -34,7 +34,7 @@ For a source-code comment, this would be a single source-code comment block.
 For example:
 
 ```markdown
-The SharedMap is a Distributed Data Structure (DDS) that...
+The SharedMap is a Distributed data structure (DDS) that...
 ```
 
-After defining the acronym, it is completely fine to refer to `Distributed Data Structure`s as `DDS`s from then on, but not before being defined.
+After defining the acronym, it is completely fine to refer to `Distributed data structure`s as `DDS`s from then on, but not before being defined.
