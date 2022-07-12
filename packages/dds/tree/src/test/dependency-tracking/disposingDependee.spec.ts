@@ -18,9 +18,9 @@ import {
 
 class MockDependent extends SimpleObservingDependent {
 	public readonly tokens: (InvalidationToken | undefined)[] = [];
-    public markInvalid(token?: InvalidationToken | undefined): void {
-        this.tokens.push(token);
-    }
+	public constructor(name: string = "MockDependent") {
+		super((token) => this.tokens.push(token), name);
+	}
 }
 
 describe("DisposingDependee", () => {

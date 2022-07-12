@@ -9,14 +9,14 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
   annotations:
-    kubernetes.io/ingress.class: {{ .Values.ingress.class }}
-    ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.org/websocket-services: {{ template "alfred.fullname" . }}
     nginx.org/proxy-send-timeout: "7200s"
     nginx.org/proxy-read-timeout: "7200s"
     nginx.org/client-max-body-size: "100m"
-    ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
 spec:
+  ingressClassName: {{ .Values.ingress.class }}
   tls:
   - hosts:
     - {{ .Values.alfred.host }}

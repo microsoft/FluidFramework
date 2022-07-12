@@ -21,6 +21,7 @@ import {
 	ValueSchema,
 	emptyField, emptyMap, emptySet, fieldSchema, anyField, anyTree, neverField, neverTree, StoredSchemaRepository,
 } from "../../schema";
+import { brandOpaque } from "../../util";
 
 describe("Schema Comparison", () => {
 	const neverTree2: TreeSchema = {
@@ -96,10 +97,10 @@ describe("Schema Comparison", () => {
 			value: ValueSchema.Nothing,
 		}));
 		assert(isNeverTree(repo, neverTree2));
-		repo.tryUpdateFieldSchema("never" as GlobalFieldKey, neverField);
+		repo.tryUpdateFieldSchema(brandOpaque<GlobalFieldKey>("never"), neverField);
 		assert(isNeverTree(repo, {
 			localFields: emptyMap,
-			globalFields: new Set(["never" as GlobalFieldKey]),
+			globalFields: new Set([brandOpaque<GlobalFieldKey>("never")]),
 			extraLocalFields: emptyField,
 			extraGlobalFields: true,
 			value: ValueSchema.Serializable,

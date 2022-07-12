@@ -10,7 +10,7 @@
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
-  "main": "dist/fluidBuild/fluidBuild.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
     "fluid-build": "bin/fluid-build",
@@ -37,11 +37,11 @@
     "layer-check:doc": "node dist/layerCheck/layerCheck.js --root ../.. --md",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "list-repo-files": "cd ../.. && git ls-files -co --exclude-standard",
-    "policy-check": "cd ../.. && node build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
-    "policy-check:debug": "cd ../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
+    "list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",
+    "policy-check": "cd ../../.. && node build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
+    "policy-check:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:fix": "npm run policy-check -- -r",
-    "policy-check:fix:debug": "cd ../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
+    "policy-check:fix:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
     "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000"
   },
   "dependencies": {

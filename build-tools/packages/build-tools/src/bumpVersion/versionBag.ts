@@ -5,7 +5,7 @@
 
 import { Package } from "../common/npmPackage";
 import { fatal, exec, execNoError } from "./utils";
-import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { MonoRepo } from "../common/monoRepo";
 import * as semver from "semver";
 
 export class VersionBag {
@@ -42,8 +42,12 @@ export class VersionBag {
         return Object.entries(this.versionData)[Symbol.iterator]();
     }
 
-    protected static getEntryName(pkg: Package) {
-        return pkg.monoRepo ? MonoRepoKind[pkg.monoRepo.kind] : pkg.name;
+    protected static getEntryName(pkg: Package): string {
+        if (pkg.monoRepo !== undefined) {
+            return pkg.monoRepo.kind;
+        } else {
+            return pkg.name;
+        }
     }
 }
 
