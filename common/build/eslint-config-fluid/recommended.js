@@ -39,9 +39,11 @@ module.exports = {
         "unicorn/empty-brace-spaces": "off",
         "unicorn/prevent-abbreviations": "off",
 
-        // Disallows the `any` type.
-        // Using the `any` type defeats the purpose of using TypeScript.
-        // When `any` is used, all compiler type checks around that value are ignored.
+        /**
+         * Disallows the `any` type.
+         * Using the `any` type defeats the purpose of using TypeScript.
+         * When `any` is used, all compiler type checks around that value are ignored.
+         */
         "@typescript-eslint/no-explicit-any": "error",
 
         /**
