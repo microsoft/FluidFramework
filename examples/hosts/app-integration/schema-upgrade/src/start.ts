@@ -63,6 +63,7 @@ const updateTabForContainer = (container: IContainer) => {
 const renderApp = (app: App) => {
     // The AppView is what a normal user would see in a normal scenario...
     const appDiv = document.getElementById("app") as HTMLDivElement;
+    ReactDOM.unmountComponentAtNode(appDiv);
     ReactDOM.render(
         React.createElement(AppView, { app }),
         appDiv,
@@ -70,6 +71,7 @@ const renderApp = (app: App) => {
 
     // Whereas the DebugView is just for the purposes of this demo.  Separated out here to clarify the division.
     const debugDiv = document.getElementById("debug") as HTMLDivElement;
+    ReactDOM.unmountComponentAtNode(debugDiv);
     ReactDOM.render(
         React.createElement(DebugView, {
             app,
@@ -153,6 +155,7 @@ async function start(): Promise<void> {
                     const migratedApp = await setUpAppForContainer(migratedContainer);
                     renderApp(migratedApp);
                     updateTabForContainer(migratedContainer);
+                    _container.close();
                 }).catch(console.error);
             } else if (sessionState === SessionState.ending) {
                 ensureMigrated(_app).catch(console.error);
