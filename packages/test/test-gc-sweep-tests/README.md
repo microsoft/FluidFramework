@@ -1,4 +1,4 @@
-# @fluidframework/test-gc-sweep-tests
+# @fluid-internal/test-gc-sweep-tests
 
 ## Overview
 
