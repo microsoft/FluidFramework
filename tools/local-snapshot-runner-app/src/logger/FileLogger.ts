@@ -10,23 +10,23 @@ import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/commo
  * TODO: Look at FileLogger class in stress tests
  */
 export default class FileLogger implements ITelemetryBaseLogger {
-  public supportsTags?: true | undefined;
-  
-  private _fileName: string;
+    public supportsTags?: true | undefined;
+    
+    private _fileName: string;
 
-  public constructor(fileName: string) {
-    this._fileName = fileName;
-  }
+    public constructor(fileName: string) {
+        this._fileName = fileName;
+    }
 
-  
-  /**
-   * Appending each line to file right away for now
-   * @param event - TODO
-   */
-  public send(event: ITelemetryBaseEvent): void {
-    const logEvent = JSON.stringify(event);
-    console.log(logEvent);
+    
+    /**
+     * Appending each line to file right away for now
+     * @param event - TODO
+     */
+    public send(event: ITelemetryBaseEvent): void {
+        const logEvent = JSON.stringify(event);
+        console.log(logEvent);
 
-    fs.appendFileSync(this._fileName, `${logEvent}\n`);
-  }
+        fs.appendFileSync(this._fileName, `${logEvent}\n`);
+    }
 }

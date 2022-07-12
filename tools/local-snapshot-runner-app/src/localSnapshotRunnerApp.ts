@@ -7,43 +7,48 @@ import * as yargs from "yargs";
 import { exportFile } from "./exportFile";
 
 function localSnapshotRunnerApp() {
-  yargs
-    .strict()
-    .version(false)
-    .command(
-      "exportFile",
-      "Generate an output for a local snapshot",
-      (yargs) =>
-        yargs
-          .option("inputFile", {
-            describe: "Name of the file containing local ODSP snapshot",
-            type: "string",
-            demandOption: true
-          })
-          .option("outputFolder", {
-            describe: "Name of the output file",
-            type: "string",
-            demandOption: true
-          })
-          .option("scenario", {
-            describe: "Name of scenario to invoke",
-            type: "string",
-            demandOption: true
-          })
-          .option("telemetryFile", {
-            describe: "Config and session data for telemetry",
-            type: "string",
-            demandOption: true
-          })
-          .option("props", {
-            describe: "Additional properties format verbose=true,a=b,... ",
-            type: "string"
-          }),
-      async (argv) =>
-        await exportFile(argv.inputFile, argv.outputFolder, argv.scenario, argv.telemetryFile, argv.props || "")
-    )
-    .help()
-    .demandCommand().argv;
+    yargs
+        .strict()
+        .version(false)
+        .command(
+            "exportFile",
+            "Generate an output for a local snapshot",
+            (yargs) =>
+                yargs
+                    .option("codeLoader", {
+                        describe: "Name of the code loader bundle",
+                        type: "string",
+                        demandOption: true
+                    })
+                    .option("inputFile", {
+                        describe: "Name of the file containing local ODSP snapshot",
+                        type: "string",
+                        demandOption: true
+                    })
+                    .option("outputFolder", {
+                        describe: "Name of the output file",
+                        type: "string",
+                        demandOption: true
+                    })
+                    .option("scenario", {
+                        describe: "Name of scenario to invoke",
+                        type: "string",
+                        demandOption: true
+                    })
+                    .option("telemetryFile", {
+                        describe: "Config and session data for telemetry",
+                        type: "string",
+                        demandOption: true
+                    })
+                    .option("props", {
+                        describe: "Additional properties format verbose=true,a=b,... ",
+                        type: "string"
+                    }),
+            async (argv) =>
+                await exportFile(argv.codeLoader, argv.inputFile, argv.outputFolder, argv.scenario, argv.telemetryFile, argv.props || "")
+        )
+        .help()
+        .demandCommand().argv;
 }
 
 localSnapshotRunnerApp();
