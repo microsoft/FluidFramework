@@ -93,6 +93,21 @@ describe("Cell", () => {
 
                 assert.equal(cell2.get(), undefined, "Could not load SharedCell from snapshot");
             });
+
+            it("can become attached if referring DDS becomes attached or is already attached", async () => {
+                const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+                const cell1 = SharedCell.create(dataStoreRuntime1, "cell1");
+                const cell2 = SharedCell.create(dataStoreRuntime1, "cell2");
+                const cell3 = new SharedCell("cell3", dataStoreRuntime1, CellFactory.Attributes);
+                assert.equal(cell1.isAttached(), false, "cell1 is attached");
+                assert.equal(cell2.isAttached(), false, "cell2 is attached");
+                cell2.set(cell1.handle);
+                assert.equal(cell1.isAttached(), false, "cell1 is attached");
+                assert.equal(cell2.isAttached(), false, "cell2 is attached");
+                cell3.set(cell2.handle);
+                assert.equal(cell1.isAttached(), true, "cell1 is not attached");
+                assert.equal(cell2.isAttached(), true, "cell2 is not attached");
+            });
         });
 
         describe("Op processing in local state", () => {
