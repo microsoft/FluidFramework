@@ -351,7 +351,7 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
     let pgAtStart = true;
     if (pos > 0) {
         const segoff = sharedString.getContainingSegment(pos - 1);
-        if (MergeTree.Marker.is(segoff.segment)) {
+        if (segoff.segment && MergeTree.Marker.is(segoff.segment)) {
             if (refHasTileLabel(segoff.segment, "pg")) {
                 pgAtStart = false;
             }
@@ -617,7 +617,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
             const segoff = sharedString.getContainingSegment(nextPos);
             // TODO: model error checking
             const segment = segoff.segment;
-            if (MergeTree.Marker.is(segment)) {
+            if (segment && MergeTree.Marker.is(segment)) {
                 const marker = <MergeTree.Marker>segoff.segment;
                 if (refHasRangeLabel(marker, "table")) {
                     const tableMarker = <ITableMarker>marker;
@@ -634,7 +634,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
                 }
             } else {
                 // Text segment
-                const tilePos = sharedString.findTile(nextPos, "pg", false);
+                const tilePos = sharedString.findTile(nextPos, "pg", false)!;
                 const pgMarker = <Paragraph.IParagraphMarker>tilePos.tile;
                 if (!pgMarker.itemCache) {
                     if (fontInfo) {
