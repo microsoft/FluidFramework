@@ -3,11 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import registerDebug from "debug";
 import { AsyncPriorityQueue } from "async";
 import { Task, TaskExec } from "./task";
 import { LeafTask } from "./leaf/leafTask";
 import { logVerbose } from "../../common/logging";
 import { BuildResult, BuildPackage } from "../buildGraph";
+
+const traceTaskExec = registerDebug("fluid-build:task:exec");
+
 export class NPMTask extends Task {
     constructor(node: BuildPackage, command: string, protected readonly subTasks: Task[]) {
         super(node, command);
@@ -67,6 +71,8 @@ export class NPMTask extends Task {
     }
 
     protected logVerboseTask(msg: string) {
-        logVerbose(`Task: ${this.node.pkg.nameColored} ${this.command}: ${msg}`);
+        const out = `Task: ${this.node.pkg.nameColored} ${this.command}: ${msg}`;
+        traceTaskExec(out);
+        logVerbose(out);
     }
 }
