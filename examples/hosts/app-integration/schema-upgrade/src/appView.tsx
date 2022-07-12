@@ -54,7 +54,7 @@ const SessionStatusView: React.FC<ISessionStatusViewProps> = (props: ISessionSta
 
     return (
         <>
-            { sessionState === SessionState.ending && <h1>The session is ending...</h1> }
+            { sessionState === SessionState.migrating && <h1>The session is ending...</h1> }
             { sessionState === SessionState.ended && <h1>The session has ended.</h1> }
         </>
     );

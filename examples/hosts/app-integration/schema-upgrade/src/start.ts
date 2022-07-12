@@ -132,15 +132,18 @@ async function start(): Promise<void> {
             return;
         }
 
+        // TODO: Maybe need retry here.
+        // TODO: Use TaskManager here to reduce container noise.
         await newContainer.attach(createTinyliciousCreateNewRequest());
+        // Discover the container ID after attaching
+        const containerId = getContainerId(newContainer);
 
         // Again, it could be the case that someone else ended the session during our attach.
         if (_app.getSessionState() === SessionState.ended) {
             return;
         }
 
-        // Discover the container ID after attaching
-        const containerId = getContainerId(newContainer);
+        // TODO: Maybe need retry here.
         _app.finalizeMigration(containerId);
         // Here we let the newly created container/app fall out of scope intentionally.
         // If we don't win the race to set the container, it is the wrong container/app to use anyway
@@ -159,7 +162,7 @@ async function start(): Promise<void> {
                     updateTabForContainer(migratedContainer);
                     _container.close();
                 }).catch(console.error);
-            } else if (sessionState === SessionState.ending) {
+            } else if (sessionState === SessionState.migrating) {
                 ensureMigrated(_app).catch(console.error);
             }
         });

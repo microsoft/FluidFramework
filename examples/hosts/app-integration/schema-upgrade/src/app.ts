@@ -48,7 +48,7 @@ const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
     if (containerKillBit.migrated) {
         return SessionState.ended;
     } else if (containerKillBit.codeDetailsProposed) {
-        return SessionState.ending;
+        return SessionState.migrating;
     } else {
         return SessionState.collaborating;
     }
@@ -57,7 +57,7 @@ const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
 // Maybe include an unknown state for pre-initialization?
 export enum SessionState {
     collaborating,
-    ending,
+    migrating,
     ended,
 }
 
@@ -85,6 +85,13 @@ const extractStringData = async (inventoryList: IInventoryList) => {
     return inventoryItemStrings.join("\n");
 };
 
+/**
+ * The App serves the purpose of wrapping this particular Container in a friendlier interface, with stronger typing
+ * and accessory functionality.  It should have the same layering restrictions as we want for the Container (e.g. no
+ * direct access to the Loader).  It does not have a goal of being general-purpose like Container does -- instead it
+ * is specially designed for the specific container code.  It seems likely that a bootloader layer might want to
+ * exist to bridge the gap between loading the container and being sure the App is the right type for the container.
+ */
 export class App extends EventEmitter {
     private _sessionState = SessionState.collaborating;
     public getSessionState(): SessionState {
@@ -109,7 +116,6 @@ export class App extends EventEmitter {
 
     public constructor(private readonly container: IContainer) {
         super();
-        // Close container after migration?
     }
 
     public readonly initialize = async (initialData?: string) => {
