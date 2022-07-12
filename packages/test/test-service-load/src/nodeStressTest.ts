@@ -102,10 +102,16 @@ async function orchestratorProcess(
         undefined,
         args.browserAuth);
 
-    // Create a new file if a testId wasn't provided
-    const url = args.testId !== undefined
-        ? await testDriver.createContainerUrl(args.testId)
-        : await initialize(testDriver, seed, profile, args.verbose === true);
+    // If testId is provided, then try to load the file first; And if it doesn't exist, then create the document.
+    let url;
+    if (args.testId !== undefined) {
+        url = await testDriver.createContainerUrl(args.testId);
+    }
+
+    // If file doesn't exists, then create one.
+    if (url === undefined || url === "DocWithGivenTestIDDoesNotExist") {
+        url = await initialize(testDriver, seed, profile, args.verbose === true, args.testId);
+    }
 
     const estRunningTimeMin = Math.floor(2 * profile.totalSendCount / (profile.opRatePerMin * profile.numClients));
     console.log(`Connecting to ${args.testId !== undefined ? "existing" : "new"}`);

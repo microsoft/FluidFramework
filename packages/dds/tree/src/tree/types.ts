@@ -50,7 +50,7 @@ export type ChildCollection = FieldKey | RootRange;
  * DetachedRanges are not valid to use as across edits:
  * they are only valid within the edit in which they were created.
  */
-export type DetachedRange = Opaque<Brand<number, "tree.DetachedRange">>;
+export interface DetachedRange extends Opaque<Brand<number, "tree.DetachedRange">> {}
 
 /**
  * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.
