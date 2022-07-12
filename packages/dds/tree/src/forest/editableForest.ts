@@ -79,6 +79,10 @@ export interface TreeLocation {
     readonly index: number;
 }
 
+export function isFieldLocation(range: FieldLocation | DetachedRange): range is FieldLocation {
+    return typeof range === "object";
+}
+
 /**
  * Wrapper around DetachedRange that can be detected at runtime.
  */

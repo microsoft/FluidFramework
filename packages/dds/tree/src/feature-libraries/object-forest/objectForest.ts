@@ -13,11 +13,11 @@ import {
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
     Value,
-    FieldLocation, TreeLocation,
+    FieldLocation, TreeLocation, isFieldLocation,
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
 import { FieldKey, TreeType, DetachedRange, AnchorSet } from "../../tree";
-import { brand } from "../../util";
+import { brand, fail } from "../../util";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
@@ -71,12 +71,45 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 
     add(nodes: Iterable<ITreeCursor>): DetachedRange {
         this.beforeChange();
-        throw new Error("Method not implemented.");
+        const range = this.newRange();
+        assert(!this.roots.has(range), "new range must not already exist");
+        const field: ObjectField = Array.from(nodes, nodeFromCursor);
+        this.roots.set(range, field);
+        return range;
     }
     attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void {
         this.beforeChange();
-        throw new Error("Method not implemented.");
+        const children = this.roots.get(toAttach) ?? fail("Can not attach non-existent range");
+        this.roots.delete(toAttach);
+        const destRange = destination.range;
+        assert(toAttach !== destRange, "can not attach range to itself");
+        if (children.length === 0) {
+            return; // Prevent creating 0 sized fields when inserting empty into empty.
+        }
+        const field: ObjectField = this.lookupField(destRange, true);
+        assertValidIndex(destination.index, field, true);
+        field.splice(destination.index, 0, ...children);
     }
+
+    private lookupField(range: FieldLocation | DetachedRange, create: boolean): ObjectField {
+        if (!isFieldLocation(range)) {
+            return this.getRoot(range);
+        } else {
+            const children = this.lookupNodeId(range.parent).children;
+            const field = children.get(range.key);
+            if (field !== undefined) {
+                    return field;
+            }
+            // Handle missing fields:
+            if (create === false) {
+                    return [];
+            }
+            const newField: ObjectField = [];
+            children.set(range.key, newField);
+            return newField;
+        }
+    }
+
     detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange {
         throw new Error("Method not implemented.");
     }
@@ -88,7 +121,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         this.beforeChange();
         throw new Error("Method not implemented.");
     }
-    allocateCursor(): ITreeSubscriptionCursor {
+    allocateCursor(): Cursor {
         return new Cursor(this);
     }
 
@@ -107,19 +140,37 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         if (node === undefined) {
             return TreeNavigationResult.NotFound;
         }
-        if (this.getRoot(this.rootField).length === 0) {
-            return TreeNavigationResult.NotFound;
+        for (const [range, field] of this.roots) {
+            if (field.length !== 0) {
+                // TODO: it unclear if this should be allowed to modify cursor in the case
+                // it does not find the actual result.
+                cursorToMove.set(range, 0);
+
+                // Epically slow solution: search entire tree for node:
+                if (this.search(node, cursorToMove) === TreeNavigationResult.NotFound) {
+                    cursorToMove.clear();
+                } else {
+                    return TreeNavigationResult.Ok;
+                }
+            }
         }
 
-        // TODO: it unclear if this should be allowed to modify cursor in the case it does not find the actual result.
-        cursorToMove.set(this.rootField, 0);
+        return TreeNavigationResult.NotFound;
+    }
 
-        // Epically slow solution: search entire tree for node:
-        if (this.search(node, cursorToMove) === TreeNavigationResult.NotFound) {
-            cursorToMove.clear();
-            return TreeNavigationResult.NotFound;
+    private lookupNodeId(id: NodeId): ObjectNode {
+        if (id instanceof ObjectNode) {
+            return id;
         }
-        return TreeNavigationResult.Ok;
+
+        // TODO: this could be much more efficient (and not use cursor)
+        const cursor = this.allocateCursor();
+        const result = this.tryGet(id, cursor);
+        assert(result === TreeNavigationResult.Ok, "Expected to find anchor");
+        const node = cursor.getNode();
+        cursor.free();
+
+        return node;
     }
 
     private search(destination: ObjectNode, cursor: Cursor): TreeNavigationResult {
@@ -145,6 +196,36 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 
         return TreeNavigationResult.NotFound;
     }
+}
+
+function assertValidIndex(index: number, array: unknown[], splice: boolean = false) {
+    assert(Number.isInteger(index), "index must be an integer");
+    assert(index >= 0, "index must be non-negative");
+    if (splice) {
+        assert(index <= array.length, "index must be less than or equal to length");
+    } else {
+        assert(index < array.length, "index must be less than length");
+    }
+}
+
+export function nodeFromCursor(cursor: ITreeCursor): ObjectNode {
+    const node = new ObjectNode(cursor.type, cursor.value);
+    for (const key of cursor.keys) {
+        const field: ObjectField = [];
+        let result = cursor.down(key, 0);
+        // TODO: do we want to require that the keys list only has non-empty fields? This assumes that.
+        // If this fails, the "up" call below would be wrong.
+        assert(result === TreeNavigationResult.Ok, "expected non empty field for listed key");
+        while (result === TreeNavigationResult.Ok) {
+            field.push(nodeFromCursor(cursor));
+            result = cursor.seek(1).result;
+        }
+        assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
+        cursor.up();
+        node.children.set(key, field);
+    }
+
+    return node;
 }
 
 /**
@@ -238,6 +319,7 @@ class Cursor implements ITreeSubscriptionCursor {
         this.state = ITreeSubscriptionCursorState.Current;
         this.indexStack.push(index);
         this.siblings = this.forest.getRoot(root);
+        this.parentStack.push(this.siblings[index]);
         this.forest.currentCursors.add(this);
     }
 
