@@ -15,7 +15,7 @@ import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 
 import { App } from "./app";
-import { IApp, IBootLoader, IBootLoaderEvents, SessionState } from "./interfaces";
+import { IApp, IBootLoader, IBootLoaderEvents, MigrationState } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
@@ -84,7 +84,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
 
         // Before attaching, let's check to make sure no one else has already done the migration
         // To avoid creating unnecessary extra containers.
-        if (app.getSessionState() === SessionState.ended) {
+        if (app.getMigrationState() === MigrationState.ended) {
             return;
         }
 
@@ -94,8 +94,8 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         // Discover the container ID after attaching
         const containerId = getContainerId(newContainer);
 
-        // Again, it could be the case that someone else ended the session during our attach.
-        if (app.getSessionState() === SessionState.ended) {
+        // Again, it could be the case that someone else finished the migration during our attach.
+        if (app.getMigrationState() === MigrationState.ended) {
             return;
         }
 
@@ -107,12 +107,12 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
     }
 
     public async getMigrated(oldApp: IApp): Promise<{ app: IApp; id: string; }> {
-        if (oldApp.getSessionState() !== SessionState.ended) {
+        if (oldApp.getMigrationState() !== MigrationState.ended) {
             throw new Error("Tried to get migrated container but migration hasn't happened yet");
         }
         const newContainerId = oldApp.newContainerId;
         if (newContainerId === undefined) {
-            throw new Error("Session ended without a new container being created");
+            throw new Error("Migration ended without a new container being created");
         }
         const newContainer = await this.loader.resolve({ url: newContainerId });
         const app = new App(newContainer);

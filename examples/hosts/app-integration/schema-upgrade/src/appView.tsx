@@ -8,7 +8,7 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import React, { useEffect, useRef, useState } from "react";
 
 import type { ExternalDataSource } from "./externalData";
-import { IApp, SessionState } from "./interfaces";
+import { IApp, MigrationState } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
 export interface IDebugViewProps {
@@ -24,7 +24,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 
     return (
         <div>
-            <SessionStatusView app={ app } />
+            <MigrationStatusView app={ app } />
             <ImportedDataView data={ undefined } />
             <ControlsView proposeCodeDetails={ app.proposeCodeDetails } />
             <ExternalDataSourceView externalDataSource={ externalDataSource }/>
@@ -32,30 +32,30 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
     );
 };
 
-interface ISessionStatusViewProps {
+interface IMigrationStatusViewProps {
     app: IApp;
 }
 
-const SessionStatusView: React.FC<ISessionStatusViewProps> = (props: ISessionStatusViewProps) => {
+const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrationStatusViewProps) => {
     const { app } = props;
 
-    const [sessionState, setSessionState] = useState<SessionState>(app.getSessionState());
+    const [migrationState, setMigrationState] = useState<MigrationState>(app.getMigrationState());
 
     useEffect(() => {
-        const sessionStateChangedHandler = () => {
-            setSessionState(app.getSessionState());
+        const migrationStateChangedHandler = () => {
+            setMigrationState(app.getMigrationState());
         };
-        app.on("sessionStateChanged", sessionStateChangedHandler);
-        sessionStateChangedHandler();
+        app.on("migrationStateChanged", migrationStateChangedHandler);
+        migrationStateChangedHandler();
         return () => {
-            app.off("sessionStateChanged", sessionStateChangedHandler);
+            app.off("migrationStateChanged", migrationStateChangedHandler);
         };
     }, [app]);
 
     return (
         <>
-            { sessionState === SessionState.migrating && <h1>The session is ending...</h1> }
-            { sessionState === SessionState.ended && <h1>The session has ended.</h1> }
+            { migrationState === MigrationState.migrating && <h1>Migration in progress...</h1> }
+            { migrationState === MigrationState.ended && <h1>This app has been migrated.</h1> }
         </>
     );
 };
@@ -133,16 +133,16 @@ export interface IAppViewProps {
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
     const { app } = props;
 
-    const [disableInput, setDisableInput] = useState<boolean>(app.getSessionState() !== SessionState.collaborating);
+    const [disableInput, setDisableInput] = useState<boolean>(app.getMigrationState() !== MigrationState.collaborating);
 
     useEffect(() => {
-        const sessionStateChangedHandler = () => {
-            setDisableInput(app.getSessionState() !== SessionState.collaborating);
+        const migrationStateChangedHandler = () => {
+            setDisableInput(app.getMigrationState() !== MigrationState.collaborating);
         };
-        app.on("sessionStateChanged", sessionStateChangedHandler);
-        sessionStateChangedHandler();
+        app.on("migrationStateChanged", migrationStateChangedHandler);
+        migrationStateChangedHandler();
         return () => {
-            app.off("sessionStateChanged", sessionStateChangedHandler);
+            app.off("migrationStateChanged", migrationStateChangedHandler);
         };
     }, [app]);
 

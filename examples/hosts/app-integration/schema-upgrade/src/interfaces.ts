@@ -16,18 +16,18 @@ export interface IBootLoaderEvents extends IEvent {
 export interface IBootLoader extends IEventProvider<IBootLoaderEvents> {
 }
 
-export enum SessionState {
+export enum MigrationState {
     collaborating,
     migrating,
     ended,
 }
 
 export interface IAppEvents extends IEvent {
-    (event: "sessionStateChanged", listener: (sessionState: SessionState) => void);
+    (event: "migrationStateChanged", listener: (migrationState: MigrationState) => void);
 }
 
 export interface IApp extends IEventProvider<IAppEvents> {
-    // id, close(), attach()?, version?
+    // id, attach()?, version?
     /**
      * Initialize must be called after constructing the IApp.
      * @param initialData - String data to initially populate the app with.  May only be used in detached state.
@@ -40,9 +40,9 @@ export interface IApp extends IEventProvider<IAppEvents> {
     exportStringData: () => Promise<string>;
 
     /**
-     * Get the current session state of the IApp.
+     * Get the current migration state of the IApp.
      */
-    getSessionState(): SessionState;
+    getMigrationState(): MigrationState;
 
     /**
      * The accepted migratory code details, if migration has been accepted.
@@ -69,6 +69,9 @@ export interface IApp extends IEventProvider<IAppEvents> {
      */
     inventoryList: IInventoryList;
 
+    /**
+     * Close the app, rendering it inoperable and closing connections.
+     */
     close(): void;
 }
 

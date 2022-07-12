@@ -8,7 +8,7 @@ import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/cont
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import type { IApp, IAppEvents, IContainerKillBit, IInventoryList } from "./interfaces";
-import { SessionState } from "./interfaces";
+import { MigrationState } from "./interfaces";
 import { containerKillBitId } from "./version1";
 
 async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
@@ -23,11 +23,11 @@ async function getContainerKillBitFromContainer(container: IContainer): Promise<
 
 const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
     if (containerKillBit.migrated) {
-        return SessionState.ended;
+        return MigrationState.ended;
     } else if (containerKillBit.codeDetailsProposed) {
-        return SessionState.migrating;
+        return MigrationState.migrating;
     } else {
-        return SessionState.collaborating;
+        return MigrationState.collaborating;
     }
 };
 
@@ -63,9 +63,9 @@ const extractStringData = async (inventoryList: IInventoryList) => {
  * exist to bridge the gap between loading the container and being sure the App is the right type for the container.
  */
 export class App extends TypedEventEmitter<IAppEvents> implements IApp {
-    private _sessionState = SessionState.collaborating;
-    public getSessionState(): SessionState {
-        return this._sessionState;
+    private _migrationState = MigrationState.collaborating;
+    public getMigrationState(): MigrationState {
+        return this._migrationState;
     }
 
     private _inventoryList: IInventoryList | undefined;
@@ -95,7 +95,7 @@ export class App extends TypedEventEmitter<IAppEvents> implements IApp {
 
         this._inventoryList = await getInventoryListFromContainer(this.container);
         this._containerKillBit = await getContainerKillBitFromContainer(this.container);
-        this._sessionState = getStateFromKillBit(this._containerKillBit);
+        this._migrationState = getStateFromKillBit(this._containerKillBit);
         this.containerKillBit.on("codeDetailsAccepted", this.onStateChanged);
         this.containerKillBit.on("migrated", this.onStateChanged);
 
@@ -107,8 +107,8 @@ export class App extends TypedEventEmitter<IAppEvents> implements IApp {
     private readonly onStateChanged = () => {
         const newState = getStateFromKillBit(this.containerKillBit);
         // assert new state !== old state
-        this._sessionState = newState;
-        this.emit("sessionStateChanged", this._sessionState);
+        this._migrationState = newState;
+        this.emit("migrationStateChanged", this._migrationState);
     };
 
     public readonly exportStringData = async () => {

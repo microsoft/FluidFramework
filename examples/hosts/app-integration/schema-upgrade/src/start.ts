@@ -9,7 +9,7 @@ import ReactDOM from "react-dom";
 import { AppView, DebugView } from "./appView";
 import { BootLoader } from "./bootLoader";
 import { externalDataSource } from "./externalData";
-import { IApp, SessionState } from "./interfaces";
+import { IApp, MigrationState } from "./interfaces";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -69,8 +69,8 @@ async function start(): Promise<void> {
     }
 
     const watchForAppMigration = (_app: IApp) => {
-        _app.on("sessionStateChanged", (sessionState: SessionState) => {
-            if (sessionState === SessionState.ended) {
+        _app.on("migrationStateChanged", (migrationState: MigrationState) => {
+            if (migrationState === MigrationState.ended) {
                 bootLoader.getMigrated(_app).then(async ({ app: migratedApp, id: migratedId }) => {
                     // bootLoader.getView(migratedApp) ???
                     watchForAppMigration(migratedApp);
@@ -78,7 +78,7 @@ async function start(): Promise<void> {
                     updateTabForId(migratedId);
                     _app.close();
                 }).catch(console.error);
-            } else if (sessionState === SessionState.migrating) {
+            } else if (migrationState === MigrationState.migrating) {
                 bootLoader.ensureMigrated(_app).catch(console.error);
             }
         });
