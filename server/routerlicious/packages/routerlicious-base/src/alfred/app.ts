@@ -49,7 +49,7 @@ export function create(
 
     // initialize RestLess server translation
     const restLessMiddleware: () => express.RequestHandler = () => {
-        const restLessServer = new RestLessServer();
+        const restLessServer = new RestLessServer({ requestSizeLimit: requestSize });
         return (req, res, next) => {
             restLessServer
                 .translate(req, res)
