@@ -34,6 +34,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
+    "@fluid-experimental/sequence-deprecated": "^2.0.0",
     "@fluidframework/cell": "^2.0.0",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
@@ -60,7 +61,6 @@
     "@fluidframework/shared-summary-block": "^2.0.0",
     "@fluidframework/telemetry-utils": "^2.0.0",
     "@fluidframework/tool-utils": "^2.0.0",
-    "@fluid-experimental/sequence-deprecated": "^2.0.0",
     "json-stable-stringify": "^1.0.1"
   },
   "devDependencies": {

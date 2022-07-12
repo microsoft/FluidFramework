@@ -57,6 +57,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluid-experimental/sequence-deprecated": "^2.0.0",
     "@fluid-internal/replay-tool": "^2.0.0",
     "@fluidframework/cell": "^2.0.0",
     "@fluidframework/common-utils": "^0.32.1",
@@ -77,8 +78,7 @@
     "@fluidframework/replay-driver": "^2.0.0",
     "@fluidframework/sequence": "^2.0.0",
     "@fluidframework/server-local-server":  "^0.1037.1000-0",
-    "@fluidframework/test-utils": "^2.0.0",
-    "@fluid-experimental/sequence-deprecated": "^2.0.0"
+    "@fluidframework/test-utils": "^2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
