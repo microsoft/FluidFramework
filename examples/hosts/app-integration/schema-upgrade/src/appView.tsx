@@ -7,13 +7,12 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import { App } from "./app";
 import type { ExternalDataSource } from "./externalData";
-import { SessionState } from "./interfaces";
+import { IApp, SessionState } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
 export interface IDebugViewProps {
-    app: App;
+    app: IApp;
     externalDataSource: ExternalDataSource;
 }
 
@@ -34,7 +33,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 };
 
 interface ISessionStatusViewProps {
-    app: App;
+    app: IApp;
 }
 
 const SessionStatusView: React.FC<ISessionStatusViewProps> = (props: ISessionStatusViewProps) => {
@@ -128,7 +127,7 @@ const ExternalDataSourceView: React.FC<IExternalDataSourceViewProps> = (props: I
 };
 
 export interface IAppViewProps {
-    app: App;
+    app: IApp;
 }
 
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {

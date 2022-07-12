@@ -60,6 +60,8 @@ export interface IApp extends IEventProvider<IAppEvents> {
      * An inventory tracker list, which is the relevant data for this particular IApp.
      */
     inventoryList: IInventoryList;
+
+    close(): void;
 }
 
 export interface IContainerKillBitEvents extends IEvent {

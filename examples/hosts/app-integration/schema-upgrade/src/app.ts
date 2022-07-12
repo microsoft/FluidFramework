@@ -133,4 +133,8 @@ export class App extends TypedEventEmitter<IAppEvents> implements IApp {
         }
         this.containerKillBit.setNewContainerId(newContainerId).catch(console.error);
     };
+
+    public close() {
+        this.container.close();
+    }
 }
