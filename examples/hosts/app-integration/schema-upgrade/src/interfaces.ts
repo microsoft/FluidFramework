@@ -19,6 +19,7 @@ export interface IAppEvents extends IEvent {
 }
 
 export interface IApp extends IEventProvider<IAppEvents> {
+    // id, close(), attach()?, version?
     /**
      * Initialize must be called after constructing the IApp.
      * @param initialData - String data to initially populate the app with.  May only be used in detached state.

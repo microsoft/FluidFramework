@@ -104,9 +104,15 @@ async function start(): Promise<void> {
     if (location.hash.length === 0) {
         createNew = true;
         fetchedData = await externalDataSource.fetchData();
+        // initialApp = bootLoader.createNew(fetchedData) ???
+        // Might not need attach() if createNew takes fetchedData.
         initialContainer = await loader.createDetachedContainer({ package: "one" });
     } else {
         const containerId = location.hash.substring(1);
+        // initialApp = bootLoader.loadExisting(containerId) ???
+        // here won't know the exact type of the app yet though
+        // Might not matter if the pattern is to say "if (old) then upgrade() else <now I know the type>"
+        // Or could include a version on the app object
         initialContainer = await loader.resolve({ url: containerId });
     }
 
@@ -163,6 +169,7 @@ async function start(): Promise<void> {
             if (sessionState === SessionState.ended) {
                 getMigratedContainer(_app).then(async (migratedContainer: IContainer) => {
                     const migratedApp = await setUpAppForContainer(migratedContainer);
+                    // bootLoader.getView(migratedApp) ???
                     renderApp(migratedApp);
                     updateTabForContainer(migratedContainer);
                     _container.close();
@@ -181,6 +188,8 @@ async function start(): Promise<void> {
         await initialContainer.attach(createTinyliciousCreateNewRequest());
     }
 
+    // bootLoader.getView(initialApp) ???
+    // viewLoader?
     renderApp(initialApp);
     updateTabForContainer(initialContainer);
 }
