@@ -4,18 +4,12 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import {
-    IMember,
-    IServiceAudience,
-} from "@fluidframework/fluid-static";
+import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 // Re-export so developers can build loggers without pulling in common-definitions
-export {
-    ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
-} from "@fluidframework/common-definitions";
+export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 /**
  * Props for initializing a new AzureClient instance
