@@ -1,56 +1,110 @@
-# @fluidframework/map
+# @fluid-internal/version-tools
 
-## SharedMap
+version-tools provides tools to parse and transform version schemes that are used by the Fluid Framework.
 
-The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting and
-retrieving values that JavaScript developers are accustomed to with the
-[Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) built-in object.
+# Version schemes
 
-### Creation
+version-tools currently supports the internal Fluid version scheme.
 
-To create a `SharedMap`, call the static create method:
+## internal
 
-```typescript
-const myMap = SharedMap.create(this.runtime, id);
+The Fluid internal version scheme consists of two semver "triplets" of major/minor/patch. The first triplet is called
+the *public version*, and is stored in the typical semver positions in the version string.
+
+The second triplet is called the *internal version*, and is found at the end of the pre-release section of the
+version string.
+
+Fluid internal version strings *always* include the string `internal` in the first position of the pre-release
+section.
+
+In the following example, the public version is `a.b.c`, while the internal version is `x.y.z`.
+
+`a.b.c-internal.x.y.z`
+
+
+_Not yet documented._
+
+<!-- toc -->
+* [@fluid-internal/version-tools](#fluid-internalversion-tools)
+* [Version schemes](#version-schemes)
+* [Usage](#usage)
+* [Commands](#commands)
+<!-- tocstop -->
+
+# Usage
+
+version-tools provides a command-line interface (`fluv`) when installed directly. However, the commands listed here are
+also available in the Fluid build and release tool (`flub`). This is accomplished using
+[oclif's plugin system](https://oclif.io/docs/plugins).
+
+<!-- usage -->
+```sh-session
+$ npm install -g @fluid-internal/version-tools
+$ fluv COMMAND
+running command...
+$ fluv (--version)
+@fluid-internal/version-tools/0.3.0 linux-x64 node-v14.20.0
+$ fluv --help [COMMAND]
+USAGE
+  $ fluv COMMAND
+...
+```
+<!-- usagestop -->
+
+# Commands
+
+<!-- commands -->
+* [`fluv help [COMMAND]`](#fluv-help-command)
+* [`fluv version VERSION`](#fluv-version-version)
+
+## `fluv help [COMMAND]`
+
+Display help for fluv.
+
+```
+USAGE
+  $ fluv help [COMMAND] [-n]
+
+ARGUMENTS
+  COMMAND  Command to show help for.
+
+FLAGS
+  -n, --nested-commands  Include all nested commands in the output.
+
+DESCRIPTION
+  Display help for fluv.
 ```
 
-### Usage
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.12/src/commands/help.ts)_
 
-Unlike the JavaScript `Map`, a `SharedMap`'s keys must be strings. The value must only be plain JS objects or handles (e.g. to another DDS or Fluid objects).
+## `fluv version VERSION`
 
-In collaborative scenarios, the value is settled with a policy of _last write wins_.
+Convert version strings between regular semver and the Fluid internal version scheme.
 
-#### `.wait()`
+```
+USAGE
+  $ fluv version [VERSION] [--json] [-t major|minor|patch|current] [--publicVersion <value>]
 
-`SharedMap` has a `wait` method in addition to the normal `get`, which returns a `Promise` that resolves to the value
-when the key becomes available.
+ARGUMENTS
+  VERSION  The version to convert.
 
-### Eventing
+FLAGS
+  -t, --type=<option>      bump type
+                           <options: major|minor|patch|current>
+  --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
 
-`SharedMap` is an `EventEmitter`, and will emit events when other clients make modifications.  You should register for these events and respond appropriately as the data is modified.  `valueChanged` will be emitted in response to a `set` or `delete`, and provide the key and previous value that was stored at that key.  `clear` will be emitted in response to a `clear`.
+GLOBAL FLAGS
+  --json  Format output as json.
 
-## SharedDirectory and IDirectory
-
-A `SharedDirectory` is a map-like DDS that additionally supports storing key/value pairs within a tree of subdirectories.  This subdirectory tree can be used to give hierarchical structure to stored key/value pairs rather than storing them on a flat map.  Both the `SharedDirectory` and any subdirectories are `IDirectories`.
-
-### Creation
-
-To create a `SharedDirectory`, call the static create method:
-
-```typescript
-const myDirectory = SharedDirectory.create(this.runtime, id);
+DESCRIPTION
+  Convert version strings between regular semver and the Fluid internal version scheme.
 ```
 
-### Usage
+_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
+<!-- commandsstop -->
 
-The map operations on an `IDirectory` refer to the key/value pairs stored in that `IDirectory`, and function just like `SharedMap` including the same extra functionality and restrictions on keys and values.  To operate on the subdirectory structure, use the corresponding subdirectory methods.
+## Trademark
 
-#### `getWorkingDirectory()`
-
-To "navigate" the subdirectory structure, `IDirectory` provides a `getWorkingDirectory` method which takes a relative path and returns the `IDirectory` located at that path if it exists.
-
-#### Eventing
-
-`valueChanged` events additionally provide the absolute path to the subdirectory storing the value that changed.
-
-`dispose` events are fired on sub directory which is deleted. Any access to this sub directory will throw an error once it is disposed.
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.

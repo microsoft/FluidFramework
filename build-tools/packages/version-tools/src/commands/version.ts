@@ -26,10 +26,10 @@ interface VersionScheme {
 }
 
 interface VersionInfo {
-    input: string,
-    bumpType: string,
-    original: VersionScheme,
-    bumped: VersionScheme,
+    input: string;
+    bumpType: string;
+    original: VersionScheme;
+    bumped: VersionScheme;
 }
 
 /**
@@ -67,7 +67,10 @@ export default class VersionCommand extends Command {
         const { args, flags } = await this.parse(VersionCommand);
 
         // eslint-disable-next-line prefer-const
-        let { bumpType, originalVersion } = await this.parseVersionArgument(args.version, flags.publicVersion);
+        let { bumpType, originalVersion } = await this.parseVersionArgument(
+            args.version,
+            flags.publicVersion,
+        );
         let bumpedVersion: semver.SemVer;
 
         if (bumpType === "") {
@@ -111,10 +114,10 @@ export default class VersionCommand extends Command {
             };
 
             return scheme;
-        }
+        };
 
-        const original = makeScheme(originalVersion)
-        const bumped= makeScheme(bumpedVersion);
+        const original = makeScheme(originalVersion);
+        const bumped = makeScheme(bumpedVersion);
 
         const data: VersionInfo = {
             input: args.version,
@@ -133,10 +136,10 @@ export default class VersionCommand extends Command {
         this.log(`Input string: ${data.input}`);
         this.log(`Bump type: ${data.bumpType}`);
 
-        this.log(`\nORIGINAL (${data.original.internalVersion})`)
+        this.log(`\nORIGINAL (${data.original.internalVersion})`);
         this.log(tablify(data.original));
 
-        if(bumpType !== "current") {
+        if (bumpType !== "current") {
             this.log(`\nBUMPED to ${data.bumped.internalSchemeVersion} (${data.bumpType})`);
             this.log(tablify(data.bumped));
         }
@@ -166,12 +169,12 @@ export default class VersionCommand extends Command {
             [originalPubVer, originalIntVer] = fromInternalScheme(parsedVersion);
             originalVersion = parsedVersion;
         } else {
-            [originalPubVer, originalIntVer] = [publicVersionToUse, parsedInput]
-            originalVersion = toInternalScheme(originalPubVer, originalIntVer)
+            [originalPubVer, originalIntVer] = [publicVersionToUse, parsedInput];
+            originalVersion = toInternalScheme(originalPubVer, originalIntVer);
         }
         return {
             bumpType,
-            originalVersion
-        }
+            originalVersion,
+        };
     }
 }
