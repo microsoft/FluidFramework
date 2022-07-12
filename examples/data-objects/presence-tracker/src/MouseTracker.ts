@@ -82,7 +82,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     /**
      * Alert all connected clients that there has been a change to a client's mouse position
      */
-    private sendMouseSignal(position: IMousePosition | undefined) {
+    private sendMouseSignal(position: IMousePosition) {
         this.signalManager.submitSignal(
             MouseTracker.mouseSignalType,
             { userId: this.audience.getMyself()?.userId, pos: position },

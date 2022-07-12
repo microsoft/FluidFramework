@@ -6,56 +6,12 @@
 import { strict as assert } from "assert";
 import { EmptyKey, ITreeCursor, TreeNavigationResult } from "../..";
 import { FieldKey } from "../../tree";
-import {
-    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
-// TODO: organize this in a more valid way
-// eslint-disable-next-line import/no-internal-modules
-} from "../schema/examples/JsonDomainSchema";
+import { JsonCursor, extract } from "./jsonCursor";
 
-import { JsonCursor } from "./jsonCursor";
-
-/**
- * Extract a JS object tree from the contents of the given ITreeCursor.  Assumes that ITreeCursor
- * contains only unaugmented JsonTypes.
- */
-export function extract(reader: ITreeCursor): any {
-    const type = reader.type;
-
-    switch (type) {
-        case jsonNumber.name:
-        case jsonBoolean.name:
-        case jsonString.name:
-            return reader.value;
-        case jsonArray.name: {
-            const length = reader.length(EmptyKey);
-            const result = new Array(length);
-            for (let index = 0; index < result.length; index++) {
-                assert.equal(reader.down(EmptyKey, index), TreeNavigationResult.Ok);
-                result[index] = extract(reader);
-                assert.equal(reader.up(), TreeNavigationResult.Ok);
-            }
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return result;
-        }
-        case jsonObject.name: {
-            const result: any = {};
-            for (const key of reader.keys) {
-                assert.equal(reader.down(key, 0), TreeNavigationResult.Ok);
-                result[key as string] = extract(reader);
-                assert.equal(reader.up(), TreeNavigationResult.Ok);
-            }
-            return result;
-        }
-        default: {
-            assert.equal(type, jsonNull.name);
-            return null;
-        }
-    }
-}
-
-describe("ITreeCursor", () => {
-    describe("down(),up(),keys(),length(),value", () => {
+describe("JsonCursor", () => {
+    // This tests that test data roundtrips via extract.
+    // This tests a lot of the API, but does not include some things (like "keys" on non-object nodes).
+    describe("extract roundtrip", () => {
         const tests = [
             ["null", [null]],
             ["boolean", [true, false]],
@@ -86,6 +42,36 @@ describe("ITreeCursor", () => {
                 });
             }
         }
+    });
+
+    describe("keys", () => {
+        it("object", () => {
+            assert.deepEqual([...new JsonCursor({}).keys], []);
+            assert.deepEqual([...new JsonCursor({ x: {} }).keys], ["x"]);
+            assert.deepEqual(new Set(new JsonCursor({ x: {}, test: 6 }).keys), new Set(["x", "test"]));
+        });
+
+        it("array", () => {
+            // TODO: should empty arrays report this key?
+            assert.deepEqual([...new JsonCursor([]).keys], [EmptyKey]);
+            assert.deepEqual([...new JsonCursor([0]).keys], [EmptyKey]);
+            assert.deepEqual([...new JsonCursor(["test", {}]).keys], [EmptyKey]);
+        });
+
+        it("string", () => {
+            assert.deepEqual([...new JsonCursor("").keys], []);
+            assert.deepEqual([...new JsonCursor("test").keys], []);
+        });
+
+        it("number", () => {
+            assert.deepEqual([...new JsonCursor(0).keys], []);
+            assert.deepEqual([...new JsonCursor(6.5).keys], []);
+        });
+
+        it("boolean", () => {
+            assert.deepEqual([...new JsonCursor(false).keys], []);
+            assert.deepEqual([...new JsonCursor(true).keys], []);
+        });
     });
 
     describe("seek()", () => {
