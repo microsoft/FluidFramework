@@ -17,6 +17,9 @@ Note that it's okay to discuss *ideas* for future features or changes, but it ne
 
 It is imperative that we keep the Fluid Framework's barrier to entry as low as possible to make adoption easier.
 Please avoid adding new terminology whenever possible.
+
+For a list of existing Fluid terminology, see [here](https://fluidframework.com/docs/glossary/).
+
 If you think you need to add something new to describe some new concept, it will need to be reviewed by the team.
 
 ## Define acronyms and abbreviations before use
