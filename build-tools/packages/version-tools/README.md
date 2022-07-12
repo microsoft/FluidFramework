@@ -21,9 +21,6 @@ In the following example, the public version is `a.b.c`, while the internal vers
 
 `a.b.c-internal.x.y.z`
 
-
-_Not yet documented._
-
 <!-- toc -->
 * [@fluid-internal/version-tools](#fluid-internalversion-tools)
 * [Version schemes](#version-schemes)
