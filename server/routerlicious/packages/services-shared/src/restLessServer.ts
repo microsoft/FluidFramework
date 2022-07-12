@@ -27,11 +27,26 @@ interface IRestLessServerOptions {
     requestSizeLimit: number | string;
 }
 
+const defaultRestLessServerOptions: IRestLessServerOptions = {
+    requestSizeLimit: "1gb",
+};
+
 /**
  * Server for communicating with a "RestLess" client.
  * Translates a "RestLess" HTTP request into a typical RESTful HTTP format
  */
 export class RestLessServer {
+    private readonly options: IRestLessServerOptions;
+
+    constructor(
+        options?: Partial<IRestLessServerOptions>,
+    ) {
+        this.options = {
+            ...defaultRestLessServerOptions,
+            ...options,
+        };
+    }
+
     /**
      * If POST request has content-type application/x-www-urlencoded,
      * translates request from RestLess to standard REST in-place.
@@ -39,7 +54,6 @@ export class RestLessServer {
     public async translate(
         request: IncomingMessageEx,
         response: ServerResponse,
-        options?: Partial<IRestLessServerOptions>,
     ): Promise<IncomingMessageEx> {
         // Ensure it's intended to be RestLess
         if (!RestLessServer.isRestLess(request)) {
@@ -51,7 +65,7 @@ export class RestLessServer {
             await new Promise<void>((resolve, reject) =>
                 urlencoded(
                     {
-                        limit: options?.requestSizeLimit ?? "1gb",
+                        limit: this.options.requestSizeLimit,
                         extended: true,
                         // urlencoded does not recognize content-type: application/x-www-form-urlencoded;restless
                         type: (req) => req.headers["content-type"]?.startsWith("application/x-www-form-urlencoded"),
