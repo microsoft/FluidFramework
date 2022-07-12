@@ -107,8 +107,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     }
 
     /**
-     * Get a copy of the internal focus status map
-     * @returns The map copy
+     * Returns focus status of specified client
      */
     public getFocusPresenceForUser(userId: string, clientId: string): boolean | undefined {
         return this.focusMap.get(userId)?.get(clientId);
