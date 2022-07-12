@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAudience } from "@fluidframework/container-definitions";
+import { IAudienceWriter } from "@fluidframework/container-definitions";
 import {
     ILocalSequencedClient,
     IProtocolHandler as IBaseProtocolHandler,
@@ -34,7 +34,7 @@ export type ProtocolHandlerBuilder = (
 ) => IProtocolHandler;
 
 export interface IProtocolHandler extends IBaseProtocolHandler {
-    readonly audience: IAudience;
+    readonly audience: IAudienceWriter;
 }
 
 export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandler {
@@ -43,7 +43,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
         quorumSnapshot: IQuorumSnapshot,
         sendProposal: (key: string, value: any) => number,
         initialClients: ISignalClient[],
-        readonly audience: IAudience,
+        readonly audience: IAudienceWriter,
     ) {
         super(
             attributes.minimumSequenceNumber,

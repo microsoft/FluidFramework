@@ -70,11 +70,15 @@ export interface ContainerWarning extends IErrorBase {
 
 // @public
 export interface IAudience extends EventEmitter {
-    addMember(clientId: string, details: IClient): any;
-    clear(): any;
     getMember(clientId: string): IClient | undefined;
     getMembers(): Map<string, IClient>;
     on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+}
+
+// @public (undocumented)
+export interface IAudienceWriter extends IAudience {
+    addMember(clientId: string, details: IClient): any;
+    clear(): any;
     removeMember(clientId: string): boolean;
 }
 

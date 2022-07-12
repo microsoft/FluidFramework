@@ -1534,13 +1534,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         deltaManager.inboundSignal.pause();
 
         deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+            // Store the initial clients so that they can be submitted to the
+            // protocol handler when it is created.
             this._initialClients = details.initialClients ?? [];
 
             if (this._protocolHandler !== undefined) {
-                this.audience.clear();
+                // When reconnecting, the protocol handler is already created,
+                // so we can update the audience right now.
+                this._protocolHandler.audience.clear();
 
                 for (const priorClient of this._initialClients) {
-                    this.audience.addMember(priorClient.clientId, priorClient.client);
+                    this._protocolHandler.audience.addMember(priorClient.clientId, priorClient.client);
                 }
             }
 

@@ -65,15 +65,6 @@
       "InterfaceDeclaration_IConnectionDetails": {
         "backCompat": false
       },
-      "InterfaceDeclaration_IAudience": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IContainer": {
-        "forwardCompat": false
-      },
-      "InterfaceDeclaration_IContainerContext": {
-        "forwardCompat": false
-      },
       "RemovedInterfaceDeclaration_ICodeLoader": {
         "forwardCompat": false,
         "backCompat": false
