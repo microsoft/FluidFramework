@@ -19,17 +19,45 @@ export interface IAppEvents extends IEvent {
 }
 
 export interface IApp extends IEventProvider<IAppEvents> {
+    /**
+     * Initialize must be called after constructing the IApp.
+     * @param initialData - String data to initially populate the app with.  May only be used in detached state.
+     */
     initialize: (initialData?: string) => Promise<void>;
+    /**
+     * Export the string data from the IApp.  Can be passed into initialize() for a new container to replicate
+     * the data.
+     */
     exportStringData: () => Promise<string>;
 
+    /**
+     * Get the current session state of the IApp.
+     */
     getSessionState(): SessionState;
 
-    acceptedCodeDetails: IFluidCodeDetails;
+    /**
+     * The accepted migratory code details, if migration has been accepted.
+     */
+    acceptedCodeDetails: IFluidCodeDetails | undefined;
+    /**
+     * Propose migration using the provided code details.
+     * @param codeDetails - The code details that the new IApp should use.
+     */
     proposeCodeDetails: (codeDetails: IFluidCodeDetails) => void;
 
+    /**
+     * The containerId of the migrated IApp, if migration has completed.
+     */
     newContainerId: string | undefined;
+    /**
+     * Complete the migration with the provided containerId.
+     * @param newContainerId - the ID of the container that the collaboration has migrated to.
+     */
     finalizeMigration: (newContainerId: string) => void;
 
+    /**
+     * An inventory tracker list, which is the relevant data for this particular IApp.
+     */
     inventoryList: IInventoryList;
 }
 
@@ -42,7 +70,7 @@ export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvent
     newContainerId: string | undefined;
     setNewContainerId(id: string): Promise<void>;
     codeDetailsProposed: boolean;
-    acceptedCodeDetails: IFluidCodeDetails;
+    acceptedCodeDetails: IFluidCodeDetails | undefined;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<void>;
     volunteerForMigration(): Promise<void>;
     haveMigrationTask(): boolean;

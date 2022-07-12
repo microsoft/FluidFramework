@@ -122,8 +122,12 @@ async function start(): Promise<void> {
     };
 
     async function ensureMigrated(_app: App) {
+        const acceptedCodeDetails = _app.acceptedCodeDetails;
+        if (acceptedCodeDetails === undefined) {
+            throw new Error("Cannot ensure migrated before code details are accepted");
+        }
         const extractedData = await _app.exportStringData();
-        const newContainer = await loader.createDetachedContainer(_app.acceptedCodeDetails);
+        const newContainer = await loader.createDetachedContainer(acceptedCodeDetails);
         const newApp = new App(newContainer);
         await newApp.initialize(extractedData);
 

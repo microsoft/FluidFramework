@@ -64,7 +64,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public get acceptedCodeDetails() {
-        return this.quorum.get(codeDetailsProposedKey) as IFluidCodeDetails;
+        return this.quorum.get(codeDetailsProposedKey) as IFluidCodeDetails | undefined;
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
