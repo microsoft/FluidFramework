@@ -160,7 +160,6 @@ import {
 } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
-import { OpTracker } from "./opTelemetry";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -224,12 +223,14 @@ export interface ISummaryBaseConfiguration {
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
     state: "enabled";
     /**
-     * Defines the maximum allowed time in between summarizations.
+     * @deprecated - please move all implementation to minIdleTime and maxIdleTime
      */
     idleTime: number;
     /**
-     * Defines the maximum allowed time, since the last received Ack,  before running the summary
+     * Defines the maximum allowed time, since the last received Ack, before running the summary
      * with reason maxTime.
+     * For example, say we receive ops one by one just before the idle time is triggered.
+     * In this case, we still want to run a summary since it's been a while since the last summary.
      */
     maxTime: number;
     /**
@@ -242,6 +243,34 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
      * before running the last summary.
      */
     minOpsForLastSummaryAttempt: number;
+    /**
+     * Defines the lower boundary for the allowed time in between summarizations.
+     * Pairs with maxIdleTime to form a range.
+     * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
+     * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
+     * linearly depending on the number of ops we receive.
+     */
+    minIdleTime: number;
+    /**
+     * Defines the upper boundary for the allowed time in between summarizations.
+     * Pairs with minIdleTime to form a range.
+     * For example, if we only receive 1 op, we don't want to have the same idle time as say 100 ops.
+     * Based on the boundaries we set in minIdleTime and maxIdleTime, the idle time will change
+     * linearly depending on the number of ops we receive.
+     */
+    maxIdleTime: number;
+    /**
+     * Runtime op weight to use in heuristic summarizing.
+     * This number is a multiplier on the number of runtime ops we process when running summarize heuristics.
+     * For example: (multiplier) * (number of runtime ops) = weighted number of runtime ops
+     */
+    runtimeOpWeight: number;
+    /**
+     * Non-runtime op weight to use in heuristic summarizing
+     * This number is a multiplier on the number of non-runtime ops we process when running summarize heuristics.
+     * For example: (multiplier) * (number of non-runtime ops) = weighted number of non-runtime ops
+     */
+    nonRuntimeOpWeight: number;
 }
 
 export interface ISummaryConfigurationDisableSummarizer {
@@ -260,21 +289,29 @@ export type ISummaryConfiguration =
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
     state: "enabled",
 
-    idleTime: 5000 * 3,
+    idleTime: 15 * 1000, // 15 secs.
 
-    maxTime: 5000 * 12,
+    minIdleTime: 0,
 
-    maxOps: 100, // Summarize if 100 ops received since last snapshot.
+    maxIdleTime: 30 * 1000, // 30 secs.
+
+    maxTime: 60 * 1000, // 1 min.
+
+    maxOps: 100, // Summarize if 100 weighted ops received since last snapshot.
 
     minOpsForLastSummaryAttempt: 10,
 
-    maxAckWaitTime: 6 * 10 * 1000, // 6 min.
+    maxAckWaitTime: 10 * 60 * 1000, // 10 mins.
 
     maxOpsSinceLastSummary: 7000,
 
-    initialSummarizerDelayMs: 5000, // 5 secs.
+    initialSummarizerDelayMs: 5 * 1000, // 5 secs.
 
     summarizerClientElection: false,
+
+    nonRuntimeOpWeight: 0.1,
+
+    runtimeOpWeight: 1.0,
 };
 
 export interface IGCRuntimeOptions {
@@ -318,9 +355,12 @@ export interface ISummaryRuntimeOptions {
     /** Override summary configurations set by the server. */
     summaryConfigOverrides?: ISummaryConfiguration;
 
-    // Flag that disables putting channels in isolated subtrees for each data store
-    // and the root node when generating a summary if set to true.
-    // Defaults to FALSE (enabled) for now.
+    /**
+     *  @deprecated - this option will not be supported on the next versions.
+     * Flag that disables putting channels in isolated subtrees for each data store
+     * and the root node when generating a summary if set to true.
+     * Defaults to FALSE (enabled) for now.
+     */
     disableIsolatedChannels?: boolean;
 
     /**
@@ -465,11 +505,6 @@ const maxOpSizeInBytesKey = "Fluid.ContainerRuntime.MaxOpSizeInBytes";
 // in order to account for some extra overhead from serialization
 // to not reach the 1MB limits in socket.io and Kafka.
 const defaultMaxOpSizeInBytes = 768000;
-
-// By default, the size of the contents for the incoming ops is tracked.
-// However, in certain situations, this may incur a performance hit.
-// The feature-gate below can be used to disable this feature.
-const disableOpTrackingKey = "Fluid.ContainerRuntime.DisableOpTracking";
 
 const defaultFlushMode = FlushMode.TurnBased;
 
@@ -1160,7 +1195,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * a summary is generated.
      */
     private nextSummaryNumber: number;
-    private readonly opTracker: OpTracker;
 
     private constructor(
         private readonly context: IContainerContext,
@@ -1466,7 +1500,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
         BindBatchTracker(this, this.logger);
-        this.opTracker = new OpTracker(this.deltaManager, this.mc.config.getBoolean(disableOpTrackingKey) === true);
     }
 
     public dispose(error?: Error): void {
@@ -2064,13 +2097,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
         const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel. For
-        // older versions, we still have to call bindToContext.
-        if (fluidDataStore.makeVisibleAndAttachGraph !== undefined) {
-            fluidDataStore.makeVisibleAndAttachGraph();
-        } else {
-            fluidDataStore.bindToContext();
-        }
+        fluidDataStore.makeVisibleAndAttachGraph();
         return fluidDataStore;
     }
 
@@ -2160,13 +2187,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
             Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
         if (isRoot) {
-            // back-compat 0.59.1000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel.
-            // For older versions, we still have to call bindToContext.
-            if (fluidDataStore.makeVisibleAndAttachGraph !== undefined) {
-                fluidDataStore.makeVisibleAndAttachGraph();
-            } else {
-                fluidDataStore.bindToContext();
-            }
+            fluidDataStore.makeVisibleAndAttachGraph();
             this.logger.sendTelemetryEvent({
                 eventName: "Root datastore with props",
                 hasProps: props !== undefined,
@@ -2670,8 +2691,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
                 gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
                 gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
-                opsSizesSinceLastSummary: this.opTracker.opsSizeAccumulator,
-                nonSystemOpsSinceLastSummary: this.opTracker.nonSystemOpCount,
                 summaryNumber,
                 ...partialStats,
             };
@@ -2744,7 +2763,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             } as const;
 
             this.summarizerNode.completeSummary(handle);
-            this.opTracker.reset();
             return submitData;
         } finally {
             // Cleanup wip summary in case of failure
@@ -2908,14 +2926,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 "OpTooLarge",
                 /* error */ undefined,
                 {
-                    length: {
-                        value: serializedContent.length,
-                        tag: TelemetryDataTag.PackageData,
-                    },
-                    limit: {
-                        value: this._maxOpSizeInBytes,
-                        tag: TelemetryDataTag.PackageData,
-                    },
+                    length: serializedContent.length,
+                    limit: this._maxOpSizeInBytes,
                 }));
             return -1;
         }

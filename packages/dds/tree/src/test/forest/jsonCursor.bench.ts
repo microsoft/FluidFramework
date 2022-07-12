@@ -8,8 +8,7 @@ import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { default as Random } from "random-js";
 import { ITreeCursor } from "../..";
-import { JsonCursor } from "./jsonCursor";
-import { extract } from "./cursor.spec";
+import { extract, JsonCursor } from "./jsonCursor";
 import { generateCanada } from "./json";
 
 // Helper for creating a PRNG instance that produces a uniform distribution in the range [0..1).
