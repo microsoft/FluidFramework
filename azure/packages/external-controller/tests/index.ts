@@ -44,7 +44,10 @@ async function initializeNewContainer(container: FluidContainer): Promise<void> 
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement, createNewFlag: boolean) {
+export async function createContainerAndRenderInElement(
+    element: HTMLDivElement,
+    createNewFlag: boolean,
+) {
     // The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
     // to store ops.
     const container = await getSessionStorageContainer(
@@ -88,9 +91,10 @@ async function setup() {
     await createContainerAndRenderInElement(rightElement, false);
 }
 
-setup().catch((e)=> {
+setup().catch((e) => {
     console.error(e);
     console.log(
         "%cThere were issues setting up and starting the in memory FLuid Server",
-        "font-size:30px");
+        "font-size:30px",
+    );
 });
