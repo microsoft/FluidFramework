@@ -306,11 +306,14 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
         }
         const val = obj[key];
         // ensure only valid props get logged, since props of logging error could be in any shape
-        const validProp = filterValidTelemetryProps(val);
-        const validTaggedProp = filterValidTelemetryProps(val.value);
-        if (isTaggedTelemetryPropertyValue(val) && validTaggedProp !== null) {
-            props[key] = validTaggedProp;
-        } else if (validProp !== null) {
+        let validProp;
+        if (isTaggedTelemetryPropertyValue(val)) {
+            validProp = filterValidTelemetryProps(val.value);
+        } else {
+            validProp = filterValidTelemetryProps(val);
+        }
+
+        if (validProp !== null) {
             props[key] = validProp;
         } else {
             // We don't support logging arbitrary objects
