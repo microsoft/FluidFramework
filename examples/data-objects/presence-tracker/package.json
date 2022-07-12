@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-example/focus-tracker",
+  "name": "@fluid-example/presence-tracker",
   "version": "2.0.0",
   "private": true,
   "description": "Example Data Object that tracks page focus for Audience members using signals.",
@@ -7,7 +7,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "examples/data-objects/focus-tracker"
+    "directory": "examples/data-objects/presence-tracker"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
