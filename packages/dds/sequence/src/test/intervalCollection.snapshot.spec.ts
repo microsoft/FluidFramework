@@ -30,8 +30,8 @@ const assertIntervals = (
 
     const actualPos = actual.map((interval) => {
         assert(interval);
-        const start = sharedString.localRefToPos(interval.start);
-        const end = sharedString.localRefToPos(interval.end);
+        const start = sharedString.localReferencePositionToPosition(interval.start);
+        const end = sharedString.localReferencePositionToPosition(interval.end);
         return { start, end };
     });
     assert.deepEqual(actualPos, expected, "intervals are not as expected");
