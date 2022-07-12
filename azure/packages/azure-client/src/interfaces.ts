@@ -24,7 +24,7 @@ export interface AzureClientProps {
     /**
      * Configuration for establishing a connection with the Azure Fluid Relay.
      */
-    readonly connection: AzureConnectionConfig;
+    readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
     /**
      * Optional. A logger instance to receive diagnostic messages.
      */
