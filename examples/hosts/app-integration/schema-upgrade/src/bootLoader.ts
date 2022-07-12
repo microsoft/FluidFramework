@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IContainer,
@@ -16,7 +15,7 @@ import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 
 import { App } from "./app";
-import { IApp, SessionState } from "./interfaces";
+import { IApp, IBootLoader, IBootLoaderEvents, SessionState } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
@@ -53,11 +52,7 @@ const getContainerId = (container: IContainer) => {
     return resolved.id;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IBootLoaderEvents extends IEvent {
-}
-
-export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> {
+export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements IBootLoader {
     private readonly loader: IHostLoader = createLoader();
 
     public async createNew(externalData?: string): Promise<{ app: IApp; id: string; }> {
