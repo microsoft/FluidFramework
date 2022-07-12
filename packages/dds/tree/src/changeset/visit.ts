@@ -7,6 +7,7 @@ import { fail, neverCase } from "../util";
 import { Delta } from "./delta";
 
 /**
+ * Implementation notes:
  * Because visitors are based on describing changes at some location in the tree (with the exception of "build"),
  * we want to ensure that visitors visit changes in an order that guarantees all changes are describable in terms
  * of some position in the tree. This means that we need to detach content bottom-up and attach content top-down.
@@ -34,15 +35,43 @@ import { Delta } from "./delta";
  *   that describes whether the move has been attached, or having a set for that describes which entries remain, would
  *   describe which parts of the delta  need applying in the second pass.
  *
+ * Current implementation:
+ * - Performs inserts in the first pass
+ * - Does not perform move-ins in the first pass
+ * - Skips the second pass if no move-outs were encountered in the first pass
+ * - Does not leverage the move table
+ *
  * Future work:
  * - Take a path to the subtree of interest (or some other description of the regions of interest)
+ * - Leverage move table when it gets added to Delta
 */
+
+/**
+ * Crawls the given `delta`, calling `visitor`'s callback for each change encountered.
+ * Each successive call to the visitor callbacks assumes that the change described by earlier calls have been applied
+ * to the document tree. For example, for a change that deletes the first and third node of a field, the visitor calls
+ * will pass indices 0 and 1 respectively.
+ * @param delta - The delta to be crawled.
+ * @param visitor - The object to notify of the changes encountered.
+ */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 	const moveInfo: MoveOutInfo = new Map();
 	firstPass(delta, { visitor, moveInfo });
 	if (moveInfo.size > 0) {
 		secondPass(delta, { visitor, moveInfo });
 	}
+}
+
+export interface DeltaVisitor {
+	onDelete(index: number, mark: Delta.Delete): void;
+	onInsert(index: number, mark: Delta.Insert): void;
+	onMoveOut(index: number, mark: Delta.MoveOut): void;
+	onMoveIn(index: number, mark: Delta.MoveIn): void;
+	onSetValue(value: Delta.Value): void;
+	enterNode(index: number): void;
+	exitNode(index: number): void;
+	enterField(key: Delta.FieldKey): void;
+	exitField(key: Delta.FieldKey): void;
 }
 
 type MoveOutInfo = Map<Delta.MoveId, Delta.MoveOut>;
@@ -177,16 +206,4 @@ function secondPass(delta: Delta.Root, props: PassProps): void {
 			default: neverCase(type);
 		}
 	}
-}
-
-export interface DeltaVisitor {
-	onDelete(index: number, mark: Delta.Delete): void;
-	onInsert(index: number, mark: Delta.Insert): void;
-	onMoveOut(index: number, mark: Delta.MoveOut): void;
-	onMoveIn(index: number, mark: Delta.MoveIn): void;
-	onSetValue(value: Delta.Value): void;
-	enterNode(index: number): void;
-	exitNode(index: number): void;
-	enterField(key: Delta.FieldKey): void;
-	exitField(key: Delta.FieldKey): void;
 }
