@@ -267,24 +267,24 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 }
 
 /**
- * Filter loggable telemetry properties
+ * Filter serializable telemetry properties
  * @param x - any telemetry prop
  * @returns - as-is if x is primitive. returns stringified if x is an array of primitive.
  * otherwise returns null since this is what we support at the moment.
  */
 // eslint-disable-next-line @rushstack/no-new-null
 function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
-    if (Array.isArray(x) && x.every((val) => isPrimitive(val))) {
+    if (Array.isArray(x) && x.every((val) => isTelemetryEventPropertyValue(val))) {
         return JSON.stringify(x);
     }
-    if (isPrimitive(x)) {
+    if (isTelemetryEventPropertyValue(x)) {
         return x;
     }
     return null;
 }
 
 // checking type of x, returns false if x is null
-function isPrimitive(x: any): x is TelemetryEventPropertyType {
+function isTelemetryEventPropertyValue(x: any): x is TelemetryEventPropertyType {
     switch (typeof x) {
         case "string":
         case "number":
@@ -307,8 +307,9 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
         const val = obj[key];
         // ensure only valid props get logged, since props of logging error could be in any shape
         const validProp = filterValidTelemetryProps(val);
-        if (isTaggedTelemetryPropertyValue(val)) {
-            props[key] = val;
+        const validTaggedProp = filterValidTelemetryProps(val.value);
+        if (isTaggedTelemetryPropertyValue(val) && validTaggedProp !== null) {
+            props[key] = validTaggedProp;
         } else if (validProp !== null) {
             props[key] = validProp;
         } else {
