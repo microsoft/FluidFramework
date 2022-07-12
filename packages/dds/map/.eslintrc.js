@@ -8,7 +8,12 @@ module.exports = {
         require.resolve("@fluidframework/eslint-config-fluid")
     ],
     "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
+        "project": [
+            "./tsconfig.json",
+            "./src/test/mocha/tsconfig.json",
+            "./src/test/memory/tsconfig.json",
+            "./src/test/types/tsconfig.json",
+        ]
     },
     "rules": {
         "@typescript-eslint/no-use-before-define": "off",
