@@ -48,10 +48,14 @@ function createLoader() {
     });
 }
 
-const updateTabForContainer = (container: IContainer) => {
+const getContainerId = (container: IContainer) => {
     const resolved = container.resolvedUrl;
     ensureFluidResolvedUrl(resolved);
-    const containerId = resolved.id;
+    return resolved.id;
+};
+
+const updateTabForContainer = (container: IContainer) => {
+    const containerId = getContainerId(container);
 
     // Update the URL with the actual container ID
     location.hash = containerId;
@@ -136,9 +140,7 @@ async function start(): Promise<void> {
         }
 
         // Discover the container ID after attaching
-        const resolved = newContainer.resolvedUrl;
-        ensureFluidResolvedUrl(resolved);
-        const containerId = resolved.id;
+        const containerId = getContainerId(newContainer);
         _app.finalizeMigration(containerId);
         // Here we let the newly created container/app fall out of scope intentionally.
         // If we don't win the race to set the container, it is the wrong container/app to use anyway
