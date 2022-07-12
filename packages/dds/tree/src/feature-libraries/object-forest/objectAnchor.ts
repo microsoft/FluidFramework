@@ -8,7 +8,7 @@ import {
     Anchor,
     ITreeSubscriptionCursorState,
 } from "../../forest";
-import { PathShared } from "../../rebase";
+import { PathShared } from "../../tree";
 
 // Currently unused,
 // but would be useful if we stop having anchors just hold onto nodes and use rebase like a real version will.

@@ -6,7 +6,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "azure"
+    "directory": "build-tools"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",

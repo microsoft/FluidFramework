@@ -41,7 +41,8 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(valu
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
 
 // @public
-export type GlobalFieldKey = Opaque<Brand<string, "tree.GlobalFieldKey">>;
+export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
+}
 
 // @public
 export interface Invariant<T> extends Contravariant<T>, Covariant<T> {

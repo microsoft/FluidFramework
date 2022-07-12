@@ -171,7 +171,7 @@
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-extra-non-null-assertion": [
             "error"
@@ -261,7 +261,7 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-argument": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-unsafe-assignment": [
             "error"

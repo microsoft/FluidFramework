@@ -25,7 +25,7 @@ function makeDiceRollerView(diceRoller: IDiceRollerController): HTMLDivElement {
     // Get the current value of the shared data to update the view whenever it changes.
     const updateDiceChar = () => {
         // Unicode 0x2680-0x2685 are the sides of a dice (⚀⚁⚂⚃⚄⚅)
-        diceCharDiv.textContent = String.fromCodePoint(0x267F + diceRoller.value);
+        diceCharDiv.textContent = String.fromCodePoint(0x267f + diceRoller.value);
         diceCharDiv.style.color = `hsl(${diceRoller.value * 60}, 70%, 50%)`;
     };
     updateDiceChar();
