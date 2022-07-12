@@ -33,7 +33,7 @@ For more information on using `ContainerSchema` to create objects please see [Da
 
 ## Common Patterns
 ### Signal Request
-When a client joins a collaboration session, they may need to receive pertinent information immediately after connecting the container.  To support this, they can request a specific signal be sent to them from other connected clients within the application. For example, in the [FocusTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/focus-tracker) we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
+When a client joins a collaboration session, they may need to receive pertinent information immediately after connecting the container.  To support this, they can request a specific signal be sent to them from other connected clients within the application. For example, in the [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
 
 ```typescript
 private static readonly focusRequestType = "focusRequest";

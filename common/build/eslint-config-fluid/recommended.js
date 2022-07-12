@@ -38,6 +38,56 @@ module.exports = {
         ],
         "unicorn/empty-brace-spaces": "off",
         "unicorn/prevent-abbreviations": "off",
+
+        /**
+         * Disallows the `any` type.
+         * Using the `any` type defeats the purpose of using TypeScript.
+         * When `any` is used, all compiler type checks around that value are ignored.
+         */
+        "@typescript-eslint/no-explicit-any": "error",
+
+        /**
+         * Requires explicit typing for anything exported from a module. Explicit types for function return
+         * values and arguments makes it clear to any calling code what is the module boundary's input and
+         * output.
+         */
+        "@typescript-eslint/explicit-module-boundary-types": "error",
+
+        /**
+         * Disallows calling a function with a value with type `any`.
+         * Despite your best intentions, the `any` type can sometimes leak into your codebase.
+         * Call a function with `any` typed argument are not checked at all by TypeScript, so it creates a
+         * potential safety hole, and source of bugs in your codebase.
+         */
+        "@typescript-eslint/no-unsafe-argument": "error",
+
+        /**
+         * Disallows assigning any to a variable, and assigning any[] to an array destructuring. Assigning an
+         * any typed value to a variable can be hard to pick up on, particularly if it leaks in from an external
+         * library.
+         */
+        "@typescript-eslint/no-unsafe-assignment": "error",
+
+        /**
+         * Disallows calling any variable that is typed as any. The arguments to, and return value of calling an
+         * any typed variable are not checked at all by TypeScript.
+         */
+        "@typescript-eslint/no-unsafe-call": "error",
+
+        /**
+         * Disallows member access on any variable that is typed as any. The arguments to, and return value of
+         * calling an any typed variable are not checked at all by TypeScript.
+         */
+        "@typescript-eslint/no-unsafe-member-access": "error",
+
+        /**
+         * Disallows returning a value with type any from a function.
+         *
+         * Despite your best intentions, the any type can sometimes leak into your codebase.
+         * Returned any typed values are not checked at all by TypeScript, so it creates a potential safety
+         * hole, and source of bugs in your codebase.
+         */
+        "@typescript-eslint/no-unsafe-return": "error",
     },
     "overrides": [
         {
@@ -46,7 +96,15 @@ module.exports = {
             "rules": {
                 "editorconfig/indent": "off", // We use tsfmt for "official" formatting.
             }
-        }
+        },
+        {
+            // Rules only for type validation files
+            "files": ["**/types/*validate*Previous.ts"],
+            "rules": {
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-unsafe-argument": "off",
+            }
+        },
     ]
 };
 

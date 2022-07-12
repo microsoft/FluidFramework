@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import crypto from "crypto";
+import registerDebug from "debug";
 import { AsyncPriorityQueue } from "async";
 import * as assert from "assert";
 import * as path from "path";
@@ -14,6 +16,8 @@ import { Task, TaskExec } from "../task";
 import { getExecutableFromCommand, writeFileAsync, unlinkAsync, readFileAsync, execAsync, existsSync, ExecAsyncResult } from "../../../common/utils";
 import chalk from "chalk";
 
+const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
+const traceTaskDep = registerDebug("fluid-build:task:dep");
 interface TaskExecResult extends ExecAsyncResult {
     worker?: boolean
 }
@@ -289,11 +293,15 @@ export abstract class LeafTask extends Task {
     }
 
     protected logVerboseTrigger(reason: string) {
-        logVerbose(`Triggering Leaf Task: [${reason}] ${this.node.pkg.nameColored} - ${this.command}`);
+        const msg = `Triggering Leaf Task: [${reason}] ${this.node.pkg.nameColored} - ${this.command}`;
+        traceTaskTrigger(msg);
+        logVerbose(msg);
     }
 
     protected logVerboseDependency(child: BuildPackage, dep: string) {
-        logVerbose(`Task Dependency: ${this.node.pkg.nameColored} ${this.executable} -> ${child.pkg.nameColored} ${dep}`);
+        const msg = `Task Dependency: ${this.node.pkg.nameColored} ${this.executable} -> ${child.pkg.nameColored} ${dep}`;
+        traceTaskDep(msg);
+        logVerbose(msg);
     }
 
     protected logVerboseTask(msg: string) {
@@ -359,6 +367,8 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
                     return true;
                 }
                 this.logVerboseTrigger("mismatched compare file");
+                traceTaskTrigger(doneFileExpectedContent);
+                traceTaskTrigger(doneFileContent);
             } else {
                 this.logVerboseTrigger("unable to generate done file expected content");
             }
@@ -368,14 +378,23 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
         return false;
     }
 
+    
+    /**
+     * Subclass could override this to provide an alternative done file name
+     */
+    protected get doneFile(): string {
+        const name = path.parse(this.executable).name;
+        // use 8 char of the sha256 hash of the command to distinguish different tasks
+        const hash = crypto.createHash("sha256").update(this.command).digest("hex").substring(0, 8);
+        return `${name}-${hash}.done.build.log`;
+    }
+
     /**
      * Subclass should override these to configure the leaf with done file task
      */
-    // A done file to be written at the end of the task
-    protected abstract get doneFile(): string;
 
     // The content to be written in the done file.
-    protected async getDoneFileContent(): Promise<string | undefined> { return ""; }
+    protected abstract getDoneFileContent(): Promise<string | undefined>;
 }
 
 
