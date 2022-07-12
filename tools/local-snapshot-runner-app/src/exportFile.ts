@@ -4,30 +4,13 @@
  */
 
 import { Loader } from "@fluidframework/container-loader";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerPackageInfo, IResolvedUrl, IUrlResolver, } from "@fluidframework/driver-definitions";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import * as fs from "fs";
 import FileLogger from "./logger/FileLogger";
 import { getArgsValidationError } from "./getArgsValidationError";
-import { convertFluidFile } from "./convertFluidFile";
 import { isCodeLoaderBundle } from "./codeLoaderBundle";
-
-class SampleUrlResolver implements IUrlResolver {
-
-    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
-        return undefined;
-    }
-
-    public async getAbsoluteUrl(
-        resolvedUrl: IResolvedUrl,
-        relativeUrl: string,
-        packageInfoSource?: IContainerPackageInfo,
-    ): Promise<string> {
-        return "";
-    }
-}
+import { FakeUrlResolver } from "./fakeUrlResolver";
 
 export async function exportFile(
     codeLoader: string,
@@ -64,17 +47,19 @@ export async function exportFile(
         }
 
         // TODO: read file stream
-        const inputFileContent = fs.readFileSync(inputFile);
-        const outputFileContent = convertFluidFile(inputFileContent.toString(), scenario, logger);
+        const inputFileContent = fs.readFileSync(inputFile, { encoding: "utf-8" });
 
         const loader = new Loader({
-            urlResolver: new SampleUrlResolver(), // TODO
+            urlResolver: new FakeUrlResolver(),
             documentServiceFactory: createLocalOdspDocumentServiceFactory(inputFileContent),
             codeLoader: await codeLoaderBundle.getCodeLoader(),
         });
 
-        // for blobs or images, will have to output multiple files
-        fs.appendFileSync(outputFolder + "/index.html", outputFileContent);
+        const container = await loader.rehydrateDetachedContainerFromSnapshot(inputFileContent);
+
+        const result = await codeLoaderBundle.getResult(container);
+
+        fs.appendFileSync(outputFolder + "/result.txt", result);
 
         logger.sendTelemetryEvent({ eventName: "Client_ExportCompleted" });
 
