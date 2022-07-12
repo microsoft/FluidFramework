@@ -344,6 +344,27 @@ describe("MergeTree.Client", () => {
         assert.equal(client2.localReferencePositionToPosition(c2LocalRef2), 1);
     });
 
+    it("Transient references can be created on removed segments", () => {
+        const client1 = new TestClient();
+        const client2 = new TestClient();
+        client1.startOrUpdateCollaboration("1");
+        client2.startOrUpdateCollaboration("2");
+        let seq = 0;
+        const insertOp = client1.makeOpMessage(
+            client1.insertTextLocal(0, "ABCD"),
+            ++seq);
+        client1.applyMsg(insertOp);
+        client2.applyMsg(insertOp);
+        client1.removeRangeLocal(0, 2);
+
+        const opFromBeforeRemovePerspective = client2.makeOpMessage(client2.insertTextLocal(3, "X"));
+        const { segment, offset } = client1.getContainingSegment(0, opFromBeforeRemovePerspective);
+        assert(segment && toRemovalInfo(segment) !== undefined);
+        const transientRef = client1.createLocalReferencePosition(segment, offset, ReferenceType.Transient, {});
+        assert.equal(transientRef.getSegment(), segment);
+        assert.equal(transientRef.getOffset(), 0);
+    });
+
     it("References can have offsets when slid to locally removed segment", () => {
         const client1 = new TestClient();
         const client2 = new TestClient();

@@ -21,7 +21,7 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IntervalType, SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { IntervalType, SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -34,6 +34,7 @@ import {
     getSnapshotTreeFromSerializedContainer,
 // eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -565,10 +566,12 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
 
-            // Create another dataStore
-            const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
-            peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
+            // Create and reference another dataStore
+            const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            defaultDataStore.root.set("dataStore2", dataStore2.handle);
+            //* Unnecessary?
+            await provider.ensureSynchronized();
+
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");
             const snapshotTree = container.serialize();
@@ -610,10 +613,12 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
             const { container, defaultDataStore } =
                 await createDetachedContainerAndGetRootDataStore();
 
-            // Create another dataStore
-            const peerDataStore = await createPeerDataStore(defaultDataStore.context.containerRuntime);
-            const dataStore2 = peerDataStore.peerDataStore as TestFluidObject;
-            peerDataStore.peerDataStoreRuntimeChannel.bindToContext();
+            // Create and reference another dataStore
+            const { peerDataStore: dataStore2 } = await createPeerDataStore(defaultDataStore.context.containerRuntime);
+            defaultDataStore.root.set("dataStore2", dataStore2.handle);
+            //* Unnecessary?
+            await provider.ensureSynchronized();
+
             const sharedMap1 = await dataStore2.getSharedObject<SharedMap>(sharedMapId);
             sharedMap1.set("0", "A");
             const snapshotTree = container.serialize();

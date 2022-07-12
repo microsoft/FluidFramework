@@ -6,11 +6,11 @@
 /**
  * The `map` package provides interfaces and implementing classes for map-like distributed data structures.
  *
- * @remarks
- * The following distributed data structures are defined in this package:
+ * @remarks The following distributed data structures are defined in this package:
  *
- * - {@link @fluidframework/map#SharedMap}
- * - {@link @fluidframework/map#SharedDirectory}
+ * - {@link SharedMap}
+ *
+ * - {@link SharedDirectory}
  *
  * @packageDocumentation
  */
@@ -18,4 +18,4 @@
 export * from "./interfaces";
 export * from "./map";
 export * from "./directory";
-export { LocalValueMaker } from "./localValues";
+export { LocalValueMaker, ILocalValue } from "./localValues";

@@ -27,7 +27,6 @@ import { TestFluidObjectFactory } from "@fluidframework/test-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore, DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
-
 import * as semver from "semver";
 import { pkgVersion } from "./packageVersion";
 import { checkInstalled, ensureInstalled, getRequestedRange, loadPackage } from "./versionUtils";

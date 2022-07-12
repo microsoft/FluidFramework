@@ -300,7 +300,7 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 export interface ISummarizer extends
-    IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer>{
+    IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
     /*
      * Asks summarizer to move to exit.
      * Summarizer will finish current processes, which may take a while.

@@ -187,8 +187,12 @@ export const dataStoreAttributesBlobName = ".component";
 
 /**
  * Modifies summary tree and stats to put tree under .channels tree.
+ *
+ * @param summarizeResult - Summary tree and stats to modify
+ *
+ * @example
  * Converts from:
- * ```ts
+ * ```typescript
  * {
  *     type: SummaryType.Tree,
  *     tree: { a: {...}, b: {...}, c: {...} },
@@ -197,7 +201,7 @@ export const dataStoreAttributesBlobName = ".component";
  *
  * to:
  *
- * ```ts
+ * ```typescript
  * {
  *     type: SummaryType.Tree,
  *     tree: {
@@ -209,7 +213,6 @@ export const dataStoreAttributesBlobName = ".component";
  * }
  * ```
  * And adds +1 to treeNodeCount in stats.
- * @param summarizeResult - summary tree and stats to modify
  */
 export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {
     summarizeResult.summary = {

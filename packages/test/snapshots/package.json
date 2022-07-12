@@ -77,10 +77,11 @@
     "@fluidframework/replay-driver": "^2.0.0",
     "@fluidframework/sequence": "^2.0.0",
     "@fluidframework/server-local-server":  "^0.1037.1000-0",
-    "@fluidframework/test-utils": "^2.0.0"
+    "@fluidframework/test-utils": "^2.0.0",
+    "@fluid-experimental/sequence-deprecated": "^2.0.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.24.0-0",
+    "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^2.0.0",
     "@rushstack/eslint-config": "^2.5.1",

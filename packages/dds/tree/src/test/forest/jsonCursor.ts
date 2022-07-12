@@ -14,15 +14,11 @@ import {
     Value,
 } from "../../..";
 
-/** NodeTypes used by the JsonCursor. */
-export const enum JsonType {
-    Null = 0,
-    Boolean = 1,
-    Number = 2,
-    String = 3,
-    Array = 4,
-    Object = 5,
-}
+import {
+    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+// TODO: organize this in a more valid way
+// eslint-disable-next-line import/no-internal-modules
+} from "../schema/examples/JsonDomainSchema";
 
 /**
  * An ITreeCursor implementation used to read a Jsonable tree for testing and benchmarking.
@@ -89,7 +85,7 @@ export class JsonCursor<T> implements ITreeCursor {
         if (key === EmptyKey && Array.isArray(parentNode)) {
             childNode = parentNode[index];
         } else if (index === 0) {
-            childNode = (parentNode as any)[key];
+            childNode = (parentNode as any)[key as string];
         } else {
             return TreeNavigationResult.NotFound;
         }
@@ -132,18 +128,18 @@ export class JsonCursor<T> implements ITreeCursor {
 
         switch (type) {
             case "number":
-                return JsonType.Number as TreeType;
+                return jsonNumber.name;
             case "string":
-                return JsonType.String as TreeType;
+                return jsonString.name;
             case "boolean":
-                return JsonType.Boolean as TreeType;
+                return jsonBoolean.name;
             default:
                 if (node === null) {
-                    return JsonType.Null as TreeType;
+                    return jsonNull.name;
                 } else if (Array.isArray(node)) {
-                    return JsonType.Array as TreeType;
+                    return jsonArray.name;
                 } else {
-                    return JsonType.Object as TreeType;
+                    return jsonObject.name;
                 }
         }
     }
@@ -169,7 +165,7 @@ export class JsonCursor<T> implements ITreeCursor {
             return node.length;
         }
 
-        return (node as any)[key] === undefined
+        return (node as any)[key as string] === undefined
             ? 0     // A field with an undefined value has 0 length
             : 1;    // All other fields have a length of 1
     }

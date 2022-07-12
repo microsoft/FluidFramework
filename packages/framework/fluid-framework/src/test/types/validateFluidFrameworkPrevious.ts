@@ -71,6 +71,7 @@ declare function get_old_EnumDeclaration_ConnectionState():
 declare function use_current_EnumDeclaration_ConnectionState(
     use: TypeOnly<current.ConnectionState>);
 use_current_EnumDeclaration_ConnectionState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_ConnectionState());
 
 /*
@@ -280,6 +281,54 @@ use_old_InterfaceDeclaration_IDirectory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryClearOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectoryClearOperation():
+    TypeOnly<old.IDirectoryClearOperation>;
+declare function use_current_InterfaceDeclaration_IDirectoryClearOperation(
+    use: TypeOnly<current.IDirectoryClearOperation>);
+use_current_InterfaceDeclaration_IDirectoryClearOperation(
+    get_old_InterfaceDeclaration_IDirectoryClearOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryClearOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectoryClearOperation():
+    TypeOnly<current.IDirectoryClearOperation>;
+declare function use_old_InterfaceDeclaration_IDirectoryClearOperation(
+    use: TypeOnly<old.IDirectoryClearOperation>);
+use_old_InterfaceDeclaration_IDirectoryClearOperation(
+    get_current_InterfaceDeclaration_IDirectoryClearOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation():
+    TypeOnly<old.IDirectoryCreateSubDirectoryOperation>;
+declare function use_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
+    use: TypeOnly<current.IDirectoryCreateSubDirectoryOperation>);
+use_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
+    get_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation():
+    TypeOnly<current.IDirectoryCreateSubDirectoryOperation>;
+declare function use_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
+    use: TypeOnly<old.IDirectoryCreateSubDirectoryOperation>);
+use_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
+    get_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDirectoryDataObject": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDirectoryDataObject():
@@ -304,6 +353,54 @@ use_old_InterfaceDeclaration_IDirectoryDataObject(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryDeleteOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectoryDeleteOperation():
+    TypeOnly<old.IDirectoryDeleteOperation>;
+declare function use_current_InterfaceDeclaration_IDirectoryDeleteOperation(
+    use: TypeOnly<current.IDirectoryDeleteOperation>);
+use_current_InterfaceDeclaration_IDirectoryDeleteOperation(
+    get_old_InterfaceDeclaration_IDirectoryDeleteOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryDeleteOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectoryDeleteOperation():
+    TypeOnly<current.IDirectoryDeleteOperation>;
+declare function use_old_InterfaceDeclaration_IDirectoryDeleteOperation(
+    use: TypeOnly<old.IDirectoryDeleteOperation>);
+use_old_InterfaceDeclaration_IDirectoryDeleteOperation(
+    get_current_InterfaceDeclaration_IDirectoryDeleteOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation():
+    TypeOnly<old.IDirectoryDeleteSubDirectoryOperation>;
+declare function use_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
+    use: TypeOnly<current.IDirectoryDeleteSubDirectoryOperation>);
+use_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
+    get_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation():
+    TypeOnly<current.IDirectoryDeleteSubDirectoryOperation>;
+declare function use_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
+    use: TypeOnly<old.IDirectoryDeleteSubDirectoryOperation>);
+use_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
+    get_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDirectoryEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDirectoryEvents():
@@ -324,6 +421,30 @@ declare function use_old_InterfaceDeclaration_IDirectoryEvents(
     use: TypeOnly<old.IDirectoryEvents>);
 use_old_InterfaceDeclaration_IDirectoryEvents(
     get_current_InterfaceDeclaration_IDirectoryEvents());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectoryKeyOperation": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IDirectoryKeyOperation():
+    TypeOnly<old.IDirectoryKeyOperation>;
+declare function use_current_TypeAliasDeclaration_IDirectoryKeyOperation(
+    use: TypeOnly<current.IDirectoryKeyOperation>);
+use_current_TypeAliasDeclaration_IDirectoryKeyOperation(
+    get_old_TypeAliasDeclaration_IDirectoryKeyOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectoryKeyOperation": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IDirectoryKeyOperation():
+    TypeOnly<current.IDirectoryKeyOperation>;
+declare function use_old_TypeAliasDeclaration_IDirectoryKeyOperation(
+    use: TypeOnly<old.IDirectoryKeyOperation>);
+use_old_TypeAliasDeclaration_IDirectoryKeyOperation(
+    get_current_TypeAliasDeclaration_IDirectoryKeyOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -372,6 +493,78 @@ declare function use_old_TypeAliasDeclaration_IDirectoryOperation(
     use: TypeOnly<old.IDirectoryOperation>);
 use_old_TypeAliasDeclaration_IDirectoryOperation(
     get_current_TypeAliasDeclaration_IDirectoryOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectorySetOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectorySetOperation():
+    TypeOnly<old.IDirectorySetOperation>;
+declare function use_current_InterfaceDeclaration_IDirectorySetOperation(
+    use: TypeOnly<current.IDirectorySetOperation>);
+use_current_InterfaceDeclaration_IDirectorySetOperation(
+    get_old_InterfaceDeclaration_IDirectorySetOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectorySetOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectorySetOperation():
+    TypeOnly<current.IDirectorySetOperation>;
+declare function use_old_InterfaceDeclaration_IDirectorySetOperation(
+    use: TypeOnly<old.IDirectorySetOperation>);
+use_old_InterfaceDeclaration_IDirectorySetOperation(
+    get_current_InterfaceDeclaration_IDirectorySetOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectoryStorageOperation": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IDirectoryStorageOperation():
+    TypeOnly<old.IDirectoryStorageOperation>;
+declare function use_current_TypeAliasDeclaration_IDirectoryStorageOperation(
+    use: TypeOnly<current.IDirectoryStorageOperation>);
+use_current_TypeAliasDeclaration_IDirectoryStorageOperation(
+    get_old_TypeAliasDeclaration_IDirectoryStorageOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectoryStorageOperation": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IDirectoryStorageOperation():
+    TypeOnly<current.IDirectoryStorageOperation>;
+declare function use_old_TypeAliasDeclaration_IDirectoryStorageOperation(
+    use: TypeOnly<old.IDirectoryStorageOperation>);
+use_old_TypeAliasDeclaration_IDirectoryStorageOperation(
+    get_current_TypeAliasDeclaration_IDirectoryStorageOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectorySubDirectoryOperation": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation():
+    TypeOnly<old.IDirectorySubDirectoryOperation>;
+declare function use_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
+    use: TypeOnly<current.IDirectorySubDirectoryOperation>);
+use_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
+    get_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectorySubDirectoryOperation": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation():
+    TypeOnly<current.IDirectorySubDirectoryOperation>;
+declare function use_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
+    use: TypeOnly<old.IDirectorySubDirectoryOperation>);
+use_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
+    get_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -516,6 +709,30 @@ declare function use_old_InterfaceDeclaration_IJSONRunSegment(
     use: TypeOnly<old.IJSONRunSegment<any>>);
 use_old_InterfaceDeclaration_IJSONRunSegment(
     get_current_InterfaceDeclaration_IJSONRunSegment());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILocalValue": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ILocalValue():
+    TypeOnly<old.ILocalValue>;
+declare function use_current_InterfaceDeclaration_ILocalValue(
+    use: TypeOnly<current.ILocalValue>);
+use_current_InterfaceDeclaration_ILocalValue(
+    get_old_InterfaceDeclaration_ILocalValue());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILocalValue": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ILocalValue():
+    TypeOnly<current.ILocalValue>;
+declare function use_old_InterfaceDeclaration_ILocalValue(
+    use: TypeOnly<old.ILocalValue>);
+use_old_InterfaceDeclaration_ILocalValue(
+    get_current_InterfaceDeclaration_ILocalValue());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1218,194 +1435,98 @@ use_old_ClassDeclaration_MapFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_MatrixSegment": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_MatrixSegment": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_MatrixSegment():
-    TypeOnly<old.MatrixSegment>;
-declare function use_current_TypeAliasDeclaration_MatrixSegment(
-    use: TypeOnly<current.MatrixSegment>);
-use_current_TypeAliasDeclaration_MatrixSegment(
-    get_old_TypeAliasDeclaration_MatrixSegment());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_MatrixSegment": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_MatrixSegment": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_MatrixSegment():
-    TypeOnly<current.MatrixSegment>;
-declare function use_old_TypeAliasDeclaration_MatrixSegment(
-    use: TypeOnly<old.MatrixSegment>);
-use_old_TypeAliasDeclaration_MatrixSegment(
-    get_current_TypeAliasDeclaration_MatrixSegment());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCellPosition": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxCellPosition": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxCellPosition():
-    TypeOnly<typeof old.maxCellPosition>;
-declare function use_current_VariableDeclaration_maxCellPosition(
-    use: TypeOnly<typeof current.maxCellPosition>);
-use_current_VariableDeclaration_maxCellPosition(
-    get_old_VariableDeclaration_maxCellPosition());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCellPosition": {"backCompat": false}
+* "RemovedVariableDeclaration_maxCellPosition": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxCellPosition():
-    TypeOnly<typeof current.maxCellPosition>;
-declare function use_old_VariableDeclaration_maxCellPosition(
-    use: TypeOnly<typeof old.maxCellPosition>);
-use_old_VariableDeclaration_maxCellPosition(
-    get_current_VariableDeclaration_maxCellPosition());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCol": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxCol": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxCol():
-    TypeOnly<typeof old.maxCol>;
-declare function use_current_VariableDeclaration_maxCol(
-    use: TypeOnly<typeof current.maxCol>);
-use_current_VariableDeclaration_maxCol(
-    get_old_VariableDeclaration_maxCol());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCol": {"backCompat": false}
+* "RemovedVariableDeclaration_maxCol": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxCol():
-    TypeOnly<typeof current.maxCol>;
-declare function use_old_VariableDeclaration_maxCol(
-    use: TypeOnly<typeof old.maxCol>);
-use_old_VariableDeclaration_maxCol(
-    get_current_VariableDeclaration_maxCol());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCols": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxCols": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxCols():
-    TypeOnly<typeof old.maxCols>;
-declare function use_current_VariableDeclaration_maxCols(
-    use: TypeOnly<typeof current.maxCols>);
-use_current_VariableDeclaration_maxCols(
-    get_old_VariableDeclaration_maxCols());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxCols": {"backCompat": false}
+* "RemovedVariableDeclaration_maxCols": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxCols():
-    TypeOnly<typeof current.maxCols>;
-declare function use_old_VariableDeclaration_maxCols(
-    use: TypeOnly<typeof old.maxCols>);
-use_old_VariableDeclaration_maxCols(
-    get_current_VariableDeclaration_maxCols());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxRow": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxRow": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxRow():
-    TypeOnly<typeof old.maxRow>;
-declare function use_current_VariableDeclaration_maxRow(
-    use: TypeOnly<typeof current.maxRow>);
-use_current_VariableDeclaration_maxRow(
-    get_old_VariableDeclaration_maxRow());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxRow": {"backCompat": false}
+* "RemovedVariableDeclaration_maxRow": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxRow():
-    TypeOnly<typeof current.maxRow>;
-declare function use_old_VariableDeclaration_maxRow(
-    use: TypeOnly<typeof old.maxRow>);
-use_old_VariableDeclaration_maxRow(
-    get_current_VariableDeclaration_maxRow());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxRows": {"forwardCompat": false}
+* "RemovedVariableDeclaration_maxRows": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_maxRows():
-    TypeOnly<typeof old.maxRows>;
-declare function use_current_VariableDeclaration_maxRows(
-    use: TypeOnly<typeof current.maxRows>);
-use_current_VariableDeclaration_maxRows(
-    get_old_VariableDeclaration_maxRows());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_maxRows": {"backCompat": false}
+* "RemovedVariableDeclaration_maxRows": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_maxRows():
-    TypeOnly<typeof current.maxRows>;
-declare function use_old_VariableDeclaration_maxRows(
-    use: TypeOnly<typeof old.maxRows>);
-use_old_VariableDeclaration_maxRows(
-    get_current_VariableDeclaration_maxRows());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_PaddingSegment": {"forwardCompat": false}
+* "RemovedClassDeclaration_PaddingSegment": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_PaddingSegment():
-    TypeOnly<old.PaddingSegment>;
-declare function use_current_ClassDeclaration_PaddingSegment(
-    use: TypeOnly<current.PaddingSegment>);
-use_current_ClassDeclaration_PaddingSegment(
-    get_old_ClassDeclaration_PaddingSegment());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_PaddingSegment": {"backCompat": false}
+* "RemovedClassDeclaration_PaddingSegment": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_PaddingSegment():
-    TypeOnly<current.PaddingSegment>;
-declare function use_old_ClassDeclaration_PaddingSegment(
-    use: TypeOnly<old.PaddingSegment>);
-use_old_ClassDeclaration_PaddingSegment(
-    get_current_ClassDeclaration_PaddingSegment());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_positionToRowCol": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_positionToRowCol": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_positionToRowCol():
-    TypeOnly<typeof old.positionToRowCol>;
-declare function use_current_FunctionDeclaration_positionToRowCol(
-    use: TypeOnly<typeof current.positionToRowCol>);
-use_current_FunctionDeclaration_positionToRowCol(
-    get_old_FunctionDeclaration_positionToRowCol());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_positionToRowCol": {"backCompat": false}
+* "RemovedFunctionDeclaration_positionToRowCol": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_positionToRowCol():
-    TypeOnly<typeof current.positionToRowCol>;
-declare function use_old_FunctionDeclaration_positionToRowCol(
-    use: TypeOnly<typeof old.positionToRowCol>);
-use_old_FunctionDeclaration_positionToRowCol(
-    get_current_FunctionDeclaration_positionToRowCol());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1458,50 +1579,26 @@ use_old_InterfaceDeclaration_RootDataObjectProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_rowColToPosition": {"forwardCompat": false}
+* "RemovedVariableDeclaration_rowColToPosition": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_rowColToPosition():
-    TypeOnly<typeof old.rowColToPosition>;
-declare function use_current_VariableDeclaration_rowColToPosition(
-    use: TypeOnly<typeof current.rowColToPosition>);
-use_current_VariableDeclaration_rowColToPosition(
-    get_old_VariableDeclaration_rowColToPosition());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_rowColToPosition": {"backCompat": false}
+* "RemovedVariableDeclaration_rowColToPosition": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_rowColToPosition():
-    TypeOnly<typeof current.rowColToPosition>;
-declare function use_old_VariableDeclaration_rowColToPosition(
-    use: TypeOnly<typeof old.rowColToPosition>);
-use_old_VariableDeclaration_rowColToPosition(
-    get_current_VariableDeclaration_rowColToPosition());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RunSegment": {"forwardCompat": false}
+* "RemovedClassDeclaration_RunSegment": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_RunSegment():
-    TypeOnly<old.RunSegment>;
-declare function use_current_ClassDeclaration_RunSegment(
-    use: TypeOnly<current.RunSegment>);
-use_current_ClassDeclaration_RunSegment(
-    get_old_ClassDeclaration_RunSegment());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_RunSegment": {"backCompat": false}
+* "RemovedClassDeclaration_RunSegment": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_RunSegment():
-    TypeOnly<current.RunSegment>;
-declare function use_old_ClassDeclaration_RunSegment(
-    use: TypeOnly<old.RunSegment>);
-use_old_ClassDeclaration_RunSegment(
-    get_current_ClassDeclaration_RunSegment());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1898,75 +1995,38 @@ use_old_TypeAliasDeclaration_SharedStringSegment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SparseMatrix": {"forwardCompat": false}
+* "RemovedClassDeclaration_SparseMatrix": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SparseMatrix():
-    TypeOnly<old.SparseMatrix>;
-declare function use_current_ClassDeclaration_SparseMatrix(
-    use: TypeOnly<current.SparseMatrix>);
-use_current_ClassDeclaration_SparseMatrix(
-    get_old_ClassDeclaration_SparseMatrix());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SparseMatrix": {"backCompat": false}
+* "RemovedClassDeclaration_SparseMatrix": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SparseMatrix():
-    TypeOnly<current.SparseMatrix>;
-declare function use_old_ClassDeclaration_SparseMatrix(
-    use: TypeOnly<old.SparseMatrix>);
-use_old_ClassDeclaration_SparseMatrix(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_SparseMatrix());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SparseMatrixFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_SparseMatrixFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SparseMatrixFactory():
-    TypeOnly<old.SparseMatrixFactory>;
-declare function use_current_ClassDeclaration_SparseMatrixFactory(
-    use: TypeOnly<current.SparseMatrixFactory>);
-use_current_ClassDeclaration_SparseMatrixFactory(
-    get_old_ClassDeclaration_SparseMatrixFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SparseMatrixFactory": {"backCompat": false}
+* "RemovedClassDeclaration_SparseMatrixFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SparseMatrixFactory():
-    TypeOnly<current.SparseMatrixFactory>;
-declare function use_old_ClassDeclaration_SparseMatrixFactory(
-    use: TypeOnly<old.SparseMatrixFactory>);
-use_old_ClassDeclaration_SparseMatrixFactory(
-    get_current_ClassDeclaration_SparseMatrixFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SparseMatrixItem": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_SparseMatrixItem": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_SparseMatrixItem():
-    TypeOnly<old.SparseMatrixItem>;
-declare function use_current_TypeAliasDeclaration_SparseMatrixItem(
-    use: TypeOnly<current.SparseMatrixItem>);
-use_current_TypeAliasDeclaration_SparseMatrixItem(
-    get_old_TypeAliasDeclaration_SparseMatrixItem());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SparseMatrixItem": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_SparseMatrixItem": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_SparseMatrixItem():
-    TypeOnly<current.SparseMatrixItem>;
-declare function use_old_TypeAliasDeclaration_SparseMatrixItem(
-    use: TypeOnly<old.SparseMatrixItem>);
-use_old_TypeAliasDeclaration_SparseMatrixItem(
-    get_current_TypeAliasDeclaration_SparseMatrixItem());
 
 /*
 * Validate forward compat by using old type in place of current type
