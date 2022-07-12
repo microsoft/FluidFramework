@@ -66,6 +66,8 @@ export interface ITestObjectProvider {
     defaultCodeDetails: IFluidCodeDetails;
     opProcessingController: IOpProcessingController;
 
+    setOverrideLogger(logger: EventAndErrorTrackingLogger): void;
+
     ensureSynchronized(): Promise<void>;
     reset(): void;
 
@@ -133,7 +135,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * any expected events that have not occurred.
  */
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
-    constructor(private readonly baseLogger: ITelemetryBaseLogger) {
+    constructor(protected readonly baseLogger: ITelemetryBaseLogger) {
         super();
     }
 
@@ -255,6 +257,11 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     get opProcessingController(): IOpProcessingController {
         return this._loaderContainerTracker;
+    }
+
+    /** Caution: This method is not designed to be user friendly, the this._logger is reset after each test */
+    public setOverrideLogger(overrideLogger: EventAndErrorTrackingLogger) {
+        this._logger = overrideLogger;
     }
 
     /**

@@ -87,6 +87,8 @@ export const defaultTimeoutDurationMs = 250;
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
     // (undocumented)
+    protected readonly baseLogger: ITelemetryBaseLogger;
+    // (undocumented)
     registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]): void;
     // (undocumented)
     reportAndClearTrackedEvents(): {
@@ -177,6 +179,8 @@ export interface ITestObjectProvider {
     opProcessingController: IOpProcessingController;
     // (undocumented)
     reset(): void;
+    // (undocumented)
+    setOverrideLogger(logger: EventAndErrorTrackingLogger): void;
     // (undocumented)
     updateDocumentId(url: IResolvedUrl | undefined): void;
     // (undocumented)
@@ -290,6 +294,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     reset(): void;
     // (undocumented)
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    setOverrideLogger(overrideLogger: EventAndErrorTrackingLogger): void;
     // (undocumented)
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     // (undocumented)
