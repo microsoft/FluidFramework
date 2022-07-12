@@ -44,7 +44,7 @@ export class AzureClient {
 
 // @public
 export interface AzureClientProps {
-    readonly connection: AzureConnectionConfig;
+    readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
 

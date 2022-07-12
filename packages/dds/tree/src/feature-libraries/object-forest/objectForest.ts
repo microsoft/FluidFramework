@@ -16,19 +16,31 @@ import {
     FieldLocation, TreeLocation,
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
-import { FieldKey, TreeType, DetachedRange } from "../../tree";
+import { FieldKey, TreeType, DetachedRange, AnchorSet } from "../../tree";
 import { brand } from "../../util";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
-    public readonly anchors: Set<ObjectAnchor> = new Set();
+
+    public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
+    public readonly anchors: AnchorSet = new AnchorSet();
+
     public readonly root: Anchor = new RootAnchor();
     public readonly rootField: DetachedRange = this.newRange();
-    public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
 
     private readonly roots: Map<DetachedRange, ObjectField> = new Map();
 
     private readonly dependees: Map<ObjectField | ObjectNode, DisposingDependee> = new Map();
+
+    // All cursors that are in the "Current" state. Must be empty when editing.
+    public readonly currentCursors: Set<Cursor> = new Set();
+
+    public constructor() {
+        super("object-forest.ObjectForest");
+        this.roots.set(this.rootField, []);
+        // Invalidate forest if schema change.
+        recordDependency(this.dependent, this.schema);
+    }
 
     public observeItem(item: ObjectField | ObjectNode, observer: ObservingDependent | undefined): void {
         let result = this.dependees.get(item);
@@ -50,13 +62,6 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return root;
     }
 
-    public constructor() {
-        super("object-forest.ObjectForest");
-        this.roots.set(this.rootField, []);
-        // Invalidate forest if schema change.
-        recordDependency(this.dependent, this.schema);
-    }
-
     private nextRange = 0;
     public newRange(): DetachedRange {
         const range = brand<DetachedRange>(this.nextRange);
@@ -65,22 +70,31 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     add(nodes: Iterable<ITreeCursor>): DetachedRange {
+        this.beforeChange();
         throw new Error("Method not implemented.");
     }
     attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void {
+        this.beforeChange();
         throw new Error("Method not implemented.");
     }
     detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange {
         throw new Error("Method not implemented.");
     }
     setValue(nodeId: NodeId, value: any): void {
+        this.beforeChange();
         throw new Error("Method not implemented.");
     }
     delete(ids: DetachedRange): void {
+        this.beforeChange();
         throw new Error("Method not implemented.");
     }
     allocateCursor(): ITreeSubscriptionCursor {
         return new Cursor(this);
+    }
+
+    private beforeChange(): void {
+        assert(this.currentCursors.size === 0, "No cursors can be current when modifying forest");
+        this.invalidateDependents();
     }
 
     tryGet(
@@ -214,6 +228,7 @@ class Cursor implements ITreeSubscriptionCursor {
         this.keyStack.length = 0;
         this.indexStack.length = 0;
         this.siblings = undefined;
+        this.forest.currentCursors.delete(this);
     }
 
     public set(root: DetachedRange, index: number): void {
@@ -223,6 +238,7 @@ class Cursor implements ITreeSubscriptionCursor {
         this.state = ITreeSubscriptionCursorState.Current;
         this.indexStack.push(index);
         this.siblings = this.forest.getRoot(root);
+        this.forest.currentCursors.add(this);
     }
 
     getNode(): ObjectNode {
