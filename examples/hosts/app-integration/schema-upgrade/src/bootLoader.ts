@@ -13,8 +13,13 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
+import { MountableView } from "@fluidframework/view-adapters";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
+
+import React from "react";
 
 import { App } from "./app";
+import { AppView } from "./appView";
 import { IApp, IBootLoader, IBootLoaderEvents, IMigratable, MigrationState } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
@@ -24,18 +29,47 @@ import {
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
 } from "./version2";
 
+interface ICodePackage<T> {
+    fluidModuleWithDetails: IFluidModuleWithDetails;
+    getModel: (container: IContainer) => T;
+    getView: (model: T) => IFluidMountableView;
+}
+
+// Return ICodePackage<IApp1> | ICodePackage<IApp2> ?
+const getCode = (version: string): ICodePackage<IApp> => {
+    const containerRuntimeFactory = version === "one"
+        ? new InventoryListContainerRuntimeFactory1()
+        : new InventoryListContainerRuntimeFactory2();
+
+    const fluidModuleWithDetails = {
+        module: { fluidExport: containerRuntimeFactory },
+        details: { package: version },
+    };
+
+    const getModel = (container: IContainer) => {
+        return new App(container);
+    };
+
+    const getView = (model: IApp) => {
+        const reactView = React.createElement(AppView, { app: model });
+        return new MountableView(reactView);
+    };
+
+    return {
+        fluidModuleWithDetails,
+        getModel,
+        getView,
+    }
+};
+
 function createLoader(): IHostLoader {
     const tinyliciousService = new TinyliciousService();
 
     const load = async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
-        const containerRuntimeFactory = source.package === "one"
-            ? new InventoryListContainerRuntimeFactory1()
-            : new InventoryListContainerRuntimeFactory2();
-
-        return {
-            module: { fluidExport: containerRuntimeFactory },
-            details: { package: source.package },
-        };
+        if (typeof source.package !== "string") {
+            throw new Error("Unexpected code detail format");
+        }
+        return getCode(source.package).fluidModuleWithDetails;
     };
     const codeLoader = { load };
 
