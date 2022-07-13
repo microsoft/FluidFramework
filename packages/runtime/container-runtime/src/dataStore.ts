@@ -138,18 +138,14 @@ class DataStore implements IDataStore {
             });
 
         if (!aliased) {
-            this.reset();
+            this.aliasState = AliasState.None;
+            this.aliasResult = undefined;
             return "Conflict";
         }
 
         this.alias = alias;
         this.aliasState = AliasState.Aliased;
         return "Success";
-    }
-
-    private reset() {
-        this.aliasState = AliasState.None;
-        this.aliasResult = undefined;
     }
 
     async request(request: IRequest): Promise<IResponse> {
