@@ -403,7 +403,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
  * channel ID.
  *
- * @deprecated - TODO: what is intended to be used instead?
+ * @deprecated TODO: what is intended to be used instead?
  */
 export interface ISerializableValue {
     /**
