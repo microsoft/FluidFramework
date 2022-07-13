@@ -61,11 +61,5 @@ describe("internalScheme", () => {
             const range = getVersionRange(input, "minor");
             assert.strictEqual(range, expected);
         });
-
-        // it("throws when resulting version does not conform to the scheme", () => {
-        //     const input = `1.0.0`;
-        //     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        //     assert.throws(()=> toInternalScheme("1.2.2", input))
-        // });
     });
 });
