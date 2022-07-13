@@ -59,6 +59,16 @@
   },
   "typeValidation": {
     "version": "1.1.1",
-    "broken": {}
+    "broken": {
+      "RemovedInterfaceDeclaration_IDirectoryClearOperation": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IDirectoryDeleteOperation": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {"backCompat": false, "forwardCompat": false},
+      "RemovedTypeAliasDeclaration_IDirectoryKeyOperation": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IDirectorySetOperation": {"backCompat": false, "forwardCompat": false},
+      "RemovedTypeAliasDeclaration_IDirectoryStorageOperation": {"backCompat": false, "forwardCompat": false},
+      "RemovedTypeAliasDeclaration_IDirectorySubDirectoryOperation": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_ILocalValue": {"backCompat": false, "forwardCompat": false}
+    }
   }
 }

@@ -94,6 +94,10 @@
   },
   "typeValidation": {
     "version": "1.1.1",
-    "broken": {}
+    "broken": {
+      "ClassDeclaration_AuthorizationError": {"forwardCompat": false},
+      "ClassDeclaration_GenericNetworkError": {"forwardCompat": false},
+      "ClassDeclaration_ThrottlingError": {"forwardCompat": false}
+    }
   }
 }
