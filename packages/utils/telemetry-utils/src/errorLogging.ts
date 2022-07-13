@@ -272,15 +272,16 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
  * @returns - as-is if x is primitive. returns stringified if x is an array of primitive.
  * otherwise returns null since this is what we support at the moment.
  */
-// eslint-disable-next-line @rushstack/no-new-null
-function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
+function filterValidTelemetryProps(x: any, key: string): TelemetryEventPropertyType {
     if (Array.isArray(x) && x.every((val) => isTelemetryEventPropertyValue(val))) {
         return JSON.stringify(x);
     }
     if (isTelemetryEventPropertyValue(x)) {
         return x;
     }
-    return null;
+    // We don't support logging arbitrary objects
+    console.error(`UnSupported Format of Logging Error Property for key ${key}:`, x);
+    return "REDACTED (arbitrary object)";
 }
 
 // checking type of x, returns false if x is null
@@ -305,20 +306,12 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
             continue;
         }
         const val = obj[key];
-        // ensure only valid props get logged, since props of logging error could be in any shape
-        let validProp;
-        if (isTaggedTelemetryPropertyValue(val)) {
-            validProp = filterValidTelemetryProps(val.value);
-        } else {
-            validProp = filterValidTelemetryProps(val);
-        }
 
-        if (validProp !== null) {
-            props[key] = validProp;
+        // ensure only valid props get logged, since props of logging error could be in any shape
+        if (isTaggedTelemetryPropertyValue(val)) {
+            props[key] = filterValidTelemetryProps(val.value, key);
         } else {
-            // We don't support logging arbitrary objects
-            props[key] = "REDACTED (arbitrary object)";
-            console.error(`UnSupported Format of Logging Error Property for key ${key}:`, val);
+            props[key] = filterValidTelemetryProps(val, key);
         }
     }
     return props;
