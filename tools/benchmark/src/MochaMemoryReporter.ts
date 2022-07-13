@@ -93,7 +93,7 @@ module.exports = class {
                                 test.state}' after reporting data.`,
                         ),
                     );
-                    // memoryTestStats.aborted = true;
+                    memoryTestStats.aborted = true;
                 }
 
                 if (isChildProcess) {
@@ -114,7 +114,26 @@ module.exports = class {
                     const suiteName = getSuiteName(suite);
                     const suiteData = inProgressSuites.get(suiteName);
                     console.log(suiteName);
-                    console.log(JSON.stringify(suiteData));
+                    // console.log(JSON.stringify(suiteData));
+                    suiteData?.forEach((testData) => {
+                        let output = `${testData[0]} - `;
+                        const stats = testData[1];
+
+                        if (stats.aborted) {
+                            output += red(" FAILED");
+                        } else {
+                            const heapUsedArray = stats.memoryUsageStats
+                                .map((memUsageStats) => memUsageStats.after.heapUsed - memUsageStats.before.heapUsed);
+                            const heapUsedStats = getArrayStatistics(heapUsedArray);
+                            output += ` AvgHeapUsed: ${heapUsedStats.mean} StdDev: ${heapUsedStats.stddev}`;
+
+                            const peakMallocedMemoryStats =
+                                getArrayStatistics(stats.heapStats.map((x) => x.after.peak_malloced_memory));
+                            output += ` AvgPeakMallocedMemory: ${peakMallocedMemoryStats.mean} ` +
+                                    `StdDev: ${peakMallocedMemoryStats.stddev}`;
+                        }
+                        console.log(output);
+                    });
                     // benchmarkReporter.recordSuiteResults(getSuiteName(suite));
                 }
             })
@@ -125,3 +144,25 @@ module.exports = class {
             });
     }
 };
+
+interface ArrayStatistics {
+    mean: number;
+    stddev: number;
+    max: number;
+    min: number;
+}
+
+function getArrayStatistics(array: number[]): ArrayStatistics {
+    const n = array.length;
+    let max = -Infinity;
+    let min = Infinity;
+    let mean = 0;
+    array.forEach((x) => {
+        mean += x;
+        if (x > max) { max = x; }
+        if (x < min) { min = x; }
+    });
+    mean /= n;
+    const stddev = Math.sqrt(array.map((x) => (x - mean) ** 2).reduce((a, b) => a + b) / n);
+    return { mean, stddev, max, min };
+}

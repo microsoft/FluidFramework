@@ -33,7 +33,7 @@
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:mocha": "mocha --ignore 'dist/test/types/*' --ignore 'dist/test/memory/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:mocha:memory": "mocha --config src/.mocharc.memory.js",
+    "test:mocha:memory": "cross-env FLUID_TEST_VERBOSE=1; mocha --config ./src/.mocharc.memory.js",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",

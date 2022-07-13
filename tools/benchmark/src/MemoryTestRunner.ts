@@ -19,8 +19,10 @@ export interface BeforeAfter<T> {
 export interface MemoryTestStats {
     runs: number;
     memoryUsageStats: BeforeAfter<NodeJS.MemoryUsage>[];
-    heapStatus: BeforeAfter<v8.HeapInfo>[];
+    heapStats: BeforeAfter<v8.HeapInfo>[];
     heapSpaceStats: BeforeAfter<v8.HeapSpaceInfo[]>[];
+    aborted: boolean;
+    error?: Error;
 }
 
 export function benchmarkMemory(args: BenchmarkArguments): Test {
@@ -41,6 +43,7 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
     const itFunction = options.only ? it.only : it;
     const test = itFunction(qualifiedTitle, async () => {
         if (isParentProcess) {
+            global.gc();
             // Instead of running the benchmark in this process, create a new process.
             // See {@link isParentProcess} for why.
             // Launch new process, with:
@@ -48,7 +51,11 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
             // - --parentProcess flag removed.
             // - --childProcess flag added (so data will be returned via stdout as json)
 
-            const childArgs = [...process.argv];
+            // Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
+            const command = process.argv0 ?? assert.fail("there must be a command");
+
+            const childArgs = [...process.execArgv, ...process.argv.slice(1)];
+
             const processFlagIndex = childArgs.indexOf("--parentProcess");
             childArgs[processFlagIndex] = "--childProcess";
 
@@ -64,8 +71,12 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
             // Add test filter so child process only run the current test.
             childArgs.push("--fgrep", test.fullTitle());
 
-            // Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
-            const command = childArgs.shift() ?? assert.fail("there must be a command");
+            // Remove arguments for debugging if they're present; in order to debug child processes we need
+            // to specify a new debugger port for each.
+            let inspectArgIndex: number = -1;
+            while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
+                childArgs.splice(inspectArgIndex, 1);
+            }
 
             // Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
             const childProcess = await import("child_process");
@@ -107,42 +118,42 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
         const memoryTestStats: MemoryTestStats = {
             runs: 0,
             memoryUsageStats: [],
-            heapStatus: [],
+            heapStats: [],
             heapSpaceStats: [],
+            aborted: false,
         };
 
-        for (let i = 0; i < (args.minSampleCount ?? 5); i++) {
-            global.gc();
-            const memoryUsageStats: BeforeAfter<NodeJS.MemoryUsage> = {
-                before: process.memoryUsage(),
-                after: undefined as unknown as NodeJS.MemoryUsage,
-            };
-            const heapStats: BeforeAfter<v8.HeapInfo> = {
-                before: v8.getHeapStatistics(),
-                after: undefined as unknown as v8.HeapInfo,
-            };
-            const heapSpaceStats: BeforeAfter<v8.HeapSpaceInfo[]> = {
-                before: v8.getHeapSpaceStatistics(),
-                after: undefined as unknown as v8.HeapSpaceInfo[],
-            };
-            // consoleLog(memoryUsageStats.before);
-            // consoleLog(heapStats.before);
-            // consoleLog(heapSpaceStats.before);
+        try {
+            for (let i = 0; i < (args.minSampleCount ?? 5); i++) {
+                global.gc();
+                const memoryUsageStats: BeforeAfter<NodeJS.MemoryUsage> = {
+                    before: process.memoryUsage(),
+                    after: undefined as unknown as NodeJS.MemoryUsage,
+                };
+                const heapStats: BeforeAfter<v8.HeapInfo> = {
+                    before: v8.getHeapStatistics(),
+                    after: undefined as unknown as v8.HeapInfo,
+                };
+                const heapSpaceStats: BeforeAfter<v8.HeapSpaceInfo[]> = {
+                    before: v8.getHeapSpaceStatistics(),
+                    after: undefined as unknown as v8.HeapSpaceInfo[],
+                };
 
-            await argsBenchmarkFn();
+                await argsBenchmarkFn();
 
-            global.gc();
-            memoryUsageStats.after = process.memoryUsage();
-            heapStats.after = v8.getHeapStatistics();
-            heapSpaceStats.after = v8.getHeapSpaceStatistics();
-            // consoleLog(memoryUsageStats.after);
-            // consoleLog(heapStats.after);
-            // consoleLog(heapSpaceStats.after);
+                global.gc();
+                memoryUsageStats.after = process.memoryUsage();
+                heapStats.after = v8.getHeapStatistics();
+                heapSpaceStats.after = v8.getHeapSpaceStatistics();
 
-            memoryTestStats.runs++;
-            memoryTestStats.memoryUsageStats.push(memoryUsageStats);
-            memoryTestStats.heapStatus.push(heapStats);
-            memoryTestStats.heapSpaceStats.push(heapSpaceStats);
+                memoryTestStats.runs++;
+                memoryTestStats.memoryUsageStats.push(memoryUsageStats);
+                memoryTestStats.heapStats.push(heapStats);
+                memoryTestStats.heapSpaceStats.push(heapSpaceStats);
+            }
+        } catch (error) {
+            memoryTestStats.aborted = true;
+            memoryTestStats.error = error as Error;
         }
 
         test.emit("benchmark end", memoryTestStats);
