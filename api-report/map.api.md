@@ -67,11 +67,9 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 // @public
 export interface IDirectoryDataObject {
-    // (undocumented)
     storage?: {
         [key: string]: ISerializableValue;
     };
-    // (undocumented)
     subdirectories?: {
         [subdirName: string]: IDirectoryDataObject;
     };
@@ -93,20 +91,20 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 
 // @public
 export interface IDirectoryEvents extends IEvent {
-    // (undocumented)
+    // @eventProperty
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
+    // @eventProperty
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
+    // @eventProperty
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
+    // @eventProperty
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
-// @public (undocumented)
+// @public
 export interface IDirectoryNewStorageFormat {
     blobs: string[];
     content: IDirectoryDataObject;
@@ -141,7 +139,7 @@ export interface ILocalValue {
     readonly value: any;
 }
 
-// @public
+// @public @deprecated
 export interface ISerializableValue {
     type: string;
     value: any;
@@ -163,13 +161,13 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
 
 // @public
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
-    // (undocumented)
+    // @eventProperty
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
+    // @eventProperty
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
+    // @eventProperty
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
+    // @eventProperty
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 

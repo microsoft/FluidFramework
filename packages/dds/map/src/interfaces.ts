@@ -100,92 +100,79 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
 /**
  * Events emitted in response to changes to the directory data.
  * These events only emit on the {@link ISharedDirectory} itself, and not on subdirectories.
- *
- * @remarks
- *
- * The following is the list of events emitted.
- *
- * ### "valueChanged"
- *
- * The valueChanged event is emitted when a key is set or deleted.  This is emitted for any key in the ISharedDirectory
- * or any subdirectory.
- *
- * #### Listener signature
- *
- * ```typescript
- * (
- *     changed: IDirectoryValueChanged,
- *     local: boolean,
- *     target: IEventThisPlaceHolder,
- * ) => void
- * ```
- * - `changed` - Information on the key that changed, its value prior to the change, and the path to the key that
- *   changed.
- *
- * - `local` - Whether the change originated from this client.
- *
- * - `target` - The ISharedDirectory itself.
- *
- * ### "clear"
- *
- * The clear event is emitted when the ISharedDirectory is cleared.
- *
- * #### Listener signature
- *
- * ```typescript
- * (local: boolean, target: IEventThisPlaceHolder) => void
- * ```
- * - `local` - Whether the clear originated from this client.
- *
- * - `target` - The ISharedDirectory itself.
- *
- * ### "subDirectoryCreated"
- *
- * The subDirectoryCreated event is emitted when a subdirectory is created.
- *
- * #### Listener signature
- *
- * ```typescript
- * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
- * ```
- * - `path` -  The relative path to the subdirectory that is created.
- *             It is relative from the object which raises the event.
- *
- * - `local` - Whether the create originated from the this client.
- *
- * - `target` - The ISharedDirectory itself.
- *
- * ###"subDirectoryDeleted"
- *
- * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
- *
- * #### Listener signature
- *
- * ```typescript
- * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
- * ```
- * - `path` - The relative path to the subdirectory that is deleted.
- *            It is relative from the object which raises the event.
- *
- * - `local` - Whether the delete originated from the this client.
- *
- * - `target` - The ISharedDirectory itself.
  */
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
+     /**
+     * Emitted when a key is set or deleted. This is emitted for any key in the {@link ISharedDirectory} or any
+     * subdirectory.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `changed` - Information on the key that changed, its value prior to the change, and the path to the
+     * key that changed.
+     *
+     * - `local` - Whether the change originated from this client.
+     *
+     * - `target` - The {@link ISharedDirectory} itself.
+     *
+     * @eventProperty
+     */
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
+
+    /**
+     * Emitted when the {@link ISharedDirectory} is cleared.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `local` - Whether the clear originated from this client.
+     *
+     * - `target` - The {@link ISharedDirectory} itself.
+     *
+     * @eventProperty
+     */
     (event: "clear", listener: (
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
+
+    /**
+     * Emitted when a subdirectory is created.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `path` - The relative path to the subdirectory that is created.
+     * It is relative from the object which raises the event.
+     *
+     * - `local` - Whether the create originated from the this client.
+     *
+     * - `target` - The {@link ISharedDirectory} itself.
+     *
+     * @eventProperty
+     */
     (event: "subDirectoryCreated", listener: (
         path: string,
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
+
+    /**
+     * Emitted when a subdirectory is deleted.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `path` - The relative path to the subdirectory that is deleted.
+     * It is relative from the object which raises the event.
+     *
+     * - `local` - Whether the delete originated from the this client.
+     *
+     * - `target` - The {@link ISharedDirectory} itself.
+     *
+     * @eventProperty
+     */
     // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
         path: string,
@@ -196,88 +183,79 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 
 /**
  * Events emitted in response to changes to the directory data.
- *
- * @remarks
- *
- * The following is the list of events emitted.
- *
- * ### "containedValueChanged"
- *
- * The containedValueChanged event is emitted when a key is set or deleted.  As opposed to the SharedDirectory's
- * valueChanged event, this is emitted only on the IDirectory that directly contains the key.
- *
- * #### Listener signature
- *
- * ```typescript
- * (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void
- * ```
- * - `changed` - Information on the key that changed and its value prior to the change.
- *
- * - `local` - Whether the change originated from this client.
- *
- * - `target` - The IDirectory itself.
- *
- * ### "subDirectoryCreated"
- *
- * The subDirectoryCreated event is emitted when a subdirectory is created.
- *
- * #### Listener signature
- *
- * ```typescript
- * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
- * ```
- * - `path` - The relative path to the subdirectory that is created.
- *            It is relative from the object which raises the event.
- *
- * - `local` - Whether the creation originated from the this client.
- *
- * - `target` - The ISharedDirectory itself.
- *
- * ### "subDirectoryDeleted"
- *
- * The subDirectoryDeleted event is emitted when a subdirectory is deleted.
- *
- * #### Listener signature
- *
- * ```typescript
- * (path: string, local: boolean, target: IEventThisPlaceHolder) => void
- * ```
- * - `path` - The relative path to the subdirectory that is deleted.
- *            It is relative from the object which raises the event.
- *
- * - `local` - Whether the delete originated from the this client.
- *
- * - `target` - The ISharedDirectory itself.
- *
- * ### "disposed"
- *
- * The dispose event is emitted when this sub directory is deleted.
- *
- * #### Listener signature
- *
- * ```typescript
- * (local: boolean, target: IEventThisPlaceHolder) => void
- * ```
- *
- * - `target` - The IDirectory itself.
  */
 export interface IDirectoryEvents extends IEvent {
+    /**
+     * Emitted when a key is set or deleted. As opposed to the
+     * {@link SharedDirectory}'s valueChanged event, this is emitted only on the {@link IDirectory} that directly
+     * contains the key.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `changed` - Information on the key that changed and its value prior to the change.
+     *
+     * - `local` - Whether the change originated from this client.
+     *
+     * - `target` - The {@link IDirectory} itself.
+
+     * @eventProperty
+     */
     (event: "containedValueChanged", listener: (
         changed: IValueChanged,
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
+
+    /**
+     * Emitted when a subdirectory is created.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `path` - The relative path to the subdirectory that is created.
+     * It is relative from the object which raises the event.
+     *
+     * - `local` - Whether the creation originated from the this client.
+     *
+     * - `target` - The {@link ISharedDirectory} itself.
+     *
+     * @eventProperty
+     */
     (event: "subDirectoryCreated", listener: (
         path: string,
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
+
+    /**
+     * Emitted when a subdirectory is deleted.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `path` - The relative path to the subdirectory that is deleted.
+     * It is relative from the object which raises the event.
+     *
+     * - `local` - Whether the delete originated from the this client.
+     *
+     * - `target` - The {@link ISharedDirectory} itself.
+     *
+     * @eventProperty
+     */
     // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
         path: string,
         local: boolean,
         target: IEventThisPlaceHolder,
     ) => void);
+
+    /**
+     * Emitted when this sub directory is deleted.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `target` - The {@link IDirectory} itself.
+     *
+     * @eventProperty
+     */
     (event: "disposed", listener: (
         target: IEventThisPlaceHolder,
     ) => void);
