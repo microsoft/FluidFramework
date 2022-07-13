@@ -5,7 +5,7 @@
 
 import { Loader } from "@fluidframework/container-loader";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import * as fs from "fs";
 import FileLogger from "./logger/FileLogger";
 import { getArgsValidationError } from "./getArgsValidationError";
@@ -27,14 +27,14 @@ export async function exportFile(
 
     const logger = ChildLogger.create(new FileLogger(telemetryFile), "LocalSnapshotRunnerApp");
 
-    try {
+    await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
         const codeLoaderBundle = require(codeLoader);
         if (!isCodeLoaderBundle(codeLoaderBundle)) {
             logger.sendErrorEvent({
                 eventName: "Client_ArgsValidationError",
                 message: "Code loader bundle is not of type CodeLoaderBundle",
             });
-            return;
+            return; // TODO: standardize error exit
         }
 
         const argsValidationError = getArgsValidationError(inputFile, outputFolder, scenario);
@@ -43,7 +43,7 @@ export async function exportFile(
                 eventName: "Client_ArgsValidationError",
                 message: argsValidationError,
             });
-            return;
+            return; // TODO: standardize error exit
         }
 
         // TODO: read file stream
@@ -63,10 +63,5 @@ export async function exportFile(
         for (const result of await codeLoaderBundle.getResults(container, logger)) {
             fs.appendFileSync(path.join(outputFolder, result.fileName), result.content);
         }
-
-        logger.sendTelemetryEvent({ eventName: "Client_ExportCompleted" });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-        logger.sendErrorEvent({ eventName: "Client_UnknownError", message: error.message }, error);
-    }
+    });
 }
