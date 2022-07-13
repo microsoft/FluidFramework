@@ -193,7 +193,7 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  *
- * @privateRemarks Directly used in
+ * @remarks Directly used in
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
