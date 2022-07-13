@@ -63,7 +63,7 @@ export async function exportFile(
 
         logger.sendTelemetryEvent({ eventName: "Client_ExportCompleted" });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         logger.sendErrorEvent({ eventName: "Client_UnknownError", message: error.message }, error);
     }
