@@ -62,9 +62,6 @@ class IgnoreErrorLogger extends EventAndErrorTrackingLogger {
     }
 }
 
-/**
- * Validates this scenario: When a datastore is aliased that it is considered a root datastore and always referenced
- */
 describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     const dataObjectFactory = new DataObjectFactory(
