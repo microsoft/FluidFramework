@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Value } from "../..";
 import { Delta, DeltaVisitor, visitDelta } from "../../changeset";
 import { deepFreeze } from "../utils";
 
@@ -13,64 +12,41 @@ function visit(delta: Delta.Root, visitor: DeltaVisitor): void {
     visitDelta(delta, visitor);
 }
 
+type CallSignatures<T> = {
+    [K in keyof T]: T[K] extends (...args: any) => any ? [K, ...Parameters<T[K]>] : never;
+};
+type PropType<T> = T[keyof T];
+type VisitCall = PropType<CallSignatures<DeltaVisitor>>;
 type VisitScript = VisitCall[];
 
-type VisitCall =
-    | ["onDelete", number, number]
-    | ["onInsert", number, Delta.ProtoNode[]]
-    | ["onMoveOut", number, number, Delta.MoveId]
-    | ["onMoveIn", number, number, Delta.MoveId]
-    | ["onSetValue", Value]
-    | ["enterNode", number]
-    | ["exitNode", number]
-    | ["enterField", Delta.FieldKey]
-    | ["exitField", Delta.FieldKey];
+const visitorMethods: (keyof DeltaVisitor)[] = [
+    "onDelete",
+    "onInsert",
+    "onMoveOut",
+    "onMoveIn",
+    "onSetValue",
+    "enterNode",
+    "exitNode",
+    "enterField",
+    "exitField",
+];
 
 function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
     let callIndex = 0;
-    const visitor = {
-        onDelete: (index: number, count: number): void => {
-            assert.deepStrictEqual(["onDelete", index, count], expected[callIndex]);
+    const makeChecker = (name: string) =>
+        (...args: unknown[]) => {
+            assert.deepStrictEqual([name, ...args], expected[callIndex]);
             callIndex += 1;
-        },
-        onInsert: (index: number, contents: Delta.ProtoNode[]): void => {
-            assert.deepStrictEqual(["onInsert", index, contents], expected[callIndex]);
-            callIndex += 1;
-        },
-        onMoveOut: (index: number, count: number, id: Delta.MoveId): void => {
-            assert.deepStrictEqual(["onMoveOut", index, count, id], expected[callIndex]);
-            callIndex += 1;
-        },
-        onMoveIn: (index: number, count: number, id: Delta.MoveId): void => {
-            assert.deepStrictEqual(["onMoveIn", index, count, id], expected[callIndex]);
-            callIndex += 1;
-        },
-        onSetValue: (value: Delta.Value): void => {
-            assert.deepStrictEqual(["onSetValue", value], expected[callIndex]);
-            callIndex += 1;
-        },
-        enterNode: (index: number): void => {
-            assert.deepStrictEqual(["enterNode", index], expected[callIndex]);
-            callIndex += 1;
-        },
-        exitNode: (index: number): void => {
-            assert.deepStrictEqual(["exitNode", index], expected[callIndex]);
-            callIndex += 1;
-        },
-        enterField: (key: Delta.FieldKey): void => {
-            assert.deepStrictEqual(["enterField", key], expected[callIndex]);
-            callIndex += 1;
-        },
-        exitField: (key: Delta.FieldKey): void => {
-            assert.deepStrictEqual(["exitField", key], expected[callIndex]);
-            callIndex += 1;
-        },
-    };
+        }
+    ;
+    const visitor: DeltaVisitor = {} as any;
+    for (const methodName of visitorMethods) {
+        visitor[methodName] = makeChecker(methodName);
+    }
     visit(delta, visitor);
     assert.strictEqual(callIndex, expected.length);
 }
 
-const empty: Delta.Root = [];
 const content = [{ id: "X" }];
 
 describe("visit", () => {
