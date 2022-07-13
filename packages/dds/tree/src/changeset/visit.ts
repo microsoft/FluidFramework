@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, neverCase } from "../util";
+import { fail, unreachableCase } from "../util";
 import * as Delta from "./delta";
 
 /**
@@ -156,7 +156,7 @@ function firstPass(delta: Delta.Root, props: PassProps): void {
                 // Handled in the second pass
                 break;
             }
-            default: neverCase(type);
+            default: unreachableCase(type);
         }
     }
 }
@@ -207,7 +207,7 @@ function secondPass(delta: Delta.Root, props: PassProps): void {
                 index += moveOut.count;
                 break;
             }
-            default: neverCase(type);
+            default: unreachableCase(type);
         }
     }
 }
