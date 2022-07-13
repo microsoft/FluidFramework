@@ -18,10 +18,9 @@ export async function exportFile(
     outputFolder: string,
     scenario: string,
     telemetryFile: string,
-    props: string
 ) {
     if (fs.existsSync(telemetryFile)) {
-        console.log("Telemetry file already exists. " + telemetryFile);
+        console.error("Telemetry file already exists. " + telemetryFile);
         throw new Error("Telemetry file already exists.");
     }
 
@@ -37,7 +36,7 @@ export async function exportFile(
             return;
         }
 
-        const argsValidationError = getArgsValidationError(inputFile, outputFolder, scenario, props);
+        const argsValidationError = getArgsValidationError(inputFile, outputFolder, scenario);
         if (argsValidationError) {
             logger.sendErrorEvent({
                 eventName: "Client_ArgsValidationError",
@@ -55,14 +54,16 @@ export async function exportFile(
             codeLoader: await codeLoaderBundle.getCodeLoader(),
         });
 
-        const container = await loader.rehydrateDetachedContainerFromSnapshot(inputFileContent);
+        // This needs a ISummaryTree, while what we give to the local ODSP driver is IOdspSnapshot
+        // See LocalOdspDocumentStorageService.getVersions(...) > calls to convertOdspSnapshotToSnapshotTreeAndBlobs
+        // const container = await loader.rehydrateDetachedContainerFromSnapshot(inputFileContent);
+        const container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
 
-        const result = await codeLoaderBundle.getResult(container);
+        const result = await codeLoaderBundle.getResult(container, logger);
 
         fs.appendFileSync(outputFolder + "/result.txt", result);
 
         logger.sendTelemetryEvent({ eventName: "Client_ExportCompleted" });
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         logger.sendErrorEvent({ eventName: "Client_UnknownError", message: error.message }, error);

@@ -39,13 +39,9 @@ function localSnapshotRunnerApp() {
                         describe: "Config and session data for telemetry",
                         type: "string",
                         demandOption: true
-                    })
-                    .option("props", {
-                        describe: "Additional properties format verbose=true,a=b,... ",
-                        type: "string"
                     }),
             async (argv) =>
-                await exportFile(argv.codeLoader, argv.inputFile, argv.outputFolder, argv.scenario, argv.telemetryFile, argv.props || "")
+                await exportFile(argv.codeLoader, argv.inputFile, argv.outputFolder, argv.scenario, argv.telemetryFile)
         )
         .help()
         .demandCommand().argv;

@@ -9,18 +9,7 @@ export function getArgsValidationError(
     inputFile: string,
     outputFolder: string,
     scenario: string,
-    props: string
 ): string | undefined {
-    if (props) {
-        const propsArr = props.split(",");
-        for (let i = 0; i < propsArr.length; i += 1) {
-            const propDetails = propsArr[i].split("=");
-            if (propDetails.length < 2) {
-                return "Incorrect props " + propsArr[i];
-            }
-        }
-    }
-
     // Validate input file
     if (!inputFile) {
         // TODO: Do not log file name. It can be customer content

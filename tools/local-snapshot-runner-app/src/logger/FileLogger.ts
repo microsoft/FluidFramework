@@ -11,14 +11,11 @@ import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/commo
  */
 export default class FileLogger implements ITelemetryBaseLogger {
     public supportsTags?: true | undefined;
-    
-    private _fileName: string;
 
-    public constructor(fileName: string) {
-        this._fileName = fileName;
-    }
+    public constructor(
+        private readonly fileName: string,
+    ) { }
 
-    
     /**
      * Appending each line to file right away for now
      * @param event - TODO
@@ -27,6 +24,6 @@ export default class FileLogger implements ITelemetryBaseLogger {
         const logEvent = JSON.stringify(event);
         console.log(logEvent);
 
-        fs.appendFileSync(this._fileName, `${logEvent}\n`);
+        fs.appendFileSync(this.fileName, `${logEvent}\n`);
     }
 }

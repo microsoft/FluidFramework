@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-definitions";
 
 /**
@@ -10,7 +11,7 @@ import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-defini
  */
 export interface ICodeLoaderBundle {
     getCodeLoader(): Promise<ICodeDetailsLoader>;
-    getResult(container: IContainer): Promise<string>;
+    getResult(container: IContainer, logger: ITelemetryBaseLogger): Promise<string>;
 }
 
 /**
