@@ -33,8 +33,7 @@ interface IMapSerializationFormat {
 const snapshotFileName = "header";
 
 /**
- * The factory that defines the map.
- * TODO: what are the semantics of this?
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMap}.
  *
  * @sealed
  */
