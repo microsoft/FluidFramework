@@ -37,8 +37,8 @@
     "lint:fix": "npm run eslint:fix",
     "prettier": "prettier --check \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
     "prettier:fix": "prettier --write \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
-    "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\"",
     "test": "npm run test:mocha",
+    "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\"",
     "tsc": "tsc -b"
   },
   "nyc": {
