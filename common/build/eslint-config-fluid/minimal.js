@@ -253,8 +253,6 @@ module.exports = {
             "rules": {
                 "@typescript-eslint/comma-spacing": "off",
                 "@typescript-eslint/consistent-type-imports": "off",
-                "@typescript-eslint/no-explicit-any": "off",
-                "@typescript-eslint/no-unsafe-argument": "off",
                 "max-lines": "off",
             }
         },

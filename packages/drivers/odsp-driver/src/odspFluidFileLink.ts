@@ -9,13 +9,14 @@ import { OdcFileSiteOrigin, OdcApiSiteOrigin } from "./constants";
 
 const fluidSignature = "1";
 const fluidSignatureParamName = "fluid";
-const fluidSitePathParamName = "s";
-const fluidDriveIdParamName = "d";
-const fluidItemIdParamName = "f";
-const fluidDataStorePathParamName = "c";
-const fluidAppNameParamName = "a";
-const fluidContainerPackageNameParamName = "p";
-const fluidFileVersionParamName = "v";
+const sitePathParamName = "s";
+const driveIdParamName = "d";
+const itemIdParamName = "f";
+const dataStorePathParamName = "c";
+const appNameParamName = "a";
+const containerPackageNameParamName = "p";
+const fileVersionParamName = "v";
+const additionalContextParamName = "x";
 
 /**
  * Transforms given Fluid data store locator into string that can be embedded into url
@@ -29,19 +30,20 @@ export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocat
     const itemId = encodeURIComponent(locator.itemId);
     const dataStorePath = encodeURIComponent(locator.dataStorePath);
 
-    let locatorSerialized = `${fluidSitePathParamName}=${sitePath}&${fluidDriveIdParamName}=${driveId}&${
-        fluidItemIdParamName}=${itemId}&${fluidDataStorePathParamName}=${dataStorePath}&${
+    let locatorSerialized = `${sitePathParamName}=${sitePath}&${driveIdParamName}=${driveId}&${
+        itemIdParamName}=${itemId}&${dataStorePathParamName}=${dataStorePath}&${
         fluidSignatureParamName}=${fluidSignature}`;
     if (locator.appName) {
-        locatorSerialized += `&${fluidAppNameParamName}=${encodeURIComponent(locator.appName)}`;
+        locatorSerialized += `&${appNameParamName}=${encodeURIComponent(locator.appName)}`;
     }
     if (locator.containerPackageName) {
-        locatorSerialized += `&${fluidContainerPackageNameParamName}=${
-            encodeURIComponent(locator.containerPackageName)}`;
+        locatorSerialized += `&${containerPackageNameParamName}=${encodeURIComponent(locator.containerPackageName)}`;
     }
     if (locator.fileVersion) {
-        locatorSerialized += `&${fluidFileVersionParamName}=${
-            encodeURIComponent(locator.fileVersion)}`;
+        locatorSerialized += `&${fileVersionParamName}=${encodeURIComponent(locator.fileVersion)}`;
+    }
+    if (locator.context) {
+        locatorSerialized += `&${additionalContextParamName}=${encodeURIComponent(locator.context)}`;
     }
 
     return fromUtf8ToBase64(locatorSerialized);
@@ -65,15 +67,16 @@ function decodeOdspFluidDataStoreLocator(
         return undefined;
     }
 
-    const sitePath = locatorInfo.get(fluidSitePathParamName);
-    const driveId = locatorInfo.get(fluidDriveIdParamName);
-    const itemId = locatorInfo.get(fluidItemIdParamName);
-    const dataStorePath = locatorInfo.get(fluidDataStorePathParamName);
-    const appName = locatorInfo.get(fluidAppNameParamName) ?? undefined;
-    const containerPackageName = locatorInfo.get(fluidContainerPackageNameParamName) ?? undefined;
-    const fileVersion = locatorInfo.get(fluidFileVersionParamName) ?? undefined;
+    const sitePath = locatorInfo.get(sitePathParamName);
+    const driveId = locatorInfo.get(driveIdParamName);
+    const itemId = locatorInfo.get(itemIdParamName);
+    const dataStorePath = locatorInfo.get(dataStorePathParamName);
+    const appName = locatorInfo.get(appNameParamName) ?? undefined;
+    const containerPackageName = locatorInfo.get(containerPackageNameParamName) ?? undefined;
+    const fileVersion = locatorInfo.get(fileVersionParamName) ?? undefined;
+    const context = locatorInfo.get(additionalContextParamName) ?? undefined;
     // "" is a valid value for dataStorePath so simply check for absence of the param;
-    // the rest of params must be present and non-empty
+    // file storage locator params must be present and non-empty
     if (!sitePath || !driveId || !itemId || dataStorePath === null) {
         return undefined;
     }
@@ -97,6 +100,7 @@ function decodeOdspFluidDataStoreLocator(
         appName,
         containerPackageName,
         fileVersion,
+        context,
     };
 }
 

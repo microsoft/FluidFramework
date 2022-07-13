@@ -4,11 +4,13 @@
  */
 
 /**
- * The **\@fluidframework/sequence** packages supports distributed data structures which are list-like.
- * It includes {@link https://fluidframework.com/docs/data-structures/string/ | SharedString} for storing
- * and simultaneously editing a sequence of text.
+ * Supports distributed data structures which are list-like.
  *
- * @see {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/sequence/README.md}.
+ * This package's main export is {@link SharedSequence}, a DDS for storing and simultaneously editing a sequence of
+ * text.
+ *
+ * @remarks Note that SharedString is a sequence DDS but it has additional specialized features and behaviors for
+ * working with text.
  *
  * @packageDocumentation
  */

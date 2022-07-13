@@ -24,7 +24,7 @@ DDS is short for *distributed data structure*. DDSes are the foundation of the F
 that the Fluid runtime is able to keep them in sync across clients while each client operates on the DDSes in largely
 the same way they would operate on local data. The data source for a Fluid solution can represent numerous DDSes.
 
-There are many types of DDSes including a [SharedMap]({{< relref "map.md" >}}) that is a distributed version of a JavaScript Map, and a [SharedString]({{< relref "string.md" >}}) that is designed to enable real-time editing of text data by multiple clients simultaneously.
+There are many types of DDSes including a [SharedMap]({{< relref "data-structures/map.md" >}}) that is a distributed version of a JavaScript Map, and a [SharedString]({{< relref "data-structures/string.md" >}}) that is designed to enable real-time editing of text data by multiple clients simultaneously.
 Developers can use the DDSes included with the Fluid Framework or develop new ones.
 
 Any practical limits on the types of data and size of a DDS will be specific to the implementation of that DDS. DDSes

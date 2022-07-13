@@ -4,18 +4,13 @@
         "rootDir": "./",
         "outDir": "../../dist/test",
         "composite": true,
-        "types": [
-            "mocha",
-            "node"
-        ],
-        "skipLibCheck": true
+        "types": ["mocha", "node"],
+        "skipLibCheck": true,
     },
-    "include": [
-        "./**/*"
-    ],
+    "include": ["./**/*"],
     "references": [
         {
-            "path": "../.."
-        }
-    ]
+            "path": "../..",
+        },
+    ],
 }

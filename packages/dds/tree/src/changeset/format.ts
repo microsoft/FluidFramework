@@ -5,731 +5,310 @@
 
 // TODOs:
 // Clipboard
-// Rework constraint scheme
-
-export type If<Bool, T1, T2 = never> = Bool extends true ? T1 : T2;
+// Constraint scheme
 
 /**
- * Edit originally constructed by clients.
- * Note that a client can maintain a local branch of edits that are not committed.
- * When that's the case those edits will start as Original edits but may become
- * rebased in response to changes on the main branch.
+ * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
-export namespace Original {
-    /**
-     * Edit constructed by clients and broadcast by Alfred.
-     */
-    export interface Transaction {
-        client: ClientId;
-        ref: SeqNumber;
-        frames: TransactionFrame[];
-    }
-
-    export type TransactionFrame = ConstraintFrame | ChangeFrame;
-
-    export type ConstraintFrame = ConstraintSequence;
-
-    export interface ConstrainedTraitSet {
-        type: "ConstrainedTraitSet";
-        traits: { [key: string]: ConstraintSequence; };
-    }
-
-    export type ConstraintSequence = (Offset | ConstrainedRange | ConstrainedTraitSet)[];
-
-    export interface ConstrainedRange {
-        type: "ConstrainedRange";
-        length?: number;
-        /**
-         * Could this just be `true` since we know the starting parent?
-         * Only if we know the constraint was satisfied originally.
-         */
-        targetParent?: NodeId;
-        targetLabel?: TraitLabel; // Same
-        targetLength?: number; // Same
-        /**
-         * Number of tree layers for which no structural changes can be made.
-         * Defaults to 0: no locking.
-         */
-        structureLock?: number;
-        /**
-         * Number of tree layers for which no value changes can be made.
-         * Defaults to 0: no locking.
-         */
-        valueLock?: number;
-        nested?: (Offset | ConstrainedTraitSet)[];
-    }
-
-    export interface MoveEntry {
-        src: TreePath;
-        dst: TreePath;
-    }
-
-    export interface HasOpId {
-        /**
-         * The ID of the corresponding MoveIn/MoveOut/End/SliceStart.
-         */
-        op: OpId;
-    }
-
-    export interface ChangeFrame {
-        moves?: MoveEntry[];
-        marks: TraitMarks;
-    }
-
-    export interface SetValue {
-        type: "SetValue";
-        value: Value | [Value, DrillDepth];
-    }
-
-    export interface Modify<TInner = Mark, AllowSetValue extends boolean = true> {
-        type?: "Modify";
-        /**
-         * We need this setValue (in addition to the SetValue mark because non-leaf nodes can have values)
-         */
-        value?: If<AllowSetValue, Value | [Value, DrillDepth] | { seq: SeqNumber; }>;
-        modify?: { [key: string]: (Offset | TInner | Modify<TInner, AllowSetValue>)[]; };
-    }
-
-    export type TraitMarks = (Offset | Mark)[];
-
-    export type ModsMark =
-        | SetValue
-        | Modify;
-    export type AttachMark =
-        | Insert
-        | MoveIn;
-    export type DetachMark =
-        | MoveOut
-        | Delete;
-    export type SegmentMark =
-        | AttachMark
-        | DetachMark;
-    export type ObjMark =
-        | ModsMark
-        | SegmentMark
-        | SliceBound;
-
-    export type Mark =
-        | ObjMark;
-
-    export interface HasMods {
-        mods?: (Offset | ModsMark)[];
-    }
-
-    export interface Place {
-        /**
-         * Whether the attach operation was performed relative to the previous sibling or the next.
-         * If no sibling exists on the indicated side then the insert was relative to the trait extremity.
-         *
-         * In a change that is being rebased, we need to know this in order to tell if this insertion should
-         * go before or after another pre-existing insertion at the same index.
-         * In a change that is being rebased over, we need to know this in order to tell if a new insertion
-         * at the same index should go before or after this one.
-         * Omit if `Sibling.Prev` for terseness.
-         */
-        side?: Sibling;
-        /**
-         * Omit if not in peer change.
-         * Omit if `Tiebreak.LastToFirst` for terseness.
-         */
-        tiebreak?: Tiebreak;
-        /**
-         * Omit if not in peer change.
-         * Omit if performed with a parent-based place anchor.
-         * Omit if `Commutativity.Full`.
-         */
-        commute?: Commutativity;
-        /**
-         * Omit if no drill-down.
-         */
-        drill?: DrillDepth;
-    }
-
-    export interface Insert extends Place, HasMods {
-        type: "Insert";
-        content: ProtoNode[];
-    }
-
-    export interface MoveInSet extends Place, HasMods, HasOpId {
-        type: "MoveInSet";
-    }
-
-    export interface MoveInSlice extends Place, HasMods, HasLength, HasOpId {
-        type: "MoveInSlice";
-    }
-
-    export type MoveIn = MoveInSet | MoveInSlice;
-
-    /**
-     * Used for set-like ranges and atomic ranges.
-     */
-    export interface Delete extends HasLength {
-        type: "Delete";
-        /**
-         * Applying a Delete over existing Modify marks has the follow effects on them and their descendants:
-         * (These effects are also applied to Modify marks over which a slice-deletion is performed)
-         * - setValue: removed
-         * - SetValue: replaced by an offset of 1
-         * - Insert: removed
-         * - MoveIn from MoveOut: MoveIn is removed, the corresponding MoveOut becomes a Delete
-         * - MoveIn from MoveOutStart: MoveIn is removed, the corresponding MoveOutStart becomes a StartDelete
-         * - Delete: replaced by an offset
-         * - MoveOut: preserved as is
-         * - MoveOutStart+End: preserved as is
-         */
-        mods?: (Offset | Modify<MoveOut | MoveOutStart | SliceEnd, false>)[];
-    }
-
-    /**
-     * Used for set-like ranges and atomic ranges.
-     */
-    export interface MoveOut extends HasLength, HasOpId {
-        type: "MoveOut";
-        /**
-         * Applying a MoveOut over existing Modify marks has the follow effects on them and their descendants:
-         * (These effects are also applied to Modify marks over which a slice-move-out is performed)
-         * - setValue: transplanted to the target location of the move.
-         * - SetValue: replaced by an offset of 1 and transplanted to the target location of the move.
-         * - Insert: transplanted to the target location of the move.
-         * - MoveIn from MoveOut: transplanted to the target location of the move. The corresponding MoveOut
-         *   is updated.
-         * - MoveIn from MoveOutStart: transplanted to transplanted to the target location of the move. The
-         *   corresponding MoveOutStart is updated.
-         * - Delete: replaced by an offset
-         * - MoveOut: preserved as is
-         * - MoveOutStart+End: preserved as is
-         */
-        mods?: (Offset | Modify<MoveOut | MoveOutStart | SliceEnd, false>)[];
-    }
-
-    /**
-     * We need a pair of bounds to help capture what each bound was relative to: each bound needs to be able to enter a
-     * race independently of the other.
-     *
-     * In original edits, the content within the bounds...
-     *  - cannot grow
-     *  - does not include all of the segments that existed there prior to the slice operation (see below).
-     *
-     * While multiple slices can coexist over a given region of a trait, a new slice can only relate to an old
-     * (i.e., pre-existing one) with one of the following Allen's interval relationships:
-     * - old \> new
-     * - old \< new
-     * - old m new
-     * - old mi new
-     * - old s new
-     * - old d new
-     * - old f new
-     * - old = new
-     *
-     * In the case of a slice-deletion, preexisting segment over which the slice is place are affected as follows:
-     * - SetValue:
-     *   Replaced by an offset of 1.
-     * - Insert:
-     *   The insertion is removed. Any MoveIn segments under the insertion have their MoveOut replaced by a Delete or
-     *   their MoveOutStart replaced by a DeleteStart.
-     * - MoveIn from a MoveOut:
-     *   The MoveIn is deleted. The MoveOut is replaced by a Deleted.
-     * - MoveIn from a MoveOutStart:
-     *   The MoveIn is preserved to act as landing strip for any attach operations that commute with the move but not
-     *   the deletion. The mods of the MoveIn are purged from any operations except MoveOut segments.
-     * - Delete:
-     *   Replaced by an offset.
-     * - DeleteStart:
-     *   The DeleteStart and its matching End are removed.
-     * - MoveOut & StartMoveOut+End:
-     *   Those are preserved as is.
-     * - Modify:
-     *   The `setValue` field is cleared.
-     *   The nested segments in the Modify's traits are purged as described in the Delete segment documentation.
-     *   If this results in a Modify mark that had no effect then the mark can be replaced by an offset of 1.
-     * In addition to the above, any segment that keeps track of mods to its nodes also has its mods purged as
-     * described for the Modify mark above.
-     *
-     * In the case of a slice-move, preexisting segment over which the slice is place are affected as follows:
-     * - SetValue:
-     *   Replaced by an offset of 1.
-     * - Insert:
-     *   The Insert is moved to the target location of the move.
-     * - MoveIn from a MoveOut:
-     *   The MoveIn is moved to the target location of the move and its MoveOut is updated.
-     * - MoveIn from a MoveOutStart:
-     *   The MoveIn is moved to the target location of the move and its MoveOutStart is updated.
-     * - Delete & DeleteStart+End:
-     *   Those are preserved as is.
-     * - MoveOut & StartMoveOut+End:
-     *   Those are preserved as is.
-     * - Modify:
-     *   The `setValue` field is transplanted to a new Modify a the target location.
-     *   The nested segments in the Modify's traits are purged as described in the MoveOut segment documentation.
-     *   If this results in a Modify mark that had no effect then the mark can be replaced by an offset of 1.
-     * In addition to the above, any segment that keeps track of mods to its nodes also has its mods purged as
-     * described for the Modify mark above.
-     */
-    export interface IsSliceStart extends HasOpId {
-        /**
-         * Omit if `Sibling.Prev` for terseness.
-         */
-        side?: Sibling;
-        /**
-         * Omit if not in peer change.
-         * Omit if `Tiebreak.LastToFirst` for terseness.
-         */
-        tiebreak?: Tiebreak;
-        /**
-         * Omit if no drill-down.
-         */
-        drill?: DrillDepth;
-    }
-
-    export interface MoveOutStart extends IsSliceStart {
-        type: "MoveOutStart";
-    }
-
-    export interface DeleteStart extends IsSliceStart {
-        type: "DeleteStart";
-    }
-
-    export interface SliceEnd extends HasOpId {
-        type: "End";
-        /**
-         * Omit if `Sibling.Prev` for terseness.
-         */
-        side?: Sibling;
-        /**
-         * Omit if not in peer change.
-         * Omit if `Tiebreak.LastToFirst` for terseness.
-         */
-        tiebreak?: Tiebreak.FirstToLast;
-    }
-
-    export type SliceBound = MoveOutStart | DeleteStart | SliceEnd;
-
-    /**
-     * The contents of a node to be created
-     */
-    export interface ProtoNode {
-        id: string;
-        type?: string;
-        value?: Value;
-        traits?: ProtoTraits;
-    }
-
-    /**
-     * The traits of a node to be created
-     */
-    export interface ProtoTraits {
-        [key: string]: ProtoTrait;
-    }
-
-    /**
-     * TODO: update this doc comment.
-     * A trait within a node to be created.
-     * May include MoveIn segments if content that was not inserted as part of this change gets moved into
-     * the inserted subtree. That MoveIn segment may itself contain other kinds of segments.
-     *
-     * Other kinds of segments are unnecessary at this layer:
-     * - Modify & SetValue:
-     *   - for a ProtoNode the new value overwrites the original
-     *   - for a moved-in node the new value is represented by a nested Modify or SetValue mark
-     * - Insert:
-     *   - inserted ProtoNodes are added to the relevant ProtoTrait
-     * - MoveIn:
-     *   - the MoveIn segment is added to the relevant ProtoTrait and the corresponding MoveOut is updated
-     * - Delete & DeleteStart+End:
-     *   - deleted ProtoNodes are removed from the relevant ProtoTrait
-     *   - deleted moved-in nodes are deleted at their original location and the MoveIn segment is removed/truncated
-     * - MoveOut & MoveOutStart+End
-     *   - Moved out ProtoNodes are removed from the relevant ProtoTrait and a corresponding insert is created
-     *   - Moved out moved-in nodes redirected to avoid the intermediate step (the MoveIn segment is removed/truncated)
-     */
-    export type ProtoTrait = ProtoNode[];
-}
-
-/**
- * Edit that has been rebased and therefore includes scaffolding information
- * for the edits over which it was rebased.
- */
-export namespace Rebased {
-    // Use "interface" instead "type" to avoid TSC error
-    export interface Modify<TInner = Mark, AllowSetValue extends boolean = true> extends
-        Original.Modify<TInner, AllowSetValue> { }
-    export type IsSliceStart = Original.IsSliceStart;
-    export type MoveOutStart = Original.MoveOutStart;
-    export type DeleteStart = Original.DeleteStart;
-    export type SliceEnd = Original.SliceEnd;
-    export type SetValue = Original.SetValue;
-    export type MoveEntry = Original.MoveEntry;
-    export type ProtoNode = Original.ProtoNode;
-    export type HasOpId = Original.HasOpId;
-    export type Place = Original.Place;
-
-    export interface Transaction {
-        // client: ClientId;
-        /**
-         * The reference sequence number of the transaction that this transaction was originally
-         * issued after.
-         */
-        ref: SeqNumber;
-        /**
-         * The reference sequence number of the transaction that this transaction has been
-         * rebased over.
-         * Omit when equal to `ref`.
-         */
-        newRef?: SeqNumber;
-        frames: TransactionFrame[];
-    }
-
-    export interface HasSeqNumber {
-        /**
-         * Included in a mark to indicate the transaction it was part of.
-         * This number is assigned by the Fluid service.
-         */
-        seq: SeqNumber;
-    }
-
-    export type TransactionFrame = ConstraintFrame | ChangeFrame;
-
-    export type ConstraintFrame = ConstraintSequence;
-
-    export interface ConstrainedTraitSet {
-        type: "ConstrainedTraitSet";
-        traits: { [key: string]: ConstraintSequence; };
-    }
-
-    export type ConstraintSequence = (Offset | Prior | ConstrainedRange | ConstrainedTraitSet)[];
-
-    export interface ConstrainedRange {
-        type: "ConstrainedRange";
-        length?: number;
-        /**
-         * Could this just be `true` since we know the starting parent?
-         * Only if we know the constraint was satisfied originally.
-         */
-        targetParent?: NodeId;
-        targetLabel?: TraitLabel; // Same
-        targetLength?: number; // Same
-        /**
-         * Number of tree layers for which no structural changes can be made.
-         * Defaults to 0: no locking.
-         */
-        structureLock?: number;
-        /**
-         * Number of tree layers for which no value changes can be made.
-         * Defaults to 0: no locking.
-         */
-        valueLock?: number;
-        nested?: (Offset | Prior | ConstrainedTraitSet)[];
-    }
-
-    export interface ChangeFrame {
-        moves?: MoveEntry[];
-        priorMoves?: { [key: number]: MoveEntry[]; };
-        marks: TraitMarks;
-    }
-
-    export interface TaggedChangeFrame extends ChangeFrame {
-        seq?: SeqNumber;
-    }
-
-    export type TraitMark = Offset | Mark;
-    export type TraitMarks = TraitMark[];
-    export type ModsTrail = (Offset | ModsMark)[];
-
-    export type ModsMark =
-        | RevertValue
-        | SetValue
-        | Modify;
-    export type AttachMark =
-        | Insert
-        | MoveIn;
-    export type DetachMark =
-        | MoveOut
-        | Delete;
-    export type SegmentMark =
-        | AttachMark
-        | DetachMark;
-    export type SliceBound =
-        | MoveOutStart
-        | DeleteStart
-        | SliceEnd;
-    export type PriorSliceBound =
-        | PriorDeleteStart
-        | PriorMoveOutStart
-        | PriorSliceEnd;
-    export type ObjMark =
-        | ModsMark
-        | SegmentMark
-        | SliceBound
-        | ReturnSlice
-        | ReturnSet
-        | ReviveSet
-        | ReviveSlice
-        | Prior;
-
-    export type SliceStart =
-        | MoveOutStart
-        | DeleteStart
-        | PriorDeleteStart
-        | PriorMoveOutStart;
-
-    export type Prior = PriorDetach | PriorSliceBound;
-
-    export type Mark =
-        | ObjMark;
-
-    export interface HasMods {
-        mods?: ModsTrail;
-    }
-
-    export interface RevertValue extends HasSeqNumber {
-        type: "RevertValue";
-    }
-
-    export interface Insert extends Place, HasMods {
-        type: "Insert";
-        content: ProtoNode[];
-    }
-
-    export interface MoveInSet extends Place, HasLength, HasMods, HasOpId {
-        type: "MoveInSet";
-    }
-
-    export interface MoveInSlice extends Place, HasLength, HasMods, HasOpId {
-        type: "MoveInSlice";
-    }
-
-    export type MoveIn = MoveInSet | MoveInSlice;
-
-    /**
-     * Used for set-like ranges and atomic ranges.
-     */
-    export interface Delete extends HasLength {
-        type: "Delete";
-        // mods?: (Offset | Modify<Mark, false>)[];
-        mods?: ModsTrail;
-    }
-
-    /**
-     * Used for set-like ranges and atomic ranges.
-     */
-    export interface MoveOut extends HasOpId, HasLength {
-        type: "MoveOut";
-        // mods?: (Offset | Modify<Mark, false>)[];
-        mods?: ModsTrail;
-    }
-
-    export interface PriorDetach extends HasSeqNumber, HasLength, HasMods {
-        type: "PriorDetach";
-    }
-
-    export interface PriorMoveOutStart extends HasSeqNumber, HasOpId {
-        type: "PriorMoveOutStart";
-    }
-
-    export interface PriorDeleteStart extends HasSeqNumber, HasOpId {
-        type: "PriorDeleteStart";
-    }
-
-    export interface PriorSliceEnd extends HasSeqNumber, HasOpId {
-        type: "PriorSliceEnd";
-    }
-
-    export interface ReviveSet extends HasSeqNumber, HasLength, HasMods {
-        type: "ReviveSet";
-    }
-
-    export interface ReturnSet extends HasSeqNumber, HasLength, HasMods, HasOpId {
-        type: "ReturnSet";
-    }
-
-    export interface ReviveSlice extends HasSeqNumber, HasLength, HasMods, HasOpId {
-        type: "ReviveSlice";
-    }
-
-    export interface ReturnSlice extends HasSeqNumber, HasLength, HasOpId { // Doesn't this need mods?
-        type: "ReturnSlice";
-    }
-}
-
-export namespace Squashed {
-    // Use "interface" instead "type" to avoid TSC error
-    export interface Modify<TInner = Mark, AllowSetValue extends boolean = true> extends
-        Original.Modify<TInner, AllowSetValue> { }
-    export type HasSeqNumber = Rebased.HasSeqNumber;
-    export type HasSliceId = Rebased.HasOpId;
-    export type MoveEntry = Rebased.MoveEntry;
-    export type SliceEnd = Rebased.SliceEnd;
-    export type ReturnSet = Rebased.ReturnSet;
-    export type ReturnSlice = Rebased.ReturnSlice;
-    export type ReviveSet = Rebased.ReviveSet;
-    export type ReviveSlice = Rebased.ReviveSlice;
-    export type RevertValue = Rebased.RevertValue;
-    export type Place = Original.Place;
-    export type Mark = Rebased.Mark;
-    export type TraitMark = Rebased.TraitMark;
-    export type TraitMarks = Rebased.TraitMarks;
-    export type ProtoNode = Rebased.ProtoNode;
-    export type SetValue = Rebased.SetValue;
-
-    export interface ChangeFrame {
-        ref: SeqNumber;
-        minSeq: SeqNumber;
-        maxSeq: SeqNumber;
-        moves?: MoveEntry[];
-        marks: TraitMarks;
-    }
-
-    // 	export type TraitMark = Offset | Mark;
-    // 	export type TraitMarks = TraitMark[];
-
-    // 	export type ModsMark =
-    // 		| RevertValue
-    // 		| SetValue
-    // 		| Modify;
-    // 	export type AttachMark =
-    // 		| Insert
-    // 		| MoveIn;
-    // 	export type DetachMark =
-    // 		| MoveOut
-    // 		| Delete;
-    // 	export type SegmentMark =
-    // 		| AttachMark
-    // 		| DetachMark;
-    // 	export type SliceBound =
-    // 		| MoveOutStart
-    // 		| DeleteStart
-    // 		| SliceEnd;
-    // 	export type ObjMark =
-    // 		| ModsMark
-    // 		| SegmentMark
-    // 		| SliceBound
-    // 		| Return
-    // 		| Revive
-    // 		| Prior;
-
-    // 	export type Mark =
-    // 		| ObjMark;
-
-    // 	export type OpId = number;
-
-    // 	export interface Provision {
-    // 		seq: SeqNumber;
-    // 		opId: OpId;
-    // 		offset?: number;
-    // 	}
-
-    // 	export interface HasMods {
-    // 		mods?: (Offset | ModsMark)[];
-    // 	}
-
-    // 	export interface SetValue {
-    // 		type: "SetValue";
-    // 		value: Value | [Value, DrillDepth];
-    // 	}
-
-    // 	export interface Insert extends Place {
-    // 		type: "Insert";
-    // 		provision?: Provision;
-    // 		content: ProtoNode[];
-    // 	}
-
-    // 	export interface MoveIn extends Place, HasLength, HasMods, HasSliceId {
-    // 		type: "MoveIn";
-    // 		provision?: Provision;
-    // 	}
-
-    // 	/**
-    // 	 * Used for set-like ranges and atomic ranges.
-    // 	 */
-    // 	export interface Delete extends HasLength {
-    // 		type: "Delete";
-    // 		provision?: Provision;
-    // 		// mods?: (Offset | Modify<Mark, false>)[];
-    // 		mods?: (Offset | ModsMark)[];
-    // 	}
-
-    // 	/**
-    // 	 * Used for set-like ranges and atomic ranges.
-    // 	 */
-    // 	export interface MoveOut extends HasLength, HasSliceId {
-    // 		type: "MoveOut";
-    // 		provision?: Provision;
-    // 		// mods?: (Offset | Modify<Mark, false>)[];
-    // 		mods?: (Offset | ModsMark)[];
-    // 	}
-
-    // 	export interface SliceStart extends HasSliceId {
-    // 		/**
-    // 		 * Omit if `Sibling.Prev` for terseness.
-    // 		 */
-    // 		side?: Sibling;
-    // 		/**
-    // 		 * Omit if not in peer change.
-    // 		 * Omit if `Tiebreak.LastToFirst` for terseness.
-    // 		 */
-    // 		tiebreak?: Tiebreak.FirstToLast;
-    // 		/**
-    // 		 * Omit if no drill-down.
-    // 		 */
-    // 		drill?: DrillDepth;
-    // 	}
-
-    // 	export interface MoveOutStart extends SliceStart {
-    // 		type: "MoveOutStart";
-    // 	}
-
-    // 	export interface DeleteStart extends SliceStart {
-    // 		type: "DeleteStart";
-    // 	}
-
-    // 	export interface PriorDetach extends HasSeqNumber, HasLength, HasMods {
-    // 		type: "Detach";
-    // 	}
-
-    // 	export type Prior = PriorDetach;// | PriorAttach | PriorTemp;
-
-    // 	/**
-    // 		 * The contents of a node to be created
-    // 		 */
-    // 	export interface ProtoNode {
-    // 		id: string;
-    // 		type?: string;
-    // 		value?: Value;
-    // 		traits?: ProtoTraits;
-    // 	}
-
-    // 	export interface ProtoTraits {
-    // 		[key: string]: ProtoTrait;
-    // 	}
-
-    // 	export type ProtoTrait = (ProtoNode | MoveIn)[];
+ export namespace Transposed {
+	export interface Transaction extends Changeset {
+		/**
+		 * The reference sequence number of the transaction that this transaction was originally
+		 * issued after.
+		 */
+		ref: SeqNumber;
+		/**
+		 * The reference sequence number of the transaction that this transaction has been
+		 * transposed over.
+		 * Omitted on changesets that have not been transposed.
+		 */
+		newRef?: SeqNumber;
+	}
+
+	export interface Changeset {
+		marks: FieldMarks;
+		moves?: MoveEntry[];
+	}
+
+	export interface MoveEntry {
+		id: OpId;
+		src: TreePath;
+		dst: TreePath;
+		hops?: TreePath[];
+	}
+
+	export interface FieldMarks {
+		/**
+		 * Lists the additional (now deleted/detached) nodes and that must be taken into account in order to represent
+		 * the changes made to this field. Without them, describing the changes would be like drawing on an incomplete
+		 * canvas.
+		 *
+		 * Note that all tombstones introduced by concurrent changes are represented here. This includes tombstones
+		 * that are not directly relevant to the description of the changes made to the field. This is necessary to
+		 * ensure that later changes that are concurrent to this change always know how the tombstones they carry
+		 * ought to be ordered relative to the tombstones in this change.
+		 */
+		tombs?: OffsetList<Tombstones, NodeCount>;
+
+		/**
+		 * Operations that attach content in a gap.
+		 * The order of attach segments in each `Attach[]` reflects the intended order of the content in the field.
+		 *
+		 * Offsets represent gaps between any two of the following:
+		 * - the start of the field
+		 * - the end of the field
+		 * - nodes that are present in the input context
+		 * - nodes that are represented by tombstones
+		 */
+		attach?: OffsetList<Attach[], GapCount>;
+
+		/**
+		 * Operations that may affect concurrently attached content.
+		 * These operation effectively target content that does not yet exist but may come to exist
+		 * as a result of concurrent changes.
+		 *
+		 * Offsets represent gaps between any two of the following:
+		 * - the start of the field
+		 * - the end of the field
+		 * - nodes that are present in the input context
+		 * - nodes that are represented by tombstones
+		 */
+		gaps?: OffsetList<GapEffectSegment, GapCount>;
+
+		/**
+		 * Operations that affect nodes (or locations where a node used to be).
+		 *
+		 * Offsets represent both nodes that are present in the input context and nodes that were
+		 * concurrently detached.
+		 */
+		nodes?: OffsetList<NodeMark, NodeCount>;
+
+		/**
+		 * Represents the changes made to the subtrees of any of the following nodes:
+		 * - nodes that are present in the input context
+		 * - nodes that have been concurrently deleted by prior changes
+		 * - nodes that are being revived by this change
+		 *
+		 * Offsets represent both tombstones and nodes that are present in the input context.
+		 *
+		 * Modifications made to newly inserted nodes are represented on their Insert mark.
+		 */
+		modify?: OffsetList<Modify, NodeCount>;
+
+		/**
+		 * Represents change made to the values of any of the following nodes:
+		 * - nodes that are present in the input context
+		 * - nodes that have been concurrently deleted by prior changes
+		 * - nodes that are being revived by this change
+		 *
+		 * Offsets represent both tombstones and nodes that are present in the input context.
+		 *
+		 * Value changes made to newly inserted nodes are represented on their Insert mark.
+		 */
+		values?: OffsetList<ValueMark, NodeCount>;
+	}
+
+	export type ValueMark = SetValue | RevertValue;
+
+	export interface SetValue {
+		type: "Set";
+		value: Value;
+	}
+
+	export interface RevertValue {
+		type: "Revert";
+		seq: SeqNumber;
+	}
+
+	export interface Modify {
+		[key: string]: FieldMarks;
+	}
+
+	export interface HasPlaceFields {
+		/**
+		 * Describes which kinds of concurrent slice operations should affect the target place.
+		 *
+		 * The tuple allows this choice to be different for concurrent slices that are sequenced
+		 * either before (`heed[0]`) or after (`heed[1]`). For example, multiple concurrent updates
+		 * of a sequence with last-write-wins semantics would use a slice-delete over the whole
+		 * sequence, and an insert with the `heed` value `[Effects.None, Effects.All]`.
+		 *
+		 * When the value for prior and ulterior concurrent slices is the same, that value can be
+		 * used directly instead of the corresponding tuple.
+		 *
+		 * Omit if `Effects.All` for terseness.
+		 */
+		heed?: Effects | [Effects, Effects];
+
+		/**
+		 * Omit if `Tiebreak.Right` for terseness.
+		 */
+		tiebreak?: Tiebreak;
+
+		/**
+		 * Indicates a prior concurrent slice-move that the target place was affected by.
+		 */
+		src?: PriorOp;
+
+		/**
+		 * Indicates a prior concurrent slice-delete that the target place was affected by.
+		 */
+		scorch?: PriorOp;
+	}
+
+	export interface GapEffectPolicy {
+		/**
+		 * When `true`, if a concurrent insertion that is sequenced before the range operation falls
+		 * within the bounds of the range, then the inserted content will *not* be included in the
+		 * range and therefore will *not* be affected by the operation performed on the range.
+		 *
+		 * Defaults to false.
+		 */
+		excludePriorInsertions?: true;
+		/**
+		 * When `true`, if a concurrent insertion that is sequenced after the range operation falls
+		 * within the bounds of the range, then the inserted content will be included in the range and
+		 * therefore will be affected by the operation performed on the range, unless that insertion
+		 * stipulates that it is not commutative with respect to the range operation.
+		 *
+		 * Defaults to false.
+		 */
+		includePosteriorInsertions?: true;
+	}
+
+	export interface Insert extends HasOpId, HasPlaceFields {
+		type: "Insert";
+		content: ProtoNode[];
+		/**
+		 * Represents the changes made to the inserted subtrees.
+		 *
+		 * Offsets represent nodes being inserted.
+		 */
+		modify?: OffsetList<Modify, NodeCount>;
+		/**
+		 * Represents the changes made to the inserted node's values.
+		 *
+		 * Offsets represent nodes being inserted.
+		 */
+		values?: OffsetList<ValueMark, NodeCount>;
+	}
+
+	export interface Bounce extends HasOpId, HasPlaceFields {
+		type: "Bounce";
+	}
+
+	/**
+	 * Represents the precise location of a concurrent slice-move-in.
+	 * This is needed so we can tell where concurrent sliced-inserts (that this changeset has yet to be rebased over)
+	 * may land in the field. Without this, we would need to be able to retain information about the relative order in
+	 * time of any number of concurrent slice-moves. See scenario N.
+	 */
+	export interface Intake extends PriorOp {
+		type: "Intake";
+	}
+
+	export interface MoveIn extends HasOpId, HasPlaceFields {
+		type: "Move";
+		/**
+		 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
+		 */
+		count: NodeCount;
+		/**
+		 * Represents the changes made to the moved-in subtrees.
+		 *
+		 * Offsets represent nodes being moved-in.
+		 */
+		modify?: OffsetList<Modify, NodeCount>;
+	}
+
+	export type Attach = Insert | MoveIn | Bounce | Intake;
+
+	export type GapEffect = Scorch | Forward | Heal | Unforward;
+
+	export type GapEffectType = GapEffect["type"];
+
+	export interface GapEffectSegment {
+		count: GapCount;
+		/**
+		 * Stack of effects applying to the gaps.
+		 */
+		stack: (GapEffect)[];
+	}
+
+	export interface Scorch extends HasOpId, GapEffectPolicy {
+		type: "Scorch";
+	}
+
+	export interface Heal extends HasOpId, GapEffectPolicy {
+		type: "Heal";
+	}
+
+	export interface Forward extends HasOpId, GapEffectPolicy {
+		type: "Forward";
+	}
+
+	export interface Unforward extends HasOpId, GapEffectPolicy {
+		type: "Unforward";
+	}
+
+	export type NodeMark = Detach | Reattach;
+
+	export interface Detach extends HasOpId {
+		type: "Delete" | "Move";
+		count: NodeCount;
+	}
+
+	export interface Reattach extends HasOpId {
+		type: "Revive" | "Return";
+		count: NodeCount;
+	}
+
+	/**
+	 * Represents a consecutive run of detached nodes.
+	 *
+	 * Note that in some situations a tombstone is created for the purpose of representing a gap
+	 * even though no node has been detached.
+	 * This can happen when a slice-move applied to a gap but not the nodes on both sides of the
+	 * gap, or when a slice-move is applied to the gap that represents the start (or end) of a
+	 * field.
+	 */
+	export interface Tombstones {
+		count: NodeCount;
+		seq: PriorSeq;
+	}
+
+	export interface PriorOp {
+		seq: PriorSeq;
+		id: OpId;
+	}
+
+	/**
+	 * The sequence number of the edit that caused the nodes to be detached.
+	 *
+	 * When the nodes were detached as the result of learning of a prior concurrent change
+	 * that preceded a prior change that the current change depends on, a pair of sequence
+	 * numbers is used instead were `seq[0]` is the earlier change whose effect on `seq[1]`
+	 * these tombstones represent. This can be read as "tombstones from the effect of `seq[0]`
+	 * on `seq[1]`".
+	 */
+	export type PriorSeq = SeqNumber | [SeqNumber, SeqNumber];
 }
 
 export namespace Sequenced {
-    export interface Transaction extends Rebased.Transaction {
-        seq: SeqNumber;
-    }
+	export interface Transaction extends Transposed.Transaction {
+		seq: SeqNumber;
+	}
 }
 
 export interface HasLength {
-    /**
-     * Omit if 1.
-     */
-    length?: number;
+	/**
+	 * Omit if 1.
+	 */
+	length?: number;
 }
 
-/**
- * Either
- *  * A positive integer that represents how much higher in the document hierarchy the drilldown started (0 = no
- *    drilling involved).
- *  * A pair whose elements describe
- *    * The list of tree addresses of reference nodes that were drilled through (ordered from last to first)
- *    * A positive integer that represents how higher above the last reference node the drilldown started
- */
-export type DrillDepth = number | [TreePath[], number];
-
 export interface TreeChildPath {
-    [label: string]: TreeRootPath;
+	[label: string]: TreeRootPath;
 }
 
 export type TreeRootPath = number | { [label: number]: TreeChildPath; };
@@ -737,27 +316,77 @@ export type TreeRootPath = number | { [label: number]: TreeChildPath; };
 /** A structure that represents a path from the root to a particular node. */
 export type TreePath = TreeChildPath | TreeRootPath;
 
-/**
- * The relative location of the sibling based on which a segment or segment boundary is defined.
- */
-export enum Sibling {
-    /**
-     * Used for, e.g., insertion after a given node.
-     */
-    Prev,
-    /**
-     * Used for, e.g., insertion before a given node.
-     */
-    Next,
+export enum RangeType {
+	Set = "Set",
+	Slice = "Slice",
 }
 
+/**
+ * A monotonically increasing positive integer assigned to each segment.
+ * The first segment is assigned OpId 0. The next one is assigned OpID 1, and so on.
+ * These IDs define total a temporal ordering over all the changes within a change frame.
+ * OpIds are scoped to a single frame, so referring to OpIds across frames would require
+ * qualifying them by frame number (and potentially sequence/commit number).
+ *
+ * The temporal ordering is leveraged in the `Original` format to resolve which node a given segment is anchored to:
+ * A segment is anchored to the first node, when scanning in the direction indicated by the `side`
+ * field, that was either inserted by an operation whose OpId is lower, or left untouched (i.e.
+ * represented by an offset), or the end of the field, whichever is encountered first.
+ *
+ * The uniqueness of IDs is leveraged in either format to
+ * 1. uniquely identify tombstones so that two changes can tell whether they carry tombstones for the same nodes or
+ * for different nodes.
+ * 2. uniquely identify the matching move-out for a move-in/return and vice-versa.
+ */
+export type OpId = number;
+
+export interface HasSeqNumber {
+	/**
+	 * Included in a mark to indicate the transaction it was part of.
+	 * This number is assigned by the Fluid service.
+	 */
+	seq: SeqNumber;
+}
+
+export interface HasOpId {
+	/**
+	 * The sequential ID assigned to a change within a transaction.
+	 */
+	id: OpId;
+}
+
+/**
+ * The contents of a node to be created
+ */
+export interface ProtoNode {
+	id?: string;
+	type?: string;
+	value?: Value;
+	fields?: ProtoFields;
+}
+
+/**
+ * The fields of a node to be created
+ */
+export interface ProtoFields {
+	[key: string]: ProtoField;
+}
+
+export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (TOffset | TContent)[];
+
+export type ProtoField = ProtoNode[];
+export type NodeCount = number;
+export type GapCount = number;
 export type Offset = number;
-export type Index = number;
 export type SeqNumber = number;
 export type Value = number | string | boolean;
 export type NodeId = string;
-export type OpId = number;
 export type ClientId = number;
-export type TraitLabel = string;
-export enum Tiebreak { LastToFirst, FirstToLast }
-export enum Commutativity { Full, MoveOnly, DeleteOnly, None }
+export type FieldLabel = string;
+export enum Tiebreak { Left, Right }
+export enum Effects {
+	All = "All",
+	Move = "Move",
+	Delete = "Delete",
+	None = "None",
+}

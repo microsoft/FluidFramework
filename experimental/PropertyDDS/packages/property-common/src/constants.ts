@@ -373,7 +373,7 @@ const PropertyError = {
      * methods: Workspace.get, Property.get
      * Workspace.get and Property.get take in an id (string or number) or an array of ids.
      * @example
-     * ```ts
+     * ```typescript
      *.get(‘position’).get(‘x’) or .get([‘property’, ‘x’])
      * ```
      */
