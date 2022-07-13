@@ -14,7 +14,9 @@ export function fail(message: string): never {
 }
 
 /**
- * Used as a default branch in switch statements to enforce that all possible branches are accounted for.
+ * Use as a default branch in switch statements to enforce (at compile time) that all possible branches are accounted for,
+  * according to the TypeScript type system.
+  * As an additional protection, errors if called.
  *
  * Example:
  * ```typescript
