@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { IDetachedBlobStorage } from "@fluidframework/container-loader";
+import { Container, IDetachedBlobStorage } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
     ContainerRuntime,
@@ -48,6 +48,14 @@ const testContainerConfig: ITestContainerConfig = {
         },
     },
     registry: [["sharedString", SharedString.getFactory()]],
+};
+
+const ensureContainerConnectedWriteMode = async (container: Container) => {
+    const resolveIfActive = (res: () => void) => { if (container.deltaManager.active) { res(); } };
+    if (!container.deltaManager.active) {
+        await new Promise<void>((resolve) => container.on("connected", () => resolveIfActive(resolve)));
+        container.off("connected", resolveIfActive);
+    }
 };
 
 class MockDetachedBlobStorage implements IDetachedBlobStorage {
@@ -627,7 +635,11 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
             // Attach the container after the blob is uploaded.
             await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
-            // Upload the same blob. This will get de-duped and we will get back a handle with the stoageId instead of
+            // Make sure we are connected or we may get a local ID handle
+            defaultDataStore._root.set("make container connect in", "write mode");
+            await ensureContainerConnectedWriteMode(container as Container);
+
+            // Upload the same blob. This will get de-duped and we will get back a handle with the storageId instead of
             // the localId that we got when uploading in detached container.
             const storageHandle = await defaultDataStore._context.uploadBlob(stringToBuffer(blobContents, "utf-8"));
 
