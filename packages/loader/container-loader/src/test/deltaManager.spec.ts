@@ -248,6 +248,14 @@ describe("Loader", () => {
                     await tickClock(expectedTimeout);
                 });
 
+                it("Should not send op when processing another op", async () => {
+                    await startDeltaManager();
+                    emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
+                        assert.strictEqual(1, 9);
+                    });
+                    assert.strictEqual(2, 3);
+                });
+
                 it("Should immediately update with immediate content", async () => {
                     immediateNoOp = true;
                     let runCount = 0;

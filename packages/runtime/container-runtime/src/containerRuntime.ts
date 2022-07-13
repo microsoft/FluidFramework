@@ -160,6 +160,7 @@ import {
 } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
+import { opSize } from "./opProperties";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -1055,7 +1056,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
     private readonly _aliasingEnabled: boolean;
     private readonly _maxOpSizeInBytes: number;
-
+    private opsCurrentlyProcessing: number = 0;
     private readonly maxConsecutiveReconnects: number;
     private readonly defaultMaxConsecutiveReconnects = 15;
 
@@ -1871,6 +1872,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
+        if (this.opsCurrentlyProcessing !== 0) {
+            this.closeFn(new UsageError("Currently processing ops: Container closed"));
+        }
+        this.opsCurrentlyProcessing++;
 
         // If it's not message for runtime, bail out right away.
         if (!isUnpackedRuntimeMessage(messageArg)) {
@@ -1943,6 +1948,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.scheduleManager.afterOpProcessing(e, message);
             throw e;
         }
+        this.opsCurrentlyProcessing--;
     }
 
     private processAliasMessage(
