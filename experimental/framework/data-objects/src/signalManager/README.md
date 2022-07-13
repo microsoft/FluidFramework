@@ -54,7 +54,7 @@ this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
 ```
 When there are a lot of connected clients, usage of this request pattern can lead to high signal costs incurred from large amounts of signals being submitted all at the same time. While this pattern is helpful when a client is in need of relevant information, to limit signal costs it would be beneficial to examine whether or not the requested data will be quickly avaiable from other events being listened to within the application. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) is an example where a newly connecting client is not required to request a signal to receive every current mouse position on the document. Since mouse movements are frequent, the newly connecting client can simply wait to recieve other users mouse positions on their mousemove events.
 ### Grouping Signal Types
-To limit signal costs, it is recommended to group together signal types that have similar payloads attached. Rather than sending and listening to multiple signal types in response to one event, it would be more cost-effective to create a seperate signal type for said particular event and listen to that single signal instead. For example, imagine an application using the `Signal Request` pattern where a newly connected client requests for the position, focus state, and currently selected object of every other connected client on the page. If you use the signal type of each specific form of user presence, you will end up with something like this:
+Rather than sending multiple signal types in response to one specific event, it is more cost-effective to create one seperate signal type for that particular event and listen to that single signal instead. For example, imagine an application using the `Signal Request` pattern where a newly connected client requests for the color, focus state, and currently selected object of every other connected client on the page. If you submit a signal for each type of data requested (where each request signal would be responded to with the requested information), it would look something like this:
 ```typescript
 container.on("connected", () => {
     this.signalManager.submitSignal("colorRequest");
@@ -62,10 +62,12 @@ container.on("connected", () => {
     this.signalManager.submitSignal("currentlySelectedObjectRequest");
 });
 ```
-With this set up, the amount of signals sent on request grows linearly with the amount of user. To avoid this costly scenario we can group the signal types into one signal that captures all the required information:
+This approach is costly since the amount of signals sent back on request grows linearly with the amount of connected users. So if there are three signals requested as opposed to one, there are 3 times as many total signals being submitted on every connect. To avoid this costly scenario we can group the signal types into one single signal that captures all the required information:
 ```typescript
 container.on("connected", () => {
-    this.signalManager.submitSignal("allRequest");
+    this.signalManager.submitSignal("connectRequest");
 });
 ```
+The idea is that the payload sent back on the `connectRequest` will include all the relevant information the newly connected user needs.
+
 
