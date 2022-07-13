@@ -87,8 +87,6 @@ export interface IClientConfiguration {
     maxMessageSize: number;
     noopCountFrequency?: number;
     noopTimeFrequency?: number;
-    // (undocumented)
-    summary: ISummaryConfiguration;
 }
 
 // @public (undocumented)
@@ -416,46 +414,12 @@ export interface ISummaryAttachment {
     type: SummaryType.Attachment;
 }
 
-// @public @deprecated (undocumented)
-export interface ISummaryAuthor {
-    // (undocumented)
-    date: string;
-    // (undocumented)
-    email: string;
-    // (undocumented)
-    name: string;
-}
-
 // @public
 export interface ISummaryBlob {
     // (undocumented)
     content: string | Uint8Array;
     // (undocumented)
     type: SummaryType.Blob;
-}
-
-// @public @deprecated (undocumented)
-export interface ISummaryCommitter {
-    // (undocumented)
-    date: string;
-    // (undocumented)
-    email: string;
-    // (undocumented)
-    name: string;
-}
-
-// @public (undocumented)
-export interface ISummaryConfiguration {
-    // (undocumented)
-    disableSummaries?: boolean;
-    // (undocumented)
-    idleTime: number;
-    // (undocumented)
-    maxAckWaitTime: number;
-    // (undocumented)
-    maxOps: number;
-    // (undocumented)
-    maxTime: number;
 }
 
 // @public (undocumented)

@@ -16,18 +16,13 @@ import {
 // InsecureTokenProvider for basic scenarios or more robust, secure providers that fulfill the
 // ITokenProvider interface
 export class AzureUrlResolver implements IUrlResolver {
-    constructor() { }
+    constructor() {}
 
     public async resolve(request: IRequest): Promise<IFluidResolvedUrl> {
-        const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(
-            request.url,
-        );
+        const { ordererUrl, storageUrl, tenantId, containerId } = decodeAzureUrl(request.url);
         // determine whether the request is for creating of a new container.
         // such request has the `createNew` header set to true and doesn't have a container ID.
-        if (
-            request.headers &&
-            request.headers[DriverHeader.createNew] === true
-        ) {
+        if (request.headers && request.headers[DriverHeader.createNew] === true) {
             return {
                 endpoints: {
                     deltaStorageUrl: `${ordererUrl}/deltas/${tenantId}/new`,
@@ -59,10 +54,7 @@ export class AzureUrlResolver implements IUrlResolver {
         };
     }
 
-    public async getAbsoluteUrl(
-        resolvedUrl: IResolvedUrl,
-        relativeUrl: string,
-    ): Promise<string> {
+    public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
         if (resolvedUrl.type !== "fluid") {
             throw new Error("Invalid Resolved Url");
         }
@@ -99,10 +91,7 @@ function decodeAzureUrl(urlString: string): {
     };
 }
 
-export const createAzureCreateNewRequest = (
-    endpointUrl: string,
-    tenantId: string,
-): IRequest => {
+export const createAzureCreateNewRequest = (endpointUrl: string, tenantId: string): IRequest => {
     const url = new URL(endpointUrl);
     url.searchParams.append("storage", encodeURIComponent(endpointUrl));
     url.searchParams.append("tenantId", encodeURIComponent(tenantId));

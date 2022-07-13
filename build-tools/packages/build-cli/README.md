@@ -19,7 +19,7 @@ $ npm install -g @fluid-internal/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-internal/build-cli/0.3.0 win32-x64 node-v14.19.1
+@fluid-internal/build-cli/0.3.0 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -33,6 +33,7 @@ USAGE
 * [`flub commands`](#flub-commands)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
+* [`flub version VERSION`](#flub-version-version)
 
 ## `flub bump`
 
@@ -48,7 +49,7 @@ FLAGS
                                <options: client|server|azure|build-tools>
   -p, --package=<value>        package
   -r, --root=<value>           Root directory of the Fluid repo (default: env _FLUID_ROOT_).
-  -t, --type=<option>          (required) [default: current] bump type
+  -t, --type=<option>          (required) bump type
                                <options: major|minor|patch|current>
   -v, --verbose                Verbose logging.
 
@@ -155,6 +156,31 @@ DESCRIPTION
 ```
 
 _See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/info.ts)_
+
+## `flub version VERSION`
+
+Convert version strings between regular semver and the Fluid internal version scheme.
+
+```
+USAGE
+  $ flub version [VERSION] [--json] [-t major|minor|patch|current] [--publicVersion <value>]
+
+ARGUMENTS
+  VERSION  The version to convert.
+
+FLAGS
+  -t, --type=<option>      bump type
+                           <options: major|minor|patch|current>
+  --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Convert version strings between regular semver and the Fluid internal version scheme.
+```
+
+_See code: [@fluid-internal/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
 <!-- commandsstop -->
 
 ## Trademark

@@ -45,7 +45,7 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
  * (keeping the two classes of fields separate, name-spacing/escaping,
  * compressing one into numbers and leaving the other strings, etc.)
  */
-export type GlobalFieldKey = Opaque<Brand<string, "tree.GlobalFieldKey">>;
+export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">>{}
 
 /**
  * Describes how a particular field functions.
