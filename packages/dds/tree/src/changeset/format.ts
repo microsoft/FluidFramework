@@ -26,7 +26,7 @@
 	}
 
 	export interface Changeset {
-		marks: TraitMarks;
+		marks: FieldMarks;
 		moves?: MoveEntry[];
 	}
 
@@ -37,14 +37,14 @@
 		hops?: TreePath[];
 	}
 
-	export interface TraitMarks {
+	export interface FieldMarks {
 		/**
 		 * Lists the additional (now deleted/detached) nodes and that must be taken into account in order to represent
-		 * the changes made to this trait. Without them, describing the changes would be like drawing on an incomplete
+		 * the changes made to this field. Without them, describing the changes would be like drawing on an incomplete
 		 * canvas.
 		 *
 		 * Note that all tombstones introduced by concurrent changes are represented here. This includes tombstones
-		 * that are not directly relevant to the description of the changes made to the trait. This is necessary to
+		 * that are not directly relevant to the description of the changes made to the field. This is necessary to
 		 * ensure that later changes that are concurrent to this change always know how the tombstones they carry
 		 * ought to be ordered relative to the tombstones in this change.
 		 */
@@ -52,7 +52,7 @@
 
 		/**
 		 * Operations that attach content in a gap.
-		 * The order of attach segments in each `Attach[]` reflects the intended order of the content in the trait.
+		 * The order of attach segments in each `Attach[]` reflects the intended order of the content in the field.
 		 *
 		 * Offsets represent gaps between any two of the following:
 		 * - the start of the field
@@ -121,10 +121,10 @@
 	}
 
 	export interface Modify {
-		[key: string]: TraitMarks;
+		[key: string]: FieldMarks;
 	}
 
-	export interface IsPlace {
+	export interface HasPlaceFields {
 		/**
 		 * Describes which kinds of concurrent slice operations should affect the target place.
 		 *
@@ -156,7 +156,7 @@
 		scorch?: PriorOp;
 	}
 
-	export interface IsGapEffect {
+	export interface GapEffectPolicy {
 		/**
 		 * When `true`, if a concurrent insertion that is sequenced before the range operation falls
 		 * within the bounds of the range, then the inserted content will *not* be included in the
@@ -176,7 +176,7 @@
 		includePosteriorInsertions?: true;
 	}
 
-	export interface Insert extends HasOpId, IsPlace {
+	export interface Insert extends HasOpId, HasPlaceFields {
 		type: "Insert";
 		content: ProtoNode[];
 		/**
@@ -193,7 +193,7 @@
 		values?: OffsetList<ValueMark, NodeCount>;
 	}
 
-	export interface Bounce extends HasOpId, IsPlace {
+	export interface Bounce extends HasOpId, HasPlaceFields {
 		type: "Bounce";
 	}
 
@@ -207,7 +207,7 @@
 		type: "Intake";
 	}
 
-	export interface MoveIn extends HasOpId, IsPlace {
+	export interface MoveIn extends HasOpId, HasPlaceFields {
 		type: "Move";
 		/**
 		 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
@@ -235,19 +235,19 @@
 		stack: (GapEffect)[];
 	}
 
-	export interface Scorch extends HasOpId, IsGapEffect {
+	export interface Scorch extends HasOpId, GapEffectPolicy {
 		type: "Scorch";
 	}
 
-	export interface Heal extends HasOpId, IsGapEffect {
+	export interface Heal extends HasOpId, GapEffectPolicy {
 		type: "Heal";
 	}
 
-	export interface Forward extends HasOpId, IsGapEffect {
+	export interface Forward extends HasOpId, GapEffectPolicy {
 		type: "Forward";
 	}
 
-	export interface Unforward extends HasOpId, IsGapEffect {
+	export interface Unforward extends HasOpId, GapEffectPolicy {
 		type: "Unforward";
 	}
 
@@ -307,16 +307,6 @@ export interface HasLength {
 	length?: number;
 }
 
-/**
- * Either
- *  * A positive integer that represents how much higher in the document hierarchy the drilldown started (0 = no
- *    drilling involved).
- *  * A pair whose elements describe
- *    * The list of tree addresses of reference nodes that were drilled through (ordered from last to first)
- *    * A positive integer that represents how higher above the last reference node the drilldown started
- */
-export type DrillDepth = number | [TreePath[], number];
-
 export interface TreeChildPath {
 	[label: string]: TreeRootPath;
 }
@@ -330,19 +320,6 @@ export enum RangeType {
 	Set = "Set",
 	Slice = "Slice",
 }
-/**
- * The relative location of the sibling based on which a segment or segment boundary is defined.
- */
-export enum Sibling {
-	/**
-	 * Used for, e.g., insertion after a given node.
-	 */
-	Prev,
-	/**
-	 * Used for, e.g., insertion before a given node.
-	 */
-	Next,
-}
 
 /**
  * A monotonically increasing positive integer assigned to each segment.
@@ -354,7 +331,7 @@ export enum Sibling {
  * The temporal ordering is leveraged in the `Original` format to resolve which node a given segment is anchored to:
  * A segment is anchored to the first node, when scanning in the direction indicated by the `side`
  * field, that was either inserted by an operation whose OpId is lower, or left untouched (i.e.
- * represented by an offset), or the end of the trait, whichever is encountered first.
+ * represented by an offset), or the end of the field, whichever is encountered first.
  *
  * The uniqueness of IDs is leveraged in either format to
  * 1. uniquely identify tombstones so that two changes can tell whether they carry tombstones for the same nodes or
@@ -385,19 +362,19 @@ export interface ProtoNode {
 	id?: string;
 	type?: string;
 	value?: Value;
-	traits?: ProtoTraits;
+	fields?: ProtoFields;
 }
 
 /**
- * The traits of a node to be created
+ * The fields of a node to be created
  */
-export interface ProtoTraits {
-	[key: string]: ProtoTrait;
+export interface ProtoFields {
+	[key: string]: ProtoField;
 }
 
 export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (TOffset | TContent)[];
 
-export type ProtoTrait = ProtoNode[];
+export type ProtoField = ProtoNode[];
 export type NodeCount = number;
 export type GapCount = number;
 export type Offset = number;
@@ -405,7 +382,7 @@ export type SeqNumber = number;
 export type Value = number | string | boolean;
 export type NodeId = string;
 export type ClientId = number;
-export type TraitLabel = string;
+export type FieldLabel = string;
 export enum Tiebreak { Left, Right }
 export enum Effects {
 	All = "All",

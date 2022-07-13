@@ -9,7 +9,7 @@ import { Effects, Transposed as T, Sequenced as S, Tiebreak } from "../../change
  * Demonstrates how to represent a change that inserts a root tree.
  */
 export namespace InsertRoot {
-	export const e1: T.TraitMarks = {
+	export const e1: T.FieldMarks = {
 		attach: [
 			[ // Array of attach operations for index 0
 				{
@@ -19,7 +19,7 @@ export namespace InsertRoot {
 						{
 							id: "cbb9bf86-12bf-46d2-95e5-bdc50bde3cd0", // ID of the root node
 							type: "Point",
-							traits: {
+							fields: {
 								x: [{
 									id: "cebb2540-a654-4e1d-8d04-5a678f628c1d", // ID of the X node
 									value: 42,
@@ -31,7 +31,7 @@ export namespace InsertRoot {
 								arrayField: [{
 									id: "376aa297-4b8b-4d85-ad0f-79ee7e9e6efc",
 									type: "JSON-Array",
-									traits: {
+									fields: {
 										entries: [
 											{ id: "1a2815ee-0495-4ffa-b958-156abbfbb074", value: 0 },
 											{ id: "e39fe778-35ac-4629-b890-5b38bf441984", value: 1 },
