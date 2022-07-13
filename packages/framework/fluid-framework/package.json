@@ -52,50 +52,13 @@
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
-    "fluid-framework-previous": "npm:fluid-framework@1.1.0",
+    "fluid-framework-previous": "npm:fluid-framework@1.1.1",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.1",
-    "broken": {
-      "RemovedInterfaceDeclaration_IDirectoryClearOperation": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_IDirectoryDeleteOperation": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedTypeAliasDeclaration_IDirectoryKeyOperation": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_IDirectorySetOperation": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedTypeAliasDeclaration_IDirectoryStorageOperation": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedTypeAliasDeclaration_IDirectorySubDirectoryOperation": {
-        "backCompat": false,
-        "forwardCompat": false
-      },
-      "RemovedInterfaceDeclaration_ILocalValue": {
-        "backCompat": false,
-        "forwardCompat": false
-      }
-    }
+    "version": "1.1.2",
+    "broken": {}
   }
 }
