@@ -239,7 +239,6 @@ export const loadPackage = (modulePath: string, pkg: string) =>
  export function getRequestedRange(baseVersion: string, requested?: number | string): string {
     if (requested === undefined || requested === 0) { return baseVersion; }
     if (typeof requested === "string") { return requested; }
-
     const version = new semver.SemVer(baseVersion);
 
     // calculate requested major version number
@@ -250,10 +249,8 @@ export const loadPackage = (modulePath: string, pkg: string) =>
     }
     // if the major version number is <= 0 then we return the equivalent pre-releases
     const lastPrereleaseVersion = new semver.SemVer("0.59.0");
-    const subtractFromMinor = requestedMajorVersion;
 
-    const requestedMinorVersion =
-    lastPrereleaseVersion.minor - subtractFromMinor;
+    const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
     // too old a version / non existing version requested
     if (requestedMinorVersion <= 0) {
         // cap at min version
