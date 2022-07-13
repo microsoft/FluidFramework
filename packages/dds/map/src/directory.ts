@@ -193,10 +193,20 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  *
- * @privateRemarks Directly used in JSON.stringify, direct result from JSON.parse.
+ * @privateRemarks Directly used in
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify | JSON.stringify},
+ * direct result from
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
 export interface IDirectoryDataObject {
+    /**
+     * TODO
+     */
     storage?: { [key: string]: ISerializableValue; };
+
+    /**
+     * TODO
+     */
     subdirectories?: { [subdirName: string]: IDirectoryDataObject; };
 }
 
