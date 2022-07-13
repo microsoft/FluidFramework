@@ -21,7 +21,7 @@ export interface IEventProvider<TEvent extends IEvent> {
     readonly on: IEventTransformer<this, TEvent>;
 
     /**
-     * Registers a callback to be invoked the first time the corresponding event is triggered.
+     * Registers a callback to be invoked the first time (after registration) the corresponding event is triggered.
      */
     readonly once: IEventTransformer<this, TEvent>;
 
