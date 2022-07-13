@@ -6,11 +6,13 @@
 import * as fs from 'fs';
 import { strict as assert } from "assert";
 import { exportFile } from "../exportFile";
+import { MockLogger } from '@fluidframework/telemetry-utils';
+import path from 'path';
 
 describe("exportFile", () => {
-    const folderRoot = `${__dirname}/../../src/test`;
-    const outputFolder = `${folderRoot}/outputFolder`;
-    const snapshotFolder = `${folderRoot}/localSnapshots`;
+    const folderRoot = path.join(__dirname, "../../src/test");
+    const outputFolder = path.join(folderRoot, "outputFolder");
+    const snapshotFolder = path.join(folderRoot, "localSnapshots");
 
     beforeEach(() => {
         fs.mkdirSync(outputFolder);
@@ -23,13 +25,14 @@ describe("exportFile", () => {
     fs.readdirSync(snapshotFolder).forEach((snapshotFileName: string) => {
         it(`Output is correct ${snapshotFileName}`, async () => {
             await exportFile(
-                `${__dirname}/sampleCodeLoader.js`,
-                `${snapshotFolder}/${snapshotFileName}`,
+                path.join(__dirname, "sampleCodeLoader.js"),
+                path.join(snapshotFolder, snapshotFileName),
                 outputFolder,
                 "sampleScenario",
-                `${outputFolder}/telemetry.txt`);
+                path.join(outputFolder, "telemetry.txt")
+            );
 
-            const resultFilePath = `${outputFolder}/result.txt`;
+            const resultFilePath = path.join(outputFolder, "result.txt");
             assert(fs.existsSync(resultFilePath), "result file does not exist");
 
             const resultFileContent = fs.readFileSync(resultFilePath, { encoding: "utf-8" });
@@ -41,6 +44,10 @@ describe("exportFile", () => {
         // TODO
     });
 
-    // TODO: add tests around improper args
+    describe("Validates arguments", () => {
+        // TODO
+        const mockLogger = new MockLogger();
+    });
+
     // TODO: potentially add tests for expecting certain telemetry logs
 });

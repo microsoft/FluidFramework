@@ -12,6 +12,7 @@ import { getArgsValidationError } from "./getArgsValidationError";
 import { isCodeLoaderBundle } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
 import path from "path";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 export async function exportFile(
     codeLoader: string,
@@ -19,13 +20,14 @@ export async function exportFile(
     outputFolder: string,
     scenario: string,
     telemetryFile: string,
+    loggerOverride?: ITelemetryBaseLogger,
 ) {
     if (fs.existsSync(telemetryFile)) {
         console.error("Telemetry file already exists. " + telemetryFile);
         throw new Error("Telemetry file already exists.");
     }
 
-    const logger = ChildLogger.create(new FileLogger(telemetryFile), "LocalSnapshotRunnerApp");
+    const logger = ChildLogger.create(loggerOverride ?? new FileLogger(telemetryFile), "LocalSnapshotRunnerApp");
 
     await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
         const codeLoaderBundle = require(codeLoader);
