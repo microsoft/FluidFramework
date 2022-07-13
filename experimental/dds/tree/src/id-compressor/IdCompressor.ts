@@ -889,16 +889,14 @@ export class IdCompressor {
 					numericOverride = numericUuidFromStableId(stableOverride);
 					const delta = getPositiveDelta(numericOverride, cluster.baseUuid, cluster.capacity - 1);
 					if (delta !== undefined) {
-						if (isFinalOverride) {
-							IdCompressor.failWithCollidingOverride(inversionKey);
-						} else {
-							if (delta < cluster.count) {
-								return this.normalizeToSessionSpace(
-									(compressionMapping.clusterBase + delta) as FinalCompressedId
-								);
-							} else {
-								IdCompressor.failWithCollidingOverride(inversionKey);
+						if (!isFinalOverride) {
+							if (delta >= cluster.count) {
+								// TODO:#283: Properly implement unification
+								return undefined;
 							}
+							return this.normalizeToSessionSpace(
+								(compressionMapping.clusterBase + delta) as FinalCompressedId
+							);
 						}
 					}
 				}
@@ -987,7 +985,7 @@ export class IdCompressor {
 
 		if (overrideInversionKey !== undefined) {
 			const registeredLocal = sessionIdNormalizer.addLocalId();
-			assert(registeredLocal === newLocalId, 'TODO');
+			assert(registeredLocal === newLocalId, 'Session ID Normalizer produced unexpected local ID');
 			if (eagerFinalId !== undefined) {
 				sessionIdNormalizer.addFinalIds(eagerFinalId, eagerFinalId, cluster ?? fail());
 			}
@@ -1000,7 +998,7 @@ export class IdCompressor {
 			return eagerFinalId;
 		} else {
 			const registeredLocal = sessionIdNormalizer.addLocalId();
-			assert(registeredLocal === newLocalId, 'TODO');
+			assert(registeredLocal === newLocalId, 'Session ID Normalizer produced unexpected local ID');
 		}
 
 		return newLocalId;

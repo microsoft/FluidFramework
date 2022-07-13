@@ -71,6 +71,7 @@ declare function get_old_EnumDeclaration_ConnectionState():
 declare function use_current_EnumDeclaration_ConnectionState(
     use: TypeOnly<current.ConnectionState>);
 use_current_EnumDeclaration_ConnectionState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_ConnectionState());
 
 /*
@@ -280,6 +281,54 @@ use_old_InterfaceDeclaration_IDirectory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryClearOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectoryClearOperation():
+    TypeOnly<old.IDirectoryClearOperation>;
+declare function use_current_InterfaceDeclaration_IDirectoryClearOperation(
+    use: TypeOnly<current.IDirectoryClearOperation>);
+use_current_InterfaceDeclaration_IDirectoryClearOperation(
+    get_old_InterfaceDeclaration_IDirectoryClearOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryClearOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectoryClearOperation():
+    TypeOnly<current.IDirectoryClearOperation>;
+declare function use_old_InterfaceDeclaration_IDirectoryClearOperation(
+    use: TypeOnly<old.IDirectoryClearOperation>);
+use_old_InterfaceDeclaration_IDirectoryClearOperation(
+    get_current_InterfaceDeclaration_IDirectoryClearOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation():
+    TypeOnly<old.IDirectoryCreateSubDirectoryOperation>;
+declare function use_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
+    use: TypeOnly<current.IDirectoryCreateSubDirectoryOperation>);
+use_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
+    get_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation():
+    TypeOnly<current.IDirectoryCreateSubDirectoryOperation>;
+declare function use_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
+    use: TypeOnly<old.IDirectoryCreateSubDirectoryOperation>);
+use_old_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation(
+    get_current_InterfaceDeclaration_IDirectoryCreateSubDirectoryOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDirectoryDataObject": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDirectoryDataObject():
@@ -304,6 +353,54 @@ use_old_InterfaceDeclaration_IDirectoryDataObject(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryDeleteOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectoryDeleteOperation():
+    TypeOnly<old.IDirectoryDeleteOperation>;
+declare function use_current_InterfaceDeclaration_IDirectoryDeleteOperation(
+    use: TypeOnly<current.IDirectoryDeleteOperation>);
+use_current_InterfaceDeclaration_IDirectoryDeleteOperation(
+    get_old_InterfaceDeclaration_IDirectoryDeleteOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryDeleteOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectoryDeleteOperation():
+    TypeOnly<current.IDirectoryDeleteOperation>;
+declare function use_old_InterfaceDeclaration_IDirectoryDeleteOperation(
+    use: TypeOnly<old.IDirectoryDeleteOperation>);
+use_old_InterfaceDeclaration_IDirectoryDeleteOperation(
+    get_current_InterfaceDeclaration_IDirectoryDeleteOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation():
+    TypeOnly<old.IDirectoryDeleteSubDirectoryOperation>;
+declare function use_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
+    use: TypeOnly<current.IDirectoryDeleteSubDirectoryOperation>);
+use_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
+    get_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation():
+    TypeOnly<current.IDirectoryDeleteSubDirectoryOperation>;
+declare function use_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
+    use: TypeOnly<old.IDirectoryDeleteSubDirectoryOperation>);
+use_old_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation(
+    get_current_InterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDirectoryEvents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDirectoryEvents():
@@ -324,6 +421,30 @@ declare function use_old_InterfaceDeclaration_IDirectoryEvents(
     use: TypeOnly<old.IDirectoryEvents>);
 use_old_InterfaceDeclaration_IDirectoryEvents(
     get_current_InterfaceDeclaration_IDirectoryEvents());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectoryKeyOperation": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IDirectoryKeyOperation():
+    TypeOnly<old.IDirectoryKeyOperation>;
+declare function use_current_TypeAliasDeclaration_IDirectoryKeyOperation(
+    use: TypeOnly<current.IDirectoryKeyOperation>);
+use_current_TypeAliasDeclaration_IDirectoryKeyOperation(
+    get_old_TypeAliasDeclaration_IDirectoryKeyOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectoryKeyOperation": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IDirectoryKeyOperation():
+    TypeOnly<current.IDirectoryKeyOperation>;
+declare function use_old_TypeAliasDeclaration_IDirectoryKeyOperation(
+    use: TypeOnly<old.IDirectoryKeyOperation>);
+use_old_TypeAliasDeclaration_IDirectoryKeyOperation(
+    get_current_TypeAliasDeclaration_IDirectoryKeyOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -372,6 +493,78 @@ declare function use_old_TypeAliasDeclaration_IDirectoryOperation(
     use: TypeOnly<old.IDirectoryOperation>);
 use_old_TypeAliasDeclaration_IDirectoryOperation(
     get_current_TypeAliasDeclaration_IDirectoryOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectorySetOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDirectorySetOperation():
+    TypeOnly<old.IDirectorySetOperation>;
+declare function use_current_InterfaceDeclaration_IDirectorySetOperation(
+    use: TypeOnly<current.IDirectorySetOperation>);
+use_current_InterfaceDeclaration_IDirectorySetOperation(
+    get_old_InterfaceDeclaration_IDirectorySetOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDirectorySetOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDirectorySetOperation():
+    TypeOnly<current.IDirectorySetOperation>;
+declare function use_old_InterfaceDeclaration_IDirectorySetOperation(
+    use: TypeOnly<old.IDirectorySetOperation>);
+use_old_InterfaceDeclaration_IDirectorySetOperation(
+    get_current_InterfaceDeclaration_IDirectorySetOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectoryStorageOperation": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IDirectoryStorageOperation():
+    TypeOnly<old.IDirectoryStorageOperation>;
+declare function use_current_TypeAliasDeclaration_IDirectoryStorageOperation(
+    use: TypeOnly<current.IDirectoryStorageOperation>);
+use_current_TypeAliasDeclaration_IDirectoryStorageOperation(
+    get_old_TypeAliasDeclaration_IDirectoryStorageOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectoryStorageOperation": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IDirectoryStorageOperation():
+    TypeOnly<current.IDirectoryStorageOperation>;
+declare function use_old_TypeAliasDeclaration_IDirectoryStorageOperation(
+    use: TypeOnly<old.IDirectoryStorageOperation>);
+use_old_TypeAliasDeclaration_IDirectoryStorageOperation(
+    get_current_TypeAliasDeclaration_IDirectoryStorageOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectorySubDirectoryOperation": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation():
+    TypeOnly<old.IDirectorySubDirectoryOperation>;
+declare function use_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
+    use: TypeOnly<current.IDirectorySubDirectoryOperation>);
+use_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
+    get_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IDirectorySubDirectoryOperation": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation():
+    TypeOnly<current.IDirectorySubDirectoryOperation>;
+declare function use_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
+    use: TypeOnly<old.IDirectorySubDirectoryOperation>);
+use_old_TypeAliasDeclaration_IDirectorySubDirectoryOperation(
+    get_current_TypeAliasDeclaration_IDirectorySubDirectoryOperation());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -520,6 +713,30 @@ use_old_InterfaceDeclaration_IJSONRunSegment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILocalValue": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ILocalValue():
+    TypeOnly<old.ILocalValue>;
+declare function use_current_InterfaceDeclaration_ILocalValue(
+    use: TypeOnly<current.ILocalValue>);
+use_current_InterfaceDeclaration_ILocalValue(
+    get_old_InterfaceDeclaration_ILocalValue());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ILocalValue": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ILocalValue():
+    TypeOnly<current.ILocalValue>;
+declare function use_old_InterfaceDeclaration_ILocalValue(
+    use: TypeOnly<old.ILocalValue>);
+use_old_InterfaceDeclaration_ILocalValue(
+    get_current_InterfaceDeclaration_ILocalValue());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IMapMessageLocalMetadata": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IMapMessageLocalMetadata():
@@ -611,6 +828,7 @@ declare function get_current_ClassDeclaration_IntervalCollection():
 declare function use_old_ClassDeclaration_IntervalCollection(
     use: TypeOnly<old.IntervalCollection<any>>);
 use_old_ClassDeclaration_IntervalCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_IntervalCollection());
 
 /*
@@ -1019,6 +1237,7 @@ declare function get_current_InterfaceDeclaration_ISharedString():
 declare function use_old_InterfaceDeclaration_ISharedString(
     use: TypeOnly<old.ISharedString>);
 use_old_InterfaceDeclaration_ISharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISharedString());
 
 /*
@@ -1523,6 +1742,7 @@ declare function get_current_ClassDeclaration_SequenceDeltaEvent():
 declare function use_old_ClassDeclaration_SequenceDeltaEvent(
     use: TypeOnly<old.SequenceDeltaEvent>);
 use_old_ClassDeclaration_SequenceDeltaEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceDeltaEvent());
 
 /*
@@ -1547,6 +1767,7 @@ declare function get_current_ClassDeclaration_SequenceEvent():
 declare function use_old_ClassDeclaration_SequenceEvent(
     use: TypeOnly<old.SequenceEvent>);
 use_old_ClassDeclaration_SequenceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceEvent());
 
 /*
@@ -1571,6 +1792,7 @@ declare function get_current_ClassDeclaration_SequenceInterval():
 declare function use_old_ClassDeclaration_SequenceInterval(
     use: TypeOnly<old.SequenceInterval>);
 use_old_ClassDeclaration_SequenceInterval(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceInterval());
 
 /*
@@ -1595,6 +1817,7 @@ declare function get_current_ClassDeclaration_SequenceMaintenanceEvent():
 declare function use_old_ClassDeclaration_SequenceMaintenanceEvent(
     use: TypeOnly<old.SequenceMaintenanceEvent>);
 use_old_ClassDeclaration_SequenceMaintenanceEvent(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SequenceMaintenanceEvent());
 
 /*
@@ -1739,6 +1962,7 @@ declare function get_current_ClassDeclaration_SharedNumberSequence():
 declare function use_old_ClassDeclaration_SharedNumberSequence(
     use: TypeOnly<old.SharedNumberSequence>);
 use_old_ClassDeclaration_SharedNumberSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedNumberSequence());
 
 /*
@@ -1811,6 +2035,7 @@ declare function get_current_ClassDeclaration_SharedObjectSequence():
 declare function use_old_ClassDeclaration_SharedObjectSequence(
     use: TypeOnly<old.SharedObjectSequence<any>>);
 use_old_ClassDeclaration_SharedObjectSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedObjectSequence());
 
 /*
@@ -1859,6 +2084,7 @@ declare function get_current_ClassDeclaration_SharedSegmentSequence():
 declare function use_old_ClassDeclaration_SharedSegmentSequence(
     use: TypeOnly<old.SharedSegmentSequence<any>>);
 use_old_ClassDeclaration_SharedSegmentSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSegmentSequence());
 
 /*
@@ -1883,6 +2109,7 @@ declare function get_current_ClassDeclaration_SharedSequence():
 declare function use_old_ClassDeclaration_SharedSequence(
     use: TypeOnly<old.SharedSequence<any>>);
 use_old_ClassDeclaration_SharedSequence(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedSequence());
 
 /*
@@ -1907,6 +2134,7 @@ declare function get_current_ClassDeclaration_SharedString():
 declare function use_old_ClassDeclaration_SharedString(
     use: TypeOnly<old.SharedString>);
 use_old_ClassDeclaration_SharedString(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SharedString());
 
 /*
@@ -1955,6 +2183,7 @@ declare function get_current_TypeAliasDeclaration_SharedStringSegment():
 declare function use_old_TypeAliasDeclaration_SharedStringSegment(
     use: TypeOnly<old.SharedStringSegment>);
 use_old_TypeAliasDeclaration_SharedStringSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SharedStringSegment());
 
 /*
@@ -1979,6 +2208,7 @@ declare function get_current_ClassDeclaration_SparseMatrix():
 declare function use_old_ClassDeclaration_SparseMatrix(
     use: TypeOnly<old.SparseMatrix>);
 use_old_ClassDeclaration_SparseMatrix(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SparseMatrix());
 
 /*

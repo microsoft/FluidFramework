@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/undo-redo",
-  "version": "1.2.0",
+  "version": "2.0.0-internal.1.0.0",
   "description": "Undo Redo",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -60,18 +60,18 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/map": "^1.2.0",
-    "@fluidframework/matrix": "^1.2.0",
-    "@fluidframework/merge-tree": "^1.2.0",
-    "@fluidframework/sequence": "^1.2.0"
+    "@fluidframework/map": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/matrix": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/merge-tree": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/sequence": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^1.2.0",
-    "@fluidframework/test-runtime-utils": "^1.2.0",
-    "@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@^0.59.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
@@ -91,7 +91,11 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "0.59.3000",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "ClassDeclaration_SharedSegmentSequenceRevertible": {
+        "backCompat": false
+      }
+    }
   }
 }

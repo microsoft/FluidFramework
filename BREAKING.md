@@ -35,6 +35,66 @@ to be `string | undefined`.
 ### `IContainerRuntime.flush` is deprecated
 `IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
 
+## 2.0.0 Breaking changes
+- [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
+- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
+- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
+- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
+- [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
+- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+- [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+- [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
+- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
+- [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
+
+### Deprecate ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please migrate all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
+### Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels
+`ISummaryRuntimeOptions.disableIsolatedChannels` has been deprecated and will be removed in a future release.
+There will be no replacement for this property.
+
+### LocalReference class and method deprecations removed
+In 0.59.0 the [LocalReference class and it's related methods were deprecated](#LocalReference-class-and-method-deprecations)
+
+The deprecated and now removed LocalReference class is replaced with LocalReferencePosition.
+The following deprecated methods are  now removed from sequence and merge-tree. Their replacements should be used instead.
+ - createPositionReference to createLocalReferencePosition
+ - addLocalReference to createLocalReferencePosition
+ - localRefToPos to localReferencePositionToPosition
+ - removeLocalReference to removeLocalReferencePosition
+
+### Remove TelemetryDataTag.PackageData
+`TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
+
+### Remove ConnectionState.Connecting
+`ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
+
+### Remove ISummaryAuthor and ISummaryCommitter
+`ISummaryAuthor` and`ISummaryCommitter` have been removed in this release. See [#10456](https://github.com/microsoft/FluidFramework/issues/10456) for details.
+
+### Remove IFluidDataStoreChannel.bindToContext and related types
+`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
+See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
+
+### Remove `aliasing` return value from `AliasResult`
+The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
+
+# 1.2.0
+
+## 1.2.0 Upcoming changes
+- [ Added locationRedirection errorType in DriverErrorType enum](#Added-locationRedirection-errorType-in-DriverErrorType-enum)
+- [ Added ILocationRedirectionError error in DriverError type](#Added-ILocationRedirectionError-error-in-DriverError-type)
+
+ ### Added locationRedirection errorType in DriverErrorType enum
+ Added locationRedirection errorType in DriverErrorType enum. This error tells that the location of file on server has changed.
+ This error will not be thrown in 1.x.x version but we are just adding it in the type for now. This will be thrown from 2.x.x onward. For consumers of errors(in any version due to dynamic driver loading), this needs to be handled as a separate type where an error message banner could be shown etc. Consumers can also choose to not do any action as far as they recognize this error at runtime and not faulter when they receive this error. Ex. if you have a switch statement which does not have this errorType as a case and throw error in default case, then you need to add a case so that it does not throw any error. However this error is not yet emitted from `Fluid Framework`, so in a way it is non breaking.
+
+ ### Added ILocationRedirectionError error in DriverError type
+ Added ILocationRedirectionError error in DriverError. This error tells that the location of file on server has changed. In case of Odsp, the domain of file changes on server.
+
 # 1.1.0
 
 ## 1.1.0 Upcoming changes
@@ -54,6 +114,7 @@ to be `string | undefined`.
 - [Summarize heuristic changes based on telemetry](#Summarize-heuristic-changes-based-on-telemetry)
 - [bindToContext to be removed from IFluidDataStoreChannel](#bindToContext-to-be-removed-from-IFluidDataStoreChannel)
 - [Garbage Collection (GC) mark phase turned on by default](#Garbage-Collection-(GC)-mark-phase-turned-on-by-default)
+- [SequenceEvent.isEmpty removed](#SequenceEvent\.isEmpty-removed)
 
 ### Summarize heuristic changes based on telemetry
 Changes will be made in the way heuristic summaries are run based on observed telemetry (see `ISummaryConfigurationHeuristics`). Please evaluate if such policies make sense for you, and if not, clone the previous defaults and pass it to the `ContainerRuntime` object to shield yourself from these changes:
@@ -71,6 +132,12 @@ GC mark phase is turned on by default with this version. In mark phase, unrefere
 For more details on GC and options for controlling its behavior, please see [this document](./packages/runtime/container-runtime/garbageCollection.md).
 
 > Note: GC sweep phase has not been enabled yet so unreferenced content won't be deleted. The work to enable it is in progress and will be ready soon.
+
+### SequenceEvent.isEmpty removed
+
+In `@fluidframework/sequence`, a change was previously made to no longer fire `SequenceEvent`s with empty deltas.
+This made the `isEmpty` property of `SequenceEvent` (also available on `SequenceDeltaEvent` and `SequenceMaintenanceEvent`) redundant.
+It has been removed in this release--consumers should assume any raised delta events are not empty.
 
 ## 1.0.0 Breaking changes
 - [Changed AzureConnectionConfig API](#Changed-AzureConnectionConfig-API)
@@ -190,6 +257,9 @@ Additionally, please note that the `Connecting` state is being renamed to `Catch
 `ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
 `ConnectionState.Connecting` will be removed in the following major release.
 
+### Remove ICodeLoader from `@fluidframework/container-definitions`
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
+
 # 0.59
 
 ## 0.59 Upcoming changes
@@ -203,7 +273,7 @@ Additionally, please note that the `Connecting` state is being renamed to `Catch
 - [Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver](#Deprecated-enableRedeemFallback-from-HostStoragePolicy-in-Odsp-driver)]
 
 ### Remove ICodeLoader interface
-ICodeLoader interface was deprecated a while ago and will be removed in the next release. Please refer to [replace ICodeLoader with ICodeDetailsLoader interface](#Replace-ICodeLoader-with-ICodeDetailsLoader-interface) for more details.
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 ### IFluidContainer.connect() and IFluidContainer.disconnect() will be made mandatory in future major release
 In major release 1.0, the optional functions `IFluidContainer.connect()` and `IFluidContainer.disconnect()` will be made mandatory functions.
@@ -243,6 +313,7 @@ Deprecated enableRedeemFallback from HostStoragePolicy in Odsp driver as it will
 - [Scope is no longer an IFluidObject](#scope-is-no-longer-an-IFluidObject)
 - [IFluidHandle and requestFluidObject generic's default no longer includes IFluidObject](#IFluidHandle-and-requestFluidObject-generics-default-no-longer-includes-IFluidObject)
 - [LazyLoadedDataObjectFactory.create no longer returns an IFluidObject](#LazyLoadedDataObjectFactory.create-no-longer-returns-an-IFluidObject)
+- [Remove routerlicious-host package](#remove-routerlicious-host-package)
 
 ### Removing Commit from TreeEntry and commits from SnapShotTree
 Cleaning up properties that are not being used in the codebase: `TreeEntry.Commit` and `ISnapshotTree.commits`.
@@ -288,7 +359,7 @@ The `packageInfoSource` argument in `getAbsoluteUrl()` on `@fluidframework/odsp-
 ```
 
 ### Replace ICodeLoader with ICodeDetailsLoader interface
-The interface `ICodeLoader` was deprecated a while ago in previous releases. The alternative for `ICodeLoader` interface is the `ICodeDetailsLoader` interface which can be imported from `@fluidframework/container-definitions`. `ICodeLoader` interface will be removed in the next release.
+`ICodeLoader` in `@fluidframework/container-definitions` was deprecated since 0.40.0 and is now removed. Use `ICodeDetailsLoader` from `@fluidframework/container-loader` instead.
 
 In particular, note the `ILoaderService` and `ILoaderProps` interfaces used with the `Loader` class now only support `ICodeDetailsLoader`. If you were using an `ICodeLoader` with these previously, you'll need to update to an `ICodeDetailsLoader`.
 
@@ -338,6 +409,9 @@ As a short term fix in both these cases IFluidObject can be passed at the generi
 LazyLoadedDataObjectFactory.create no longer returns an IFluidObject, it now only returns a [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
 
 As a short term fix the return type of this method can be safely casted to an IFluidObject. However, IFluidObject is deprecated and will be removed in an upcoming release so this can only be a temporary workaround before moving to [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Remove Routerlicious-host package
+Remove `@fluidframework/routerlicious-host` package and its `ContainerUrlResolver` as they have been deprecated in 0.59 and unused.
 
 # 0.58
 

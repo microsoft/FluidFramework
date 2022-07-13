@@ -138,7 +138,7 @@ export class DocumentStorage implements IDocumentStorage {
         const blobsShaCache = new Map<string, string>();
         const uploadManager = this.enableWholeSummaryUpload ?
             new WholeSummaryUploadManager(gitManager) :
-            new SummaryTreeUploadManager(gitManager, blobsShaCache, () => undefined);
+            new SummaryTreeUploadManager(gitManager, blobsShaCache, async () => undefined);
         const handle = await uploadManager.writeSummaryTree(fullTree, "", "container", 0);
 
         winston.info(`Tree reference: ${JSON.stringify(handle)}`, { messageMetaData });
@@ -163,14 +163,13 @@ export class DocumentStorage implements IDocumentStorage {
             Lumberjack.info(`Commit sha: ${JSON.stringify(commit.sha)}`, lumberjackProperties);
         }
 
-        const deli: IDeliState = {
+        const deli: Omit<IDeliState, "epoch"> = {
             clients: undefined,
             durableSequenceNumber: sequenceNumber,
             expHash1: initialHash,
             logOffset: -1,
             sequenceNumber,
             signalClientConnectionNumber: 0,
-            epoch: undefined,
             term: 1,
             lastSentMSN: 0,
             nackMessages: undefined,
@@ -224,7 +223,7 @@ export class DocumentStorage implements IDocumentStorage {
     public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
         const versions = await this.getVersions(tenantId, documentId, 1);
         if (!versions.length) {
-            return null;
+            return (null as unknown) as ICommit;
         }
 
         const latest = versions[0];
@@ -257,12 +256,15 @@ export class DocumentStorage implements IDocumentStorage {
         const tenant = await this.tenantManager.getTenant(tenantId, documentId);
         const versions = await tenant.gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {
-            return { cache: { blobs: [], commits: [], refs: { [documentId]: null }, trees: [] }, code: null };
+            return {
+                cache: { blobs: [], commits: [], refs: { [documentId]: (null as unknown) as string }, trees: [] },
+                code: (null as unknown) as string,
+            };
         }
 
         const fullTree = await tenant.gitManager.getFullTree(versions[0].sha);
 
-        let code: string = null;
+        let code: string = (null as unknown) as string;
         if (fullTree.quorumValues) {
             let quorumValues;
             for (const blob of fullTree.blobs) {
@@ -302,10 +304,10 @@ export class DocumentStorage implements IDocumentStorage {
         session?: ISession): Promise<IDocument> {
         const value: IDocument = {
             createTime: Date.now(),
-            deli,
+            deli: (deli as unknown) as string,
             documentId,
-            session,
-            scribe,
+            session: (session as unknown) as ISession,
+            scribe: (scribe as unknown) as string,
             tenantId,
             version: "0.1",
         };
@@ -377,7 +379,6 @@ export class DocumentStorage implements IDocumentStorage {
             const opsCollection = await this.databaseManager.getDeltaCollection(tenantId, documentId);
             await opsCollection
                 .insertMany(dbOps, false)
-                // eslint-disable-next-line @typescript-eslint/promise-function-async
                 .catch((error) => {
                     // Duplicate key errors are ignored
                     if (error.code !== 11000) {

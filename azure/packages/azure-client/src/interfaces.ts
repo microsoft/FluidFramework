@@ -4,18 +4,12 @@
  */
 
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import {
-    IMember,
-    IServiceAudience,
-} from "@fluidframework/fluid-static";
+import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 
 // Re-export so developers can build loggers without pulling in common-definitions
-export {
-    ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
-} from "@fluidframework/common-definitions";
+export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 /**
  * Props for initializing a new AzureClient instance
@@ -24,7 +18,7 @@ export interface AzureClientProps {
     /**
      * Configuration for establishing a connection with the Azure Fluid Relay.
      */
-    readonly connection: AzureConnectionConfig;
+    readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
     /**
      * Optional. A logger instance to receive diagnostic messages.
      */
@@ -129,6 +123,8 @@ export interface AzureContainerServices {
  * Note: must be JSON-serializable.
  * Passing a non-serializable object (e.g. a `class`) will result in undefined behavior.
  */
+// TODO: this should be updated to use something other than `any` (unknown)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface AzureUser<T = any> extends IUser {
     /**
      * The user's name
@@ -150,6 +146,8 @@ export interface AzureUser<T = any> extends IUser {
  * Note: must be JSON-serializable.
  * Passing a non-serializable object (e.g. a `class`) will result in undefined behavior.
  */
+// TODO: this should be updated to use something other than `any` (unknown)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface AzureMember<T = any> extends IMember {
     /**
      * {@inheritDoc AzureUser.name}
