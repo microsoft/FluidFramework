@@ -55,159 +55,159 @@ import * as Delta from "./delta";
  * @param visitor - The object to notify of the changes encountered.
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
-	const moveInfo: MoveOutInfo = new Map();
-	firstPass(delta, { visitor, moveInfo });
-	if (moveInfo.size > 0) {
-		secondPass(delta, { visitor, moveInfo });
-	}
+    const moveInfo: MoveOutInfo = new Map();
+    firstPass(delta, { visitor, moveInfo });
+    if (moveInfo.size > 0) {
+        secondPass(delta, { visitor, moveInfo });
+    }
 }
 
 export interface DeltaVisitor {
-	onDelete(index: number, count: number): void;
-	onInsert(index: number, content: Delta.ProtoNode[]): void;
-	onMoveOut(index: number, count: number, id: Delta.MoveId): void;
-	onMoveIn(index: number, count: number, id: Delta.MoveId): void;
-	onSetValue(value: Delta.Value): void;
-	// TODO: better align this with ITreeCursor:
+    onDelete(index: number, count: number): void;
+    onInsert(index: number, content: Delta.ProtoNode[]): void;
+    onMoveOut(index: number, count: number, id: Delta.MoveId): void;
+    onMoveIn(index: number, count: number, id: Delta.MoveId): void;
+    onSetValue(value: Delta.Value): void;
+    // TODO: better align this with ITreeCursor:
     // maybe rename it's up and down to enter / exit? Maybe Also)?
     // Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match
-	// this visitor?
-	enterNode(index: number): void;
-	exitNode(index: number): void;
-	enterField(key: Delta.FieldKey): void;
-	exitField(key: Delta.FieldKey): void;
+    // this visitor?
+    enterNode(index: number): void;
+    exitNode(index: number): void;
+    enterField(key: Delta.FieldKey): void;
+    exitField(key: Delta.FieldKey): void;
 }
 
 type MoveOutInfo = Map<Delta.MoveId, Delta.MoveOut>;
 
 interface PassProps {
-	/**
-	 * Can be omitted if equal to zero.
-	 */
-	startIndex?: number;
-	visitor: DeltaVisitor;
-	moveInfo: MoveOutInfo;
+    /**
+     * Can be omitted if equal to zero.
+     */
+    startIndex?: number;
+    visitor: DeltaVisitor;
+    moveInfo: MoveOutInfo;
 }
 
 type Pass = (delta: Delta.Root, props: PassProps) => void;
 
 function recurse(modify: Delta.Modify, props: PassProps, func: Pass): void {
-	// Note that the `in` operator return true for properties that are present on the object even if they
-	// are set to `undefined. This is leveraged here to represent the fact that the value should be set to
-	// `undefined` as opposed to leaving the value untouched.
-	if (Delta.setValue in modify) {
-		props.visitor.onSetValue(modify[Delta.setValue]);
-	}
-	// `Object.keys`'s return value does not include symbols
-	for (const key of Object.keys(modify)) {
-		props.visitor.enterField(key);
-		func(modify[key], props);
-		props.visitor.exitField(key);
-	}
+    // Note that the `in` operator return true for properties that are present on the object even if they
+    // are set to `undefined. This is leveraged here to represent the fact that the value should be set to
+    // `undefined` as opposed to leaving the value untouched.
+    if (Delta.setValue in modify) {
+        props.visitor.onSetValue(modify[Delta.setValue]);
+    }
+    // `Object.keys`'s return value does not include symbols
+    for (const key of Object.keys(modify)) {
+        props.visitor.enterField(key);
+        func(modify[key], props);
+        props.visitor.exitField(key);
+    }
 }
 
 function firstPass(delta: Delta.Root, props: PassProps): void {
-	const { startIndex, visitor, moveInfo } = props;
-	let index = startIndex ?? 0;
-	for (const { offset, mark } of delta) {
-		index += offset;
-		// Inline into the `switch(...)` once we upgrade to TS 4.7
-		const type = mark[Delta.type];
-		switch (type) {
-			case Delta.MarkType.Delete: {
-				// Remove cast once we upgrade to TS 4.7
-				const deleteMark = mark as Delta.Delete;
-				if (mark.modify !== undefined) {
-					firstPass(mark.modify, { ...props, startIndex: index });
-				}
-				visitor.onDelete(index, deleteMark.count);
-				break;
-			}
-			case Delta.MarkType.MoveOut: {
-				// Remove cast once we upgrade to TS 4.7
-				const moveOutMark = mark as Delta.MoveOut;
-				moveInfo.set(moveOutMark.moveId, moveOutMark);
-				if (mark.modify !== undefined) {
-					firstPass(mark.modify, { ...props, startIndex: index });
-				}
-				visitor.onMoveOut(index, moveOutMark.count, moveOutMark.moveId);
-				break;
-			}
-			case Delta.MarkType.Modify: {
-				// Remove cast once we upgrade to TS 4.7
-				const modifyMark = mark as Delta.Modify;
-				visitor.enterNode(index);
-				recurse(modifyMark, { visitor, moveInfo }, firstPass);
-				visitor.exitNode(index);
-				index += 1;
-				break;
-			}
-			case Delta.MarkType.Insert: {
-				// Remove cast once we upgrade to TS 4.7
-				const insertMark = mark as Delta.Insert;
-				visitor.onInsert(index, insertMark.content);
-				if (mark.modify !== undefined) {
-					firstPass(mark.modify, { ...props, startIndex: index });
-				}
-				index += insertMark.content.length;
-				break;
-			}
-			case Delta.MarkType.MoveIn: {
-				// Handled in the second pass
-				break;
-			}
-			default: neverCase(type);
-		}
-	}
+    const { startIndex, visitor, moveInfo } = props;
+    let index = startIndex ?? 0;
+    for (const { offset, mark } of delta) {
+        index += offset;
+        // Inline into the `switch(...)` once we upgrade to TS 4.7
+        const type = mark[Delta.type];
+        switch (type) {
+            case Delta.MarkType.Delete: {
+                // Remove cast once we upgrade to TS 4.7
+                const deleteMark = mark as Delta.Delete;
+                if (mark.modify !== undefined) {
+                    firstPass(mark.modify, { ...props, startIndex: index });
+                }
+                visitor.onDelete(index, deleteMark.count);
+                break;
+            }
+            case Delta.MarkType.MoveOut: {
+                // Remove cast once we upgrade to TS 4.7
+                const moveOutMark = mark as Delta.MoveOut;
+                moveInfo.set(moveOutMark.moveId, moveOutMark);
+                if (mark.modify !== undefined) {
+                    firstPass(mark.modify, { ...props, startIndex: index });
+                }
+                visitor.onMoveOut(index, moveOutMark.count, moveOutMark.moveId);
+                break;
+            }
+            case Delta.MarkType.Modify: {
+                // Remove cast once we upgrade to TS 4.7
+                const modifyMark = mark as Delta.Modify;
+                visitor.enterNode(index);
+                recurse(modifyMark, { visitor, moveInfo }, firstPass);
+                visitor.exitNode(index);
+                index += 1;
+                break;
+            }
+            case Delta.MarkType.Insert: {
+                // Remove cast once we upgrade to TS 4.7
+                const insertMark = mark as Delta.Insert;
+                visitor.onInsert(index, insertMark.content);
+                if (mark.modify !== undefined) {
+                    firstPass(mark.modify, { ...props, startIndex: index });
+                }
+                index += insertMark.content.length;
+                break;
+            }
+            case Delta.MarkType.MoveIn: {
+                // Handled in the second pass
+                break;
+            }
+            default: neverCase(type);
+        }
+    }
 }
 
 const NO_MATCHING_MOVE_OUT_ERR = "Encountered a MoveIn mark for which there is not corresponding MoveOut mark";
 
 function secondPass(delta: Delta.Root, props: PassProps): void {
-	const { startIndex, visitor, moveInfo } = props;
-	let index = startIndex ?? 0;
-	for (const { offset, mark } of delta) {
-		index += offset;
-		// Inline into the `switch(...)` once we upgrade to TS 4.7
-		const type = mark[Delta.type];
-		switch (type) {
-			case Delta.MarkType.Delete: {
-				// Handled in the first pass
-				break;
-			}
-			case Delta.MarkType.MoveOut: {
-				// Handled in the first pass
-				break;
-			}
-			case Delta.MarkType.Modify: {
-				// Remove cast once we upgrade to TS 4.7
-				const modifyMark = mark as Delta.Modify;
-				visitor.enterNode(index);
-				recurse(modifyMark, { ...props, startIndex: 0 }, secondPass);
-				visitor.exitNode(index);
-				index += 1;
-				break;
-			}
-			case Delta.MarkType.Insert: {
-				// Remove cast once we upgrade to TS 4.7
-				const insertMark = mark as Delta.Insert;
-				// Handled in the first pass
-				index += insertMark.content.length;
-				break;
-			}
-			case Delta.MarkType.MoveIn: {
-				// Remove cast once we upgrade to TS 4.7
-				const moveInMark = mark as Delta.MoveIn;
-				const moveOut = moveInfo.get(moveInMark.moveId) ?? fail(NO_MATCHING_MOVE_OUT_ERR);
-				visitor.onMoveIn(index, moveOut.count, moveOut.moveId);
-				if (mark.modify !== undefined) {
-					// Note that this may call visitor callbacks with an index that is less than index + moveOut.count
-					secondPass(mark.modify, { ...props, startIndex: index });
-				}
-				index += moveOut.count;
-				break;
-			}
-			default: neverCase(type);
-		}
-	}
+    const { startIndex, visitor, moveInfo } = props;
+    let index = startIndex ?? 0;
+    for (const { offset, mark } of delta) {
+        index += offset;
+        // Inline into the `switch(...)` once we upgrade to TS 4.7
+        const type = mark[Delta.type];
+        switch (type) {
+            case Delta.MarkType.Delete: {
+                // Handled in the first pass
+                break;
+            }
+            case Delta.MarkType.MoveOut: {
+                // Handled in the first pass
+                break;
+            }
+            case Delta.MarkType.Modify: {
+                // Remove cast once we upgrade to TS 4.7
+                const modifyMark = mark as Delta.Modify;
+                visitor.enterNode(index);
+                recurse(modifyMark, { ...props, startIndex: 0 }, secondPass);
+                visitor.exitNode(index);
+                index += 1;
+                break;
+            }
+            case Delta.MarkType.Insert: {
+                // Remove cast once we upgrade to TS 4.7
+                const insertMark = mark as Delta.Insert;
+                // Handled in the first pass
+                index += insertMark.content.length;
+                break;
+            }
+            case Delta.MarkType.MoveIn: {
+                // Remove cast once we upgrade to TS 4.7
+                const moveInMark = mark as Delta.MoveIn;
+                const moveOut = moveInfo.get(moveInMark.moveId) ?? fail(NO_MATCHING_MOVE_OUT_ERR);
+                visitor.onMoveIn(index, moveOut.count, moveOut.moveId);
+                if (mark.modify !== undefined) {
+                    // Note that this may call visitor callbacks with an index that is less than index + moveOut.count
+                    secondPass(mark.modify, { ...props, startIndex: index });
+                }
+                index += moveOut.count;
+                break;
+            }
+            default: neverCase(type);
+        }
+    }
 }

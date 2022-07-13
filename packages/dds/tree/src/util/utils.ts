@@ -29,5 +29,5 @@ export function fail(message: string): never {
  * @param never - The switch value
  */
  export function neverCase(never: never): never {
-	fail("neverCase was called");
+    fail("neverCase was called");
 }

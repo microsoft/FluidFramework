@@ -161,8 +161,8 @@ export type Mark = Modify | Delete | MoveOut | MoveIn | Insert;
  * See PositionedMarks.
  */
 export interface MarkWithOffset<TMark = Mark> {
-	offset: Offset;
-	mark: TMark;
+    offset: Offset;
+    mark: TMark;
 }
 
 /**
@@ -170,42 +170,42 @@ export interface MarkWithOffset<TMark = Mark> {
  * moved).
  */
 export interface Modify {
-	[type]: typeof MarkType.Modify;
-	[setValue]?: Value;
-	[key: FieldKey]: PositionedMarks;
+    [type]: typeof MarkType.Modify;
+    [setValue]?: Value;
+    [key: FieldKey]: PositionedMarks;
 }
 
 /**
  * Describes modifications made to a subtree that is being deleted.
  */
 export interface ModifyDeleted {
-	[type]: typeof MarkType.Modify;
-	[key: FieldKey]: PositionedMarks<ModifyDeleted | MoveOut>;
+    [type]: typeof MarkType.Modify;
+    [key: FieldKey]: PositionedMarks<ModifyDeleted | MoveOut>;
 }
 
 /**
  * Describes modifications made to a subtree that is being moved out.
  */
 export interface ModifyMovedOut {
-	[type]: typeof MarkType.Modify;
-	[setValue]?: Value;
-	[key: FieldKey]: PositionedMarks<ModifyMovedOut | Delete | MoveOut>;
+    [type]: typeof MarkType.Modify;
+    [setValue]?: Value;
+    [key: FieldKey]: PositionedMarks<ModifyMovedOut | Delete | MoveOut>;
 }
 
 /**
  * Describes modifications made to a subtree that is being moved in.
  */
 export interface ModifyMovedIn {
-	[type]: typeof MarkType.Modify;
-	[key: FieldKey]: PositionedMarks<ModifyMovedIn | MoveIn | Insert>;
+    [type]: typeof MarkType.Modify;
+    [key: FieldKey]: PositionedMarks<ModifyMovedIn | MoveIn | Insert>;
 }
 
 /**
  * Describes modifications made to a subtree that is being inserted.
  */
 export interface ModifyInserted {
-	[type]: typeof MarkType.Modify;
-	[key: FieldKey]: PositionedMarks<ModifyMovedIn | MoveIn>;
+    [type]: typeof MarkType.Modify;
+    [key: FieldKey]: PositionedMarks<ModifyMovedIn | MoveIn>;
 }
 
 /**
@@ -213,9 +213,9 @@ export interface ModifyInserted {
  * Includes descriptions of the modifications made to those nodes (if any).
  */
 export interface Delete {
-	[type]: typeof MarkType.Delete;
-	count: number;
-	modify?: PositionedMarks<ModifyDeleted>;
+    [type]: typeof MarkType.Delete;
+    count: number;
+    modify?: PositionedMarks<ModifyDeleted>;
 }
 
 /**
@@ -223,13 +223,13 @@ export interface Delete {
  * Includes descriptions of the modifications made to those nodes (if any).
  */
 export interface MoveOut {
-	[type]: typeof MarkType.MoveOut;
-	count: number;
-	/**
-	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
-	 */
-	moveId: MoveId;
-	modify?: PositionedMarks<ModifyMovedOut>;
+    [type]: typeof MarkType.MoveOut;
+    count: number;
+    /**
+     * The delta should carry exactly one `MoveIn` mark with the same move ID.
+     */
+    moveId: MoveId;
+    modify?: PositionedMarks<ModifyMovedOut>;
 }
 
 /**
@@ -237,12 +237,12 @@ export interface MoveOut {
  * Includes descriptions of the modifications made to those nodes (if any).
  */
 export interface MoveIn {
-	[type]: typeof MarkType.MoveIn;
-	/**
-	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
-	 */
-	moveId: MoveId;
-	modify?: PositionedMarks<ModifyMovedIn>;
+    [type]: typeof MarkType.MoveIn;
+    /**
+     * The delta should carry exactly one `MoveOut` mark with the same move ID.
+     */
+    moveId: MoveId;
+    modify?: PositionedMarks<ModifyMovedIn>;
 }
 
 /**
@@ -251,26 +251,26 @@ export interface MoveIn {
  * Those are represented as `MoveIn` marks within `ProtoField`s.
  */
 export interface Insert {
-	[type]: typeof MarkType.Insert;
-	content: ProtoNode[];
-	modify?: PositionedMarks<ModifyInserted>;
+    [type]: typeof MarkType.Insert;
+    content: ProtoNode[];
+    modify?: PositionedMarks<ModifyInserted>;
 }
 
 /**
  * The contents of a subtree to be created
  */
 export interface ProtoNode {
-	id: string;
-	type?: string;
-	value?: Value;
-	fields?: ProtoFields;
+    id: string;
+    type?: string;
+    value?: Value;
+    fields?: ProtoFields;
 }
 
 /**
  * The fields of a subtree to be created
  */
 export interface ProtoFields {
-	[key: FieldKey]: ProtoField;
+    [key: FieldKey]: ProtoField;
 }
 
 export type ProtoField = ProtoNode[];
@@ -283,9 +283,9 @@ export type NodeId = string;
 export type FieldKey = string;
 
 export const MarkType = {
-	Modify: 0,
-	Insert: 1,
-	Delete: 2,
-	MoveOut: 3,
-	MoveIn: 4,
+    Modify: 0,
+    Insert: 1,
+    Delete: 2,
+    MoveOut: 3,
+    MoveIn: 4,
 } as const;
