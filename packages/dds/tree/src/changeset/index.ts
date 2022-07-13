@@ -3,4 +3,8 @@
  * Licensed under the MIT License.
  */
 
-export * from "./progressiveEditBuilder";
+/**
+ * This module contains the changeset format and related operations.
+ */
+
+export * from "./format";

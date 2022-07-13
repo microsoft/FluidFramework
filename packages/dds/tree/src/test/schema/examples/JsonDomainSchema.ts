@@ -26,9 +26,9 @@ import {
 
 export const typeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 
-const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
+export const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
 
-const json: NamedTreeSchema[] = [];
+export const json: NamedTreeSchema[] = [];
 
 export const jsonObject: NamedTreeSchema = {
     name: "Json.Object" as TreeSchemaIdentifier,
