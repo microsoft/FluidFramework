@@ -4,7 +4,7 @@
  */
 
 import { fail, neverCase } from "../util";
-import { Delta } from "./delta";
+import * as Delta from "./delta";
 
 /**
  * Implementation notes:
@@ -68,6 +68,10 @@ export interface DeltaVisitor {
 	onMoveOut(index: number, mark: Delta.MoveOut): void;
 	onMoveIn(index: number, mark: Delta.MoveIn): void;
 	onSetValue(value: Delta.Value): void;
+	// TODO: better align this with ITreeCursor:
+    // maybe rename it's up and down to enter / exit? Maybe Also)?
+    // Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match
+	// this visitor?
 	enterNode(index: number): void;
 	exitNode(index: number): void;
 	enterField(key: Delta.FieldKey): void;

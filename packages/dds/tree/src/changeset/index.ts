@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { Delta } from "./delta";
+export * as Delta from "./delta";
 export * from "./visit";
