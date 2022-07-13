@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import * as path from "path";
 import { VersionBag, ReferenceVersionBag } from "./versionBag";
 import { commonOptions } from "../common/commonOptions";
 import { Timer } from "../common/timer";
