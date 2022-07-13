@@ -25,7 +25,8 @@
   },
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run build:test",
+    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:compile": "npm run build:commonjs",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",
@@ -44,7 +45,8 @@
     "policy-check:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:fix": "npm run policy-check -- -r",
     "policy-check:fix:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
-    "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000"
+    "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000",
+    "tsc": "tsc -b"
   },
   "dependencies": {
     "@fluidframework/bundle-size-tools": "^0.0.8505",
