@@ -141,6 +141,9 @@
       "RemovedInterfaceDeclaration_ILocalValue": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "ClassDeclaration_Interval": {
+        "backCompat": false
       }
     }
   }
