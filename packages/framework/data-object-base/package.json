@@ -73,7 +73,7 @@
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@^1.0.0",
+    "@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@1.1.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": "^1.1.1",
     "@microsoft/api-extractor": "^7.22.2",
@@ -91,7 +91,7 @@
   },
   "module:es5": "es5/index.js",
   "typeValidation": {
-    "version": "1.1.0",
+    "version": "1.1.1",
     "broken": {}
   }
 }
