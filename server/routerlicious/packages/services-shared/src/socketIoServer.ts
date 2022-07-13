@@ -99,7 +99,7 @@ export function create(
         Lumberjack.error("Error with Redis sub connection", undefined, err);
     });
 
-    let adapter: (nsp: Namespace) => Adapter | undefined;
+    let adapter: (nsp: Namespace) => Adapter;
     if (socketIoAdapterConfig?.enableCustomSocketIoAdapter) {
         const socketIoRedisOptions: redisSocketIoAdapter.ISocketIoRedisOptions =
         {

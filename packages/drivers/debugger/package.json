@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/debugger",
-  "version": "1.2.0",
+  "version": "2.0.0-internal.1.0.0",
   "description": "Fluid Debugger - a tool to play through history of a file",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -34,10 +34,10 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^1.2.0",
-    "@fluidframework/driver-utils": "^1.2.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/replay-driver": "^1.2.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
+    "@fluidframework/replay-driver": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "jsonschema": "^1.2.6"
   },
   "devDependencies": {
@@ -58,7 +58,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.2.0",
+    "version": "2.0.0",
     "broken": {}
   }
 }

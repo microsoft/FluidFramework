@@ -6,19 +6,29 @@
     "configurations": [
         {
             "name": "flub",
-            "program": "${workspaceFolder}/tools/build-cli/bin/dev",
+            "program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
             "request": "launch",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "type": "node",
             "args": [
-                "bump",
-                "write",
+                "info",
                 "-g",
-                "client",
-                "-t",
-                "current"
+                "build-tools",
+            ],
+        },
+        {
+            "name": "fluid-bump-version",
+            "program": "${workspaceFolder}/build-tools/packages/build-tools/dist/bumpVersion/bumpVersionCli.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "-d",
+                "@fluidframework/common-utils@^0.33.1000",
             ],
         },
         {

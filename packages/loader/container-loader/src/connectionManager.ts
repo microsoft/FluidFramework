@@ -97,7 +97,6 @@ class NoDeltaStream
     serviceConfiguration: IClientConfiguration = {
         maxMessageSize: 0,
         blockSize: 0,
-        summary: undefined as any,
     };
     checkpointSequenceNumber?: number | undefined = undefined;
     submit(messages: IDocumentMessage[]): void {
@@ -441,7 +440,7 @@ export class ConnectionManager implements IConnectionManager {
         if (this.pendingConnection !== undefined) {
             pendingConnectionMode = this.pendingConnection.connectionMode;
             this.cancelConnection();  // Throw out in-progress connection attempt in favor of new attempt
-            assert(this.pendingConnection === undefined, "this.pendingConnection should be undefined");
+            assert(this.pendingConnection === undefined, 0x344 /* this.pendingConnection should be undefined */);
         }
         // If there is no specified ConnectionMode, try the previous mode, if there is no previous mode use default
         let requestedMode = connectionMode ?? pendingConnectionMode ?? this.defaultReconnectionMode;
@@ -626,7 +625,8 @@ export class ConnectionManager implements IConnectionManager {
      * Cancel in-progress connection attempt.
      */
     private cancelConnection() {
-        assert(this.pendingConnection !== undefined, "this.pendingConnection is undefined when trying to cancel");
+        assert(this.pendingConnection !== undefined,
+            0x345 /* this.pendingConnection is undefined when trying to cancel */);
         this.pendingConnection.abort();
         this.pendingConnection = undefined;
         this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });

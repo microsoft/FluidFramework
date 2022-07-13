@@ -34,5 +34,7 @@
         "injective",
         "losslessly",
         "unaugmented"
-    ]
+    ],
+    "editor.detectIndentation": true,
+    "editor.insertSpaces": false, // Use detectIndentation instead
 }

@@ -124,7 +124,7 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
     const markTopLevelNonDev = (dep: string, ref: string, topRef: string) => {
         const item = repoPackageLockJson.dependencies[dep];
         if (!item) {
-            throw new Error(`Missing ${dep} in lock file referenced by ${ref} from ${topRef} in ${MonoRepoKind[monoRepo.kind].toLowerCase()}`);
+            throw new Error(`Missing ${dep} in lock file referenced by ${ref} from ${topRef} in ${monoRepo.kind.toLowerCase()}`);
         }
         if (commonOptions.verbose) {
             console.log(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
@@ -141,8 +141,8 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
         markTopLevelNonDev(dep, "<root>", "<root>");
     }
 
-    console.log(`${MonoRepoKind[monoRepo.kind]}: ${format(totalDevCount)}/${format(totalCount)} locked devDependencies`);
-    console.log(`${MonoRepoKind[monoRepo.kind]}: ${format(topLevelDevCount)}/${format(topLevelTotalCount)} top level locked devDependencies`);
+    console.log(`${monoRepo.kind}: ${format(totalDevCount)}/${format(totalCount)} locked devDependencies`);
+    console.log(`${monoRepo.kind}: ${format(topLevelDevCount)}/${format(topLevelTotalCount)} top level locked devDependencies`);
     return writeFileAsync(path.join(monoRepo.repoPath, "repo-package-lock.json"), JSON.stringify(repoPackageLockJson, undefined, 2));
 }
 
@@ -193,7 +193,7 @@ function processDevDependencies(repoPackageJson: PackageJson, packageJson: Packa
 async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
     const packageMap = new Map<string, Package>(monoRepo.packages.map(pkg => [pkg.name, pkg]));
     const repoPackageJson: PackageJson = {
-        name: `@fluid-internal/${MonoRepoKind[monoRepo.kind].toLowerCase()}`,
+        name: `@fluid-internal/${monoRepo.kind.toLowerCase()}`,
         version: monoRepo.version,
         private: true,
         dependencies: {},
@@ -215,7 +215,7 @@ async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
     processDevDependencies(repoPackageJson, rootPackageJson, packageMap);
 
     await writeFileAsync(path.join(monoRepo.repoPath, "repo-package.json"), JSON.stringify(repoPackageJson, undefined, 2));
-    console.log(`${MonoRepoKind[monoRepo.kind]}: ${format(devDepCount)}/${format(depCount + devDepCount)} devDependencies`);
+    console.log(`${monoRepo.kind}: ${format(devDepCount)}/${format(depCount + devDepCount)} devDependencies`);
     return generateMonoRepoPackageLockJson(monoRepo, repoPackageJson);
 }
 
@@ -228,13 +228,12 @@ async function main() {
     const repo = new FluidRepo(resolvedRoot, false);
     timer.time("Package scan completed");
 
-    if (kind === MonoRepoKind.Client) {
-        await generateMonoRepoInstallPackageJson(repo.clientMonoRepo);
-    } else if (kind === MonoRepoKind.Server && repo.serverMonoRepo) {
-        await generateMonoRepoInstallPackageJson(repo.serverMonoRepo);
-    } else if (kind === MonoRepoKind.Azure && repo.azureMonoRepo) {
-        await generateMonoRepoInstallPackageJson(repo.azureMonoRepo);
+    const releaseGroup = repo.monoRepos.get(kind);
+    if(releaseGroup === undefined) {
+        throw new Error(`release group couldn't be found.`);
     }
+
+    await generateMonoRepoInstallPackageJson(releaseGroup);
 }
 
 main().catch(error => {

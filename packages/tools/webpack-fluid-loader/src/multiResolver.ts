@@ -42,7 +42,6 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
 
         case "r11s":
             assert(options.tenantId !== undefined, 0x320 /* options.tenantId is undefined */);
-            assert(options.bearerSecret !== undefined, 0x321 /* options.bearerSecret is undefined */);
             assert(options.fluidHost !== undefined, 0x322 /* options.fluidHost is undefined */);
             if (options.discoveryEndpoint !== undefined) {
                 return new InsecureUrlResolver(
@@ -50,23 +49,22 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                     options.discoveryEndpoint,
                     "https://dummy-historian",
                     options.tenantId,
-                    options.bearerSecret);
+                    options.bearerSecret ?? "");
             }
             return new InsecureUrlResolver(
                 options.fluidHost,
                 options.fluidHost.replace("www", "alfred"),
                 options.fluidHost.replace("www", "historian"),
                 options.tenantId,
-                options.bearerSecret);
+                options.bearerSecret ?? "");
         case "tinylicious": {
-            assert(options.bearerSecret !== undefined, 0x323 /* options.bearerSecret is undefined */);
             const urls = tinyliciousUrls(options);
             return new InsecureUrlResolver(
                 urls.hostUrl,
                 urls.ordererUrl,
                 urls.storageUrl,
                 "tinylicious",
-                options.bearerSecret);
+                options.bearerSecret ?? "");
         }
         case "spo":
         case "spo-df":

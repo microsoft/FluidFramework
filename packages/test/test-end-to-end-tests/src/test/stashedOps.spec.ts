@@ -5,7 +5,6 @@
 
 import assert from "assert";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
 import {
@@ -558,17 +557,18 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const newMapId = "newMap";
         let id;
         const pendingOps = await getPendingOps(provider, false, async (container, d, m) => {
-            const runtime = (container as any).context.runtime as IContainerRuntime;
+            const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+            const runtime = defaultDataStore.context.containerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
-            const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
+            const dataStore: ITestFluidObject = await requestFluidObject<ITestFluidObject>(router, "/");
             id = dataStore.context.id;
 
             const channel = dataStore.runtime.createChannel(newMapId, "https://graph.microsoft.com/types/map");
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            defaultDataStore.root.set("someDataStore", dataStore.handle);
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -585,7 +585,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     it("doesn't resend successful attach op", async function() {
         const newMapId = "newMap";
         const pendingOps = await getPendingOps(provider, true, async (container, d, m) => {
-            const runtime = (container as any).context.runtime as IContainerRuntime;
+            const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+            const runtime = defaultDataStore.context.containerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
             const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
@@ -594,7 +595,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            defaultDataStore.root.set("someDataStore", dataStore.handle);
             (channel as SharedMap).set(testKey, testValue);
         });
 
@@ -756,14 +757,20 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             .then(async (c) => c.closeAndGetPendingLocalState());
         const container = await loadOffline(provider, { url }, offlineState);
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
+        const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-        // calling uploadBlob() will not resolve while offline, but should not result in an error
-        const blobHandleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+        const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+        assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+        map.set("blob handle", handle);
 
         container.connect();
-        // blob handle should resolve now we're connected
-        const handle = await blobHandleP;
-        assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+
+        const container2 = await provider.loadTestContainer(testContainerConfig);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+        await provider.ensureSynchronized();
+        assert.strictEqual(bufferToString(await map2.get("blob handle").get(), "utf8"), "blob contents");
     });
 
     it("offline attach", async function() {
@@ -771,7 +778,8 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         let id;
         // stash attach op
         const pendingOps = await getPendingOps(provider, false, async (container, d, m) => {
-            const runtime = (container as any).context.runtime as IContainerRuntime;
+            const defaultDataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+            const runtime = defaultDataStore.context.containerRuntime;
 
             const router = await runtime.createDataStore(["default"]);
             const dataStore = await requestFluidObject<ITestFluidObject>(router, "/");
@@ -781,7 +789,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             assert.strictEqual(channel.handle.isAttached, false, "Channel should be detached");
 
             (await channel.handle.get() as SharedObject).bindToContext();
-            dataStore.channel.bindToContext();
+            defaultDataStore.root.set("someDataStore", dataStore.handle);
             (channel as SharedMap).set(testKey, testValue);
         });
 

@@ -7,10 +7,10 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
-module.exports = env => {
-    return ({
+module.exports = (env) => {
+    return {
         entry: {
-            app: "./tests/index.ts"
+            app: "./tests/index.ts",
         },
         resolve: {
             extensions: [".ts", ".tsx", ".js"],
@@ -19,9 +19,9 @@ module.exports = env => {
             rules: [
                 {
                     test: /\.tsx?$/,
-                    loader: require.resolve("ts-loader")
+                    loader: require.resolve("ts-loader"),
                 },
-            ]
+            ],
         },
         output: {
             filename: "[name].bundle.js",
@@ -30,22 +30,22 @@ module.exports = env => {
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
             devtoolNamespace: "fluid-example/draft-js",
-            libraryTarget: "umd"
+            libraryTarget: "umd",
         },
         devServer: {
             static: {
-                directory: path.join(__dirname, 'tests')
-            }
+                directory: path.join(__dirname, "tests"),
+            },
         },
         plugins: [
             new webpack.ProvidePlugin({
-                process: 'process/browser'
+                process: "process/browser",
             }),
             new HtmlWebpackPlugin({
                 template: "./tests/index.html",
             }),
         ],
         mode: "development",
-        devtool: "inline-source-map"
-    });
+        devtool: "inline-source-map",
+    };
 };

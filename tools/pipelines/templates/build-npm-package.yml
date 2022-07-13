@@ -262,7 +262,7 @@ stages:
                 targetType: 'inline'
                 workingDirectory: ${{ parameters.buildDirectory }}/nyc/report
                 script: |
-                  sed -e 's/\(filename=\".*[\\/]external \)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+                  sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
             - task: PublishCodeCoverageResults@1
@@ -271,6 +271,7 @@ stages:
                 codeCoverageTool: Cobertura
                 summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
                 reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
+                failIfCoverageEmpty: true
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
           # Test - Upload results
