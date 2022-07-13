@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, ChildLocation } from "../tree";
-import { Value, ITreeCursor } from "./cursor";
+import { FieldKey, ChildLocation, Value } from "../tree";
+import { ITreeCursor } from "./cursor";
 
 /**
  * Copy on write and immutable views for forests.
