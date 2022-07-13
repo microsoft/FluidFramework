@@ -41,8 +41,8 @@
     "prettier": "prettier --check \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
     "prettier:fix": "prettier --write \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
     "test": "npm run test:mocha",
-    "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\"",
     "posttest": "npm run lint",
+    "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
     "tsc": "tsc -b",
     "version": "npm run build:readme && git add README.md"
   },
