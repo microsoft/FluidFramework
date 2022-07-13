@@ -21,3 +21,8 @@ export {
     Loader,
     RelativeLoader,
 } from "./loader";
+export {
+    IProtocolDetails,
+    IProtocolHandler,
+    ProtocolHandlerBuilder,
+} from "./protocol";
