@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { describe } from "mocha";
 import { getRequestedRange } from "../versionUtils";
 
 describe("Get the major version number above or below the baseVersion", () => {
@@ -13,8 +14,8 @@ describe("Get the major version number above or below the baseVersion", () => {
     assert.strictEqual(getRequestedRange("2.0.0", -1), "^1.0.0-0");
 
     // asserts for malformed major versions
-    assert.strictEqual(getRequestedRange("2.0.0", 0), "^2.0.0");
-    assert.strictEqual(getRequestedRange("2.0.0", undefined), "^2.0.0");
+    assert.strictEqual(getRequestedRange("2.0.0", 0), "2.0.0");
+    assert.strictEqual(getRequestedRange("2.0.0", undefined), "2.0.0");
 
     // assert for minor bumps
     assert.strictEqual(getRequestedRange("0.59.1000", -1), "^0.58.0-0");
