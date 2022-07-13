@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { deflate, inflate } from "pako";
 import { compress, decompress } from "lz4js";
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
