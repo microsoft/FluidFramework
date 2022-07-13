@@ -1053,8 +1053,8 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
      * - ack of a remote endpoint modification
      * - position change due to segment sliding (slides due to mergeTree segment deletion will always appear local)
      * The `interval` argument reflects the new values.
-     * `previousInterval` contains `ReferencePosition`s at the same location as the interval's original endpoints.
-     * These references may be transient, so should only be used for location information.
+     * `previousInterval` contains transient `ReferencePosition`s at the same location as the interval's original
+     * endpoints. These references should be used for position information only.
      * `local` reflects whether the change originated locally.
      * `op` is defined if and only if the server has acked this change.
      */
@@ -1135,7 +1135,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             client,
             label,
             this.helpers,
-            (interval, previousInterval) => this.emit("changeInterval", interval, previousInterval, true, undefined),
+            (interval, previousInterval) => this.emitChange(interval, previousInterval, true),
         );
         if (this.savedSerializedIntervals) {
             for (const serializedInterval of this.savedSerializedIntervals) {
@@ -1155,6 +1155,30 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
      */
     private getNextLocalSeq(): number {
         return ++this.client.getCollabWindow().localSeq;
+    }
+
+    private emitChange(
+        interval: TInterval,
+        previousInterval: TInterval,
+        local: boolean,
+        op?: ISequencedDocumentMessage,
+    ): void {
+        // Temporarily make references transient so that positional queries work (non-transient refs
+        // on resolve to DetachedPosition on any segments that don't contain them). The original refType
+        // is restored as single-endpoint changes re-use previous references.
+        let startRefType: ReferenceType;
+        let endRefType: ReferenceType;
+        if (previousInterval instanceof SequenceInterval) {
+            startRefType = previousInterval.start.refType;
+            endRefType = previousInterval.end.refType;
+            previousInterval.start.refType = ReferenceType.Transient;
+            previousInterval.end.refType = ReferenceType.Transient;
+        }
+        this.emit("changeInterval", interval, previousInterval, local, op);
+        if (previousInterval instanceof SequenceInterval) {
+            previousInterval.start.refType = startRefType;
+            previousInterval.end.refType = endRefType;
+        }
     }
 
     public getIntervalById(id: string) {
@@ -1287,7 +1311,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             };
             this.emitter.emit("change", undefined, serializedInterval, { localSeq: this.getNextLocalSeq() });
             this.addPendingChange(id, serializedInterval);
-            this.emit("changeInterval", newInterval, interval, true, undefined);
+            this.emitChange(newInterval, interval, true);
             return newInterval;
         }
         // No interval to change
@@ -1410,7 +1434,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
             }
 
             if (newInterval !== interval) {
-                this.emit("changeInterval", newInterval, interval, local, op);
+                this.emitChange(newInterval, interval, local, op);
             }
 
             const changedProperties = Object.keys(newProps).length > 0;
@@ -1543,7 +1567,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
                 }
             }
             this.localCollection.add(interval);
-            this.emit("changeInterval", interval, oldInterval, true, op);
+            this.emitChange(interval, oldInterval as TInterval, true, op);
         }
     }
 

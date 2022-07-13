@@ -223,7 +223,7 @@ describe("SharedString interval collection event spec", () => {
                 {
                     const [{ interval, previousInterval, previousEndpoints, local, op }] = eventLog;
                     assert.deepEqual(interval, { start: 0, end: 1 });
-                    assert(toRemovalInfo(previousInterval.start.getSegment()) !== undefined);
+                    assert(toRemovalInfo(previousInterval.end.getSegment()) !== undefined);
                     assert.deepEqual(previousEndpoints, { start: 0, end: 1 });
                     assert.equal(local, true);
                     assert.equal(op, undefined);
@@ -292,7 +292,7 @@ describe("SharedString interval collection event spec", () => {
             assert.equal(eventLog.length, 1);
             {
                 const [{ id, deltas, local, op }] = eventLog;
-                assert.deepEqual(id, intervalId);
+                assert.equal(id, intervalId);
                 assert.equal(local, true);
                 assert.equal(op, undefined);
                 assert.deepEqual(deltas, { foo: null });
@@ -309,13 +309,28 @@ describe("SharedString interval collection event spec", () => {
             assert.equal(eventLog.length, 1);
             {
                 const [{ id, deltas, local, op }] = eventLog;
-                assert.deepEqual(id, intervalId);
+                assert.equal(id, intervalId);
                 assert.equal(local, false);
                 assert.equal(op?.contents.type, "act");
                 assert.deepEqual(deltas, { foo: null });
             }
         });
 
-        // TODO: More interesting tests with pending state
+        it("only includes deltas for values that actually changed", () => {
+            const collection2 = sharedString2.getIntervalCollection("test");
+            collection2.changeProperties(intervalId, { applies: true, conflictedDoesNotApply: 5 });
+            assert.equal(eventLog.length, 0);
+            collection.changeProperties(intervalId, { conflictedDoesNotApply: 2 });
+            assert.equal(eventLog.length, 1);
+            containerRuntimeFactory.processAllMessages();
+            assert.equal(eventLog.length, 2);
+            {
+                const { id, deltas, local, op } = eventLog[1];
+                assert.equal(id, intervalId);
+                assert.equal(local, false);
+                assert.equal(op?.contents.type, "act");
+                assert.deepEqual(deltas, { applies: null });
+            }
+        });
     });
 });
