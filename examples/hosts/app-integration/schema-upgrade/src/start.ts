@@ -6,8 +6,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { AppView, DebugView } from "./appView";
+import { AppView } from "./appView";
 import { BootLoader } from "./bootLoader";
+import { DebugView } from "./debugView";
 import { externalDataSource } from "./externalData";
 import { IApp, MigrationState } from "./interfaces";
 
