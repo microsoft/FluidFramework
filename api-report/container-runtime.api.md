@@ -127,7 +127,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(): IPendingRuntimeState;
+    getPendingLocalState(): unknown;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
@@ -452,6 +452,8 @@ export interface IPendingMessage {
 export interface IPendingRuntimeState {
     baseSnapshot: ISnapshotTree;
     pending?: IPendingLocalState;
+    // Warning: (ae-forgotten-export) The symbol "IPendingBlobs" needs to be exported by the entry point index.d.ts
+    pendingAttachmentBlobs?: IPendingBlobs;
     savedOps: ISequencedDocumentMessage[];
     // Warning: (ae-forgotten-export) The symbol "ISerializedBaseSnapshotBlobs" needs to be exported by the entry point index.d.ts
     snapshotBlobs: ISerializedBaseSnapshotBlobs;

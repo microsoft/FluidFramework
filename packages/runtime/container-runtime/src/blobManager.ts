@@ -9,7 +9,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, bufferToString, Deferred, stringToBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -102,6 +102,8 @@ interface PendingBlob {
     uploadP: Promise<ICreateBlobResponse>;
 }
 
+export interface IPendingBlobs { [id: string]: { blob: string; }; }
+
 export class BlobManager {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
@@ -154,10 +156,18 @@ export class BlobManager {
         // of the format `/<BlobManager.basePath>/<blobId>`.
         private readonly gcNodeUpdated: (blobPath: string) => void,
         private readonly runtime: IBlobManagerRuntime,
+        stashedBlobs?: unknown,
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "BlobManager");
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
+        if (stashedBlobs) {
+            Object.entries(stashedBlobs as IPendingBlobs).forEach(([id, entry]) => this.pendingBlobs.set(id, {
+                blob: stringToBuffer(entry.blob, "utf8"),
+                status: PendingBlobStatus.OfflinePendingUpload,
+                deferred: new Deferred<string>(),
+            }));
+        }
     }
 
     private get pendingOfflineUploads() {
@@ -561,5 +571,15 @@ export class BlobManager {
             // set identity (id -> id) entry
             this.redirectTable.set(storageId, storageId);
         }
+    }
+
+    public getPendingBlobs(): unknown {
+        const blobs = {};
+        // TODO: if we save the TTL from the createBlobResponse we can avoid reuploading these unnecessarily.
+        // Otherwise we won't know if they've been deleted from storage so we must always reupload.
+        for (const [key, entry] of this.pendingBlobs) {
+            blobs[key] = { blob: bufferToString(entry.blob, "utf8") };
+        }
+        return blobs;
     }
 }
