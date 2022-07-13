@@ -42,7 +42,7 @@ import * as Delta from "./delta";
  * - Does not leverage the move table
  *
  * Future work:
- * - Take a path to the subtree of interest (or some other description of the regions of interest)
+ * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial checkouts).
  * - Leverage move table when it gets added to Delta
 */
 
