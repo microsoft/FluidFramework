@@ -356,7 +356,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      */
     protected applyStashedOp(content: any): unknown {
         this.kernel.tryProcessMessage(content, false, undefined);
-        return this.kernel.tryGetStashedOpLocalMetadata(content);
+        return this.kernel.tryProcessStashedOpLocalMetadata(content);
     }
 
     /**
