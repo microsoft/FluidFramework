@@ -95,6 +95,23 @@ GLOBAL FLAGS
 
 DESCRIPTION
   Convert version strings between regular semver and the Fluid internal version scheme.
+
+EXAMPLES
+  The version can be a Fluid internal version.
+
+    $ fluv version 2.0.0-internal.1.0.0 --type minor
+
+  The version can also be a semver with a bump type.
+
+    $ fluv version 1.0.0 --type minor
+
+  If needed, you can provide a public version to override the default.
+
+    $ fluv version 1.0.0 --type patch --publicVersion 3.1.0
+
+  You can use ^ and ~ as a shorthand.
+
+    $ fluv version ^1.0.0
 ```
 
 _See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_

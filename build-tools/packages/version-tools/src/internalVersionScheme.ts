@@ -171,10 +171,25 @@ export function bumpInternalVersion(
     return toInternalScheme(pubVer, newIntVer);
 }
 
+/**
+ * Returns a dependency range string for the Fluid internal version.
+ *
+ * @remarks
+ *
+ * The Fluid internal version scheme is not compatible with common dependency shorthands like ~ and ^. Instead, more
+ * complex greater-than/less-than ranges must be used. This function simplifies generating those ranges.
+ *
+ * @param version - The Fluid internal version to use as the *minimum* for the version range. This version must be a
+ * Fluid internal version or an Error will be thrown.
+ * @param maxAutomaticBump - The maximum level of semver bumps you want the range to allow. For example, if you want the
+ * dependency range to allow more recent patch versions, pass the value "patch". You can also pass "~" and "^" to
+ * generate a range equivalent to those shorthands.
+ * @returns A dependency range string. If the generated range is invalid an Error will be thrown.
+ */
 export function getVersionRange(
     version: semver.SemVer | string,
     maxAutomaticBump: "minor" | "patch" | "~" | "^",
-) {
+): string {
     validateVersionScheme(version);
 
     const lowVersion = version;

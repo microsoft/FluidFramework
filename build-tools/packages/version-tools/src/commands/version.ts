@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { isVersionBumpTypeExtended } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
 import * as semver from "semver";
 import { table } from "table";
@@ -63,23 +64,41 @@ export default class VersionCommand extends Command {
         },
     ];
 
+    static examples = [
+        {
+            description: "The version can be a Fluid internal version.",
+            command: "<%= config.bin %> <%= command.id %> 2.0.0-internal.1.0.0 --type minor",
+        },
+        {
+            description: "The version can also be a semver with a bump type.",
+            command: "<%= config.bin %> <%= command.id %> 1.0.0 --type minor",
+        },
+        {
+            description: "If needed, you can provide a public version to override the default.",
+            command: "<%= config.bin %> <%= command.id %> 1.0.0 --type patch --publicVersion 3.1.0",
+        },
+        {
+            description: "You can use ^ and ~ as a shorthand.",
+            command: "<%= config.bin %> <%= command.id %> ^1.0.0",
+        },
+    ];
+
     async run(): Promise<VersionInfo> {
         const { args, flags } = await this.parse(VersionCommand);
 
-        // eslint-disable-next-line prefer-const
-        let { bumpType, originalVersion } = await this.parseVersionArgument(
-            args.version,
-            flags.publicVersion,
-        );
-        let bumpedVersion: semver.SemVer;
+        const versionArg = await this.parseVersionArgument(args.version);
+        const bumpType = flags.type ?? versionArg.bumpType ?? "";
 
-        if (bumpType === "") {
-            if (flags.type === undefined) {
-                this.error(`Need a bump type`);
-            }
-            bumpType = flags.type;
+        if (!isVersionBumpTypeExtended(bumpType)) {
+            this.error(`Need a bump type`);
         }
 
+        const { parsedVersion, isFluidInternalFormat } = versionArg;
+        const originalVersion = isFluidInternalFormat
+            ? parsedVersion
+            : toInternalScheme(flags.publicVersion, parsedVersion);
+
+        let bumpedVersion: semver.SemVer;
         switch (bumpType) {
             case "patch":
             case "minor":
@@ -148,10 +167,20 @@ export default class VersionCommand extends Command {
         return data;
     }
 
-    async parseVersionArgument(arg: string, publicVersionToUse: string) {
-        const input = arg;
-        let parsedInput = arg;
-        let bumpType = "";
+    /**
+     * Parses a CLI input string as a version. The st
+     *
+     * @param versionString - A version string in either standard semver or Fluid internal format. If the string begins
+     * with a "~" or "^", then the bump type will be set accordingly.
+     * @returns An object containing the parsed bump type, parsed version, and a boolean indicating whether the parsed
+     * version is in the Fluid internal format or not.
+     */
+    async parseVersionArgument(versionString: string): Promise<ParsedVersion> {
+        const input = versionString;
+        let parsedInput = versionString;
+        let bumpType: string | undefined;
+
+        // Infer the bump type from the ^ and ~
         if (input.startsWith("^") || input.startsWith("~")) {
             bumpType = input.startsWith("^") ? "minor" : "patch";
             parsedInput = input.slice(1);
@@ -161,20 +190,16 @@ export default class VersionCommand extends Command {
         if (parsedVersion === null) {
             this.error(`The version you provided isn't valid: "${parsedInput}"`);
         }
-
-        let originalPubVer: semver.SemVer | string;
-        let originalIntVer: semver.SemVer | string;
-        let originalVersion: semver.SemVer;
-        if (isInternalVersionScheme(parsedVersion) === true) {
-            [originalPubVer, originalIntVer] = fromInternalScheme(parsedVersion);
-            originalVersion = parsedVersion;
-        } else {
-            [originalPubVer, originalIntVer] = [publicVersionToUse, parsedInput];
-            originalVersion = toInternalScheme(originalPubVer, originalIntVer);
-        }
         return {
             bumpType,
-            originalVersion,
+            parsedVersion,
+            isFluidInternalFormat: isInternalVersionScheme(parsedVersion) === true,
         };
     }
+}
+
+interface ParsedVersion {
+    bumpType?: string;
+    parsedVersion: semver.SemVer;
+    isFluidInternalFormat: boolean;
 }
