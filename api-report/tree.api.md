@@ -41,7 +41,8 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(valu
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
 
 // @public
-export type GlobalFieldKey = Opaque<Brand<string, "tree.GlobalFieldKey">>;
+export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
+}
 
 // @public
 export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
@@ -90,7 +91,11 @@ export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 export type TreeType = TreeSchemaIdentifier;
 
 // @public
-export type Value = undefined | Serializable;
+export interface TreeValue extends Serializable {
+}
+
+// @public
+export type Value = undefined | TreeValue;
 
 // (No @packageDocumentation comment for this package)
 

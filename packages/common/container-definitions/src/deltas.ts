@@ -182,7 +182,11 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
      */
     toArray(): T[];
 
-    waitTillProcessingDone(): Promise<void>;
+    /**
+     * returns number of ops processed and time it took to process these ops.
+     * Zeros if queue did not process anything (had no messages, was paused or had hit an error before)
+     */
+    waitTillProcessingDone(): Promise<{ count: number; duration: number; }>;
 }
 
 export type ReadOnlyInfo = {

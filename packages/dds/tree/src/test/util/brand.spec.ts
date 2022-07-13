@@ -23,9 +23,9 @@ export type T1 = Brand<number, "1">;
 export type T2 = Brand<number, "2">;
 export type T3 = Brand<{ test: number; }, "2">;
 
-type O1 = Opaque<T1>;
-type O2 = Opaque<T2>;
-type O3 = Opaque<T3>;
+interface O1 extends Opaque<T1>{}
+interface O2 extends Opaque<T2>{}
+interface O3 extends Opaque<T3>{}
 
 type _check =
     | requireTrue<areSafelyAssignable<ExtractFromOpaque<O1>, T1>>

@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -22,7 +22,14 @@ import {
     blobCountPropertyName,
     totalBlobSizePropertyName,
 } from "@fluidframework/runtime-definitions";
-import { ChildLogger, EventEmitterWithErrorHandling } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    EventEmitterWithErrorHandling,
+    loggerToMonitoringContext,
+    MonitoringContext,
+    SampledTelemetryHelper,
+    TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
@@ -36,6 +43,9 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     public get IFluidLoadable() { return this; }
 
+    private readonly opProcessingHelper: SampledTelemetryHelper;
+    private readonly callbacksHelper: SampledTelemetryHelper;
+
     /**
      * The handle referring to this SharedObject
      */
@@ -45,6 +55,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      * Telemetry logger for the shared object
      */
     protected readonly logger: ITelemetryLogger;
+    private readonly mc: MonitoringContext;
 
     /**
      * Connection state
@@ -95,10 +106,58 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
         this.logger = ChildLogger.create(
             runtime.logger,
             undefined,
-            { all: { sharedObjectId: uuid() } },
+            {
+                all: {
+                    sharedObjectId: uuid(),
+                    ddsType: {
+                        value: this.attributes.type,
+                        tag: TelemetryDataTag.CodeArtifact,
+                    },
+                },
+            },
         );
+        this.mc = loggerToMonitoringContext(this.logger);
+
+        [this.opProcessingHelper, this.callbacksHelper] = this.setUpSampledTelemetryHelpers();
 
         this.attachListeners();
+    }
+
+    /**
+     * This function is only supposed to be called from SharedObjectCore's constructor and
+     * depends on a few things being set already. assert() calls make sure of it.
+     * @returns The telemetry sampling helpers, so the constructor can be the one to assign them
+     * to variables to avoid complaints from TypeScript.
+     */
+    private setUpSampledTelemetryHelpers(): SampledTelemetryHelper[] {
+        assert(this.mc !== undefined && this.logger !== undefined, "this.mc and/or this.logger has not been set");
+        const opProcessingHelper = new SampledTelemetryHelper(
+            {
+                eventName: "ddsOpProcessing",
+                category: "performance",
+            },
+            this.logger,
+            this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 100,
+            true,
+            new Map<string, ITelemetryProperties>([
+                ["local", { localOp: true }],
+                ["remote", { localOp: false }],
+            ]));
+        const callbacksHelper = new SampledTelemetryHelper(
+            {
+                eventName: "ddsEventCallbacks",
+                category: "performance",
+            },
+            this.logger,
+            this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 100,
+            true);
+
+        this.runtime.once("dispose", () => {
+            this.callbacksHelper.dispose();
+            this.opProcessingHelper.dispose();
+        });
+
+        return [opProcessingHelper, callbacksHelper];
     }
 
     /**
@@ -413,9 +472,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      */
     private process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
         this.verifyNotClosed(); // This will result in container closure.
-        this.emit("pre-op", message, local, this);
-        this.processCore(message, local, localOpMetadata);
-        this.emit("op", message, local, this);
+        this.emitInternal("pre-op", message, local, this);
+
+        this.opProcessingHelper.measure(
+            () => { this.processCore(message, local, localOpMetadata); },
+            local ? "local" : "remote");
+
+        this.emitInternal("op", message, local, this);
     }
 
     /**
@@ -444,6 +507,36 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
      * when the op is ACKed or resubmitted, respectively
      */
     protected abstract applyStashedOp(content: any): unknown;
+
+    /**
+     * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
+     * specifically to emit events that are part of the public interface of the DDS (i.e. those that can have listeners
+     * attached to them by the consumers of the DDS). It should not be called from outside the class or to emit events
+     * which are only internal to the DDS. Support for calling it from outside the DDS instance might be removed in the
+     * future.
+     *
+     * @internal
+     *
+     * @param event - The event to emit.
+     * @param args - Arguments to pass to the event listeners.
+     * @returns `true` if the event had listeners, `false` otherwise.
+     */
+    public emit(event: EventEmitterEventType, ...args: any[]): boolean {
+        return this.callbacksHelper.measure(() => super.emit(event, ...args));
+    }
+
+    /**
+     * Use to emit events inside {@link SharedObjectCore}, with no telemetry measurement
+     * done on the duration of the callbacks. Simply calls `super.emit()`.
+     * @param event - Event to emit
+     * @param args - Arguments for the event
+     * @returns Whatever `super.emit()` returns.
+     */
+    private emitInternal(
+        event: EventEmitterEventType,
+        ...args: any[]): boolean {
+        return super.emit(event, ...args);
+    }
 }
 
 /**

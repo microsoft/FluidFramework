@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/undo-redo";
-export const pkgVersion = "1.2.0";
+export const pkgVersion = "2.0.0-internal.1.0.0";

@@ -15,7 +15,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+    "build": "npm run build:genver && npm run format && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:compile": "concurrently npm:build:commonjs npm:build:esnext",
     "build:docs": "api-extractor run --local",
@@ -28,9 +28,12 @@
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+    "format": "npm run prettier:fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "postpack": "cd dist && tar -cvf ../azure-client.test-files.tar ./test",
+    "prettier": "prettier --check \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
+    "prettier:fix": "prettier --write \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
     "start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
     "test:realsvc": "npm run test:realsvc:tinylicious",
     "test:realsvc:azure": "cross-env FLUID_CLIENT=azure npm run test:realsvc:azure:run",
@@ -51,10 +54,10 @@
     "@fluidframework/driver-utils": "^1.0.1",
     "@fluidframework/fluid-static": "^1.0.1",
     "@fluidframework/map": "^1.0.1",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@fluidframework/routerlicious-driver": "^1.0.1",
     "@fluidframework/runtime-utils": "^1.0.1",
-    "@fluidframework/server-services-client": "^0.1036.5000",
+    "@fluidframework/server-services-client": "^0.1037.1000-0",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },
@@ -73,7 +76,9 @@
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
+    "eslint-config-prettier": "~8.5.0",
     "mocha": "^10.0.0",
+    "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
     "start-server-and-test": "^1.11.7",
     "typescript": "~4.5.5"
@@ -83,6 +88,10 @@
   },
   "typeValidation": {
     "version": "1.1.0",
-    "broken": {}
+    "broken": {
+      "InterfaceDeclaration_AzureClientProps": {
+        "forwardCompat": false
+      }
+    }
   }
 }

@@ -146,15 +146,20 @@ export class JsonCursor<T> implements ITreeCursor {
 
     public get keys(): Iterable<FieldKey> {
         const node = this.currentNode;
+        const type = typeof node;
 
-        // It is legal to invoke 'keys()' on a node of type 'JsonType.Null', which requires a
-        // special case to avoid 'Object.keys()' throwing.
-        return node !== null
-            // RATIONALE: Both JSON and the SharedTree data model represent 'undefined' via omission
-            //            (except at the root, where JSON coerces undefined to null).  Therefore, the
-            //            currently selected node may never be 'undefined'.
-            ? Object.keys(node as object) as Iterable<FieldKey>
-            : [];
+        switch (type) {
+            case "object":
+                if (node === null) {
+                    return [];
+                } else if (Array.isArray(node)) {
+                    return [EmptyKey];
+                } else {
+                    return Object.keys(node as object) as Iterable<FieldKey>;
+                }
+            default:
+               return [];
+        }
     }
 
     public length(key: FieldKey): number {
@@ -176,5 +181,45 @@ export class JsonCursor<T> implements ITreeCursor {
         return typeof (node) === "object"
             ? undefined     // null, arrays, and objects have no defined value
             : node;         // boolean, numbers, and strings are their own value
+    }
+}
+
+/**
+ * Extract a JS object tree from the contents of the given ITreeCursor.  Assumes that ITreeCursor
+ * contains only unaugmented JsonTypes.
+ */
+ export function extract(reader: ITreeCursor): unknown {
+    const type = reader.type;
+
+    switch (type) {
+        case jsonNumber.name:
+        case jsonBoolean.name:
+        case jsonString.name:
+            return reader.value;
+        case jsonArray.name: {
+            const length = reader.length(EmptyKey);
+            const result = new Array(length);
+            for (let index = 0; index < result.length; index++) {
+                assert(reader.down(EmptyKey, index) === TreeNavigationResult.Ok, "expected navigation ok");
+                result[index] = extract(reader);
+                assert(reader.up() === TreeNavigationResult.Ok, "expected navigation ok");
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return result;
+        }
+        case jsonObject.name: {
+            const result: any = {};
+            for (const key of reader.keys) {
+                assert(reader.down(key, 0) === TreeNavigationResult.Ok, "expected navigation ok");
+                result[key as string] = extract(reader);
+                assert(reader.up() === TreeNavigationResult.Ok, "expected navigation ok");
+            }
+            return result;
+        }
+        default: {
+            assert(type === jsonNull.name, "unexpected type");
+            return null;
+        }
     }
 }

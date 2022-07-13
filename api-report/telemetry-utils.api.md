@@ -7,6 +7,7 @@
 import { EventEmitter } from 'events';
 import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { IDebugger } from 'debug';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { ILoggingError } from '@fluidframework/common-definitions';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
@@ -234,6 +235,17 @@ export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmit
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
 
 // @public
+export class SampledTelemetryHelper implements IDisposable {
+    constructor(eventBase: ITelemetryGenericEvent, logger: ITelemetryLogger, sampleThreshold: number, includeAggregateMetrics?: boolean, perBucketProperties?: Map<string, ITelemetryProperties>);
+    // (undocumented)
+    dispose(error?: Error | undefined): void;
+    // (undocumented)
+    disposed: boolean;
+    // (undocumented)
+    measure<T>(codeToMeasure: () => T, bucket?: string): T;
+}
+
+// @public
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @public @deprecated (undocumented)
@@ -246,8 +258,6 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 // @public
 export enum TelemetryDataTag {
     CodeArtifact = "CodeArtifact",
-    // @deprecated
-    PackageData = "PackageData",
     UserData = "UserData"
 }
 
