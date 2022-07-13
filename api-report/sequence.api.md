@@ -68,7 +68,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
+    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean): TInterval;
 }
 
 // @public (undocumented)
