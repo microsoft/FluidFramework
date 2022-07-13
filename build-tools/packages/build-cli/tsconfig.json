@@ -1,8 +1,5 @@
 {
-    "exclude": [
-        "dist",
-        "node_modules"
-    ],
+    "exclude": ["dist", "node_modules"],
     "compilerOptions": {
         "declaration": true,
         "importHelpers": true,
@@ -13,7 +10,7 @@
         "target": "es2019",
         "types": ["node"],
         "esModuleInterop": true,
-        "incremental": true,
+        "incremental": false,
         "pretty": true,
     },
     "parserOptions": {

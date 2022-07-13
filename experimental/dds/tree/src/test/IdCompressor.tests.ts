@@ -751,7 +751,8 @@ describe('IdCompressor', () => {
 				const id = network.getIdLog(Client.Client2)[0].id;
 				const uuid = assertIsStableId(compressor2.decompress(id));
 				const nextUuid = stableIdFromNumericUuid(numericUuidFromStableId(uuid), 1);
-				expect(() => network.allocateAndSendIds(Client.Client1, 1, { 0: nextUuid })).to.throw(
+				// TODO:#283: Re-assess test when full unification is implemented
+				expect(() => network.allocateAndSendIds(Client.Client1, 1, { 0: nextUuid })).to.not.throw(
 					`Override '${nextUuid}' collides with another allocated UUID.`
 				);
 			}

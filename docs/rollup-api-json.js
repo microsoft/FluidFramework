@@ -128,15 +128,10 @@ const main = async () => {
     await fs.emptyDir(stagingPath);
     await fs.emptyDir(outputPath);
 
-    const websitePackageFiles = data.websitePackages.map(
-        (p) => `${packageName(p)}.api.json`
-    );
+    const apiExtractorInputDir = path.resolve("..", "_api-extractor-temp", "doc-models");
 
     // Copy all the files to staging that need to be present for member processing.
-    const stagedPackageFiles = data.allStagingPackages.map(
-        (p) => `${packageName(p)}.api.json`
-    );
-    await cpy(stagedPackageFiles, stagingPath, { cwd: originalPath });
+    await cpy(apiExtractorInputDir, stagingPath);
 
     // Combine members.
     await combineMembers(stagingPath, stagingPath, data.memberCombineInstructions);
@@ -157,7 +152,7 @@ const main = async () => {
             to: to,
         };
 
-        const results = await replace(options);
+        await replace(options);
     }
     catch (error) {
         console.error("Error occurred:", error);
@@ -165,7 +160,7 @@ const main = async () => {
 
     // Copy all processed files that should be published on the site to the output dir.
     console.log(`Copying final files from ${stagingPath} to ${outputPath}`)
-    await cpy(websitePackageFiles, outputPath, { cwd: stagingPath })
+    await cpy(stagingPath, outputPath)
         .on("progress", (progress) => {
             if (progress.percent === 1) {
                 console.log(`\tCopied ${progress.totalFiles} files.`);

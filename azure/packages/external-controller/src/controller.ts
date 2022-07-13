@@ -53,7 +53,8 @@ export class DiceRollerController extends EventEmitter implements IDiceRollerCon
         const value = this.props.get(diceValueKey);
         if (typeof value !== "number") {
             throw new TypeError(
-                "Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?");
+                "Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?",
+            );
         }
         this.props.on("valueChanged", (changed) => {
             if (changed.key === diceValueKey) {
@@ -67,7 +68,8 @@ export class DiceRollerController extends EventEmitter implements IDiceRollerCon
         const value = this.props.get(diceValueKey);
         if (typeof value !== "number") {
             throw new TypeError(
-                "Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?");
+                "Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?",
+            );
         }
         return value;
     }

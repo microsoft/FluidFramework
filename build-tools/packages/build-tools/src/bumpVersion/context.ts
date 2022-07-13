@@ -16,21 +16,9 @@ import { logVerbose } from "../common/logging";
 import { GitRepo } from "./gitRepo";
 import { fatal, prereleaseSatisfies } from "./utils";
 
-import * as semver from "semver";
-
-export type VersionBumpType = "major" | "minor" | "patch";
-export type VersionBumpTypeExtended = VersionBumpType | "current";
-export type VersionChangeType = VersionBumpType | semver.SemVer;
-export type VersionChangeTypeExtended = VersionBumpTypeExtended | semver.SemVer;
-
-export function isVersionBumpType(type: VersionChangeType | string): type is VersionBumpType {
-    return type === "major" || type === "minor" || type === "patch";
-}
-
-export function isVersionBumpTypeExtended(type: VersionChangeType | string): type is VersionBumpTypeExtended {
-    return type === "major" || type === "minor" || type === "patch" || type === "current";
-}
-
+/**
+ * Context provides access to data about the Fluid repo, and exposes methods to interrogate the repo state.
+ */
 export class Context {
     public readonly repo: FluidRepo;
     public readonly fullPackageMap: Map<string, Package>;
@@ -43,12 +31,13 @@ export class Context {
     constructor(
         public readonly gitRepo: GitRepo,
         public readonly originRemotePartialUrl: string,
-        public readonly originalBranchName: string
+        public readonly originalBranchName: string,
+        logVerbose = false,
     ) {
         this.timer = new Timer(commonOptions.timer);
 
         // Load the package
-        this.repo = new FluidRepo(this.gitRepo.resolvedRoot, false);
+        this.repo = new FluidRepo(this.gitRepo.resolvedRoot, false, logVerbose);
         this.timer.time("Package scan completed");
 
         this.fullPackageMap = this.repo.createPackageMap();

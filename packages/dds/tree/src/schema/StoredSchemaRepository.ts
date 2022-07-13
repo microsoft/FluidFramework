@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Dependee, SimpleDependee } from "../dependency-tracking";
 import { allowsFieldSuperset, allowsTreeSuperset } from "./Comparison";
 import {
     SchemaRepository,
@@ -50,8 +51,12 @@ import {
  * - schema changes coupled with instructions for how to updated old data
  * While this is possible,
  * it is not the focus of this design since such users have strictly less implementation constraints.
+ *
+ * TODO: could implement more fine grained dependency tracking.
  */
-export class StoredSchemaRepository implements SchemaRepository {
+export class StoredSchemaRepository extends SimpleDependee implements SchemaRepository, Dependee {
+    readonly computationName: string = "StoredSchemaRepository";
+
     /**
      * For now, the schema are just scored in maps.
      * There are a couple reasons we might not want this simple solution long term:
@@ -67,7 +72,9 @@ export class StoredSchemaRepository implements SchemaRepository {
     public constructor(
         protected readonly fields: Map<GlobalFieldKey, FieldSchema> = new Map(),
         protected readonly trees: Map<TreeSchemaIdentifier, TreeSchema> = new Map(),
-    ) { }
+    ) {
+        super();
+    }
 
     public clone(): StoredSchemaRepository {
         return new StoredSchemaRepository(new Map(this.fields), new Map(this.trees));
@@ -105,6 +112,7 @@ export class StoredSchemaRepository implements SchemaRepository {
             )
         ) {
             this.fields.set(identifier, schema);
+            this.invalidateDependents();
             return true;
         }
         return false;
@@ -121,6 +129,7 @@ export class StoredSchemaRepository implements SchemaRepository {
         const original = this.lookupTreeSchema(identifier);
         if (allowsTreeSuperset(this, original, schema)) {
             this.trees.set(identifier, schema);
+            this.invalidateDependents();
             return true;
         }
         return false;

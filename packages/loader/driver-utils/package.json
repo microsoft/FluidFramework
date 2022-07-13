@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/driver-utils",
-  "version": "1.2.0",
+  "version": "2.0.0-internal.1.0.0",
   "description": "Collection of utility functions for Fluid drivers",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -62,22 +62,22 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/core-interfaces": "^1.2.0",
-    "@fluidframework/driver-definitions": "^1.2.0",
-    "@fluidframework/gitresources": "^0.1036.5000",
-    "@fluidframework/protocol-base": "^0.1036.5000",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/telemetry-utils": "^1.2.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/gitresources": "^0.1037.1000-0",
+    "@fluidframework/protocol-base": "^0.1037.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "axios": "^0.26.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
-    "@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@1.1.0",
+    "@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@^1.0.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^1.2.0",
-    "@fluidframework/runtime-utils": "^1.2.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
@@ -93,7 +93,20 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.2.0",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedClassDeclaration_SummaryTreeAssembler": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }
