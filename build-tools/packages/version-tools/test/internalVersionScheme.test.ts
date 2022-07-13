@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import { assert } from "chai";
-import { fromInternalScheme, toInternalScheme, getVersionRange } from "../internalVersionScheme";
+import { fromInternalScheme, toInternalScheme, getVersionRange } from "../src/internalVersionScheme";
 
 describe("internalScheme", () => {
     describe("converting FROM internal scheme", () => {

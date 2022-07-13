@@ -110,6 +110,7 @@ export function toInternalScheme(
 /**
  * Validates that the version follows the Fluid internal version scheme. Throws if not.
  */
+// eslint-disable-next-line @rushstack/no-new-null
 function validateVersionScheme(version: semver.SemVer | string | null) {
     const parsedVersion = semver.parse(version);
     if (parsedVersion === null) {
