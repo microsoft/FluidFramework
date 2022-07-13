@@ -321,14 +321,14 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         const detachedMap1: ISharedMap = SharedMap.create(dataObject1.runtime);
         const detachedMap2: ISharedMap = SharedMap.create(dataObject1.runtime);
 
-        // When an unattached cell refers to another unattached map, both remain unattached
+        // When an unattached map refers to another unattached map, both remain unattached
         detachedMap1.set("newSharedMap", detachedMap2.handle);
         assert.equal(sharedMap1.isAttached(), true, "sharedMap1 is not attached");
         assert.equal(detachedMap1.isAttached(), false, "detachedMap1 is not attached");
         assert.equal(detachedMap2.isAttached(), false, "detachedMap2 is not attached");
 
-        // When referring cell becomes attached, the referred map becomes attached
-        // and the attachment transitively passes to a second referred DDS
+        // When referring map becomes attached, the referred map becomes attached
+        // and the attachment transitively passes to a second referred map
         sharedMap1.set("newSharedMap", detachedMap1.handle);
         assert.equal(sharedMap1.isAttached(), true, "sharedMap1 is not attached");
         assert.equal(detachedMap1.isAttached(), true, "detachedMap1 is not attached");

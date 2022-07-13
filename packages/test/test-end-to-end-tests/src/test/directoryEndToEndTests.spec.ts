@@ -692,7 +692,7 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
             assert.equal(detachedDirectory2.isAttached(), false, "detachedDirectory2 is not attached");
 
             // When referring directory becomes attached, the referred directory becomes attached
-            // and the attachment transitively passes to a second referred DDS
+            // and the attachment transitively passes to a second referred directory
             sharedDirectory1.set("newSharedDirectory", detachedDirectory1.handle);
             assert.equal(sharedDirectory1.isAttached(), true, "sharedDirectory1 is not attached");
             assert.equal(detachedDirectory1.isAttached(), true, "detachedDirectory1 is not attached");
