@@ -66,6 +66,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
 
     public async loadExisting(id: string): Promise<IApp> {
         const container = await this.loader.resolve({ url: id });
+        // Here need to verify the correct App to wrap the container in
         const app = new App(container);
         await app.initialize();
         return app;
