@@ -63,10 +63,10 @@ export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
 }
 
 export interface DeltaVisitor {
-	onDelete(index: number, mark: Delta.Delete): void;
-	onInsert(index: number, mark: Delta.Insert): void;
-	onMoveOut(index: number, mark: Delta.MoveOut): void;
-	onMoveIn(index: number, mark: Delta.MoveIn): void;
+	onDelete(index: number, count: number): void;
+	onInsert(index: number, content: Delta.ProtoNode[]): void;
+	onMoveOut(index: number, count: number, id: Delta.MoveId): void;
+	onMoveIn(index: number, count: number, id: Delta.MoveId): void;
 	onSetValue(value: Delta.Value): void;
 	// TODO: better align this with ITreeCursor:
     // maybe rename it's up and down to enter / exit? Maybe Also)?
@@ -120,7 +120,7 @@ function firstPass(delta: Delta.Root, props: PassProps): void {
 				if (mark.modify !== undefined) {
 					firstPass(mark.modify, { ...props, startIndex: index });
 				}
-				visitor.onDelete(index, deleteMark);
+				visitor.onDelete(index, deleteMark.count);
 				break;
 			}
 			case Delta.MarkType.MoveOut: {
@@ -130,7 +130,7 @@ function firstPass(delta: Delta.Root, props: PassProps): void {
 				if (mark.modify !== undefined) {
 					firstPass(mark.modify, { ...props, startIndex: index });
 				}
-				visitor.onMoveOut(index, moveOutMark);
+				visitor.onMoveOut(index, moveOutMark.count, moveOutMark.moveId);
 				break;
 			}
 			case Delta.MarkType.Modify: {
@@ -145,7 +145,7 @@ function firstPass(delta: Delta.Root, props: PassProps): void {
 			case Delta.MarkType.Insert: {
 				// Remove cast once we upgrade to TS 4.7
 				const insertMark = mark as Delta.Insert;
-				visitor.onInsert(index, insertMark);
+				visitor.onInsert(index, insertMark.content);
 				if (mark.modify !== undefined) {
 					firstPass(mark.modify, { ...props, startIndex: index });
 				}
@@ -198,12 +198,12 @@ function secondPass(delta: Delta.Root, props: PassProps): void {
 			case Delta.MarkType.MoveIn: {
 				// Remove cast once we upgrade to TS 4.7
 				const moveInMark = mark as Delta.MoveIn;
-				visitor.onMoveIn(index, moveInMark);
+				const moveOut = moveInfo.get(moveInMark.moveId) ?? fail(NO_MATCHING_MOVE_OUT_ERR);
+				visitor.onMoveIn(index, moveOut.count, moveOut.moveId);
 				if (mark.modify !== undefined) {
 					// Note that this may call visitor callbacks with an index that is less than index + moveOut.count
 					secondPass(mark.modify, { ...props, startIndex: index });
 				}
-				const moveOut = moveInfo.get(moveInMark.moveId) ?? fail(NO_MATCHING_MOVE_OUT_ERR);
 				index += moveOut.count;
 				break;
 			}

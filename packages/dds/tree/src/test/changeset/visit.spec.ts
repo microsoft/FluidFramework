@@ -16,10 +16,10 @@ function visit(delta: Delta.Root, visitor: DeltaVisitor): void {
 type VisitScript = VisitCall[];
 
 type VisitCall =
-	| ["onDelete", number, Delta.Delete]
-	| ["onInsert", number, Delta.Insert]
-	| ["onMoveOut", number, Delta.MoveOut]
-	| ["onMoveIn", number, Delta.MoveIn]
+	| ["onDelete", number, number]
+	| ["onInsert", number, Delta.ProtoNode[]]
+	| ["onMoveOut", number, number, Delta.MoveId]
+	| ["onMoveIn", number, number, Delta.MoveId]
 	| ["onSetValue", Value]
 	| ["enterNode", number]
 	| ["exitNode", number]
@@ -29,20 +29,20 @@ type VisitCall =
 function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
 	let callIndex = 0;
 	const visitor = {
-		onDelete: (index: number, mark: Delta.Delete): void => {
-			assert.deepStrictEqual(["onDelete", index, mark], expected[callIndex]);
+		onDelete: (index: number, count: number): void => {
+			assert.deepStrictEqual(["onDelete", index, count], expected[callIndex]);
 			callIndex += 1;
 		},
-		onInsert: (index: number, mark: Delta.Insert): void => {
-			assert.deepStrictEqual(["onInsert", index, mark], expected[callIndex]);
+		onInsert: (index: number, contents: Delta.ProtoNode[]): void => {
+			assert.deepStrictEqual(["onInsert", index, contents], expected[callIndex]);
 			callIndex += 1;
 		},
-		onMoveOut: (index: number, mark: Delta.MoveOut): void => {
-			assert.deepStrictEqual(["onMoveOut", index, mark], expected[callIndex]);
+		onMoveOut: (index: number, count: number, id: Delta.MoveId): void => {
+			assert.deepStrictEqual(["onMoveOut", index, count, id], expected[callIndex]);
 			callIndex += 1;
 		},
-		onMoveIn: (index: number, mark: Delta.MoveIn): void => {
-			assert.deepStrictEqual(["onMoveIn", index, mark], expected[callIndex]);
+		onMoveIn: (index: number, count: number, id: Delta.MoveId): void => {
+			assert.deepStrictEqual(["onMoveIn", index, count, id], expected[callIndex]);
 			callIndex += 1;
 		},
 		onSetValue: (value: Delta.Value): void => {
@@ -71,6 +71,7 @@ function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
 }
 
 const empty: Delta.Root = [];
+const content = [{ id: "X" }];
 
 describe("visit", () => {
 	it("empty delta", () => {
@@ -117,27 +118,29 @@ describe("visit", () => {
 	it("insert root", () => {
 		const mark: Delta.Insert = {
 			[Delta.type]: Delta.MarkType.Insert,
-			content: [{ id: "X" }],
+			content,
 		};
-		testVisit([{ offset: 0, mark }], [["onInsert", 0, mark]]);
+		testVisit([{ offset: 0, mark }], [["onInsert", 0, content]]);
 	});
 
 	it("insert child", () => {
-		const mark: Delta.Insert = {
-			[Delta.type]: Delta.MarkType.Insert,
-			content: [{ id: "X" }],
-		};
 		const delta: Delta.Root = [{
 			offset: 0,
 			mark: {
 				[Delta.type]: Delta.MarkType.Modify,
-				foo: [{ offset: 42, mark }],
+				foo: [{
+					offset: 42,
+					mark: {
+						[Delta.type]: Delta.MarkType.Insert,
+						content,
+					},
+				}],
 			},
 		}];
 		const expected: VisitScript = [
 			["enterNode", 0],
 			["enterField", "foo"],
-			["onInsert", 42, mark],
+			["onInsert", 42, [{ id: "X" }]],
 			["exitField", "foo"],
 			["exitNode", 0],
 		];
@@ -149,7 +152,7 @@ describe("visit", () => {
 			[Delta.type]: Delta.MarkType.Delete,
 			count: 10,
 		};
-		testVisit([{ offset: 0, mark }], [["onDelete", 0, mark]]);
+		testVisit([{ offset: 0, mark }], [["onDelete", 0, 10]]);
 	});
 
 	it("delete child", () => {
@@ -167,7 +170,7 @@ describe("visit", () => {
 		const expected: VisitScript = [
 			["enterNode", 0],
 			["enterField", "foo"],
-			["onDelete", 42, mark],
+			["onDelete", 42, 10],
 			["exitField", "foo"],
 			["exitNode", 0],
 		];
@@ -181,7 +184,7 @@ describe("visit", () => {
 		};
 		const ins: Delta.Insert = {
 			[Delta.type]: Delta.MarkType.Insert,
-			content: [{ id: "X" }],
+			content,
 		};
 		const set: Delta.Modify = {
 			[Delta.type]: Delta.MarkType.Modify,
@@ -201,8 +204,8 @@ describe("visit", () => {
 		const expected: VisitScript = [
 			["enterNode", 0],
 			["enterField", "foo"],
-			["onDelete", 0, del],
-			["onInsert", 3, ins],
+			["onDelete", 0, 10],
+			["onInsert", 3, content],
 			["enterNode", 5],
 			["onSetValue", 1],
 			["exitNode", 5],
