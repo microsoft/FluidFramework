@@ -365,6 +365,8 @@ export class GarbageCollector implements IGarbageCollector {
     public readonly trackGCState: boolean;
 
     private readonly testMode: boolean;
+    private readonly sweepV0TimeoutMs: number | undefined;
+    private get sweepV0(): boolean { return this.sweepV0TimeoutMs !== undefined; }
     private readonly mc: MonitoringContext;
 
     /**
@@ -490,7 +492,12 @@ export class GarbageCollector implements IGarbageCollector {
             }
         }
 
+        // Sweep V0 is a test mode for using a very short timeout in order to enable testing of real sweep behavior.
+        // It's similar to testMode but rather than deleting immediately, it exercises the Sweep timers and codepaths
+        this.sweepV0TimeoutMs = this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SweepV0TimeoutMs");
+
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
+        // This allows us to safely set Sweep Timeout
         if (this.sessionExpiryTimeoutMs !== undefined && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
             // If Test Override config is set, override Session Expiry timeout.
             const overrideSessionExpiryTimeoutMs =
@@ -512,6 +519,11 @@ export class GarbageCollector implements IGarbageCollector {
             if (createParams.snapshotCacheExpiryMs !== undefined) {
                 this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + createParams.snapshotCacheExpiryMs + oneDayMs;
             }
+        }
+
+        // Sweep V0 overrides Sweep Timeout, even setting it if SessionExpiry is disabled
+        if (this.sweepV0TimeoutMs !== undefined) {
+            this.sweepTimeoutMs = this.sweepV0TimeoutMs;
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -544,8 +556,9 @@ export class GarbageCollector implements IGarbageCollector {
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
-        // Override inactive timeout if test config or gc options to override it is set.
-        this.inactiveTimeoutMs = this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
+        this.inactiveTimeoutMs =
+            this.sweepV0 ? 0 : // For SweepV0 consider unreferenced objects immediately inactive
+            this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
             this.gcOptions.inactiveTimeoutMs ??
             defaultInactiveTimeoutMs;
 
@@ -555,7 +568,9 @@ export class GarbageCollector implements IGarbageCollector {
         }
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-        this.testMode = this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true;
+        this.testMode =
+            !this.sweepV0 && // Disable testMode if we're doing Sweep V0
+            (this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true);
 
         // GC state is written into root of the summary tree by default. Can be overridden via feature flag for now.
         this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? true;
@@ -787,9 +802,9 @@ export class GarbageCollector implements IGarbageCollector {
         this.updateCurrentState(gcData, gcResult, currentReferenceTimestampMs);
         this.runtime.updateUsedRoutes(gcResult.referencedNodeIds, currentReferenceTimestampMs);
 
-        // Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will
-        // delete these objects here instead.
-        this.logSweepEvents(logger, currentReferenceTimestampMs);
+        // If enabled, run Sweep to delete objects that have been unreferenced sufficiently long
+        // This also logs once per node when it is (or  would be) swept
+        this.sweepIfEnabled(logger, currentReferenceTimestampMs);
 
         // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
         // involving access to deleted data.
@@ -1240,16 +1255,18 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     /**
-     * For nodes that are ready to sweep, log an event for now. Until we start running sweep which deletes objects,
-     * this will give us a view into how much deleted content a container has.
+     * If full sweep is enabled, delete all Sweep-Ready nodes from the runtime.
+     * Additionally log a telemetry event, regardless of whether Sweep is enabled.
+     * This will give us a view into how much deleted content a container has while rolling out Sweep.
      */
-    private logSweepEvents(logger: ITelemetryLogger, currentReferenceTimestampMs?: number) {
+    private sweepIfEnabled(logger: ITelemetryLogger, currentReferenceTimestampMs?: number) {
         if (this.mc.config.getBoolean(disableSweepLogKey) === true
             || currentReferenceTimestampMs === undefined
             || this.sweepTimeoutMs === undefined) {
             return;
         }
 
+        const idsToSweep = new Set<{ nodeId: string; nodeType: string; age: number; }>();
         this.unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
             if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
                 return;
@@ -1260,6 +1277,11 @@ export class GarbageCollector implements IGarbageCollector {
                 return;
             }
 
+            const age = currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs;
+            idsToSweep.add({ nodeId, nodeType, age });
+        });
+
+        idsToSweep.forEach(({ nodeId, nodeType, age }) => {
             // Log deleted event for each node only once to reduce noise in telemetry.
             const uniqueEventId = `Deleted-${nodeId}`;
             if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
@@ -1270,12 +1292,16 @@ export class GarbageCollector implements IGarbageCollector {
                 eventName: "GCObjectDeleted",
                 id: nodeId,
                 type: nodeType,
-                age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+                age,
                 timeout: this.sweepTimeoutMs,
                 completedGCRuns: this.completedRuns,
                 lastSummaryTime: this.getLastSummaryTimestampMs(),
             });
         });
+
+        if (this.sweepV0) {
+            this.runtime.deleteUnusedRoutes(Array.from(idsToSweep).map(({ nodeId }) => nodeId));
+        }
     }
 
     /**
