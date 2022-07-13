@@ -428,7 +428,8 @@ export interface ISerializedValue {
 
     /**
      * String representation of the value.
-     * TODO: what does it mean for this to be undefined?
+     *
+     * @remarks Will be undefined if the original value was undefined.
      */
     value: string | undefined;
 }
