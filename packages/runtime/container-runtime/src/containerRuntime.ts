@@ -1071,6 +1071,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private consecutiveReconnects = 0;
 
+    /**
+     * Used to delay transition to "connected" state while we upload
+     * attachment blobs that were added while disconnected
+     */
+    private delayConnectClientId?: string;
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -1322,10 +1328,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId: string) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobId, localId) => this.submit(
+                ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId }),
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
-            this.logger,
         );
 
         this.scheduleManager = new ScheduleManager(
@@ -1579,12 +1585,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-                const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
-                if (handle) {
+                const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+                if (blob) {
                     return {
                         status: 200,
                         mimeType: "fluid/object",
-                        value: handle.get(),
+                        value: blob,
                     };
                 } else {
                     return create404Response(request);
@@ -1790,6 +1796,38 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
+        if (connected === false && this.delayConnectClientId !== undefined) {
+            this.delayConnectClientId = undefined;
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "UnsuccessfulConnectedTransition",
+            });
+            // Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
+            return;
+        }
+
+        // If attachment blobs were added while disconnected, we need to delay
+        // propagation of the "connected" event until we have uploaded them to
+        // ensure we don't submit ops referencing a blob that has not been uploaded
+        const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
+        if (connecting && this.blobManager.hasPendingOfflineUploads) {
+            assert(!this.delayConnectClientId, "Connect event delay must be canceled before subsequent connect event");
+            assert(!!clientId, "Must have clientId when connecting");
+            this.delayConnectClientId = clientId;
+            this.blobManager.onConnected().then(() => {
+                // make sure we didn't reconnect before the promise resolved
+                if (this.delayConnectClientId === clientId && !this.disposed) {
+                    this.delayConnectClientId = undefined;
+                    this.setConnectionStateCore(connected, clientId);
+                }
+            }, (error) => this.closeFn(error));
+            return;
+        }
+
+        this.setConnectionStateCore(connected, clientId);
+    }
+
+    private setConnectionStateCore(connected: boolean, clientId?: string) {
+        assert(!this.delayConnectClientId, "connect event delay must be cleared before propagating connect event");
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -1887,8 +1925,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
-                    assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
+                    this.blobManager.processBlobAttachOp(message, local);
                     break;
                 default:
             }
@@ -3017,7 +3054,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata, opMetadata);
+                this.blobManager.reSubmit(opMetadata);
                 break;
             case ContainerMessageType.Rejoin:
                 this.submit(type, content);
