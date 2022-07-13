@@ -232,7 +232,7 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
         verifyCellValue(await getCellDataStore(getCellDataStore(Promise.resolve(sharedCell3))), cellValue, 3);
     });
 
-    it("attaches if referring DDS becomes attached or is already attached", async () => {
+    it("attaches if referring SharedCell becomes attached or is already attached", async () => {
         const detachedCell1: ISharedCell = SharedCell.create(dataObject1.runtime);
         const detachedCell2: ISharedCell = SharedCell.create(dataObject1.runtime);
 
