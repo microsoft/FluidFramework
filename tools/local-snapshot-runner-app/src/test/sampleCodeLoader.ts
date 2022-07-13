@@ -18,6 +18,6 @@ export async function getCodeLoader(): Promise<ICodeDetailsLoader> {
     };
 }
 
-export async function getResult(_container: IContainer, _logger: ITelemetryBaseLogger): Promise<string> {
-    return "sample result";
+export async function getResults(_container: IContainer, _logger: ITelemetryBaseLogger): Promise<Record<"fileName" | "content", string>[]> {
+    return [{ fileName: "result.txt", content: "sample result" }];
 }

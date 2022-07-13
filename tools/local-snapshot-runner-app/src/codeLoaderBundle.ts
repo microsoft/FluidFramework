@@ -11,7 +11,7 @@ import { ICodeDetailsLoader, IContainer } from "@fluidframework/container-defini
  */
 export interface ICodeLoaderBundle {
     getCodeLoader(): Promise<ICodeDetailsLoader>;
-    getResult(container: IContainer, logger: ITelemetryBaseLogger): Promise<string>;
+    getResults(container: IContainer, logger: ITelemetryBaseLogger): Promise<Record<"fileName" | "content", string>[]>;
 }
 
 /**
@@ -22,5 +22,5 @@ export interface ICodeLoaderBundle {
 export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
     return bundle
         && bundle.getCodeLoader && typeof bundle.getCodeLoader === "function"
-        && bundle.getResult && typeof bundle.getResult === "function";
+        && bundle.getResults && typeof bundle.getResults === "function";
 }

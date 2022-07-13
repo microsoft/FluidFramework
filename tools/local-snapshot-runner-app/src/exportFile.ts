@@ -11,6 +11,7 @@ import FileLogger from "./logger/FileLogger";
 import { getArgsValidationError } from "./getArgsValidationError";
 import { isCodeLoaderBundle } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
+import path from "path";
 
 export async function exportFile(
     codeLoader: string,
@@ -59,9 +60,9 @@ export async function exportFile(
         // const container = await loader.rehydrateDetachedContainerFromSnapshot(inputFileContent);
         const container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
 
-        const result = await codeLoaderBundle.getResult(container, logger);
-
-        fs.appendFileSync(outputFolder + "/result.txt", result);
+        for (const result of await codeLoaderBundle.getResults(container, logger)) {
+            fs.appendFileSync(path.join(outputFolder, result.fileName), result.content);
+        }
 
         logger.sendTelemetryEvent({ eventName: "Client_ExportCompleted" });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
