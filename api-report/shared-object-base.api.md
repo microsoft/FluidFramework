@@ -67,8 +67,10 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
 
 // @public
 export interface ISharedObjectEvents extends IErrorEvent {
-    // (undocumented)
-    (event: "pre-op" | "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // @eventProperty
+    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    // @eventProperty
+    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public (undocumented)
