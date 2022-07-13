@@ -770,6 +770,4 @@ export class SubSequence<T> extends BaseSegment {
     static readonly typeString: string;
 }
 
-// (No @packageDocumentation comment for this package)
-
 ```

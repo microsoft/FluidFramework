@@ -6,7 +6,9 @@
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
 
 export class TestDataObject extends DataObject {
-    public static get Name(): string { return "@fluid-example/test-data-object"; }
+    public static get Name(): string {
+        return "@fluid-example/test-data-object";
+    }
 
     public static readonly factory = new DataObjectFactory(
         TestDataObject.Name,

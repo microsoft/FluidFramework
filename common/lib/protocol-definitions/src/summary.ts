@@ -7,20 +7,6 @@ export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISumm
 
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
-export interface ISummaryAuthor {
-    name: string;
-    email: string;
-    // ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
-    date: string;
-}
-
-export interface ISummaryCommitter {
-    name: string;
-    email: string;
-    // ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
-    date: string;
-}
-
 /**
  *  Type tag used to distinguish different types of nodes in a {@link ISummaryTree}.
  */

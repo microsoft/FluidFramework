@@ -72,7 +72,7 @@ interface IDirectoryMessageHandler {
 /**
  * Operation indicating a value should be set for a key.
  */
-interface IDirectorySetOperation {
+export interface IDirectorySetOperation {
     /**
      * String identifier of the operation type.
      */
@@ -97,7 +97,7 @@ interface IDirectorySetOperation {
 /**
  * Operation indicating a key should be deleted from the directory.
  */
-interface IDirectoryDeleteOperation {
+export interface IDirectoryDeleteOperation {
     /**
      * String identifier of the operation type.
      */
@@ -117,12 +117,12 @@ interface IDirectoryDeleteOperation {
 /**
  * An operation on a specific key within a directory
  */
-type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
+export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
  */
-interface IDirectoryClearOperation {
+export interface IDirectoryClearOperation {
     /**
      * String identifier of the operation type.
      */
@@ -137,12 +137,12 @@ interface IDirectoryClearOperation {
 /**
  * An operation on one or more of the keys within a directory
  */
-type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
+export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
  */
-interface IDirectoryCreateSubDirectoryOperation {
+export interface IDirectoryCreateSubDirectoryOperation {
     /**
      * String identifier of the operation type.
      */
@@ -162,7 +162,7 @@ interface IDirectoryCreateSubDirectoryOperation {
 /**
  * Operation indicating a subdirectory should be deleted.
  */
-interface IDirectoryDeleteSubDirectoryOperation {
+export interface IDirectoryDeleteSubDirectoryOperation {
     /**
      * String identifier of the operation type.
      */
@@ -182,7 +182,8 @@ interface IDirectoryDeleteSubDirectoryOperation {
 /**
  * An operation on the subdirectories within a directory
  */
-type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
+export type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation
+    | IDirectoryDeleteSubDirectoryOperation;
 
 /**
  * Any operation on a directory
@@ -268,7 +269,7 @@ export class DirectoryFactory {
  * SubDirectories can be retrieved for use as working directories.
  *
  * @example
- * ```ts
+ * ```typescript
  * mySharedDirectory.createSubDirectory("a").createSubDirectory("b").createSubDirectory("c").set("foo", val1);
  * const mySubDir = mySharedDirectory.getWorkingDirectory("/a/b/c");
  * mySubDir.get("foo"); // returns val1
@@ -1262,7 +1263,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a clear operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1275,10 +1275,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         this.throwIfDisposed();
         if (local) {
             assert(isClearLocalOpMetadata(localOpMetadata),
-                0x00f /* `pendingMessageId is missing from the local client's ${op.type} operation` */);
+                0x00f /* pendingMessageId is missing from the local client's operation */);
             const pendingClearMessageId = this.pendingClearMessageIds.shift();
             assert(pendingClearMessageId === localOpMetadata.pendingMessageId,
-                "pendingMessageId does not match");
+                0x32a /* pendingMessageId does not match */);
             return;
         }
         this.clearExceptPendingKeys();
@@ -1288,7 +1288,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a delete operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1309,7 +1308,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a set operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1336,7 +1334,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a create subdirectory operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1357,7 +1354,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * Process a delete subdirectory operation.
      * @param op - The op to process
      * @param local - Whether the message originated from the local client
-     * @param message - The message
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      * @internal
@@ -1397,11 +1393,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public resubmitClearMessage(op: IDirectoryClearOperation, localOpMetadata: unknown): void {
-        assert(isClearLocalOpMetadata(localOpMetadata), "Invalid localOpMetadata for clear");
+        assert(isClearLocalOpMetadata(localOpMetadata), 0x32b /* Invalid localOpMetadata for clear */);
         // We don't reuse the metadata pendingMessageId but send a new one on each submit.
         const pendingClearMessageId = this.pendingClearMessageIds.shift();
         assert(pendingClearMessageId === localOpMetadata.pendingMessageId,
-            "pendingMessageId does not match");
+            0x32c /* pendingMessageId does not match */);
         this.submitClearMessage(op, localOpMetadata.previousStorage);
     }
 
@@ -1439,12 +1435,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public resubmitKeyMessage(op: IDirectoryKeyOperation, localOpMetadata: unknown): void {
-        assert(isKeyEditLocalOpMetadata(localOpMetadata), "Invalid localOpMetadata in submit");
+        assert(isKeyEditLocalOpMetadata(localOpMetadata), 0x32d /* Invalid localOpMetadata in submit */);
 
         // clear the old pending message id
         const pendingMessageIds = this.pendingKeys.get(op.key);
         assert(pendingMessageIds !== undefined && pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-            "Unexpected pending message received");
+            0x32e /* Unexpected pending message received */);
         pendingMessageIds.shift();
         if (pendingMessageIds.length === 0) {
             this.pendingKeys.delete(op.key);
@@ -1511,12 +1507,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public resubmitSubDirectoryMessage(op: IDirectorySubDirectoryOperation, localOpMetadata: unknown): void {
-        assert(isSubDirLocalOpMetadata(localOpMetadata), "Invalid localOpMetadata for sub directory op");
+        assert(isSubDirLocalOpMetadata(localOpMetadata), 0x32f /* Invalid localOpMetadata for sub directory op */);
 
         // clear the old pending message id
         const pendingMessageIds = this.pendingSubDirectories.get(op.subdirName);
         assert(pendingMessageIds !== undefined && pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-            "Unexpected pending message received");
+            0x330 /* Unexpected pending message received */);
         pendingMessageIds.shift();
         if (pendingMessageIds.length === 0) {
             this.pendingSubDirectories.delete(op.subdirName);
@@ -1683,7 +1679,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                     0x011 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageIds = this.pendingKeys.get(op.key);
                 assert(pendingMessageIds !== undefined && pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-                    "Unexpected pending message received");
+                    0x331 /* Unexpected pending message received */);
                 pendingMessageIds.shift();
                 if (pendingMessageIds.length === 0) {
                     this.pendingKeys.delete(op.key);
@@ -1718,7 +1714,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                     0x012 /* pendingMessageId is missing from the local client's operation */);
                 const pendingMessageIds = this.pendingSubDirectories.get(op.subdirName);
                 assert(pendingMessageIds !== undefined && pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-                    "Unexpected pending message received");
+                    0x332 /* Unexpected pending message received */);
                 pendingMessageIds.shift();
                 if (pendingMessageIds.length === 0) {
                     this.pendingSubDirectories.delete(op.subdirName);
@@ -1750,7 +1746,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     /**
      * Clear implementation used for both locally sourced clears as well as incoming remote clears.
      * @param local - Whether the message originated from the local client
-     * @param op - The message if from a remote clear, or null if from a local clear
      */
     private clearCore(local: boolean) {
         this._storage.clear();

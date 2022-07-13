@@ -42,16 +42,6 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @public (undocumented)
-export enum BindState {
-    // (undocumented)
-    Binding = "Binding",
-    // (undocumented)
-    Bound = "Bound",
-    // (undocumented)
-    NotBound = "NotBound"
-}
-
 // @public
 export namespace ConnectionState {
     export type CatchingUp = 1;
@@ -279,8 +269,10 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     peek(): T | undefined;
     resume(): void;
     toArray(): T[];
-    // (undocumented)
-    waitTillProcessingDone(): Promise<void>;
+    waitTillProcessingDone(): Promise<{
+        count: number;
+        duration: number;
+    }>;
 }
 
 // @public
@@ -547,7 +539,5 @@ export type ReadOnlyInfo = {
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
 };
-
-// (No @packageDocumentation comment for this package)
 
 ```

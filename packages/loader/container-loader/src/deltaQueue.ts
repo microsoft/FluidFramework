@@ -4,7 +4,7 @@
  */
 
 import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
-import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
 import Deque from "double-ended-queue";
 
 export interface IDeltaQueueWriter<T> {
@@ -30,7 +30,7 @@ export class DeltaQueue<T>
      * When processing is ongoing, holds a deferred that will resolve once processing stops.
      * Undefined when not processing.
      */
-    private processingDeferred: Deferred<void> | undefined;
+    private processingPromise: Promise<{ count: number; duration: number; }> | undefined;
 
     public get disposed(): boolean {
         return this.isDisposed;
@@ -48,13 +48,11 @@ export class DeltaQueue<T>
     }
 
     public get idle(): boolean {
-        return this.processingDeferred === undefined && this.q.length === 0;
+        return this.processingPromise === undefined && this.q.length === 0;
     }
 
-    public async waitTillProcessingDone(): Promise<void> {
-        if (this.processingDeferred !== undefined) {
-            return this.processingDeferred.promise;
-        }
+    public async waitTillProcessingDone() {
+        return this.processingPromise ?? { count: 0, duration: 0 };
     }
 
     /**
@@ -98,7 +96,7 @@ export class DeltaQueue<T>
         this.pauseCount++;
         // If called from within the processing loop, we are in the middle of processing an op. Return a promise
         // that will resolve when processing has actually stopped.
-        return this.waitTillProcessingDone();
+        await this.waitTillProcessingDone();
     }
 
     public resume(): void {
@@ -113,18 +111,29 @@ export class DeltaQueue<T>
      * not already started.
      */
     private ensureProcessing() {
-        if (!this.paused && this.processingDeferred === undefined) {
-            this.processingDeferred = new Deferred<void>();
+        if (this.anythingToProcess() && this.processingPromise === undefined) {
             // Use a resolved promise to start the processing on a separate stack.
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            Promise.resolve().then(() => {
-                this.processDeltas();
-                if (this.processingDeferred !== undefined) {
-                    this.processingDeferred.resolve();
-                    this.processingDeferred = undefined;
-                }
+            this.processingPromise = Promise.resolve().then(() => {
+                assert(this.processingPromise !== undefined, "reentrancy?");
+                const result = this.processDeltas();
+                assert(this.processingPromise !== undefined, "reentrancy?");
+                // WARNING: Do not move next line to .finally() clause!
+                // It runs async and creates a race condition where incoming ensureProcessing() call observes
+                // from previous run while previous run is over (but finally clause was not scheduled yet)
+                this.processingPromise = undefined;
+                return result;
+            }).catch((error) => {
+                this.error = error;
+                this.processingPromise = undefined;
+                this.emit("error", error);
+                return { count: 0, duration: 0 };
             });
+            assert(this.processingPromise !== undefined, "processDeltas() should run async");
         }
+    }
+
+    private anythingToProcess() {
+        return this.q.length !== 0 && !this.paused && this.error === undefined;
     }
 
     /**
@@ -136,24 +145,21 @@ export class DeltaQueue<T>
 
         // For grouping to work we must process all local messages immediately and in the single turn.
         // So loop over them until no messages to process, we have become paused, or hit an error.
-        while (!(this.q.length === 0 || this.paused || this.error !== undefined)) {
+        while (this.anythingToProcess()) {
             // Get the next message in the queue
             const next = this.q.shift();
             count++;
             // Process the message.
-            try {
-                // We know next is defined since we did a length check just prior to shifting.
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.worker(next!);
-                this.emit("op", next);
-            } catch (error) {
-                this.error = error;
-                this.emit("error", error);
-            }
+            // We know next is defined since we did a length check just prior to shifting.
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.worker(next!);
+            this.emit("op", next);
         }
 
+        const duration = performance.now() - start;
         if (this.q.length === 0) {
-            this.emit("idle", count, performance.now() - start);
+            this.emit("idle", count, duration);
         }
+        return { count, duration };
     }
 }

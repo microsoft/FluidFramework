@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable, ITelemetryProperties,
+    IDisposable, ITelemetryLogger, ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -35,7 +35,7 @@ import {
     extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
- } from "@fluidframework/container-utils";
+} from "@fluidframework/container-utils";
 import {
     IDocumentService,
     IDocumentStorageService,
@@ -50,9 +50,10 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
+    isRuntimeMessage,
+    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
-    isSystemMessage,
     IProtocolHandler,
     ProtocolOpHandlerWithClientValidation,
 } from "@fluidframework/protocol-base";
@@ -228,6 +229,24 @@ const getCodeProposal =
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 /**
+ * Helper function to report to telemetry cases where operation takes longer than expected (1s)
+ * @param logger - logger to use
+ * @param eventName - event name
+ * @param action - functor to call and measure
+ */
+async function ReportIfTooLong(
+    logger: ITelemetryLogger,
+    eventName: string,
+    action: () => Promise<ITelemetryProperties>,
+) {
+    const event = PerformanceEvent.start(logger, { eventName });
+    const props = await action();
+    if (event.duration > 1000) {
+        event.end(props);
+    }
+}
+
+/**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
  */
@@ -288,14 +307,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         event.end({ ...props, ...loadOptions.loadMode });
                         resolve(container);
                     },
-                    (error) => {
-                        const err = normalizeError(error);
-                        // Depending where error happens, we can be attempting to connect to web socket
-                        // and continuously retrying (consider offline mode)
-                        // Host has no container to close, so it's prudent to do it here
-                        container.close(err);
-                        onClosed(err);
-                    });
+                        (error) => {
+                            const err = normalizeError(error);
+                            // Depending where error happens, we can be attempting to connect to web socket
+                            // and continuously retrying (consider offline mode)
+                            // Host has no container to close, so it's prudent to do it here
+                            container.close(err);
+                            onClosed(err);
+                        });
             }),
             { start: true, end: true, cancel: "generic" },
         );
@@ -538,7 +557,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     name: typeof name === "string" ? name : undefined,
                 },
                 error);
-            });
+        });
         this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
@@ -565,6 +584,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerAttachState: () => this._attachState,
                     containerLifecycleState: () => this._lifecycleState,
                     containerConnectionState: () => ConnectionState[this.connectionState],
+                    serializedContainer: config.serializedContainerState !== undefined,
                 },
                 // we need to be judicious with our logging here to avoid generating too much data
                 // all data logged here should be broadly applicable, and not specific to a
@@ -577,6 +597,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
                     containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
                     // message information to associate errors with the specific execution state
+                    // dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
                     dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
                     dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
                     dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
@@ -681,10 +702,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         }
                         break;
                     case connectedEventName:
-                         if (this.connected) {
+                        if (this.connected) {
                             listener(this.clientId);
-                         }
-                         break;
+                        }
+                        break;
                     case disconnectedEventName:
                         if (!this.connected) {
                             listener();
@@ -915,7 +936,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 throw newError;
             }
         },
-        { start: true, end: true, cancel: "generic" });
+            { start: true, end: true, cancel: "generic" });
     }
 
     public async request(path: IRequest): Promise<IResponse> {
@@ -1173,17 +1194,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pendingLocalState?.pendingRuntimeState,
         );
 
-        // Internal context is fully loaded at this point
-        this.setLoaded();
-
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
         if (!this.closed) {
             if (opsBeforeReturnP !== undefined) {
                 this._deltaManager.inbound.resume();
 
-                await opsBeforeReturnP;
-                await this._deltaManager.inbound.waitTillProcessingDone();
+                await ReportIfTooLong(
+                    this.mc.logger,
+                    "WaitOps",
+                    async () => { await opsBeforeReturnP; return {}; });
+                await ReportIfTooLong(
+                    this.mc.logger,
+                    "WaitOpProcessing",
+                    async () => this._deltaManager.inbound.waitTillProcessingDone());
 
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this._deltaManager.inbound.pause();
@@ -1192,7 +1216,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             switch (loadMode.deltaConnection) {
                 case undefined:
                 case "delayed":
-                    assert(this.inboundQueuePausedFromInit, "inboundQueuePausedFromInit should be true");
+                    assert(this.inboundQueuePausedFromInit, 0x346 /* inboundQueuePausedFromInit should be true */);
                     this.inboundQueuePausedFromInit = false;
                     this._deltaManager.inbound.resume();
                     this._deltaManager.inboundSignal.resume();
@@ -1213,9 +1237,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Container was closed while load()");
         }
 
+        // Internal context is fully loaded at this point
+        this.setLoaded();
+
         return {
             sequenceNumber: attributes.sequenceNumber,
             version: versionId,
+            dmLastProcessedSeqNumber: this._deltaManager.lastSequenceNumber,
+            dmLastKnownSeqNumber: this._deltaManager.lastKnownSeqNumber,
         };
     }
 
@@ -1393,7 +1422,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 if (key === "code" || key === "code2") {
                     if (!isFluidCodeDetails(value)) {
                         this.mc.logger.sendErrorEvent({
-                                eventName: "CodeProposalNotIFluidCodeDetails",
+                            eventName: "CodeProposalNotIFluidCodeDetails",
                         });
                     }
                     this.processCodeProposal().catch((error) => {
@@ -1682,8 +1711,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
         }
 
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
+            this.mc.logger.sendTelemetryEvent(
+                { eventName: "UnpackedRuntimeMessage", type: message.type });
+        }
         // Forward non system messages to the loaded runtime for processing
-        if (!isSystemMessage(message)) {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
             this.context.process(message, local, undefined);
         }
 

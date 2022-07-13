@@ -26,11 +26,11 @@ export interface IDataStoreAliasMessage {
 
 /**
  * Type guard that returns true if the given alias message is actually an instance of
- * a class which implements @see IDataStoreAliasMessage
+ * a class which implements {@link IDataStoreAliasMessage}
  * @param maybeDataStoreAliasMessage - message object to be validated
- * @returns True if the @see IDataStoreAliasMessage is fully implemented, false otherwise
+ * @returns True if the {@link IDataStoreAliasMessage} is fully implemented, false otherwise
  */
- export const isDataStoreAliasMessage = (
+export const isDataStoreAliasMessage = (
     maybeDataStoreAliasMessage: any,
 ): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
     return typeof maybeDataStoreAliasMessage?.internalId === "string"
@@ -92,13 +92,7 @@ class DataStore implements IDataStore {
             alias,
         };
 
-        // back-compat 0.58.2000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel. For
-        // older versions, we still have to call bindToContext.
-        if (this.fluidDataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
-            this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
-        } else {
-            this.fluidDataStoreChannel.bindToContext();
-        }
+        this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
         if (this.runtime.attachState === AttachState.Detached) {
             const localResult = this.datastores.processAliasMessageCore(message);
@@ -153,7 +147,7 @@ class DataStore implements IDataStore {
 
     private async ackBasedPromise<T>(
         executor: (resolve: (value: T | PromiseLike<T>) => void,
-        reject: (reason?: any) => void) => void,
+            reject: (reason?: any) => void) => void,
     ): Promise<T> {
         let rejectBecauseDispose: () => void;
         return new Promise<T>((resolve, reject) => {

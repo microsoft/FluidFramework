@@ -7,4 +7,11 @@ export {
     EmptyKey,
     FieldKey,
     TreeType,
+    ChildLocation,
+    DetachedRange,
+    ChildCollection,
+    RootRange,
 } from "./types";
+
+export * from "./pathTree";
+export * from "./anchorSet";

@@ -74,10 +74,11 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     /**
      * Sets multiple values in a map.
      *
+     * See {@link MapProperty.setValues}
+     *
      * @param {object} in_values to assign to the collection
      * @param {Boolean} in_typed - If the map's items have a typeid and a value then create the
      *   properties with that typeid, else use the set's typeid (support polymorphic items).
-     * @see {setValues}
      * @private
      */
     _setValuesInternal(in_values, in_typed) {
@@ -123,11 +124,12 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     /**
      * Sets multiple values in a map.
      *
+     * See {@link MapProperty.setValues}
+     *
      * @param {object} in_values to assign to the collection
      * @param {Bool} in_typed  - Whether the values are typed/polymorphic.
      * @param {Bool} in_initial  - Whether we are setting default/initial values
      *   or if the function is called directly with the values to set.
-     * @see {setValues}
      * @override
      */
     _setValues(in_values, in_typed, in_initial) {

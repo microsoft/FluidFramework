@@ -31,6 +31,7 @@ import {
     waitForConnectedState,
     DeltaStreamConnectionForbiddenError,
     logNetworkFailure,
+    // isRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
     ConnectionMode,
@@ -439,7 +440,7 @@ export class ConnectionManager implements IConnectionManager {
         if (this.pendingConnection !== undefined) {
             pendingConnectionMode = this.pendingConnection.connectionMode;
             this.cancelConnection();  // Throw out in-progress connection attempt in favor of new attempt
-            assert(this.pendingConnection === undefined, "this.pendingConnection should be undefined");
+            assert(this.pendingConnection === undefined, 0x344 /* this.pendingConnection should be undefined */);
         }
         // If there is no specified ConnectionMode, try the previous mode, if there is no previous mode use default
         let requestedMode = connectionMode ?? pendingConnectionMode ?? this.defaultReconnectionMode;
@@ -624,7 +625,8 @@ export class ConnectionManager implements IConnectionManager {
      * Cancel in-progress connection attempt.
      */
     private cancelConnection() {
-        assert(this.pendingConnection !== undefined, "this.pendingConnection is undefined when trying to cancel");
+        assert(this.pendingConnection !== undefined,
+            0x345 /* this.pendingConnection is undefined when trying to cancel */);
         this.pendingConnection.abort();
         this.pendingConnection = undefined;
         this.logger.sendTelemetryEvent({ eventName: "ConnectionCancelReceived" });
@@ -839,7 +841,6 @@ export class ConnectionManager implements IConnectionManager {
 
     public sendMessages(messages: IDocumentMessage[]) {
         assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
-
         // If connection is "read" or implicit "read" (got leave op for "write" connection),
         // then op can't make it through - we will get a nack if op is sent.
         // We can short-circuit this process.
@@ -891,7 +892,7 @@ export class ConnectionManager implements IConnectionManager {
                 this.logger.sendPerformanceEvent({ eventName: "ReadConnectionTransition" });
 
                 // Please see #8483 for more details on why maintaining connection further as is would not work.
-                // Short story - connection properties are immutable, and many processes (consensus DDSs, summarizer)
+                // Short story - connection properties are immutable, and many processes (consensus DDSes, summarizer)
                 // assume that connection stays "write" connection until disconnect, and act accordingly, which may
                 // not work well with de-facto "read" connection we are in after receiving own leave op on timeout.
                 // Clients need to be able to transition to "read" state after some time of inactivity!

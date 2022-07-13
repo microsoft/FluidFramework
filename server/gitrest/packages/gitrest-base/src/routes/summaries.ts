@@ -34,7 +34,7 @@ import {
     getRepoManagerFromWriteAPI,
 } from "../utils";
 
-function getDocumentStorageDirectory(repoManager: IRepositoryManager, documentId: string): string {
+function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
     return `${repoManager.path}/${documentId}`;
 }
 
@@ -55,7 +55,7 @@ async function getSummary(
         try {
             const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
                 fileSystemManager,
-                getDocumentStorageDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+                getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
             );
             if (latestFullSummaryFromStorage !== undefined) {
                 return latestFullSummaryFromStorage;
@@ -91,7 +91,7 @@ async function getSummary(
         // next getSummary or a createSummary request may trigger persisting to storage.
         persistLatestFullSummaryInStorage(
             fileSystemManager,
-            getDocumentStorageDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+            getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
             fullSummary,
         ).catch((error) => {
             Lumberjack.error(
@@ -144,7 +144,7 @@ async function createSummary(
                     // TODO: does this fail if file is open and still being written to from a previous request?
                     await persistLatestFullSummaryInStorage(
                         fileSystemManager,
-                        getDocumentStorageDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+                        getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
                         latestFullSummary,
                     );
                 } catch(error) {
@@ -170,9 +170,37 @@ async function deleteSummary(
     fileSystemManager: IFileSystemManager,
     repoManagerParams: IRepoManagerParams,
     softDelete: boolean,
-    externalWriterConfig?: IExternalWriterConfig,
-    persistLatestFullSummary = false): Promise<boolean> {
-    throw new NetworkError(501, "Not Implemented");
+    repoPerDocEnabled: boolean,
+    externalWriterConfig?: IExternalWriterConfig): Promise<void> {
+    if(!repoPerDocEnabled) {
+        throw new NetworkError(501, "Not Implemented");
+    }
+    const lumberjackProperties = {
+        ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
+        [BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
+        // Currently, we ignore the softDelete header and always implement hard delete. Soft delete will come next.
+        [BaseGitRestTelemetryProperties.softDelete]: false,
+    };
+    // In repo-per-doc model, the repoManager's path represents the directory that contains summary data.
+    const summaryFolderPath = repoManager.path;
+    Lumberjack.info(`Deleting summary`, lumberjackProperties);
+    try {
+        await fileSystemManager.promises.rm(summaryFolderPath, { recursive: true });
+    } catch (error: any) {
+        if (error?.code === "ENOENT") {
+            // File does not exist.
+            Lumberjack.warning(
+                "Tried to delete summary, but it does not exist",
+                lumberjackProperties,
+                error);
+            return;
+        }
+        Lumberjack.error(
+            "Failed to delete summary",
+            lumberjackProperties,
+            error);
+        throw error;
+    }
 }
 
 export function create(
@@ -254,8 +282,8 @@ export function create(
                 fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
                 repoManagerParams,
                 softDelete,
+                repoPerDocEnabled,
                 getExternalWriterParams(request.query?.config as string | undefined),
-                persistLatestFullSummary,
             )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 204);
     });
