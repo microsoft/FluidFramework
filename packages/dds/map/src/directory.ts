@@ -201,7 +201,7 @@ export interface IDirectoryDataObject {
 }
 
 /**
- * TODO
+ * {@link IDirectory} storage format.
  */
 export interface IDirectoryNewStorageFormat {
     /**
@@ -210,7 +210,7 @@ export interface IDirectoryNewStorageFormat {
     blobs: string[];
 
     /**
-     * {@inheritDoc IDirectoryDataObject}
+     * Storage content.
      */
     content: IDirectoryDataObject;
 }
