@@ -17,7 +17,7 @@ export type PromiseCacheExpiry = {
 };
 
 /**
- * Options for configuring the PromiseCache
+ * Options for configuring the {@link PromiseCache}
  */
 export interface PromiseCacheOptions {
     /** Common expiration policy for all items added to this cache */
