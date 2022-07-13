@@ -10,28 +10,31 @@ import { exportFile } from "../exportFile";
 describe("exportFile", () => {
     const folderRoot = `${__dirname}/../../src/test`;
     const outputFolder = `${folderRoot}/outputFolder`;
+    const snapshotFolder = `${folderRoot}/localSnapshots`;
 
-    before(() => {
+    beforeEach(() => {
         fs.mkdirSync(outputFolder);
     });
 
-    after(() => {
+    afterEach(() => {
         fs.rmdirSync(outputFolder, { recursive: true });
     });
 
-    it("Output is correct", async () => {
-        await exportFile(
-            `${__dirname}/sampleCodeLoader.js`,
-            `${folderRoot}/localSnapshots/localSnapshot1.json`,
-            outputFolder,
-            "sampleScenario",
-            `${outputFolder}/telemetry.txt`);
+    fs.readdirSync(snapshotFolder).forEach((snapshotFileName: string) => {
+        it(`Output is correct ${snapshotFileName}`, async () => {
+            await exportFile(
+                `${__dirname}/sampleCodeLoader.js`,
+                `${snapshotFolder}/${snapshotFileName}`,
+                outputFolder,
+                "sampleScenario",
+                `${outputFolder}/telemetry.txt`);
 
-        const resultFilePath = `${outputFolder}/result.txt`;
-        assert(fs.existsSync(resultFilePath), "result file does not exist");
+            const resultFilePath = `${outputFolder}/result.txt`;
+            assert(fs.existsSync(resultFilePath), "result file does not exist");
 
-        const resultFileContent = fs.readFileSync(resultFilePath, { encoding: "utf-8" });
-        assert.strictEqual(resultFileContent, "sample result", "result output is not correct");
+            const resultFileContent = fs.readFileSync(resultFilePath, { encoding: "utf-8" });
+            assert.strictEqual(resultFileContent, "sample result", "result output is not correct");
+        });
     });
 
     it("Run from command line", () => {
@@ -39,4 +42,5 @@ describe("exportFile", () => {
     });
 
     // TODO: add tests around improper args
+    // TODO: potentially add tests for expecting certain telemetry logs
 });
