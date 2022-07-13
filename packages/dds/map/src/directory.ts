@@ -216,8 +216,8 @@ export interface IDirectoryNewStorageFormat {
 }
 
 /**
- * The factory that defines the directory.
- * TODO: what are the semantics of this?
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedDirectory}.
+ *
  * @sealed
  */
 export class DirectoryFactory implements IChannelFactory {
