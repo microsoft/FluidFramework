@@ -22,14 +22,15 @@ export enum MigrationState {
     ended,
 }
 
-export interface IAppEvents extends IEvent {
+export interface IMigrationEvents extends IEvent {
     (event: "migrationStateChanged", listener: (migrationState: MigrationState) => void);
 }
 
-export interface IApp extends IEventProvider<IAppEvents> {
-    // id, attach()?, version?
+export interface IMigratable extends IEventProvider<IMigrationEvents> {
+    // attach()?, version?
     /**
      * Initialize must be called after constructing the IApp.
+     * Split into import() vs initialize()?
      * @param initialData - String data to initially populate the app with.  May only be used in detached state.
      */
     initialize: (initialData?: string) => Promise<void>;
@@ -63,7 +64,12 @@ export interface IApp extends IEventProvider<IAppEvents> {
      * @param newContainerId - the ID of the container that the collaboration has migrated to.
      */
     finalizeMigration: (newContainerId: string) => void;
+}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IAppEvents extends IMigrationEvents { }
+
+export interface IApp extends IMigratable, IEventProvider<IAppEvents> {
     /**
      * An inventory tracker list, which is the relevant data for this particular IApp.
      */

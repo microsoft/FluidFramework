@@ -8,11 +8,11 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import React, { useEffect, useRef, useState } from "react";
 
 import type { ExternalDataSource } from "./externalData";
-import { IApp, MigrationState } from "./interfaces";
+import { IApp, IMigratable, MigrationState } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
 export interface IDebugViewProps {
-    app: IApp;
+    app: IMigratable;
     externalDataSource: ExternalDataSource;
 }
 
@@ -33,7 +33,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 };
 
 interface IMigrationStatusViewProps {
-    app: IApp;
+    app: IMigratable;
 }
 
 const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrationStatusViewProps) => {

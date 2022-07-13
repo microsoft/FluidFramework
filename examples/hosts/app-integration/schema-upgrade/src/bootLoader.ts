@@ -15,7 +15,7 @@ import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 
 import { App } from "./app";
-import { IApp, IBootLoader, IBootLoaderEvents, MigrationState } from "./interfaces";
+import { IApp, IBootLoader, IBootLoaderEvents, IMigratable, MigrationState } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
@@ -71,7 +71,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         return app;
     }
 
-    public async ensureMigrated(app: IApp) {
+    public async ensureMigrated(app: IMigratable) {
         const acceptedCodeDetails = app.acceptedCodeDetails;
         if (acceptedCodeDetails === undefined) {
             throw new Error("Cannot ensure migrated before code details are accepted");
@@ -106,7 +106,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         // And the loader is probably caching the container anyway too.
     }
 
-    public async getMigrated(oldApp: IApp): Promise<{ app: IApp; id: string; }> {
+    public async getMigrated(oldApp: IMigratable): Promise<{ app: IApp; id: string; }> {
         if (oldApp.getMigrationState() !== MigrationState.ended) {
             throw new Error("Tried to get migrated container but migration hasn't happened yet");
         }
