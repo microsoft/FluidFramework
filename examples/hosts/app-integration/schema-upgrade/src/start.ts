@@ -69,6 +69,8 @@ async function start(): Promise<void> {
         app = await bootLoader.loadExisting(id);
     }
 
+    // Note - here I proceed to rendering, but instead we could just propose the new version without rendering
+
     const watchForAppMigration = (_app: IApp) => {
         _app.on("migrationStateChanged", (migrationState: MigrationState) => {
             if (migrationState === MigrationState.ended) {
@@ -86,8 +88,6 @@ async function start(): Promise<void> {
     };
 
     watchForAppMigration(app);
-
-    // app.on("wantsMigration", () => {}); ???
 
     // bootLoader.getView(initialApp) ???
     // viewLoader?

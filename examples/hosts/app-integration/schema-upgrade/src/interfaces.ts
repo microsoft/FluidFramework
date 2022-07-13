@@ -31,6 +31,7 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
     /**
      * Initialize must be called after constructing the IApp.
      * Split into import() vs initialize()?
+     * Avoid implying that string is a requirement - can even be an in-memory type
      * @param initialData - String data to initially populate the app with.  May only be used in detached state.
      */
     initialize: (initialData?: string) => Promise<void>;
