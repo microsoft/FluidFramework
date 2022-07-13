@@ -4,6 +4,7 @@
 
 ```ts
 
+import { EventEmitterEventType } from '@fluidframework/common-utils';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
@@ -108,6 +109,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     get connected(): boolean;
     protected didAttach(): void;
     protected dirty(): void;
+    // @internal
+    emit(event: EventEmitterEventType, ...args: any[]): boolean;
     // (undocumented)
     abstract getAttachSummary(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     abstract getGCData(fullGC?: boolean): IGarbageCollectionData;

@@ -123,7 +123,9 @@ export enum BaseGitRestTelemetryProperties {
     ref = "ref",
     repoName = "repoName",
     repoOwner = "repoOwner",
+    repoPerDocEnabled = "repoPerDocEnabled",
     sha = "sha",
+    softDelete = "softDelete",
     storageName = "storageName",
     summaryType = "summaryType",
 }

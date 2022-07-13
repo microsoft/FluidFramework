@@ -32,20 +32,20 @@ import { v4 as uuid } from "uuid";
  * ({@link https://www.npmjs.com/package/jsrsasign | jsrsasign}) and may only be used in client (browser) context.
  * It is **not** Node.js-compatible.
  *
- * @param tenantId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.tenantId}
+ * @param tenantId - See {@link @fluidframework/protocol-definitions#ITokenClaims.tenantId}
  * @param key - API key to authenticate user. Must be {@link https://en.wikipedia.org/wiki/UTF-8 | UTF-8}-encoded.
- * @param scopes - @see {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
- * @param documentId - @see {@link @fluidframework/protocol-definitions#ITokenClaims.documentId}.
+ * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+ * @param documentId - See {@link @fluidframework/protocol-definitions#ITokenClaims.documentId}.
  * If not specified, the token will not be associated with a document, and an empty string will be used.
  * @param user - User with whom generated tokens will be associated.
  * If not specified, the token will not be associated with a user, and a randomly generated mock user will be
  * used instead.
- * @see {@link @fluidframework/protocol-definitions#ITokenClaims.user}
+ * See {@link @fluidframework/protocol-definitions#ITokenClaims.user}
  * @param lifetime - Used to generate the {@link @fluidframework/protocol-definitions#ITokenClaims.exp | expiration}.
  * Expiration = now + lifetime.
  * Expressed in seconds.
  * Default: 3600 (1 hour).
- * @param ver - @see {@link @fluidframework/protocol-definitions#ITokenClaims.ver}.
+ * @param ver - See {@link @fluidframework/protocol-definitions#ITokenClaims.ver}.
  * Default: `1.0`.
  */
 export function generateToken(
@@ -55,8 +55,9 @@ export function generateToken(
     documentId?: string,
     user?: IUser,
     lifetime: number = 60 * 60,
-    ver: string = "1.0"): string {
-    let userClaim = (user) ? user : generateUser();
+    ver: string = "1.0",
+): string {
+    let userClaim = user ? user : generateUser();
     if (userClaim.id === "" || userClaim.id === undefined) {
         userClaim = generateUser();
     }
@@ -65,7 +66,7 @@ export function generateToken(
     const now = Math.round(Date.now() / 1000);
     const docId = documentId ?? "";
 
-    const claims: ITokenClaims & { jti: string; } = {
+    const claims: ITokenClaims & { jti: string } = {
         documentId: docId,
         scopes,
         tenantId,
@@ -77,7 +78,15 @@ export function generateToken(
     };
 
     const utf8Key = { utf8: key };
-    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
+
+    return jsrsasign.jws.JWS.sign(
+        // External API uses null
+        // eslint-disable-next-line unicorn/no-null
+        null,
+        JSON.stringify({ alg: "HS256", typ: "JWT" }),
+        claims,
+        utf8Key,
+    );
 }
 
 /**

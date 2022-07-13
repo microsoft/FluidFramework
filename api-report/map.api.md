@@ -53,6 +53,19 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
 }
 
 // @public
+export interface IDirectoryClearOperation {
+    path: string;
+    type: "clear";
+}
+
+// @public
+export interface IDirectoryCreateSubDirectoryOperation {
+    path: string;
+    subdirName: string;
+    type: "createSubDirectory";
+}
+
+// @public
 export interface IDirectoryDataObject {
     // (undocumented)
     storage?: {
@@ -62,6 +75,20 @@ export interface IDirectoryDataObject {
     subdirectories?: {
         [subdirName: string]: IDirectoryDataObject;
     };
+}
+
+// @public
+export interface IDirectoryDeleteOperation {
+    key: string;
+    path: string;
+    type: "delete";
+}
+
+// @public
+export interface IDirectoryDeleteSubDirectoryOperation {
+    path: string;
+    subdirName: string;
+    type: "deleteSubDirectory";
 }
 
 // @public
@@ -77,23 +104,44 @@ export interface IDirectoryEvents extends IEvent {
 }
 
 // @public
+export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
+
+// @public (undocumented)
 export interface IDirectoryNewStorageFormat {
     blobs: string[];
     content: IDirectoryDataObject;
 }
 
-// Warning: (ae-forgotten-export) The symbol "IDirectoryStorageOperation" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "IDirectorySubDirectoryOperation" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
+
+// @public
+export interface IDirectorySetOperation {
+    key: string;
+    path: string;
+    type: "set";
+    value: ISerializableValue;
+}
+
+// @public
+export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
+
+// @public
+export type IDirectorySubDirectoryOperation = IDirectoryCreateSubDirectoryOperation | IDirectoryDeleteSubDirectoryOperation;
 
 // @public
 export interface IDirectoryValueChanged extends IValueChanged {
     path: string;
 }
 
-// @public @deprecated
+// @public
+export interface ILocalValue {
+    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
+    readonly type: string;
+    readonly value: any;
+}
+
+// @public
 export interface ISerializableValue {
     type: string;
     value: any;
@@ -149,7 +197,6 @@ export interface IValueChanged {
 export class LocalValueMaker {
     constructor(serializer: IFluidSerializer);
     fromInMemory(value: any): ILocalValue;
-    // Warning: (ae-forgotten-export) The symbol "ILocalValue" needs to be exported by the entry point index.d.ts
     fromSerializable(serializable: ISerializableValue): ILocalValue;
 }
 
@@ -208,6 +255,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: any, localOpMetadata: unknown): void;
     set<T = any>(key: string, value: T): this;
     get size(): number;
     subdirectories(): IterableIterator<[string, IDirectory]>;
