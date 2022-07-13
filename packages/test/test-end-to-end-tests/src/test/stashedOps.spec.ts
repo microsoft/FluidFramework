@@ -757,14 +757,20 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             .then(async (c) => c.closeAndGetPendingLocalState());
         const container = await loadOffline(provider, { url }, offlineState);
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
+        const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-        // calling uploadBlob() will not resolve while offline, but should not result in an error
-        const blobHandleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+        const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+        assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+        map.set("blob handle", handle);
 
         container.connect();
-        // blob handle should resolve now we're connected
-        const handle = await blobHandleP;
-        assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+
+        const container2 = await provider.loadTestContainer(testContainerConfig);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+        await provider.ensureSynchronized();
+        assert.strictEqual(bufferToString(await map2.get("blob handle").get(), "utf8"), "blob contents");
     });
 
     it("offline attach", async function() {
