@@ -173,8 +173,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     nextInterval(pos: number): TInterval | undefined;
     // (undocumented)
     previousInterval(pos: number): TInterval | undefined;
-    // Warning: (ae-forgotten-export) The symbol "SerializedIntervalDelta" needs to be exported by the entry point index.d.ts
-    //
     // @internal (undocumented)
     rebaseLocalInterval(opName: string, serializedInterval: SerializedIntervalDelta, localSeq: number): SerializedIntervalDelta;
     // (undocumented)
@@ -434,6 +432,9 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
+
+// @internal (undocumented)
+export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" | "properties"> & Partial<Pick<ISerializedInterval, "start" | "end" | "properties">>;
 
 // @public @deprecated (undocumented)
 export class SharedIntervalCollection extends SharedObject implements ISharedIntervalCollection<Interval> {

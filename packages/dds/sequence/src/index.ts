@@ -28,6 +28,7 @@ export {
     SequenceInterval,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,
+    SerializedIntervalDelta,
 } from "./intervalCollection";
 export {
     IMapMessageLocalMetadata,

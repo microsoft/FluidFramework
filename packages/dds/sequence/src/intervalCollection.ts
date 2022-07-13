@@ -72,7 +72,8 @@ export interface ISerializedInterval {
     properties?: PropertySet;
 }
 
-type SerializedIntervalDelta =
+/** @internal */
+export type SerializedIntervalDelta =
     Omit<ISerializedInterval, "start" | "end" | "properties">
     & Partial<Pick<ISerializedInterval, "start" | "end" | "properties">>;
 
