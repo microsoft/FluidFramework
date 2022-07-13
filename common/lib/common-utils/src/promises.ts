@@ -21,7 +21,7 @@ export class Deferred<T> {
     /**
      * Returns whether the underlying promise has been completed
      */
-    public get isCompleted() {
+    public get isCompleted(): boolean {
         return this.completed;
     }
 
@@ -39,7 +39,7 @@ export class Deferred<T> {
      *
      * @param value - the value to resolve the promise with
      */
-    public resolve(value: T | PromiseLike<T>) {
+    public resolve(value: T | PromiseLike<T>): void {
         if (this.res !== undefined) {
             this.completed = true;
             this.res(value);
@@ -51,7 +51,7 @@ export class Deferred<T> {
      *
      * @param value - the value to reject the promise with
      */
-    public reject(error: any) {
+    public reject(error: any): void {
         if (this.rej !== undefined) {
             this.completed = true;
             this.rej(error);

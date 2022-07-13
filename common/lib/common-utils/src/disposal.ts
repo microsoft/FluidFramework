@@ -9,7 +9,7 @@ export function doIfNotDisposed<T>(
     disposable: IDisposable,
     f: (...args: any[]) => T,
 ): (...args: any[]) => T {
-    return (...args: any[]) => {
+    return (...args: any[]): T => {
         if (disposable.disposed) {
             throw new Error("Already disposed");
         } else {

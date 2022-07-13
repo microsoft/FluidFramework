@@ -96,19 +96,18 @@ describe("PromiseCache", () => {
     });
 
     describe("asyncFn behavior", () => {
-        // eslint-disable-next-line @typescript-eslint/promise-function-async
-        const thrower = (removeOnError: boolean): Promise<string> => {
+        const thrower = async (removeOnError: boolean): Promise<string> => {
             throw new Error(removeOnError ? "remove" : "Don't remove");
         };
 
-        const removeOnErrorByMessage = (error: Error) => error.message === "remove";
+        const removeOnErrorByMessage = (error: Error): boolean => error.message === "remove";
         let pc: PromiseCache<number, string> | undefined;
 
         it("asyncFn run immediately and only if key not set", () => {
             pc = new PromiseCache<number, string>();
 
             let callCount = 0;
-            const fn = async () => { ++callCount; return "hello!"; };
+            const fn = async (): Promise<string> => { ++callCount; return "hello!"; };
 
             // fn runs immediately...
             pc.add(1, fn);
@@ -129,8 +128,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            const asyncFn = () => thrower(false /* removeOnError */);
+            const asyncFn = async (): Promise<string> => thrower(false /* removeOnError */);
 
             const addOrGet1 = pc.addOrGet(1, asyncFn);
             await assert.rejects(addOrGet1);
@@ -142,8 +140,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            const asyncFn = () => thrower(false /* removeOnError */);
+            const asyncFn = async (): Promise<string> => thrower(false /* removeOnError */);
 
             const add2 = pc.add(2, asyncFn);
             assert.equal(add2, true);
@@ -156,7 +153,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            const asyncFn = async () => thrower(false /* removeOnError */);
+            const asyncFn = async (): Promise<string> => thrower(false /* removeOnError */);
 
             const p3 = pc.addOrGet(3, asyncFn);
             await assert.rejects(p3);
@@ -168,7 +165,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            const asyncFn = async () => thrower(false /* removeOnError */);
+            const asyncFn = async (): Promise<string> => thrower(false /* removeOnError */);
 
             const add4 = pc.add(4, asyncFn);
             assert.equal(add4, true);
@@ -181,8 +178,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            const asyncFn = () => thrower(true /* removeOnError */);
+            const asyncFn = async (): Promise<string> => thrower(true /* removeOnError */);
 
             const p5 = pc.addOrGet(5, asyncFn);
             const contains5a = pc.has(5);
@@ -197,8 +193,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            // eslint-disable-next-line @typescript-eslint/promise-function-async
-            const asyncFn = () => thrower(true /* removeOnError */);
+            const asyncFn = async (): Promise<string> => thrower(true /* removeOnError */);
 
             const add6 = pc.add(6, asyncFn);
             assert.equal(add6, true);
@@ -214,7 +209,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            const asyncFn = async () => thrower(true /* removeOnError */);
+            const asyncFn = async (): Promise<string> => thrower(true /* removeOnError */);
 
             const p7 = pc.addOrGet(7, asyncFn);
             const contains7a = pc.has(7);
@@ -229,7 +224,7 @@ describe("PromiseCache", () => {
             pc = new PromiseCache<number, string>({
                 removeOnError: removeOnErrorByMessage,
             });
-            const asyncFn = async () => thrower(true /* removeOnError */);
+            const asyncFn = async (): Promise<string> => thrower(true /* removeOnError */);
 
             const add8 = pc.add(8, asyncFn);
             assert.equal(add8, true);
@@ -248,7 +243,7 @@ describe("PromiseCache", () => {
 
         // Useful for debugging the tests
         const enableLogging: boolean = false; // Set to true to see timing logs
-        function logClock(m) {
+        function logClock(m): void {
             if (enableLogging) {
                 console.log(`${m} ${clock.now}`);
             }

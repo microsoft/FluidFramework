@@ -224,9 +224,7 @@ export class PromiseTimer implements IPromiseTimer {
     constructor(defaultTimeout: number, defaultHandler: () => void);
     // (undocumented)
     clear(): void;
-    // (undocumented)
     get hasTimer(): boolean;
-    // (undocumented)
     start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult>;
     // (undocumented)
     protected wrapHandler(handler: () => void): void;
@@ -253,7 +251,7 @@ export class RateLimiter {
 }
 
 // @public
-export function safelyParseJSON(json: string): any;
+export function safelyParseJSON(json: string): any | undefined;
 
 // @public
 export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void): ReturnType<typeof setTimeout>;
