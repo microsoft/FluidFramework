@@ -192,8 +192,8 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
- * @privateRemarks
- * Directly used in JSON.stringify, direct result from JSON.parse.
+ *
+ * @privateRemarks Directly used in JSON.stringify, direct result from JSON.parse.
  */
 export interface IDirectoryDataObject {
     storage?: { [key: string]: ISerializableValue; };
