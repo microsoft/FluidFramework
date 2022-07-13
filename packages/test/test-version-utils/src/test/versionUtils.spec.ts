@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { describe } from "mocha";
 import { getRequestedRange } from "../versionUtils";
 
 describe("Get the major version number above or below the baseVersion", () => {
