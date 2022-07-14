@@ -2,12 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { EventEmitter } from "events";
 import { IEvent, TransformedEvent, IEventTransformer, IEventProvider } from "@fluidframework/common-definitions";
 
-// the event emitter polyfill and the node event emitter have different event types:
-// string | symbol vs. string | number
-// this allow us to correctly handle either type
+/**
+ * The event emitter polyfill and the node event emitter have different event types:
+ * string | symbol vs. string | number
+ *
+ * This type allow us to correctly handle either type
+ */
 export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any); } ? E : never;
 
 export type TypedEventTransform<TThis, TEvent> =

@@ -7,8 +7,10 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { default as Random } from "random-js";
-import { ITreeCursor } from "../..";
-import { extract, JsonCursor } from "./jsonCursor";
+import { ITreeCursor } from "../../..";
+// Allow importing from this specific file which is being tested:
+/* eslint-disable-next-line import/no-internal-modules */
+import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./json";
 
 // Helper for creating a PRNG instance that produces a uniform distribution in the range [0..1).
@@ -77,17 +79,17 @@ function bench(name: string, getJson: () => any) {
             // TODO: extract() hasn't been optimized, and possibly should be cloned into
             //       the benchmark to avoid test enhancements (e.g., additional asserts)
             //       from skewing benchmark results.
-            const extracted = extract(cursor);
+            const extracted = cursorToJsonObject(cursor);
 
             assert.deepEqual(extracted, json,
                 "extract() must return an equivalent tree.");
-            assert.deepEqual(extract(cursor), json,
+            assert.deepEqual(cursorToJsonObject(cursor), json,
                 "Repeated calls to extract() must return an equivalent tree.");
             assert.notEqual(extracted, json,
                 "extract() must not return the original tree instance.");
         },
         benchmarkFn: () => {
-            extract(cursor);
+            cursorToJsonObject(cursor);
         },
     });
 }

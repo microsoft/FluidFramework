@@ -77,7 +77,7 @@ export interface IActorClient {
 }
 
 /**
- * The ITokenService abstracts the discovery of claims contained within a token
+ * Abstracts the discovery of claims contained within a token.
  */
 export interface ITokenService {
     extractClaims(token: string): ITokenClaims;

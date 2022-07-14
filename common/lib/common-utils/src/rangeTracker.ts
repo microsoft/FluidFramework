@@ -8,7 +8,7 @@ import cloneDeep from "lodash/cloneDeep";
 import { assert } from "./assert";
 
 /**
- * A range in the RangeTracker
+ * A range in the {@link RangeTracker}
  */
 export interface IRange {
     primary: number;
@@ -17,7 +17,7 @@ export interface IRange {
 }
 
 /**
- * A serialized version of the RangeTracker
+ * A serialized version of the {@link RangeTracker}
  */
 export interface IRangeTrackerSnapshot {
     ranges: IRange[];
@@ -37,7 +37,7 @@ export class RangeTracker {
     private lastPrimary: number;
     private lastSecondary: number | undefined;
 
-    get base() {
+    get base(): number {
         return this.ranges[0].primary;
     }
 
@@ -46,7 +46,7 @@ export class RangeTracker {
      *
      * @returns last primary that was added
      */
-    get primaryHead() {
+    get primaryHead(): number {
         return this.lastPrimary;
     }
 
@@ -55,7 +55,7 @@ export class RangeTracker {
      *
      * @returns last secondary that was added
      */
-    get secondaryHead() {
+    get secondaryHead(): number | undefined {
         return this.lastSecondary;
     }
 
@@ -90,7 +90,7 @@ export class RangeTracker {
      * @param primary - the primary number in the range
      * @param secondary - the secondary number in the range
      */
-    public add(primary: number, secondary: number) {
+    public add(primary: number, secondary: number): void {
         // Both values must continuously be increasing - we won't always track the last value we saw so we do so
         // below to check invariants
         assert(primary >= this.lastPrimary, 0x003 /* "Primary to add to range < last primary!" */);
@@ -166,7 +166,7 @@ export class RangeTracker {
      *
      * @param primary - the primary value to update
      */
-    public updateBase(primary: number) {
+    public updateBase(primary: number): void {
         assert(primary >= this.ranges[0].primary, 0x007 /* "Target primary to update < first range's primary!" */);
 
         // Walk the ranges looking for the first one that is greater than the primary. Primary is then within the

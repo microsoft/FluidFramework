@@ -17,7 +17,7 @@ export type PromiseCacheExpiry = {
 };
 
 /**
- * Options for configuring the PromiseCache
+ * Options for configuring the {@link PromiseCache}
  */
 export interface PromiseCacheOptions {
     /** Common expiration policy for all items added to this cache */
@@ -41,7 +41,7 @@ class GarbageCollector<TKey> {
     /**
      * Schedule GC for the given key, as applicable
      */
-    public schedule(key: TKey) {
+    public schedule(key: TKey): void {
         if (this.expiry.policy !== "indefinite") {
             this.gcTimeouts.set(
                 key,
@@ -56,7 +56,7 @@ class GarbageCollector<TKey> {
     /**
      * Cancel any pending GC for the given key
      */
-    public cancel(key: TKey) {
+    public cancel(key: TKey): void {
         const timeout = this.gcTimeouts.get(key);
         if (timeout !== undefined) {
             clearTimeout(timeout);
@@ -67,7 +67,7 @@ class GarbageCollector<TKey> {
     /**
      * Update any pending GC for the given key, as applicable
      */
-    public update(key: TKey) {
+    public update(key: TKey): void {
         // Cancel/reschedule new GC if the policy is sliding
         if (this.expiry.policy === "sliding") {
             this.cancel(key);
@@ -93,7 +93,7 @@ export class PromiseCache<TKey, TResult> {
      */
     constructor({
         expiry = { policy: "indefinite" },
-        removeOnError = () => true,
+        removeOnError = (): boolean => true,
     }: PromiseCacheOptions = {}) {
         this.removeOnError = removeOnError;
         this.gc = new GarbageCollector<TKey>(expiry, (key) => this.remove(key));
@@ -102,7 +102,7 @@ export class PromiseCache<TKey, TResult> {
     /**
      * Check if there's anything cached at the given key
      */
-    public has(key: TKey) {
+    public has(key: TKey): boolean {
         return this.cache.has(key);
     }
 
@@ -120,7 +120,7 @@ export class PromiseCache<TKey, TResult> {
     /**
      * Remove the Promise for the given key, returning true if it was found and removed
      */
-    public remove(key: TKey) {
+    public remove(key: TKey): boolean {
         this.gc.cancel(key);
         return this.cache.delete(key);
     }
@@ -140,7 +140,7 @@ export class PromiseCache<TKey, TResult> {
         let promise = this.get(key);
         if (promise === undefined) {
             // Wrap in an async lambda in case asyncFn disabled @typescript-eslint/promise-function-async
-            const safeAsyncFn = async () => asyncFn();
+            const safeAsyncFn = async (): Promise<TResult> => asyncFn();
 
             // Start the async work and put the Promise in the cache
             promise = safeAsyncFn();
