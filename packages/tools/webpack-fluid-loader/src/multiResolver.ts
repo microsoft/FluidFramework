@@ -60,7 +60,6 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                 options.fluidHost.replace("www", "historian"),
                 options.tenantId,
                 options.bearerSecret ?? "");
-
         case "tinylicious": {
             const urls = tinyliciousUrls(options);
             return new InsecureUrlResolver(
