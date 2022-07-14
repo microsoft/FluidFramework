@@ -43,7 +43,7 @@ export interface LocalReferencePosition extends ReferencePosition {
 }
 
 /**
- * @privateRemarks This should not be exported outside merge tree
+ * @privateRemarks This should not be exported outside merge tree.
  * @internal
  */
 class LocalReference implements LocalReferencePosition {
@@ -134,7 +134,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     *
+     * @privateRemarks This method should only be called by mergeTree.
      * @internal
      */
     public hierRefCount: number = 0;
@@ -156,7 +156,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     *
+     * @privateRemarks This method should only be called by mergeTree.
      * @internal
      */
     public [Symbol.iterator]() {
@@ -195,9 +195,9 @@ export class LocalReferenceCollection {
         return iterator;
     }
 
-        /**
-     *
-         * @internal
+    /**
+     * @privateRemarks This method should only be called by mergeTree.
+     * @internal
      */
     public clear() {
         this.refCount = 0;
@@ -223,7 +223,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     *
+     * @privateRemarks This method should only be called by mergeTree.
      * @internal
      */
     public get empty() {
@@ -231,7 +231,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     *
+     * @privateRemarks This method should only be called by mergeTree.
      * @internal
      */
     public createLocalRef(
@@ -250,7 +250,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     *
+     * @privateRemarks This method should only be called by mergeTree.
      * @internal
      */
     public addLocalRef(lref: LocalReferencePosition, offset: number) {
@@ -275,7 +275,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     *
+     * @privateRemarks This method should only be called by mergeTree.
      * @internal
      */
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
@@ -290,14 +290,16 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @internal
      *
      * Called by 'append()' implementations to append local refs from the given 'other' segment to the
      * end of 'this' segment.
      *
      * Note: This method should be invoked after the caller has ensured that segments can be merged,
-     *       but before 'this' segment's cachedLength has changed, or the adjustment to the local refs
-     *       will be incorrect.
+     * but before 'this' segment's cachedLength has changed, or the adjustment to the local refs
+     * will be incorrect.
+     *
+     * @privateRemarks This method should only be called by mergeTree.
+     * @internal
      */
     public append(other: LocalReferenceCollection) {
         if (!other || other.empty) {
@@ -317,8 +319,10 @@ export class LocalReferenceCollection {
         this.refsByOffset.push(...other.refsByOffset);
     }
     /**
+     * Returns true of the local reference is in the collection, otherwise false.
+     *
+     * @privateRemarks This method should only be called by mergeTree.
      * @internal
-     * Return true of the local reference is in the collection, otherwise false
      */
     public has(lref: ReferencePosition): boolean {
         if (!(lref instanceof LocalReference)
@@ -357,8 +361,6 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @internal
-     *
      * Splits this `LocalReferenceCollection` into the intervals [0, offset) and [offset, originalLength).
      * Local references in the former half of this split will remain associated with the segment used on construction.
      * Local references in the latter half of this split will be transferred to `splitSeg`,
@@ -366,6 +368,9 @@ export class LocalReferenceCollection {
      * @param offset - Offset into the original segment at which the collection should be split
      * @param splitSeg - Split segment which originally corresponded to the indices [offset, originalLength)
      * before splitting.
+     *
+     * @privateRemarks This method should only be called by mergeTree.
+     * @internal
      */
     public split(offset: number, splitSeg: ISegment) {
         if (!this.empty) {
