@@ -22,6 +22,12 @@ const testContainerConfig: ITestContainerConfig = {
     fluidDataObjectType: DataObjectFactoryType.Test,
     registry,
 };
+import {
+    Marker,
+    ReferenceType,
+    reservedMarkerIdKey,
+} from "@fluidframework/merge-tree";
+import { ISharedMap, SharedMap } from "@fluidframework/map";
 
 describeFullCompat("SharedString", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -31,10 +37,11 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
 
     let sharedString1: SharedString;
     let sharedString2: SharedString;
+    let dataObject1: ITestFluidObject;
 
     beforeEach(async () => {
         const container1 = await provider.makeTestContainer(testContainerConfig) as Container;
-        const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+        dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
         sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
 
         const container2 = await provider.loadTestContainer(testContainerConfig) as Container;
@@ -67,5 +74,29 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(
             newSharedString.getText(), text, "The new container should receive the inserted text on creation");
+    });
+
+    it("marker passes on attachment directly and transitively to any referenced DDS", async () => {
+        sharedString1.insertText(0, "hello world");
+        // Insert a simple marker.
+        sharedString1.insertMarker(
+            6,
+            ReferenceType.Simple,
+            {
+                [reservedMarkerIdKey]: "markerId",
+            },
+        );
+
+        // Annotate the marker.
+        const detachedMap: ISharedMap = SharedMap.create(dataObject1.runtime);
+        assert.equal(detachedMap.isAttached(), false, "detachedMap should not be attached");
+        assert.equal(sharedString1.isAttached(), true, "sharedString1 should be attached");
+
+        detachedMap.set("color", "blue");
+        const simpleMarker = sharedString1.getMarkerFromId("markerId") as Marker;
+        sharedString1.annotateMarker(simpleMarker, detachedMap.handle);
+        assert.equal(detachedMap.isAttached(), true, "detachedMap should be attached");
+        assert.equal(sharedString1.isAttached(), true, "sharedString1 should be attached");
+        assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
     });
 });
