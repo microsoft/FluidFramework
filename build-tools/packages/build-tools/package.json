@@ -45,8 +45,7 @@
     "policy-check:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:fix": "npm run policy-check -- -r",
     "policy-check:fix:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
-    "test": "npm run test:mocha",
-    "test:mocha": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000",
+    "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000",
     "tsc": "tsc -b"
   },
   "dependencies": {
