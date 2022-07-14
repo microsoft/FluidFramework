@@ -33,7 +33,7 @@ For a Markdown document, this is a file/page.
 For a source-code comment, this would be a single source-code comment block.
 
 - Remember that our API docs are published for public consumption!
-  So even if this means you have to redefine an acronym multiple times in a code file, it is important to do so for our end-customers.
+  So even if this means you have to repeat an acronym definition multiple times in a code file, it is important to do so for our end-customers.
 
 For example:
 
