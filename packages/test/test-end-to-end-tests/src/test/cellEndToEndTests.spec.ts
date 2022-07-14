@@ -243,7 +243,7 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
         assert.equal(detachedCell2.isAttached(), false, "detachedCell2 is not attached");
 
         // When referring cell becomes attached, the referred cell becomes attached
-        // and the attachment transitively passes to a second referred DDS
+        // and the attachment transitively passes to a second referred cell
         sharedCell1.set(detachedCell1.handle);
         assert.equal(sharedCell1.isAttached(), true, "sharedCell1 is not attached");
         assert.equal(detachedCell1.isAttached(), true, "detachedCell1 is not attached");
