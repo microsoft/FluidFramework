@@ -4,7 +4,7 @@
  */
 
 /**
- * Interface for a comparere.
+ * Interface for a comparer.
  */
 export interface IComparer<T> {
     /**
