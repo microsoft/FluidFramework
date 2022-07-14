@@ -7,6 +7,9 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo, IResolvedUrl, IUrlResolver, } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 
+/**
+ * Fake URL resolver that returns hard coded values on every request
+ */
 export class FakeUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
