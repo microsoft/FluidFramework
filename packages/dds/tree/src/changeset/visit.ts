@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Value } from "../tree";
 import { fail, unreachableCase } from "../util";
 import * as Delta from "./delta";
 
@@ -67,7 +68,7 @@ export interface DeltaVisitor {
     onInsert(index: number, content: Delta.ProtoNode[]): void;
     onMoveOut(index: number, count: number, id: Delta.MoveId): void;
     onMoveIn(index: number, count: number, id: Delta.MoveId): void;
-    onSetValue(value: Delta.Value): void;
+    onSetValue(value: Value): void;
     // TODO: better align this with ITreeCursor:
     // maybe rename it's up and down to enter / exit? Maybe Also)?
     // Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match

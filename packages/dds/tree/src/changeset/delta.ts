@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { Value } from "../tree";
+import { Brand, Opaque } from "../util";
+
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
  * Instances of this format are generated based on incoming changesets and consumed by a view layer (e.g., Forest) to
@@ -260,7 +263,7 @@ export interface Insert {
  * The contents of a subtree to be created
  */
 export interface ProtoNode {
-    id: string;
+    id?: NodeId;
     type?: string;
     value?: Value;
     fields?: ProtoFields;
@@ -275,11 +278,24 @@ export interface ProtoFields {
 
 export type ProtoField = ProtoNode[];
 
-export type MoveId = number;
+/**
+ * Uniquely identifies a MoveOut/MoveIn pair within a transaction.
+ * When the delta represents a whole transaction the MoveIn and MoveOut marks will both appear in the same delta.
+ * Deltas can also represent a portion of a transaction, in which case it's possible the MoveIn and MoveOut marks with
+ * the same `MoveId` will appear in different deltas.
+ */
+export type MoveId = Opaque<Brand<number, "delta.MoveId">>;
+
 export type Offset = number;
-export type Index = number;
-export type Value = number | string | boolean | undefined;
-export type NodeId = string;
+
+/**
+ * An identifier that a node might carry.
+ * No uniqueness guarantees (across any scope) are made at this time.
+ * TODO: Update comment once uniqueness guarantees can be made.
+ */
+export type NodeId = Opaque<Brand<string, "delta.NodeId">>;
+
+// TODO: Use or unify with tree's FieldKey
 export type FieldKey = string;
 
 export const MarkType = {
