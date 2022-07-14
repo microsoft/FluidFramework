@@ -38,7 +38,6 @@ import {
     createRoomJoinMessage,
     createNackMessage,
     createRoomLeaveMessage,
-    getRandomInt,
     generateClientId,
 } from "../utils";
 
@@ -83,15 +82,6 @@ const getSubmitSignalThrottleId = (clientId: string, tenantId: string) => `${cli
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
-    // Trace sampling.
-    if (message.operation?.traces && getRandomInt(100) === 0) {
-        message.operation.traces.push(
-            {
-                action: "start",
-                service: "alfred",
-                timestamp: Date.now(),
-            });
-    }
     const sanitizedMessage: IDocumentMessage = {
         clientSequenceNumber: message.clientSequenceNumber,
         contents: message.contents,
@@ -543,7 +533,12 @@ export function configureWebSocketServices(
                                     return true;
                                 }
                             })
-                            .map((message) => sanitizeMessage(message));
+                            .map((message) => {
+                                const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
+                                const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage, connection.clientId,
+                                    connection.tenantId, connection.documentId);
+                                return sanitizedMessageWithTrace;
+                            });
 
                         if (sanitized.length > 0) {
                             // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -641,4 +636,35 @@ export function configureWebSocketServices(
             await Promise.all(removeAndStoreP);
         });
     });
+}
+
+function addAlfredTrace(message: IDocumentMessage, clientId: string, tenantId: string, documentId: string) {
+    if (message && core.DefaultServiceConfiguration.enableTraces && shouldAddTrace(message)) {
+        if (message.traces === undefined) {
+            message.traces = [];
+        }
+        message.traces.push(
+        {
+            action: "start",
+            service: "alfred",
+            timestamp: Date.now(),
+        });
+
+        const lumberjackProperties = {
+            [BaseTelemetryProperties.tenantId]: tenantId,
+            [BaseTelemetryProperties.documentId]: documentId,
+            clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            opType: message.type,
+        };
+        Lumberjack.info(`Message received by Alfred.`, lumberjackProperties);
+    }
+
+    return message;
+}
+
+// Trace sampling.1
+function shouldAddTrace(message: IDocumentMessage) {
+    const test = true; // getRandomInt(100) === 0;
+    return test;
 }
