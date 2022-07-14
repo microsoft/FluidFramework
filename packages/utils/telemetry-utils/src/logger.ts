@@ -48,6 +48,17 @@ export interface ITelemetryLoggerPropertyBags{
     error?: ITelemetryLoggerPropertyBag;
 }
 
+// Less restrictive telemetry properties to include arrays with primitives.
+export interface ITelemetryPropertiesExt {
+    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType | (string | number | boolean)[];
+}
+
+// Base interface for logging telemetry statements allowing flat arrays containing primitives.
+export interface ITelemetryBaseEventExt extends ITelemetryPropertiesExt {
+    category: string;
+    eventName: string;
+}
+
 /**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
