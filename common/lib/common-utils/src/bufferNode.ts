@@ -51,9 +51,9 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
 /**
  * Convert binary blob to string format
  *
- * @param blob - the binary blob
- * @param encoding - output string's encoding
- * @returns the blob in string format
+ * @param blob - The binary blob
+ * @param encoding - Output string's encoding
+ * @returns The blob in string format
  */
 export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
     IsoBuffer.from(blob).toString(encoding);

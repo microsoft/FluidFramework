@@ -401,8 +401,7 @@ export class ChangeSet {
      * this class and transforms it in such a way that it can be applied after this ChangeSet. The function will modify
      * the supplied ChangeSet
      *
-     * @param io_changeSet -
-     *     The ChangeSet that is rebased behind the state obtained by application of this ChangeSet.
+     * @param io_changeSet - The ChangeSet that is rebased behind the state obtained by application of this ChangeSet.
      * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict.
      * @param in_options - Optional additional parameters.
      * @returns The rebased ChangeSet (the same object as io_changeSet, it will be
@@ -417,14 +416,10 @@ export class ChangeSet {
     /**
      * Internal helper function that performs a rebase on a single property
      *
-     * @param in_ownPropertyChangeSet -
-     *     The ChangeSet for the property stored in this class
-     * @param io_rebasePropertyChangeSet -
-     *     The ChangeSet for the property to be rebased
-     * @param in_basePath -
-     *     Base path to get to the property processed by this function
-     * @param out_conflicts -
-     *     A list of paths that resulted in conflicts together with the type of the conflict
+     * @param in_ownPropertyChangeSet - The ChangeSet for the property stored in this class
+     * @param io_rebasePropertyChangeSet - The ChangeSet for the property to be rebased
+     * @param in_basePath - Base path to get to the property processed by this function
+     * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict
      * @param in_options - Optional additional parameters
      * @returns The rebased ChangeSet for this property
      */
@@ -596,9 +591,10 @@ export class ChangeSet {
     }
 
     /**
-     * Decides based on the given Typeid which rebase operation to perform
-     * Note: This function is not directly called on the ChangeSet but on the object containing it together with a key
-     * since it needs to be able to overwrite this entry
+     * Decides based on the given Typeid which rebase operation to perform.
+     *
+     * @remarks Note: This function is not directly called on the ChangeSet but on the object containing it together
+     * with a key since it needs to be able to overwrite this entry
      *
      * @param in_key - The key of the entry in the object
      * @param in_ownPropertyChangeSet - The object containing the ChangeSet for the property stored in this class.
@@ -609,7 +605,8 @@ export class ChangeSet {
      * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict.
      *
      * @returns Has there been a simple set collision? Those have to be handled separately
-     *                   TODO: We should unify the handling of set collisions
+     *
+     * @privateRemarks TODO: We should unify the handling of set collisions
      * @private
      */
     private rebaseChangeSetForPropertyEntryWithTypeid(
@@ -685,7 +682,7 @@ export class ChangeSet {
     }
 
     /**
-     * recursive helper function for ChangeSet.prototype._toReversibleChangeSet
+     * Recursive helper function for ChangeSet.prototype._toReversibleChangeSet
      * which converts a irreversible changeset to a reversible changeset
      * or updates the former state of a reversible changeset
      * @param in_context - The traversal context.
