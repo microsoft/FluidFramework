@@ -80,22 +80,24 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
         sharedString1.insertText(0, "hello world");
         // Insert a simple marker.
         sharedString1.insertMarker(
-            6,
+            0,
             ReferenceType.Simple,
             {
                 [reservedMarkerIdKey]: "markerId",
             },
         );
 
-        // Annotate the marker.
-        const detachedMap: ISharedMap = SharedMap.create(dataObject1.runtime);
-        assert.equal(detachedMap.isAttached(), false, "detachedMap should not be attached");
+        const detachedSharedString = SharedString.create(dataObject1.runtime, "detachedString");
+        detachedSharedString.insertText(0, "blue");
+
+        assert.equal(detachedSharedString.isAttached(), false, "detachedMap should not be attached");
         assert.equal(sharedString1.isAttached(), true, "sharedString1 should be attached");
 
-        detachedMap.set("color", "blue");
+        const prop = { color: detachedSharedString.handle };
         const simpleMarker = sharedString1.getMarkerFromId("markerId") as Marker;
-        sharedString1.annotateMarker(simpleMarker, detachedMap.handle);
-        assert.equal(detachedMap.isAttached(), true, "detachedMap should be attached");
+        sharedString1.annotateMarker(simpleMarker, prop);
+
+        assert.equal(detachedSharedString.isAttached(), true, "detachedMap should be attached");
         assert.equal(sharedString1.isAttached(), true, "sharedString1 should be attached");
         assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
     });
