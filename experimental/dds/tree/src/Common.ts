@@ -131,7 +131,7 @@ export function assertNotUndefined<T>(value: T | undefined, message = 'value mus
 
 /**
  * Asserts an array contains a single value and returns the value.
- * @param array - array to assert contains a single value.
+ * @param array - Array to assert contains a single value.
  * @param message - Message to be printed if assertion fails.
  */
 export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
