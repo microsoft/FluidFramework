@@ -362,7 +362,7 @@ export namespace PathHelper {
      *
      * @returns quoted path string
      */
-     export const quotePathSegmentIfNeeded = function(in_pathSegment: string): string {
+    export const quotePathSegmentIfNeeded = function(in_pathSegment: string): string {
         if (in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
             in_pathSegment.indexOf('"') !== -1 ||
             in_pathSegment.indexOf("\\") !== -1 ||
