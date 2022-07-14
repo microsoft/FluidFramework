@@ -84,8 +84,6 @@ export interface IClientConfiguration {
     maxMessageSize: number;
     noopCountFrequency?: number;
     noopTimeFrequency?: number;
-    // (undocumented)
-    summary: ISummaryConfiguration;
 }
 
 // @public (undocumented)
@@ -416,39 +414,11 @@ export interface ISummaryAttachment {
 }
 
 // @public
-export interface ISummaryAuthor {
-    date: IsoDate;
-    email: string;
-    name: string;
-}
-
-// @public
 export interface ISummaryBlob {
     // (undocumented)
     content: string | Uint8Array;
     // (undocumented)
     type: SummaryType.Blob;
-}
-
-// @public
-export interface ISummaryCommitter {
-    date: IsoDate;
-    email: string;
-    name: string;
-}
-
-// @public (undocumented)
-export interface ISummaryConfiguration {
-    // (undocumented)
-    disableSummaries?: boolean;
-    // (undocumented)
-    idleTime: number;
-    // (undocumented)
-    maxAckWaitTime: number;
-    // (undocumented)
-    maxOps: number;
-    // (undocumented)
-    maxTime: number;
 }
 
 // @public (undocumented)
@@ -501,7 +471,6 @@ export interface ISummaryTree {
     };
     // (undocumented)
     type: SummaryType.Tree;
-    // (undocumented)
     unreferenced?: true;
 }
 
@@ -627,10 +596,10 @@ export enum ScopeType {
     SummaryWrite = "summary:write"
 }
 
-// @public (undocumented)
+// @public
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
-// @public (undocumented)
+// @public
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 // @public
@@ -649,10 +618,10 @@ export namespace SummaryType {
     const Attachment: Attachment;
 }
 
-// @public (undocumented)
+// @public
 export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
-// @public (undocumented)
+// @public
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
 // @public

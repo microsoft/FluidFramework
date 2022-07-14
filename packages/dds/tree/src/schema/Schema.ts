@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Brand, Opaque } from "../util";
+
 /**
  * Example internal schema representation types.
  */
@@ -20,38 +22,30 @@
  * 2. Persist the whole schema.
  * Use the identifier to associate it with schema when loading to check that the schema match.
  */
-export type SchemaIdentifier = string & {
-    readonly SchemaIdentifier: "3965006b-66d0-41d6-bb04-bd6873b528b4";
-};
+export type SchemaIdentifier = GlobalFieldKey | TreeSchemaIdentifier;
 
 /**
  * SchemaIdentifier for a Tree.
  * Also known as "Definition"
  */
-export type TreeSchemaIdentifier = SchemaIdentifier & {
-    readonly TreeSchemaIdentifier: "ffc4b4b6-a4d8-4479-9636-fe6c6a1a4a7f";
-};
+export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 
 /**
- * Key / Name / Label for a field which is scoped to a specific TreeSchema.
+ * Key (aka Name or Label) for a field which is scoped to a specific TreeSchema.
  */
-export type LocalFieldKey = string & {
-    readonly TreeSchemaIdentifier: "1108736b-ebb5-4924-9a25-d4dbabd83fc5";
-};
+export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 /**
  * SchemaIdentifier for a Field "global field",
- * meaning a field which has the same meaning for all usages withing the document
+ * meaning a field which has the same meaning for all usages within the document
  * (not scoped to a specific TreeSchema like LocalFieldKey).
  *
  * Note that the implementations should ensure that GlobalFieldKeys can never collide with LocalFieldKeys.
- * This can either be done in several ways
+ * This can be done in several ways
  * (keeping the two classes of fields separate, name-spacing/escaping,
  * compressing one into numbers and leaving the other strings, etc.)
  */
-export type GlobalFieldKey = SchemaIdentifier & {
-    readonly TreeSchemaIdentifier: "7cc802f9-3360-4176-bbbf-cab23320d80b";
-};
+export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">>{}
 
 /**
  * Describes how a particular field functions.

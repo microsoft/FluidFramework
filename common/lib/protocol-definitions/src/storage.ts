@@ -60,6 +60,7 @@ export type ITreeEntry = {
      * Path to the object
      */
     path: string;
+
     /**
      * The file mode; one of 100644 for file (blob), 100755 for executable (blob), 040000 for subdirectory (tree)
      * or 120000 for a blob that specifies the path of a symlink
@@ -88,6 +89,7 @@ export enum TreeEntry {
 
 export interface ITree {
     entries: ITreeEntry[];
+
     /**
      * Unique ID representing all entries in the tree. Can be used to optimize snapshotting in the case
      * it is known that the `ITree` has already been created and stored

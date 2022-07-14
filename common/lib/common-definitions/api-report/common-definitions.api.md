@@ -256,10 +256,10 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
 
-// @public (undocumented)
+// @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @public (undocumented)
+// @public
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 // @public

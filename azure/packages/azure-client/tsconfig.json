@@ -4,14 +4,8 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "composite": true,
-        "types": [
-            "node"
-        ]
+        "types": ["node"],
     },
-    "include": [
-        "src/**/*"
-    ],
-    "exclude": [
-        "src/test/**/*"
-    ]
+    "include": ["src/**/*"],
+    "exclude": ["src/test/**/*"],
 }

@@ -253,7 +253,7 @@ export class RateLimiter {
 }
 
 // @public
-export function safelyParseJSON(json: string): any;
+export function safelyParseJSON(json: string): any | undefined;
 
 // @public
 export function setLongTimeout(timeoutFn: () => void, timeoutMs: number, setTimeoutIdFn?: (timeoutId: ReturnType<typeof setTimeout>) => void): ReturnType<typeof setTimeout>;

@@ -61,11 +61,15 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
      * @param appName - application name hint that is encoded with url produced by getAbsoluteUrl() method.
      * This hint is used by link handling logic which determines which app to redirect to when user
      * navigates directly to the link.
+     * @param getContext - callback function which is used to get context for given resolved url. If context
+     * is returned then it will be embedded into url returned by getAbsoluteUrl() method.
      */
     public constructor(
         shareLinkFetcherProps?: ShareLinkFetcherProps | undefined,
         logger?: ITelemetryBaseLogger,
         private readonly appName?: string,
+        private readonly getContext?:
+            (resolvedUrl: IOdspResolvedUrl, dataStorePath: string) => Promise<string | undefined>,
     ) {
         this.logger = createOdspLogger(logger);
         if (shareLinkFetcherProps) {
@@ -185,7 +189,9 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
      * Requests a driver + data store storage URL. Note that this method requires share link to be fetched
      * and it will throw in case share link fetcher props were not specified when instance was created.
      * @param resolvedUrl - The driver resolved URL
-     * @param request - The relative data store path URL. For requesting a driver URL, this value should always be '/'
+     * @param dataStorePath - The relative data store path URL.
+     * For requesting a driver URL, this value should always be '/'
+     * @param packageInfoSource - optional, represents container package information to be included in url.
      */
     public async getAbsoluteUrl(
         resolvedUrl: IResolvedUrl,
@@ -193,8 +199,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         packageInfoSource?: IContainerPackageInfo,
     ): Promise<string> {
         const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+
         const shareLink = await this.getShareLinkPromise(odspResolvedUrl);
         const shareLinkUrl = new URL(shareLink);
+
         // back-compat: GitHub #9653
         const isFluidPackage = (pkg: any) =>
             typeof pkg === "object"
@@ -211,6 +219,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         }
         containerPackageName = containerPackageName ?? odspResolvedUrl.codeHint?.containerPackageName;
 
+        const context = await this.getContext?.(odspResolvedUrl, dataStorePath);
+
         storeLocatorInOdspUrl(shareLinkUrl, {
             siteUrl: odspResolvedUrl.siteUrl,
             driveId: odspResolvedUrl.driveId,
@@ -219,6 +229,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             appName: this.appName,
             containerPackageName,
             fileVersion: odspResolvedUrl.fileVersion,
+            context,
         });
 
         return shareLinkUrl.href;
@@ -237,6 +248,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
     /**
      * Crafts a supported data store nav param
+     * @deprecated encodeOdspFluidDataStoreLocator should be used instead
      */
     public static createNavParam(locator: OdspFluidDataStoreLocator) {
         return encodeOdspFluidDataStoreLocator(locator);

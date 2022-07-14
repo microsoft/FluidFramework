@@ -3,51 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { IsoDate } from "./date";
-
+/**
+ * TODO
+ */
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
+/**
+ * TODO
+ */
 export type SummaryTree = ISummaryTree | ISummaryHandle;
-
-/**
- * TODO
- */
-export interface ISummaryAuthor {
-    /**
-     * Name of the summary author.
-     */
-    name: string;
-
-    /**
-     * Email address of the summary author.
-     */
-    email: string;
-
-    /**
-     * Date on which the summary was generated.
-     */
-    date: IsoDate;
-}
-
-/**
- * TODO
- */
-export interface ISummaryCommitter {
-    /**
-     * Name of the summary committer.
-     */
-    name: string;
-
-    /**
-     * Email address of the summary author.
-     */
-    email: string;
-
-    /**
-     * Date on which the summary was generated.
-     */
-    date: IsoDate;
-}
 
 /**
  *  Type tag used to distinguish different types of nodes in a {@link ISummaryTree}.
@@ -78,13 +42,21 @@ export namespace SummaryType {
 
      /**
       * Unique identifier to larger blobs uploaded outside of the summary.
-      * Ex. DDS has large images or video that will be uploaded by the BlobManager and
-      * receive an Id that can be used in the summary.
+      *
+      * @example A distributed data structure (DDS) has large images or video that will be uploaded by the BlobManager
+      * and receive an ID that can be used in the summary.
       */
      export const Attachment: Attachment = 4 as const;
 }
+
+/**
+ * TODO
+ */
 export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
+/**
+ * TODO
+ */
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
 /**
@@ -111,8 +83,8 @@ export interface ISummaryHandle {
 /**
  * String or Binary data to be uploaded to the server as part of the container's Summary.
  * Note: Already uploaded blobs would be referenced by a ISummaryAttachment.
- * Additional information can be found here: https://github.com/microsoft/FluidFramework/issues/6568
- * Ex. "content": "\{ \"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",
+ * Additional information can be found here: {@link https://github.com/microsoft/FluidFramework/issues/6568}
+ * @example "content": "\{ \"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",
  *                    \"summaryFormatVersion\":2,\"isRootDataStore\":false \}"
  */
 export interface ISummaryBlob {
@@ -124,8 +96,9 @@ export interface ISummaryBlob {
  * Unique identifier for blobs uploaded outside of the summary. Attachment Blobs are uploaded and
  * downloaded separately and do not take part of the snapshot payload.
  * The id gets returned from the backend after the attachment has been uploaded.
- * Additional information can be found here: https://github.com/microsoft/FluidFramework/issues/6374
- * Ex. "id": "bQAQKARDdMdTgqICmBa_ZB86YXwGP"
+ * Additional information can be found here: {@link https://github.com/microsoft/FluidFramework/issues/6374}
+ *
+ * @example "id": "bQAQKARDdMdTgqICmBa_ZB86YXwGP"
  */
 export interface ISummaryAttachment {
     type: SummaryType.Attachment;
@@ -142,6 +115,9 @@ export interface ISummaryTree {
     // TODO type I can infer from SummaryObject. File mode I may want to directly specify so have symlink+exec access
     tree: { [path: string]: SummaryObject; };
 
-    // Indicates that this tree entry is unreferenced. If this is not present, the tree entry is considered referenced.
+    /**
+     * Indicates that this tree entry is unreferenced.
+     * If this is not present, the tree entry is considered referenced.
+     */
     unreferenced?: true;
 }

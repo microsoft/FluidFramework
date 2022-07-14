@@ -4,7 +4,7 @@
  */
 
 /**
- * Convert a Uint8Array array to an ArrayBuffer
+ * Converts a Uint8Array array to an ArrayBuffer.
  * @param array - Array to convert to ArrayBuffer
  */
 export function Uint8ArrayToArrayBuffer(array: Uint8Array): ArrayBuffer {

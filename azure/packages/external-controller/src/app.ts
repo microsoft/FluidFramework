@@ -9,15 +9,8 @@ import {
     AzureLocalConnectionConfig,
     AzureContainerServices,
 } from "@fluidframework/azure-client";
-import {
-    generateTestUser,
-    InsecureTokenProvider,
-} from "@fluidframework/test-client-utils";
-import {
-    IValueChanged,
-    IFluidContainer,
-    SharedMap,
-} from "fluid-framework";
+import { generateTestUser, InsecureTokenProvider } from "@fluidframework/test-client-utils";
+import { IValueChanged, IFluidContainer, SharedMap } from "fluid-framework";
 import { DiceRollerController, DiceRollerControllerProps } from "./controller";
 import { makeAppView } from "./view";
 
@@ -42,16 +35,18 @@ const azureUser = {
     additionalDetails: userDetails,
 };
 
-const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure ? {
-    type: "remote",
-    tenantId: "",
-    tokenProvider: new AzureFunctionTokenProvider("", azureUser),
-    endpoint: "",
-} : {
-    type: "local",
-    tokenProvider: new InsecureTokenProvider("fooBar", user),
-    endpoint: "http://localhost:7070",
-};
+const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
+    ? {
+          type: "remote",
+          tenantId: "",
+          tokenProvider: new AzureFunctionTokenProvider("", azureUser),
+          endpoint: "",
+      }
+    : {
+          type: "local",
+          tokenProvider: new InsecureTokenProvider("fooBar", user),
+          endpoint: "http://localhost:7070",
+      };
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
@@ -79,19 +74,23 @@ function createDiceRollerControllerProps(map: SharedMap): DiceRollerControllerPr
     };
 }
 
-function createDiceRollerControllerPropsFromContainer(container: IFluidContainer):
-    [DiceRollerControllerProps, DiceRollerControllerProps] {
+function createDiceRollerControllerPropsFromContainer(
+    container: IFluidContainer,
+): [DiceRollerControllerProps, DiceRollerControllerProps] {
     const diceRollerController1Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-        container.initialObjects.map1 as SharedMap);
+        container.initialObjects.map1 as SharedMap,
+    );
     const diceRollerController2Props: DiceRollerControllerProps = createDiceRollerControllerProps(
-        container.initialObjects.map2 as SharedMap);
+        container.initialObjects.map2 as SharedMap,
+    );
     return [diceRollerController1Props, diceRollerController2Props];
 }
 
-async function initializeNewContainer(container: IFluidContainer):
-    Promise<[DiceRollerControllerProps, DiceRollerControllerProps]> {
-    const [diceRollerController1Props, diceRollerController2Props] = createDiceRollerControllerPropsFromContainer(
-        container);
+async function initializeNewContainer(
+    container: IFluidContainer,
+): Promise<[DiceRollerControllerProps, DiceRollerControllerProps]> {
+    const [diceRollerController1Props, diceRollerController2Props] =
+        createDiceRollerControllerPropsFromContainer(container);
 
     // Initialize both of our SharedMaps for usage with a DiceRollerController
     await Promise.all([
@@ -114,7 +113,8 @@ async function start(): Promise<void> {
     let id: string;
 
     // Get or create the document depending if we are running through the create new flow
-    let diceRollerController1Props; let diceRollerController2Props;
+    let diceRollerController1Props;
+    let diceRollerController2Props;
     const createNew = location.hash.length === 0;
     if (createNew) {
         // The client will create a new detached container using the schema
@@ -126,7 +126,9 @@ async function start(): Promise<void> {
         // map2.set("diceValue", 1);
         // console.log(map1.get("diceValue"));
         // Initialize our models so they are ready for use with our controllers
-        [diceRollerController1Props, diceRollerController2Props] = await initializeNewContainer(container);
+        [diceRollerController1Props, diceRollerController2Props] = await initializeNewContainer(
+            container,
+        );
 
         // If the app is in a `createNew` state, and the container is detached, we attach the container.
         // This uploads the container to the service and connects to the collaboration session.
@@ -138,8 +140,8 @@ async function start(): Promise<void> {
         // Use the unique container ID to fetch the container created earlier.  It will already be connected to the
         // collaboration session.
         ({ container, services } = await client.getContainer(id, containerSchema));
-        [diceRollerController1Props, diceRollerController2Props] = createDiceRollerControllerPropsFromContainer(
-            container);
+        [diceRollerController1Props, diceRollerController2Props] =
+            createDiceRollerControllerPropsFromContainer(container);
     }
 
     document.title = id;
@@ -149,7 +151,9 @@ async function start(): Promise<void> {
     const diceRollerController2 = new DiceRollerController(diceRollerController2Props);
 
     const contentDiv = document.getElementById("content") as HTMLDivElement;
-    contentDiv.append(makeAppView([diceRollerController1, diceRollerController2], services.audience));
+    contentDiv.append(
+        makeAppView([diceRollerController1, diceRollerController2], services.audience),
+    );
 }
 
 start().catch(console.error);

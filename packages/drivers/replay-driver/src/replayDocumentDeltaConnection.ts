@@ -202,12 +202,6 @@ export class ReplayDocumentDeltaConnection
             serviceConfiguration: {
                 blockSize: 64436,
                 maxMessageSize: ReplayDocumentDeltaConnection.ReplayMaxMessageSize,
-                summary: {
-                    idleTime: 5000,
-                    maxTime: 5000 * 12,
-                    maxOps: 1000,
-                    maxAckWaitTime: 600000,
-                },
             },
             supportedVersions: [ReplayDocumentDeltaConnection.replayProtocolVersion],
             version: ReplayDocumentDeltaConnection.replayProtocolVersion,

@@ -30,7 +30,7 @@ export interface IEventProvider<TEvent extends IEvent> {
     readonly on: IEventTransformer<this, TEvent>;
 
     /**
-     * Registers a callback to be invoked the first time the corresponding event is triggered.
+     * Registers a callback to be invoked the first time (after registration) the corresponding event is triggered.
      */
     readonly once: IEventTransformer<this, TEvent>;
 
@@ -41,10 +41,10 @@ export interface IEventProvider<TEvent extends IEvent> {
 }
 
 /**
- * Allows an interface to extend an interfaces that already extends an IEventProvider
+ * Allows an interface to extend interfaces that already extend an {@link IEventProvider}.
  *
  * @example
- *``` typescript
+ * ``` typescript
  * interface AEvents extends IEvent{
  *  (event: "a-event",listener: (a: number)=>void);
  * }
@@ -58,8 +58,8 @@ export interface IEventProvider<TEvent extends IEvent> {
  * interface B extends ExtendEventProvider<AEvents, A, BEvents>{
  *  b: boolean;
  * };
- *```
- * interface B will now extend interface A and it's events
+ * ```
+ * interface B will now extend interface A and its events
  *
  */
 export type ExtendEventProvider<
@@ -72,20 +72,20 @@ export type ExtendEventProvider<
 // support polymorphic `this`. For instance if an event wanted to be:
 // (event: "some-event", listener:(target: this)=>void)
 //
-// it should be writtern as
+// it should be written as
 // (event: "some-event", listener:(target: IEventThisPlaceHolder)=>void)
 //
 // and IEventThisPlaceHolder will be replaced with this.
 // This is all consumers of these types need to know.
 
 /**
- * The placeholder type that should be used instead of `this` in events
+ * The placeholder type that should be used instead of `this` in events.
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder"; };
 
 /**
- * Does the type replacement by changing types of `IEventThisPlaceHolder` to `TThis`
+ * Does the type replacement by changing types of {@link IEventThisPlaceHolder} to `TThis`
  */
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> =
     L extends any[] ? { [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K] } : L;

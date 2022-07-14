@@ -8,7 +8,8 @@ import { IDisposable } from "@fluidframework/common-definitions";
 /**
  * Returns a wrapper around the provided function, which will only invoke the inner function if the provided
  * {@link @fluidframework/common-definitions#IDisposable | disposable} object has not yet been disposed.
- * Otherwise, it will throw an error.
+ *
+ * @throws Will throw an error if the item has already been disposed.
  */
 export function doIfNotDisposed<T>(
     disposable: IDisposable,

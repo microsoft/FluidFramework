@@ -216,7 +216,7 @@ export class RedisSocketIoAdapter extends Adapter {
         if (!this.isDefaultNamespaceAndDisable) {
             const rooms = this.sids.get(socketId);
             if (rooms) {
-                const unsubscribeRooms = [];
+                const unsubscribeRooms: string[] = [];
 
                 for (const roomId of rooms) {
                     const shouldUnsubscribe = this.removeFromRoom(socketId, roomId);
@@ -423,6 +423,9 @@ export class RedisSocketIoAdapter extends Adapter {
      * It will publish a message over the pub connection and wait until it receives it
      */
     private async runRoomHealthCheck(room: string) {
+        if (!RedisSocketIoAdapter.options.healthChecks) {
+            return;
+        }
         const healthCheckId = uuid.v4();
 
         const startTime = Date.now();

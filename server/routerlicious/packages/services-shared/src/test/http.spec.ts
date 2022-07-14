@@ -7,10 +7,10 @@ import assert from "assert";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Deferred } from "@fluidframework/common-utils";
 import type { Response, Request } from "express";
-import { containsPathTraversal, handleResponse, validateRequestParams } from "../http";
+import { containsPathTraversal, defaultErrorMessage, handleResponse, validateRequestParams } from "../http";
 
 class MockRequest {
-    constructor(public readonly params: { [key: string]: string; }) {}
+    constructor(public readonly params: { [key: string]: string; }) { }
 }
 class MockResponse {
     private _statusCode: number = 200;
@@ -168,28 +168,28 @@ describe("HTTP Utils", () => {
             const responseError = new MockMongoError(11000, "E11000: Duplicate Key");
             await handleResponse(Promise.reject(responseError), (mockResponse as unknown) as Response);
             assert.strictEqual(mockResponse.statusCode, defaultErrorCode);
-            assert.strictEqual(mockResponse.responseData, JSON.stringify(responseError.message));
+            assert.strictEqual(mockResponse.responseData, JSON.stringify(defaultErrorMessage));
         });
         it("handles undefined error", async () => {
             const mockResponse = new MockResponse();
             const responseError = undefined;
             await handleResponse(Promise.reject(responseError), (mockResponse as unknown) as Response);
             assert.strictEqual(mockResponse.statusCode, defaultErrorCode);
-            assert.strictEqual(mockResponse.responseData, JSON.stringify(undefined));
+            assert.strictEqual(mockResponse.responseData, JSON.stringify(defaultErrorMessage));
         });
         it("handles string error", async () => {
             const mockResponse = new MockResponse();
             const responseError = "Failure occurred";
             await handleResponse(Promise.reject(responseError), (mockResponse as unknown) as Response);
             assert.strictEqual(mockResponse.statusCode, defaultErrorCode);
-            assert.strictEqual(mockResponse.responseData, JSON.stringify(responseError));
+            assert.strictEqual(mockResponse.responseData, JSON.stringify(defaultErrorMessage));
         });
         it("handles Error error", async () => {
             const mockResponse = new MockResponse();
             const responseError = new Error("Internal Error");
             await handleResponse(Promise.reject(responseError), (mockResponse as unknown) as Response);
             assert.strictEqual(mockResponse.statusCode, defaultErrorCode);
-            assert.strictEqual(mockResponse.responseData, JSON.stringify(responseError.message));
+            assert.strictEqual(mockResponse.responseData, JSON.stringify(defaultErrorMessage));
         });
     });
 });
