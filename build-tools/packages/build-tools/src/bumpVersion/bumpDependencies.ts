@@ -38,7 +38,6 @@ export async function bumpDependencies(
 ) {
     const suffix = release ? "" : "-0";
     const bumpPackages = context.repo.packages.packages.map(pkg => {
-        // const matchName = pkg.name;
         const matchName = pkg.monoRepo ? pkg.monoRepo.kind : pkg.name;
         const matched = bumpDepPackages.has(matchName);
         // Only add the suffix if the version is not user specified
