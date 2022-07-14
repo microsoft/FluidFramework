@@ -295,7 +295,13 @@ async function main() {
                 break;
             case "dep":
                 console.log("Bumping dependencies");
-                await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramLocal, paramCommit);
+                await bumpDependencies(
+                    context,
+                    paramBumpDepPackages,
+                    /*updateLock*/ paramLocal,
+                    /*commit*/ paramCommit,
+                    "Bump dependencies version"
+                );
                 break;
             case "release":
                 await releaseVersion(context, paramReleaseName!, paramLocal, paramVirtualPatch, paramReleaseVersion);

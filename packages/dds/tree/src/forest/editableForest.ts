@@ -30,7 +30,7 @@ export interface IEditableForest extends IForestSubscription {
      * The caller performs these updates because it has more semantic knowledge about the edits, which can be needed to
      * update the anchors in a semantically optimal way.
      */
-     readonly anchors: AnchorSet;
+    readonly anchors: AnchorSet;
 
     /**
      * Adds the supplied nodes to the forest.

@@ -319,6 +319,13 @@ export class Packages {
         return this.queueExecOnAllPackage(pkg => pkg.noHoistInstall(repoRoot), "npm i");
     }
 
+    public async filterPackages(releaseGroup: MonoRepoKind | undefined) {
+        if(releaseGroup === undefined) {
+            return this.packages;
+        }
+        return this.packages.filter((p) => p.monoRepo?.kind === releaseGroup);
+    }
+
     public async forEachAsync<TResult>(exec: (pkg: Package) => Promise<TResult>, parallel: boolean, message?: string) {
         if (parallel) { return this.queueExecOnAllPackageCore(exec, message) }
 

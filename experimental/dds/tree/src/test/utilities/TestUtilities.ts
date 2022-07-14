@@ -191,7 +191,7 @@ export function setUpTestSharedTree(
 		});
 	}
 
-	const newContainerRuntimeFactory = containerRuntimeFactory || new MockContainerRuntimeFactory();
+	const newContainerRuntimeFactory = containerRuntimeFactory ?? new MockContainerRuntimeFactory();
 
 	if (localMode === true) {
 		componentRuntime.local = true;
