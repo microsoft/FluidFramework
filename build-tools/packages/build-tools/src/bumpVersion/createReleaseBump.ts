@@ -80,7 +80,10 @@ export async function createReleaseBump(
     }
 
     // Bump the version
-    const bumpType = bumpTypeOverride ?? context.originalBranchName === "next" ? "major" : "minor";
+    const bumpType = bumpTypeOverride ?? "";
+    if(!bumpType) {
+        fatal(`No bump type provided.`);
+    }
 
     console.log(`Release bump: bumping ${bumpType} version for development`)
     console.log(await bumpCurrentBranch(context, bumpType, releaseName, depVersions, virtualPatch));
