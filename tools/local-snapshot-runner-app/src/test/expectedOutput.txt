@@ -1,2 +1,0 @@
-scenario: test
-input: test
