@@ -93,7 +93,7 @@ export class IsoBuffer extends Uint8Array {
      * @param encodingOrOffset - (string | number)
      * @param length - (number)
      */
-     static from(value, encodingOrOffset?, length?): IsoBuffer {
+    static from(value, encodingOrOffset?, length?): IsoBuffer {
         if (typeof value === "string") {
             return IsoBuffer.fromString(value, encodingOrOffset as string | undefined);
         // Capture any typed arrays, including Uint8Array (and thus - IsoBuffer!)
