@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Value } from "../tree";
+import { FieldKey, Value } from "../tree";
 import { Brand, Opaque } from "../util";
 
 /**
@@ -95,20 +95,20 @@ import { Brand, Opaque } from "../util";
  * be represented a `Modify` mark like so:
  * ```typescript
  * interface ModifyAndDelete {
- *   [type]: typeof MarkType.ModifyAndDelete;
- *   [key: FieldKey]: (Offset | ModifyDel | MoveOut)[];
+ *   type: typeof MarkType.ModifyAndDelete;
+ *   fields: FieldMap<PositionedMarks<ModifyDeleted | MoveOut>>;
  * }
  * interface ModifyAndMoveOut {
- *   [type]: typeof MarkType.ModifyAndMoveOut;
- *   [moveId]: MoveId;
- *   [key: FieldKey]: (Offset | ModifyOut | MoveOut)[];
+ *   type: typeof MarkType.ModifyAndMoveOut;
+ *   moveId: MoveId;
+ *   fields: FieldMap<PositionedMarks<ModifyMovedOut | MoveOut>>;
  * }
  * export interface Delete {
- *   [type]: typeof MarkType.Delete;
+ *   type: typeof MarkType.Delete;
  *   count: number;
  * }
  * export interface MoveOut {
- *   [type]: typeof MarkType.MoveOut;
+ *   type: typeof MarkType.MoveOut;
  *   count: number;
  *   moveId: MoveId;
  * }
@@ -128,11 +128,11 @@ import { Brand, Opaque } from "../util";
  * transaction that moves content from "foo" to "bar" then moves that same content from "bar" to "baz").
  * This makes the format less terse and harder to reason about.
  *
- * 6. MoveIn marks are not inlined within `ProtoFields`.
+ * 6. MoveIn marks are not inlined within `ProtoField`s.
  *
- * Inlining them would force the consuming code to detect `MoveIn` marks within the `ProtoFields` and handle them
+ * Inlining them would force the consuming code to detect `MoveIn` marks within the `ProtoField` and handle them
  * within the context of the insert.
- * This would be cumbersome because either the code that is responsible for consuming the `ProtoFields` would need to
+ * This would be cumbersome because either the code that is responsible for consuming the `ProtoField` would need to
  * be aware of and have the context to handle `MoveIn`, or some caller of that code would need to find and extract such
  * `MoveIn` marks ahead to calling that code.
  */
@@ -140,7 +140,22 @@ import { Brand, Opaque } from "../util";
 /**
  * Represents the change made to a document.
  */
-export type Root = PositionedMarks;
+export type Root = PositionedMarks<OuterMark>;
+
+/**
+ * Represents a change being made to a part of the tree.
+ */
+export type Mark = OuterMark | InnerModify;
+
+/**
+ * A mark that represents changes to nodes that are otherwise unaffected by changes to their ancestors.
+ */
+export type OuterMark = Modify | Delete | MoveOut | MoveIn | Insert;
+
+/**
+ * A mark that represents changes to nodes that also unaffected by changes to their ancestors.
+ */
+export type InnerModify = ModifyDeleted | ModifyInserted | ModifyMovedIn | ModifyMovedOut;
 
 /**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
@@ -155,11 +170,6 @@ export type Root = PositionedMarks;
  */
 export type PositionedMarks<TMark = Mark> = MarkWithOffset<TMark>[];
 
-export const type: unique symbol = Symbol("Delta.type");
-export const setValue: unique symbol = Symbol("Delta.setValue");
-
-export type Mark = Modify | Delete | MoveOut | MoveIn | Insert;
-
 /**
  * See PositionedMarks.
  */
@@ -173,42 +183,42 @@ export interface MarkWithOffset<TMark = Mark> {
  * moved).
  */
 export interface Modify {
-    [type]: typeof MarkType.Modify;
-    [setValue]?: Value;
-    [key: FieldKey]: PositionedMarks;
+    type: typeof MarkType.Modify;
+    setValue?: Value;
+    fields?: FieldMarks<OuterMark>;
 }
 
 /**
  * Describes modifications made to a subtree that is being deleted.
  */
 export interface ModifyDeleted {
-    [type]: typeof MarkType.Modify;
-    [key: FieldKey]: PositionedMarks<ModifyDeleted | MoveOut>;
+    type: typeof MarkType.Modify;
+    fields?: FieldMarks<ModifyDeleted | MoveOut>;
 }
 
 /**
  * Describes modifications made to a subtree that is being moved out.
  */
 export interface ModifyMovedOut {
-    [type]: typeof MarkType.Modify;
-    [setValue]?: Value;
-    [key: FieldKey]: PositionedMarks<ModifyMovedOut | Delete | MoveOut>;
+    type: typeof MarkType.Modify;
+    setValue?: Value;
+    fields?: FieldMarks<ModifyMovedOut | Delete | MoveOut>;
 }
 
 /**
  * Describes modifications made to a subtree that is being moved in.
  */
 export interface ModifyMovedIn {
-    [type]: typeof MarkType.Modify;
-    [key: FieldKey]: PositionedMarks<ModifyMovedIn | MoveIn | Insert>;
+    type: typeof MarkType.Modify;
+    fields?: FieldMarks<ModifyMovedIn | MoveIn | Insert>;
 }
 
 /**
  * Describes modifications made to a subtree that is being inserted.
  */
 export interface ModifyInserted {
-    [type]: typeof MarkType.Modify;
-    [key: FieldKey]: PositionedMarks<ModifyMovedIn | MoveIn>;
+    type: typeof MarkType.Modify;
+    fields?: FieldMarks<ModifyMovedIn | MoveIn>;
 }
 
 /**
@@ -216,7 +226,7 @@ export interface ModifyInserted {
  * Includes descriptions of the modifications made to those nodes (if any).
  */
 export interface Delete {
-    [type]: typeof MarkType.Delete;
+    type: typeof MarkType.Delete;
     count: number;
     modify?: PositionedMarks<ModifyDeleted>;
 }
@@ -226,7 +236,7 @@ export interface Delete {
  * Includes descriptions of the modifications made to those nodes (if any).
  */
 export interface MoveOut {
-    [type]: typeof MarkType.MoveOut;
+    type: typeof MarkType.MoveOut;
     count: number;
     /**
      * The delta should carry exactly one `MoveIn` mark with the same move ID.
@@ -240,7 +250,7 @@ export interface MoveOut {
  * Includes descriptions of the modifications made to those nodes (if any).
  */
 export interface MoveIn {
-    [type]: typeof MarkType.MoveIn;
+    type: typeof MarkType.MoveIn;
     /**
      * The delta should carry exactly one `MoveOut` mark with the same move ID.
      */
@@ -254,7 +264,7 @@ export interface MoveIn {
  * Those are represented as `MoveIn` marks within `ProtoField`s.
  */
 export interface Insert {
-    [type]: typeof MarkType.Insert;
+    type: typeof MarkType.Insert;
     content: ProtoNode[];
     modify?: PositionedMarks<ModifyInserted>;
 }
@@ -266,14 +276,10 @@ export interface ProtoNode {
     id?: NodeId;
     type?: string;
     value?: Value;
-    fields?: ProtoFields;
-}
-
-/**
- * The fields of a subtree to be created
- */
-export interface ProtoFields {
-    [key: FieldKey]: ProtoField;
+    /**
+     * The fields of a subtree to be created
+     */
+    fields?: FieldMap<ProtoField>;
 }
 
 export type ProtoField = ProtoNode[];
@@ -295,8 +301,8 @@ export type Offset = number;
  */
 export type NodeId = Opaque<Brand<string, "delta.NodeId">>;
 
-// TODO: Use or unify with tree's FieldKey
-export type FieldKey = string;
+export type FieldMap<T> = Map<FieldKey, T>;
+export type FieldMarks<TMark> = FieldMap<PositionedMarks<TMark>>;
 
 export const MarkType = {
     Modify: 0,

@@ -5,6 +5,8 @@
 
 import { strict as assert } from "assert";
 import { Delta, DeltaVisitor, visitDelta } from "../../changeset";
+import { FieldKey } from "../../tree";
+import { brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";
 
 function visit(delta: Delta.Root, visitor: DeltaVisitor): void {
@@ -47,7 +49,9 @@ function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
     assert.strictEqual(callIndex, expected.length);
 }
 
-const content = [{ id: "X" }];
+const fooKey = "foo" as FieldKey;
+const id = brandOpaque<Delta.NodeId>("X");
+const content = [{ id }];
 
 describe("visit", () => {
     it("empty delta", () => {
@@ -56,8 +60,8 @@ describe("visit", () => {
 
     it("set root value", () => {
         const mark: Delta.Modify = {
-            [Delta.type]: Delta.MarkType.Modify,
-            [Delta.setValue]: 1,
+            type: Delta.MarkType.Modify,
+            setValue: 1,
         };
         const expected: VisitScript = [
             ["enterNode", 0],
@@ -69,23 +73,23 @@ describe("visit", () => {
 
     it("set child value", () => {
         const mark: Delta.Modify = {
-            [Delta.type]: Delta.MarkType.Modify,
-            [Delta.setValue]: 1,
+            type: Delta.MarkType.Modify,
+            setValue: 1,
         };
         const delta: Delta.Root = [{
             offset: 0,
             mark: {
-                [Delta.type]: Delta.MarkType.Modify,
-                foo: [{ offset: 42, mark }],
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fooKey, [{ offset: 42, mark }]]]),
             },
         }];
         const expected: VisitScript = [
             ["enterNode", 0],
-            ["enterField", "foo"],
+            ["enterField", fooKey],
             ["enterNode", 42],
             ["onSetValue", 1],
             ["exitNode", 42],
-            ["exitField", "foo"],
+            ["exitField", fooKey],
             ["exitNode", 0],
         ];
         testVisit(delta, expected);
@@ -93,31 +97,29 @@ describe("visit", () => {
 
     it("insert root", () => {
         const mark: Delta.Insert = {
-            [Delta.type]: Delta.MarkType.Insert,
+            type: Delta.MarkType.Insert,
             content,
         };
         testVisit([{ offset: 0, mark }], [["onInsert", 0, content]]);
     });
 
     it("insert child", () => {
+        const mark = {
+            type: Delta.MarkType.Insert,
+            content,
+        };
         const delta: Delta.Root = [{
             offset: 0,
             mark: {
-                [Delta.type]: Delta.MarkType.Modify,
-                foo: [{
-                    offset: 42,
-                    mark: {
-                        [Delta.type]: Delta.MarkType.Insert,
-                        content,
-                    },
-                }],
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fooKey, [{ offset: 42, mark }]]]),
             },
         }];
         const expected: VisitScript = [
             ["enterNode", 0],
-            ["enterField", "foo"],
-            ["onInsert", 42, [{ id: "X" }]],
-            ["exitField", "foo"],
+            ["enterField", fooKey],
+            ["onInsert", 42, [{ id }]],
+            ["exitField", fooKey],
             ["exitNode", 0],
         ];
         testVisit(delta, expected);
@@ -125,7 +127,7 @@ describe("visit", () => {
 
     it("delete root", () => {
         const mark: Delta.Delete = {
-            [Delta.type]: Delta.MarkType.Delete,
+            type: Delta.MarkType.Delete,
             count: 10,
         };
         testVisit([{ offset: 0, mark }], [["onDelete", 0, 10]]);
@@ -133,21 +135,21 @@ describe("visit", () => {
 
     it("delete child", () => {
         const mark: Delta.Delete = {
-            [Delta.type]: Delta.MarkType.Delete,
+            type: Delta.MarkType.Delete,
             count: 10,
         };
         const delta: Delta.Root = [{
             offset: 0,
             mark: {
-                [Delta.type]: Delta.MarkType.Modify,
-                foo: [{ offset: 42, mark }],
+                type: Delta.MarkType.Modify,
+                fields: new Map([[fooKey, [{ offset: 42, mark }]]]),
             },
         }];
         const expected: VisitScript = [
             ["enterNode", 0],
-            ["enterField", "foo"],
+            ["enterField", fooKey],
             ["onDelete", 42, 10],
-            ["exitField", "foo"],
+            ["exitField", fooKey],
             ["exitNode", 0],
         ];
         testVisit(delta, expected);
@@ -155,37 +157,40 @@ describe("visit", () => {
 
     it("the lot on a field", () => {
         const del: Delta.Delete = {
-            [Delta.type]: Delta.MarkType.Delete,
+            type: Delta.MarkType.Delete,
             count: 10,
         };
         const ins: Delta.Insert = {
-            [Delta.type]: Delta.MarkType.Insert,
+            type: Delta.MarkType.Insert,
             content,
         };
         const set: Delta.Modify = {
-            [Delta.type]: Delta.MarkType.Modify,
-            [Delta.setValue]: 1,
+            type: Delta.MarkType.Modify,
+            setValue: 1,
         };
         const delta: Delta.Root = [{
             offset: 0,
             mark: {
-                [Delta.type]: Delta.MarkType.Modify,
-                foo: [
-                    { offset: 0, mark: del },
-                    { offset: 3, mark: ins },
-                    { offset: 1, mark: set },
-                ],
+                type: Delta.MarkType.Modify,
+                fields: new Map([[
+                    fooKey,
+                    [
+                        { offset: 0, mark: del },
+                        { offset: 3, mark: ins },
+                        { offset: 1, mark: set },
+                    ],
+                ]]),
             },
         }];
         const expected: VisitScript = [
             ["enterNode", 0],
-            ["enterField", "foo"],
+            ["enterField", fooKey],
             ["onDelete", 0, 10],
             ["onInsert", 3, content],
             ["enterNode", 5],
             ["onSetValue", 1],
             ["exitNode", 5],
-            ["exitField", "foo"],
+            ["exitField", fooKey],
             ["exitNode", 0],
         ];
         testVisit(delta, expected);
