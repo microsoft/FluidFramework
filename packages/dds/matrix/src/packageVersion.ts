@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/matrix";
-export const pkgVersion = "1.2.1";
+export const pkgVersion = "1.2.2";
