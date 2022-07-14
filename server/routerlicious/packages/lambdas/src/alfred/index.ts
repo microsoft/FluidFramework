@@ -136,7 +136,7 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
 /**
  * Stores client connectivity time in a Redis list.
  */
- async function storeClientConnectivityTime(
+async function storeClientConnectivityTime(
     clientId: string,
     documentId: string,
     tenantId: string,
@@ -161,7 +161,7 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
             [BaseTelemetryProperties.tenantId]: tenantId,
             [BaseTelemetryProperties.documentId]: documentId,
         },
-        error);
+            error);
     }
 }
 
@@ -217,7 +217,9 @@ export function configureWebSocketServices(
     connectThrottler?: core.IThrottler,
     submitOpThrottler?: core.IThrottler,
     submitSignalThrottler?: core.IThrottler,
-    throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager) {
+    throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
+    verifyMaxMessageSize?: boolean,
+) {
     webSocketServer.on("connection", (socket: core.IWebSocket) => {
         // Map from client IDs on this connection to the object ID and user info.
         const connectionsMap = new Map<string, core.IOrdererConnection>();
@@ -522,30 +524,69 @@ export function configureWebSocketServices(
                         return;
                     }
 
+                    const lumberjackProperties = {
+                        [CommonProperties.clientId]: clientId,
+                        ...getLumberBaseProperties(connection.documentId, connection.tenantId),
+                    };
                     messageBatches.forEach((messageBatch) => {
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
-                        const sanitized = messages
-                            .filter((message) => {
-                                if (message.type === MessageType.RoundTrip) {
-                                    if (message.traces) {
-                                        // End of tracking. Write traces.
-                                        // TODO: add Lumber metric here?
-                                        metricLogger.writeLatencyMetric("latency", message.traces).catch(
-                                            (error) => {
-                                                logger.error(error.stack);
-                                                Lumberjack.error(error.stack);
-                                            });
+                        try {
+                            const sanitized = messages
+                                .filter((message) => {
+                                    if (message.type === MessageType.RoundTrip) {
+                                        if (message.traces) {
+                                            // End of tracking. Write traces.
+                                            // TODO: add Lumber metric here?
+                                            metricLogger.writeLatencyMetric("latency", message.traces).catch(
+                                                (error) => {
+                                                    logger.error(error.stack);
+                                                    Lumberjack.error(error.stack);
+                                                });
+                                        }
+                                        return false;
                                     }
-                                    return false;
-                                } else {
-                                    return true;
-                                }
-                            })
-                            .map((message) => sanitizeMessage(message));
 
-                        if (sanitized.length > 0) {
-                            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                            connection.order(sanitized);
+                                    if (verifyMaxMessageSize === true) {
+                                        // Local tests show `JSON.stringify` to be fast
+                                        // - <1ms for JSONs <100kb
+                                        // - ~2ms for JSONs ~256kb
+                                        // - ~6ms for JSONs ~1mb
+                                        // - ~38ms for JSONs ~10mb
+                                        // - ~344ms for JSONs ~100mb
+                                        // maxMessageSize is currently 16kb, so this check should be <1ms
+                                        const messageSize = JSON.stringify(message.contents).length;
+                                        const maxMessageSize = connection.serviceConfiguration.maxMessageSize;
+                                        if (messageSize > maxMessageSize) {
+                                            throw new NetworkError(413, "Op size too large");
+                                        }
+                                    }
+
+                                    return true;
+                                })
+                                .map((message) => sanitizeMessage(message));
+
+                            if (sanitized.length > 0) {
+                                connection.order(sanitized).catch((error) => {
+                                    Lumberjack.error(
+                                        "Error ordering submitted op(s)",
+                                        lumberjackProperties,
+                                        error,
+                                    );
+                                });
+                            }
+                        } catch (e) {
+                            if (isNetworkError(e)) {
+                                if (e.code === 413) {
+                                    Lumberjack.info("Rejected too large operation(s)", lumberjackProperties);
+                                    socket.emit("nack", "", [createNackMessage(
+                                        e.code,
+                                        NackErrorType.BadRequestError,
+                                        e.message,
+                                    )]);
+                                    return;
+                                }
+                            }
+                            Lumberjack.error("Error processing submitted op(s)", lumberjackProperties, e);
                         }
                     });
                 }

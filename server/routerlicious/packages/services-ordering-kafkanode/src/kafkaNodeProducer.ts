@@ -28,6 +28,7 @@ export class KafkaNodeProducer implements IProducer {
     private connecting = false;
     private connected = false;
     private readonly maxBatchSize: number;
+    private readonly maxMessageSize: number;
 
     constructor(
         private readonly clientOptions: kafka.KafkaClientOptions,
@@ -35,9 +36,12 @@ export class KafkaNodeProducer implements IProducer {
         private readonly topic: string,
         private readonly topicPartitions?: number,
         private readonly topicReplicationFactor?: number,
-        maxBatchSize?: number) {
+        maxBatchSize?: number,
+        maxMessageSize?: number,
+    ) {
         clientOptions.clientId = clientId;
         this.maxBatchSize = maxBatchSize ?? MaxBatchSize;
+        this.maxMessageSize = maxMessageSize ?? Number.MAX_SAFE_INTEGER;
         this.connect();
     }
 
@@ -139,6 +143,14 @@ export class KafkaNodeProducer implements IProducer {
             };
 
             const stringifiedMessage = Buffer.from(JSON.stringify(boxcarMessage));
+            if (stringifiedMessage.byteLength > this.maxMessageSize) {
+                const error = new Error(
+                    // eslint-disable-next-line max-len
+                    `Boxcar message size (${stringifiedMessage.byteLength}) exceeded max message size (${this.maxMessageSize})`,
+                );
+                boxcar.deferred.reject(error);
+                continue;
+            }
             this.producer.send(
                 [{ key: boxcar.documentId, messages: stringifiedMessage, topic: this.topic }],
                 (error, data) => {

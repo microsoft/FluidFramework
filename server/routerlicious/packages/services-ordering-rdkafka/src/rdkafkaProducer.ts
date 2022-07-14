@@ -21,6 +21,7 @@ export interface IKafkaProducerOptions extends Partial<IKafkaBaseOptions> {
 	enableIdempotence: boolean;
 	pollIntervalMs: number;
 	maxBatchSize: number;
+	maxMessageSize: number;
 	additionalOptions?: kafkaTypes.ProducerGlobalConfig;
 	topicConfig?: kafkaTypes.ProducerTopicConfig;
 }
@@ -64,6 +65,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			enableIdempotence: options?.enableIdempotence ?? false,
 			pollIntervalMs: options?.pollIntervalMs ?? 10,
 			maxBatchSize: options?.maxBatchSize ?? MaxBatchSize,
+			maxMessageSize: options?.maxMessageSize ?? Number.MAX_SAFE_INTEGER,
 		};
 	}
 
@@ -272,6 +274,14 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			};
 
 			const message = Buffer.from(JSON.stringify(boxcarMessage));
+			if (message.byteLength > this.producerOptions.maxMessageSize) {
+				const error = new Error(
+					// eslint-disable-next-line max-len
+					`Boxcar message size (${message.byteLength}) exceeded max message size (${this.producerOptions.maxMessageSize})`,
+				);
+				boxcar.deferred.reject(error);
+				continue;
+			}
 
 			try {
 				if (this.producer && this.connected) {
