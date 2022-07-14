@@ -26,7 +26,7 @@
     "eslint:fix": "eslint src --fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
-    "perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --expose-gc --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
+    "perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
     "perf:measure": "npm run perf -- --fgrep @Measurement",
     "prettier": "prettier --check \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\"",
     "prettier:fix": "prettier --write \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\"",
