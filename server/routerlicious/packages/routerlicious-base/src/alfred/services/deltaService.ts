@@ -16,8 +16,7 @@ export class DeltaService implements IDeltaService {
     constructor(
         protected readonly mongoManager: MongoManager,
         protected readonly tenantManager: ITenantManager,
-    ) {
-    }
+    ) { }
 
     public async getDeltas(
         collectionName: string,
