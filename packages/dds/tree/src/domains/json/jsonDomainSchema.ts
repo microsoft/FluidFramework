@@ -12,7 +12,6 @@
  */
 
 import {
-    TreeSchema,
     FieldKind,
     ValueSchema,
     FieldSchema,
@@ -22,13 +21,13 @@ import {
     emptyField,
     emptyMap,
     emptySet,
-} from "../../../schema";
+} from "../../schema";
 
-export const typeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
+export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
 
-export const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
+const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
 
-export const json: NamedTreeSchema[] = [];
+const json: NamedTreeSchema[] = [];
 
 export const jsonObject: NamedTreeSchema = {
     name: "Json.Object" as TreeSchemaIdentifier,
@@ -92,7 +91,7 @@ export const jsonBoolean: NamedTreeSchema = {
 json.push(jsonObject, jsonArray, jsonNumber, jsonString, jsonNull, jsonBoolean);
 for (const named of json) {
     jsonTypes.add(named.name);
-    typeSchema.set(named.name, named);
+    jsonTypeSchema.set(named.name, named);
 }
 
 export const jsonRoot: FieldSchema = {

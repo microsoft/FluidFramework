@@ -4,6 +4,7 @@
 
 ```ts
 
+import { Jsonable } from '@fluidframework/datastore-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @public
@@ -27,6 +28,9 @@ export interface Covariant<T> {
     // (undocumented)
     _removeContravariance?: T;
 }
+
+// @public
+export function cursorToJsonObject(reader: ITreeCursor): unknown;
 
 // @public
 export const EmptyKey: FieldKey;
@@ -66,6 +70,51 @@ export interface ITreeCursor {
     up(): TreeNavigationResult;
     readonly value: Value;
 }
+
+// Warning: (ae-forgotten-export) The symbol "NamedTreeSchema" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export const jsonArray: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonBoolean: NamedTreeSchema;
+
+// @public
+export class JsonCursor<T> implements ITreeCursor {
+    constructor(root: Jsonable<T>);
+    // (undocumented)
+    down(key: FieldKey, index: number): TreeNavigationResult;
+    // (undocumented)
+    get keys(): Iterable<FieldKey>;
+    // (undocumented)
+    length(key: FieldKey): number;
+    // (undocumented)
+    seek(offset: number): {
+        result: TreeNavigationResult;
+        moved: number;
+    };
+    // (undocumented)
+    get type(): TreeType;
+    // (undocumented)
+    up(): TreeNavigationResult;
+    // (undocumented)
+    get value(): Value;
+}
+
+// @public (undocumented)
+export const jsonNull: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonNumber: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonObject: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonString: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema>;
 
 // @public
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;

@@ -7,18 +7,18 @@ import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
     ITreeCursor,
+    TreeNavigationResult,
+} from "../../forest";
+import {
     EmptyKey,
     FieldKey,
-    TreeNavigationResult,
     TreeType,
     Value,
-} from "../../..";
+} from "../../tree";
 
 import {
     jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
-// TODO: organize this in a more valid way
-// eslint-disable-next-line import/no-internal-modules
-} from "../schema/examples/JsonDomainSchema";
+} from "./jsonDomainSchema";
 
 /**
  * An ITreeCursor implementation used to read a Jsonable tree for testing and benchmarking.
@@ -185,10 +185,10 @@ export class JsonCursor<T> implements ITreeCursor {
 }
 
 /**
- * Extract a JS object tree from the contents of the given ITreeCursor.  Assumes that ITreeCursor
- * contains only unaugmented JsonTypes.
+ * Extract a JS object tree from the contents of the given ITreeCursor.
+ * Assumes that ITreeCursor contains only unaugmented JsonTypes.
  */
- export function extract(reader: ITreeCursor): unknown {
+export function cursorToJsonObject(reader: ITreeCursor): unknown {
     const type = reader.type;
 
     switch (type) {
@@ -201,7 +201,7 @@ export class JsonCursor<T> implements ITreeCursor {
             const result = new Array(length);
             for (let index = 0; index < result.length; index++) {
                 assert(reader.down(EmptyKey, index) === TreeNavigationResult.Ok, "expected navigation ok");
-                result[index] = extract(reader);
+                result[index] = cursorToJsonObject(reader);
                 assert(reader.up() === TreeNavigationResult.Ok, "expected navigation ok");
             }
 
@@ -212,7 +212,7 @@ export class JsonCursor<T> implements ITreeCursor {
             const result: any = {};
             for (const key of reader.keys) {
                 assert(reader.down(key, 0) === TreeNavigationResult.Ok, "expected navigation ok");
-                result[key as string] = extract(reader);
+                result[key as string] = cursorToJsonObject(reader);
                 assert(reader.up() === TreeNavigationResult.Ok, "expected navigation ok");
             }
             return result;
