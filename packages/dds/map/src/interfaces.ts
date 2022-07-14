@@ -114,8 +114,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
      * - `local` - Whether the change originated from this client.
      *
      * - `target` - The {@link ISharedDirectory} itself.
-     *
-     * @eventProperty
      */
     (event: "valueChanged", listener: (
         changed: IDirectoryValueChanged,
@@ -131,8 +129,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
      * - `local` - Whether the clear originated from this client.
      *
      * - `target` - The {@link ISharedDirectory} itself.
-     *
-     * @eventProperty
      */
     (event: "clear", listener: (
         local: boolean,
@@ -150,8 +146,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
      * - `local` - Whether the create originated from the this client.
      *
      * - `target` - The {@link ISharedDirectory} itself.
-     *
-     * @eventProperty
      */
     (event: "subDirectoryCreated", listener: (
         path: string,
@@ -170,8 +164,6 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
      * - `local` - Whether the delete originated from the this client.
      *
      * - `target` - The {@link ISharedDirectory} itself.
-     *
-     * @eventProperty
      */
     // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
@@ -197,8 +189,6 @@ export interface IDirectoryEvents extends IEvent {
      * - `local` - Whether the change originated from this client.
      *
      * - `target` - The {@link IDirectory} itself.
-
-     * @eventProperty
      */
     (event: "containedValueChanged", listener: (
         changed: IValueChanged,
@@ -217,8 +207,6 @@ export interface IDirectoryEvents extends IEvent {
      * - `local` - Whether the creation originated from the this client.
      *
      * - `target` - The {@link ISharedDirectory} itself.
-     *
-     * @eventProperty
      */
     (event: "subDirectoryCreated", listener: (
         path: string,
@@ -237,8 +225,6 @@ export interface IDirectoryEvents extends IEvent {
      * - `local` - Whether the delete originated from the this client.
      *
      * - `target` - The {@link ISharedDirectory} itself.
-     *
-     * @eventProperty
      */
     // eslint-disable-next-line @typescript-eslint/unified-signatures
     (event: "subDirectoryDeleted", listener: (
@@ -253,8 +239,6 @@ export interface IDirectoryEvents extends IEvent {
      * @remarks Listener parameters:
      *
      * - `target` - The {@link IDirectory} itself.
-     *
-     * @eventProperty
      */
     (event: "disposed", listener: (
         target: IEventThisPlaceHolder,
@@ -287,48 +271,33 @@ export interface IDirectoryValueChanged extends IValueChanged {
 
 /**
  * Events emitted in response to changes to the {@link ISharedMap | map} data.
- *
- * @remarks
- *
- * The following is the list of events emitted.
- *
- * ### "valueChanged"
- *
- * The valueChanged event is emitted when a key is set or deleted.
- *
- * #### Listener signature
- *
- * ```typescript
- * (
- *     changed: IValueChanged,
- *     local: boolean,
- *     target: IEventThisPlaceHolder,
- * ) => void
- * ```
- * - `changed` - Information on the key that changed and its value prior to the change.
- *
- * - `local` - Whether the change originated from this client.
- *
- * - `target` - The map itself.
- *
- * ### "clear"
- *
- * The clear event is emitted when the map is cleared.
- *
- * #### Listener signature
- *
- * ```typescript
- * (local: boolean, target: IEventThisPlaceHolder) => void
- * ```
- * - `local` - Whether the clear originated from this client.
- *
- * - `target` - The map itself.
  */
 export interface ISharedMapEvents extends ISharedObjectEvents {
+    /**
+     * Emitted when a key is set or deleted.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `changed` - Information on the key that changed and its value prior to the change.
+     *
+     * - `local` - Whether the change originated from this client.
+     *
+     * - `target` - The {@link ISharedMap} itself.
+     */
     (event: "valueChanged", listener: (
         changed: IValueChanged,
         local: boolean,
         target: IEventThisPlaceHolder) => void);
+
+    /**
+     * Emitted when the map is cleared.
+     *
+     * @remarks Listener parameters:
+     *
+     * - `local` - Whether the clear originated from this client.
+     *
+     * - `target` - The {@link ISharedMap} itself.
+     */
     (event: "clear", listener: (
         local: boolean,
         target: IEventThisPlaceHolder) => void);
@@ -381,7 +350,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
  * If type is Shared, then the in-memory value will just be a reference to the SharedObject.  Its value will be a
  * channel ID.
  *
- * @deprecated TODO: what is intended to be used instead?
+ * @deprecated This type is legacy and deprecated.
  */
 export interface ISerializableValue {
     /**
@@ -396,7 +365,7 @@ export interface ISerializableValue {
 }
 
 /**
- * TODO
+ * Serialized {@link ISerializableValue} counterpart.
  */
 export interface ISerializedValue {
     /**

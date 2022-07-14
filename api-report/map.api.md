@@ -91,13 +91,9 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 
 // @public
 export interface IDirectoryEvents extends IEvent {
-    // @eventProperty
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // @eventProperty
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // @eventProperty
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // @eventProperty
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
@@ -161,13 +157,9 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
 
 // @public
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
-    // @eventProperty
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // @eventProperty
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // @eventProperty
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // @eventProperty
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
@@ -179,9 +171,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 
 // @public
 export interface ISharedMapEvents extends ISharedObjectEvents {
-    // (undocumented)
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
