@@ -199,7 +199,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
             }
         }
 
-        await Promise.all([provider.ensureSynchronized()]);
+        await provider.ensureSynchronized();
 
         for (const map of maps) {
             for (const key of keys) {
