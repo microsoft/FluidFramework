@@ -102,11 +102,10 @@ export type OperationRangeNoneNOP = OperationRangeInsert | OperationRangeRemove 
 export type OperationRange = OperationRangeNoneNOP | OperationRangeNOP;
 
 /**
- * compute a range for an operation of the current change set
- * @param io_operation - input
- * @param in_aOffset - the offset that needs to be added to transform the operation
- * @param io_resultingRange- -
- * the computed range
+ * Computes a range for an operation of the current change set
+ * @param io_operation - Input
+ * @param in_aOffset - The offset that needs to be added to transform the operation
+ * @param io_resultingRange - The computed range
  */
 const getRangeForCurrentStateOperation = function(io_operation: GenericOperation, in_aOffset: number, io_resultingRange: OperationRange) {
     if (!io_operation) {
@@ -153,10 +152,10 @@ const getRangeForCurrentStateOperation = function(io_operation: GenericOperation
 const getOpLength = (op: arrayRemoveList) => isNumber(op[1]) ? op[1] : op[1].length;
 
 /**
- * computes the impact range for a given operation of the applied change set
- * @param in_operation - the op
- * @param io_resultingRange - the computed range
- * @param in_flag - the flag for the resulting range, default is 'complete B'
+ * Computes the impact range for a given operation of the applied change set
+ * @param in_operation - The op
+ * @param io_resultingRange - The computed range
+ * @param in_flag - The flag for the resulting range, default is 'complete B'
  * @param in_options - Optional additional parameters
  */
 const getRangeForAppliedOperation = function(
@@ -321,13 +320,13 @@ const _copyOperation = function(in_sourceOperation: NoneNOPOperation, in_targetO
 /**
  * cut overlapping ranges in non-overlapping and completely overlapping segments
  * ranges of length 0 just cut lengthy ranges
- * @param io_rangeA - input A
- * @param io_rangeB - input B
- * @param io_resultingSegment - the resulting overlapping segment
- * @param in_rebasing - is this function called for rebasing - we have to implement two different
- *     behaviors of this function: one for squashing and one for rebasing, because an insert-insert
- *     operation in squashing should be separte segments, while for rebasing, we need one segment
- *     for both inserts to be able to report a conflict.
+ * @param io_rangeA - Input A
+ * @param io_rangeB - Input B
+ * @param io_resultingSegment - The resulting overlapping segment
+ * @param in_rebasing - Is this function called for rebasing - we have to implement two different
+ * behaviors of this function: one for squashing and one for rebasing, because an insert-insert
+ * operation in squashing should be separte segments, while for rebasing, we need one segment
+ * for both inserts to be able to report a conflict.
  * overlapping range or
  * (partial) A or B
  */
@@ -889,7 +888,11 @@ const handleCombinations = function(in_segment: SegmentType, in_isPrimitiveType:
                 case ArrayChangeSetIterator.types.REMOVE: {
                     // Attention: B removes A completely, kill A to avoid zero inserts
                     let opBLen;
-                    opBLen = isNumber(opB.operation[1]) ? opB.operation[1] : opB.operation[1].length;
+                    if (isNumber(opB.operation[1])) {
+                        opBLen = opB.operation[1];
+                    } else {
+                        opBLen = opB.operation[1].length;
+                    }
                     if (opBLen !== opA.operation[1].length) {
                         throw new Error("handleCombinations: insert-remove: unequal number of affected entries");
                     }
@@ -1038,15 +1041,14 @@ const arraysHaveSameValues = function(in_arr1: arrayModifyList[1], in_arr2: arra
  *        | [rem orig. data]| (note the user)  | [rem dupl. rem]  |
  * -------|-----------------+------------------+------------------|
  *
- * @param {{opA:{}, opB:{}}} in_segment - the two ops to be combined
- * @param {Array.<property-changeset.ChangeSet.ConflictInfo>} out_conflicts -
- *     A list of paths that resulted in conflicts together with the type of the conflict
- * @param {string} in_basePath -
- *     Base path to get to the property processed by this function
+ * @param {{opA:{}, opB:{}}} in_segment - The two ops to be combined
+ * @param {Array.<property-changeset.ChangeSet.ConflictInfo>} out_conflicts - A list of paths that resulted in
+ * conflicts together with the type of the conflict
+ * @param {string} in_basePath - Base path to get to the property processed by this function
  * @param {boolean} in_isPrimitiveType - is it an array of primitive types
  * @param {Object} [in_options] - Optional additional parameters
  * @param {Map} [in_options.applyAfterMetaInformation] - Additional meta information which help later to obtain
- *                                                       more compact changeset during the apply operation
+ * more compact changeset during the apply operation
  */
 const handleRebaseCombinations = function(
     in_segment: SegmentType,
