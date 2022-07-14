@@ -55,15 +55,18 @@ export async function exportFile(
             urlResolver: new FakeUrlResolver(),
             documentServiceFactory: createLocalOdspDocumentServiceFactory(inputFileContent),
             codeLoader: await codeLoaderBundle.getCodeLoader(),
+            scope: await codeLoaderBundle.getLoaderScope(),
         });
 
         // This needs a ISummaryTree, while what we give to the local ODSP driver is IOdspSnapshot
         // See LocalOdspDocumentStorageService.getVersions(...) > calls to convertOdspSnapshotToSnapshotTreeAndBlobs
         // const container = await loader.rehydrateDetachedContainerFromSnapshot(inputFileContent);
-        const container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
+        
+        const container = await loader.resolve({ url: "/fakeUrl/" });
 
-        for (const result of await codeLoaderBundle.getResults(container, logger)) {
-            fs.appendFileSync(path.join(outputFolder, result.fileName), result.content);
+        const results = await codeLoaderBundle.getResults(container, logger);
+        for (const key in results) {
+            fs.appendFileSync(path.join(outputFolder, key), results[key]);
         }
     });
 }

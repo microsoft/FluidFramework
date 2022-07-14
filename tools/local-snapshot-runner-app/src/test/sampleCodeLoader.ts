@@ -6,6 +6,7 @@
 import { ICodeDetailsLoader, IContainer, IFluidModuleWithDetails } from "@fluidframework/container-definitions";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
 export async function getCodeLoader(): Promise<ICodeDetailsLoader> {
     return {
@@ -18,6 +19,10 @@ export async function getCodeLoader(): Promise<ICodeDetailsLoader> {
     };
 }
 
-export async function getResults(_container: IContainer, _logger: ITelemetryBaseLogger): Promise<Record<"fileName" | "content", string>[]> {
-    return [{ fileName: "result.txt", content: "sample result" }];
+export async function getLoaderScope(): Promise<FluidObject | undefined> {
+    return undefined;
+}
+
+export async function getResults(_container: IContainer, _logger: ITelemetryBaseLogger): Promise<Record<string, string>> {
+    return { "result.txt": "sample result" };
 }
