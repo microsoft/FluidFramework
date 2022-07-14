@@ -64,7 +64,6 @@ export const bumpTypeFlag = Flags.build({
         if (isVersionBumpTypeExtended(input)) {
             return input;
         }
-        return undefined;
     },
 });
 
