@@ -53,11 +53,11 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                     options.bearerSecret ?? "");
             }
 
-            options.fluidHost = options.fluidHost ?? "";
+            const fluidHost = options.fluidHost ?? "";
             return new InsecureUrlResolver(
-                options.fluidHost,
-                options.fluidHost.replace("www", "alfred"),
-                options.fluidHost.replace("www", "historian"),
+                fluidHost,
+                fluidHost.replace("www", "alfred"),
+                fluidHost.replace("www", "historian"),
                 options.tenantId,
                 options.bearerSecret ?? "");
         case "tinylicious": {
