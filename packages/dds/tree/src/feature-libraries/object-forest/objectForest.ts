@@ -24,7 +24,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
     public readonly anchors: AnchorSet = new AnchorSet();
 
-    public readonly root: Anchor = new RootAnchor();
+    public root(range: DetachedRange): Anchor { return new RootAnchor(range); }
     public readonly rootField: DetachedRange = this.newRange();
 
     private readonly roots: Map<DetachedRange, ObjectField> = new Map();
@@ -258,8 +258,11 @@ abstract class ObjectAnchor implements Anchor {
 }
 
 class RootAnchor extends ObjectAnchor {
+    constructor(public readonly range: DetachedRange) {
+        super();
+    }
     find(forest: ObjectForest, observer: ObservingDependent | undefined): ObjectNode | undefined {
-        const field = forest.getRoot(forest.rootField);
+        const field = forest.getRoot(this.range);
         return field[0];
     }
 }
