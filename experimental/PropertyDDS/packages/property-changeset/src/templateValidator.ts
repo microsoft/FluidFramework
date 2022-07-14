@@ -108,8 +108,7 @@ const _extractTypeid = function(typeidOrReference: string) {
 /**
  * Given a typeid string, fetches the semver 'x.y.z' version string.
  * @param in_typeid - A PropertySet typeid. For example: 'TeamLeoValidation2:ColorID-1.0.0'.
- * @returns The semver 'x.y.z' version string, or null if in_typeid is not a valid
- *   PropertySet typeid.
+ * @returns The semver 'x.y.z' version string, or null if in_typeid is not a valid PropertySet typeid.
  */
 const _getSemverFromTypeId = function(in_typeid: string): string | null {
     const semverRegex = /.*-(.*)$/g;
@@ -144,9 +143,11 @@ function isPropertyArray(source: SchemaEntityType): source is PropertiesType {
  * @param in_source - The source entity to test for deep equality.
  * @param in_target - The target entity to test for deep equality.
  * @returns {isEqual: false, path: 'foo.properties[1].x'}
- *   isEqual: true if in_source and in_target property sets are equal, even if the individual
- *     property arrays differ but contain the same out of order elements.
- *   path: path to the property that is not equal.
+ *
+ * - isEqual: true if in_source and in_target property sets are equal, even if the individual property arrays
+ * differ but contain the same out of order elements.
+ *
+ * - path: path to the property that is not equal.
  */
 const _psetDeepEquals = function(in_source: SchemaEntityType, in_target: SchemaEntityType): PathEqualityInfo {
     const idPath = [];
@@ -157,10 +158,10 @@ const _psetDeepEquals = function(in_source: SchemaEntityType, in_target: SchemaE
     /**
      * Create the _psetDeepEquals result.
      * @param isEqual - Whether or not a PropertySet result is being constructed for
-     *   PropertySets that are deeply equal.
+     * PropertySets that are deeply equal.
      * @returns {{isEqual: boolean, path: string}} An object that indicates whether or not the source
-     *   and target PropertySets are deeply equal. If they're not, it also contains a path to the
-     *   property that is not equal.
+     * and target PropertySets are deeply equal. If they're not, it also contains a path to the
+     * property that is not equal.
      */
     const _getPSetDeepEqualsResult = (isEqual: boolean): PathEqualityInfo => ({
         isEqual,
@@ -305,10 +306,13 @@ const _validateBasic = function(in_template: PropertySchema) {
 
 /**
  * Validations performed when the version increases between consecutive templates.
+ *
+ * @remarks
  * For example: 1.1.3 -> 2.0.0
  * This function checks the change level (PATCH, MINOR, MAJOR) and analyses the template content
  * to emit warnings if the change level should be higher, given the content that changed.
- * This function assumes that: in_versionPrevious < in_version
+ * This function assumes that: in_versionPrevious < in_version.
+ *
  * @param in_template - The latest template object.
  * @param in_templatePrevious - The previous template object.
  * @param in_version - The latest template version. Ex.: '2.0.0'.
@@ -539,21 +543,25 @@ const _validateSameVersion = function(in_template: PropertySchema, in_templatePr
 /**
  * Validate a template
  * Check that the template is syntactically correct as well as semantically correct.
- * @param in_template - The template to check against
- * Produces an {object|undefined} map of key-value pairs
- *  where the path of the invalid property is the key and the value is the error message
- *  i.e.
- *  <pre>
- *    {
- *      'isValid': true or false,
- *      'typeid': 'The typeid of the object being parsed',
- *      'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
- *        'in the document', 'but not resolved from the local cache' ],
- *      'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
- *      'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
- *      ...
- *    }
- *  </pre>
+ * @param in_template - The template to check against.
+ * Produces an {object|undefined} map of key-value pairs where the path of the invalid property is the key and the
+ * value is the error message.
+ *
+ * i.e.
+ *
+ * ```
+ * <pre>
+ *   {
+ *     'isValid': true or false,
+ *     'typeid': 'The typeid of the object being parsed',
+ *     'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
+ *       'in the document', 'but not resolved from the local cache' ],
+ *     'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
+ *     'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
+ *     ...
+ *   }
+ * </pre>
+ * ```
  * @throws if context validation fails
  */
 const _validateSemanticAndSyntax = function(in_template: PropertySchema) {
