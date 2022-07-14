@@ -13,6 +13,7 @@ import {
 	MaxBatchSize,
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
+import { NetworkError } from "@fluidframework/server-services-client";
 import { Deferred } from "@fluidframework/common-utils";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
@@ -275,7 +276,8 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 			const message = Buffer.from(JSON.stringify(boxcarMessage));
 			if (message.byteLength > this.producerOptions.maxMessageSize) {
-				const error = new Error(
+				const error = new NetworkError(
+					413,
 					// eslint-disable-next-line max-len
 					`Boxcar message size (${message.byteLength}) exceeded max message size (${this.producerOptions.maxMessageSize})`,
 				);

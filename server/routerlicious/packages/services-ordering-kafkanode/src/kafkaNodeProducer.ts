@@ -13,6 +13,7 @@ import {
     PendingBoxcar,
     MaxBatchSize,
 } from "@fluidframework/server-services-core";
+import { NetworkError } from "@fluidframework/server-services-client";
 import * as kafka from "kafka-node";
 import { ensureTopics } from "./kafkaTopics";
 
@@ -144,7 +145,8 @@ export class KafkaNodeProducer implements IProducer {
 
             const stringifiedMessage = Buffer.from(JSON.stringify(boxcarMessage));
             if (stringifiedMessage.byteLength > this.maxMessageSize) {
-                const error = new Error(
+                const error = new NetworkError(
+                    413,
                     // eslint-disable-next-line max-len
                     `Boxcar message size (${stringifiedMessage.byteLength}) exceeded max message size (${this.maxMessageSize})`,
                 );

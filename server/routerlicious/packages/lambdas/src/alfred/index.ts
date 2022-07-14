@@ -528,6 +528,20 @@ export function configureWebSocketServices(
                         [CommonProperties.clientId]: clientId,
                         ...getLumberBaseProperties(connection.documentId, connection.tenantId),
                     };
+                    const handleMessageBatchProcessingError = (error: any) => {
+                        if (isNetworkError(error)) {
+                            if (error.code === 413) {
+                                Lumberjack.info("Rejected too large operation(s)", lumberjackProperties);
+                                socket.emit("nack", "", [createNackMessage(
+                                    error.code,
+                                    NackErrorType.BadRequestError,
+                                    error.message,
+                                )]);
+                                return;
+                            }
+                        }
+                        Lumberjack.error("Error processing submitted op(s)", lumberjackProperties, error);
+                    };
                     messageBatches.forEach((messageBatch) => {
                         const messages = Array.isArray(messageBatch) ? messageBatch : [messageBatch];
                         try {
@@ -557,6 +571,7 @@ export function configureWebSocketServices(
                                         const messageSize = JSON.stringify(message.contents).length;
                                         const maxMessageSize = connection.serviceConfiguration.maxMessageSize;
                                         if (messageSize > maxMessageSize) {
+                                            // Exit early from processing message batch
                                             throw new NetworkError(413, "Op size too large");
                                         }
                                     }
@@ -566,27 +581,11 @@ export function configureWebSocketServices(
                                 .map((message) => sanitizeMessage(message));
 
                             if (sanitized.length > 0) {
-                                connection.order(sanitized).catch((error) => {
-                                    Lumberjack.error(
-                                        "Error ordering submitted op(s)",
-                                        lumberjackProperties,
-                                        error,
-                                    );
-                                });
+                                // Cannot await this order call without delaying other message batches in this submitOp.
+                                connection.order(sanitized).catch(handleMessageBatchProcessingError);
                             }
                         } catch (e) {
-                            if (isNetworkError(e)) {
-                                if (e.code === 413) {
-                                    Lumberjack.info("Rejected too large operation(s)", lumberjackProperties);
-                                    socket.emit("nack", "", [createNackMessage(
-                                        e.code,
-                                        NackErrorType.BadRequestError,
-                                        e.message,
-                                    )]);
-                                    return;
-                                }
-                            }
-                            Lumberjack.error("Error processing submitted op(s)", lumberjackProperties, e);
+                            handleMessageBatchProcessingError(e);
                         }
                     });
                 }
