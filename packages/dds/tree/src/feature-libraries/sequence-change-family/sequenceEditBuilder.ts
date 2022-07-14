@@ -4,13 +4,14 @@
  */
 
 import { Delta, ProgressiveEditBuilder } from "../../changeset";
-import { AnchorSet } from "../../tree";
+import { ITreeCursor } from "../../forest";
+import { AnchorSet, UpPath, Value } from "../../tree";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
-import { SequenceChangeset } from "./sequenceChangeset";
+import { MoveId, SequenceChangeset } from "./sequenceChangeset";
 
 export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangeset> {
     constructor(
-        deltaReceiver: (delta: Delta) => void,
+        deltaReceiver: (delta: Delta.Root) => void,
         anchorSet: AnchorSet,
     ) {
         super(sequenceChangeFamily, deltaReceiver, anchorSet);
@@ -18,7 +19,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
 
     public setValue(node: NodePath, value: Value) { }
 
-    public insert(place: PlacePath, content: ProtoNode[]) { }
+    public insert(place: PlacePath, content: ITreeCursor) { }
 
     public delete(place: PlacePath, count: number) { }
 
@@ -31,8 +32,5 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
     public discard(moveId: MoveId) { }
 }
 
-interface NodePath { }
-interface PlacePath { }
-interface Value { }
-interface ProtoNode { }
-interface MoveId { }
+type NodePath = UpPath;
+type PlacePath = UpPath;
