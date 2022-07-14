@@ -53,7 +53,7 @@ export async function bumpDependencies(
     }
 
     const bumpPackageMap = new Map(bumpPackages.map(rec => [rec.pkg.name, { pkg: rec.pkg, rangeSpec: `^${rec.version}` }]));
-    const filteredPackages = await context.repo.packages.filteredPackages(releaseGroup);
+    const filteredPackages = await context.repo.packages.filterPackages(releaseGroup);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return bumpDependenciesCore(context, filteredPackages, bumpPackageMap, updateLock, commit, commitMessage!, release);
 }

@@ -42,10 +42,14 @@ export const packageSelectorFlag = Flags.build({
     exclusive: ["g"],
     multiple: false,
     parse: async (input) => {
+        // TODO: This function was inherited from previous build-tools commands. We should re-evaluate whether we want
+        // to support parsing versions out of strings or make it a separate explicit argument.
+
+        // If the package string includes a "=", then the string is assumed to be a package name and a version together.
         const split = input.split("=");
-        const dep = split[0];
+        const pkg = split[0];
         const version = split[1];
-        return { dep, version };
+        return { pkg, version };
     },
 });
 
@@ -57,10 +61,10 @@ export const bumpTypeFlag = Flags.build({
     description: "Version bump type.",
     options: ["major", "minor", "patch", "current"],
     parse: async (input) => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (isVersionBumpTypeExtended(input)) {
             return input;
         }
+        return undefined;
     },
 });
 

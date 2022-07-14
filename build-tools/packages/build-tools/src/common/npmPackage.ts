@@ -319,7 +319,7 @@ export class Packages {
         return this.queueExecOnAllPackage(pkg => pkg.noHoistInstall(repoRoot), "npm i");
     }
 
-    public async filteredPackages(releaseGroup: MonoRepoKind | undefined) {
+    public async filterPackages(releaseGroup: MonoRepoKind | undefined) {
         if(releaseGroup === undefined) {
             return this.packages;
         }

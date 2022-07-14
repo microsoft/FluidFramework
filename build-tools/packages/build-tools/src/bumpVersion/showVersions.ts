@@ -11,6 +11,7 @@ import { Package } from "../common/npmPackage";
 import * as semver from "semver";
 import { strict as assert } from "assert";
 
+// TODO: Validate and document this function.
 export async function showVersions(context: Context, releaseGroup: MonoRepoKind | string, publishedVersion?: semver.SemVer) {
     let versions: ReferenceVersionBag;
     if (!publishedVersion) {
