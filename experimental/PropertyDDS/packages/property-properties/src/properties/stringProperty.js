@@ -71,7 +71,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * Get the string value
-     * @return {string} the JavaScript string primitive value of this StringProperty
+     * @returns {string} the JavaScript string primitive value of this StringProperty
      */
     getValue() {
         return this._dataArrayRef;
@@ -139,7 +139,7 @@ export class StringProperty extends ValueArrayProperty {
      * inserts a string starting at a position and shifts the rest of
      * the String to the right. Will not overwrite existing values.
      * @param {number} in_position - Target index
-     * @param {string} in_value - value to be inserted
+     * @param {string} in_value - Value to be inserted
      * @throws If in_position is smaller than zero, larger than the length of the string or not a number
      * @throws If in_value is not a string
      */
@@ -152,7 +152,7 @@ export class StringProperty extends ValueArrayProperty {
      * Adds letters to the end of the string
      * @param {string} in_value - The string to be pushed
      * @throws If in_value is not a string
-     * @return {number} The new length of the string.
+     * @returns {number} The new length of the string.
      */
     push(in_value) {
         ConsoleUtils.assert(_.isString(in_value), MSG.IN_VALUE_MUST_BE_STRING + in_value);
@@ -174,8 +174,8 @@ export class StringProperty extends ValueArrayProperty {
     /**
       * Returns the full property type identifier for the ChangeSet including the enum type id
       * @param {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
-      *                since that is not aplicable here, this param is ignored
-      * @return {string} The typeid
+      * since that is not aplicable here, this param is ignored
+      * @returns {string} The typeid
       */
     getFullTypeid(in_hideCollection) {
         return this._typeid;
@@ -197,7 +197,7 @@ export class StringProperty extends ValueArrayProperty {
      * @throws If in_deleteCount is not a number
      * @throws If trying to remove an item with a parent
      * @throws If in_offset is smaller than zero or if in_offset + in_delete count is larger than the length of the array
-     * @return {String} the part of the string that was removed.
+     * @returns {String} the part of the string that was removed.
      */
     removeRange(in_offset, in_deleteCount) {
         ConsoleUtils.assert(_.isNumber(in_offset),
@@ -284,18 +284,16 @@ export class StringProperty extends ValueArrayProperty {
     /**
      * Serialize the property
      *
-     * @param {boolean} in_dirtyOnly -
-     *     Only include dirty entries in the serialization
-     * @param {boolean} in_includeRootTypeid -
-     *     Include the typeid of the root of the hierarchy - has no effect for ArrayProperty
-     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] -
-     *     The type of dirtiness to use when reporting dirty changes. By default this is
-     *     PENDING_CHANGE
+     * @param {boolean} in_dirtyOnly - Only include dirty entries in the serialization
+     * @param {boolean} in_includeRootTypeid - Include the typeid of the root of the hierarchy. Has no effect for
+     * ArrayProperty.
+     * @param {property-properties.BaseProperty.MODIFIED_STATE_FLAGS} [in_dirtinessType] - The type of dirtiness to use
+     * when reporting dirty changes. By default this is `PENDING_CHANGE`.
      * @param {boolean} [in_includeReferencedRepositories=false] - If this is set to true, the serialize
-     *     function will descend into referenced repositories. WARNING: if there are loops in the references
-     *     this can result in an infinite loop
+     * function will descend into referenced repositories. WARNING: if there are loops in the references
+     * this can result in an infinite loop
      *
-     * @return {Object} The serialized representation of this property
+     * @returns {Object} The serialized representation of this property
      * @private
      */
     _serialize(in_dirtyOnly, in_includeRootTypeid,
@@ -348,7 +346,7 @@ export class StringProperty extends ValueArrayProperty {
      * @param {string} in_value - The new value
      * @param {boolean} [in_reportToView = true] - By default, the dirtying will always be reported to the checkout view
      * and trigger a modified event there. When batching updates, this can be prevented via this flag.
-     * @return {boolean} true if the value was actually changed
+     * @returns {boolean} true if the value was actually changed
      */
     _setValue(in_value, in_reportToView) {
         var oldValue = this._dataArrayRef;
@@ -417,7 +415,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * Gets the dirty flags for this property
-     * @return {Number} The dirty flags
+     * @returns {Number} The dirty flags
      */
     _getDirtyFlags() {
         if (this._dirty === PENDING_AND_DIRTY_SET_TO_PROPERTY_VALUE ||
@@ -463,7 +461,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * Return a JSON representation of the property.
-     * @return {object} A JSON representation of the property.
+     * @returns {object} A JSON representation of the property.
      * @private
      */
     _toJson() {
@@ -508,7 +506,7 @@ export class StringProperty extends ValueArrayProperty {
     /**
      * get a letter at a given index
      * @param {number} in_index - The index
-     * @return {string} the single letter found at in_index
+     * @returns {string} the single letter found at in_index
      */
     get(in_index) {
         return ArrayProperty.prototype.get.call(this, in_index);
@@ -540,7 +538,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * Returns the length of the data array
-     * @return {Number} The length
+     * @returns {Number} The length
      */
     _dataArrayGetLength() {
         return this._dataArrayRef.length;
@@ -548,7 +546,7 @@ export class StringProperty extends ValueArrayProperty {
 
     /**
      * Returns the data array's internal buffer
-     * @return {Array} The buffer
+     * @returns {Array} The buffer
      */
     _dataArrayGetBuffer() {
         return this._dataArrayRef;
@@ -558,7 +556,7 @@ export class StringProperty extends ValueArrayProperty {
      * Returns an entry from the data array
      * @param {Number} in_i - Position in the array
      *
-     * @return {*} The value at index in_i
+     * @returns {*} The value at index in_i
      */
     _dataArrayGetValue(in_i) {
         in_i = in_i === undefined ? 0 : in_i;
