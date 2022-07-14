@@ -1100,15 +1100,17 @@ export function runSharedTreeOperationsTests(
 		});
 
 		describe('telemetry', () => {
-            class LoggerThatOnlySeesSharedTreeEvents implements ITelemetryBaseLogger {
-                public constructor(private readonly additionalFilter: (event: ITelemetryBaseEvent) => boolean = (e) => true) {}
-                public events: ITelemetryBaseEvent[] = [];
-                public send(event: ITelemetryBaseEvent) {
-                    if (isSharedTreeEvent(event) && this.additionalFilter(event)) {
-                        this.events.push(event);
-                    }
-                }
-            }
+			class LoggerThatOnlySeesSharedTreeEvents implements ITelemetryBaseLogger {
+				public constructor(
+					private readonly additionalFilter: (event: ITelemetryBaseEvent) => boolean = (e) => true
+				) {}
+				public events: ITelemetryBaseEvent[] = [];
+				public send(event: ITelemetryBaseEvent) {
+					if (isSharedTreeEvent(event) && this.additionalFilter(event)) {
+						this.events.push(event);
+					}
+				}
+			}
 
 			describe('useFailedSequencedEditTelemetry', () => {
 				it('decorates events with the correct properties', async () => {
