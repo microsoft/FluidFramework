@@ -52,7 +52,7 @@ async function main() {
         .option("-v, --verbose", "Enables verbose logging")
         .option("-b, --browserAuth", "Enables browser auth which may require a user to open a url in a browser.")
         .option("-m, --enableMetrics", "Enable capturing client & ops metrics")
-        .option("-createId", "--createTestId", "Flag indicating whether to create a document corresponding \
+        .option("--createTestId", "Flag indicating whether to create a document corresponding \
         to the testId passed")
         .parse(process.argv);
 
