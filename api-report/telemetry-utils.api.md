@@ -140,6 +140,14 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
 
 // @public (undocumented)
+export interface ITelemetryBaseEventExt extends ITelemetryPropertiesExt {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
     // (undocumented)
     [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
@@ -151,6 +159,12 @@ export interface ITelemetryLoggerPropertyBags {
     all?: ITelemetryLoggerPropertyBag;
     // (undocumented)
     error?: ITelemetryLoggerPropertyBag;
+}
+
+// @public (undocumented)
+export interface ITelemetryPropertiesExt {
+    // (undocumented)
+    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType | (string | number | boolean)[];
 }
 
 // @public (undocumented)
