@@ -112,8 +112,8 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange {
         this.beforeChange();
         const field: ObjectField = this.lookupField(range, false);
-        assertValidIndex(startIndex, field, false);
-        assertValidIndex(endIndex, field, false);
+        assertValidIndex(startIndex, field, true);
+        assertValidIndex(endIndex, field, true);
         assert(startIndex <= endIndex, "detached range's end must be after it's start");
         const newRange = this.newRange();
         const newField = field.splice(startIndex, endIndex - startIndex);
@@ -209,10 +209,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 }
 
-function assertValidIndex(index: number, array: unknown[], splice: boolean = false) {
+function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: boolean = false) {
     assert(Number.isInteger(index), "index must be an integer");
     assert(index >= 0, "index must be non-negative");
-    if (splice) {
+    if (allowOnePastEnd) {
         assert(index <= array.length, "index must be less than or equal to length");
     } else {
         assert(index < array.length, "index must be less than length");

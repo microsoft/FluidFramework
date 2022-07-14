@@ -15,6 +15,8 @@ import {
 } from "../schema";
 import { IEditableForest, TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema } from "../domains";
+import { recordDependency, SimpleObservingDependent } from "../dependency-tracking";
+import { MockDependent } from "./utils";
 
 /**
  * Generic forest test suite
@@ -57,6 +59,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
 
                     // copy data from reader into json object and compare to data.
                     const copy = cursorToJsonObject(reader);
+                    reader.free();
                     assert.deepEqual(copy, data);
                 });
             }
@@ -88,6 +91,36 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
             assert.equal(forest.tryGet(anchor, reader), TreeNavigationResult.Ok);
             assert.equal(reader.value, 2);
             assert.equal(reader.seek(1).result, TreeNavigationResult.NotFound);
+        });
+
+        describe("top level invalidation", () => {
+            it("data editing", () => {
+                const forest = factory();
+                const dependent = new MockDependent("dependent");
+                recordDependency(dependent, forest);
+
+                assert.deepEqual(dependent.tokens, []);
+                const newRange = forest.add([new JsonCursor(1)]);
+                assert.deepEqual(dependent.tokens.length, 1);
+
+                forest.add([new JsonCursor(2)]);
+                assert.deepEqual(dependent.tokens.length, 2);
+
+                const toDelete = forest.detachRangeOfChildren(newRange, 0, 1);
+                forest.delete(toDelete);
+
+                assert.deepEqual(dependent.tokens.length, 4);
+            });
+
+            it("schema editing", () => {
+                const forest = factory();
+                const dependent = new MockDependent("dependent");
+                recordDependency(dependent, forest);
+                for (const t of jsonTypeSchema.values()) {
+                    assert(forest.schema.tryUpdateTreeSchema(t.name, t));
+                }
+                assert.deepEqual(dependent.tokens.length, jsonTypeSchema.size);
+            });
         });
     });
 }
