@@ -200,12 +200,12 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
  */
 export interface IDirectoryDataObject {
     /**
-     * TODO
+     * Key/value date set by the user.
      */
     storage?: { [key: string]: ISerializableValue; };
 
     /**
-     * TODO
+     * Recursive sub-directories {@link IDirectoryDataObject | objects}.
      */
     subdirectories?: { [subdirName: string]: IDirectoryDataObject; };
 }

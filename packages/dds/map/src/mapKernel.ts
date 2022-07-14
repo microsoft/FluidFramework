@@ -101,12 +101,19 @@ export type IMapOperation = IMapKeyOperation | IMapClearOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
- * Directly used in JSON.stringify, direct result from JSON.parse
+ *
+ * @remarks Directly used in
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
+ * | JSON.stringify}, direct result from
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
 export interface IMapDataObjectSerializable {
     [key: string]: ISerializableValue;
 }
 
+/**
+ * Serialized key/value data.
+ */
 export interface IMapDataObjectSerialized {
     [key: string]: ISerializedValue;
 }
