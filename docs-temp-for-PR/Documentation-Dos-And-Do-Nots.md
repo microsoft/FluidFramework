@@ -4,7 +4,8 @@ When writing documentation - be it source-code documentation, wiki content, etc.
 
 A consistent point of view helps documentation flow nicely.
 And since our docs are aimed at some potential developer or customer, it is nice to address them directly.
-In any given article, "you" should always refer to the same person/reader. Don't use "you" to refer to a developer in one paragraph and use it to refer to an end-user or a network admininstrator somewhere else. 
+In any given article, "you" should always refer to the same person/reader.
+Don't use "you" to refer to a developer in one paragraph and use it to refer to an end-user or a network admininstrator somewhere else.
 
 ## Only write about supported functionality
 
@@ -38,7 +39,7 @@ For a source-code comment, this would be a single source-code comment block.
 For example:
 
 ```markdown
-The SharedMap is a Distributed data structure (DDS) that...
+The SharedMap is a Distributed Data Structure (DDS) that...
 ```
 
-After defining the acronym, it is completely fine to refer to `Distributed data structure`s as `DDS`s from then on, but not before being defined.
+After defining the acronym, it is completely fine to refer to `Distributed Data Structure`s as `DDS`s from then on, but not before being defined.
