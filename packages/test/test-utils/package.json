@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-utils",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Utilities for Fluid tests",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -55,28 +55,28 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": "^1.1.1",
+    "@fluidframework/aqueduct": "^1.1.2",
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^1.1.1",
-    "@fluidframework/container-loader": "^1.1.1",
-    "@fluidframework/container-runtime": "^1.1.1",
-    "@fluidframework/container-runtime-definitions": "^1.1.1",
-    "@fluidframework/core-interfaces": "^1.1.1",
-    "@fluidframework/datastore": "^1.1.1",
-    "@fluidframework/datastore-definitions": "^1.1.1",
-    "@fluidframework/driver-definitions": "^1.1.1",
-    "@fluidframework/driver-utils": "^1.1.1",
-    "@fluidframework/local-driver": "^1.1.1",
-    "@fluidframework/map": "^1.1.1",
+    "@fluidframework/container-definitions": "^1.1.2",
+    "@fluidframework/container-loader": "^1.1.2",
+    "@fluidframework/container-runtime": "^1.1.2",
+    "@fluidframework/container-runtime-definitions": "^1.1.2",
+    "@fluidframework/core-interfaces": "^1.1.2",
+    "@fluidframework/datastore": "^1.1.2",
+    "@fluidframework/datastore-definitions": "^1.1.2",
+    "@fluidframework/driver-definitions": "^1.1.2",
+    "@fluidframework/driver-utils": "^1.1.2",
+    "@fluidframework/local-driver": "^1.1.2",
+    "@fluidframework/map": "^1.1.2",
     "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/request-handler": "^1.1.1",
-    "@fluidframework/routerlicious-driver": "^1.1.1",
-    "@fluidframework/runtime-definitions": "^1.1.1",
-    "@fluidframework/runtime-utils": "^1.1.1",
-    "@fluidframework/telemetry-utils": "^1.1.1",
-    "@fluidframework/test-driver-definitions": "^1.1.1",
-    "@fluidframework/test-runtime-utils": "^1.1.1",
+    "@fluidframework/request-handler": "^1.1.2",
+    "@fluidframework/routerlicious-driver": "^1.1.2",
+    "@fluidframework/runtime-definitions": "^1.1.2",
+    "@fluidframework/runtime-utils": "^1.1.2",
+    "@fluidframework/telemetry-utils": "^1.1.2",
+    "@fluidframework/test-driver-definitions": "^1.1.2",
+    "@fluidframework/test-runtime-utils": "^1.1.2",
     "debug": "^4.1.1",
     "uuid": "^8.3.1"
   },
@@ -84,7 +84,7 @@
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/test-utils-previous": "npm:@fluidframework/test-utils@1.1.0",
+    "@fluidframework/test-utils-previous": "npm:@fluidframework/test-utils@1.1.1",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
@@ -103,7 +103,7 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.1",
+    "version": "1.1.2",
     "broken": {}
   }
 }

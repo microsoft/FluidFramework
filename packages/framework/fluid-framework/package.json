@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,11 +35,11 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^1.1.1",
-    "@fluidframework/container-loader": "^1.1.1",
-    "@fluidframework/fluid-static": "^1.1.1",
-    "@fluidframework/map": "^1.1.1",
-    "@fluidframework/sequence": "^1.1.1"
+    "@fluidframework/container-definitions": "^1.1.2",
+    "@fluidframework/container-loader": "^1.1.2",
+    "@fluidframework/fluid-static": "^1.1.2",
+    "@fluidframework/map": "^1.1.2",
+    "@fluidframework/sequence": "^1.1.2"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
@@ -52,13 +52,13 @@
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
-    "fluid-framework-previous": "npm:fluid-framework@1.1.0",
+    "fluid-framework-previous": "npm:fluid-framework@1.1.1",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.1.1",
+    "version": "1.1.2",
     "broken": {
       "RemovedInterfaceDeclaration_IDirectoryClearOperation": {"backCompat": false, "forwardCompat": false},
       "RemovedInterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {"backCompat": false, "forwardCompat": false},
