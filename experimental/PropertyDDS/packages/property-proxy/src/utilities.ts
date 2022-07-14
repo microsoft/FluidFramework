@@ -77,11 +77,11 @@ export namespace Utilities {
             if (property.isPrimitiveType() &&
                 !PropertyFactory.instanceOf(property, "Reference", "array") &&
                 !PropertyFactory.instanceOf(property, "Reference", "map")) {
-                    if (element.isPrimitiveType()) {
-                        return element.getValue();
-                    } else {
-                        return element.getValues();
-                    }
+                if (element.isPrimitiveType()) {
+                    return element.getValue();
+                } else {
+                    return element.getValues();
+                }
             } else {
                 // Some special cases to allow out of the box functionality for arrays
                 if (element.getParent() && property.getContext() === "array" && forceType<ArrayProperty>(property)) {
