@@ -263,7 +263,7 @@ export function isExternalError(e: any): boolean {
  * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
  */
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
-    return (typeof (x?.value) !== "object" && typeof (x?.tag) === "string");
+    return typeof (x?.tag) === "string";
 }
 
 /**
@@ -309,7 +309,10 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
 
         // ensure only valid props get logged, since props of logging error could be in any shape
         if (isTaggedTelemetryPropertyValue(val)) {
-            props[key] = filterValidTelemetryProps(val.value, key);
+            props[key] = {
+                value: filterValidTelemetryProps(val.value, key),
+                tag: val.tag,
+            };
         } else {
             props[key] = filterValidTelemetryProps(val, key);
         }
