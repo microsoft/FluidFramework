@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable, ITelemetryProperties,
+    IDisposable, ITelemetryLogger, ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -227,6 +227,24 @@ export async function waitContainerToCatchUp(container: IContainer) {
 const getCodeProposal =
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
+
+/**
+ * Helper function to report to telemetry cases where operation takes longer than expected (1s)
+ * @param logger - logger to use
+ * @param eventName - event name
+ * @param action - functor to call and measure
+ */
+async function ReportIfTooLong(
+    logger: ITelemetryLogger,
+    eventName: string,
+    action: () => Promise<ITelemetryProperties>,
+) {
+    const event = PerformanceEvent.start(logger, { eventName });
+    const props = await action();
+    if (event.duration > 1000) {
+        event.end(props);
+    }
+}
 
 /**
  * State saved by a container at close time, to be used to load a new instance
@@ -566,6 +584,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerAttachState: () => this._attachState,
                     containerLifecycleState: () => this._lifecycleState,
                     containerConnectionState: () => ConnectionState[this.connectionState],
+                    serializedContainer: config.serializedContainerState !== undefined,
                 },
                 // we need to be judicious with our logging here to avoid generating too much data
                 // all data logged here should be broadly applicable, and not specific to a
@@ -578,6 +597,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
                     containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
                     // message information to associate errors with the specific execution state
+                    // dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
                     dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
                     dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
                     dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
@@ -772,8 +792,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
         assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
-        assert(this._protocolHandler.attributes.term !== undefined,
-            0x30b /* Must have a valid protocol handler instance */);
+        assert(this._protocolHandler.attributes.term !== undefined, "Must have a valid protocol handler instance");
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -1175,17 +1194,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pendingLocalState?.pendingRuntimeState,
         );
 
-        // Internal context is fully loaded at this point
-        this.setLoaded();
-
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
         if (!this.closed) {
             if (opsBeforeReturnP !== undefined) {
                 this._deltaManager.inbound.resume();
 
-                await opsBeforeReturnP;
-                await this._deltaManager.inbound.waitTillProcessingDone();
+                await ReportIfTooLong(
+                    this.mc.logger,
+                    "WaitOps",
+                    async () => { await opsBeforeReturnP; return {}; });
+                await ReportIfTooLong(
+                    this.mc.logger,
+                    "WaitOpProcessing",
+                    async () => this._deltaManager.inbound.waitTillProcessingDone());
 
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this._deltaManager.inbound.pause();
@@ -1194,7 +1216,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             switch (loadMode.deltaConnection) {
                 case undefined:
                 case "delayed":
-                    assert(this.inboundQueuePausedFromInit, "inboundQueuePausedFromInit should be true");
+                    assert(this.inboundQueuePausedFromInit, 0x346 /* inboundQueuePausedFromInit should be true */);
                     this.inboundQueuePausedFromInit = false;
                     this._deltaManager.inbound.resume();
                     this._deltaManager.inboundSignal.resume();
@@ -1215,9 +1237,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Container was closed while load()");
         }
 
+        // Internal context is fully loaded at this point
+        this.setLoaded();
+
         return {
             sequenceNumber: attributes.sequenceNumber,
             version: versionId,
+            dmLastProcessedSeqNumber: this._deltaManager.lastSequenceNumber,
+            dmLastKnownSeqNumber: this._deltaManager.lastKnownSeqNumber,
         };
     }
 

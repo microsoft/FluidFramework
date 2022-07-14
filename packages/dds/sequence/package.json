@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/sequence",
-  "version": "1.2.0",
+  "version": "2.0.0-internal.1.0.0",
   "description": "Distributed sequence",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -64,28 +64,28 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-utils": "^1.2.0",
-    "@fluidframework/core-interfaces": "^1.2.0",
-    "@fluidframework/datastore-definitions": "^1.2.0",
-    "@fluidframework/merge-tree": "^1.2.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/runtime-definitions": "^1.2.0",
-    "@fluidframework/runtime-utils": "^1.2.0",
-    "@fluidframework/shared-object-base": "^1.2.0",
-    "@fluidframework/telemetry-utils": "^1.2.0",
+    "@fluidframework/container-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/merge-tree": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
+    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/runtime-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/shared-object-base": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "uuid": "^8.3.1"
   },
   "devDependencies": {
-    "@fluid-internal/stochastic-test-utils": "^1.2.0",
-    "@fluid-internal/test-dds-utils": "^1.2.0",
+    "@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluid-internal/test-dds-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/gitresources": "^0.1036.5000",
-    "@fluidframework/mocha-test-setup": "^1.2.0",
-    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@1.1.0",
-    "@fluidframework/server-services-client": "^0.1036.5000",
-    "@fluidframework/test-runtime-utils": "^1.2.0",
+    "@fluidframework/gitresources": "^0.1037.1000-0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/sequence-previous": "npm:@fluidframework/sequence@^1.0.0",
+    "@fluidframework/server-services-client": "^0.1037.1000-0",
+    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/diff": "^3.5.1",
@@ -105,7 +105,47 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.2.0",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "ClassDeclaration_IntervalCollection": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceInterval": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISharedString": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceDeltaEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceMaintenanceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedNumberSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedObjectSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedSegmentSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedString": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_SharedStringSegment": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SparseMatrix": {
+        "backCompat": false
+      }
+    }
   }
 }

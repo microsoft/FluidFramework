@@ -1,6 +1,6 @@
 {
   "name": "fluid-framework",
-  "version": "1.2.0",
+  "version": "2.0.0-internal.1.0.0",
   "description": "The main entry point into Fluid Framework public packages",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,11 +35,11 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/container-definitions": "^1.2.0",
-    "@fluidframework/container-loader": "^1.2.0",
-    "@fluidframework/fluid-static": "^1.2.0",
-    "@fluidframework/map": "^1.2.0",
-    "@fluidframework/sequence": "^1.2.0"
+    "@fluidframework/container-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-loader": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/fluid-static": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/map": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/sequence": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
@@ -52,13 +52,96 @@
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
-    "fluid-framework-previous": "npm:fluid-framework@1.1.0",
+    "fluid-framework-previous": "npm:fluid-framework@^1.0.0",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.2.0",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "ClassDeclaration_IntervalCollection": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceInterval": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ISharedString": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceDeltaEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SequenceMaintenanceEvent": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedString": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedNumberSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedObjectSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedSegmentSequence": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SharedSequence": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_SharedStringSegment": {
+        "backCompat": false
+      },
+      "ClassDeclaration_SparseMatrix": {
+        "backCompat": false
+      },
+      "RemovedEnumDeclaration_ConnectionState": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "EnumDeclaration_ConnectionState": {
+        "forwardCompat": false
+      },
+      "RemovedInterfaceDeclaration_IDirectoryClearOperation": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IDirectoryCreateSubDirectoryOperation": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IDirectoryDeleteOperation": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IDirectoryDeleteSubDirectoryOperation": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_IDirectoryKeyOperation": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IDirectorySetOperation": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_IDirectoryStorageOperation": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_IDirectorySubDirectoryOperation": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_ILocalValue": {
+        "forwardCompat": false,
+        "backCompat": false
+      }
+    }
   }
 }

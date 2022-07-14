@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { FieldKey, TreeType } from "../tree";
+import { FieldKey, TreeType, Value } from "../tree";
 
 export const enum TreeNavigationResult {
     /** Attempt to navigate cursor to a key or index that is outside the client's view. */
@@ -16,16 +15,6 @@ export const enum TreeNavigationResult {
     /** ITreeReader successfully navigated to the desired node. */
     Ok = 1,
 }
-
-/**
- * Value stored on a node.
- *
- * TODO: `Serializable` is not really the right type to use here,
- * since may types (including functions) are "Serializable" (according to the type) despite not being serializable.
- *
- * Use this type instead of directly using Serializable for both clarity and so the above TODO can be addressed.
- */
-export type Value = undefined | Serializable;
 
 /**
  * A stateful low-level interface for reading tree data.

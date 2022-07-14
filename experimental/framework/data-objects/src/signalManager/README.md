@@ -33,7 +33,7 @@ For more information on using `ContainerSchema` to create objects please see [Da
 
 ## Common Patterns
 ### Signal Request
-When a client joins a collaboration session, they may need to receive pertinent information immediately after connecting the container.  To support this, they can request a specific signal be sent to them from other connected clients within the application. For example, in the [FocusTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/focus-tracker) we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
+When a client joins a collaboration session, they may need to receive pertinent information immediately after connecting the container.  To support this, they can request a specific signal be sent to them from other connected clients within the application. For example, in the [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
 
 ```typescript
 private static readonly focusRequestType = "focusRequest";
@@ -52,4 +52,25 @@ this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
     this.sendFocusSignal(document.hasFocus());
 });
 ```
-When there are a lot of connected clients, usage of this request pattern can lead to high signal costs incurred from large amounts of signals being submitted all at the same time. While this pattern is helpful when a client is in need of relevant information, to limit signal costs it would be beneficial to examine whether or not the requested data will be quickly avaiable from other events being listened to within the application. Take [MouseTracker]() as an example, a newly connecting client is not required to request a signal to receive every current mouse position on the document. Since mouse movements are frequent, the newly connecting client can simply wait to recieve other users mouse positions on their mousemove events.
+When there are a lot of connected clients, usage of this request pattern can lead to high signal costs incurred from large amounts of signals being submitted all at the same time. While this pattern is helpful when a client is in need of relevant information, to limit signal costs it would be beneficial to examine whether or not the requested data will be quickly avaiable from other events being listened to within the application. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) is an example where a newly connecting client is not required to request a signal to receive every current mouse position on the document. Since mouse movements are frequent, the newly connecting client can simply wait to recieve other users mouse positions on their mousemove events.
+### Grouping Signal Types
+
+Rather than submitting multiple signal types in response to one specific event, it is more cost-effective to create one seperate signal type for that particular event and listen to that single signal instead. For example, imagine an application using the `Signal Request` pattern where a newly connected client requests for the color, focus state, and currently selected object of every other connected client on the page. If you submit a signal for each type of data requested, it would look something like this:
+
+```typescript
+container.on("connected", () => {
+    this.signalManager.submitSignal("colorRequest");
+    this.signalManager.submitSignal("focusRequest");
+    this.signalManager.submitSignal("currentlySelectedObjectRequest");
+});
+```
+
+This approach is costly since the amount of signals sent back on request grows linearly with the amount of connected users. So if there are three signals requested as opposed to one, there are 3 times as many total signals being submitted on every connect. To avoid this costly scenario we can group the signal types into one single signal that captures all the required information:
+
+```typescript
+container.on("connected", () => {
+    this.signalManager.submitSignal("connectRequest");
+});
+```
+
+The idea is that the payload sent back on the `connectRequest` will include all the relevant information the newly connected user needs.

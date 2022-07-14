@@ -263,7 +263,7 @@
             },
             "Azure-Examples": {
                 "packages": [
-                    "@fluid-example/focus-tracker",
+                    "@fluid-example/presence-tracker",
                     "@fluid-example/app-integration-external-controller"
                 ],
                 "deps": [
