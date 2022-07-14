@@ -5,7 +5,6 @@
 
 import {
     supportedMonoRepoValues,
-    isVersionBumpType,
     isVersionBumpTypeExtended,
 } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -60,7 +59,7 @@ export const bumpTypeFlag = Flags.build({
     char: "t",
     description: "Version bump type.",
     options: ["major", "minor", "patch", "current"],
-    parse: async (input) => {
+    parse: async (input): Promise<string | undefined> => {
         if (isVersionBumpTypeExtended(input)) {
             return input;
         }
