@@ -177,7 +177,11 @@ export class EnumArrayProperty extends ValueArrayProperty {
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection = false) {
-        return in_hideCollection ? TypeIdHelper.createSerializationTypeId(this._typeid, '', true) : TypeIdHelper.createSerializationTypeId(this._typeid, 'array', true);
+        if (in_hideCollection) {
+            return TypeIdHelper.createSerializationTypeId(this._typeid, '', true);
+        } else {
+            return TypeIdHelper.createSerializationTypeId(this._typeid, 'array', true);
+        }
     }
 
     /**

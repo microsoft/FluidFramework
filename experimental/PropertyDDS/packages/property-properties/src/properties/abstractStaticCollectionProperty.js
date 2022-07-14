@@ -113,7 +113,11 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @return {string} String identifying the property
      */
     getId() {
-        return this._id !== null ? this._id : this.getGuid();
+        if (this._id !== null) {
+            return this._id;
+        } else {
+            return this.getGuid();
+        }
     }
 
     /**
@@ -187,14 +191,17 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     }
 
     /**
-     * Returns an object with all the nested values contained in this property
-     * @return {object} an object representing the values of your property
-     * for example: {
+     * Returns an object with all the nested values contained in this property.
+     *
+     * @example
+     * ```javascript
+     * {
      *   position: {
-     *    x: 2,
-     *    y: 5
+     *     x: 2,
+     *     y: 5
      *   }
      * }
+     * ```
      */
     getValues() {
         var ids = this._getIds();

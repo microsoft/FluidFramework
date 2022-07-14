@@ -128,8 +128,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      *
      * @param {object} in_values - to assign to the collection
      * @param {Bool} in_typed - Whether the values are typed/polymorphic.
-     * @param {Bool} in_initial - Whether we are setting default/initial values
-     *   or if the function is called directly with the values to set.
+     * @param {Bool} in_initial - Whether we are setting default/initial values or if the function is called directly
+     * with the values to set.
+     *
      * @override
      */
     _setValues(in_values, in_typed, in_initial) {
@@ -144,8 +145,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * Sets multiple values in a map.
      *
      * @param {object} in_values - to assign to the collection
-     * @throws if one of the path in in_values does not exist in this property
-     * @throws if trying to set a value to a path that leads to a Property other than ValueProperty or StringProperty
+     * @throws If one of the path in in_values does not exist in this property
+     * @throws If trying to set a value to a path that leads to a Property other than ValueProperty or StringProperty
+     *
      * @override
      */
     setValues(in_values) {
@@ -160,17 +162,19 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     }
 
     /**
-     * Returns an object with all the nested values contained in this property
-     * @return {object} an object representing the values of your property
-     * for example: {
-          * 'firstString': {
-            * 'stringValue': 'test1'
-          * },
-          * 'secondString': {
-            * 'stringValue': 'test2'
-          * }
-        * }
-      */
+     * Returns an object with all the nested values contained in this property.
+     *
+     * @example
+     * ```javascript
+     * {
+     *   'firstString': {
+     *     'stringValue': 'test1'
+     *   },
+     *   'secondString': {
+     *     'stringValue': 'test2'
+     *   }
+     * }
+     */
     getValues() {
         var ids = this.getIds();
         var result = {};
@@ -207,8 +211,14 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * @protected
      */
     _resolvePathSegment(in_segment, in_segmentType) {
-        // Base Properties only support paths separated via dots
-        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN ? this._dynamicChildren[in_segment] : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
+        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
+            return this._dynamicChildren[in_segment];
+        } else {
+            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(
+                this,
+                in_segment,
+                in_segmentType);
+        }
     }
 
     /**
@@ -219,10 +229,10 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      *
      * @param {string} in_key - The key under which the entry is added
      * @param {property-properties.Property} in_property - The property to insert
-     * @throws if the property already exists
-     * @throws if the property already has a parent
-     * @throws if in_key is not a string
-     * @throws if the property is a root property
+     * @throws If the property already exists
+     * @throws If the property already has a parent
+     * @throws If in_key is not a string
+     * @throws If the property is a root property
      */
     insert(in_key, in_property) {
         ConsoleUtils.assert(_.isString(in_key), MSG.KEY_NOT_STRING + in_key);
@@ -245,7 +255,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * Removes the entry with the given key from the map
      *
      * @param {string} in_key - The key of the entry to remove from the map
-     * @throws if trying to remove an entry that does not exist
+     * @throws If trying to remove an entry that does not exist
      * @return {*} the item removed
      */
     remove(in_key) {
@@ -261,9 +271,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      *
      * @param {string} in_key - The key under which the entry is stored
      * @param {property-properties.MapProperty~MapValueType} in_property - The property to store in the map
-     * @throws if in_property is not a property
-     * @throws if trying to insert a property that has a parent
-     * @throws if in_key is not a string or a number
+     * @throws If in_property is not a property
+     * @throws If trying to insert a property that has a parent
+     * @throws If in_key is not a string or a number
      */
     set(in_key, in_property) {
         this._checkIsNotReadOnly(true);
@@ -324,23 +334,14 @@ export class MapProperty extends IndexedCollectionBaseProperty {
                     in_options.referenceResolutionMode;
 
             var prop = this;
-            switch (in_ids) {
-            case PATH_TOKENS.ROOT: {
+            if (in_ids === PATH_TOKENS.ROOT) {
                 prop = prop.getRoot();
-
-            break;
-            }
-            case PATH_TOKENS.UP: {
+            } else if (in_ids === PATH_TOKENS.UP) {
                 prop = prop.getParent();
-
-            break;
-            }
-            case PATH_TOKENS.REF: {
+            } else if (in_ids === PATH_TOKENS.REF) {
                 throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
-            }
-            default: {
+            } else {
                 prop = prop._dynamicChildren[in_ids];
-            }
             }
 
             // Handle automatic reference resolution
@@ -397,7 +398,11 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     _getScope() {
         var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
 
-        return scope !== undefined ? scope : this._scope;
+        if (scope !== undefined) {
+            return scope;
+        } else {
+            return this._scope;
+        }
     }
 
     /**
