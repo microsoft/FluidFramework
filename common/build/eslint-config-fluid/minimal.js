@@ -224,6 +224,7 @@ module.exports = {
         // #endregion
 
         "@typescript-eslint/prefer-includes": "error",
+        "@typescript-eslint/prefer-nullish-coalescing": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
     },
     "overrides": [
