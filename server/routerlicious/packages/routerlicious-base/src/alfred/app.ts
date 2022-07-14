@@ -5,6 +5,7 @@
 
 import path from "path";
 import {
+    IDeltaService,
     IDocumentStorage,
     IProducer,
     ITenantManager,
@@ -29,7 +30,6 @@ import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
-import { DeltaService } from "./services";
 
 export function create(
     config: Provider,
@@ -38,7 +38,7 @@ export function create(
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    deltaService: DeltaService,
+    deltaService: IDeltaService,
     producer: IProducer,
     documentsCollection: ICollection<IDocument>) {
     // Maximum REST request size

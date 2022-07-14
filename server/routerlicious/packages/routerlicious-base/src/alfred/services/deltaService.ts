@@ -5,9 +5,14 @@
 
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ISequencedOperationMessage, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
+import {
+    IDeltaService,
+    ISequencedOperationMessage,
+    ITenantManager,
+    MongoManager,
+} from "@fluidframework/server-services-core";
 
-export class DeltaService {
+export class DeltaService implements IDeltaService {
     constructor(
         protected readonly mongoManager: MongoManager,
         protected readonly tenantManager: ITenantManager,

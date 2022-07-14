@@ -8,6 +8,7 @@ import {
     ICache,
     IClientManager,
     ICollection,
+    IDeltaService,
     IDocument,
     IDocumentStorage,
     IOrdererManager,
@@ -26,7 +27,6 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
-import { DeltaService } from "./services";
 
 export class AlfredRunner implements IRunner {
     private server: IWebServer;
@@ -46,7 +46,7 @@ export class AlfredRunner implements IRunner {
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
-        private readonly deltaService: DeltaService,
+        private readonly deltaService: IDeltaService,
         private readonly producer: IProducer,
         private readonly metricClientConfig: any,
         private readonly documentsCollection: ICollection<IDocument>,

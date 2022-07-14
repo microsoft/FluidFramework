@@ -4,6 +4,7 @@
  */
 
 import {
+    IDeltaService,
     IDocumentStorage,
     IProducer,
     ITenantManager,
@@ -15,7 +16,6 @@ import {
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { DeltaService } from "../services";
 import * as api from "./api";
 
 export interface IRoutes {
@@ -28,7 +28,7 @@ export function create(
     tenantManager: ITenantManager,
     throttler: IThrottler,
     singleUseTokenCache: ICache,
-    deltaService: DeltaService,
+    deltaService: IDeltaService,
     storage: IDocumentStorage,
     producer: IProducer,
     appTenants: IAlfredTenant[],

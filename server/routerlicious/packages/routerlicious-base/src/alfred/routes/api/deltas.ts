@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITenantManager, IThrottler } from "@fluidframework/server-services-core";
+import { IDeltaService, ITenantManager, IThrottler } from "@fluidframework/server-services-core";
 import {
     verifyStorageToken,
     throttle,
@@ -16,12 +16,11 @@ import { Provider } from "nconf";
 import winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../../../utils";
-import { DeltaService } from "../../services";
 
 export function create(
     config: Provider,
     tenantManager: ITenantManager,
-    deltaService: DeltaService,
+    deltaService: IDeltaService,
     appTenants: IAlfredTenant[],
     throttler: IThrottler): Router {
     const deltasCollectionName = config.get("mongo:collectionNames:deltas");

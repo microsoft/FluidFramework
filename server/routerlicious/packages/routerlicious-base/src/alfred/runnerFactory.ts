@@ -93,7 +93,7 @@ export class AlfredResources implements core.IResources {
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
-        public deltaService: DeltaService,
+        public deltaService: core.IDeltaService,
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
@@ -357,6 +357,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
+        const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
+
         return new AlfredResources(
             config,
             producer,
@@ -373,7 +375,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             storage,
             appTenants,
             operationsDbMongoManager,
-            new DeltaService(operationsDbMongoManager, tenantManager),
+            deltaService,
             port,
             documentsCollectionName,
             metricClientConfig,
