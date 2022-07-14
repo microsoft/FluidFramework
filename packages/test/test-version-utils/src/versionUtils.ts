@@ -239,11 +239,15 @@ export const loadPackage = (modulePath: string, pkg: string) =>
 export function getRequestedRange(baseVersion: string, requested?: number | string): string {
     if (requested === undefined || requested === 0) { return baseVersion; }
     if (typeof requested === "string") { return requested; }
-    const version = new semver.SemVer(baseVersion);
-
-    if (version.major < 0 || version.minor < 0 || version.patch < 0) { throw new TypeError("Invalid Version"); }
+    let version;
+    try {
+        version = new semver.SemVer(baseVersion);
+    } catch (err: unknown) {
+        throw new Error(err as string);
+    }
 
     // calculate requested major version number
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
     const requestedMajorVersion = version.major + requested;
     // if the major version number is bigger than 0 then return it as normal
     if (requestedMajorVersion > 0) {
@@ -254,6 +258,7 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
 
     // Minor number in 0.xx release represent a major change hence different rules
     // are applied for computing the requested version.
+    // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
     const requestedMinorVersion = lastPrereleaseVersion.minor + requestedMajorVersion;
     // too old a version / non existing version requested
     if (requestedMinorVersion <= 0) {
