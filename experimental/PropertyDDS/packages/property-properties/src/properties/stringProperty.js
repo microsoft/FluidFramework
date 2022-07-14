@@ -234,7 +234,11 @@ export class StringProperty extends ValueArrayProperty {
         var oldStringLength = this._dataArrayRef.length;
         var newStringData;
         if (_.isString(in_serializedObj)) {
-            return this._setValue(in_serializedObj, in_reportToView) ? in_serializedObj : {};
+            if (this._setValue(in_serializedObj, in_reportToView)) {
+                return in_serializedObj;
+            } else {
+                return {};
+            }
         } else {
             if (!in_serializedObj.insert ||
                 !in_serializedObj.insert[0]) {
