@@ -4,9 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { EmptyKey, ITreeCursor, TreeNavigationResult } from "../..";
-import { FieldKey } from "../../tree";
-import { JsonCursor, extract } from "./jsonCursor";
+import { EmptyKey, ITreeCursor, TreeNavigationResult } from "../../..";
+import { FieldKey } from "../../../tree";
+// Allow importing from this specific file which is being tested:
+/* eslint-disable-next-line import/no-internal-modules */
+import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 
 describe("JsonCursor", () => {
     // This tests that test data roundtrips via extract.
@@ -32,12 +34,12 @@ describe("JsonCursor", () => {
                 it(`${name}: ${JSON.stringify(expected)}`, () => {
                     const cursor = new JsonCursor(expected);
 
-                    assert.deepEqual(extract(cursor), expected,
+                    assert.deepEqual(cursorToJsonObject(cursor), expected,
                         "JsonCursor results must match source.");
 
                     // Read tree a second time to verify that the previous traversal returned the cursor's
                     // internal state machine to the root (i.e., stacks should be empty.)
-                    assert.deepEqual(extract(cursor), expected,
+                    assert.deepEqual(cursorToJsonObject(cursor), expected,
                         "JsonCursor must return same results on second traversal.");
                 });
             }
