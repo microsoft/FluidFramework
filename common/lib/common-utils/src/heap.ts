@@ -25,8 +25,8 @@ export interface IComparer<T> {
  */
 export const NumberComparer: IComparer<number> = {
     /**
-     * The compare function for numbers,.
-     * @returns The difference of the two number.
+     * The compare function for numbers.
+     * @returns The difference of the two numbers.
      */
     compare: (a, b): number => a - b,
 
