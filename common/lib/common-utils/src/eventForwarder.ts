@@ -21,6 +21,9 @@ export class EventForwarder<TEvent = IEvent>
     private static readonly newListenerEvent = "newListener";
     private static readonly removeListenerEvent = "removeListener";
 
+    /**
+     * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+     */
     public get disposed(): boolean { return this.isDisposed; }
     private isDisposed: boolean = false;
 
@@ -40,6 +43,9 @@ export class EventForwarder<TEvent = IEvent>
         }
     }
 
+    /**
+     * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
+     */
     public dispose(): void {
         this.isDisposed = true;
         for (const listenerRemovers of this.forwardingEvents.values()) {

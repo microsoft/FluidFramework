@@ -5,6 +5,7 @@
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { SchemaRepository } from "../schema";
+import { DetachedRange } from "../tree";
 import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
 /**
@@ -40,6 +41,8 @@ export interface IForestSubscription extends Dependee {
      * The root's schema is tracked under {@link rootFieldKey}.
      */
     readonly schema: SchemaRepository & Dependee;
+
+    readonly rootField: DetachedRange;
 
     /**
      * Allocates a cursor in the "cleared" state.

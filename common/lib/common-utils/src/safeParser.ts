@@ -4,11 +4,14 @@
  */
 
 /**
- * Wrapper for JSON.parse to translate all exception to return undefined
+ * Wrapper for
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse},
+ * which will return `undefined` in the case of an error, rather than throwing.
  *
- * @param json - the JSON string to parse
- * @returns the result JSON.parse is successful, undefined if exception happens
+ * @param json - The JSON string to parse
+ * @returns The result from `JSON.parse` if successful, otherwise `undefined`.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function safelyParseJSON(json: string): any | undefined {
     let parsed;
     try {

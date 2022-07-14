@@ -8,7 +8,7 @@ import cloneDeep from "lodash/cloneDeep";
 import { assert } from "./assert";
 
 /**
- * A range in the RangeTracker
+ * A range in the {@link RangeTracker}
  */
 export interface IRange {
     primary: number;
@@ -17,7 +17,7 @@ export interface IRange {
 }
 
 /**
- * A serialized version of the RangeTracker
+ * A serialized version of the {@link RangeTracker}
  */
 export interface IRangeTrackerSnapshot {
     ranges: IRange[];
