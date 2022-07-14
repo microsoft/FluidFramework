@@ -27,7 +27,6 @@ import {
     ReferenceType,
     reservedMarkerIdKey,
 } from "@fluidframework/merge-tree";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
 
 describeFullCompat("SharedString", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
