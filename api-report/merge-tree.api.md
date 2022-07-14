@@ -199,6 +199,7 @@ export class Client {
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
+    rollback?(op: any, localOpMetadata: unknown): void;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
     readonly specToSegment: (spec: IJSONSegment) => ISegment;

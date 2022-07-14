@@ -153,7 +153,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      * E.g. Segment group not first is pending queue.
      * Inserted segment does not have unassigned sequence number.
      *
-     * Returns true if the op  modifies the segment, otherwise false.
+     * Returns true if the op modifies the segment, otherwise false.
      * The only current false case is overlapping remove, where a segment is removed
      * by a previously sequenced operation before the current operation is acked.
      */

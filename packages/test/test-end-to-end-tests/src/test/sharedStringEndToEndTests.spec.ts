@@ -5,8 +5,10 @@
 
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
     ITestObjectProvider,
     ITestContainerConfig,
@@ -14,7 +16,7 @@ import {
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
@@ -67,5 +69,87 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
         const newSharedString = await newComponent.getSharedObject<SharedString>(stringId);
         assert.equal(
             newSharedString.getText(), text, "The new container should receive the inserted text on creation");
+    });
+});
+
+describeNoCompat("SharedString orderSequentially", (getTestObjectProvider) => {
+    let provider: ITestObjectProvider;
+    beforeEach(() => {
+        provider = getTestObjectProvider();
+    });
+
+    let container: Container;
+    let dataObject: ITestFluidObject;
+    let sharedString: SharedString;
+    let containerRuntime: ContainerRuntime;
+
+    const configProvider = ((settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+        getRawConfig: (name: string): ConfigTypes => settings[name],
+    }));
+    const errorMessage = "callback failure";
+
+    beforeEach(async () => {
+        const configWithFeatureGates = {
+            ...testContainerConfig,
+            loaderProps: { configProvider: configProvider({
+                "Fluid.ContainerRuntime.EnableRollback": true,
+            }) },
+        };
+        container = await provider.makeTestContainer(configWithFeatureGates) as Container;
+        dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+        sharedString = await dataObject.getSharedObject<SharedString>(stringId);
+        containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+    });
+
+    it("Should rollback insert on empty string", async () => {
+        let error: Error | undefined;
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedString.insertText(0, "abcd");
+                throw new Error(errorMessage);
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedString.getText(), "");
+    });
+    it("Should rollback insert into non-empty string", async () => {
+        let error: Error | undefined;
+        sharedString.insertText(0, "aefg");
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedString.insertText(1, "bcd");
+                throw new Error(errorMessage);
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedString.getText(), "aefg");
+    });
+    it("Should rollback multiple inserts with split segments", async () => {
+        let error: Error | undefined;
+        sharedString.insertText(0, "aefg");
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedString.insertText(1, "bd");
+                sharedString.insertText(2, "c");
+                throw new Error(errorMessage);
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedString.getText(), "aefg");
     });
 });

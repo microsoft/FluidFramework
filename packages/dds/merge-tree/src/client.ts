@@ -14,8 +14,12 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
-import { RedBlackTree } from "./collections";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
+import { ListRemoveEntry, RedBlackTree } from "./collections";
+import {
+    TreeMaintenanceSequenceNumber,
+    UnassignedSequenceNumber,
+    UniversalSequenceNumber,
+} from "./constants";
 import { LocalReferencePosition } from "./localReference";
 import {
     CollaborationWindow,
@@ -51,7 +55,7 @@ import {
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
-import { MergeTreeTextHelper } from "./textSegment";
+import { MergeTreeTextHelper, TextSegment } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import {
@@ -344,6 +348,49 @@ export class Client {
 
     public getMarkerFromId(id: string) {
         return this.mergeTree.getMarkerFromId(id);
+    }
+
+    /**
+     * Revert an op
+     */
+    public rollback?(op: any, localOpMetadata: unknown) {
+        if (op.type !== MergeTreeDeltaType.INSERT) {
+            throw new Error("Unsupported op type for rollback");
+        }
+
+        const lastList = this.mergeTree.pendingSegments?.prev;
+        if (!lastList) {
+            throw new Error("No pending segments");
+        }
+        ListRemoveEntry(lastList);
+        const pendingSegmentGroup = lastList.data;
+        if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
+            throw new Error("Rollback op doesn't match last edit");
+        }
+        let length = 0;
+        for (const segment of pendingSegmentGroup.segments) {
+            const segmentSegmentGroup = segment.segmentGroups.dequeue();
+            assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+            if (TextSegment.is(segment)) {
+                length += segment.text.length;
+            } else if (Marker.is(segment)) {
+                length += 1;
+            } else {
+                throw new Error("Unsupported segment type for rollback");
+            }
+        }
+
+        const start = op.pos1 as number;
+        const segWindow = this.getCollabWindow();
+        const removeOp = createRemoveRangeOp(start, start + length);
+        this.mergeTree.markRangeRemoved(
+            start,
+            start + length,
+            UniversalSequenceNumber,
+            segWindow.clientId,
+            TreeMaintenanceSequenceNumber,
+            false,
+            { op: removeOp });
     }
 
     /**
