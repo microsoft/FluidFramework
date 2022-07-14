@@ -123,7 +123,7 @@ export class Heap<T> {
         }
     }
 
-    /*
+    /**
      * Get the number of elements in the Heap.
      *
      * @returns The number of elements in the Heap.

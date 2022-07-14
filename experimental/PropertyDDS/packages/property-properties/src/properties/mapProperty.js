@@ -49,7 +49,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
-     * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
+     * @param {boolean} [in_hideCollection=false] - If true the collection type (if applicable) will be omitted
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection = false) {
@@ -76,7 +76,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      *
      * See {@link MapProperty.setValues}
      *
-     * @param {object} in_values to assign to the collection
+     * @param {object} in_values - to assign to the collection
      * @param {Boolean} in_typed - If the map's items have a typeid and a value then create the
      *   properties with that typeid, else use the set's typeid (support polymorphic items).
      * @private
@@ -126,9 +126,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      *
      * See {@link MapProperty.setValues}
      *
-     * @param {object} in_values to assign to the collection
-     * @param {Bool} in_typed  - Whether the values are typed/polymorphic.
-     * @param {Bool} in_initial  - Whether we are setting default/initial values
+     * @param {object} in_values - to assign to the collection
+     * @param {Bool} in_typed - Whether the values are typed/polymorphic.
+     * @param {Bool} in_initial - Whether we are setting default/initial values
      *   or if the function is called directly with the values to set.
      * @override
      */
@@ -143,7 +143,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     /**
      * Sets multiple values in a map.
      *
-     * @param {object} in_values to assign to the collection
+     * @param {object} in_values - to assign to the collection
      * @throws if one of the path in in_values does not exist in this property
      * @throws if trying to set a value to a path that leads to a Property other than ValueProperty or StringProperty
      * @override
@@ -163,13 +163,13 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * Returns an object with all the nested values contained in this property
      * @return {object} an object representing the values of your property
      * for example: {
-          'firstString': {
-            'stringValue': 'test1'
-          },
-          'secondString': {
-            'stringValue': 'test2'
-          }
-        }
+          * 'firstString': {
+            * 'stringValue': 'test1'
+          * },
+          * 'secondString': {
+            * 'stringValue': 'test2'
+          * }
+        * }
       */
     getValues() {
         var ids = this.getIds();
@@ -200,7 +200,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     /**
      * Resolves a direct child node based on the given path segment
      *
-     * @param {String} in_segment                                   - The path segment to resolve
+     * @param {String} in_segment - The path segment to resolve
      * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
      *
      * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
@@ -208,11 +208,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      */
     _resolvePathSegment(in_segment, in_segmentType) {
         // Base Properties only support paths separated via dots
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-            return this._dynamicChildren[in_segment];
-        } else {
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
-        }
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN ? this._dynamicChildren[in_segment] : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(this, in_segment, in_segmentType);
     }
 
     /**
@@ -221,8 +217,8 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * Note: This will trigger an exception when this key already exists in the map. If you want to overwrite
      *       existing entries you can use the set function.
      *
-     * @param {string}  in_key   - The key under which the entry is added
-     * @param {property-properties.Property}  in_property - The property to insert
+     * @param {string} in_key - The key under which the entry is added
+     * @param {property-properties.Property} in_property - The property to insert
      * @throws if the property already exists
      * @throws if the property already has a parent
      * @throws if in_key is not a string
@@ -263,8 +259,8 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      *
      * Note: this will overwrite an already existing value
      *
-     * @param {string}                                  in_key    - The key under which the entry is stored
-     * @param {property-properties.MapProperty~MapValueType}  in_property  - The property to store in the map
+     * @param {string} in_key - The key under which the entry is stored
+     * @param {property-properties.MapProperty~MapValueType} in_property - The property to store in the map
      * @throws if in_property is not a property
      * @throws if trying to insert a property that has a parent
      * @throws if in_key is not a string or a number
@@ -311,7 +307,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
      *     refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]- -
      *     How should this function behave during reference resolution?
      *
      * @return {property-properties.Property|*|undefined} The entry in the collection or undefined
@@ -328,14 +324,23 @@ export class MapProperty extends IndexedCollectionBaseProperty {
                     in_options.referenceResolutionMode;
 
             var prop = this;
-            if (in_ids === PATH_TOKENS.ROOT) {
+            switch (in_ids) {
+            case PATH_TOKENS.ROOT: {
                 prop = prop.getRoot();
-            } else if (in_ids === PATH_TOKENS.UP) {
+
+            break;
+            }
+            case PATH_TOKENS.UP: {
                 prop = prop.getParent();
-            } else if (in_ids === PATH_TOKENS.REF) {
+
+            break;
+            }
+            case PATH_TOKENS.REF: {
                 throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
-            } else {
+            }
+            default: {
                 prop = prop._dynamicChildren[in_ids];
+            }
             }
 
             // Handle automatic reference resolution
@@ -392,11 +397,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     _getScope() {
         var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
 
-        if (scope !== undefined) {
-            return scope;
-        } else {
-            return this._scope;
-        }
+        return scope !== undefined ? scope : this._scope;
     }
 
     /**

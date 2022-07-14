@@ -13,6 +13,7 @@ import { constants } from "../constants";
 
 const BIT32 = 4294967296;
 const { MSG } = constants;
+
 /**
  * A data representation class for 64 bit integer types.
  * This is necessary since js doesn't support 64bit
@@ -22,7 +23,7 @@ const { MSG } = constants;
  * There are and there won't be set functions!
  * (see javascript String class)
  *
- * @param low  - lower 32 bit
+ * @param low - lower 32 bit
  * @param high - higher 32 bit
  */
 export class Integer64 {

@@ -56,12 +56,16 @@ export interface ISummarizeResult {
 /**
  * Contains the same data as ISummaryResult but in order to avoid naming collisions,
  * the data store summaries are wrapped around an array of labels identified by pathPartsForChildren.
- * Ex: id:""
-       pathPartsForChildren: ["path1"]
-       stats: ...
-       summary:
-        ...
-            "path1":
+ *
+ * @example
+ * ```
+ * id:""
+ * pathPartsForChildren: ["path1"]
+ * stats: ...
+ * summary:
+ *   ...
+ *     "path1":
+ * ```
  */
 export interface ISummarizeInternalResult extends ISummarizeResult {
     id: string;

@@ -107,7 +107,7 @@ const _extractTypeid = function(typeidOrReference: string) {
 
 /**
  * Given a typeid string, fetches the semver 'x.y.z' version string.
- * @param in_typeid A PropertySet typeid. For example: 'TeamLeoValidation2:ColorID-1.0.0'.
+ * @param in_typeid - A PropertySet typeid. For example: 'TeamLeoValidation2:ColorID-1.0.0'.
  * @returns The semver 'x.y.z' version string, or null if in_typeid is not a valid
  *   PropertySet typeid.
  */
@@ -119,7 +119,7 @@ const _getSemverFromTypeId = function(in_typeid: string): string | null {
 
 /**
  * Fetches the type name of a javascript entity.
- * @param in_obj A javascript entity.
+ * @param in_obj - A javascript entity.
  * @returns The type name for in_obj.
  */
 const _getType = (in_obj: any): string => Object.prototype.toString.call(in_obj).slice(8, -1);
@@ -141,8 +141,8 @@ function isPropertyArray(source: SchemaEntityType): source is PropertiesType {
  * An object deep compare with special handling for pset property arrays.
  * pset property arrays are allowed to be out of order as long as elements can be matched with
  * their id.
- * @param in_source The source entity to test for deep equality.
- * @param in_target The target entity to test for deep equality.
+ * @param in_source - The source entity to test for deep equality.
+ * @param in_target - The target entity to test for deep equality.
  * @returns {isEqual: false, path: 'foo.properties[1].x'}
  *   isEqual: true if in_source and in_target property sets are equal, even if the individual
  *     property arrays differ but contain the same out of order elements.
@@ -156,7 +156,7 @@ const _psetDeepEquals = function(in_source: SchemaEntityType, in_target: SchemaE
 
     /**
      * Create the _psetDeepEquals result.
-     * @param isEqual Whether or not a PropertySet result is being constructed for
+     * @param isEqual - Whether or not a PropertySet result is being constructed for
      *   PropertySets that are deeply equal.
      * @returns {{isEqual: boolean, path: string}} An object that indicates whether or not the source
      *   and target PropertySets are deeply equal. If they're not, it also contains a path to the
@@ -169,9 +169,9 @@ const _psetDeepEquals = function(in_source: SchemaEntityType, in_target: SchemaE
 
     /**
      * Performs a recursive, depth first deep equal test against two PropertySets.
-     * @param source The source entity to test for deep equality.
-     * @param target The target entity to test for deep equality.
-     * @param id The current path element being compared.
+     * @param source - The source entity to test for deep equality.
+     * @param target - The target entity to test for deep equality.
+     * @param id - The current path element being compared.
      * @return The result of _getPSetDeepEqualsResult
      */
     let _depthFirstDeepEquals = function(source: SchemaEntityType, target: SchemaEntityType, id?: string): PathEqualityInfo {
@@ -261,7 +261,7 @@ const _psetDeepEquals = function(in_source: SchemaEntityType, in_target: SchemaE
 
 /**
  * Fetches the non semver part of a typeid string.
- * @param in_typeid A PropertySet typeid. For example: 'TeamLeoValidation2:ColorID-1.0.0'.
+ * @param in_typeid - A PropertySet typeid. For example: 'TeamLeoValidation2:ColorID-1.0.0'.
  * @returns The typeid, without a semver.
  */
 const _stripSemverFromTypeId = function(in_typeid: string): string | null {
@@ -293,7 +293,7 @@ const _unresolvedTypes = function(in_template: PropertySchema) {
 
 /**
  * Performs basic template validation.
- * @param in_template The template object to validate.
+ * @param in_template - The template object to validate.
  */
 const _validateBasic = function(in_template: PropertySchema) {
     if (!in_template) {
@@ -309,10 +309,10 @@ const _validateBasic = function(in_template: PropertySchema) {
  * This function checks the change level (PATCH, MINOR, MAJOR) and analyses the template content
  * to emit warnings if the change level should be higher, given the content that changed.
  * This function assumes that: in_versionPrevious < in_version
- * @param in_template The latest template object.
- * @param in_templatePrevious The previous template object.
- * @param in_version The latest template version. Ex.: '2.0.0'.
- * @param in_versionPrevious The previous template version. Ex.: '1.1.3'.
+ * @param in_template - The latest template object.
+ * @param in_templatePrevious - The previous template object.
+ * @param in_version - The latest template version. Ex.: '2.0.0'.
+ * @param in_versionPrevious - The previous template version. Ex.: '1.1.3'.
  */
 const _validatePositiveIncrement = function(in_template: PropertySchema, in_templatePrevious: PropertySchema, in_version: string, in_versionPrevious: string) {
     ConsoleUtils.assert(
@@ -525,8 +525,8 @@ const _validatePositiveIncrement = function(in_template: PropertySchema, in_temp
  * Validations performed when the version between consecutive templates doesn't change.
  * For example: 1.1.3 -> 1.1.3.
  * Templates whose version didn't change should have identical content.
- * @param in_template The latest template object.
- * @param in_templatePrevious The previous template object.
+ * @param in_template - The latest template object.
+ * @param in_templatePrevious - The previous template object.
  */
 const _validateSameVersion = function(in_template: PropertySchema, in_templatePrevious: PropertySchema) {
     const result = _psetDeepEquals.call(this, in_templatePrevious, in_template);
@@ -539,7 +539,7 @@ const _validateSameVersion = function(in_template: PropertySchema, in_templatePr
 /**
  * Validate a template
  * Check that the template is syntactically correct as well as semantically correct.
- * @param in_template The template to check against
+ * @param in_template - The template to check against
  * Produces an {object|undefined} map of key-value pairs
  *  where the path of the invalid property is the key and the value is the error message
  *  i.e.
@@ -565,7 +565,7 @@ const _validateSemanticAndSyntax = function(in_template: PropertySchema) {
 /**
  * Validate a template
  * Check that the template is syntactically correct as well as semantically correct.
- * @param in_template The template to check against
+ * @param in_template - The template to check against
  * @return {Promise} a promise that resolved to nothing
  * @ignore
  */
@@ -575,7 +575,7 @@ const _validateSemanticAndSyntaxAsync = async function(in_template: PropertySche
 
 /**
  * Validates that the semver part of a template's typeid is valid.
- * @param {Object} in_template The template object to validate.
+ * @param {Object} in_template - The template object to validate.
  * @return {string} The semver string. For example: '1.0.0'.
  * @private
  * @this TemplateValidator
@@ -595,8 +595,8 @@ const _validateSemverFormat = function(in_template) {
 /**
  * Skip semver validation. Verify that the content is the same for both templates, while ignoring
  * the root 'typeid' property.
- * @param {Object} in_template The latest template object.
- * @param {Object} in_templatePrevious The previous template object.
+ * @param {Object} in_template - The latest template object.
+ * @param {Object} in_templatePrevious - The previous template object.
  * @private
  * @this TemplateValidator
  */
@@ -611,8 +611,8 @@ const _validateSkipSemver = function(in_template, in_templatePrevious) {
 
 /**
  * Checks if an invalid context error should be signified
-
- * @param {String} in_context The latest template object.
+ *
+ * @param {String} in_context - The latest template object.
  * @return {Error|undefined} If exists returns the InvalidContext error
  * @private
  * @this TemplateValidator
@@ -628,7 +628,7 @@ const getInvalidContextError = function(in_context) {
 /**
  * Validate that the context is valid
  * Validate that only Named Properties are in sets
- * @param {object} in_template The template to check against
+ * @param {object} in_template - The template to check against
  * @ignore
  * @throws if the context is invalid.
  */
@@ -647,7 +647,7 @@ const _validateContext = function(in_template) {
 /**
  * Validate just the syntax of a template
  * Check that the template is well-formed, according to the schema.
- * @param {object} in_template The template to check against
+ * @param {object} in_template - The template to check against
  *
  * Context validation makes sure that elements of sets eventually inherit from NamedProperty.
  * If this is not the case, a promise rejection will occur with the appropriate error.
@@ -719,7 +719,7 @@ const _validateContextAsync = async function(in_template) {
 /**
  * Validate that the context is valid
  * Validate that only Named Properties are in sets
- * @param {object} in_template The template to check against
+ * @param {object} in_template - The template to check against
  * @ignore
  * @throws if the context is invalid.
  */
@@ -744,7 +744,7 @@ let _validateConstants = function(in_template) {
 /**
  * Analyze output of the syntax validation and build error messages
  *
- * @param in_template The template that was analyzed
+ * @param in_template - The template that was analyzed
  */
 const _processValidationResults = function(in_template: PropertySchema) {
     let that = this;
@@ -764,24 +764,16 @@ const _processValidationResults = function(in_template: PropertySchema) {
                         error.message = `typeid should have a pattern like: my.example:point-1.0.0 ${error.data
                             } does not match that pattern`;
                     } else if ("pattern" && regexTypeId.test(error.dataPath)) {
-                        if (error.schemaPath === "#/definitions/typed-reference-typeid/pattern") {
-                            error.message = "";
-                        } else {
-                            error.message = `${error.dataPath} should follow this pattern: <namespace>:<typeid>-<version> ` +
+                        error.message = error.schemaPath === "#/definitions/typed-reference-typeid/pattern" ? "" : `${error.dataPath} should follow this pattern: <namespace>:<typeid>-<version> ` +
                                 `(for example: Sample:Rectangle-1.0.0) or match one of the Primitive Types (Float32, Float64, ` +
                                 `Int8, Uint8, Int16, Uint16, Int32, Uint32, Bool, String, Reference, Enum, Int64, Uint64) or ` +
                                 `Reserved Types (BaseProperty, NamedProperty, NodeProperty, NamedNodeProperty, ` +
                                 `RelationshipProperty). '${error.data}' is not valid`;
-                        }
                     }
                     break;
 
                 case "enum":
-                    if (regexTypeId.test(error.dataPath)) {
-                        error.message = "";
-                    } else {
-                        error.message = `${error.dataPath} should match one of the following: ${error.schema}`;
-                    }
+                    error.message = regexTypeId.test(error.dataPath) ? "" : `${error.dataPath} should match one of the following: ${error.schema}`;
                     break;
 
                 case "type":
@@ -824,7 +816,7 @@ const _processValidationResults = function(in_template: PropertySchema) {
 /**
  * Validate just the syntax of a template
  * Check that the template is well-formed, according to the schema.
- * @param in_template The template to check against
+ * @param in_template - The template to check against
  * @throws if a property with context set is not an instance of NamedProperties
  * @ignore
  */
@@ -866,7 +858,7 @@ const createContextCheckAsyncQueue = function() {
  * Validate just the syntax of a template
  * Check that the template is well-formed, according to the schema.
  *
- * @param in_template The template to check against
+ * @param in_template - The template to check against
  * Mainly checks context. See _validateContextAsync
  * @returns Promise that resolves without any result
  * @ignore
@@ -989,8 +981,8 @@ export class TemplateValidator {
  * 4. PATCH revision should be increased when _only_ the template description changes.
  * 5. Adding one or more template attributes is a MINOR change.
  * 6. Removing one or more template attributes is a MAJOR change.
- * @param in_template The latest template version, as a JSON object.
- * @param in_templatePrevious The previous template version, as a JSON object. Optional.
+ * @param in_template - The latest template version, as a JSON object.
+ * @param in_templatePrevious - The previous template version, as a JSON object. Optional.
  * @returns The validation results. Example: {
  *   isValid: false,
  *   errors: ['Something went wrong. Validation failed.'],
@@ -1092,8 +1084,8 @@ export class TemplateValidator {
      * 4. PATCH revision should be increased when _only_ the template description changes.
      * 5. Adding one or more template attributes is a MINOR change.
      * 6. Removing one or more template attributes is a MAJOR change.
-     * @param in_template The latest template version, as a JSON object.
-     * @param in_templatePrevious The previous template version, as a JSON object. Optional.
+     * @param in_template - The latest template version, as a JSON object.
+     * @param in_templatePrevious - The previous template version, as a JSON object. Optional.
      * @returns A promise that resolves to the validation results as an object. Example: {
      *   isValid: false,
      *   errors: ['Something went wrong. Validation failed.'],
@@ -1119,8 +1111,8 @@ export class TemplateValidator {
     /**
      * Called by validateAsync if a previous schema is passed in argument
      *
-     * @param in_template The latest template version, as a JSON object.
-     * @param in_templatePrevious The previous template version, as a JSON object. Optional.
+     * @param in_template - The latest template version, as a JSON object.
+     * @param in_templatePrevious - The previous template version, as a JSON object. Optional.
      *
      * @returns promise that resolves to the validation results as an objet. See validateAsync
      * @ignore

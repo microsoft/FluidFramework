@@ -40,7 +40,7 @@ export namespace PathHelper {
     /**
      * Tokenizes a path string
      *
-     * @param in_path     - The path string to divide into tokens
+     * @param in_path - The path string to divide into tokens
      * @param out_types - The types of the tokens
      *
      * @returns the tokens from the path string
@@ -311,7 +311,7 @@ export namespace PathHelper {
     /**
      * Creates a quoted string for a path seqment to make sure it parses correctly
      *
-     * @param in_pathSegment   - The path string to put in quotes
+     * @param in_pathSegment - The path string to put in quotes
      *
      * @returns quoted path string
      */
@@ -332,7 +332,7 @@ export namespace PathHelper {
     /**
      * Reverse a quoted/escaped string for a path seqment
      *
-     * @param in_quotedPathSegment   - The quoted/escaped path string to put in quotes
+     * @param in_quotedPathSegment - The quoted/escaped path string to put in quotes
      *
      * @return unquoted path string
      */
@@ -358,11 +358,11 @@ export namespace PathHelper {
     /**
      * Adds quotation marks to a path string if they are needed
      *
-     * @param in_pathSegment   - The path string to put in quotes
+     * @param in_pathSegment - The path string to put in quotes
      *
      * @returns quoted path string
      */
-    export const quotePathSegmentIfNeeded = function(in_pathSegment: string): string {
+     export const quotePathSegmentIfNeeded = function(in_pathSegment: string): string {
         if (in_pathSegment.indexOf(PROPERTY_PATH_DELIMITER) !== -1 ||
             in_pathSegment.indexOf('"') !== -1 ||
             in_pathSegment.indexOf("\\") !== -1 ||

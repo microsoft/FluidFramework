@@ -117,7 +117,7 @@ const { LazyLoadedProperties } = require('./properties/lazyLoadedProperties');
  * @constructor
  * @protected
  *
- * @param {bool} skipSemver flag passed to the constructor of the
+ * @param {bool} skipSemver - flag passed to the constructor of the
  * TemplateValidator. Skips semver validation
  *
  * @ignore
@@ -248,7 +248,7 @@ var registerLocal = function(in_template) {
 
 /**
  * Helper function used to extract the error messages from a list of Error objects
- * @param {Array.<Error>} in_errors List of error objects
+ * @param {Array.<Error>} in_errors - List of error objects
  * @private
  * @return {Array.<string>} List of error messages
  */
@@ -281,7 +281,7 @@ var _createVersionedSortedCollection = function() {
  * Extracts typeids directly referred to in a template and that are not locally known
  *
  * @public
- * @param {property-properties.PropertyTemplate|object} in_template from which to extract dependencies
+ * @param {property-properties.PropertyTemplate|object} in_template - from which to extract dependencies
  *
  * @return {Array} list of unknown typeids
  */
@@ -300,7 +300,7 @@ var _extractUnknownDependencies = function(in_template) {
  * Pushes a template request task onto the template requests queue
  *
  * @public
- * @param {String} in_typeid typeid of the template to retrieve
+ * @param {String} in_typeid - typeid of the template to retrieve
  *
  */
 var _pushTemplateRequestTask = function(in_typeid) {
@@ -413,9 +413,9 @@ class PropertyFactory {
     /**
     * Add a listener for a given type of event.
     *
-    * @param  {string} eventName A string representing the type of event upon which the
+    * @param {string} eventName - A string representing the type of event upon which the
     *   listener will be notified.
-    * @param  {function} eventListener The function to call when the "type" of event
+    * @param {function} eventListener - The function to call when the "type" of event
     *   is emitted.
     * @public
     */
@@ -427,9 +427,9 @@ class PropertyFactory {
     * Remove a listener for a given type of event. Iff a listener was removed,
     * an event 'removeListener' will be emitted.
     *
-    * @param  {string} eventName A string representing the type of event on which the
+    * @param {string} eventName - A string representing the type of event on which the
     *   listener was attached.
-    * @param  {function} eventListener The function to remove from the list of functions
+    * @param {function} eventListener - The function to remove from the list of functions
     * @public
     * */
     removeListener(eventName, eventListener) {
@@ -594,9 +594,9 @@ class PropertyFactory {
      * function, but it returns the array of templates instead of registering them.
      * Throws an error if any conversion error occurs.
      *
-     * @param {String} in_fromType  The type of the object to convert.
-     *                              The only type supported so far is 'JSONSchema'.
-     * @param {Object} in_toConvert  The object to convert
+     * @param {String} in_fromType - The type of the object to convert.
+     * The only type supported so far is 'JSONSchema'.
+     * @param {Object} in_toConvert - The object to convert
      * @throws if in_fromType is not valid.
      * @throws if the in_toConvert object is not a valid template.
      * @return {Array.<object>} Array of Property Sets Templates
@@ -614,9 +614,9 @@ class PropertyFactory {
      * function, but it registers the templates for you instead of returning them.
      * Throws an error if any conversion error occurs.
      *
-     * @param {String} in_fromType  The type of the object to convert.
-     *                              The only type supported so far is 'JSONSchema'.
-     * @param {Object} in_toConvert  The object to convert
+     * @param {String} in_fromType - The type of the object to convert.
+     * The only type supported so far is 'JSONSchema'.
+     * @param {Object} in_toConvert - The object to convert
      * @throws if in_toConvert is not valid.
      * @throws if in_fromType is not a valid object type.
      */
@@ -767,7 +767,7 @@ class PropertyFactory {
 
     /**
      * Remove the scope from the remote templates collection
-     * @param {string} in_scope The scope to remove
+     * @param {string} in_scope - The scope to remove
      * @protected
      */
     _removeScope(in_scope) {
@@ -798,11 +798,11 @@ class PropertyFactory {
      *
      * This is the internal function used to register templates and primitive properties.
      *
-     * @param {property-properties.PropertyTemplate|string}                            in_typeid  -
+     * @param {property-properties.PropertyTemplate|string} in_typeid -
      *     typeid of for the property the given template/constructor represents
-     * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrProperty
+     * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrProperty -
      *     Template/native property class to associate with the typeid
-     * @param {string}                                                          [in_context='single'] -
+     * @param {string} [in_context='single'] -
      *     The context for which the parameter is added (if it is set to all the object will be used in
      *     all contexts)
      */
@@ -837,7 +837,7 @@ class PropertyFactory {
     /**
      * Validate a template
      * Check that the template is syntactically correct as well as semantically correct.
-     * @param {object|property-properties.PropertyTemplate} in_template The template to check against
+     * @param {object|property-properties.PropertyTemplate} in_template - The template to check against
      * @return {object|undefined} map of key-value pairs
      *  where the path of the invalid property is the key and the value is the error message
      *  i.e.
@@ -860,8 +860,8 @@ class PropertyFactory {
     /**
      * Get a template or property object based on a typeid and a context
      *
-     * @param {string} in_typeid    - The type unique identifier
-     * @param {string} [in_context]  - The context of the property to create
+     * @param {string} in_typeid - The type unique identifier
+     * @param {string} [in_context] - The context of the property to create
      * @param {string} [in_scope] - The scope in which the property typeid is defined
      *
      * @return {property-properties.PropertyTemplate|object|property-properties.BaseProperty|undefined}
@@ -878,8 +878,8 @@ class PropertyFactory {
     /**
      * Get a template or property object based on a typeid and a context
      *
-     * @param {string} in_typeid    - The type unique identifier
-     * @param {string} [in_context]  - The context of the property to create
+     * @param {string} in_typeid - The type unique identifier
+     * @param {string} [in_context] - The context of the property to create
      * @param {string} [in_scope] - The scope in which the property typeid is defined
      *
      * @return {property-properties.PropertyTemplateWrapper|property-properties.BaseProperty|undefined}
@@ -951,10 +951,10 @@ class PropertyFactory {
      * Create an instance of the given property typeid if there is a template registered for it.
      * Otherwise, this method returns undefined. Searches also in scoped templates.
      *
-     * @param {string} in_typeid   - The type unique identifier
-     * @param {string} in_context  - The type of collection of values that the property contains.
-     *                               Accepted values are "single" (default), "array", "map" and "set".
-     * @param {object|undefined} in_initialProperties A set of initial values for the PropertySet being created
+     * @param {string} in_typeid - The type unique identifier
+     * @param {string} in_context - The type of collection of values that the property contains.
+     * Accepted values are "single" (default), "array", "map" and "set".
+     * @param {object|undefined} in_initialProperties - A set of initial values for the PropertySet being created
      * @param {string|undefined} in_scope - The scope in which the property typeid is defined
      * @return {property-properties.BaseProperty|undefined} the property instance
      * @private
@@ -1394,11 +1394,11 @@ class PropertyFactory {
      * Create an instance of the given property typeid if there is a template registered for it.
      * Otherwise, this method returns undefined.
      *
-     * @param {string} in_typeid   - The type unique identifier
-     * @param {string} in_context  - The type of collection of values that the property contains.
-     *                               Accepted values are "single" (default), "array", "map" and "set".
-     * @param {object=} in_initialProperties A set of initial values for the PropertySet being created
-     * @param {object=} in_options Additional options
+     * @param {string} in_typeid - The type unique identifier
+     * @param {string} in_context - The type of collection of values that the property contains.
+     * Accepted values are "single" (default), "array", "map" and "set".
+     * @param {object=} in_initialProperties - A set of initial values for the PropertySet being created
+     * @param {object=} in_options - Additional options
      *
      * @return {property-properties.BaseProperty|undefined} the property instance
      */
@@ -1411,11 +1411,11 @@ class PropertyFactory {
      * passed base constructor, but have the typeid and id assigned in its constructor. This way, we
      * avoid the storage overhead of having those members in each instance of the property.
      *
-     * @param {String} in_context             - The context of the property
-     * @param {String} in_typeid              - The typeid of the property
-     * @param {Function} in_baseConstructor   - The constructor to inherit from
-     * @param {String} in_id                  - The Id of the property
-     * @param {String} in_scope               - The scope of the property
+     * @param {String} in_context - The context of the property
+     * @param {String} in_typeid - The typeid of the property
+     * @param {Function} in_baseConstructor - The constructor to inherit from
+     * @param {String} in_id - The Id of the property
+     * @param {String} in_scope - The scope of the property
      *
      * @return {Function} The constructor for the property
      */
@@ -1466,8 +1466,8 @@ class PropertyFactory {
      * Creates a property definition for a non-collection property with the entry and constructor function assigned
      * Children will be added later by parseTemplate.
      *
-     * @param {string}                               in_typeid - The type unique identifier
-     * @param {string}                               in_id     - The id of the property to create
+     * @param {string} in_typeid - The type unique identifier
+     * @param {string} in_id - The id of the property to create
      * @param {property-properties.PropertyTemplate|object|property-properties.BaseProperty} in_templateOrConstructor -
      *        the Template/Property for this in_typeid
      * @param {string|undefined} in_scope - The scope in which the property typeid is defined
@@ -1520,7 +1520,7 @@ class PropertyFactory {
 
     /**
      * Check whether a typeid is registered
-     * @param {string} in_typeid The type unique identifier
+     * @param {string} in_typeid - The type unique identifier
      * @param {string|undefined} in_scope - The scope in which the property typeid is defined
      * @return {boolean} Returns true if the typeid is registered. False otherwise.
      * @private
@@ -1533,7 +1533,7 @@ class PropertyFactory {
      * Checks if there exists a registered template with a corresponding typeid
      * example:example would match to example:example-1.0.0
      * example:example-1.0.0 would not match to example:example only to example:example-1.0.0
-     * @param {string} in_typeid The type unique identifier with or without a version
+     * @param {string} in_typeid - The type unique identifier with or without a version
      * @param {string|undefined} in_scope - The scope in which the property typeid is defined
      * @return {boolean} Returns true if a match is found. False otherwise.
      * @private
@@ -1556,7 +1556,7 @@ class PropertyFactory {
     /**
      * Check whether the given typeid is a specialized constructor
      * Specialized constructors are of Array or Map types
-     * @param {string} in_typeid The type unique identifier
+     * @param {string} in_typeid - The type unique identifier
      * @return {boolean} Returns true if the typeid is a specialized constructor
      * @private
      */
@@ -1567,12 +1567,12 @@ class PropertyFactory {
     /**
      * Generate the typeid according to multiple settings
      *
-     * @param {Object}                       in_propertiesEntry             - Describes the property object to create
-     * @param {string=}                     [in_propertiesEntry.id]         - The name of the property
-     * @param {string=}                     [in_propertiesEntry.typeid]     - The type identifier
-     * @param {string=}                     [in_propertiesEntry.context]    - Context in which the property is created
-     * @param {Object=}                     [in_propertiesEntry.properties] - Context in which the property is created
-     * @param {number}                      [in_propertiesEntry.length]     - The length of an array property
+     * @param {Object} in_propertiesEntry - Describes the property object to create
+     * @param {string=} [in_propertiesEntry.id] - The name of the property
+     * @param {string=} [in_propertiesEntry.typeid] - The type identifier
+     * @param {string=} [in_propertiesEntry.context] - Context in which the property is created
+     * @param {Object=} [in_propertiesEntry.properties] - Context in which the property is created
+     * @param {number} [in_propertiesEntry.length] - The length of an array property
      * @param {string} in_scope - The scope in which the property typeid is defined
      * @param {string} context - The context of the property
      *
@@ -1600,15 +1600,14 @@ class PropertyFactory {
     /**
      * Creates a propertyDef for the given properties entry
      *
-     * @param {Object}                       in_propertiesEntry             - Describes the property object to create
-     * @param {string=}                     [in_propertiesEntry.id]         - The name of the property
-     * @param {string=}                     [in_propertiesEntry.typeid]     - The type identifier
-     * @param {string=}                     [in_propertiesEntry.context]    - Context in which the property is created
-     * @param {Object=}                     [in_propertiesEntry.properties] - Context in which the property is created
-     * @param {number}                      [in_propertiesEntry.length]     - The length of an array property
-     * @param {string}                       in_scope                       - The scope in which the property
-     *                                                                        typeid is defined
-     * @param {Object}                       out_propertyDef                - The created property definition
+     * @param {Object} in_propertiesEntry - Describes the property object to create
+     * @param {string=} [in_propertiesEntry.id] - The name of the property
+     * @param {string=} [in_propertiesEntry.typeid] - The type identifier
+     * @param {string=} [in_propertiesEntry.context] - Context in which the property is created
+     * @param {Object=} [in_propertiesEntry.properties] - Context in which the property is created
+     * @param {number} [in_propertiesEntry.length] - The length of an array property
+     * @param {string} in_scope - The scope in which the property typeid is defined
+     * @param {Object} out_propertyDef - The created property definition
      */
     _createDefFromPropertyDeclaration(in_propertiesEntry, in_scope, out_propertyDef) {
         var context = in_propertiesEntry.context !== undefined ? in_propertiesEntry.context : 'single';
@@ -1733,7 +1732,7 @@ class PropertyFactory {
     /**
      * Method used to determine whether the given object is a property constructor
      *
-     * @param {Object} in_obj Object to check.
+     * @param {Object} in_obj - Object to check.
      * @return {boolean} True if the object is a BaseProperty.
      * @private
      */
@@ -1873,11 +1872,11 @@ class PropertyFactory {
      *       the user wants to check whether a given template has all members as another template and so this is
      *       true for the template itself
      *
-     * @param {string}  in_templateTypeid     - Template for which we want to check, whether in_baseTypeid is a parent
-     * @param {string}  in_baseTypeid         - The base template to check for
-     * @param {object} [in_options]          - Additional options
+     * @param {string} in_templateTypeid - Template for which we want to check, whether in_baseTypeid is a parent
+     * @param {string} in_baseTypeid - The base template to check for
+     * @param {object} [in_options] - Additional options
      * @param {boolean} [in_options.includeSelf=true] - Also return true if in_templateTypeid === in_baseTypeid
-     * @param {property-properties.Workspace} [in_options.workspace] A checked out workspace to check against. If supplied,
+     * @param {property-properties.Workspace} [in_options.workspace] - A checked out workspace to check against. If supplied,
      *  the function will check against the schemas that have been registered within the workspace
      * @throws if no template is found for in_templateTypeid
      * @return {boolean} True if in_baseTypeid is a parent of in_templateTypeid or
@@ -1948,12 +1947,11 @@ class PropertyFactory {
     /**
      * Returns all the typeids the template inherits from (including all possible paths through multiple inheritance).
      *
-     * @param {string}  in_typeid              - typeid of the template
-     * @param {Object}  out_parents            - map containing the parents
-     * @param {Boolean} in_includeBaseProperty - Include BaseProperty as parent. Everything implicitly inherits
-     *                                           from BaseProperty, but it is not explicitly listed in the
-     *                                           template, so it is only be included if explicitly requested
-     * @param {string} [in_scope] - The scope in which the property typeid is defined
+     * @param {string} in_typeid - typeid of the template
+     * @param {Object} out_parents - Map containing the parents
+     * @param {Boolean} in_includeBaseProperty - Include BaseProperty as parent. Everything implicitly inherits from
+     * BaseProperty, but it is not explicitly listed in the template, so it is only be included if explicitly requested.
+     * @param {string} [in_scope] - The scope in which the property typeid is defined.
      */
     _getAllParentsForTemplateInternal(in_typeid,
         out_parents,
@@ -2057,10 +2055,10 @@ class PropertyFactory {
     /**
     * Initializes the schema store.
     * @public
-    * @param {Object} in_options the store settings.
-    * @param {getBearerTokenFn} in_options.getBearerToken Function that accepts a callback.
+    * @param {Object} in_options - the store settings.
+    * @param {getBearerTokenFn} in_options.getBearerToken - Function that accepts a callback.
     *     Function that should be called with an error or the OAuth2 bearer token representing the user.
-    * @param {string} in_options.url The root of the url used in the request to retrieve PropertySet schemas.
+    * @param {string} in_options.url - The root of the url used in the request to retrieve PropertySet schemas.
     *
     * @return {Promise} Return an empty promise when checkout resolve or reject with error.
     */
@@ -2088,10 +2086,10 @@ class PropertyFactory {
     /**
      * Pushes a template request task onto the template requests queue
      *
-     * @private
-     * @param {String} in_task schema retrieval task
-     * @param {String} in_callback callback of the task
+     * @param {String} in_task - schema retrieval task
+     * @param {String} in_callback - callback of the task
      *
+     * @private
      */
     _retrieveTemplateRequestWorker(in_task, in_callback) {
         var store = in_task.context;
@@ -2236,7 +2234,7 @@ class PropertyFactory {
      * property typeid and context.
      *
      * @public
-     * @param {property-properties.BaseProperty} in_property The property to test
+     * @param {property-properties.BaseProperty} in_property - The property to test
      * @param {String} in_primitiveTypeid - Native property typeid
      * @param {String} in_context - Context of the property
      * @return {boolean} True, if the property is an instance of the corresponding type

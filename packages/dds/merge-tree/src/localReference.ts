@@ -43,7 +43,8 @@ export interface LocalReferencePosition extends ReferencePosition {
 }
 
 /**
- * @internal - this should not be exported outside merge tree
+ * @privateRemarks This should not be exported outside merge tree
+ * @internal
  */
 class LocalReference implements LocalReferencePosition {
     public properties: PropertySet | undefined;
@@ -134,7 +135,7 @@ export class LocalReferenceCollection {
 
     /**
      *
-     * @internal - this method should only be called by mergeTree
+     * @internal
      */
     public hierRefCount: number = 0;
     private readonly refsByOffset: (IRefsAtOffset | undefined)[];
@@ -142,7 +143,7 @@ export class LocalReferenceCollection {
 
     /**
      *
-     * @internal - this method should only be called by mergeTree
+     * @internal
      */
     constructor(
         /** Segment this `LocalReferenceCollection` is associated to. */
@@ -156,7 +157,7 @@ export class LocalReferenceCollection {
 
     /**
      *
-     * @internal - this method should only be called by mergeTree
+     * @internal
      */
     public [Symbol.iterator]() {
         const subiterators: IterableIterator<LocalReferencePosition>[] = [];
@@ -196,7 +197,7 @@ export class LocalReferenceCollection {
 
         /**
      *
-     * @internal - this method should only be called by mergeTree
+         * @internal
      */
     public clear() {
         this.refCount = 0;
@@ -223,7 +224,7 @@ export class LocalReferenceCollection {
 
     /**
      *
-     * @internal - this method should only be called by mergeTree
+     * @internal
      */
     public get empty() {
         return this.refCount === 0;
@@ -231,7 +232,7 @@ export class LocalReferenceCollection {
 
     /**
      *
-     * @internal - this method should only be called by mergeTree
+     * @internal
      */
     public createLocalRef(
         offset: number,
@@ -250,7 +251,7 @@ export class LocalReferenceCollection {
 
     /**
      *
-     * @internal - this method should only be called by mergeTree
+     * @internal
      */
     public addLocalRef(lref: LocalReferencePosition, offset: number) {
         assert(
@@ -275,7 +276,7 @@ export class LocalReferenceCollection {
 
     /**
      *
-     * @internal - this method should only be called by mergeTree
+     * @internal
      */
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         if (this.has(lref)) {
@@ -289,7 +290,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @internal - this method should only be called by mergeTree
+     * @internal
      *
      * Called by 'append()' implementations to append local refs from the given 'other' segment to the
      * end of 'this' segment.
@@ -316,7 +317,7 @@ export class LocalReferenceCollection {
         this.refsByOffset.push(...other.refsByOffset);
     }
     /**
-     * @internal - this method should only be called by mergeTree
+     * @internal
      * Return true of the local reference is in the collection, otherwise false
      */
     public has(lref: ReferencePosition): boolean {
@@ -356,7 +357,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @internal - this method should only be called by mergeTree
+     * @internal
      *
      * Splits this `LocalReferenceCollection` into the intervals [0, offset) and [offset, originalLength).
      * Local references in the former half of this split will remain associated with the segment used on construction.
