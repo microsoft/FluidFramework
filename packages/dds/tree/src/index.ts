@@ -20,3 +20,10 @@ export {
     ExtractFromOpaque,
     isAny,
 } from "./util";
+
+export {
+    cursorToJsonObject,
+    JsonCursor,
+    jsonTypeSchema,
+    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+} from "./domains";
