@@ -12,14 +12,14 @@ import {
 } from "@fluidframework/odsp-driver-definitions";
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 import { getSocketIo } from "./getSocketIo";
+// eslint-disable-next-line import/no-internal-modules
+import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocumentServiceFactory";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
  */
-export class OdspDocumentServiceFactory
-    extends OdspDocumentServiceFactoryCore
-    implements IDocumentServiceFactory {
+export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
     constructor(
         getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
         getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined,
@@ -34,4 +34,8 @@ export class OdspDocumentServiceFactory
             hostPolicy,
         );
     }
+}
+
+export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory {
+    return new LocalOdspDocumentServiceFactory(localSnapshot);
 }

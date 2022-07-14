@@ -889,16 +889,14 @@ export class IdCompressor {
 					numericOverride = numericUuidFromStableId(stableOverride);
 					const delta = getPositiveDelta(numericOverride, cluster.baseUuid, cluster.capacity - 1);
 					if (delta !== undefined) {
-						if (isFinalOverride) {
-							IdCompressor.failWithCollidingOverride(inversionKey);
-						} else {
-							if (delta < cluster.count) {
-								return this.normalizeToSessionSpace(
-									(compressionMapping.clusterBase + delta) as FinalCompressedId
-								);
-							} else {
-								IdCompressor.failWithCollidingOverride(inversionKey);
+						if (!isFinalOverride) {
+							if (delta >= cluster.count) {
+								// TODO:#283: Properly implement unification
+								return undefined;
 							}
+							return this.normalizeToSessionSpace(
+								(compressionMapping.clusterBase + delta) as FinalCompressedId
+							);
 						}
 					}
 				}
@@ -987,7 +985,7 @@ export class IdCompressor {
 
 		if (overrideInversionKey !== undefined) {
 			const registeredLocal = sessionIdNormalizer.addLocalId();
-			assert(registeredLocal === newLocalId, 'TODO');
+			assert(registeredLocal === newLocalId, 'Session ID Normalizer produced unexpected local ID');
 			if (eagerFinalId !== undefined) {
 				sessionIdNormalizer.addFinalIds(eagerFinalId, eagerFinalId, cluster ?? fail());
 			}
@@ -1000,7 +998,7 @@ export class IdCompressor {
 			return eagerFinalId;
 		} else {
 			const registeredLocal = sessionIdNormalizer.addLocalId();
-			assert(registeredLocal === newLocalId, 'TODO');
+			assert(registeredLocal === newLocalId, 'Session ID Normalizer produced unexpected local ID');
 		}
 
 		return newLocalId;
@@ -1051,11 +1049,9 @@ export class IdCompressor {
 			// `localOverrides`s. Otherwise, it is a sequential allocation from the session UUID and can simply be negated and
 			// added to that UUID to obtain the stable ID associated with it.
 			const localOverride = this.localOverrides?.get(id);
-			if (localOverride !== undefined) {
-				return localOverride;
-			} else {
-				return stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
-			}
+			return localOverride !== undefined
+				? localOverride
+				: stableIdFromNumericUuid(this.localSession.sessionUuid, idOffset - 1);
 		}
 	}
 
@@ -1093,14 +1089,10 @@ export class IdCompressor {
 			const [key, compressionMapping] = closestMatch;
 			if (!IdCompressor.isClusterInfo(compressionMapping)) {
 				if (key === inversionKey) {
-					if (IdCompressor.isUnfinalizedOverride(compressionMapping)) {
-						return compressionMapping;
-					} else {
-						return (
-							compressionMapping.associatedLocalId ??
-							(compressionMapping.originalOverridingFinal as SessionSpaceCompressedId)
-						);
-					}
+					return IdCompressor.isUnfinalizedOverride(compressionMapping)
+						? compressionMapping
+						: compressionMapping.associatedLocalId ??
+								(compressionMapping.originalOverridingFinal as SessionSpaceCompressedId);
 				}
 			} else {
 				if (!isStable) {

@@ -13,7 +13,7 @@ const DeferredPromise = require('@fluid-experimental/property-common').DeferredP
  * @fileOverview
  * Manages temporary AWS access with credential rotation.
  * This class requires static initialization.
- * @see {@link CredentialRotation#init}
+ * See {@link CredentialRotation#init}
  */
 class CredentialRotation {
   /**

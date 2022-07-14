@@ -71,6 +71,7 @@ declare function get_old_ClassDeclaration_BaseSegment():
 declare function use_current_ClassDeclaration_BaseSegment(
     use: TypeOnly<current.BaseSegment>);
 use_current_ClassDeclaration_BaseSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_BaseSegment());
 
 /*
@@ -143,7 +144,6 @@ declare function get_old_ClassDeclaration_Client():
 declare function use_current_ClassDeclaration_Client(
     use: TypeOnly<current.Client>);
 use_current_ClassDeclaration_Client(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Client());
 
 /*
@@ -156,6 +156,7 @@ declare function get_current_ClassDeclaration_Client():
 declare function use_old_ClassDeclaration_Client(
     use: TypeOnly<old.Client>);
 use_old_ClassDeclaration_Client(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Client());
 
 /*
@@ -720,6 +721,7 @@ declare function get_old_InterfaceDeclaration_IConsensusInfo():
 declare function use_current_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<current.IConsensusInfo>);
 use_current_InterfaceDeclaration_IConsensusInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IConsensusInfo());
 
 /*
@@ -732,6 +734,7 @@ declare function get_current_InterfaceDeclaration_IConsensusInfo():
 declare function use_old_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<old.IConsensusInfo>);
 use_old_InterfaceDeclaration_IConsensusInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusInfo());
 
 /*
@@ -768,6 +771,7 @@ declare function get_old_InterfaceDeclaration_IHierBlock():
 declare function use_current_InterfaceDeclaration_IHierBlock(
     use: TypeOnly<current.IHierBlock>);
 use_current_InterfaceDeclaration_IHierBlock(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IHierBlock());
 
 /*
@@ -960,6 +964,7 @@ declare function get_old_InterfaceDeclaration_IMergeBlock():
 declare function use_current_InterfaceDeclaration_IMergeBlock(
     use: TypeOnly<current.IMergeBlock>);
 use_current_InterfaceDeclaration_IMergeBlock(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeBlock());
 
 /*
@@ -984,6 +989,7 @@ declare function get_old_TypeAliasDeclaration_IMergeNode():
 declare function use_current_TypeAliasDeclaration_IMergeNode(
     use: TypeOnly<current.IMergeNode>);
 use_current_TypeAliasDeclaration_IMergeNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IMergeNode());
 
 /*
@@ -1008,6 +1014,7 @@ declare function get_old_InterfaceDeclaration_IMergeNodeCommon():
 declare function use_current_InterfaceDeclaration_IMergeNodeCommon(
     use: TypeOnly<current.IMergeNodeCommon>);
 use_current_InterfaceDeclaration_IMergeNodeCommon(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IMergeNodeCommon());
 
 /*
@@ -1368,6 +1375,7 @@ declare function get_old_ClassDeclaration_IncrementalMapState():
 declare function use_current_ClassDeclaration_IncrementalMapState(
     use: TypeOnly<current.IncrementalMapState<any>>);
 use_current_ClassDeclaration_IncrementalMapState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_IncrementalMapState());
 
 /*
@@ -1440,6 +1448,7 @@ declare function get_old_InterfaceDeclaration_InsertContext():
 declare function use_current_InterfaceDeclaration_InsertContext(
     use: TypeOnly<current.InsertContext>);
 use_current_InterfaceDeclaration_InsertContext(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_InsertContext());
 
 /*
@@ -1728,6 +1737,7 @@ declare function get_old_InterfaceDeclaration_ISegmentChanges():
 declare function use_current_InterfaceDeclaration_ISegmentChanges(
     use: TypeOnly<current.ISegmentChanges>);
 use_current_InterfaceDeclaration_ISegmentChanges(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISegmentChanges());
 
 /*
@@ -1788,6 +1798,7 @@ declare function get_current_ClassDeclaration_List():
 declare function use_old_ClassDeclaration_List(
     use: TypeOnly<old.List<any>>);
 use_old_ClassDeclaration_List(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_List());
 
 /*
@@ -1865,27 +1876,14 @@ use_old_VariableDeclaration_LocalClientId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_LocalReference": {"forwardCompat": false}
+* "RemovedClassDeclaration_LocalReference": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_LocalReference():
-    TypeOnly<old.LocalReference>;
-declare function use_current_ClassDeclaration_LocalReference(
-    use: TypeOnly<current.LocalReference>);
-use_current_ClassDeclaration_LocalReference(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_LocalReference());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_LocalReference": {"backCompat": false}
+* "RemovedClassDeclaration_LocalReference": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_LocalReference():
-    TypeOnly<current.LocalReference>;
-declare function use_old_ClassDeclaration_LocalReference(
-    use: TypeOnly<old.LocalReference>);
-use_old_ClassDeclaration_LocalReference(
-    get_current_ClassDeclaration_LocalReference());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1897,6 +1895,7 @@ declare function get_old_ClassDeclaration_LocalReferenceCollection():
 declare function use_current_ClassDeclaration_LocalReferenceCollection(
     use: TypeOnly<current.LocalReferenceCollection>);
 use_current_ClassDeclaration_LocalReferenceCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocalReferenceCollection());
 
 /*
@@ -1914,26 +1913,39 @@ use_old_ClassDeclaration_LocalReferenceCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_LocalReferenceMapper": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_LocalReferenceMapper": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_LocalReferenceMapper():
-    TypeOnly<old.LocalReferenceMapper>;
-declare function use_current_TypeAliasDeclaration_LocalReferenceMapper(
-    use: TypeOnly<current.LocalReferenceMapper>);
-use_current_TypeAliasDeclaration_LocalReferenceMapper(
-    get_old_TypeAliasDeclaration_LocalReferenceMapper());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_LocalReferenceMapper": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_LocalReferenceMapper": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_LocalReferenceMapper():
-    TypeOnly<current.LocalReferenceMapper>;
-declare function use_old_TypeAliasDeclaration_LocalReferenceMapper(
-    use: TypeOnly<old.LocalReferenceMapper>);
-use_old_TypeAliasDeclaration_LocalReferenceMapper(
-    get_current_TypeAliasDeclaration_LocalReferenceMapper());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_LocalReferencePosition": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_LocalReferencePosition():
+    TypeOnly<old.LocalReferencePosition>;
+declare function use_current_InterfaceDeclaration_LocalReferencePosition(
+    use: TypeOnly<current.LocalReferencePosition>);
+use_current_InterfaceDeclaration_LocalReferencePosition(
+    get_old_InterfaceDeclaration_LocalReferencePosition());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_LocalReferencePosition": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_LocalReferencePosition():
+    TypeOnly<current.LocalReferencePosition>;
+declare function use_old_InterfaceDeclaration_LocalReferencePosition(
+    use: TypeOnly<old.LocalReferencePosition>);
+use_old_InterfaceDeclaration_LocalReferencePosition(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_InterfaceDeclaration_LocalReferencePosition());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1945,6 +1957,7 @@ declare function get_old_InterfaceDeclaration_LRUSegment():
 declare function use_current_InterfaceDeclaration_LRUSegment(
     use: TypeOnly<current.LRUSegment>);
 use_current_InterfaceDeclaration_LRUSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_LRUSegment());
 
 /*
@@ -1993,6 +2006,7 @@ declare function get_old_ClassDeclaration_Marker():
 declare function use_current_ClassDeclaration_Marker(
     use: TypeOnly<current.Marker>);
 use_current_ClassDeclaration_Marker(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Marker());
 
 /*
@@ -2005,6 +2019,7 @@ declare function get_current_ClassDeclaration_Marker():
 declare function use_old_ClassDeclaration_Marker(
     use: TypeOnly<old.Marker>);
 use_old_ClassDeclaration_Marker(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Marker());
 
 /*
@@ -2089,6 +2104,7 @@ declare function get_old_ClassDeclaration_MergeBlock():
 declare function use_current_ClassDeclaration_MergeBlock(
     use: TypeOnly<current.MergeBlock>);
 use_current_ClassDeclaration_MergeBlock(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MergeBlock());
 
 /*
@@ -2113,6 +2129,7 @@ declare function get_old_ClassDeclaration_MergeNode():
 declare function use_current_ClassDeclaration_MergeNode(
     use: TypeOnly<current.MergeNode>);
 use_current_ClassDeclaration_MergeNode(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MergeNode());
 
 /*
@@ -2137,6 +2154,7 @@ declare function get_old_ClassDeclaration_MergeTree():
 declare function use_current_ClassDeclaration_MergeTree(
     use: TypeOnly<current.MergeTree>);
 use_current_ClassDeclaration_MergeTree(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MergeTree());
 
 /*
@@ -2149,6 +2167,7 @@ declare function get_current_ClassDeclaration_MergeTree():
 declare function use_old_ClassDeclaration_MergeTree(
     use: TypeOnly<old.MergeTree>);
 use_old_ClassDeclaration_MergeTree(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MergeTree());
 
 /*
@@ -3241,6 +3260,7 @@ declare function get_old_ClassDeclaration_SnapshotLegacy():
 declare function use_current_ClassDeclaration_SnapshotLegacy(
     use: TypeOnly<current.SnapshotLegacy>);
 use_current_ClassDeclaration_SnapshotLegacy(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_SnapshotLegacy());
 
 /*
@@ -3253,6 +3273,7 @@ declare function get_current_ClassDeclaration_SnapshotLegacy():
 declare function use_old_ClassDeclaration_SnapshotLegacy(
     use: TypeOnly<old.SnapshotLegacy>);
 use_old_ClassDeclaration_SnapshotLegacy(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SnapshotLegacy());
 
 /*
@@ -3337,6 +3358,7 @@ declare function get_old_ClassDeclaration_TextSegment():
 declare function use_current_ClassDeclaration_TextSegment(
     use: TypeOnly<current.TextSegment>);
 use_current_ClassDeclaration_TextSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TextSegment());
 
 /*

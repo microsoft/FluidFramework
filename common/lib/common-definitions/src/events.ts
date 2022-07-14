@@ -15,14 +15,27 @@ export interface IErrorEvent extends IEvent {
 }
 
 export interface IEventProvider<TEvent extends IEvent> {
+    /**
+     * Registers a callback to be invoked when the corresponding event is triggered.
+     */
     readonly on: IEventTransformer<this, TEvent>;
+
+    /**
+     * Registers a callback to be invoked the first time (after registration) the corresponding event is triggered.
+     */
     readonly once: IEventTransformer<this, TEvent>;
+
+    /**
+     * Removes the corresponding event if it has been registered.
+     */
     readonly off: IEventTransformer<this, TEvent>;
 }
 
 /**
- * Allow an interface to extend an interfaces that already extends an IEventProvider
- *``` typescript
+ * Allows an interface to extend interfaces that already extend an {@link IEventProvider}.
+ *
+ * @example
+ * ``` typescript
  * interface AEvents extends IEvent{
  *  (event: "a-event",listener: (a: number)=>void);
  * }
@@ -36,8 +49,8 @@ export interface IEventProvider<TEvent extends IEvent> {
  * interface B extends ExtendEventProvider<AEvents, A, BEvents>{
  *  b: boolean;
  * };
- *```
- * interface B will now extend interface A and it's events
+ * ```
+ * interface B will now extend interface A and its events
  *
  */
 export type ExtendEventProvider<
@@ -46,35 +59,44 @@ export type ExtendEventProvider<
     TEvent extends TBaseEvent> =
         Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
-// These types handle replaceing IEventThisPlaceHolder with this, so we can
-// support polymorphic this. For instance if an event wanted to be:
+// These types handle replacing IEventThisPlaceHolder with this, so we can
+// support polymorphic `this`. For instance if an event wanted to be:
 // (event: "some-event", listener:(target: this)=>void)
 //
-// it should be writtern as
+// it should be written as
 // (event: "some-event", listener:(target: IEventThisPlaceHolder)=>void)
 //
 // and IEventThisPlaceHolder will be replaced with this.
 // This is all consumers of these types need to know.
 
-// This is the place holder type that should be used instead of this in events
+/**
+ * The placeholder type that should be used instead of `this` in events.
+ */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IEventThisPlaceHolder = { thisPlaceHolder: "thisPlaceHolder"; };
 
-// This does the type replacement by changing types of IEventThisPlaceHolder to TThis
+/**
+ * Does the type replacement by changing types of {@link IEventThisPlaceHolder} to `TThis`
+ */
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> =
     L extends any[] ? { [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K] } : L;
 
-// this transforms the event overload by replacing IEventThisPlaceHolder with TThis in the event listener arguments
-// and having the overload return TTHis as well
+/**
+ * Transforms the event overload by replacing {@link IEventThisPlaceHolder} with `TThis` in the event listener
+ * arguments and having the overload return `TTHis` as well
+ */
 export type TransformedEvent<TThis, E, A extends any[]> =
     (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
-// This type is a conditional type for transforming all the overloads provides in TEvent.
-// Due to limitations of the typescript typing system, we need to handle each number of overload individually.
-// It currently supports the max of 15 event overloads which is more than we use anywhere.
-// At more than 15 overloads we start to hit TS2589. If we need to move beyond 15 we should evaluate
-// using a mapped type pattern like {"event":(listenerArgs)=>void}
-//
+/**
+ * This type is a conditional type for transforming all the overloads provided in `TEvent`.
+ *
+ * @remarks
+ * Due to limitations of the TypeScript typing system, we need to handle each number of overload individually.
+ * It currently supports the max of 15 event overloads which is more than we use anywhere.
+ * At more than 15 overloads we start to hit {@link https://github.com/microsoft/TypeScript/issues/37209 | TS2589}.
+ * If we need to move beyond 15 we should evaluate using a mapped type pattern like `{"event":(listenerArgs)=>void}`
+ */
 export type IEventTransformer<TThis, TEvent extends IEvent> =
     TEvent extends
     {

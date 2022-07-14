@@ -11,6 +11,7 @@ eslint-disable
 */
 
 import * as MergeTree from "@fluidframework/merge-tree";
+import { refGetRangeLabels, refHasRangeLabel, refHasRangeLabels, refHasTileLabel } from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
 import * as Paragraph from "./paragraph";
 
@@ -351,7 +352,7 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
     if (pos > 0) {
         const segoff = sharedString.getContainingSegment(pos - 1);
         if (MergeTree.Marker.is(segoff.segment)) {
-            if (segoff.segment.hasTileLabel("pg")) {
+            if (refHasTileLabel(segoff.segment, "pg")) {
                 pgAtStart = false;
             }
         }
@@ -618,7 +619,7 @@ function parseCell(cellStartPos: number, sharedString: SharedString, fontInfo?: 
             const segment = segoff.segment;
             if (MergeTree.Marker.is(segment)) {
                 const marker = <MergeTree.Marker>segoff.segment;
-                if (marker.hasRangeLabel("table")) {
+                if (refHasRangeLabel(marker, "table")) {
                     const tableMarker = <ITableMarker>marker;
                     parseTable(tableMarker, nextPos, sharedString, fontInfo);
                     if (tableMarker.table!.minContentWidth > cellMarker.cell.minContentWidth) {
@@ -737,8 +738,8 @@ export function succinctPrintTable(tableMarker: ITableMarker, tableMarkerPos: nu
                 lineBuf += `${segpos}:`;
                 reqPos = false;
             }
-            if (marker.hasRangeLabels()) {
-                const rangeLabel = marker.getRangeLabels()![0];
+            if (refHasRangeLabels(marker)) {
+                const rangeLabel = refGetRangeLabels(marker)![0];
                 if (marker.refType === MergeTree.ReferenceType.NestEnd) {
                     lineBuf += "E";
                     if ((rangeLabel === "table") || (rangeLabel === "row")) {

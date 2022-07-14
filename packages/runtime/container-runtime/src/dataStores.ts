@@ -34,7 +34,7 @@ import {
      responseToException,
      SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { ChildLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ChildLogger, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
@@ -145,7 +145,7 @@ export class DataStores implements IDisposable {
                 });
             } else {
                 if (typeof value !== "object") {
-                    throw new Error("Snapshot should be there to load from!!");
+                    throw new LoggingError("Snapshot should be there to load from!!");
                 }
                 const snapshotTree = value;
                 dataStoreContext = new LocalFluidDataStoreContext({
@@ -201,7 +201,7 @@ export class DataStores implements IDisposable {
                     ...extractSafePropertiesFromMessage(message),
                     dataStoreId: {
                         value: attachMessage.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                 },
             );
@@ -329,7 +329,7 @@ export class DataStores implements IDisposable {
         pkg: Readonly<string[]>,
         isRoot: boolean,
         id = uuid()): IFluidDataStoreContextDetached {
-        assert(!id.includes("/"), "Id cannot contain slashes");
+        assert(!id.includes("/"), 0x30c /* Id cannot contain slashes */);
 
         const context = new LocalDetachedFluidDataStoreContext({
             id,
@@ -352,7 +352,7 @@ export class DataStores implements IDisposable {
     }
 
     public _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
-        assert(!id.includes("/"), "Id cannot contain slashes");
+        assert(!id.includes("/"), 0x30d /* Id cannot contain slashes */);
         const context = new LocalFluidDataStoreContext({
             id,
             pkg,
@@ -421,9 +421,7 @@ export class DataStores implements IDisposable {
     }
 
     public async getDataStore(id: string, wait: boolean): Promise<FluidDataStoreContext> {
-        const internalId = this.aliasMap.get(id) ?? id;
-
-        const context = await this.contexts.getBoundOrRemoted(internalId, wait);
+        const context = await this.contexts.getBoundOrRemoted(id, wait);
         if (context === undefined) {
             // The requested data store does not exits. Throw a 404 response exception.
             const request = { url: id };
@@ -442,7 +440,7 @@ export class DataStores implements IDisposable {
                 eventName: "SignalFluidDataStoreNotFound",
                 fluidDataStoreId: {
                     value: address,
-                    tag: TelemetryDataTag.PackageData,
+                    tag: TelemetryDataTag.CodeArtifact,
                 },
             });
             return;
@@ -649,13 +647,13 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Called during GC to retrieve the package path of a data store node with the given path.
+     * Called by GC to retrieve the package path of a data store node with the given path.
      */
-    public getDataStorePackagePath(nodePath: string): readonly string[] | undefined {
-        // If the node belongs to a data store, return its package path if the data store is loaded. For DDSs, we return
-        // the package path of the data store that contains it.
+    public async getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
+        // If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
+        // data store that contains it.
         const context = this.contexts.get(nodePath.split("/")[1]);
-        return context?.isLoaded ? context.packagePath : undefined;
+        return (await context?.getInitialSnapshotDetails())?.pkg;
     }
 
     /**

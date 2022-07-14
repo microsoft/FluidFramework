@@ -195,6 +195,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
 
             // Specifying a non-integer index is regarded a mal-formed path and thus throws an exception
             if (!isFinite(index)) {
+                // eslint-disable-next-line unicorn/prefer-type-error
                 throw new Error(MSG.INVALID_NON_NUMERIC_SEGMENT_IN_PATH + in_segment);
             }
 
@@ -340,7 +341,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     set(in_position, in_value) {
         if (_.isArray(in_value)) {
-            throw new Error(MSG.ARRAY_SET_ONE_ELEMENT + in_value);
+            throw new TypeError(MSG.ARRAY_SET_ONE_ELEMENT + in_value);
         }
         this.setRange(in_position, [in_value]);
     }
@@ -348,7 +349,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     /**
      * Sets the values of items in the array.
      * If values are typed, iterates through the values and creates a property with the defined type and value.
-     * @see {setValues}
+     *
+     * See {@link ArrayProperty.setValues}
+     *
      * @param {Array<*>} in_values  - The list of typed values.
      * @param {Bool} in_typed  - Whether the values are typed/polymorphic.
      * @param {Bool} in_initial  - Whether we are setting default/initial values
@@ -384,8 +387,9 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     }
 
     /**
+     * See {@link ArrayProperty.setValues}
+     *
      * @param {Array<*>|Object} in_values an array or object containing the values to be set.
-     * @see {setValues}
      */
     _setValuesInternal(in_values) {
         this._checkIsNotReadOnly(true);
@@ -591,7 +595,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     insertRange(in_offset, in_array) {
         if (!_.isArray(in_array)) {
-            throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'ArrayProperty.insertRange');
+            throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + 'ArrayProperty.insertRange');
         }
 
         if (validationsEnabled.enabled) {
@@ -728,10 +732,11 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     setRange(in_offset, in_array) {
         if (!_.isArray(in_array) && !_.isString(in_array)) {
-            throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'ArrayProperty.setRange');
+            throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + 'ArrayProperty.setRange');
         }
         in_offset = Math.floor(in_offset);
         if (!isFinite(in_offset)) {
+            // eslint-disable-next-line unicorn/prefer-type-error
             throw new Error(MSG.NOT_NUMBER + 'in_offset, method: ArrayProperty.setRange or .set');
         }
         ConsoleUtils.assert(in_offset >= -1 && (in_offset + in_array.length) <= this.getLength(),
@@ -1081,7 +1086,7 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
      */
     _deserializeNamedPropertyArray(in_serializedObj, in_reportToView) {
         if (!_.isArray(in_serializedObj.insert[0][1])) {
-            throw new Error(MSG.INVALID_CHANGESET);
+            throw new TypeError(MSG.INVALID_CHANGESET);
         }
 
         // When the array contains named properties, we can use an efficient diffing algorithm, which
@@ -1270,15 +1275,15 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
     _serializeArray(in_array) {
         var len = in_array.length;
         var result = new Array(len);
-    if (this._isPrimitive) {
-        for (var i = 0; i < len; i++) {
-            result[i] = this._serializeValue(in_array[i]);
+        if (this._isPrimitive) {
+            for (var i = 0; i < len; i++) {
+                result[i] = this._serializeValue(in_array[i]);
+            }
+        } else {
+            for (var i = 0; i < len; i++) {
+                result[i] = {};
+            }
         }
-    } else {
-        for (var i = 0; i < len; i++) {
-            result[i] = {};
-        }
-    }
         return result;
     }
 

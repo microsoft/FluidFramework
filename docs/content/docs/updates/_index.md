@@ -1,5 +1,5 @@
 ---
-title: "What's new"
+title: "Release Notes"
 draft: false
 area: updates
 type: updates
