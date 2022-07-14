@@ -241,6 +241,8 @@ export const loadPackage = (modulePath: string, pkg: string) =>
     if (typeof requested === "string") { return requested; }
     const version = new semver.SemVer(baseVersion);
 
+    if (version.major < 0 || version.minor < 0 || version.patch < 0) { return baseVersion; }
+
     // calculate requested major version number
     const requestedMajorVersion = version.major + requested;
     // if the major version number is bigger than 0 then return it as normal
