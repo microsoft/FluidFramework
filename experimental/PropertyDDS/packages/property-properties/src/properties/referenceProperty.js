@@ -94,12 +94,12 @@ export class ReferenceProperty extends ValueProperty {
         var resolvedProperty = this.getParent().resolvePath(this.value,
             { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.ALWAYS });
 
-            if (resolvedProperty !== undefined && _.isArray(in_ids)) {
-                // Forward handling of arrays to the BaseProperty function
-                return resolvedProperty.get(in_ids, in_options);
-            } else {
-                return resolvedProperty;
-            }
+        if (resolvedProperty !== undefined && _.isArray(in_ids)) {
+            // Forward handling of arrays to the BaseProperty function
+            return resolvedProperty.get(in_ids, in_options);
+        } else {
+            return resolvedProperty;
+        }
     }
 
     /**
