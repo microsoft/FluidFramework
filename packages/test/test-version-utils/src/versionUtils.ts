@@ -239,6 +239,14 @@ export const loadPackage = (modulePath: string, pkg: string) =>
 export function getRequestedRange(baseVersion: string, requested?: number | string): string {
     if (requested === undefined || requested === 0) { return baseVersion; }
     if (typeof requested === "string") { return requested; }
+
+    const isInternal = baseVersion.includes("internal");
+
+    if (isInternal) {
+        const internalVersions = baseVersion.split("-internal.");
+        return internalSchema(internalVersions[0], internalVersions[1], requested);
+    }
+
     let version;
     try {
         version = new semver.SemVer(baseVersion);
@@ -266,4 +274,26 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
         return "^0.0.1-0";
     }
     return `^0.${requestedMinorVersion}.0-0`;
+}
+
+export function internalSchema(publicVersion: string, internalVersion: string, requested: number | string): string {
+    if (internalVersion < "2.0.0" && requested === -1) { return `^1.0.0-0`; }
+    if (internalVersion < "2.0.0" && requested === -2) { return `^0.59.0-0`; }
+    if (internalVersion === "2.0.0" && requested === -2) { return `^1.0.0-0`; }
+
+    if (internalVersion <= "2.0.0" && requested < -2) {
+        const lastPrereleaseVersion = new semver.SemVer("0.59.0");
+        const requestedMinorVersion = lastPrereleaseVersion.minor + (requested as number) + 2;
+        return `^0.${requestedMinorVersion}.0-0`;
+    }
+
+    let internalMajor;
+    try {
+        const parsedVersion = new semver.SemVer(internalVersion);
+        internalMajor = parsedVersion.major - 1;
+    } catch (err: unknown) {
+        throw new Error(err as string);
+    }
+
+    return `${publicVersion}-internal.${internalMajor}.0.0`;
 }
