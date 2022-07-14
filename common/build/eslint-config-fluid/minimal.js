@@ -105,6 +105,8 @@ module.exports = {
         // currently in the repository, so it has not been enabled yet.
         "unused-imports/no-unused-imports": "error",
 
+        "valid-typeof": "error",
+
         // Catches a common coding mistake where "resolve" and "reject" are confused.
         "promise/param-names": "warn",
 
@@ -121,6 +123,8 @@ module.exports = {
         "unicorn/no-new-buffer": "error",
         "unicorn/no-unsafe-regex": "error",
         "unicorn/prefer-switch": "error",
+        "unicorn/prefer-ternary": "error",
+        "unicorn/prefer-type-error": "error",
 
         // DISABLED INTENTIONALLY
         // Disabled because we don't require that all variable declarations be explicitly typed.
@@ -250,8 +254,6 @@ module.exports = {
             "rules": {
                 "@typescript-eslint/comma-spacing": "off",
                 "@typescript-eslint/consistent-type-imports": "off",
-                "@typescript-eslint/no-explicit-any": "off",
-                "@typescript-eslint/no-unsafe-argument": "off",
                 "max-lines": "off",
             }
         },

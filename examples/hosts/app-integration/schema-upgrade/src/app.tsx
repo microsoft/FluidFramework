@@ -118,19 +118,19 @@ async function start(): Promise<void> {
         }
 
         if (containerKillBit.dead) {
-            return;
+            return undefined;
         }
 
         // After the quorum proposal is accepted, our system doesn't allow further edits to the string
         // So we can immediately get the data out even before taking the lock.
         const stringData = await extractStringData(inventoryList);
         if (containerKillBit.dead) {
-            return;
+            return stringData;
         }
 
         await containerKillBit.volunteerForDestruction();
         if (containerKillBit.dead) {
-            return;
+            return stringData;
         }
 
         await writeData(stringData);
@@ -139,6 +139,27 @@ async function start(): Promise<void> {
         } else {
             await containerKillBit.setDead();
         }
+        return stringData;
+    };
+
+    const migrateContainer = async () => {
+        fetchedData = await saveAndEndSession();
+        container.close();
+        container = await loader.createDetachedContainer({ package: "no-dynamic-package", config: {} });
+        inventoryList = await getInventoryListFromContainer(container);
+        containerKillBit = await getContainerKillBitFromContainer(container);
+        if (fetchedData !== undefined) {
+            await applyStringData(inventoryList, fetchedData);
+        }
+        await container.attach(createTinyliciousCreateNewRequest());
+
+        // Discover the container ID after attaching
+        const resolved = container.resolvedUrl;
+        ensureFluidResolvedUrl(resolved);
+        containerId = resolved.id;
+
+        location.hash = containerId;
+        document.title = containerId;
     };
 
     // Given an IInventoryList, we can render the list and provide controls for users to modify it.
@@ -150,6 +171,7 @@ async function start(): Promise<void> {
             writeToExternalStorage={ writeToExternalStorage }
             containerKillBit={ containerKillBit }
             saveAndEndSession={ saveAndEndSession }
+            migrateContainer={ migrateContainer }
         />,
         div,
     );

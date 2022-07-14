@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Loader } from "@fluidframework/container-loader";
-import {
-    IDocumentServiceFactory,
-    IUrlResolver,
-} from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
 import {
     AttachState,
     IContainer,
@@ -23,9 +20,7 @@ import {
     RootDataObject,
 } from "@fluidframework/fluid-static";
 
-import {
-    SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { SummaryType } from "@fluidframework/protocol-definitions";
 
 import {
     AzureClientProps,
@@ -36,17 +31,16 @@ import {
 } from "./interfaces";
 import { isAzureRemoteConnectionConfig } from "./utils";
 import { AzureAudience } from "./AzureAudience";
-import {
-    AzureUrlResolver,
-    createAzureCreateNewRequest,
-} from "./AzureUrlResolver";
+import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
  */
 const LOCAL_MODE_TENANT_ID = "local";
 const getTenantId = (connectionProps: AzureConnectionConfig): string => {
-    return isAzureRemoteConnectionConfig(connectionProps) ? connectionProps.tenantId : LOCAL_MODE_TENANT_ID;
+    return isAzureRemoteConnectionConfig(connectionProps)
+        ? connectionProps.tenantId
+        : LOCAL_MODE_TENANT_ID;
 };
 
 const MAX_VERSION_COUNT = 5;
@@ -69,10 +63,10 @@ export class AzureClient {
         this.urlResolver = new AzureUrlResolver();
         // The local service implementation differs from the Azure Fluid Relay in blob
         // storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
-        const enableWholeSummaryUpload = isAzureRemoteConnectionConfig(this.props.connection);
+        const isRemoteConnection = isAzureRemoteConnectionConfig(this.props.connection);
         this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
             this.props.connection.tokenProvider,
-            { enableWholeSummaryUpload, enableDiscovery: true },
+            { enableWholeSummaryUpload: isRemoteConnection, enableDiscovery: isRemoteConnection },
         );
     }
 
@@ -81,9 +75,7 @@ export class AzureClient {
      * @param containerSchema - Container schema for the new container.
      * @returns New detached container instance along with associated services.
      */
-    public async createContainer(
-        containerSchema: ContainerSchema,
-    ): Promise<{
+    public async createContainer(containerSchema: ContainerSchema): Promise<{
         container: IFluidContainer;
         services: AzureContainerServices;
     }> {
@@ -94,10 +86,7 @@ export class AzureClient {
             config: {},
         });
 
-        const fluidContainer = await this.createFluidContainer(
-            container,
-            this.props.connection,
-        );
+        const fluidContainer = await this.createFluidContainer(container, this.props.connection);
         const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
     }
@@ -126,12 +115,12 @@ export class AzureClient {
         const sourceContainer = await loader.resolve({ url: url.href });
 
         if (sourceContainer.resolvedUrl === undefined) {
-            throw new Error(
-                "Source container cannot resolve URL.",
-            );
+            throw new Error("Source container cannot resolve URL.");
         }
 
-        const documentService = await this.documentServiceFactory.createDocumentService(sourceContainer.resolvedUrl);
+        const documentService = await this.documentServiceFactory.createDocumentService(
+            sourceContainer.resolvedUrl,
+        );
         const storage = await documentService.connectToStorage();
         const handle = {
             type: SummaryType.Handle,
@@ -140,14 +129,9 @@ export class AzureClient {
         };
         const tree = await storage.downloadSummary(handle);
 
-        const container = await loader.rehydrateDetachedContainerFromSnapshot(
-            JSON.stringify(tree),
-        );
+        const container = await loader.rehydrateDetachedContainerFromSnapshot(JSON.stringify(tree));
 
-        const fluidContainer = await this.createFluidContainer(
-            container,
-            this.props.connection,
-        );
+        const fluidContainer = await this.createFluidContainer(container, this.props.connection);
         const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
     }
@@ -171,10 +155,7 @@ export class AzureClient {
         url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
         url.searchParams.append("containerId", encodeURIComponent(id));
         const container = await loader.resolve({ url: url.href });
-        const rootDataObject = await requestFluidObject<RootDataObject>(
-            container,
-            "/",
-        );
+        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         const fluidContainer = new FluidContainer(container, rootDataObject);
         const services = this.getContainerServices(container);
         return { container: fluidContainer, services };
@@ -192,25 +173,21 @@ export class AzureClient {
         options?: AzureGetVersionsOptions,
     ): Promise<AzureContainerVersion[]> {
         const url = new URL(this.props.connection.endpoint);
-        url.searchParams.append(
-            "storage",
-            encodeURIComponent(this.props.connection.endpoint),
-        );
-        url.searchParams.append(
-            "tenantId",
-            encodeURIComponent(getTenantId(this.props.connection)),
-        );
+        url.searchParams.append("storage", encodeURIComponent(this.props.connection.endpoint));
+        url.searchParams.append("tenantId", encodeURIComponent(getTenantId(this.props.connection)));
         url.searchParams.append("containerId", encodeURIComponent(id));
 
         const resolvedUrl = await this.urlResolver.resolve({ url: url.href });
         if (!resolvedUrl) {
             throw new Error("Unable to resolved URL");
         }
-        const documentService =
-            await this.documentServiceFactory.createDocumentService(
-                resolvedUrl,
-            );
+        const documentService = await this.documentServiceFactory.createDocumentService(
+            resolvedUrl,
+        );
         const storage = await documentService.connectToStorage();
+
+        // External API uses null
+        // eslint-disable-next-line unicorn/no-null
         const versions = await storage.getVersions(null, options?.maxCount ?? MAX_VERSION_COUNT);
 
         return versions.map((item) => {
@@ -225,9 +202,7 @@ export class AzureClient {
     }
 
     private createLoader(containerSchema: ContainerSchema): Loader {
-        const runtimeFactory = new DOProviderContainerRuntimeFactory(
-            containerSchema,
-        );
+        const runtimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
         const load = async (): Promise<IFluidModuleWithDetails> => {
             return {
                 module: { fluidExport: runtimeFactory },
@@ -253,16 +228,19 @@ export class AzureClient {
             getTenantId(connection),
         );
 
-        const rootDataObject = await requestFluidObject<RootDataObject>(
-            container,
-            "/",
-        );
+        const rootDataObject = await requestFluidObject<RootDataObject>(container, "/");
         return new (class extends FluidContainer {
-            async attach() {
+            /**
+             * See {@link FluidContainer.attach}
+             *
+             * @remarks This is required since the FluidContainer doesn't have knowledge of how the attach will happen
+             * or the id that will be returned.
+             * This exists because we are projecting a separation of server responsibility to the end developer that
+             * doesn't exist in the framework.
+             */
+            public async attach(): Promise<string> {
                 if (this.attachState !== AttachState.Detached) {
-                    throw new Error(
-                        "Cannot attach container. Container is not in detached state",
-                    );
+                    throw new Error("Cannot attach container. Container is not in detached state");
                 }
                 await container.attach(createNewRequest);
                 const resolved = container.resolvedUrl;

@@ -185,6 +185,7 @@ export interface ITestObjectProvider {
 
 // @public (undocumented)
 export class LoaderContainerTracker implements IOpProcessingController {
+    constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
     ensureSynchronized(...containers: IContainer[]): Promise<void>;
     pauseProcessing(...containers: IContainer[]): Promise<void>;
@@ -287,6 +288,8 @@ export class TestObjectProvider implements ITestObjectProvider {
     get opProcessingController(): IOpProcessingController;
     // (undocumented)
     reset(): void;
+    // (undocumented)
+    resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
     // (undocumented)
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     // (undocumented)

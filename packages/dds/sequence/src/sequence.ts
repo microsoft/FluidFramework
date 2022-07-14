@@ -29,7 +29,7 @@ import {
     IRelativePosition,
     ISegment,
     ISegmentAction,
-    LocalReference,
+    LocalReferencePosition,
     matchProperties,
     MergeTreeDeltaType,
     PropertySet,
@@ -65,6 +65,10 @@ const contentPath = "content";
 
 /**
  * Events emitted in response to changes to the sequence data.
+ *
+ *  @remarks
+ *
+ * The following is the list of events emitted.
  *
  * ### "sequenceDelta"
  *
@@ -115,8 +119,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                     const lastAnnotate = ops[ops.length - 1] as IMergeTreeAnnotateMsg;
                     const props = {};
                     for (const key of Object.keys(r.propertyDeltas)) {
-                        props[key] =
-                            r.segment.properties[key] === undefined ? null : r.segment.properties[key];
+                        props[key] = r.segment.properties?.[key] ?? null;
                     }
                     if (lastAnnotate && lastAnnotate.pos2 === r.position &&
                         matchProperties(lastAnnotate.props, props)) {
@@ -232,7 +235,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
      */
-    public removeRange(start: number, end: number) {
+    public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
         const removeOp = this.client.removeRangeLocal(start, end);
         if (removeOp) {
             this.submitSequenceMessage(removeOp);
@@ -294,37 +297,16 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.getRangeExtentsOfPosition(pos);
     }
 
-    /**
-     * @deprecated - use createLocalReferencePosition
-     */
-    public createPositionReference(
-        segment: T,
-        offset: number,
-        refType: ReferenceType): LocalReference {
-        const lref = new LocalReference(this.client, segment, offset, refType);
-        if (refType !== ReferenceType.Transient) {
-            this.addLocalReference(lref);
-        }
-        return lref;
-    }
-
     public createLocalReferencePosition(
         segment: T,
         offset: number,
         refType: ReferenceType,
-        properties: PropertySet | undefined): ReferencePosition {
+        properties: PropertySet | undefined): LocalReferencePosition {
         return this.client.createLocalReferencePosition(
             segment,
             offset,
             refType,
             properties);
-    }
-
-    /**
-     * @deprecated - use localReferencePositionToPosition
-     */
-    public localRefToPos(localRef: LocalReference) {
-        return this.client.localReferencePositionToPosition(localRef);
     }
 
     public localReferencePositionToPosition(lref: ReferencePosition): number {
@@ -373,21 +355,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         }
     }
 
-    /**
-     * @deprecated - use createLocalReferencePosition
-     */
-    public addLocalReference(lref: LocalReference) {
-        return this.client.addLocalReference(lref);
-    }
-
-    /**
-     * @deprecated - use removeLocalReferencePosition
-     */
-    public removeLocalReference(lref: LocalReference) {
-        return this.client.removeLocalReferencePosition(lref);
-    }
-
-    public removeLocalReferencePosition(lref: ReferencePosition) {
+    public removeLocalReferencePosition(lref: LocalReferencePosition) {
         return this.client.removeLocalReferencePosition(lref);
     }
 
@@ -705,18 +673,20 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 // it is important this series remains synchronous
                 // first we stop deferring incoming ops, and apply then all
                 this.deferIncomingOps = false;
-                while (this.loadedDeferredIncomingOps.length > 0) {
-                    this.processCore(this.loadedDeferredIncomingOps.shift(), false, undefined);
+                for (const message of this.loadedDeferredIncomingOps) {
+                    this.processCore(message, false, undefined);
                 }
+                this.loadedDeferredIncomingOps.length = 0;
+
                 // then resolve the loaded promise
                 // and resubmit all the outstanding ops, as the snapshot
                 // is fully loaded, and all outstanding ops are applied
                 this.loadedDeferred.resolve();
 
-                while (this.loadedDeferredOutgoingOps.length > 0) {
-                    const opData = this.loadedDeferredOutgoingOps.shift();
-                    this.reSubmitCore(opData[0], opData[1]);
+                for (const [messageContent, opMetadata] of this.loadedDeferredOutgoingOps) {
+                    this.reSubmitCore(messageContent, opMetadata);
                 }
+                this.loadedDeferredOutgoingOps.length = 0;
             }
         }
     }

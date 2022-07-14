@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/runtime-definitions",
-  "version": "1.1.0",
+  "version": "2.0.0-internal.1.0.0",
   "description": "Fluid Runtime definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -15,7 +15,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-    "build:compile": "npm run tsc && npm run build:test",
+    "build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
     "build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
@@ -28,22 +28,23 @@
     "lint:fix": "npm run eslint:fix",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
-    "tsfmt:fix": "tsfmt --replace"
+    "tsfmt:fix": "tsfmt --replace",
+    "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-definitions": "^1.1.0",
-    "@fluidframework/core-interfaces": "^1.1.0",
-    "@fluidframework/driver-definitions": "^1.1.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/container-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "@types/node": "^14.18.0"
   },
   "devDependencies": {
-    "@fluidframework/build-common": "^0.23.0",
-    "@fluidframework/build-tools": "^0.2.71273",
+    "@fluidframework/build-common": "^0.24.0",
+    "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@^0.59.0",
+    "@fluidframework/runtime-definitions-previous": "npm:@fluidframework/runtime-definitions@^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
@@ -54,15 +55,21 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.0.0",
+    "version": "2.0.0",
     "broken": {
+      "TypeAliasDeclaration_AliasResult": {
+        "forwardCompat": false
+      },
       "InterfaceDeclaration_IFluidDataStoreContext": {
-        "backCompat": false
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IFluidDataStoreChannel": {
+        "backCompat": false,
+        "forwardCompat": false
       },
       "InterfaceDeclaration_IFluidDataStoreContextDetached": {
-        "backCompat": false
-      },
-      "InterfaceDeclaration_ISignalEnvelope": {
+        "backCompat": false,
         "forwardCompat": false
       }
     }

@@ -220,7 +220,26 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
     /**
      * Call back on disconnect
      */
-    protected onDisconnect() {}
+    protected onDisconnect() { }
+
+    /**
+     * Apply inner op
+     * @param content - ICellOperation content
+     */
+    private applyInnerOp(content: ICellOperation) {
+        switch (content.type) {
+            case "setCell":
+                this.setCore(this.decode(content.value));
+                break;
+
+            case "deleteCell":
+                this.deleteCore();
+                break;
+
+            default:
+                throw new Error("Unknown operation");
+        }
+    }
 
     /**
      * Process a cell operation
@@ -246,19 +265,7 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
 
         if (message.type === MessageType.Operation && !local) {
             const op = message.contents as ICellOperation;
-
-            switch (op.type) {
-                case "setCell":
-                    this.setCore(this.decode(op.value));
-                    break;
-
-                case "deleteCell":
-                    this.deleteCore();
-                    break;
-
-                default:
-                    throw new Error("Unknown operation");
-            }
+            this.applyInnerOp(op);
         }
     }
 
@@ -278,7 +285,14 @@ export class SharedCell<T = any> extends SharedObject<ISharedCellEvents<T>>
         return this.serializer.decode(value);
     }
 
-    protected applyStashedOp() {
-        throw new Error("not implemented");
+    /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+     * @internal
+     */
+    protected applyStashedOp(content: unknown): unknown {
+        const cellContent = content as ICellOperation;
+        this.applyInnerOp(cellContent);
+        ++this.messageId;
+        return this.messageId;
     }
 }

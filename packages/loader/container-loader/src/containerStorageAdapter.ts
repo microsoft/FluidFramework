@@ -53,8 +53,8 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         return this.storageGetter().repositoryUrl;
     }
 
-    public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
-        return this.storageGetter().getSnapshotTree(version);
+    public async getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null> {
+        return this.storageGetter().getSnapshotTree(version, scenarioName);
     }
 
     public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -65,8 +65,8 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         return this.storageGetter().readBlob(id);
     }
 
-    public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
-        return this.storageGetter().getVersions(versionId, count);
+    public async getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]> {
+        return this.storageGetter().getVersions(versionId, count, scenarioName);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {

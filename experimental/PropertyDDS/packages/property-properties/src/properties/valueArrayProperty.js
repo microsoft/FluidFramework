@@ -437,7 +437,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      */
     setRange(in_offset, in_array) {
         if (!_.isArray(in_array)) {
-            throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'Int64ArrayProperty.setRange');
+            throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + 'Int64ArrayProperty.setRange');
         }
         var out_array = in_array.map((element) => {
             return _castFunctors.Int64(element);
@@ -526,7 +526,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      */
     setRange(in_offset, in_array) {
         if (!_.isArray(in_array)) {
-            throw new Error(MSG.IN_ARRAY_NOT_ARRAY + 'Uint64ArrayProperty.setRange');
+            throw new TypeError(MSG.IN_ARRAY_NOT_ARRAY + 'Uint64ArrayProperty.setRange');
         }
         var out_array = in_array.map((element) => {
             return _castFunctors.Uint64(element);

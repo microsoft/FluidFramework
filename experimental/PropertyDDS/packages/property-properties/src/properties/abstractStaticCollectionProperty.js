@@ -324,7 +324,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
     /**
      * Given an object that mirrors a PSet Template, assigns the properties to the values
      * found in that object.
-     * @see {setValues}
+     * See {@link setValues}
      * @param {object} in_values The object containing the nested values to assign
      * @param {boolean} in_typed Whether the values are typed/polymorphic.
      * @param {boolean} in_initial  - Whether we are setting default/initial values

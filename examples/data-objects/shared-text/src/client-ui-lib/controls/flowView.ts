@@ -15,6 +15,7 @@ import { performance } from "@fluidframework/common-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
+import { refHasRangeLabel, refHasTileLabel } from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
@@ -248,8 +249,8 @@ function showPositionInLine(
 }
 
 function endRenderSegments(marker: MergeTree.Marker) {
-    return (marker.hasTileLabel("pg") ||
-        ((marker.hasRangeLabel("cell") &&
+    return (refHasTileLabel(marker, "pg") ||
+        ((refHasRangeLabel(marker, "cell") &&
             (marker.refType & MergeTree.ReferenceType.NestEnd))));
 }
 
@@ -670,11 +671,7 @@ function renderTree(
         layoutContext.startingPosStack = startingPosStack;
     } else {
         const previousTileInfo = findTile(flowView.sharedString, requestedPosition, "pg", true);
-        if (previousTileInfo) {
-            layoutContext.startPos = previousTileInfo.pos + 1;
-        } else {
-            layoutContext.startPos = 0;
-        }
+        layoutContext.startPos = previousTileInfo ? previousTileInfo.pos + 1 : 0;
     }
     return renderFlow(layoutContext);
 }
@@ -820,11 +817,7 @@ class Viewport {
 
     public findClosestLineDiv(up = true, y: number) {
         let bestIndex = -1;
-        if (up) {
-            bestIndex = closestNorth(this.lineDivs, y);
-        } else {
-            bestIndex = closestSouth(this.lineDivs, y);
-        }
+        bestIndex = up ? closestNorth(this.lineDivs, y) : closestSouth(this.lineDivs, y);
         if (bestIndex >= 0) {
             return this.lineDivs[bestIndex];
         }
@@ -863,11 +856,7 @@ function makeFontInfo(docContext: IDocumentContext): Paragraph.IFontInfo {
     const glh = (fontstr: string, lineHeight?: string) => domutils.getLineHeight(fontstr, lineHeight);
 
     function getFont(pg: Paragraph.IParagraphMarker) {
-        if (pg.properties!.header) {
-            return docContext.headerFontstr;
-        } else {
-            return docContext.fontstr;
-        }
+        return pg.properties!.header ? docContext.headerFontstr : docContext.fontstr;
     }
 
     return {
@@ -1065,12 +1054,9 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             }
 
             const lineStart = breakInfo.posInPG + pgStartPos;
-            let lineEnd: number | undefined;
-            if (breakIndex < (len - 1)) {
-                lineEnd = pgBreaks[breakIndex + 1].posInPG + pgStartPos;
-            } else {
-                lineEnd = undefined;
-            }
+            const lineEnd = breakIndex < (len - 1)
+                ? pgBreaks[breakIndex + 1].posInPG + pgStartPos
+                : undefined;
             const lineOK = (layoutContext.deferUntilHeight! <= deferredHeight);
             if (lineOK && ((lineEnd === undefined) || (lineEnd > layoutContext.requestedPosition!))) {
                 lineDiv = makeLineDiv(new ui.Rectangle(lineX, lineY, lineWidth, lineHeight), lineFontstr);
@@ -1140,7 +1126,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
             ? segoff.segment
             : undefined;
 
-        if (asMarker && asMarker.hasRangeLabel("table")) {
+        if (asMarker && refHasRangeLabel(asMarker, "table")) {
             let tableView: Table.Table;
             if (asMarker.removedSeq === undefined) {
                 renderTable(asMarker, docContext, layoutContext);
@@ -1212,7 +1198,7 @@ function renderFlow(layoutContext: ILayoutContext): IRenderOutput {
                     segoff = getContainingSegment(flowView.sharedString, currentPos);
                     if (MergeTree.Marker.is(segoff.segment)) {
                         // eslint-disable-next-line max-len
-                        if (segoff.segment.hasRangeLabel("cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
+                        if (refHasRangeLabel(segoff.segment, "cell") && (segoff.segment.refType & MergeTree.ReferenceType.NestEnd)) {
                             break;
                         }
                     }
@@ -1259,14 +1245,24 @@ function makeSegSpan(
                 }
                 const textErrorInfo = textSegment.properties[key] as ITextErrorInfo;
                 span.textErrorRun = textErrorRun;
-                if (textErrorInfo.color === "paul") {
-                    span.style.background = underlinePaulStringURL;
-                } else if (textErrorInfo.color === "paulgreen") {
-                    span.style.background = underlinePaulGrammarStringURL;
-                } else if (textErrorInfo.color === "paulgolden") {
-                    span.style.background = underlinePaulGoldStringURL;
-                } else {
-                    span.style.background = underlineStringURL;
+
+                switch (textErrorInfo.color) {
+                    case "paul": {
+                        span.style.background = underlinePaulStringURL;
+                        break;
+                    }
+                    case "paulgreen": {
+                        span.style.background = underlinePaulGrammarStringURL;
+                        break;
+                    }
+                    case "paulgolden": {
+                        span.style.background = underlinePaulGoldStringURL;
+                        break;
+                    }
+                    default: {
+                        span.style.background = underlineStringURL;
+                        break;
+                    }
                 }
             } else {
                 span.style[key] = textSegment.properties[key];
@@ -1469,8 +1465,8 @@ interface IRemotePresenceBase {
     type: string;
 }
 interface ILocalPresenceInfo {
-    localRef?: MergeTree.LocalReference;
-    markLocalRef?: MergeTree.LocalReference;
+    localRef?: MergeTree.ReferencePosition;
+    markLocalRef?: MergeTree.ReferencePosition;
     xformPos?: number;
     markXformPos?: number;
     clientId: string;
@@ -1566,8 +1562,8 @@ function getCurrentWord(pos: number, sharedString: Sequence.SharedString) {
     }
 }
 
-function getLocalRefPos(sharedString: Sequence.SharedString, localRef: MergeTree.LocalReference) {
-    return sharedString.getPosition(localRef.segment!) + localRef.offset;
+function getLocalRefPos(sharedString: Sequence.SharedString, localRef: MergeTree.ReferencePosition) {
+    return sharedString.localReferencePositionToPosition(localRef);
 }
 
 function getContainingSegment(sharedString: Sequence.SharedString, pos: number): ISegmentOffset {
@@ -1895,11 +1891,9 @@ export class FlowView extends ui.Component {
     private updatePresencePosition(localPresenceInfo: ILocalPresenceInfo) {
         if (localPresenceInfo) {
             localPresenceInfo.xformPos = getLocalRefPos(this.sharedString, localPresenceInfo.localRef!);
-            if (localPresenceInfo.markLocalRef) {
-                localPresenceInfo.markXformPos = getLocalRefPos(this.sharedString, localPresenceInfo.markLocalRef);
-            } else {
-                localPresenceInfo.markXformPos = localPresenceInfo.xformPos;
-            }
+            localPresenceInfo.markXformPos = localPresenceInfo.markLocalRef
+                ? getLocalRefPos(this.sharedString, localPresenceInfo.markLocalRef)
+                : localPresenceInfo.xformPos;
         }
     }
 
@@ -1922,9 +1916,9 @@ export class FlowView extends ui.Component {
                 localPresenceInfo.cursor!.presenceInfoUpdated = true;
             }
             if (presentPresence.markLocalRef) {
-                this.sharedString.removeLocalReference(presentPresence.markLocalRef);
+                this.sharedString.removeLocalReferencePosition(presentPresence.markLocalRef);
             }
-            this.sharedString.removeLocalReference(presentPresence.localRef);
+            this.sharedString.removeLocalReferencePosition(presentPresence.localRef);
             tempXformPos = presentPresence.xformPos;
             tempMarkXformPos = presentPresence.markXformPos;
         }
@@ -2127,21 +2121,13 @@ export class FlowView extends ui.Component {
                 } else if (targetLineDiv === elm) {
                     if (targetLineDiv.indentWidth !== undefined) {
                         const relX = x - targetLineBounds.left;
-                        if (relX <= targetLineDiv.indentWidth) {
-                            position = targetLineDiv.linePos;
-                        } else {
-                            position = targetLineDiv.lineEnd;
-                        }
+                        position = relX <= targetLineDiv.indentWidth ? targetLineDiv.linePos : targetLineDiv.lineEnd;
                     } else {
                         position = targetLineDiv.lineEnd;
                     }
                 } else {
                     // Content div
-                    if (x <= targetLineBounds.left) {
-                        position = targetLineDiv.linePos;
-                    } else {
-                        position = targetLineDiv.lineEnd;
-                    }
+                    position = x <= targetLineBounds.left ? targetLineDiv.linePos : targetLineDiv.lineEnd;
                 }
             } else if (elm.tagName === "SPAN") {
                 const span = this.getSegSpan(elm as ISegSpan);
@@ -2203,12 +2189,12 @@ export class FlowView extends ui.Component {
             if (MergeTree.Marker.is(segoff.segment)) {
                 const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
-                    if (marker.hasTileLabel("pg")) {
-                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
+                    if (refHasTileLabel(marker, "pg")) {
+                        if (refHasRangeLabel(marker, "table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                             this.cursorRev();
                         }
                     }
-                } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (marker.hasRangeLabel("cell"))) {
+                } else if ((marker.refType === MergeTree.ReferenceType.NestEnd) && (refHasRangeLabel(marker, "cell"))) {
                     const cellMarker = marker as Table.ICellMarker;
                     const endId = cellMarker.getId();
                     let beginMarker: Table.ICellMarker | undefined;
@@ -2237,19 +2223,19 @@ export class FlowView extends ui.Component {
                 // REVIEW: assume marker for now
                 const marker = segoff.segment;
                 if (marker.refType & MergeTree.ReferenceType.Tile) {
-                    if (marker.hasTileLabel("pg")) {
-                        if (marker.hasRangeLabel("table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
+                    if (refHasTileLabel(marker, "pg")) {
+                        if (refHasRangeLabel(marker, "table") && (marker.refType & MergeTree.ReferenceType.NestEnd)) {
                             this.cursorFwd();
                         } else {
                             return;
                         }
                     }
                 } else if (marker.refType & MergeTree.ReferenceType.NestBegin) {
-                    if (marker.hasRangeLabel("table")) {
+                    if (refHasRangeLabel(marker, "table")) {
                         this.cursor.pos += 3;
-                    } else if (marker.hasRangeLabel("row")) {
+                    } else if (refHasRangeLabel(marker, "row")) {
                         this.cursor.pos += 2;
-                    } else if (marker.hasRangeLabel("cell")) {
+                    } else if (refHasRangeLabel(marker, "cell")) {
                         if (Table.cellIsMoribund(marker)) {
                             this.tryMoveCell(this.cursor.pos);
                         } else {
@@ -2259,9 +2245,9 @@ export class FlowView extends ui.Component {
                         this.cursorFwd();
                     }
                 } else if (marker.refType & MergeTree.ReferenceType.NestEnd) {
-                    if (marker.hasRangeLabel("row")) {
+                    if (refHasRangeLabel(marker, "row")) {
                         this.cursorFwd();
-                    } else if (marker.hasRangeLabel("table")) {
+                    } else if (refHasRangeLabel(marker, "table")) {
                         this.cursor.pos += 2;
                     } else {
                         this.cursorFwd();
@@ -2295,11 +2281,7 @@ export class FlowView extends ui.Component {
                 if (rowDiv.rowView) {
                     const cell = rowDiv.rowView.findClosestCell(x) as ICellView;
                     if (cell) {
-                        if (up) {
-                            targetLineDiv = cell.viewport.lastLineDiv();
-                        } else {
-                            targetLineDiv = cell.viewport.firstLineDiv();
-                        }
+                        targetLineDiv = up ? cell.viewport.lastLineDiv() : cell.viewport.firstLineDiv();
                         rowDiv = targetLineDiv as IRowDiv;
                     } else {
                         break;
@@ -2318,29 +2300,20 @@ export class FlowView extends ui.Component {
             if (rowDiv && rowDiv.rowView) {
                 const rowView = rowDiv.rowView;
                 const tableView = rowView.table!;
-                let targetRow: Table.Row | undefined;
-                if (up) {
-                    targetRow = tableView.findPrecedingRow(rowView);
-                } else {
-                    targetRow = tableView.findNextRow(rowView);
-                }
+                const targetRow: Table.Row | undefined = up
+                    ? tableView.findPrecedingRow(rowView)
+                    : tableView.findNextRow(rowView);
                 if (targetRow) {
                     const cell = targetRow.findClosestCell(x) as ICellView;
                     if (cell) {
-                        if (up) {
-                            targetLineDiv = cell.viewport.lastLineDiv();
-                        } else {
-                            targetLineDiv = cell.viewport.firstLineDiv();
-                        }
+                        targetLineDiv = up ? cell.viewport.lastLineDiv() : cell.viewport.firstLineDiv();
                     }
                     return this.setCursorPosFromPixels(targetLineDiv, x);
                 } else {
                     // Top or bottom row of table
-                    if (up) {
-                        targetLineDiv = rowDiv.previousElementSibling as ILineDiv;
-                    } else {
-                        targetLineDiv = rowDiv.nextElementSibling as ILineDiv;
-                    }
+                    targetLineDiv = up
+                        ? rowDiv.previousElementSibling as ILineDiv
+                        : rowDiv.nextElementSibling as ILineDiv;
                     if (targetLineDiv) {
                         checkInTable();
                         return this.setCursorPosFromPixels(targetLineDiv, x);
@@ -2382,12 +2355,7 @@ export class FlowView extends ui.Component {
                 const elm = document.elementFromPoint(prevX, prevY);
                 if (elm) {
                     const span = elm as ISegSpan;
-                    let segspan: ISegSpan;
-                    if (span.seg) {
-                        segspan = span;
-                    } else {
-                        segspan = span.parentElement as ISegSpan;
-                    }
+                    const segspan: ISegSpan = span.seg ? span : span.parentElement as ISegSpan;
                     if (segspan && segspan.seg) {
                         this.clickSpan(e.clientX, e.clientY, segspan);
                     }
@@ -2432,12 +2400,7 @@ export class FlowView extends ui.Component {
                 freshDown = false;
                 const elm = <HTMLElement>document.elementFromPoint(prevX, prevY);
                 const span = elm as ISegSpan;
-                let segspan: ISegSpan;
-                if (span.seg) {
-                    segspan = span;
-                } else {
-                    segspan = span.parentElement as ISegSpan;
-                }
+                const segspan: ISegSpan = span.seg ? span : span.parentElement as ISegSpan;
                 if (segspan && segspan.seg) {
                     this.clickSpan(e.clientX, e.clientY, segspan);
                     if (this.cursor.emptySelection()) {
@@ -2470,11 +2433,7 @@ export class FlowView extends ui.Component {
             if (!this.wheelTicking) {
                 const factor = 20;
                 let inputDelta = e.wheelDelta;
-                if (Math.abs(e.wheelDelta) === 120) {
-                    inputDelta = e.wheelDelta / 6;
-                } else {
-                    inputDelta = e.wheelDelta / 2;
-                }
+                inputDelta = Math.abs(e.wheelDelta) === 120 ? e.wheelDelta / 6 : e.wheelDelta / 2;
                 const delta = factor * inputDelta;
                 // eslint-disable-next-line max-len
                 // console.log(`top char: ${this.topChar - delta} factor ${factor}; delta: ${delta} wheel: ${e.wheelDeltaY} ${e.wheelDelta} ${e.detail}`);
@@ -2490,6 +2449,8 @@ export class FlowView extends ui.Component {
             e.returnValue = false;
         };
 
+        // The logic below is complex enough that using switches makes the code far less readable.
+        /* eslint-disable unicorn/prefer-switch */
         const keydownHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
                 this.focusChild.keydownHandler!(e);
@@ -2522,7 +2483,9 @@ export class FlowView extends ui.Component {
                         };
                     }
                     this.sharedString.removeText(toRemove.start, toRemove.end);
-                } else if (((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown)) && (!this.ticking)) {
+                } else if (
+                    ((e.keyCode === KeyCode.pageUp) || (e.keyCode === KeyCode.pageDown))
+                    && (!this.ticking)) {
                     setTimeout(() => {
                         this.scroll(e.keyCode === KeyCode.pageUp);
                         this.ticking = false;
@@ -2607,10 +2570,8 @@ export class FlowView extends ui.Component {
                         this.broadcastPresence();
                         this.cursor.updateView(this);
                     }
-                } else {
-                    if (!e.ctrlKey) {
-                        specialKey = false;
-                    }
+                } else if (!e.ctrlKey) {
+                    specialKey = false;
                 }
                 if (specialKey) {
                     e.preventDefault();
@@ -2618,6 +2579,7 @@ export class FlowView extends ui.Component {
                 }
             }
         };
+        /* eslint-enable unicorn/prefer-switch */
 
         const keypressHandler = (e: KeyboardEvent) => {
             if (this.focusChild) {
@@ -2673,7 +2635,7 @@ export class FlowView extends ui.Component {
         if (tileInfo) {
             const tile = tileInfo.tile as Paragraph.IParagraphMarker;
             let listStatus = false;
-            if (tile.hasTileLabel("list")) {
+            if (refHasTileLabel(tile, "list")) {
                 listStatus = true;
             }
             const curLabels = tile.properties![MergeTree.reservedTileLabelsKey] as string[];
@@ -2714,12 +2676,9 @@ export class FlowView extends ui.Component {
             const tableView = tableMarker.table!;
             if (cursorContext.cell && (!cursorContext.cell.empty())) {
                 const cell = cursorContext.cell.top() as Table.ICellMarker;
-                let toCell: Table.Cell | undefined;
-                if (shift) {
-                    toCell = tableView.prevcell(cell.cell!);
-                } else {
-                    toCell = tableView.nextcell(cell.cell!);
-                }
+                const toCell: Table.Cell | undefined = shift
+                    ? tableView.prevcell(cell.cell!)
+                    : tableView.nextcell(cell.cell!);
                 if (toCell) {
                     const position = this.sharedString.getPosition(toCell.marker);
                     this.cursor.pos = position + 1;
@@ -3236,8 +3195,8 @@ export class FlowView extends ui.Component {
                 const localPresenceInfo = {
                     clientId,
                     fresh: true,
-                    localRef: this.sharedString.createPositionReference(
-                        segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove),
+                    localRef: this.sharedString.createLocalReferencePosition(
+                        segoff.segment, segoff.offset, MergeTree.ReferenceType.SlideOnRemove, undefined),
                     presenceColor: this.presenceVector.has(clientId) ?
                         this.presenceVector.get(clientId)!.presenceColor :
                         presenceColors[this.presenceVector.size % presenceColors.length],
@@ -3249,8 +3208,8 @@ export class FlowView extends ui.Component {
                     const markSegoff = this.sharedString.getContainingSegment(remotePresenceInfo.origMark);
                     if (markSegoff.segment) {
                         localPresenceInfo.markLocalRef =
-                            this.sharedString.createPositionReference(markSegoff.segment,
-                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove);
+                            this.sharedString.createLocalReferencePosition(markSegoff.segment,
+                                markSegoff.offset, MergeTree.ReferenceType.SlideOnRemove, undefined);
                     }
                 }
                 this.updatePresenceVector(localPresenceInfo);

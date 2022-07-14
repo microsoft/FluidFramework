@@ -2,13 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { AzureRemoteConnectionConfig, AzureLocalConnectionConfig, AzureConnectionConfig } from "./interfaces";
+import {
+    AzureRemoteConnectionConfig,
+    AzureLocalConnectionConfig,
+    AzureConnectionConfig,
+} from "./interfaces";
 
 /**
  * Type guard for validating a given AzureConnectionConfig is a remote connection type (AzureRemoteConnectionConfig)
  */
 export function isAzureRemoteConnectionConfig(
-    connectionConfig: AzureConnectionConfig): connectionConfig is AzureRemoteConnectionConfig {
+    connectionConfig: AzureConnectionConfig,
+): connectionConfig is AzureRemoteConnectionConfig {
     return connectionConfig.type === "remote";
 }
 
@@ -16,6 +21,7 @@ export function isAzureRemoteConnectionConfig(
  * Type guard for validating a given AzureConnectionConfig is a local connection type (AzureLocalConnectionConfig)
  */
 export function isAzureLocalConnectionConfig(
-    connectionConfig: AzureConnectionConfig): connectionConfig is AzureLocalConnectionConfig {
+    connectionConfig: AzureConnectionConfig,
+): connectionConfig is AzureLocalConnectionConfig {
     return connectionConfig.type === "local";
 }
