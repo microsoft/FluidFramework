@@ -30,7 +30,7 @@ interface IAcceptedQuorumValue {
     /**
      * The accepted value.
      */
-    value: any;
+    value: unknown;
 
     /**
      * The sequence number when the value was accepted, which will normally coincide with one of three possibilities:
@@ -48,7 +48,7 @@ interface IAcceptedQuorumValue {
  * The pending change information, if any.
  */
 interface IPendingQuorumValue {
-    value: any;
+    value: unknown;
     /**
      * The list of clientIds that we expect "accept" ops from.  Clients are also removed from this list if they
      * disconnect without accepting.  When this list empties, the pending value transitions to accepted.
@@ -71,7 +71,7 @@ type QuorumValue =
 interface IQuorumSetOperation {
     type: "set";
     key: string;
-    value: any;
+    value: unknown;
 
     /**
      * A "set" is only valid if it is made with knowledge of the most-recent accepted proposal - its reference
@@ -205,6 +205,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
      * {@inheritDoc IQuorum.get}
      */
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public get(key: string): any {
         return this.values.get(key)?.accepted?.value;
     }
@@ -212,6 +214,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
      * {@inheritDoc IQuorum.getPending}
      */
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public getPending(key: string): any {
         // TODO: Should this return differently for "nothing pending" vs. "delete pending"?
         // Maybe return the QuorumValue itself?
@@ -221,8 +225,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
      * {@inheritDoc IQuorum.set}
      */
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    public set(key: string, value: any): void {
+    public set(key: string, value: unknown): void {
         const currentValue = this.values.get(key);
         // Early-exit if we can't submit a valid proposal (there's already a pending proposal)
         if (currentValue?.pending !== undefined) {
@@ -293,7 +296,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
     private readonly handleIncomingSet = (
         key: string,
-        value: any,
+        value: unknown,
         refSeq: number,
         setSequenceNumber: number,
         clientId: string,
@@ -447,10 +450,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
      * @internal
      */
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const quorumOp: IQuorumOperation = content;
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+        const quorumOp = content as IQuorumOperation;
         // Filter out accept messages - if we're coming back from a disconnect, our acceptance is never required
         // because we're implicitly removed from the list of expected accepts.
         if (quorumOp.type === "accept") {

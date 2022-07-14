@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { LocalReference } from "@fluidframework/merge-tree";
+import { ReferencePosition } from "@fluidframework/merge-tree";
 import { SequenceInterval } from "@fluidframework/sequence";
 
 const rangeExpr = /([A-Za-z]+)(\d+):([A-Za-z]+)(\d+)/;
@@ -43,7 +43,7 @@ export function parseRange(range: string) {
 export class CellRange {
     constructor(
         private readonly interval: SequenceInterval,
-        private readonly resolve: (localRef: LocalReference) => { row: number; col: number; },
+        private readonly resolve: (localRef: ReferencePosition) => { row: number; col: number; },
     ) {
         // Ensure CellInterval was not created with a null/undefined interval.
         assert(!!interval, "CellInterval created with bad interval!");

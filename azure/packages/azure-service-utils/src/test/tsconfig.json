@@ -8,12 +8,10 @@
         "skipLibCheck": true,
         "noEmit": true,
     },
-    "include": [
-        "./**/*"
-    ],
+    "include": ["./**/*"],
     "references": [
         {
-            "path": "../.."
-        }
-    ]
+            "path": "../..",
+        },
+    ],
 }

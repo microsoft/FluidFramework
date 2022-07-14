@@ -4,4 +4,3 @@
  */
 
 export * from "./rebaser";
-export * from "./pathTree";
