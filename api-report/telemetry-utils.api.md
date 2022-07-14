@@ -283,6 +283,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);
     // (undocumented)
     static readonly eventNamespaceSeparator = ":";
+    static filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null;
     // (undocumented)
     static formatTick(tick: number): number;
     // (undocumented)
@@ -290,7 +291,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     static numberFromString(str: string | null | undefined): string | number | undefined;
     static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean): void;
     // (undocumented)
-    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent;
+    protected prepareEvent(event: ITelemetryBaseEvent | ITelemetryBaseEventExt): ITelemetryBaseEvent;
     // (undocumented)
     protected readonly properties?: ITelemetryLoggerPropertyBags | undefined;
     // (undocumented)
@@ -302,6 +303,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     protected sendTelemetryEventCore(event: ITelemetryGenericEvent & {
         category: TelemetryEventCategory;
     }, error?: any): void;
+    static stringifyEventFields(event: ITelemetryBaseEventExt): ITelemetryBaseEvent;
 }
 
 // @public
