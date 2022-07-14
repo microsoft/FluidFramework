@@ -277,11 +277,11 @@ export function getRequestedRange(baseVersion: string, requested?: number | stri
 }
 
 export function internalSchema(publicVersion: string, internalVersion: string, requested: number | string): string {
-    if (internalVersion < "2.0.0" && requested === -1) { return `^1.0.0-0`; }
-    if (internalVersion < "2.0.0" && requested === -2) { return `^0.59.0-0`; }
-    if (internalVersion === "2.0.0" && requested === -2) { return `^1.0.0-0`; }
+    if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -1) { return `^1.0.0-0`; }
+    if (publicVersion === "2.0.0" && internalVersion < "2.0.0" && requested === -2) { return `^0.59.0-0`; }
+    if (publicVersion === "2.0.0" && internalVersion === "2.0.0" && requested === -2) { return `^1.0.0-0`; }
 
-    if (internalVersion <= "2.0.0" && requested < -2) {
+    if (publicVersion === "2.0.0" && internalVersion <= "2.0.0" && requested < -2) {
         const lastPrereleaseVersion = new semver.SemVer("0.59.0");
         const requestedMinorVersion = lastPrereleaseVersion.minor + (requested as number) + 2;
         return `^0.${requestedMinorVersion}.0-0`;
