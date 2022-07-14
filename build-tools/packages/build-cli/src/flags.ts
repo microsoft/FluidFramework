@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { supportedMonoRepoValues } from "@fluidframework/build-tools";
+import {
+    supportedMonoRepoValues,
+    isVersionBumpType,
+    isVersionBumpTypeExtended,
+} from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
 /**
@@ -36,6 +40,13 @@ export const packageSelectorFlag = Flags.build({
     description: "package",
     // Can't be used with release groups.
     exclusive: ["g"],
+    multiple: false,
+    parse: async (input) => {
+        const split = input.split("=");
+        const dep = split[0];
+        const version = split[1];
+        return { dep, version };
+    },
 });
 
 /**
@@ -43,7 +54,22 @@ export const packageSelectorFlag = Flags.build({
  */
 export const bumpTypeFlag = Flags.build({
     char: "t",
-    description: "bump type",
+    description: "Version bump type.",
     options: ["major", "minor", "patch", "current"],
-    required: true,
+    parse: async (input) => {
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+        if (isVersionBumpTypeExtended(input)) {
+            return input;
+        }
+    },
+});
+
+/**
+ * A re-usable CLI flag to parse version schemes used to adjust versions.
+ */
+export const versionSchemeFlag = Flags.build({
+    char: "S",
+    description: "Version scheme to use.",
+    options: ["semver", "internal", "virtualPatch"],
+    default: "semver",
 });
