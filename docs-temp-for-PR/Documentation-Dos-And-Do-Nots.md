@@ -4,6 +4,7 @@ When writing documentation - be it source-code documentation, wiki content, etc.
 
 A consistent point of view helps documentation flow nicely.
 And since our docs are aimed at some potential developer or customer, it is nice to address them directly.
+In any given article, "you" should always refer to the same person/reader. Don't use "you" to refer to a developer in one paragraph and use it to refer to an end-user or a network admininstrator somewhere else. 
 
 ## Only write about supported functionality
 
