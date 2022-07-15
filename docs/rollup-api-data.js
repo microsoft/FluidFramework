@@ -44,7 +44,7 @@ const memberCombineInstructions = [
         ])
     },
     {
-        package: "@fluidframework/shared-sequence",
+        package: "@fluidframework/sequence",
         sourceImports: new Map([
             [
                 "@fluidframework/merge-tree", [
