@@ -11,6 +11,9 @@ import { RandomCtor, Random } from "best-random";
  * XORSHIFT-ADD (XSadd) is a non-cryptographic PRNG that is tiny, fast, seedable, and has
  * acceptable statistical properties for most test applications.
  *
+ * In particular, uint32 output from XSadd passes the BigCrush suite of TestU01, but fails
+ * if the bits are reversed due to weaknesses in the lower bits.
+ *
  * See: http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/XSADD/
  */
 export const XSadd: RandomCtor =
