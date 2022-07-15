@@ -212,6 +212,8 @@ export interface IDirectoryDataObject {
 
 /**
  * {@link IDirectory} storage format.
+ *
+ * @internal
  */
 export interface IDirectoryNewStorageFormat {
     /**
