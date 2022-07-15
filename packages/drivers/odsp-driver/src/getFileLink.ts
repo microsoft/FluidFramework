@@ -86,7 +86,7 @@ async function getFileLinkCore(
     // ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
     return PerformanceEvent.timedExecAsync(
         logger,
-        { eventName: "odspFileLink", requestName: "getSharingLink" },
+        { eventName: "odspFileLink", requestName: "getSharingInformation" },
         async (event) => {
             let attempts = 0;
             let additionalProps;
@@ -103,8 +103,8 @@ async function getFileLinkCore(
                     0x2bb /* "Instrumented token fetcher with throwOnNullToken = true should never return null" */);
 
                 const { url, headers } = getUrlAndHeadersWithAuth(
-                    `${odspUrlParts.siteUrl}/_api/web/GetFileByServerRelativeUrl(@a1)/Linkingurl?@a1=${
-                        encodeURIComponent(`'${new URL(fileItem.webDavUrl).pathname}'`)
+                    `${odspUrlParts.siteUrl}/_api/web/GetFileByUrl(@a1)/ListItemAllFields/GetSharingInformation?@a1=${
+                        encodeURIComponent(`'${fileItem.webDavUrl}'`)
                     }`,
                     storageToken,
                     false,
@@ -121,15 +121,15 @@ async function getFileLinkCore(
                 additionalProps = response.propsToLog;
 
                 const sharingInfo = await response.content.json();
-                const linkingUrl = sharingInfo?.d?.LinkingUrl;
-                if (typeof linkingUrl !== "string") {
+                const directUrl = sharingInfo?.d?.directUrl;
+                if (typeof directUrl !== "string") {
                     // This will retry once in getWithRetryForTokenRefresh
                     throw new NonRetryableError(
-                        "Malformed GetSharingLink response",
+                        "Malformed GetSharingInformation response",
                         DriverErrorType.incorrectServerResponse,
                         { driverVersion });
                 }
-                return linkingUrl;
+                return directUrl;
             });
             event.end({ ...additionalProps, attempts });
             return fileLink;
