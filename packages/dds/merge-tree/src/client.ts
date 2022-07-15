@@ -367,7 +367,7 @@ export class Client {
             const segmentSegmentGroup = segment.segmentGroups.dequeue();
             assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
 
-            const start = op.pos1 as number;
+            const start = this.findRollbackPosition(segment);
             const segWindow = this.getCollabWindow();
             const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
             this.mergeTree.markRangeRemoved(
@@ -379,6 +379,28 @@ export class Client {
                 false,
                 { op: removeOp });
         }
+    }
+
+    /**
+     *  Walk the segments up to the current segment and calculate its position
+     */
+    private findRollbackPosition(segment: ISegment) {
+        let segmentPosition = 0;
+        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
+            if (seg === segment) {
+                return false;
+            }
+
+            // If not removed, increase position
+            if (seg.removedSeq === undefined) {
+                segmentPosition += seg.cachedLength;
+            }
+
+            return true;
+        });
+
+        return segmentPosition;
     }
 
     /**
@@ -701,7 +723,7 @@ export class Client {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         let segmentPosition = 0;
         /*
-            Walk the segments up to the current segment, and calculate it's
+            Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
             after the current segment.
 
