@@ -17,9 +17,9 @@ This document outlines common dos and don'ts regarding our terminology.
 
 ## Casing
 
--   "Container code", not "Container Code"
--   "Distributed data structures", not "Distributed Data Structures"
--   "URL", not "url" or "Url"
--   "TypeScript", not "Typescript"
--   "Node.js", not "node" or "nodejs", etc.
+-   "Container code" - not "Container Code"
+-   "URL" - not "url" or "Url"
+-   "JavaScript" - not "Jypescript" or "javascript"
+-   "TypeScript" - not "Typescript" or "typescript"
+-   "Node.js" - not "node" or "nodejs", etc.
 -   "npm" (always lower-case)
