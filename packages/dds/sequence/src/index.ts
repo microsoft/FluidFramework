@@ -43,7 +43,7 @@ export * from "./sharedNumberSequence";
 export * from "./sparsematrix";
 export * from "./sharedIntervalCollection";
 
-export {
+export type {
     IRelativePosition,
     MergeTreeDeltaOperationType,
     MergeTreeDeltaOperationTypes,
