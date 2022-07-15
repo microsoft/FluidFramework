@@ -29,7 +29,7 @@ import {
 import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { isFluidError } from "@fluidframework/telemetry-utils";
+import { isFluidError, NormalizedExternalError } from "@fluidframework/telemetry-utils";
 import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import {
@@ -136,7 +136,13 @@ describe("Data Store Context Tests", () => {
                     assert.fail("realize should have thrown an error due to empty pkg array");
                 } catch (e) {
                     assert(isFluidError(e), "Expected a valid Fluid Error to be thrown");
-                    assert.equal(e.errorType, ContainerErrorType.dataProcessingError, "Error should be a DataProcessingError");
+
+                    // localDataStoreContext.realize() will throw a LoggingError which is NOT an external error
+                    // so it gets turned into a NormalizedExternalError instead of DataProcessingError
+                    assert.equal(e.errorType, NormalizedExternalError.normalizedErrorType, "Error should be a NormalizedExternalError");
+                    assert(e.getTelemetryProperties().dataProcessingError === 1);
+                    assert(e.getTelemetryProperties().dataProcessingCodepath === "realizeFluidDataStoreContext");
+                    assert(e.getTelemetryProperties().untrustedOrigin === undefined);
                     const props = e.getTelemetryProperties();
                     assert.equal((props.packageName as ITaggedTelemetryPropertyType)?.value, "BOGUS",
                         "The error should have the packageName in its telemetry properties");
