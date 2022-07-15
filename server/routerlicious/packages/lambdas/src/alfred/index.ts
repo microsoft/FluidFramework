@@ -669,5 +669,6 @@ function addAlfredTrace(message: IDocumentMessage, numberOfMessagesPerTrace: num
 }
 
 function sampleMessages(message: IDocumentMessage, numberOfMessagesPerTrace: number): boolean {
+    Lumberjack.info(`Debug log: ${numberOfMessagesPerTrace}`);
     return getRandomInt(numberOfMessagesPerTrace) === 0;
 }
