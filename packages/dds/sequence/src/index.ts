@@ -42,3 +42,13 @@ export * from "./sharedObjectSequence";
 export * from "./sharedNumberSequence";
 export * from "./sparsematrix";
 export * from "./sharedIntervalCollection";
+
+export {
+    IRelativePosition,
+    MergeTreeDeltaOperationType,
+    MergeTreeDeltaOperationTypes,
+    MergeTreeDeltaType,
+    PropertySet,
+    ReferencePosition,
+    ReferenceType,
+} from "@fluidframework/merge-tree";

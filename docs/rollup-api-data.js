@@ -44,6 +44,22 @@ const memberCombineInstructions = [
         ])
     },
     {
+        package: "@fluidframework/shared-sequence",
+        sourceImports: new Map([
+            [
+                "@fluidframework/merge-tree", [
+                    "IRelativePosition",
+                    "MergeTreeDeltaOperationType",
+                    "MergeTreeDeltaOperationTypes",
+                    "MergeTreeDeltaType",
+                    "PropertySet",
+                    "ReferencePosition",
+                    "ReferenceType",
+                ]
+            ]
+        ])
+    },
+    {
         package: "@fluidframework/test-client-utils",
         sourceImports: new Map([
             ["@fluidframework/test-runtime-utils", ["InsecureTokenProvider"]],

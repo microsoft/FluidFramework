@@ -40,6 +40,7 @@ import { LocalReferencePosition } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree';
+import { MergeTreeDeltaType } from '@fluidframework/merge-tree';
 import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree';
 import { PropertiesManager } from '@fluidframework/merge-tree';
 import { PropertySet } from '@fluidframework/merge-tree';
@@ -202,6 +203,8 @@ export enum IntervalType {
     Transient = 4
 }
 
+export { IRelativePosition }
+
 // @public
 export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes> {
     // (undocumented)
@@ -298,6 +301,12 @@ export const maxRow = 4294967295;
 // @public @deprecated (undocumented)
 export const maxRows: number;
 
+export { MergeTreeDeltaOperationType }
+
+export { MergeTreeDeltaOperationTypes }
+
+export { MergeTreeDeltaType }
+
 // @public @deprecated
 export class PaddingSegment extends BaseSegment {
     constructor(size: number);
@@ -333,6 +342,12 @@ export function positionToRowCol(position: number): {
     row: number;
     col: number;
 };
+
+export { PropertySet }
+
+export { ReferencePosition }
+
+export { ReferenceType }
 
 // @public @deprecated (undocumented)
 export const rowColToPosition: (row: number, col: number) => number;
