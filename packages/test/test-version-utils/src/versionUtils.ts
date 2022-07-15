@@ -295,5 +295,5 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
     }
 
     // eslint-disable-next-line max-len
-    return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 || <${publicVersion}-internal.${parsedVersion.major}.0.0`;
+    return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 <${publicVersion}-internal.${parsedVersion.major}.0.0`;
 }
