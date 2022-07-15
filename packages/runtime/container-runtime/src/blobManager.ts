@@ -156,18 +156,22 @@ export class BlobManager {
         // of the format `/<BlobManager.basePath>/<blobId>`.
         private readonly gcNodeUpdated: (blobPath: string) => void,
         private readonly runtime: IBlobManagerRuntime,
-        stashedBlobs?: unknown,
+        stashedBlobs: IPendingBlobs = {},
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "BlobManager");
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
-        if (stashedBlobs) {
-            Object.entries(stashedBlobs as IPendingBlobs).forEach(([id, entry]) => this.pendingBlobs.set(id, {
-                blob: stringToBuffer(entry.blob, "utf8"),
+
+        // Begin uploading stashed blobs from previous container instance
+        Object.entries(stashedBlobs).forEach(([localId, entry]) => {
+            const blob = stringToBuffer(entry.blob, "utf8");
+            this.pendingBlobs.set(localId, {
+                blob,
                 status: PendingBlobStatus.OfflinePendingUpload,
-                deferred: new Deferred<string>(),
-            }));
-        }
+                handleP: new Deferred(),
+                uploadP: this.uploadBlob(localId, blob),
+            });
+        });
     }
 
     private get pendingOfflineUploads() {
@@ -573,10 +577,8 @@ export class BlobManager {
         }
     }
 
-    public getPendingBlobs(): unknown {
+    public getPendingBlobs(): IPendingBlobs {
         const blobs = {};
-        // TODO: if we save the TTL from the createBlobResponse we can avoid reuploading these unnecessarily.
-        // Otherwise we won't know if they've been deleted from storage so we must always reupload.
         for (const [key, entry] of this.pendingBlobs) {
             blobs[key] = { blob: bufferToString(entry.blob, "utf8") };
         }

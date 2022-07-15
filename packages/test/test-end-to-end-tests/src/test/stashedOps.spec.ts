@@ -82,7 +82,7 @@ const getPendingStateWithoutClose = (container: IContainer): string => {
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
 
 // load container, pause, create (local) ops from callback, then optionally send ops before closing container
-const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
+const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback = () => undefined) => {
     const container = await args.loadTestContainer(testContainerConfig);
     await ensureContainerConnected(container);
     const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
@@ -141,7 +141,7 @@ async function loadOffline(provider: ITestObjectProvider, request: IRequest, pen
     const loader = provider.createLoader(
         [[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
         { documentServiceFactory });
-    const container = await loader.resolve(request, pendingLocalState ?? await getPendingOps(provider, false, () => undefined));
+    const container = await loader.resolve(request, pendingLocalState ?? await getPendingOps(provider, false));
     return { container, connect: () => p.resolve(undefined) };
 }
 
@@ -776,7 +776,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
         const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-        // "upload" a blob while offline
         const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
         assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
         map.set("blob handle", handle);
@@ -796,22 +795,26 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
         const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-        // pending changes should be applied while offline
+        // Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
         const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
         map.set("blob handle 1", handle);
 
-        const morePendingOps = container.container.closeAndGetPendingLocalState();
+        const stashedChanges = container.container.closeAndGetPendingLocalState();
 
-        const container3 = await loadOffline(provider, { url }, morePendingOps);
+        const container3 = await loadOffline(provider, { url }, stashedChanges);
         const dataStore3 = await requestFluidObject<ITestFluidObject>(container3.container, "default");
         const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+
+        // Blob is accessible locally while offline
+        assert.strictEqual(bufferToString(await map3.get("blob handle 1").get(), "utf8"), "blob contents 1");
+
         container3.connect();
         await ensureContainerConnected(container3.container);
         await provider.ensureSynchronized();
 
-        assert.strictEqual(bufferToString(await map3.get("blob handle 1").get(), "utf8"), "blob contents 1");
-        assert.strictEqual(bufferToString(await map.get("blob handle 1").get(), "utf8"), "blob contents 1");
+        // Blob is uploaded and accessible by all clients
         assert.strictEqual(bufferToString(await map1.get("blob handle 1").get(), "utf8"), "blob contents 1");
+        assert.strictEqual(bufferToString(await map3.get("blob handle 1").get(), "utf8"), "blob contents 1");
     });
 
     it("offline attach", async function() {

@@ -487,7 +487,7 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
  * instantiated runtime in a new instance of the container, so it can load to the
  * same state
  */
-export interface IPendingRuntimeState {
+interface IPendingRuntimeState {
     /**
      * Pending ops from PendingStateManager
      */

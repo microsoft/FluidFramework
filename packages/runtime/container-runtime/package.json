@@ -130,6 +130,10 @@
       },
       "TypeAliasDeclaration_SubmitSummaryResult": {
         "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IPendingRuntimeState": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
