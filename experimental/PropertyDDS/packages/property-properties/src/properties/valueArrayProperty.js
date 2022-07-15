@@ -397,8 +397,12 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
         var int64Prop;
         for (var i = 0; i < this._dataArrayGetLength(); i++) {
             // TODO: The 'toString()' function is defined on Integer64Property, so we need to create
-            //       such object to use it. It would be better to have it in Integer64.prototype.toString
-            int64Prop = this._dataArrayGetValue(i) instanceof Int64 ? new Int64Property({}) : new Uint64Property({});
+            // such object to use it. It would be better to have it in Integer64.prototype.toString
+            if (this._dataArrayGetValue(i) instanceof Int64) {
+                int64Prop = new Int64Property({});
+            } else {
+                int64Prop = new Uint64Property({});
+            }
             int64Prop.setValueLow(this._dataArrayGetValue(i).getValueLow());
             int64Prop.setValueHigh(this._dataArrayGetValue(i).getValueHigh());
             printFct(childIndent + i + ': ' + int64Prop);
