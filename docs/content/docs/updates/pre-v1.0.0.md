@@ -230,9 +230,9 @@ The 0.48 release is focused on clarifying the primary Fluid Framework public API
 
 ### Breaking changes
 
-#### Signaler and Signaler classes moved
+#### SignalManager and Signaler classes moved
 
-The `Signaler` and `Signaler` classes have been moved to the `@fluid-experimental/data-objects` package to
+The `SignalManager` and `Signaler` classes have been moved to the `@fluid-experimental/data-objects` package to
 better reflect their experimental state. If you use these classes, you can add a dependency on the
 `@fluid-experimental/data-objects` package and import the classes from there.
 
