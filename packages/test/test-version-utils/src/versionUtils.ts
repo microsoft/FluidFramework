@@ -287,13 +287,13 @@ export function internalSchema(publicVersion: string, internalVersion: string, r
         return `^0.${requestedMinorVersion}.0-0`;
     }
 
-    let internalMajor;
+    let parsedVersion;
     try {
-        const parsedVersion = new semver.SemVer(internalVersion);
-        internalMajor = parsedVersion.major - 1;
+        parsedVersion = new semver.SemVer(internalVersion);
     } catch (err: unknown) {
         throw new Error(err as string);
     }
 
-    return `${publicVersion}-internal.${internalMajor}.0.0`;
+    // eslint-disable-next-line max-len
+    return `>=${publicVersion}-internal.${parsedVersion.major - 1}.0.0 || <${publicVersion}-internal.${parsedVersion.major}.0.0`;
 }
