@@ -30,7 +30,6 @@ import { MockFluidDataStoreRuntime, validateAssertionError } from "@fluidframewo
 import { createRootSummarizerNodeWithGC, IRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
 import { isFluidError, NormalizedExternalError } from "@fluidframework/telemetry-utils";
-import { ContainerErrorType } from "@fluidframework/container-definitions";
 import { ITaggedTelemetryPropertyType } from "@fluidframework/common-definitions";
 import {
     LocalFluidDataStoreContext,

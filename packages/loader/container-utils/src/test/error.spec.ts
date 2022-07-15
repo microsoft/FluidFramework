@@ -79,7 +79,6 @@ describe("Errors", () => {
             assert(coercedError.message === "[object Object]");
         });
         it("Should NOT coerce LoggingError", () => {
-
             const originalError = new LoggingError(
                 "Inherited error message", {
                     otherProperty: "Considered PII-free property",
