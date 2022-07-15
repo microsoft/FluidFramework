@@ -368,8 +368,12 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
                 for (var i = 0; i < in_values.length; i++) {
                     var prop = in_values[i];
 
-                    prop = in_values[i] instanceof BaseProperty ? in_values[i] : Property.PropertyFactory._createProperty(
+                    if (in_values[i] instanceof BaseProperty) {
+                        prop = in_values[i];
+                    } else {
+                        prop = Property.PropertyFactory._createProperty(
                             in_values[i].typeid || this._typeid, null, in_values[i].value, this._getScope());
+                    }
                     arr.push(prop);
                 }
 
@@ -528,11 +532,11 @@ export class ArrayProperty extends AbstractStaticCollectionProperty {
         if (this._dirty) {
             if (this._dirty.dirty === undefined &&
                 this._dirty.pending === undefined) {
-                    if (oldFlags === 0) {
-                        this._dirty = undefined;
-                    } else {
-                        this._dirty = DIRTY_STATE_FLAGS_ARRAY[oldFlags];
-                    }
+                if (oldFlags === 0) {
+                    this._dirty = undefined;
+                } else {
+                    this._dirty = DIRTY_STATE_FLAGS_ARRAY[oldFlags];
+                }
             } else {
                 this._dirty.flags = oldFlags;
             }
