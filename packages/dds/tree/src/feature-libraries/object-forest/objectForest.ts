@@ -386,8 +386,8 @@ class Cursor implements ITreeSubscriptionCursor {
             this.parentStack[this.parentStack.length - 1] = child;
             return { result: TreeNavigationResult.Ok, moved: offset };
         }
-        // Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: offset };
+        // TODO: Maybe truncate move, and move to end?
+        return { result: TreeNavigationResult.NotFound, moved: 0 };
     }
     up(): TreeNavigationResult {
         assert(this.state === ITreeSubscriptionCursorState.Current, 0x341 /* Cursor must be current to be used */);
