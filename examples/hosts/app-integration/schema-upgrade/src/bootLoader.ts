@@ -31,7 +31,7 @@ import {
 
 interface ICodePackage<T> {
     fluidModuleWithDetails: IFluidModuleWithDetails;
-    getModel: (container: IContainer) => T;
+    getModel: (container: IContainer) => Promise<T>;
     getView: (model: T) => IFluidMountableView;
 }
 
@@ -40,8 +40,10 @@ const v1Code: ICodePackage<IApp> = {
         module: { fluidExport: new InventoryListContainerRuntimeFactory1() },
         details: { package: "one" },
     },
-    getModel: (container: IContainer) => {
-        return new App(container);
+    getModel: async (container: IContainer) => {
+        const app = new App(container);
+        await app.initialize();
+        return app;
     },
     getView: (model: IApp) => {
         const reactView = React.createElement(AppView, { app: model });
@@ -54,8 +56,10 @@ const v2Code: ICodePackage<IApp> = {
         module: { fluidExport: new InventoryListContainerRuntimeFactory2() },
         details: { package: "two" },
     },
-    getModel: (container: IContainer) => {
-        return new App(container);
+    getModel: async (container: IContainer) => {
+        const app = new App(container);
+        await app.initialize();
+        return app;
     },
     getView: (model: IApp) => {
         const reactView = React.createElement(AppView, { app: model });
@@ -110,10 +114,11 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
 
     public async loadExisting(id: string): Promise<IApp> {
         const container = await this.loader.resolve({ url: id });
-        // Here need to verify the correct App to wrap the container in
-        const app = new App(container);
-        await app.initialize();
-        return app;
+        const codeDetails = container.getSpecifiedCodeDetails();
+        if (typeof codeDetails?.package !== "string") {
+            throw new Error("Unexpected code details");
+        }
+        return getCode(codeDetails.package).getModel(container);
     }
 
     public async ensureMigrated(app: IMigratable) {
