@@ -163,7 +163,6 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         enableNackMessages: true,
         enableOpHashing: true,
         enableAutoDSNUpdate: false,
-        enableAutoSummaryAcks: false,
         enableWriteClientSignals: false,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,
