@@ -112,6 +112,6 @@ Typical scenarios require the connected clients to "agree" on some course of act
 - Upgrade a data schema. (All clients agree to simultaneously make the change.)
 
 <!-- Links -->
-[SharedMap]: https://fluidframework.com/docs/apis/map/sharedmap/
-[SharedDirectory]: https://fluidframework.com/docs/apis/map/shareddirectory/
-[SharedString]: https://fluidframework.com/docs/apis/sequence/sharedstring/
+[SharedMap]: {{< relref "/docs/apis/map/sharedmap" >}}
+[SharedDirectory]: {{< relref "/docs/apis/map/shareddirectory" >}}
+[SharedString]: {{< relref "/docs/apis/map/sharedstring" >}}
