@@ -1,7 +1,7 @@
 {
     "profiles": {
         "ci": {
-            "opRatePerMin": 10,
+            "opRatePerMin": 1000,
             "progressIntervalMs": 15000,
             "numClients": 10,
             "totalSendCount": 10000,

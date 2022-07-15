@@ -29,8 +29,8 @@ export interface IRunConfig {
 }
 
 export interface ILoadTest {
-    run(config: IRunConfig, reset: boolean): Promise<boolean>;
-    detached(config: Omit<IRunConfig, "runId">): Promise<LoadTestDataStoreModel>;
+    run(config: IRunConfig, reset: boolean, logger): Promise<boolean>;
+    detached(config: Omit<IRunConfig, "runId">, logger): Promise<LoadTestDataStoreModel>;
 }
 
 const taskManagerKey = "taskManager";
@@ -134,6 +134,7 @@ export class LoadTestDataStoreModel {
         root: ISharedDirectory,
         runtime: IFluidDataStoreRuntime,
         containerRuntime: IContainerRuntimeBase,
+        logger,
     ) {
         await LoadTestDataStoreModel.waitForCatchup(runtime);
 
@@ -170,6 +171,7 @@ export class LoadTestDataStoreModel {
             counter,
             runDir,
             gcDataStore.handle,
+            logger,
         );
 
         if (reset) {
@@ -202,6 +204,7 @@ export class LoadTestDataStoreModel {
         public readonly counter: ISharedCounter,
         private readonly runDir: IDirectory,
         private readonly gcDataStoreHandle: IFluidHandle,
+        private readonly logger,
     ) {
         const halfClients = Math.floor(this.config.testConfig.numClients / 2);
         // The runners are paired up and each pair shares a single taskId
@@ -251,16 +254,24 @@ export class LoadTestDataStoreModel {
         if (partnerBlobCount > 0) {
             this.root.on("valueChanged", (v) => {
                 if (v.key.startsWith(this.partnerBlobKeyPrefix)) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    this.root.get<IFluidHandle>(v.key)?.get();
-                    console.error("i'm reading");
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.root.get<IFluidHandle>(v.key)!.get().catch((error) => {
+                        this.logger.sendErrorEvent({
+                            eventName: "hi",
+                            key: v.key,
+                        }, error);
+                    });
                 }
             });
             for (const key of this.root.keys()) {
                 if (key.startsWith(this.partnerBlobKeyPrefix)) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                     this.root.get<IFluidHandle>(key)?.get();
-                     console.log("i'm reading");
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                     this.root.get<IFluidHandle>(key)!.get().catch((error) => {
+                        this.logger.sendErrorEvent({
+                            eventName: "hi",
+                            key,
+                        }, error);
+                    });
                 }
             }
         }
@@ -408,14 +419,20 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
     }
 
-    public async detached(config: Omit<IRunConfig, "runId">) {
+    public async detached(config: Omit<IRunConfig, "runId">, logger) {
         return LoadTestDataStoreModel.createRunnerInstance(
-            { ...config, runId: -1 }, false, this.root, this.runtime, this.context.containerRuntime);
+            { ...config, runId: -1 },
+            false,
+            this.root,
+            this.runtime,
+            this.context.containerRuntime,
+            logger,
+        );
     }
 
-    public async run(config: IRunConfig, reset: boolean) {
+    public async run(config: IRunConfig, reset: boolean, logger) {
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
-            config, reset, this.root, this.runtime, this.context.containerRuntime);
+            config, reset, this.root, this.runtime, this.context.containerRuntime, logger);
 
         const leaderElection = new LeaderElection(this.runtime);
         leaderElection.setupLeaderElection();
