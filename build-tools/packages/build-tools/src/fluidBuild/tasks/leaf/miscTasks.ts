@@ -157,12 +157,25 @@ export class CopyfilesTask extends LeafWithDoneFileTask {
 export class GenVerTask extends LeafTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) { }
     protected async checkLeafIsUpToDate() {
+        const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
         try {
-            const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
             const content = await readFileAsync(file, "utf8");
-            const match = content.match(/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9.]+)";.*/m);
-            return (match !== null && this.node.pkg.name === match[1] && this.node.pkg.version === match[2]);
+            const match = content.match(/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9A-Za-z.+-]+)";.*/m);
+            if (match === null) {
+                this.logVerboseTrigger("src/packageVersion.ts content not matched");
+                return false;
+            }
+            if (this.node.pkg.name !== match[1]) {
+                this.logVerboseTrigger("package name in src/packageVersion.ts not matched");
+                return false;
+            }
+            if (this.node.pkg.version !== match[2]) {
+                this.logVerboseTrigger("package version in src/packageVersion.ts not matched");
+                return false;
+            }
+            return true;
         } catch {
+            this.logVerboseTrigger(`failed to read src/packageVersion.ts`)
             return false;
         }
     }

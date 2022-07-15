@@ -800,7 +800,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @internal
 	 */
 	public saveSerializedSummary(options?: { serializer?: IFluidSerializer }): string {
-		const { serializer } = options || {};
+		const { serializer } = options ?? {};
 		return serialize(this.saveSummary(), serializer ?? this.serializer, this.handle);
 	}
 

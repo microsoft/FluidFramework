@@ -24,7 +24,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
     public readonly anchors: AnchorSet = new AnchorSet();
 
-    public readonly root: Anchor = new RootAnchor();
+    public root(range: DetachedRange): Anchor { return new RootAnchor(range); }
     public readonly rootField: DetachedRange = this.newRange();
 
     private readonly roots: Map<DetachedRange, ObjectField> = new Map();
@@ -112,8 +112,8 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange {
         this.beforeChange();
         const field: ObjectField = this.lookupField(range, false);
-        assertValidIndex(startIndex, field, false);
-        assertValidIndex(endIndex, field, false);
+        assertValidIndex(startIndex, field, true);
+        assertValidIndex(endIndex, field, true);
         assert(startIndex <= endIndex, "detached range's end must be after it's start");
         const newRange = this.newRange();
         const newField = field.splice(startIndex, endIndex - startIndex);
@@ -209,10 +209,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 }
 
-function assertValidIndex(index: number, array: unknown[], splice: boolean = false) {
+function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: boolean = false) {
     assert(Number.isInteger(index), "index must be an integer");
     assert(index >= 0, "index must be non-negative");
-    if (splice) {
+    if (allowOnePastEnd) {
         assert(index <= array.length, "index must be less than or equal to length");
     } else {
         assert(index < array.length, "index must be less than length");
@@ -258,8 +258,11 @@ abstract class ObjectAnchor implements Anchor {
 }
 
 class RootAnchor extends ObjectAnchor {
+    constructor(public readonly range: DetachedRange) {
+        super();
+    }
     find(forest: ObjectForest, observer: ObservingDependent | undefined): ObjectNode | undefined {
-        const field = forest.getRoot(forest.rootField);
+        const field = forest.getRoot(this.range);
         return field[0];
     }
 }
@@ -383,8 +386,8 @@ class Cursor implements ITreeSubscriptionCursor {
             this.parentStack[this.parentStack.length - 1] = child;
             return { result: TreeNavigationResult.Ok, moved: offset };
         }
-        // Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: offset };
+        // TODO: Maybe truncate move, and move to end?
+        return { result: TreeNavigationResult.NotFound, moved: 0 };
     }
     up(): TreeNavigationResult {
         assert(this.state === ITreeSubscriptionCursorState.Current, 0x341 /* Cursor must be current to be used */);
