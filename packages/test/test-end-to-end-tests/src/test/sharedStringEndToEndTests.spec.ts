@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
@@ -133,6 +134,29 @@ describeNoCompat("SharedString orderSequentially", (getTestObjectProvider) => {
         assert.equal(error?.message, errorMessage, "Unexpected error message");
         assert.equal(containerRuntime.disposed, false);
         assert.equal(sharedString.getText(), "aefg");
+    });
+    it("Should rollback insert marker", async () => {
+        let error: Error | undefined;
+        sharedString.insertText(0, "abc");
+        try {
+            containerRuntime.orderSequentially(() => {
+                sharedString.insertMarker(
+                    1,
+                    ReferenceType.Simple,
+                    {
+                        [reservedMarkerIdKey]: "markerId",
+                    },
+                );
+                throw new Error(errorMessage);
+            });
+        } catch (err) {
+            error = err as Error;
+        }
+
+        assert.notEqual(error, undefined, "No error");
+        assert.equal(error?.message, errorMessage, "Unexpected error message");
+        assert.equal(containerRuntime.disposed, false);
+        assert.equal(sharedString.getTextWithPlaceholders(), "abc");
     });
     it("Should rollback multiple inserts with split segments", async () => {
         let error: Error | undefined;
