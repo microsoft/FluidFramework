@@ -132,7 +132,7 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
                 if (operation && operation.traces === undefined) {
                     operation.traces = [];
                 // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-                } else if (operation && operation.traces && operation.traces.length > 1) {
+                } else if (operation && operation.traces && operation.traces.length > 0) {
                     operation.traces.push(
                         {
                             action: "end",

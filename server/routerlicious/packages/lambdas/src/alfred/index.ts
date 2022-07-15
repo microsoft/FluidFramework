@@ -39,6 +39,7 @@ import {
     createNackMessage,
     createRoomLeaveMessage,
     generateClientId,
+    getRandomInt,
 } from "../utils";
 
 const summarizerClientType = "summarizer";
@@ -200,6 +201,7 @@ export function configureWebSocketServices(
     metricLogger: core.IMetricClient,
     logger: core.ILogger,
     maxNumberOfClientsPerDocument: number = 1000000,
+    numberOfMessagesPerTrace: number = 100,
     maxTokenLifetimeSec: number = 60 * 60,
     isTokenExpiryEnabled: boolean = false,
     isClientConnectivityCountingEnabled: boolean = false,
@@ -535,7 +537,8 @@ export function configureWebSocketServices(
                             })
                             .map((message) => {
                                 const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
-                                const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage, connection.clientId,
+                                const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage,
+                                    numberOfMessagesPerTrace, connection.clientId,
                                     connection.tenantId, connection.documentId);
                                 return sanitizedMessageWithTrace;
                             });
@@ -638,8 +641,9 @@ export function configureWebSocketServices(
     });
 }
 
-function addAlfredTrace(message: IDocumentMessage, clientId: string, tenantId: string, documentId: string) {
-    if (message && core.DefaultServiceConfiguration.enableTraces && shouldAddTrace(message)) {
+function addAlfredTrace(message: IDocumentMessage, numberOfMessagesPerTrace: number,
+    clientId: string, tenantId: string, documentId: string) {
+    if (message && core.DefaultServiceConfiguration.enableTraces && sampleMessages(message, numberOfMessagesPerTrace)) {
         if (message.traces === undefined) {
             message.traces = [];
         }
@@ -655,6 +659,7 @@ function addAlfredTrace(message: IDocumentMessage, clientId: string, tenantId: s
             [BaseTelemetryProperties.documentId]: documentId,
             clientId,
             clientSequenceNumber: message.clientSequenceNumber,
+            traces: message.traces,
             opType: message.type,
         };
         Lumberjack.info(`Message received by Alfred.`, lumberjackProperties);
@@ -663,8 +668,6 @@ function addAlfredTrace(message: IDocumentMessage, clientId: string, tenantId: s
     return message;
 }
 
-// Trace sampling.1
-function shouldAddTrace(message: IDocumentMessage) {
-    const test = true; // getRandomInt(100) === 0;
-    return test;
+function sampleMessages(message: IDocumentMessage, numberOfMessagesPerTrace: number): boolean {
+    return getRandomInt(numberOfMessagesPerTrace) === 0;
 }
