@@ -8,7 +8,7 @@ import process from "process";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { PromiseTimer, Timer, IPromiseTimerResult } from "../..";
 
-const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
+const flushPromises = async (): Promise<void> => new Promise((resolve) => process.nextTick(resolve));
 type PromiseTimerResultString = IPromiseTimerResult["timerResult"];
 
 describe("Timers", () => {
@@ -29,7 +29,7 @@ describe("Timers", () => {
     describe("Timer", () => {
         let runCount = 0;
         const defaultTimeout = 1000;
-        const defaultHandler = () => runCount++;
+        const defaultHandler = (): number => runCount++;
         let timer: Timer;
 
         beforeEach(() => {
@@ -41,17 +41,17 @@ describe("Timers", () => {
             timer.clear();
         });
 
-        const assertShouldNotRunYet = (initialRunCount = 0, getRunCount = () => runCount) => {
+        const assertShouldNotRunYet = (initialRunCount = 0, getRunCount = (): number => runCount): void => {
             assert.strictEqual(getRunCount(), initialRunCount, "Should not run yet");
         };
 
-        const assertShouldNotRunAgainAfterRestart = () => {
+        const assertShouldNotRunAgainAfterRestart = (): void => {
             // Make sure only executes once
             clock.tick(defaultTimeout + 1);
             assert.strictEqual(runCount, 1, "Should not run additional times after restart");
         };
 
-        const testExactTimeout = (time: number, getRunCount = () => runCount) => {
+        const testExactTimeout = (time: number, getRunCount = (): number => runCount): void => {
             const initialRunCount = getRunCount();
             clock.tick(time - 1);
             assertShouldNotRunYet(initialRunCount, getRunCount);
@@ -219,7 +219,7 @@ describe("Timers", () => {
         let runCount = 0;
         let resolveResult: PromiseTimerResultString | undefined;
         const defaultTimeout = 1000;
-        const defaultHandler = () => runCount++;
+        const defaultHandler = (): number => runCount++;
         let timer: PromiseTimer;
 
         beforeEach(() => {
@@ -232,24 +232,24 @@ describe("Timers", () => {
             timer.clear();
         });
 
-        function startWithThen(ms?: number, handler?: () => void) {
+        function startWithThen(ms?: number, handler?: () => void): void {
             timer.start(ms, handler).then(
                 (result) => { resolveResult = result.timerResult; },
                 (error) => assert.fail(error),
             );
         }
 
-        async function tickAndFlush(ms: number) {
+        async function tickAndFlush(ms: number): Promise<void> {
             clock.tick(ms);
             await flushPromises();
         }
 
-        const assertShouldNotRunYet = (initialRunCount = 0, getRunCount = () => runCount) => {
+        const assertShouldNotRunYet = (initialRunCount = 0, getRunCount = (): number => runCount): void => {
             assert.strictEqual(getRunCount(), initialRunCount, "Should not run yet");
             assert.strictEqual(resolveResult, undefined, "Run promise should not be resolved yet");
         };
 
-        const testExactTimeout = async (time: number) => {
+        const testExactTimeout = async (time: number): Promise<void> => {
             const initialRunCount = runCount;
             await tickAndFlush(time - 1);
             assertShouldNotRunYet(initialRunCount);

@@ -21,7 +21,7 @@ export class Deferred<T> {
     /**
      * Returns whether the underlying promise has been completed
      */
-    public get isCompleted() {
+    public get isCompleted(): boolean {
         return this.completed;
     }
 
@@ -39,7 +39,7 @@ export class Deferred<T> {
      *
      * @param value - the value to resolve the promise with
      */
-    public resolve(value: T | PromiseLike<T>) {
+    public resolve(value: T | PromiseLike<T>): void {
         if (this.res !== undefined) {
             this.completed = true;
             this.res(value);
@@ -51,7 +51,7 @@ export class Deferred<T> {
      *
      * @param value - the value to reject the promise with
      */
-    public reject(error: any) {
+    public reject(error: any): void {
         if (this.rej !== undefined) {
             this.completed = true;
             this.rej(error);
@@ -75,7 +75,9 @@ export class LazyPromise<T> implements Promise<T> {
     constructor(private readonly execute: () => Promise<T>) { }
 
     public async then<TResult1 = T, TResult2 = never>(
+        // eslint-disable-next-line @rushstack/no-new-null
         onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
+        // eslint-disable-next-line @rushstack/no-new-null
         onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined):
         Promise<TResult1 | TResult2> {
         // eslint-disable-next-line prefer-rest-params
@@ -83,12 +85,14 @@ export class LazyPromise<T> implements Promise<T> {
     }
 
     public async catch<TResult = never>(
+        // eslint-disable-next-line @rushstack/no-new-null
         onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined):
         Promise<T | TResult> {
         // eslint-disable-next-line prefer-rest-params
         return this.getPromise().catch<TResult>(...arguments);
     }
 
+    // eslint-disable-next-line @rushstack/no-new-null
     public async finally(onfinally?: (() => void) | null | undefined): Promise<T> {
         // eslint-disable-next-line prefer-rest-params
         return this.getPromise().finally(...arguments);

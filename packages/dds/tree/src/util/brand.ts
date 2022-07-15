@@ -54,6 +54,12 @@ export abstract class BrandedType<ValueType, Name extends string> {
  * The type can be recovered using {@link extractFromOpaque},
  * however if we assume only code that produces these "opaque" handles does that conversion,
  * they can function like opaque handles.
+ *
+ * Recommenced usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
+ * uses the type name instead of expanding it:
+ * ```typescript
+ * export interface MyType extends Opaque<Brand<string, "myPackage.MyType">>{}
+ * ```
  */
 export type Opaque<T extends Brand<any, string>> = T extends Brand<
     infer ValueType,

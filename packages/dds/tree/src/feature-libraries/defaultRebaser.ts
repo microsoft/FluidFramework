@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Value } from "../forest";
-import { AnchorSet, ChangeRebaser, UpPath } from "../rebase";
+import { AnchorSet, UpPath, Value } from "../tree";
+import { ChangeRebaser } from "../rebase";
 import { Contravariant, Covariant, Invariant } from "../util";
 
 // TODO: factor actual changeset logic out by field kind, and into some other directory.
