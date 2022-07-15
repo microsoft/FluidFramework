@@ -16,6 +16,9 @@ export interface IDeliServerConfiguration {
     // Enables automatically updating the DNS when sequencing a summaryAck
     enableAutoDSNUpdate: boolean;
 
+    // Enables automatically acking summaries when the summary includes the protocol tree
+    enableAutoSummaryAcks: boolean;
+
     // Enables creating join/leave signals for write clients
     enableWriteClientSignals: boolean;
 
@@ -163,6 +166,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
         enableNackMessages: true,
         enableOpHashing: true,
         enableAutoDSNUpdate: false,
+        enableAutoSummaryAcks: false,
         enableWriteClientSignals: false,
         clientTimeout: 5 * 60 * 1000,
         activityTimeout: 30 * 1000,

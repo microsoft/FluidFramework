@@ -17,6 +17,8 @@ import {
     ScopeType,
     ISignalMessage,
     ISummaryAck,
+    ISummaryContent,
+    IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize, defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
@@ -423,6 +425,46 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     if (this.serviceConfiguration.deli.enableOpHashing) {
                         this.lastHash = getNextHash(sequencedMessage, this.lastHash);
                         sequencedMessage.expHash1 = this.lastHash;
+                    }
+
+                    if (this.serviceConfiguration.deli.enableAutoSummaryAcks &&
+                        sequencedMessage.type === MessageType.Summarize) {
+                        const summaryContent: ISummaryContent =
+                            JSON.parse((sequencedMessage as ISequencedDocumentAugmentedMessage).contents);
+
+                        // only run this logic on a single-commit summary message
+                        if (summaryContent.details?.includesProtocolTree) {
+                            // set a flag on the server metadata for this message to indicate that deli acked it
+                            // this will allow scribe to detect that the summarize message was handled and ignore it
+                            // this is useful for a mixed mode state where deli is acking while scribe is still running
+                            if (!sequencedMessage.serverMetadata) {
+                                sequencedMessage.serverMetadata = {};
+                            }
+
+                            if (sequencedMessage.serverMetadata &&
+                                typeof (sequencedMessage.serverMetadata) === "object") {
+                                sequencedMessage.serverMetadata.deliAcked = true;
+                            }
+
+                            const contents: ISummaryAck = {
+                                handle: summaryContent.handle,
+                                summaryProposal: {
+                                    summarySequenceNumber: sequencedMessage.sequenceNumber,
+                                },
+                            };
+
+                            const summaryAckMessage: IDocumentSystemMessage = {
+                                clientSequenceNumber: -1,
+                                contents,
+                                data: JSON.stringify(contents),
+                                referenceSequenceNumber: -1,
+                                type: MessageType.SummaryAck,
+                            };
+
+                            // note: ideally this message could be processed immediately instead of looping back around,
+                            // but that would require a large refactor
+                            void this.sendToRawDeltas(this.createRawOperationMessage(summaryAckMessage));
+                        }
                     }
 
                     const outgoingMessage: ISequencedOperationMessage = {
@@ -1216,7 +1258,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Creates a leave message for inactive clients.
      */
     private createLeaveMessage(clientId: string, serverMetadata?: any): IRawOperationMessage {
-        const operation: IDocumentSystemMessage = {
+        const leaveMessage: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
             data: JSON.stringify(clientId),
@@ -1225,15 +1267,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             type: MessageType.ClientLeave,
             serverMetadata,
         };
-        const leaveMessage: IRawOperationMessage = {
-            clientId: null,
-            documentId: this.documentId,
-            operation,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-        return leaveMessage;
+        return this.createRawOperationMessage(leaveMessage);
     }
 
     /**
@@ -1328,21 +1362,24 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     private createOpMessage(type: string): IRawOperationMessage {
-        const noOpMessage: IRawOperationMessage = {
+        return this.createRawOperationMessage({
+            clientSequenceNumber: -1,
+            contents: null,
+            referenceSequenceNumber: -1,
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
+            type,
+        });
+    }
+
+    private createRawOperationMessage(operation: IDocumentMessage): IRawOperationMessage {
+        return {
             clientId: null,
             documentId: this.documentId,
-            operation: {
-                clientSequenceNumber: -1,
-                contents: null,
-                referenceSequenceNumber: -1,
-                traces: this.serviceConfiguration.enableTraces ? [] : undefined,
-                type,
-            },
+            operation,
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: RawOperationType,
         };
-        return noOpMessage;
     }
 
     /**
