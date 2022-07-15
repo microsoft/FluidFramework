@@ -37,9 +37,6 @@ import {
 import { dataStoreAttributesBlobName, IContainerRuntimeMetadata } from "../summaryFormat";
 
 describe("Garbage Collection Tests", () => {
-    const testPkgPath = ["testPkg"];
-    // The package data is tagged in the telemetry event.
-    const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.CodeArtifact };
     // Nodes in the reference graph.
     const nodes: string[] = [
         "/node1",
@@ -50,6 +47,10 @@ describe("Garbage Collection Tests", () => {
 
     const mockLogger: MockLogger = new MockLogger();
     const mc = mixinMonitoringContext(mockLogger, sessionStorageConfigProvider.value);
+    let closeCalled = false;
+    const testPkgPath = ["testPkg"];
+    // The package data is tagged in the telemetry event.
+    const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.CodeArtifact };
 
     const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
     let injectedSettings = {};
@@ -115,7 +116,6 @@ describe("Garbage Collection Tests", () => {
 
     describe("Session expiry", () => {
         const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
-        let closeCalled = false;
 
         beforeEach(() => {
             closeCalled = false;

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/build-common",
-  "version": "0.25.0",
+  "version": "1.0.0",
   "description": "Package containing common configs",
   "homepage": "https://fluidframework.com",
   "repository": {

@@ -11,7 +11,7 @@ import { AzureClient } from "../AzureClient";
 import { createAzureClient } from "./AzureClientFactory";
 import { TestDataObject } from "./TestDataObject";
 
-const mapWait = async <T = any>(map: ISharedMap, key: string): Promise<T> => {
+const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
     const maybeValue = map.get<T>(key);
     if (maybeValue !== undefined) {
         return maybeValue;
@@ -71,7 +71,11 @@ describe("AzureClient", () => {
      */
     it("Created container is detached", async () => {
         const { container } = await client.createContainer(schema);
-        assert.strictEqual(container.attachState, AttachState.Detached, "Container should be detached");
+        assert.strictEqual(
+            container.attachState,
+            AttachState.Detached,
+            "Container should be detached",
+        );
     });
 
     /**
@@ -89,12 +93,10 @@ describe("AzureClient", () => {
             });
         });
 
+        assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
         assert.strictEqual(
-            typeof (containerId), "string",
-            "Attach did not return a string ID",
-        );
-        assert.strictEqual(
-            container.attachState, AttachState.Attached,
+            container.attachState,
+            AttachState.Attached,
             "Container is not attached after attach is called",
         );
     });
@@ -114,19 +116,13 @@ describe("AzureClient", () => {
             });
         });
 
+        assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
         assert.strictEqual(
-            typeof (containerId), "string",
-            "Attach did not return a string ID",
-        );
-        assert.strictEqual(
-            container.attachState, AttachState.Attached,
+            container.attachState,
+            AttachState.Attached,
             "Container is attached after attach is called",
         );
-        await assert.rejects(
-            container.attach(),
-            () => true,
-            "Container should not attach twice",
-        );
+        await assert.rejects(container.attach(), () => true, "Container should not attach twice");
     });
 
     /**
@@ -136,7 +132,7 @@ describe("AzureClient", () => {
      * be returned.
      */
     it("can retrieve existing Azure Fluid Relay container successfully", async () => {
-        const { container: newContainer } = (await client.createContainer(schema));
+        const { container: newContainer } = await client.createContainer(schema);
         const containerId = await newContainer.attach();
         await new Promise<void>((resolve) => {
             newContainer.on("connected", () => {
@@ -159,7 +155,7 @@ describe("AzureClient", () => {
      */
     it("cannot load improperly created container (cannot load a non-existent container)", async () => {
         const consoleErrorFn = console.error;
-        console.error = (): void => { };
+        console.error = (): void => {};
         const containerAndServicesP = client.getContainer("containerConfig", schema);
 
         const errorFn = (error: Error): boolean => {
@@ -200,7 +196,10 @@ describe("AzureClient", () => {
         );
 
         const { container } = await resources;
-        assert.deepStrictEqual(Object.keys(container.initialObjects), Object.keys(schema.initialObjects));
+        assert.deepStrictEqual(
+            Object.keys(container.initialObjects),
+            Object.keys(schema.initialObjects),
+        );
     });
 
     /**
