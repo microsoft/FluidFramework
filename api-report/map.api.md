@@ -100,7 +100,7 @@ export interface IDirectoryEvents extends IEvent {
 // @public
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
-// @public
+// @internal
 export interface IDirectoryNewStorageFormat {
     blobs: string[];
     content: IDirectoryDataObject;
