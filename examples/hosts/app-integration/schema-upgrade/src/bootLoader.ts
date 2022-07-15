@@ -31,7 +31,7 @@ import {
 
 interface ICodePackage<T> {
     fluidModuleWithDetails: IFluidModuleWithDetails;
-    getModel: (container: IContainer) => Promise<T>;
+    getModel: (container: IContainer) => T;
     getView: (model: T) => IFluidMountableView;
 }
 
@@ -40,10 +40,8 @@ const v1Code: ICodePackage<IApp> = {
         module: { fluidExport: new InventoryListContainerRuntimeFactory1() },
         details: { package: "one" },
     },
-    getModel: async (container: IContainer) => {
-        const app = new App(container);
-        await app.initialize();
-        return app;
+    getModel: (container: IContainer) => {
+        return new App(container);
     },
     getView: (model: IApp) => {
         const reactView = React.createElement(AppView, { app: model });
@@ -56,10 +54,8 @@ const v2Code: ICodePackage<IApp> = {
         module: { fluidExport: new InventoryListContainerRuntimeFactory2() },
         details: { package: "two" },
     },
-    getModel: async (container: IContainer) => {
-        const app = new App(container);
-        await app.initialize();
-        return app;
+    getModel: (container: IContainer) => {
+        return new App(container);
     },
     getView: (model: IApp) => {
         const reactView = React.createElement(AppView, { app: model });
@@ -103,6 +99,8 @@ const getContainerId = (container: IContainer) => {
 export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements IBootLoader {
     private readonly loader: IHostLoader = createLoader();
 
+    // Here, the BootLoader knows the specific version it wants to create (the latest one).
+    // So, we can specify the code details and instantiate the App directly.
     public async createNew(externalData?: string): Promise<{ app: IApp; id: string; }> {
         const container = await this.loader.createDetachedContainer({ package: "one" });
         const app = new App(container);
@@ -118,7 +116,10 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         if (typeof codeDetails?.package !== "string") {
             throw new Error("Unexpected code details");
         }
-        return getCode(codeDetails.package).getModel(container);
+        const code = getCode(codeDetails.package);
+        const model = code.getModel(container);
+        await model.initialize();
+        return model;
     }
 
     public async ensureMigrated(app: IMigratable) {
@@ -129,7 +130,11 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         const extractedData = await app.exportStringData();
         // Possibly transform the extracted data here
         const newContainer = await this.loader.createDetachedContainer(acceptedCodeDetails);
-        const newApp = new App(newContainer);
+        if (typeof acceptedCodeDetails.package !== "string") {
+            throw new Error("Unexpected code detail format");
+        }
+        const code = getCode(acceptedCodeDetails.package);
+        const newApp = code.getModel(newContainer);
         await newApp.initialize(extractedData);
 
         // Before attaching, let's check to make sure no one else has already done the migration
@@ -165,8 +170,13 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
             throw new Error("Migration ended without a new container being created");
         }
         const newContainer = await this.loader.resolve({ url: newContainerId });
-        const app = new App(newContainer);
-        await app.initialize();
-        return { app, id: newContainerId };
+        const codeDetails = newContainer.getSpecifiedCodeDetails();
+        if (typeof codeDetails?.package !== "string") {
+            throw new Error("Unexpected code details");
+        }
+        const code = getCode(codeDetails.package);
+        const model = code.getModel(newContainer);
+        await model.initialize();
+        return { app: model, id: newContainerId };
     }
 }
