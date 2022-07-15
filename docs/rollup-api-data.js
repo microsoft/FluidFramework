@@ -52,6 +52,7 @@ const memberCombineInstructions = [
                     "MergeTreeDeltaOperationType",
                     "MergeTreeDeltaOperationTypes",
                     "MergeTreeDeltaType",
+                    "MergeTreeMaintenanceType",
                     "PropertySet",
                     "ReferencePosition",
                     "ReferenceType",
