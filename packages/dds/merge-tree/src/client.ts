@@ -55,7 +55,7 @@ import {
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
-import { MergeTreeTextHelper, TextSegment } from "./textSegment";
+import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import {
@@ -367,30 +367,22 @@ export class Client {
         if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
             throw new Error("Rollback op doesn't match last edit");
         }
-        let length = 0;
         for (const segment of pendingSegmentGroup.segments) {
             const segmentSegmentGroup = segment.segmentGroups.dequeue();
             assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
-            if (TextSegment.is(segment)) {
-                length += segment.text.length;
-            } else if (Marker.is(segment)) {
-                length += 1;
-            } else {
-                throw new Error("Unsupported segment type for rollback");
-            }
-        }
 
-        const start = op.pos1 as number;
-        const segWindow = this.getCollabWindow();
-        const removeOp = createRemoveRangeOp(start, start + length);
-        this.mergeTree.markRangeRemoved(
-            start,
-            start + length,
-            UniversalSequenceNumber,
-            segWindow.clientId,
-            TreeMaintenanceSequenceNumber,
-            false,
-            { op: removeOp });
+            const start = op.pos1 as number;
+            const segWindow = this.getCollabWindow();
+            const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
+            this.mergeTree.markRangeRemoved(
+                start,
+                start + segment.cachedLength,
+                UniversalSequenceNumber,
+                segWindow.clientId,
+                TreeMaintenanceSequenceNumber,
+                false,
+                { op: removeOp });
+        }
     }
 
     /**
