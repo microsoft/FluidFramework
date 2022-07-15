@@ -134,7 +134,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public hierRefCount: number = 0;
@@ -156,7 +156,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public [Symbol.iterator]() {
@@ -196,7 +196,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public clear() {
@@ -223,7 +223,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public get empty() {
@@ -231,7 +231,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public createLocalRef(
@@ -250,7 +250,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public addLocalRef(lref: LocalReferencePosition, offset: number) {
@@ -275,7 +275,7 @@ export class LocalReferenceCollection {
     }
 
     /**
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
@@ -298,7 +298,7 @@ export class LocalReferenceCollection {
      * but before 'this' segment's cachedLength has changed, or the adjustment to the local refs
      * will be incorrect.
      *
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public append(other: LocalReferenceCollection) {
@@ -321,7 +321,7 @@ export class LocalReferenceCollection {
     /**
      * Returns true of the local reference is in the collection, otherwise false.
      *
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public has(lref: ReferencePosition): boolean {
@@ -369,7 +369,7 @@ export class LocalReferenceCollection {
      * @param splitSeg - Split segment which originally corresponded to the indices [offset, originalLength)
      * before splitting.
      *
-     * @privateRemarks This method should only be called by mergeTree.
+     * @remarks This method should only be called by mergeTree.
      * @internal
      */
     public split(offset: number, splitSeg: ISegment) {
