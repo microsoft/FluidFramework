@@ -17,7 +17,6 @@ import {
     ScopeType,
     ISignalMessage,
     ISummaryAck,
-    ISummaryContent,
     IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize, defaultHash, getNextHash } from "@fluidframework/server-services-client";
@@ -192,6 +191,11 @@ export interface IDeliLambdaEvents extends IEvent {
      */
     (event: "updatedNackMessages",
         listener: (type: NackMessagesType, contents: INackMessagesControlMessageContents | undefined) => void);
+
+    /**
+     * Emitted when the lambda recieves a summarize message.
+     */
+    (event: "summarizeMessage", listener: (summarizeMessage: ISequencedDocumentAugmentedMessage) => void);
 
     /**
      * Emitted when the lambda recieves a custom control message.
@@ -427,44 +431,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                         sequencedMessage.expHash1 = this.lastHash;
                     }
 
-                    if (this.serviceConfiguration.deli.enableAutoSummaryAcks &&
-                        sequencedMessage.type === MessageType.Summarize) {
-                        const summaryContent: ISummaryContent =
-                            JSON.parse((sequencedMessage as ISequencedDocumentAugmentedMessage).contents);
-
-                        // only run this logic on a single-commit summary message
-                        if (summaryContent.details?.includesProtocolTree) {
-                            // set a flag on the server metadata for this message to indicate that deli acked it
-                            // this will allow scribe to detect that the summarize message was handled and ignore it
-                            // this is useful for a mixed mode state where deli is acking while scribe is still running
-                            if (!sequencedMessage.serverMetadata) {
-                                sequencedMessage.serverMetadata = {};
-                            }
-
-                            if (sequencedMessage.serverMetadata &&
-                                typeof (sequencedMessage.serverMetadata) === "object") {
-                                sequencedMessage.serverMetadata.deliAcked = true;
-                            }
-
-                            const contents: ISummaryAck = {
-                                handle: summaryContent.handle,
-                                summaryProposal: {
-                                    summarySequenceNumber: sequencedMessage.sequenceNumber,
-                                },
-                            };
-
-                            const summaryAckMessage: IDocumentSystemMessage = {
-                                clientSequenceNumber: -1,
-                                contents,
-                                data: JSON.stringify(contents),
-                                referenceSequenceNumber: -1,
-                                type: MessageType.SummaryAck,
-                            };
-
-                            // note: ideally this message could be processed immediately instead of looping back around,
-                            // but that would require a large refactor
-                            void this.sendToRawDeltas(this.createRawOperationMessage(summaryAckMessage));
-                        }
+                    if (sequencedMessage.type === MessageType.Summarize) {
+                        // note: this is being emitted before it's produced to the deltas topic
+                        // that lets event handlers alter the message if necessary
+                        this.emit("summarizeMessage", sequencedMessage as ISequencedDocumentAugmentedMessage);
                     }
 
                     const outgoingMessage: ISequencedOperationMessage = {

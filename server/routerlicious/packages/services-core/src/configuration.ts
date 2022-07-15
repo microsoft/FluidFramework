@@ -16,9 +16,6 @@ export interface IDeliServerConfiguration {
     // Enables automatically updating the DNS when sequencing a summaryAck
     enableAutoDSNUpdate: boolean;
 
-    // Enables automatically acking summaries when the summary includes the protocol tree
-    enableAutoSummaryAcks: boolean;
-
     // Enables creating join/leave signals for write clients
     enableWriteClientSignals: boolean;
 
