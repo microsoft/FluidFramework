@@ -215,12 +215,12 @@ export interface IDirectoryDataObject {
  */
 export interface IDirectoryNewStorageFormat {
     /**
-     * TODO
+     * Blob IDs representing larger directory data that was serialized.
      */
     blobs: string[];
 
     /**
-     * Storage content.
+     * Storage content representing directory data that was not serialized.
      */
     content: IDirectoryDataObject;
 }
