@@ -65,16 +65,16 @@ export interface IRuntimeSignaler {
  * manage callbacks, and thus will reflect that behavior with regards to callback registration and
  * deregistration.
  */
-export class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignaler {
+ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignaler {
     private readonly emitter = new EventEmitter();
 
-    private readonly managerId: string | undefined;
+    private readonly signalerId: string | undefined;
 
     constructor(
         /**
          * Object to wrap that can submit and listen to signals
          */
-        private readonly internalSignaler: IRuntimeSignaler,
+        private readonly signaler: IRuntimeSignaler,
         /**
          * Optional id to assign to this manager that will be attached to
          * signal names.  Useful to avoid collisions if there are multiple
@@ -86,20 +86,20 @@ export class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements 
         this.emitter.on("error", (error) => {
             this.emit("error", error);
         });
-        this.managerId = managerId ? `#${managerId}` : undefined;
-        this.internalSignaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+        this.signalerId = managerId ? `#${managerId}` : undefined;
+        this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             const clientId = message.clientId;
             // Only call listeners when the runtime is connected and if the signal has an
             // identifiable sender clientId.  The listener is responsible for deciding how
             // it wants to handle local/remote signals
-            if (this.internalSignaler.connected && clientId !== null) {
+            if (this.signaler.connected && clientId !== null) {
                 this.emitter.emit(message.type, clientId, local, message.content);
             }
         });
     }
 
     private getManagerSignalName(signalName: string): string {
-        return this.managerId ? `${signalName}${this.managerId}` : signalName;
+        return this.signalerId ? `${signalName}${this.signalerId}` : signalName;
     }
 
     // ISignaler methods
@@ -127,24 +127,21 @@ export class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements 
         payload?: Jsonable,
     ) {
         const managerSignalName = this.getManagerSignalName(signalName);
-        if (this.internalSignaler.connected) {
-            this.internalSignaler.submitSignal(managerSignalName, payload);
+        if (this.signaler.connected) {
+            this.signaler.submitSignal(managerSignalName, payload);
         }
     }
 }
 
 /**
- * Note: currently experimental and under development
- *
  * DataObject implementation of ISignaler for fluid-static plug-and-play.  Allows fluid-static
- * users to get an ISignaler without a custom DO.  Where possible, consumers should instead
- * create a InternalSignaler themselves instead of using the DO wrapper to avoid the DO overhead.
+ * users to get an ISignaler without a custom DO.
  */
 export class Signaler extends DataObject<{ Events: IErrorEvent; }> implements EventEmitter, ISignaler {
-    private _manager: InternalSignaler | undefined;
-    private get manager(): InternalSignaler {
-        assert(this._manager !== undefined, 0x24b /* "internal signaler should be defined" */);
-        return this._manager;
+    private _signaler: InternalSignaler | undefined;
+    private get signaler(): InternalSignaler {
+        assert(this._signaler !== undefined, 0x24b /* "internal signaler should be defined" */);
+        return this._signaler;
     }
 
     public static get Name() { return "@fluid-example/signaler"; }
@@ -157,8 +154,8 @@ export class Signaler extends DataObject<{ Events: IErrorEvent; }> implements Ev
     );
 
     protected async hasInitialized() {
-        this._manager = new InternalSignaler(this.runtime);
-        this.manager.on("error", (error) => {
+        this._signaler = new InternalSignaler(this.runtime);
+        this.signaler.on("error", (error) => {
             this.emit("error", error);
         });
     }
@@ -169,7 +166,7 @@ export class Signaler extends DataObject<{ Events: IErrorEvent; }> implements Ev
         signalName: string,
         listener: SignalListener,
     ): ISignaler {
-        this.manager.onSignal(signalName, listener);
+        this.signaler.onSignal(signalName, listener);
         return this;
     }
 
@@ -177,7 +174,7 @@ export class Signaler extends DataObject<{ Events: IErrorEvent; }> implements Ev
         signalName: string,
         listener: SignalListener,
     ): ISignaler {
-        this.manager.offSignal(signalName, listener);
+        this.signaler.offSignal(signalName, listener);
         return this;
     }
 
@@ -185,6 +182,6 @@ export class Signaler extends DataObject<{ Events: IErrorEvent; }> implements Ev
         signalName: string,
         payload?: Jsonable,
     ) {
-        this.manager.submitSignal(signalName, payload);
+        this.signaler.submitSignal(signalName, payload);
     }
 }
