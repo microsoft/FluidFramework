@@ -101,7 +101,7 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
 
         // When referring SharedString becomes attached, the referred SharedString becomes attached
         // and the attachment transitively passes to a second referred SharedString
-        const simpleMarker2 = detachedString1.getMarkerFromId("markerId") as Marker;
+        const simpleMarker2 = sharedString1.getMarkerFromId("markerId") as Marker;
         const prop2 = { color: detachedString1.handle };
         sharedString1.annotateMarker(simpleMarker2, prop2);
 
