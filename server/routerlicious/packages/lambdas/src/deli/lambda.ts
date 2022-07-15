@@ -193,12 +193,12 @@ export interface IDeliLambdaEvents extends IEvent {
         listener: (type: NackMessagesType, contents: INackMessagesControlMessageContents | undefined) => void);
 
     /**
-     * Emitted when the lambda recieves a summarize message.
+     * Emitted when the lambda receives a summarize message.
      */
     (event: "summarizeMessage", listener: (summarizeMessage: ISequencedDocumentAugmentedMessage) => void);
 
     /**
-     * Emitted when the lambda recieves a custom control message.
+     * Emitted when the lambda receives a custom control message.
      */
     (event: "controlMessage", listener: (controlMessage: IControlMessage) => void);
 
