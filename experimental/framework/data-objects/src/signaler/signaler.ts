@@ -59,16 +59,16 @@ export interface IRuntimeSignaler {
 /**
  * Note: currently experimental and under development
  *
- * Helper class to assist common scenarios around working with signals.  Signaler wraps a runtime
+ * Helper class to assist common scenarios around working with signals.  InternalSignaler wraps a runtime
  * object with signaling functionality (e.g. ContainerRuntime or FluidDataStoreRuntime) and can
  * then be used in place of the original signaler.  It uses a separate internal EventEmitter to
  * manage callbacks, and thus will reflect that behavior with regards to callback registration and
  * deregistration.
  */
-export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignaler {
+ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignaler {
     private readonly emitter = new EventEmitter();
 
-    private readonly managerId: string | undefined;
+    private readonly signalerId: string | undefined;
 
     constructor(
         /**
@@ -80,13 +80,13 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
          * signal names.  Useful to avoid collisions if there are multiple
          * signal users at the Container level
          */
-        managerId?: string,
+        signalerId?: string,
     ) {
         super();
         this.emitter.on("error", (error) => {
             this.emit("error", error);
         });
-        this.managerId = managerId ? `#${managerId}` : undefined;
+        this.signalerId = signalerId ? `#${signalerId}` : undefined;
         this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             const clientId = message.clientId;
             // Only call listeners when the runtime is connected and if the signal has an
@@ -98,8 +98,8 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
         });
     }
 
-    private getManagerSignalName(signalName: string): string {
-        return this.managerId ? `${signalName}${this.managerId}` : signalName;
+    private getSignalerSignalName(signalName: string): string {
+        return this.signalerId ? `${signalName}${this.signalerId}` : signalName;
     }
 
     // ISignaler methods
@@ -108,8 +108,8 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
         signalName: string,
         listener: SignalListener,
     ): ISignaler {
-        const managerSignalName = this.getManagerSignalName(signalName);
-        this.emitter.on(managerSignalName, listener);
+        const signalerSignalName = this.getSignalerSignalName(signalName);
+        this.emitter.on(signalerSignalName, listener);
         return this;
     }
 
@@ -117,8 +117,8 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
         signalName: string,
         listener: SignalListener,
     ): ISignaler {
-        const managerSignalName = this.getManagerSignalName(signalName);
-        this.emitter.off(managerSignalName, listener);
+        const signalerSignalName = this.getSignalerSignalName(signalName);
+        this.emitter.off(signalerSignalName, listener);
         return this;
     }
 
@@ -126,39 +126,36 @@ export class Signaler extends TypedEventEmitter<IErrorEvent> implements ISignale
         signalName: string,
         payload?: Jsonable,
     ) {
-        const managerSignalName = this.getManagerSignalName(signalName);
+        const signalerSignalName = this.getSignalerSignalName(signalName);
         if (this.signaler.connected) {
-            this.signaler.submitSignal(managerSignalName, payload);
+            this.signaler.submitSignal(signalerSignalName, payload);
         }
     }
 }
 
 /**
- * Note: currently experimental and under development
- *
  * DataObject implementation of ISignaler for fluid-static plug-and-play.  Allows fluid-static
- * users to get an ISignaler without a custom DO.  Where possible, consumers should instead
- * create a Signaler themselves instead of using the DO wrapper to avoid the DO overhead.
+ * users to get an ISignaler without a custom DO.
  */
-export class SignalManager extends DataObject<{ Events: IErrorEvent; }> implements EventEmitter, ISignaler {
-    private _manager: Signaler | undefined;
-    private get manager(): Signaler {
-        assert(this._manager !== undefined, 0x24b /* "internal signaler should be defined" */);
-        return this._manager;
+export class Signaler extends DataObject<{ Events: IErrorEvent; }> implements EventEmitter, ISignaler {
+    private _signaler: InternalSignaler | undefined;
+    private get signaler(): InternalSignaler {
+        assert(this._signaler !== undefined, 0x24b /* "internal signaler should be defined" */);
+        return this._signaler;
     }
 
-    public static get Name() { return "@fluid-example/signal-manager"; }
+    public static get Name() { return "@fluid-example/signaler"; }
 
     public static readonly factory = new DataObjectFactory(
-        SignalManager.Name,
-        SignalManager,
+        Signaler.Name,
+        Signaler,
         [],
         {},
     );
 
     protected async hasInitialized() {
-        this._manager = new Signaler(this.runtime);
-        this.manager.on("error", (error) => {
+        this._signaler = new InternalSignaler(this.runtime);
+        this.signaler.on("error", (error) => {
             this.emit("error", error);
         });
     }
@@ -169,7 +166,7 @@ export class SignalManager extends DataObject<{ Events: IErrorEvent; }> implemen
         signalName: string,
         listener: SignalListener,
     ): ISignaler {
-        this.manager.onSignal(signalName, listener);
+        this.signaler.onSignal(signalName, listener);
         return this;
     }
 
@@ -177,7 +174,7 @@ export class SignalManager extends DataObject<{ Events: IErrorEvent; }> implemen
         signalName: string,
         listener: SignalListener,
     ): ISignaler {
-        this.manager.offSignal(signalName, listener);
+        this.signaler.offSignal(signalName, listener);
         return this;
     }
 
@@ -185,6 +182,6 @@ export class SignalManager extends DataObject<{ Events: IErrorEvent; }> implemen
         signalName: string,
         payload?: Jsonable,
     ) {
-        this.manager.submitSignal(signalName, payload);
+        this.signaler.submitSignal(signalName, payload);
     }
 }
