@@ -14,7 +14,6 @@ import {
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 
@@ -73,7 +72,6 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
     });
 
     it("marker passes on attachment directly and transitively to any referenced DDS", async () => {
-        sharedString1.insertText(0, "hello world");
         // Insert a simple marker.
         sharedString1.insertMarker(
             0,
@@ -82,25 +80,33 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
                 [reservedMarkerIdKey]: "markerId",
             },
         );
+        const detachedString1 = SharedString.create(dataObject1.runtime, "detachedString1");
+        detachedString1.insertMarker(
+            0,
+            ReferenceType.Simple,
+            {
+                [reservedMarkerIdKey]: "markerId",
+            },
+        );
+        const detachedString2 = SharedString.create(dataObject1.runtime, "detachedString2");
 
         // When an unattached DDS refers to another unattached DDS, both remain unattached
-        const detachedString = SharedString.create(dataObject1.runtime, "detachedString");
-        detachedString.insertText(0, "blue");
-        const detachedMap: ISharedMap = SharedMap.create(dataObject1.runtime);
-        detachedMap.set("key", detachedString.handle);
+        const simpleMarker = detachedString1.getMarkerFromId("markerId") as Marker;
+        const prop = { color: detachedString2.handle };
+        detachedString1.annotateMarker(simpleMarker, prop);
 
-        assert.equal(detachedString.isAttached(), false, "detachedString should not be attached");
-        assert.equal(detachedMap.isAttached(), false, "detachedMap should not be attached");
+        assert.equal(detachedString1.isAttached(), false, "detachedString1 should not be attached");
+        assert.equal(detachedString2.isAttached(), false, "detachedString2 should not be attached");
         assert.equal(sharedString1.isAttached(), true, "sharedString1 should be attached");
 
-        // When referring cell becomes attached, the referred cell becomes attached
-        // and the attachment transitively passes to a second referred DDS
-        const simpleMarker = sharedString1.getMarkerFromId("markerId") as Marker;
-        const prop = { color: detachedMap.handle };
-        sharedString1.annotateMarker(simpleMarker, prop);
+        // When referring SharedString becomes attached, the referred SharedString becomes attached
+        // and the attachment transitively passes to a second referred SharedString
+        const simpleMarker2 = detachedString1.getMarkerFromId("markerId") as Marker;
+        const prop2 = { color: detachedString1.handle };
+        sharedString1.annotateMarker(simpleMarker2, prop2);
 
-        assert.equal(detachedString.isAttached(), true, "detachedString should be attached");
-        assert.equal(detachedMap.isAttached(), true, "detachedMap should be attached");
+        assert.equal(detachedString1.isAttached(), true, "detachedString1 should be attached");
+        assert.equal(detachedString2.isAttached(), true, "detachedString2 should be attached");
         assert.equal(sharedString1.isAttached(), true, "sharedString1 should be attached");
     });
 });
