@@ -143,7 +143,7 @@ export function getRepoPath(
 }
 
 export function getGitDirectory(repoPath: string, baseDir?: string): string {
-    return baseDir ? `${baseDir}/${repoPath}` : repoPath;
+    return baseDir ? `${baseDir}/${repoPath}/summaries` : `${repoPath}/summaries`;
 }
 
 export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
