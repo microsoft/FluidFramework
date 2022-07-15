@@ -74,7 +74,7 @@ async function start(): Promise<void> {
     const watchForAppMigration = (_app: IApp) => {
         _app.on("migrationStateChanged", (migrationState: MigrationState) => {
             if (migrationState === MigrationState.ended) {
-                bootLoader.getMigrated(_app).then(async ({ app: migratedApp, id: migratedId }) => {
+                bootLoader.getMigrated(_app).then(async ({ model: migratedApp, id: migratedId }) => {
                     // bootLoader.getView(migratedApp) ???
                     watchForAppMigration(migratedApp);
                     renderApp(migratedApp);

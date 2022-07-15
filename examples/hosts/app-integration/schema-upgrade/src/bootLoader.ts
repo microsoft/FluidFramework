@@ -161,7 +161,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         // And the loader is probably caching the container anyway too.
     }
 
-    public async getMigrated(oldApp: IMigratable): Promise<{ app: IApp; id: string; }> {
+    public async getMigrated(oldApp: IMigratable): Promise<{ model: IApp; id: string; }> {
         if (oldApp.getMigrationState() !== MigrationState.ended) {
             throw new Error("Tried to get migrated container but migration hasn't happened yet");
         }
@@ -177,6 +177,6 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         const code = getCode(codeDetails.package);
         const model = code.getModel(newContainer);
         await model.initialize();
-        return { app: model, id: newContainerId };
+        return { model, id: newContainerId };
     }
 }
