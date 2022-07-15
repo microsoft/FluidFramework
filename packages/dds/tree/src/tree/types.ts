@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Serializable } from "@fluidframework/datastore-definitions";
 import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema";
 import { Brand, Opaque } from "../util";
 
@@ -63,3 +64,20 @@ export interface FieldKind {
     readonly minimumChildren: number;
     readonly maximumChildren: number;
 }
+
+/**
+ * Value that may be stored on a node.
+ *
+ * TODO: `Serializable` is not really the right type to use here,
+ * since many types (including functions) are "Serializable" (according to the type) despite not being serializable.
+ *
+ * Use this type instead of directly using Serializable for both clarity and so the above TODO can be addressed.
+ *
+ * This is a named interface instead of a Type alias so tooling (ex: refactors) will not replace it with `any`.
+ */
+export interface TreeValue extends Serializable {}
+
+ /**
+  * Value stored on a node.
+  */
+export type Value = undefined | TreeValue;

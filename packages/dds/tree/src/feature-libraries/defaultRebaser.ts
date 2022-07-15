@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Value } from "../forest";
-import { AnchorSet, UpPath } from "../tree";
+import { AnchorSet, UpPath, Value } from "../tree";
 import { ChangeRebaser } from "../rebase";
 import { Contravariant, Covariant, Invariant } from "../util";
 

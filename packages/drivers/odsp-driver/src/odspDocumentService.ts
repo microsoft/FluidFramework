@@ -267,7 +267,7 @@ export class OdspDocumentService implements IDocumentService {
                     this.socketIoClientFactory().catch(annotateAndRethrowConnectionError("socketIoClientFactory")),
                 ]);
 
-            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
+            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken ?? null);
             if (finalWebsocketToken === null) {
                 throw this.annotateConnectionError(
                     new NonRetryableError(

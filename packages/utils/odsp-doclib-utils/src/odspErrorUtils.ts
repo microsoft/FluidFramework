@@ -141,9 +141,9 @@ export function createOdspNetworkError(
     let facetCodes: string[] | undefined;
     let innerMostErrorCode: string | undefined;
     if (parseResult.success) {
-        // Log the whole response if it looks like the error format we expect
-        props.response = responseText;
         const errorResponse = parseResult.errorResponse;
+        // logging the error response message
+        props.responseMessage = errorResponse.error.message;
         facetCodes = parseFacetCodes(errorResponse);
         if (facetCodes !== undefined) {
             innerMostErrorCode = facetCodes[0];

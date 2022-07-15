@@ -679,6 +679,26 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
             });
         });
     });
+
+    describe("Attachment behavior", () => {
+        it("attaches if referring SharedDirectory becomes attached or is already attached", async () => {
+            const detachedDirectory1: ISharedDirectory = SharedDirectory.create(dataObject1.runtime);
+            const detachedDirectory2: ISharedDirectory = SharedDirectory.create(dataObject1.runtime);
+
+            // When an unattached directory refers to another unattached directory, both remain unattached
+            detachedDirectory1.set("newSharedDirectory", detachedDirectory2.handle);
+            assert.equal(sharedDirectory1.isAttached(), true, "sharedDirectory1 should be attached");
+            assert.equal(detachedDirectory1.isAttached(), false, "detachedDirectory1 should not be attached");
+            assert.equal(detachedDirectory2.isAttached(), false, "detachedDirectory2 should not be attached");
+
+            // When referring directory becomes attached, the referred directory becomes attached
+            // and the attachment transitively passes to a second referred directory
+            sharedDirectory1.set("newSharedDirectory", detachedDirectory1.handle);
+            assert.equal(sharedDirectory1.isAttached(), true, "sharedDirectory1 should be attached");
+            assert.equal(detachedDirectory1.isAttached(), true, "detachedDirectory1 should be attached");
+            assert.equal(detachedDirectory2.isAttached(), true, "detachedDirectory2 should be attached");
+        });
+    });
 });
 
 describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) => {

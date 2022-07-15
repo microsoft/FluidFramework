@@ -4,8 +4,8 @@
  */
 
 import { StoredSchemaRepository } from "../schema";
-import { AnchorSet, FieldKey, DetachedRange } from "../tree";
-import { Value, ITreeCursor } from "./cursor";
+import { AnchorSet, FieldKey, DetachedRange, Value } from "../tree";
+import { ITreeCursor } from "./cursor";
 import { IForestSubscription, NodeId } from "./forest";
 
 /**
@@ -30,7 +30,7 @@ export interface IEditableForest extends IForestSubscription {
      * The caller performs these updates because it has more semantic knowledge about the edits, which can be needed to
      * update the anchors in a semantically optimal way.
      */
-     readonly anchors: AnchorSet;
+    readonly anchors: AnchorSet;
 
     /**
      * Adds the supplied nodes to the forest.
@@ -77,6 +77,10 @@ export interface IEditableForest extends IForestSubscription {
 export interface TreeLocation {
     readonly range: FieldLocation | DetachedRange;
     readonly index: number;
+}
+
+export function isFieldLocation(range: FieldLocation | DetachedRange): range is FieldLocation {
+    return typeof range === "object";
 }
 
 /**

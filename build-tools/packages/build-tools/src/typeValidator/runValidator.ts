@@ -6,8 +6,9 @@
 import program from "commander";
 import { bumpDependencies } from "../bumpVersion/bumpDependencies";
 import { bumpVersionCommand } from "../bumpVersion/bumpVersion";
-import { Context, VersionChangeType } from "../bumpVersion/context";
+import { Context } from "../bumpVersion/context";
 import { GitRepo } from "../bumpVersion/gitRepo";
+import { VersionChangeType } from "../bumpVersion/versionSchemes";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { validateRepo } from "./repoValidator";
 import { BreakingIncrement, enableLogging } from "./validatorUtils";
@@ -67,7 +68,7 @@ async function main() {
         validationResults.forEach((value, key) => {
             depMap.set(key, undefined);
         });
-        bumpDependencies(context, "Bump dependencies version", depMap, false, false, false);
+        bumpDependencies(context, depMap, false, false, "Bump dependencies version", false);
     }
 }
 
