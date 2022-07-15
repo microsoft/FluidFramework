@@ -1,4 +1,5 @@
 import * as v8 from "v8";
+import { performance } from "perf_hooks";
 import { assert } from "chai";
 import { Test } from "mocha";
 import {
@@ -43,7 +44,6 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
     const itFunction = options.only ? it.only : it;
     const test = itFunction(qualifiedTitle, async () => {
         if (isParentProcess) {
-            global.gc();
             // Instead of running the benchmark in this process, create a new process.
             // See {@link isParentProcess} for why.
             // Launch new process, with:
@@ -59,7 +59,11 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
             const processFlagIndex = childArgs.indexOf("--parentProcess");
             childArgs[processFlagIndex] = "--childProcess";
 
-            // Remove arguments for any existing test filters.
+            // Replace any existing arguments for test filters so the child process only runs the current
+            // test. Note that even if using a mocha config file, when mocha spawns a node process all flags
+            // and settings from the file are passed explicitly to that command invocation and thus appear here.
+            // This also means there's no issue if the config file uses the grep argument (which would be
+            // mutually exclusive with the fgrep we add here), because it is removed.
             for (const flag of ["--grep", "--fgrep"]) {
                 const flagIndex = childArgs.indexOf(flag);
                 if (flagIndex > 0) {
@@ -67,8 +71,6 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
                     childArgs.splice(flagIndex, 2);
                 }
             }
-
-            // Add test filter so child process only run the current test.
             childArgs.push("--fgrep", test.fullTitle());
 
             // Remove arguments for debugging if they're present; in order to debug child processes we need
@@ -107,13 +109,6 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
             return Promise.resolve();
         }
 
-        // const benchmarkOptions: Benchmark.Options = {
-        //     maxTime: options.maxBenchmarkDurationSeconds,
-        //     minSamples: options.minSampleCount,
-        //     minTime: options.minSampleDurationSeconds,
-        //     defer: isAsync,
-        // };
-
         await options.before();
         const memoryTestStats: MemoryTestStats = {
             runs: 0,
@@ -124,7 +119,8 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
         };
 
         try {
-            for (let i = 0; i < (args.minSampleCount ?? 5); i++) {
+            const startTime = performance.now();
+            do {
                 global.gc();
                 const memoryUsageStats: BeforeAfter<NodeJS.MemoryUsage> = {
                     before: process.memoryUsage(),
@@ -138,10 +134,10 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
                     before: v8.getHeapSpaceStatistics(),
                     after: undefined as unknown as v8.HeapSpaceInfo[],
                 };
+                global.gc();
 
                 await argsBenchmarkFn();
 
-                global.gc();
                 memoryUsageStats.after = process.memoryUsage();
                 heapStats.after = v8.getHeapStatistics();
                 heapSpaceStats.after = v8.getHeapSpaceStatistics();
@@ -150,7 +146,10 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
                 memoryTestStats.memoryUsageStats.push(memoryUsageStats);
                 memoryTestStats.heapStats.push(heapStats);
                 memoryTestStats.heapSpaceStats.push(heapSpaceStats);
-            }
+                if ((performance.now() - startTime) / 1000 > (args.maxBenchmarkDurationSeconds ?? 60)) {
+                    break;
+                }
+            } while (memoryTestStats.runs < (args.minSampleCount ?? 5));
         } catch (error) {
             memoryTestStats.aborted = true;
             memoryTestStats.error = error as Error;

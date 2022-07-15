@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 import { benchmarkTypes, isChildProcess, performanceTestSuiteTag, ReporterOptions } from "./Configuration";
 // import { BenchmarkReporter, failedData } from "./Reporter";
 import { MemoryTestStats } from "./MemoryTestRunner";
-import { red } from "./ReporterUtilities";
+import { bold, green, italicize, pad, prettyNumber, red } from "./ReporterUtilities";
 
 const tags = [performanceTestSuiteTag];
 
@@ -61,7 +62,7 @@ module.exports = class {
                 });
             })
             .on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
-                console.error(red(`Test ${test.fullTitle()} failed with error: '${err.message}'`));
+                console.info(red(`Test ${test.fullTitle()} failed with error: '${err.message}'`));
             })
             .on(Runner.constants.EVENT_TEST_END, (test: Test) => {
                 // Type signature for `Test.state` indicates it will never be 'pending',
@@ -87,7 +88,7 @@ module.exports = class {
                 if (test.state !== "passed") {
                     // The mocha test failed after reporting benchmark data.
                     // This may indicate the benchmark did not measure what was intended, so mark as aborted.
-                    console.error(
+                    console.info(
                         red(
                             `Test ${test.title} in ${suite} completed with status '${
                                 test.state}' after reporting data.`,
@@ -113,27 +114,44 @@ module.exports = class {
                 if (!isChildProcess) {
                     const suiteName = getSuiteName(suite);
                     const suiteData = inProgressSuites.get(suiteName);
-                    console.log(suiteName);
-                    // console.log(JSON.stringify(suiteData));
-                    suiteData?.forEach((testData) => {
-                        let output = `${testData[0]} - `;
-                        const stats = testData[1];
+                    if (suiteData === undefined) {
+                        return;
+                    }
+                    inProgressSuites.delete(suiteName);
+                    console.log(`\n${bold(suiteName)}`);
 
-                        if (stats.aborted) {
-                            output += red(" FAILED");
+                    // console.log(JSON.stringify(suiteData));
+
+                    const table = new Table();
+                    suiteData?.forEach(([testName, testData]) => {
+                        if (testData.aborted) {
+                            table.cell("status", `${pad(4)}${red("×")}`);
                         } else {
-                            const heapUsedArray = stats.memoryUsageStats
+                            table.cell("status", `${pad(4)}${green("✔")}`);
+                        }
+                        table.cell("name", italicize(testName));
+                        if (!testData.aborted) {
+                            const heapUsedArray = testData.memoryUsageStats
                                 .map((memUsageStats) => memUsageStats.after.heapUsed - memUsageStats.before.heapUsed);
                             const heapUsedStats = getArrayStatistics(heapUsedArray);
-                            output += ` AvgHeapUsed: ${heapUsedStats.mean} StdDev: ${heapUsedStats.stddev}`;
 
-                            const peakMallocedMemoryStats =
-                                getArrayStatistics(stats.heapStats.map((x) => x.after.peak_malloced_memory));
-                            output += ` AvgPeakMallocedMemory: ${peakMallocedMemoryStats.mean} ` +
-                                    `StdDev: ${peakMallocedMemoryStats.stddev}`;
+                            table.cell("Heap Used Avg", prettyNumber(heapUsedStats.mean, 2), Table.padLeft);
+                            table.cell("Heap Used StdDev", prettyNumber(heapUsedStats.stddev, 2), Table.padLeft);
+                            table.cell("Relative StdDev",
+                                `${prettyNumber(heapUsedStats.stddev / heapUsedStats.mean * 100, 2)}%`, Table.padLeft);
+
+                            // const peakMallocedMemoryStats =
+                            //     getArrayStatistics(testData.heapStats.map((x) => x.after.peak_malloced_memory));
+
+                            // table.cell("Peak Malloced Memory Avg",
+                            //     prettyNumber(peakMallocedMemoryStats.mean, 2), Table.padLeft);
+                            // table.cell("Peak Malloced Memory StdDev",
+                            //     prettyNumber(peakMallocedMemoryStats.stddev, 2), Table.padLeft);
+                            table.cell("samples", testData.runs.toString(), Table.padLeft);
                         }
-                        console.log(output);
+                        table.newRow();
                     });
+                    console.log(`${table.toString()}`);
                     // benchmarkReporter.recordSuiteResults(getSuiteName(suite));
                 }
             })
