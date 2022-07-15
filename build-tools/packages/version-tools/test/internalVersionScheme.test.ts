@@ -6,6 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { assert } from "chai";
+import * as semver from "semver";
 import {
     fromInternalScheme,
     toInternalScheme,
@@ -57,6 +58,11 @@ describe("internalScheme", () => {
             const expected = `>=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0`;
             const range = getVersionRange(input, "patch");
             assert.strictEqual(range, expected);
+
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.0`, range))
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.1`, range))
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.2`, range))
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.3`, range))
         });
 
         it("caret ^ dependency equivalent (auto-upgrades minor versions)", () => {
@@ -64,6 +70,11 @@ describe("internalScheme", () => {
             const expected = `>=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0`;
             const range = getVersionRange(input, "minor");
             assert.strictEqual(range, expected);
+
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.1.0`, range))
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.1.1`, range))
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.2.2`, range))
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.3.3`, range))
         });
     });
 });
