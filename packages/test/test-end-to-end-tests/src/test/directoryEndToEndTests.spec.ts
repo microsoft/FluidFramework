@@ -687,16 +687,16 @@ describeFullCompat("SharedDictionary", (getTestObjectProvider) => {
 
             // When an unattached directory refers to another unattached directory, both remain unattached
             detachedDirectory1.set("newSharedDirectory", detachedDirectory2.handle);
-            assert.equal(sharedDirectory1.isAttached(), true, "sharedDirectory1 is not attached");
-            assert.equal(detachedDirectory1.isAttached(), false, "detachedDirectory1 is not attached");
-            assert.equal(detachedDirectory2.isAttached(), false, "detachedDirectory2 is not attached");
+            assert.equal(sharedDirectory1.isAttached(), true, "sharedDirectory1 should be attached");
+            assert.equal(detachedDirectory1.isAttached(), false, "detachedDirectory1 should not be attached");
+            assert.equal(detachedDirectory2.isAttached(), false, "detachedDirectory2 should not be attached");
 
             // When referring directory becomes attached, the referred directory becomes attached
             // and the attachment transitively passes to a second referred directory
             sharedDirectory1.set("newSharedDirectory", detachedDirectory1.handle);
-            assert.equal(sharedDirectory1.isAttached(), true, "sharedDirectory1 is not attached");
-            assert.equal(detachedDirectory1.isAttached(), true, "detachedDirectory1 is not attached");
-            assert.equal(detachedDirectory2.isAttached(), true, "detachedDirectory2 is not attached");
+            assert.equal(sharedDirectory1.isAttached(), true, "sharedDirectory1 should be attached");
+            assert.equal(detachedDirectory1.isAttached(), true, "detachedDirectory1 should be attached");
+            assert.equal(detachedDirectory2.isAttached(), true, "detachedDirectory2 should be attached");
         });
     });
 });

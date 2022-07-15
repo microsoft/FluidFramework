@@ -323,16 +323,16 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
 
         // When an unattached map refers to another unattached map, both remain unattached
         detachedMap1.set("newSharedMap", detachedMap2.handle);
-        assert.equal(sharedMap1.isAttached(), true, "sharedMap1 is not attached");
-        assert.equal(detachedMap1.isAttached(), false, "detachedMap1 is not attached");
-        assert.equal(detachedMap2.isAttached(), false, "detachedMap2 is not attached");
+        assert.equal(sharedMap1.isAttached(), true, "sharedMap1 should be attached");
+        assert.equal(detachedMap1.isAttached(), false, "detachedMap1 should not be attached");
+        assert.equal(detachedMap2.isAttached(), false, "detachedMap2 should not be attached");
 
         // When referring map becomes attached, the referred map becomes attached
         // and the attachment transitively passes to a second referred map
         sharedMap1.set("newSharedMap", detachedMap1.handle);
-        assert.equal(sharedMap1.isAttached(), true, "sharedMap1 is not attached");
-        assert.equal(detachedMap1.isAttached(), true, "detachedMap1 is not attached");
-        assert.equal(detachedMap2.isAttached(), true, "detachedMap2 is not attached");
+        assert.equal(sharedMap1.isAttached(), true, "sharedMap1 should be attached");
+        assert.equal(detachedMap1.isAttached(), true, "detachedMap1 should be attached");
+        assert.equal(detachedMap2.isAttached(), true, "detachedMap2 should be attached");
     });
 });
 
