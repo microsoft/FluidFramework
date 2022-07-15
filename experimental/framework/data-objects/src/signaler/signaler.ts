@@ -80,13 +80,13 @@ export interface IRuntimeSignaler {
          * signal names.  Useful to avoid collisions if there are multiple
          * signal users at the Container level
          */
-        managerId?: string,
+        signalerId?: string,
     ) {
         super();
         this.emitter.on("error", (error) => {
             this.emit("error", error);
         });
-        this.signalerId = managerId ? `#${managerId}` : undefined;
+        this.signalerId = signalerId ? `#${signalerId}` : undefined;
         this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
             const clientId = message.clientId;
             // Only call listeners when the runtime is connected and if the signal has an
@@ -98,7 +98,7 @@ export interface IRuntimeSignaler {
         });
     }
 
-    private getManagerSignalName(signalName: string): string {
+    private getSignalerSignalName(signalName: string): string {
         return this.signalerId ? `${signalName}${this.signalerId}` : signalName;
     }
 
@@ -108,8 +108,8 @@ export interface IRuntimeSignaler {
         signalName: string,
         listener: SignalListener,
     ): ISignaler {
-        const managerSignalName = this.getManagerSignalName(signalName);
-        this.emitter.on(managerSignalName, listener);
+        const signalerSignalName = this.getSignalerSignalName(signalName);
+        this.emitter.on(signalerSignalName, listener);
         return this;
     }
 
@@ -117,8 +117,8 @@ export interface IRuntimeSignaler {
         signalName: string,
         listener: SignalListener,
     ): ISignaler {
-        const managerSignalName = this.getManagerSignalName(signalName);
-        this.emitter.off(managerSignalName, listener);
+        const signalerSignalName = this.getSignalerSignalName(signalName);
+        this.emitter.off(signalerSignalName, listener);
         return this;
     }
 
@@ -126,9 +126,9 @@ export interface IRuntimeSignaler {
         signalName: string,
         payload?: Jsonable,
     ) {
-        const managerSignalName = this.getManagerSignalName(signalName);
+        const signalerSignalName = this.getSignalerSignalName(signalName);
         if (this.signaler.connected) {
-            this.signaler.submitSignal(managerSignalName, payload);
+            this.signaler.submitSignal(signalerSignalName, payload);
         }
     }
 }
