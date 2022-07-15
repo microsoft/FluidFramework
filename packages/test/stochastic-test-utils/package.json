@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^0.32.1",
+    "best-random": "^1.0.0",
     "random-js": "^1.0.8"
   },
   "devDependencies": {
