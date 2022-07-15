@@ -1,32 +1,32 @@
-# SignalManager
-The `SignalManager` is a DataObject that can be used to communicate transient data via signals. Transient data refers to impermanent information that is not persisted with the container.
+# Signaler
+The `Signaler` is a DataObject that can be used to communicate transient data via signals. Transient data refers to impermanent information that is not persisted with the container.
 
 ## Usage
-User presence scenarios are well-suited for `SignalManager`, as users are required to tell other users their own information and their past data is mostly irrelavant. Using `SignalManager` over other distributed data structures in these scenarios is beneficial, as its usage does not result in the storage of data that is not useful in the long-term.
+User presence scenarios are well-suited for `Signaler`, as users are required to tell other users their own information and their past data is mostly irrelavant. Using `Signaler` over other distributed data structures in these scenarios is beneficial, as its usage does not result in the storage of data that is not useful in the long-term.
 
 ### Creation
-Just like with DDSes, you can include `SignalManager` as a shared object you would like to load in your `FluidContainer` schema.
+Just like with DDSes, you can include `Signaler` as a shared object you would like to load in your `FluidContainer` schema.
 
-Here is a look at how you would go about loading `SignalManager` as part of the initial objects of the container:
+Here is a look at how you would go about loading `Signaler` as part of the initial objects of the container:
 
 ```typescript
 const containerSchema: ContainerSchema = {
     initialObjects: {
-        signalManager: SignalManager,
+        signaler: Signaler,
     },
 };
 
 const { container, services } = await client.createContainer(containerSchema);
 
-const signalManager = container.initialObjects.signalManager as SignalManager;
+const signaler = container.initialObjects.signaler as Signaler;
 ```
 
-`signalManager` can then be directly used in your Fluid application!
+`signaler` can then be directly used in your Fluid application!
 
 For more information on using `ContainerSchema` to create objects please see [Data modeling](https://fluidframework.com/docs/build/data-modeling/).
 
 ## API
-`SignalManager` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
+`Signaler` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
 - `submitSignal(signalName: string, payload?: Jsonable)` - Sends a signal with a payload to its connected listeners
 - `onSignal(signalName: string, listener: SignalListener)` - Adds a listener for the specified signal. Same behavior as EventEmitter's `on` method.
 - `offSignal(signalName: string, listener: SignalListener)` - Removes a listener for the specified signal. Same behavior as EventEmitter's `off` method.
@@ -41,14 +41,14 @@ private static readonly focusRequestType = "focusRequest";
 
 ```typescript
 container.on("connected", () => {
-    this.signalManager.submitSignal(FocusTracker.focusRequestType);
+    this.signaler.submitSignal(FocusTracker.focusRequestType);
 });
 ```
 
 The connected clients are listening to this focus request signal, and they respond with their current focus state:
 
 ```typescript
-this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
+this.signaler.onSignal(FocusTracker.focusRequestType, () => {
     this.sendFocusSignal(document.hasFocus());
 });
 ```
@@ -59,9 +59,9 @@ Rather than submitting multiple signal types in response to one specific event, 
 
 ```typescript
 container.on("connected", () => {
-    this.signalManager.submitSignal("colorRequest");
-    this.signalManager.submitSignal("focusRequest");
-    this.signalManager.submitSignal("currentlySelectedObjectRequest");
+    this.signaler.submitSignal("colorRequest");
+    this.signaler.submitSignal("focusRequest");
+    this.signaler.submitSignal("currentlySelectedObjectRequest");
 });
 ```
 
@@ -69,7 +69,7 @@ This approach is costly since the amount of signals sent back on request grows l
 
 ```typescript
 container.on("connected", () => {
-    this.signalManager.submitSignal("connectRequest");
+    this.signaler.submitSignal("connectRequest");
 });
 ```
 

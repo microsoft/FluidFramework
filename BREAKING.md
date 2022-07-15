@@ -1070,14 +1070,14 @@ The `encoding` property of `IBlob` in `@fluidframework/protocol-definitions` has
 
 ## 0.48 Breaking changes
 - [client-api package removed](#client-api-package-removed)
-- [SignalManager removed from fluid-framework export](#signalmanager-removed-from-fluid-framework-export)
+- [Signaler removed from fluid-framework export](#signalmanager-removed-from-fluid-framework-export)
 - [MockLogger removed from @fluidframework/test-runtime-utils](#mocklogger-removed-from-fluidframeworktest-runtime-utils)
 
 ### client-api package removed
 The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been removed.  Usage of this package should be replaced with direct usage of the `Loader`, `FluidDataStoreRuntime`, `ContainerRuntime`, and other supported functionality.
 
-### SignalManager removed from fluid-framework export
-The `SignalManager` and `Signaler` classes have been removed from the `@fluid-framework/fluid-static` and `fluid-framework` package exports and moved to the `@fluid-experimental/data-objects` package.  This is because of its experimental state and the intentional omission of experimental features from `fluid-framework`.  Users should instead import the classes from the `@fluid-experimental/data-objects` package.
+### Signaler removed from fluid-framework export
+The `Signaler` and `Signaler` classes have been removed from the `@fluid-framework/fluid-static` and `fluid-framework` package exports and moved to the `@fluid-experimental/data-objects` package.  This is because of its experimental state and the intentional omission of experimental features from `fluid-framework`.  Users should instead import the classes from the `@fluid-experimental/data-objects` package.
 
 ### MockLogger removed from @fluidframework/test-runtime-utils
 MockLogger is only used internally, so it's removed from @fluidframework/test-runtime-utils.
