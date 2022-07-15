@@ -21,6 +21,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { waitForContainerConnection } from "./gcTestSummaryUtils";
 
 class TestDataObject extends DataObject {
     public get _root() {
@@ -79,6 +80,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
+            disableSummaries: true,
             summaryConfigOverrides: {
                 state: "disabled",
             },
@@ -138,19 +140,18 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 
     const createContainer = async (): Promise<IContainer> => provider.createContainer(runtimeFactory);
 
-    before(function() {
-        provider = getTestObjectProvider();
+    beforeEach(async function() {
+        provider = getTestObjectProvider({ syncSummarizer: true });
         // These tests validate the GC state in summary by calling summarize directly on the container runtime.
         // They do not post these summaries or download them. So, it doesn't need to run against real services.
         if (provider.driver.type !== "local") {
             this.skip();
         }
-    });
 
-    beforeEach(async () => {
         const container = await createContainer();
         mainDataStore = await requestFluidObject<TestDataObject>(container, "/");
         containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+        await waitForContainerConnection(container);
     });
 
     describe("SharedMatrix", () => {

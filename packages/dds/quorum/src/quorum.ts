@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable unicorn/numeric-separators-style */
+/* eslint-disable unicorn/number-literal-case */
+
 // eslint-disable-next-line unicorn/prefer-node-protocol
 import { EventEmitter } from "events";
 
-// import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
     IChannelAttributes,
@@ -27,7 +30,7 @@ interface IAcceptedQuorumValue {
     /**
      * The accepted value.
      */
-    value: any;
+    value: unknown;
 
     /**
      * The sequence number when the value was accepted, which will normally coincide with one of three possibilities:
@@ -45,11 +48,7 @@ interface IAcceptedQuorumValue {
  * The pending change information, if any.
  */
 interface IPendingQuorumValue {
-    value: any;
-    /**
-     * The sequence number when this value went pending -- the sequence number of the "set" op.
-     */
-    sequenceNumber: number;
+    value: unknown;
     /**
      * The list of clientIds that we expect "accept" ops from.  Clients are also removed from this list if they
      * disconnect without accepting.  When this list empties, the pending value transitions to accepted.
@@ -72,7 +71,7 @@ type QuorumValue =
 interface IQuorumSetOperation {
     type: "set";
     key: string;
-    value: any;
+    value: unknown;
 
     /**
      * A "set" is only valid if it is made with knowledge of the most-recent accepted proposal - its reference
@@ -89,12 +88,6 @@ interface IQuorumSetOperation {
 interface IQuorumAcceptOperation {
     type: "accept";
     key: string;
-    /**
-     * The sequence number when the value to be accepted went pending.  This is used to validate that we are
-     * accepting the specific proposal that we intended, and not another proposal for the same key.
-     * TODO: We may not need this if we filter out resubmission of "accept" ops on reconnect.
-     */
-    pendingSeq: number;
 }
 
 type IQuorumOperation = IQuorumSetOperation | IQuorumAcceptOperation;
@@ -198,8 +191,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
         this.runtime.getQuorum().on("removeMember", this.handleQuorumRemoveMember);
 
         this.disconnectWatcher.on("disconnect", () => {
-            // assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
-            // TODO: Handle appropriately
+            // TODO: Consider if disconnect watching is needed for promise-based API.
         });
     }
 
@@ -213,6 +205,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
      * {@inheritDoc IQuorum.get}
      */
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public get(key: string): any {
         return this.values.get(key)?.accepted?.value;
     }
@@ -220,6 +214,8 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
      * {@inheritDoc IQuorum.getPending}
      */
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public getPending(key: string): any {
         // TODO: Should this return differently for "nothing pending" vs. "delete pending"?
         // Maybe return the QuorumValue itself?
@@ -229,8 +225,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     /**
      * {@inheritDoc IQuorum.set}
      */
-    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-    public set(key: string, value: any): void {
+    public set(key: string, value: unknown): void {
         const currentValue = this.values.get(key);
         // Early-exit if we can't submit a valid proposal (there's already a pending proposal)
         if (currentValue?.pending !== undefined) {
@@ -301,7 +296,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
     private readonly handleIncomingSet = (
         key: string,
-        value: any,
+        value: unknown,
         refSeq: number,
         setSequenceNumber: number,
         clientId: string,
@@ -329,7 +324,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             pending: {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 value,
-                sequenceNumber: setSequenceNumber,
                 expectedSignoffs,
             },
         };
@@ -351,7 +345,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
             const acceptOp: IQuorumAcceptOperation = {
                 type: "accept",
                 key,
-                pendingSeq: setSequenceNumber,
             };
             this.submitLocalMessage(acceptOp);
         }
@@ -359,20 +352,15 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
 
     private readonly handleIncomingAccept = (
         key: string,
-        pendingSeq: number,
         clientId: string,
         sequenceNumber: number,
     ): void => {
         const pending = this.values.get(key)?.pending;
-        if (pending === undefined
-            || pending.sequenceNumber !== pendingSeq
-            || !pending.expectedSignoffs.includes(clientId)) {
-            // Drop unexpected accepts on the ground.  This can happen normally in resubmit on reconnect cases, and
-            // is benign since the client implicitly accepts on disconnect.
-            // TODO: We could filter out just the accept ops when resubmitting on reconnect to avoid this - the
-            // proposals could still be resubmitted.
-            return;
-        }
+        // We don't resubmit accepts on reconnect so this should only run for expected accepts.
+        assert(pending !== undefined, 0x2f8 /* Unexpected accept op, nothing pending */);
+        assert(
+            pending.expectedSignoffs.includes(clientId),
+            0x2f9 /* Unexpected accept op, client not in expectedSignoffs */);
 
         // Remove the client from the expected signoffs
         pending.expectedSignoffs = pending.expectedSignoffs.filter(
@@ -459,6 +447,36 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     }
 
     /**
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
+     * @internal
+     */
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+        const quorumOp = content as IQuorumOperation;
+        // Filter out accept messages - if we're coming back from a disconnect, our acceptance is never required
+        // because we're implicitly removed from the list of expected accepts.
+        if (quorumOp.type === "accept") {
+            return;
+        }
+
+        // Filter out set messages that have no chance of being accepted because there's another value pending
+        // or another value was accepted while we were disconnected.
+        const currentValue = this.values.get(quorumOp.key);
+        if (
+            currentValue !== undefined
+            && (
+                currentValue.pending !== undefined
+                || quorumOp.refSeq < currentValue.accepted?.sequenceNumber
+            )
+        ) {
+            // TODO: If set() returns a promise we will need to resolve it false for invalid proposals.
+            return;
+        }
+
+        // Otherwise we can resubmit
+        this.submitLocalMessage(quorumOp, localOpMetadata);
+    }
+
+    /**
      * Process a quorum operation
      *
      * @param message - the message to prepare
@@ -477,7 +495,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
                     break;
 
                 case "accept":
-                    this.incomingOp.emit("accept", op.key, op.pendingSeq, message.clientId, message.sequenceNumber);
+                    this.incomingOp.emit("accept", op.key, message.clientId, message.sequenceNumber);
                     break;
 
                 default:

@@ -21,10 +21,22 @@ import {
 } from "./types";
 import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
+/**
+ * Input props for {@link RootDataObject.initializingFirstTime}
+ */
 export interface RootDataObjectProps {
+    /**
+     * Initial object structure with which the {@link RootDataObject} will be first-time initialized.
+     * See {@link RootDataObject.initializingFirstTime}
+     */
     initialObjects: LoadableObjectClassRecord;
 }
 
+/**
+ * The entry-point/root collaborative object of the Fluid Container.
+ * This class abstracts the dynamic code required to build a Fluid Container into a static representation
+ * for end customers.
+ */
 export class RootDataObject extends DataObject<{ InitialState: RootDataObjectProps; }> {
     private readonly initialObjectsDirKey = "initial-objects-key";
     private readonly _initialObjects: LoadableObjectRecord = {};
@@ -37,6 +49,12 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         return dir;
     }
 
+    /**
+     * The first time this object is initialized, creates each object identified in
+     * {@link RootDataObjectProps.initialObjects} and stores them as unique values in the root directory.
+     *
+     * See {@link @fluidframework/aqueduct#PureDataObject.initializingFirstTime}
+     */
     protected async initializingFirstTime(props: RootDataObjectProps) {
         this.root.createSubDirectory(this.initialObjectsDirKey);
 
@@ -53,6 +71,12 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         await Promise.all(initialObjectsP);
     }
 
+    /**
+     * Every time an instance is initialized, loads all of the initial objects in the root directory so they can be
+     * accessed immediately.
+     *
+     * See {@link @fluidframework/aqueduct#PureDataObject.hasInitialized}
+     */
     protected async hasInitialized() {
         // We will always load the initial objects so they are available to the developer
         const loadInitialObjectsP: Promise<void>[] = [];
@@ -67,6 +91,10 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         await Promise.all(loadInitialObjectsP);
     }
 
+    /**
+     * Provides a record of the initial objects defined on creation.
+     * See {@link RootDataObject.initializingFirstTime}
+     */
     public get initialObjects(): LoadableObjectRecord {
         if (Object.keys(this._initialObjects).length === 0) {
             throw new Error("Initial Objects were not correctly initialized");
@@ -74,6 +102,10 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
         return this._initialObjects;
     }
 
+    /**
+     * Dynamically creates a new detached collaborative object (DDS/DataObject).
+     * @param objectClass - Type of the collaborative object to be created.
+     */
     public async create<T extends IFluidLoadable>(
         objectClass: LoadableObjectClass<T>,
     ): Promise<T> {
@@ -104,12 +136,16 @@ export class RootDataObject extends DataObject<{ InitialState: RootDataObjectPro
 const rootDataStoreId = "rootDOId";
 
 /**
- * The DOProviderContainerRuntimeFactory is container code that provides a single RootDataObject.  This data object is
+ * Container code that provides a single {@link RootDataObject}.  This data object is
  * dynamically customized (registry and initial objects) based on the schema provided to the container runtime factory.
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    private readonly rootDataObjectFactory; // type is DataObjectFactory
+    private readonly rootDataObjectFactory: DataObjectFactory<RootDataObject, {
+        InitialState: RootDataObjectProps;
+    }>;
+
     private readonly initialObjects: LoadableObjectClassRecord;
+
     constructor(schema: ContainerSchema) {
         const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
         const rootDataObjectFactory =
@@ -125,6 +161,9 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
         this.initialObjects = schema.initialObjects;
     }
 
+    /**
+     * {@inheritDoc @fluidframework/aqueduct#BaseContainerRuntimeFactory.containerInitializingFirstTime}
+     */
     protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
         // The first time we create the container we create the RootDataObject
         await this.rootDataObjectFactory.createRootInstance(

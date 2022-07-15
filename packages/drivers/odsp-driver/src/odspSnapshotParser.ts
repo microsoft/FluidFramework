@@ -6,7 +6,7 @@
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { IOdspSnapshot, IOdspSnapshotCommit, ISnapshotTreeEx } from "./contracts";
-import { ISnapshotContents } from "./odspUtils";
+import { ISnapshotContents } from "./odspPublicUtils";
 
 /**
  * Build a tree hierarchy base on a flat tree
@@ -51,7 +51,7 @@ function buildHierarchy(flatTree: IOdspSnapshotCommit): api.ISnapshotTree {
  * Converts existing IOdspSnapshot to snapshot tree, blob array and ops
  * @param odspSnapshot - snapshot
  */
-export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
+export function convertOdspSnapshotToSnapshotTreeAndBlobs(
     odspSnapshot: IOdspSnapshot,
 ): ISnapshotContents {
     const blobsWithBufferContent = new Map<string, ArrayBuffer>();
@@ -62,11 +62,16 @@ export function convertOdspSnapshotToSnapsohtTreeAndBlobs(
             blobsWithBufferContent.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf8"));
         });
     }
+
+    const sequenceNumber = odspSnapshot?.trees[0].sequenceNumber;
+
     const val: ISnapshotContents = {
         blobs: blobsWithBufferContent,
         ops: odspSnapshot.ops?.map((op) => op.op) ?? [],
-        sequenceNumber: odspSnapshot?.trees[0].sequenceNumber,
+        sequenceNumber,
         snapshotTree: buildHierarchy(odspSnapshot.trees[0]),
+        latestSequenceNumber: (odspSnapshot.ops && odspSnapshot.ops.length > 0) ?
+            odspSnapshot.ops[odspSnapshot.ops.length - 1].sequenceNumber : sequenceNumber,
     };
     return val;
 }

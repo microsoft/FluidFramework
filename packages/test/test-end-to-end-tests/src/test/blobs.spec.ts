@@ -27,7 +27,8 @@ import {
     itExpects,
 } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { getGCStateFromSummary } from "./mockSummarizerClient";
+// eslint-disable-next-line import/no-internal-modules
+import { getGCStateFromSummary } from "./gc/gcTestSummaryUtils";
 
 const testContainerConfig: ITestContainerConfig = {
     runtimeOptions: {
@@ -36,7 +37,8 @@ const testContainerConfig: ITestContainerConfig = {
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{
-                    idleTime: 5000,
+                    minIdleTime: 5000,
+                    maxIdleTime: 5000,
                     maxTime: 5000 * 12,
                     maxAckWaitTime: 120000,
                     maxOps: 1,
@@ -144,14 +146,24 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
             await new Promise<void>((resolve, reject) => {
                 let summarized = false;
                 container1.on("op", (op) => {
-                    if (op.type === "summaryAck") {
-                        if (summarized) {
-                            resolve();
+                    switch (op.type) {
+                        case "summaryAck": {
+                            if (summarized) {
+                                resolve();
+                            }
+                            break;
                         }
-                    } else if (op.type === "summaryNack") {
-                        reject(new Error("summaryNack"));
-                    } else if (op.type === "summarize") {
-                        summarized = true;
+                        case "summaryNack": {
+                            reject(new Error("summaryNack"));
+                            break;
+                        }
+                        case "summarize": {
+                            summarized = true;
+                            break;
+                        }
+                        default: {
+                            break;
+                        }
                     }
                 });
             });
@@ -178,22 +190,6 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
         // upload the blob twice and make sure nothing bad happens.
         await Promise.all([dataStore._runtime.uploadBlob(blob), dataStore._runtime.uploadBlob(blob)]);
-    });
-
-    it("uploadBlob() rejects when runtime is disposed", async () => {
-        const container = await provider.makeTestContainer(testContainerConfig);
-        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-
-        const blobOpP = new Promise<void>((resolve) => container.deltaManager.on("submitOp", (op) => {
-            if (op.contents.includes("blobAttach")) {
-                (container.deltaManager as any)._inbound.pause();
-                resolve();
-            }
-        }));
-        const blobP = dataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8"));
-        await blobOpP;
-        container.close();
-        await assert.rejects(blobP, /runtime disposed/);
     });
 });
 
@@ -246,14 +242,24 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
         await new Promise<void>((resolve, reject) => {
             let summarized = false;
             container1.on("op", (op) => {
-                if (op.type === "summaryAck") {
-                    if (summarized) {
-                        resolve();
+                switch (op.type) {
+                    case "summaryAck": {
+                        if (summarized) {
+                            resolve();
+                        }
+                        break;
                     }
-                } else if (op.type === "summaryNack") {
-                    reject(new Error("summaryNack"));
-                } else if (op.type === "summarize") {
-                    summarized = true;
+                    case "summaryNack": {
+                        reject(new Error("summaryNack"));
+                        break;
+                    }
+                    case "summarize": {
+                        summarized = true;
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
                 }
             });
         });
@@ -449,7 +455,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
         const gcContainerConfig: ITestContainerConfig = {
             runtimeOptions: {
                 gcOptions: {
-                    gcAllowed: true, runGCInTestMode: deleteUnreferencedContent, writeDataAtRoot: true,
+                    gcAllowed: true, runGCInTestMode: deleteUnreferencedContent,
                 },
             },
         };

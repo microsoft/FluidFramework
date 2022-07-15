@@ -22,19 +22,30 @@ function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCe
     const proxiedParent = PropertyProxy.proxify(rowData.parent!);
     const parentContext = rowData.parent!.getContext();
     try {
-        if (parentContext === "single" || parentContext === "array") {
-            // TODO: Temporary workaround, as enum arrays currently are not considered primitive.
-            if (Utils.isEnumArrayProperty(rowData.parent!)) {
-                (rowData.parent! as any).set(parseInt(rowData.name, 10), val);
-            } else {
-                proxiedParent[rowData.name] = val;
+        switch (parentContext) {
+            case "single":
+            case "array": {
+                // TODO: Temporary workaround, as enum arrays currently are not considered primitive.
+                if (Utils.isEnumArrayProperty(rowData.parent!)) {
+                    (rowData.parent! as any).set(parseInt(rowData.name, 10), val);
+                } else {
+                    proxiedParent[rowData.name] = val;
+                }
+                break;
             }
-        } else if (parentContext === "map") {
-            // This is safe since we know the input property in PropertyProxy.proxify was of type MapProperty
-            // since the parents context was of type "map"
-            (proxiedParent as unknown as ProxifiedMapProperty).set(rowData.name, val);
-        } else if (parentContext === "set") {
-            (rowData.parent! as SetProperty).get(rowData.name)!.value = val;
+            case "map": {
+                // This is safe since we know the input property in PropertyProxy.proxify was of type MapProperty
+                // since the parents context was of type "map"
+                (proxiedParent as unknown as ProxifiedMapProperty).set(rowData.name, val);
+                break;
+            }
+            case "set": {
+                (rowData.parent! as SetProperty).get(rowData.name)!.value = val;
+                break;
+            }
+            default: {
+                break;
+            }
         }
         rowData.parent!.getRoot().getWorkspace()!.commit();
     } catch (error) {

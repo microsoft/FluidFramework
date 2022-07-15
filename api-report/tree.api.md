@@ -4,22 +4,127 @@
 
 ```ts
 
+import { Jsonable } from '@fluidframework/datastore-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @public
+export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
+
+// @public
+export abstract class BrandedType<ValueType, Name extends string> {
+    protected readonly _type_brand: Name;
+    // (undocumented)
+    protected _typeCheck?: Invariant<ValueType>;
+}
+
+// @public
+export interface Contravariant<T> {
+    // (undocumented)
+    _removeCovariance?: (_: T) => void;
+}
+
+// @public
+export interface Covariant<T> {
+    // (undocumented)
+    _removeContravariance?: T;
+}
+
+// @public
+export function cursorToJsonObject(reader: ITreeCursor): unknown;
+
+// @public
+export const EmptyKey: FieldKey;
+
+// @public
+export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaque extends BrandedType<infer ValueType, infer Name> ? isAny<ValueType> extends true ? unknown : Brand<ValueType, Name> : never;
+
+// @public
+export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
+
+// @public (undocumented)
+export type FieldKey = LocalFieldKey | GlobalFieldKey;
+
+// @public
+export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
+}
+
+// @public
+export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
+}
+
+// @public
+export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
+
+// @public
 export interface ITreeCursor {
-    down(key: TreeKey, index: number): TreeNavigationResult;
-    keys: Iterable<TreeKey>;
-    length(key: TreeKey): number;
-    type: TreeType;
+    down(key: FieldKey, index: number): TreeNavigationResult;
+    // (undocumented)
+    keys: Iterable<FieldKey>;
+    // (undocumented)
+    length(key: FieldKey): number;
+    seek(offset: number): {
+        result: TreeNavigationResult;
+        moved: number;
+    };
+    readonly type: TreeType;
     up(): TreeNavigationResult;
-    value: undefined | Serializable;
+    readonly value: Value;
+}
+
+// Warning: (ae-forgotten-export) The symbol "NamedTreeSchema" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export const jsonArray: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonBoolean: NamedTreeSchema;
+
+// @public
+export class JsonCursor<T> implements ITreeCursor {
+    constructor(root: Jsonable<T>);
+    // (undocumented)
+    down(key: FieldKey, index: number): TreeNavigationResult;
+    // (undocumented)
+    get keys(): Iterable<FieldKey>;
+    // (undocumented)
+    length(key: FieldKey): number;
+    // (undocumented)
+    seek(offset: number): {
+        result: TreeNavigationResult;
+        moved: number;
+    };
+    // (undocumented)
+    get type(): TreeType;
+    // (undocumented)
+    up(): TreeNavigationResult;
+    // (undocumented)
+    get value(): Value;
 }
 
 // @public (undocumented)
-export type TreeKey = (number | string) & {
-    readonly TreeKey: symbol;
-};
+export const jsonNull: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonNumber: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonObject: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonString: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema>;
+
+// @public
+export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
+
+// @public
+export interface MakeNominal {
+}
+
+// @public
+export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
 // @public (undocumented)
 export const enum TreeNavigationResult {
@@ -28,10 +133,18 @@ export const enum TreeNavigationResult {
     Pending = 0
 }
 
+// @public
+export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
+
 // @public (undocumented)
-export type TreeType = (number | string) & {
-    readonly TreeType: symbol;
-};
+export type TreeType = TreeSchemaIdentifier;
+
+// @public
+export interface TreeValue extends Serializable {
+}
+
+// @public
+export type Value = undefined | TreeValue;
 
 // (No @packageDocumentation comment for this package)
 

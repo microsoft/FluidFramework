@@ -21,7 +21,7 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
     get(key: string): any;
     getPending(key: string): any;
     has(key: string): boolean;
-    set(key: string, value: any): void;
+    set(key: string, value: unknown): void;
 }
 
 // @public
@@ -48,11 +48,12 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     protected onDisconnect(): void;
     // @internal
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    set(key: string, value: any): void;
+    // @internal (undocumented)
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    set(key: string, value: unknown): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    }
-
+}
 
 // (No @packageDocumentation comment for this package)
 
