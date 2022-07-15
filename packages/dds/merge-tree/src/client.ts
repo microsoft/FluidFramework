@@ -1015,7 +1015,10 @@ export class Client {
 
         return loader.initialize(storage);
     }
-
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
         return this.mergeTree.getStackContext(startPos, this.getCollabWindow().clientId, rangeLabels);
     }

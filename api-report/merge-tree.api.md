@@ -159,7 +159,7 @@ export class Client {
         segment: ISegment | undefined;
         offset: number | undefined;
     };
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
@@ -220,7 +220,9 @@ export class Client {
     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
 }
 
-// @public (undocumented)
+// Warning: (ae-internal-missing-underscore) The name "ClientSeq" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal @deprecated (undocumented)
 export interface ClientSeq {
     // (undocumented)
     clientId: string;
@@ -228,9 +230,9 @@ export interface ClientSeq {
     refSeq: number;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "clientSeqComparer" is marked as @public, but its signature references "Comparer" which is marked as @internal
+// Warning: (ae-internal-missing-underscore) The name "clientSeqComparer" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export const clientSeqComparer: Comparer<ClientSeq>;
 
 // @public (undocumented)
@@ -379,7 +381,7 @@ export interface IHierBlock extends IMergeBlock {
     hierToString(indentCount: number): string;
     // (undocumented)
     leftmostTiles: MapLike<ReferencePosition>;
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     rangeStacks: RangeStackMap;
     // (undocumented)
     rightmostTiles: MapLike<ReferencePosition>;
@@ -888,7 +890,9 @@ export interface LocalReferencePosition extends ReferencePosition {
     callbacks?: Partial<Record<"beforeSlide" | "afterSlide", () => void>>;
 }
 
-// @public (undocumented)
+// Warning: (ae-internal-missing-underscore) The name "LRUSegment" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal @deprecated (undocumented)
 export interface LRUSegment {
     // (undocumented)
     maxSeq: number;
@@ -1022,13 +1026,11 @@ export class MergeTree {
         segment: ISegment | undefined;
         offset: number | undefined;
     };
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     getStats(): MergeTreeStats;
-    // Warning: (ae-incompatible-release-tags) The symbol "incrementalBlockMap" is marked as @public, but its signature references "Stack" which is marked as @internal
-    //
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>): void;
     // (undocumented)
     insertAtReferencePosition(referencePosition: ReferencePosition, insertSegment: ISegment, opArgs: IMergeTreeDeltaOpArgs): void;
@@ -1057,9 +1059,7 @@ export class MergeTree {
         insertAfterRemovedSegs: boolean;
         zamboniSegments: boolean;
     };
-    // Warning: (ae-incompatible-release-tags) The symbol "pendingSegments" is marked as @public, but its signature references "List" which is marked as @internal
-    //
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     pendingSegments: List<SegmentGroup> | undefined;
     posFromRelativePos(relativePos: IRelativePosition, refseq?: number, clientId?: number): number;
     // (undocumented)
@@ -1228,9 +1228,9 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "RangeStackMap" is marked as @public, but its signature references "Stack" which is marked as @internal
+// Warning: (ae-internal-missing-underscore) The name "RangeStackMap" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 // Warning: (ae-internal-missing-underscore) The name "RBColor" should be prefixed with an underscore because the declaration is marked as @internal
