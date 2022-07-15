@@ -35,30 +35,40 @@ interface ICodePackage<T> {
     getView: (model: T) => IFluidMountableView;
 }
 
-// Return ICodePackage<IApp1> | ICodePackage<IApp2> ?
-const getCode = (version: string): ICodePackage<IApp> => {
-    const containerRuntimeFactory = version === "one"
-        ? new InventoryListContainerRuntimeFactory1()
-        : new InventoryListContainerRuntimeFactory2();
-
-    const fluidModuleWithDetails = {
-        module: { fluidExport: containerRuntimeFactory },
-        details: { package: version },
-    };
-
-    const getModel = (container: IContainer) => {
+const v1Code: ICodePackage<IApp> = {
+    fluidModuleWithDetails: {
+        module: { fluidExport: new InventoryListContainerRuntimeFactory1() },
+        details: { package: "one" },
+    },
+    getModel: (container: IContainer) => {
         return new App(container);
-    };
-
-    const getView = (model: IApp) => {
+    },
+    getView: (model: IApp) => {
         const reactView = React.createElement(AppView, { app: model });
         return new MountableView(reactView);
-    };
+    },
+};
 
-    return {
-        fluidModuleWithDetails,
-        getModel,
-        getView,
+const v2Code: ICodePackage<IApp> = {
+    fluidModuleWithDetails: {
+        module: { fluidExport: new InventoryListContainerRuntimeFactory2() },
+        details: { package: "two" },
+    },
+    getModel: (container: IContainer) => {
+        return new App(container);
+    },
+    getView: (model: IApp) => {
+        const reactView = React.createElement(AppView, { app: model });
+        return new MountableView(reactView);
+    },
+};
+
+// Return ICodePackage<IApp1> | ICodePackage<IApp2> ?
+const getCode = (version: string): ICodePackage<IApp> => {
+    switch (version) {
+        case "one": return v1Code;
+        case "two": return v2Code;
+        default: throw new Error("Unknown version");
     }
 };
 
