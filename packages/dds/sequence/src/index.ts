@@ -48,6 +48,7 @@ export type {
     MergeTreeDeltaOperationType,
     MergeTreeDeltaOperationTypes,
     MergeTreeDeltaType,
+    MergeTreeMaintenanceType,
     PropertySet,
     ReferencePosition,
     ReferenceType,

@@ -307,6 +307,8 @@ export { MergeTreeDeltaOperationTypes }
 
 export { MergeTreeDeltaType }
 
+export { MergeTreeMaintenanceType }
+
 // @public @deprecated
 export class PaddingSegment extends BaseSegment {
     constructor(size: number);
