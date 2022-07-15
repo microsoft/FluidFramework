@@ -75,9 +75,9 @@ Launches each test runner with `--inspect-brk` and a unique Node debugging port.
 
 #### --createTestId	
 
-If the `testId`argument is specified, the `createTestId`flag determines whether to load an exisiting
-document corresponding to the `testId`specified, or create a new one. When `createTestId`is set to true,
-a new document is created, and when `createTestId`is false, we try to load an existing document.
+If the `testId` argument is specified, the `createTestId` flag determines whether to load an exisiting
+document corresponding to the `testId` specified, or create a new one. When `createTestId` is set to true,
+a new document is created, and when `createTestId` is false, we try to load an existing document.
 
 #### --log, -l
 
