@@ -202,9 +202,9 @@ export class SetProperty extends IndexedCollectionBaseProperty {
      * Returns the collection entry with the given ID
      *
      * @param {string|array<string|number>} in_ids - key of the entry to return or an array of keys if an array is
-     *     passed, the .get function will be performed on each id in sequence for example .get(['position','x']) is
-     *     equivalent to .get('position').get('x'). If .get resolves to a ReferenceProperty, it will return the property
-     *     that the ReferenceProperty refers to.
+     * passed, the .get function will be performed on each id in sequence for example .get(['position','x']) is
+     * equivalent to .get('position').get('x'). If .get resolves to a ReferenceProperty, it will return the property
+     * that the ReferenceProperty refers to.
      * @param {Object} in_options - parameter object
      * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
      * should this function behave during reference resolution?
