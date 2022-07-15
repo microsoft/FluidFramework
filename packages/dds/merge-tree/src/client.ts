@@ -15,11 +15,7 @@ import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
 import { ListRemoveEntry, RedBlackTree } from "./collections";
-import {
-    TreeMaintenanceSequenceNumber,
-    UnassignedSequenceNumber,
-    UniversalSequenceNumber,
-} from "./constants";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition } from "./localReference";
 import {
     CollaborationWindow,
@@ -379,7 +375,7 @@ export class Client {
                 start + segment.cachedLength,
                 UniversalSequenceNumber,
                 segWindow.clientId,
-                TreeMaintenanceSequenceNumber,
+                UniversalSequenceNumber,
                 false,
                 { op: removeOp });
         }
