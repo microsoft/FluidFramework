@@ -26,7 +26,7 @@
 	}
 
 	export interface Changeset {
-		marks: FieldMarks;
+		marks: PositionedMarks;
 		moves?: MoveEntry[];
 	}
 
@@ -37,75 +37,33 @@
 		hops?: TreePath[];
 	}
 
-	export interface FieldMarks {
-		/**
-		 * Lists the additional (now deleted/detached) nodes and that must be taken into account in order to represent
-		 * the changes made to this field. Without them, describing the changes would be like drawing on an incomplete
-		 * canvas.
-		 *
-		 * Note that all tombstones introduced by concurrent changes are represented here. This includes tombstones
-		 * that are not directly relevant to the description of the changes made to the field. This is necessary to
-		 * ensure that later changes that are concurrent to this change always know how the tombstones they carry
-		 * ought to be ordered relative to the tombstones in this change.
-		 */
-		tombs?: OffsetList<Tombstones, NodeCount>;
+	export type PositionedMarks = MarkWithOffset[];
 
-		/**
-		 * Operations that attach content in a gap.
-		 * The order of attach segments in each `Attach[]` reflects the intended order of the content in the field.
-		 *
-		 * Offsets represent gaps between any two of the following:
-		 * - the start of the field
-		 * - the end of the field
-		 * - nodes that are present in the input context
-		 * - nodes that are represented by tombstones
-		 */
-		attach?: OffsetList<Attach[], GapCount>;
+	/**
+	 * See PositionedMarks.
+	 */
+	export interface MarkWithOffset<TMark = Mark> {
+		offset: Offset;
+		mark: TMark;
+	}
 
-		/**
-		 * Operations that may affect concurrently attached content.
-		 * These operation effectively target content that does not yet exist but may come to exist
-		 * as a result of concurrent changes.
-		 *
-		 * Offsets represent gaps between any two of the following:
-		 * - the start of the field
-		 * - the end of the field
-		 * - nodes that are present in the input context
-		 * - nodes that are represented by tombstones
-		 */
-		gaps?: OffsetList<GapEffectSegment, GapCount>;
+	type Mark =
+		| Tomb
+		| Modify
+		| Detach
+		| Reattach
+		| ModifyReattach
+		| ModifyDetach
+		| ModifyMoveIn
+		| ModifyInsert
+		| MoveIn
+		| Insert
+		| Bounce
+		| Intake;
 
-		/**
-		 * Operations that affect nodes (or locations where a node used to be).
-		 *
-		 * Offsets represent both nodes that are present in the input context and nodes that were
-		 * concurrently detached.
-		 */
-		nodes?: OffsetList<NodeMark, NodeCount>;
-
-		/**
-		 * Represents the changes made to the subtrees of any of the following nodes:
-		 * - nodes that are present in the input context
-		 * - nodes that have been concurrently deleted by prior changes
-		 * - nodes that are being revived by this change
-		 *
-		 * Offsets represent both tombstones and nodes that are present in the input context.
-		 *
-		 * Modifications made to newly inserted nodes are represented on their Insert mark.
-		 */
-		modify?: OffsetList<Modify, NodeCount>;
-
-		/**
-		 * Represents change made to the values of any of the following nodes:
-		 * - nodes that are present in the input context
-		 * - nodes that have been concurrently deleted by prior changes
-		 * - nodes that are being revived by this change
-		 *
-		 * Offsets represent both tombstones and nodes that are present in the input context.
-		 *
-		 * Value changes made to newly inserted nodes are represented on their Insert mark.
-		 */
-		values?: OffsetList<ValueMark, NodeCount>;
+	export interface Tomb {
+		seq: SeqNumber;
+		count: number;
 	}
 
 	export type ValueMark = SetValue | RevertValue;
@@ -121,7 +79,13 @@
 	}
 
 	export interface Modify {
-		[key: string]: FieldMarks;
+		tomb?: SeqNumber;
+		value?: ValueMark;
+		fields?: FieldMarks;
+	}
+
+	export interface FieldMarks {
+		[key: string]: PositionedMarks;
 	}
 
 	export interface HasPlaceFields {
@@ -179,18 +143,11 @@
 	export interface Insert extends HasOpId, HasPlaceFields {
 		type: "Insert";
 		content: ProtoNode[];
-		/**
-		 * Represents the changes made to the inserted subtrees.
-		 *
-		 * Offsets represent nodes being inserted.
-		 */
-		modify?: OffsetList<Modify, NodeCount>;
-		/**
-		 * Represents the changes made to the inserted node's values.
-		 *
-		 * Offsets represent nodes being inserted.
-		 */
-		values?: OffsetList<ValueMark, NodeCount>;
+	}
+
+	export interface ModifyInsert extends HasOpId, HasPlaceFields, Modify {
+		type: "Insert";
+		content: ProtoNode;
 	}
 
 	export interface Bounce extends HasOpId, HasPlaceFields {
@@ -213,12 +170,10 @@
 		 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
 		 */
 		count: NodeCount;
-		/**
-		 * Represents the changes made to the moved-in subtrees.
-		 *
-		 * Offsets represent nodes being moved-in.
-		 */
-		modify?: OffsetList<Modify, NodeCount>;
+	}
+
+	export interface ModifyMoveIn extends HasOpId, HasPlaceFields, Modify {
+		type: "Move";
 	}
 
 	export type Attach = Insert | MoveIn | Bounce | Intake;
@@ -254,13 +209,23 @@
 	export type NodeMark = Detach | Reattach;
 
 	export interface Detach extends HasOpId {
+		tomb?: SeqNumber;
 		type: "Delete" | "Move";
 		count: NodeCount;
 	}
 
+	export interface ModifyDetach extends HasOpId, Modify {
+		type: "Delete" | "Move";
+	}
+
 	export interface Reattach extends HasOpId {
+		tomb: SeqNumber;
 		type: "Revive" | "Return";
 		count: NodeCount;
+	}
+	export interface ModifyReattach extends HasOpId, Modify {
+		tomb: SeqNumber;
+		type: "Revive" | "Return";
 	}
 
 	/**

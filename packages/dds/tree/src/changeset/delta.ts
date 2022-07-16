@@ -150,7 +150,16 @@ export type Mark = OuterMark | InnerModify;
 /**
  * A mark that represents changes to nodes that are otherwise unaffected by changes to their ancestors.
  */
-export type OuterMark = Modify | Delete | MoveOut | MoveIn | Insert;
+export type OuterMark =
+    | Modify
+    | Delete
+    | MoveOut
+    | MoveIn
+    | Insert
+    | ModifyAndDelete
+    | ModifyAndMoveOut
+    | MoveInAndModify
+    | InsertAndModify;
 
 /**
  * A mark that represents changes to nodes that also unaffected by changes to their ancestors.
@@ -193,7 +202,7 @@ export interface Modify {
  */
 export interface ModifyDeleted {
     type: typeof MarkType.Modify;
-    fields?: FieldMarks<ModifyDeleted | MoveOut>;
+    fields: FieldMarks<ModifyDeleted | MoveOut>;
 }
 
 /**
@@ -210,7 +219,7 @@ export interface ModifyMovedOut {
  */
 export interface ModifyMovedIn {
     type: typeof MarkType.Modify;
-    fields?: FieldMarks<ModifyMovedIn | MoveIn | Insert>;
+    fields: FieldMarks<ModifyMovedIn | MoveIn | Insert>;
 }
 
 /**
@@ -218,22 +227,28 @@ export interface ModifyMovedIn {
  */
 export interface ModifyInserted {
     type: typeof MarkType.Modify;
-    fields?: FieldMarks<ModifyMovedIn | MoveIn>;
+    fields: FieldMarks<ModifyMovedIn | MoveIn>;
 }
 
 /**
  * Describes the deletion of a contiguous range of node.
- * Includes descriptions of the modifications made to those nodes (if any).
  */
 export interface Delete {
     type: typeof MarkType.Delete;
     count: number;
-    modify?: PositionedMarks<ModifyDeleted>;
+}
+
+/**
+ * Describes the deletion of a single node.
+ * Includes descriptions of the modifications the node.
+ */
+export interface ModifyAndDelete {
+    type: typeof MarkType.ModifyAndDelete;
+    fields: FieldMarks<ModifyDeleted | MoveOut>;
 }
 
 /**
  * Describes the moving out of a contiguous range of node.
- * Includes descriptions of the modifications made to those nodes (if any).
  */
 export interface MoveOut {
     type: typeof MarkType.MoveOut;
@@ -242,12 +257,24 @@ export interface MoveOut {
      * The delta should carry exactly one `MoveIn` mark with the same move ID.
      */
     moveId: MoveId;
-    modify?: PositionedMarks<ModifyMovedOut>;
+}
+
+/**
+ * Describes the moving out of a single node.
+ * Includes descriptions of the modifications made to the node.
+ */
+export interface ModifyAndMoveOut {
+    type: typeof MarkType.ModifyAndMoveOut;
+    /**
+     * The delta should carry exactly one `MoveIn` mark with the same move ID.
+     */
+    moveId: MoveId;
+    setValue?: Value;
+    fields?: FieldMarks<ModifyMovedOut | Delete | MoveOut>;
 }
 
 /**
  * Describes the moving in of a contiguous range of node.
- * Includes descriptions of the modifications made to those nodes (if any).
  */
 export interface MoveIn {
     type: typeof MarkType.MoveIn;
@@ -255,18 +282,37 @@ export interface MoveIn {
      * The delta should carry exactly one `MoveOut` mark with the same move ID.
      */
     moveId: MoveId;
-    modify?: PositionedMarks<ModifyMovedIn>;
+}
+
+/**
+ * Describes the moving in of a single node.
+ * Includes descriptions of the modifications made to the node.
+ */
+export interface MoveInAndModify {
+    type: typeof MarkType.MoveInAndModify;
+    /**
+     * The delta should carry exactly one `MoveOut` mark with the same move ID.
+     */
+    moveId: MoveId;
+    fields: FieldMarks<ModifyMovedIn | MoveIn | Insert>;
 }
 
 /**
  * Describes the insertion of a contiguous range of node.
- * Includes descriptions of the modifications made to those nodes (if any).
- * Those are represented as `MoveIn` marks within `ProtoField`s.
  */
 export interface Insert {
     type: typeof MarkType.Insert;
     content: ProtoNode[];
-    modify?: PositionedMarks<ModifyInserted>;
+}
+
+/**
+ * Describes the insertion of a single node.
+ * Includes descriptions of the modifications made to the nodes.
+ */
+export interface InsertAndModify {
+    type: typeof MarkType.InsertAndModify;
+    content: ProtoNode;
+    fields: FieldMarks<ModifyMovedIn | MoveIn>;
 }
 
 /**
@@ -285,10 +331,7 @@ export interface ProtoNode {
 export type ProtoField = ProtoNode[];
 
 /**
- * Uniquely identifies a MoveOut/MoveIn pair within a transaction.
- * When the delta represents a whole transaction the MoveIn and MoveOut marks will both appear in the same delta.
- * Deltas can also represent a portion of a transaction, in which case it's possible the MoveIn and MoveOut marks with
- * the same `MoveId` will appear in different deltas.
+ * Uniquely identifies a MoveOut/MoveIn pair within a delta.
  */
 export type MoveId = Opaque<Brand<number, "delta.MoveId">>;
 
@@ -307,7 +350,11 @@ export type FieldMarks<TMark> = FieldMap<PositionedMarks<TMark>>;
 export const MarkType = {
     Modify: 0,
     Insert: 1,
-    Delete: 2,
-    MoveOut: 3,
-    MoveIn: 4,
+    InsertAndModify: 2,
+    MoveIn: 3,
+    MoveInAndModify: 4,
+    Delete: 5,
+    ModifyAndDelete: 6,
+    MoveOut: 7,
+    ModifyAndMoveOut: 8,
 } as const;
