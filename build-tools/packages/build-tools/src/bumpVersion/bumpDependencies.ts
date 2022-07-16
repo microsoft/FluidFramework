@@ -6,7 +6,7 @@ import * as semver from "semver";
 import { Context } from "./context";
 import { VersionBag } from "./versionBag";
 import { fatal, prereleaseSatisfies } from "./utils";
-import { MonoRepo } from "../common/monoRepo";
+import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { FluidRepo } from "../common/fluidRepo";
 
