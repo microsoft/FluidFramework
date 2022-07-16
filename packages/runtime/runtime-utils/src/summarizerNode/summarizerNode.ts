@@ -265,8 +265,9 @@ export class SummarizerNode implements IRootSummarizerNode {
             const maybeSummaryNode = this.pendingSummaries.get(proposalHandle);
 
             if (maybeSummaryNode !== undefined) {
-                this.refreshLatestSummaryFromPending(proposalHandle, maybeSummaryNode.referenceSequenceNumber);
-                return { latestSummaryUpdated: true, wasSummaryTracked: true };
+                if (this.refreshLatestSummaryFromPending(proposalHandle, maybeSummaryNode.referenceSequenceNumber)) {
+                    return { latestSummaryUpdated: true, wasSummaryTracked: true };
+                }
             }
         }
 
@@ -286,19 +287,31 @@ export class SummarizerNode implements IRootSummarizerNode {
         );
         return { latestSummaryUpdated: true, wasSummaryTracked: false, snapshot: snapshotTree };
     }
-
+/**
+ * Called when we get an ack from the server for a summary we've just sent. Updates the reference state of this node
+ * from the state in the pending summary queue.
+ * @param proposalHandle - Handle for the current proposal.
+ * @param referenceSequenceNumber -  reference sequence number of sent summary.
+ * @returns true if we should proceed with the summary refresh and false
+ * in case of failure.
+ */
     protected refreshLatestSummaryFromPending(
         proposalHandle: string,
         referenceSequenceNumber: number,
-    ): void {
+    ): boolean {
         const summaryNode = this.pendingSummaries.get(proposalHandle);
         if (summaryNode === undefined) {
-            // This should only happen if parent skipped recursion AND no prior summary existed.
-            assert(
-                this._latestSummary === undefined,
-                0x1a6 /* "Not found pending summary, but this node has previously completed a summary" */,
-            );
-            return;
+            if (this._latestSummary !== undefined) {
+                // A data store is probably loading other data stores asynchronously or in response
+                // to some event/trigger which will cause a few data stores to be loaded in between summaries.
+                // We might need to reload from the snapshot (refreshLatestSummaryFromSnapshot) in case the current
+                // reference number is smaller than the one returned by the ack.
+                // https://dev.azure.com/fluidframework/internal/_workitems/edit/645
+                return false;
+            } else {
+                // This should only happen if parent skipped recursion AND no prior summary existed.
+                return true;
+            }
         } else {
             assert(
                 referenceSequenceNumber === summaryNode.referenceSequenceNumber,
@@ -315,8 +328,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         // Propagate update to all child nodes
         for (const child of this.children.values()) {
-            child.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
+            if (child.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber) === false) {
+                return false;
+            }
         }
+        return true;
     }
 
     protected async refreshLatestSummaryFromSnapshot(

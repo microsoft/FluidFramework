@@ -257,13 +257,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * Called when we get an ack from the server for a summary we sent. Update the reference state of this node
+     * Called when we get an ack from the server for a summary we've sent. Update the reference state of this node
      * from the state in the pending summary queue.
      */
     protected refreshLatestSummaryFromPending(
         proposalHandle: string,
         referenceSequenceNumber: number,
-    ): void {
+    ): boolean {
         // If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
         if (!this.gcDisabled) {
             const summaryNode = this.pendingSummaries.get(proposalHandle) as SummaryNodeWithGC;
