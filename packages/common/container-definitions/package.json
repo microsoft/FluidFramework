@@ -80,6 +80,27 @@
       "RemovedEnumDeclaration_BindState": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "InterfaceDeclaration_ITaggedTelemetryPropertyType": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITelemetryBaseEvent": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITelemetryErrorEvent": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITelemetryGenericEvent": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITelemetryPerformanceEvent": {
+        "backCompat": false
+      },
+      "InterfaceDeclaration_ITelemetryProperties": {
+        "backCompat": false
+      },
+      "TypeAliasDeclaration_TelemetryEventPropertyType": {
+        "backCompat": false
       }
     }
   }
