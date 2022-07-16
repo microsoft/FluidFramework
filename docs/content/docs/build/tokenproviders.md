@@ -152,4 +152,19 @@ The `generateToken` function will generate a token for the given user that is si
 You can add custom data such as email id, gender, address, etc for your token generation. See `Token Provider` under [Connect to Azure Fluid Relay]({{< relref "azure-frs.md" >}}) for more information.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- Links -->
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+
+<!-- Classes and interfaces -->
+
+[FluidContainer]: {{< relref "fluidcontainer.md" >}}
+[IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedSequence]: {{< relref "sequences.md" >}}
+[SharedString]: {{< relref "string.md" >}}
+
 <!-- AUTO-GENERATED-CONTENT:END -->
