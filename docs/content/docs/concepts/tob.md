@@ -39,8 +39,8 @@ eventually be consistent with the client that originated the change.
 ## Operations
 
 Fluid is also efficient when communicating with the server. When you change a data structure, Fluid doesn't send the
-whole data structure to the server. Rather, it sends operations. For example, consider the [SharedSequence][] data
-structure. When a client inserts, appends, or deletes items in the sequence, Fluid sends the server the operation that
+whole data structure to the server. Rather, it sends operations. For example, consider the [SharedString][] data
+structure. When a client inserts, appends, or deletes items in the string, Fluid sends the server the operation that
 was performed and the data that was inserted/appended/etc. When the Fluid service broadcasts the operation to all the
 other connected clients, it again sends only the operation itself, not the full data structure. This efficiency in
 bytes-over-wire helps both performance and bandwidth.
@@ -88,7 +88,6 @@ Data Objects' data structures will be summarized.
 [IFluidContainer]: {{< relref "ifluidcontainer.md" >}}
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "sequences.md" >}}
 [SharedString]: {{< relref "string.md" >}}
 
 <!-- AUTO-GENERATED-CONTENT:END -->
