@@ -107,9 +107,9 @@ import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
-    IProtocolDetails,
     IProtocolHandler,
     ProtocolHandler,
+    ProtocolHandlerBuilder,
 } from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
@@ -272,7 +272,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         loadOptions: IContainerLoadOptions,
         pendingLocalState?: IPendingContainerState,
-        protocolDetails?: IProtocolDetails,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
             loader,
@@ -282,7 +282,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 canReconnect: loadOptions.canReconnect,
                 serializedContainerState: pendingLocalState,
             },
-            protocolDetails);
+            protocolHandlerBuilder);
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -330,12 +330,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async createDetached(
         loader: Loader,
         codeDetails: IFluidCodeDetails,
-        protocolDetails?: IProtocolDetails,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {},
-            protocolDetails);
+            protocolHandlerBuilder);
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -354,12 +354,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async rehydrateDetachedFromSnapshot(
         loader: Loader,
         snapshot: string,
-        protocolDetails?: IProtocolDetails,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
             loader,
             {},
-            protocolDetails);
+            protocolHandlerBuilder);
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -414,7 +414,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
-    private _initialClients: ISignalClient[] = [];
+    private _initialClients: ISignalClient[] | undefined;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -558,7 +558,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     constructor(
         private readonly loader: Loader,
         config: IContainerConfig,
-        private readonly protocolDetails?: IProtocolDetails,
+        private readonly protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ) {
         super((name, error) => {
             this.mc.logger.sendErrorEvent(
@@ -1406,13 +1406,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         quorumSnapshot: IQuorumSnapshot,
     ): Promise<IProtocolHandler> {
         const protocolHandlerBuilder =
-            this.protocolDetails?.protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
+            this.protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
         const protocol = protocolHandlerBuilder(
             attributes,
             quorumSnapshot,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
-            this._initialClients,
+            this._initialClients ?? [],
         );
+
+        this._initialClients = undefined;
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1534,17 +1536,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         deltaManager.inboundSignal.pause();
 
-        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
-            // Store the initial clients so that they can be submitted to the
-            // protocol handler when it is created.
-            this._initialClients = details.initialClients ?? [];
-
-            if (this._protocolHandler !== undefined) {
+        deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+            if (this._protocolHandler === undefined) {
+                // Store the initial clients so that they can be submitted to the
+                // protocol handler when it is created.
+                this._initialClients = details.initialClients;
+            } else {
                 // When reconnecting, the protocol handler is already created,
                 // so we can update the audience right now.
                 this._protocolHandler.audience.clear();
 
-                for (const priorClient of this._initialClients) {
+                for (const priorClient of details.initialClients ?? []) {
                     this._protocolHandler.audience.addMember(priorClient.clientId, priorClient.client);
                 }
             }

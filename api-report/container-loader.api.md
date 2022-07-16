@@ -8,7 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
-import { IAudienceWriter } from '@fluidframework/container-definitions';
+import { IAudienceOwner } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
@@ -56,7 +56,7 @@ export enum ConnectionState {
 
 // @public (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    constructor(loader: Loader, config: IContainerConfig, protocolDetails?: IProtocolDetails | undefined);
+    constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
     // (undocumented)
@@ -79,7 +79,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
-    static createDetached(loader: Loader, codeDetails: IFluidCodeDetails, protocolDetails?: IProtocolDetails): Promise<Container>;
+    static createDetached(loader: Loader, codeDetails: IFluidCodeDetails, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -93,7 +93,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
-    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolDetails?: IProtocolDetails): Promise<Container>;
+    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
     // (undocumented)
@@ -102,7 +102,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
-    static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string, protocolDetails?: IProtocolDetails): Promise<Container>;
+    static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -170,7 +170,7 @@ export interface ILoaderProps {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
-    readonly protocolDetails?: IProtocolDetails;
+    readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
     readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
 }
@@ -201,14 +201,9 @@ export interface IPendingContainerState {
 }
 
 // @public (undocumented)
-export interface IProtocolDetails {
-    protocolHandlerBuilder: ProtocolHandlerBuilder;
-}
-
-// @public (undocumented)
 export interface IProtocolHandler extends IProtocolHandler_2 {
     // (undocumented)
-    readonly audience: IAudienceWriter;
+    readonly audience: IAudienceOwner;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
 }
@@ -230,7 +225,7 @@ export class Loader implements IHostLoader {
     readonly services: ILoaderServices;
 }
 
-// @public (undocumented)
+// @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number, initialClients: ISignalClient[]) => IProtocolHandler;
 
 // @public (undocumented)

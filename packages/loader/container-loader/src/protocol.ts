@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IAudienceWriter } from "@fluidframework/container-definitions";
+import { IAudienceOwner } from "@fluidframework/container-definitions";
 import {
     ILocalSequencedClient,
     IProtocolHandler as IBaseProtocolHandler,
@@ -19,13 +19,9 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 
-export interface IProtocolDetails {
-    /**
-     * Function to be used for creating a protocol handler.
-     */
-    protocolHandlerBuilder: ProtocolHandlerBuilder;
-}
-
+/**
+ * Function to be used for creating a protocol handler.
+ */
 export type ProtocolHandlerBuilder = (
     attributes: IDocumentAttributes,
     snapshot: IQuorumSnapshot,
@@ -34,7 +30,7 @@ export type ProtocolHandlerBuilder = (
 ) => IProtocolHandler;
 
 export interface IProtocolHandler extends IBaseProtocolHandler {
-    readonly audience: IAudienceWriter;
+    readonly audience: IAudienceOwner;
     // To be removed after the server package dependency is upgraded. ADO:1026
     processSignal(message: ISignalMessage);
 }
@@ -45,7 +41,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
         quorumSnapshot: IQuorumSnapshot,
         sendProposal: (key: string, value: any) => number,
         initialClients: ISignalClient[],
-        readonly audience: IAudienceWriter,
+        readonly audience: IAudienceOwner,
     ) {
         super(
             attributes.minimumSequenceNumber,

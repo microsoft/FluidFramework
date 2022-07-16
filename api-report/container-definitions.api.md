@@ -75,8 +75,8 @@ export interface IAudience extends EventEmitter {
     on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
 }
 
-// @public (undocumented)
-export interface IAudienceWriter extends IAudience {
+// @public
+export interface IAudienceOwner extends IAudience {
     addMember(clientId: string, details: IClient): any;
     clear(): any;
     removeMember(clientId: string): boolean;

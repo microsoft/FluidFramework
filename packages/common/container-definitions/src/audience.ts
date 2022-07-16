@@ -6,7 +6,10 @@
 import { EventEmitter } from "events";
 import { IClient } from "@fluidframework/protocol-definitions";
 
-export interface IAudienceWriter extends IAudience {
+/**
+ * Manages the state and the members for {@link IAudience}
+ */
+export interface IAudienceOwner extends IAudience {
     /**
      * Adds a new client to the audience
      */
