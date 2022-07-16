@@ -107,7 +107,8 @@ export interface ITokenService {
 }
 
 /**
- * TODO
+ * Abstracts the token fetching mechanism for a hosting application.
+ * The hosting application is responsible for providing an implementation.
  */
 export interface ITokenProvider {
     /**
