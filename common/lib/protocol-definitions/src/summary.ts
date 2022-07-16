@@ -4,12 +4,13 @@
  */
 
 /**
- * TODO
+ * Object representing a node within a summary tree.
+ * If any particular node is an {@link ISummaryTree}, it can contain additional `SummaryObject`s as its children.
  */
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
 /**
- * TODO
+ * The root of the summary tree.
  */
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
@@ -49,18 +50,24 @@ export namespace SummaryType {
 }
 
 /**
- * TODO
+ * {@inheritDoc (SummaryType:namespace)}
  */
 export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
 /**
- * TODO
+ * Summary type that {@link ISummaryHandle} points to.
+ *
+ * @remarks
+ * Summary handles are often used to point to summary tree objects contained within older summaries, thus avoiding
+ * the need to re-send the entire subtree if summary object has not changed.
  */
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
 /**
  * Path to a summary tree object from the last successful summary indicating the summary object hasn't
  * changed since it was uploaded.
+ *
+ * @example
  * To illustrate, if a DataStore did not change since last summary, the framework runtime will use a handle for the
  * entire DataStore instead of re-sending the entire subtree. The same concept applies for a DDS.
  * An example of handle would be: '/<DataStoreId>/<DDSId>'.
