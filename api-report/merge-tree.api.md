@@ -979,13 +979,7 @@ export class MergeTree {
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
     // @internal
-    _getSlideToSegment(segoff: {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    }): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
+    _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined;
     // (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
