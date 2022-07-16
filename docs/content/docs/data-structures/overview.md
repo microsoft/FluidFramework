@@ -86,7 +86,7 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 ## Specialized data structures
 
-- [SharedCounter][] -- a counter.
+- SharedCounter -- a counter.
 
   The SharedCounter is useful to keep track of increments. While a key-value data structure appears like a good fit, two
   clients simultaneously setting the same key can cause issues. By contrast, clients can increase or decrease the
@@ -111,7 +111,5 @@ Typical scenarios require the connected clients to "agree" on some course of act
 - Import data from an external source. (Multiple clients doing this could lead to duplicate data.)
 - Upgrade a data schema. (All clients agree to simultaneously make the change.)
 
-<!-- Links -->
-[SharedMap]: https://fluidframework.com/docs/apis/map/sharedmap/
-[SharedDirectory]: https://fluidframework.com/docs/apis/map/shareddirectory/
-[SharedString]: https://fluidframework.com/docs/apis/sequence/sharedstring/
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

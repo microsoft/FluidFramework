@@ -150,3 +150,6 @@ The `generateToken` function will generate a token for the given user that is si
 ## Adding custom data to tokens
 
 You can add custom data such as email id, gender, address, etc for your token generation. See `Token Provider` under [Connect to Azure Fluid Relay]({{< relref "azure-frs.md" >}}) for more information.
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
