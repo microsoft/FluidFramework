@@ -54,14 +54,12 @@
 		| Reattach
 		| ModifyReattach
 		| ModifyDetach
-		| ModifyMoveIn
-		| ModifyInsert
-		| MoveIn
-		| Insert
-		| Bounce
-		| Intake;
+		| AttachGroup;
+
+	export type AttachGroup = Attach[];
 
 	export interface Tomb {
+		type: "Tomb";
 		seq: SeqNumber;
 		count: number;
 	}
@@ -79,6 +77,7 @@
 	}
 
 	export interface Modify {
+		type: "Modify";
 		tomb?: SeqNumber;
 		value?: ValueMark;
 		fields?: FieldMarks;
@@ -176,7 +175,7 @@
 		type: "Move";
 	}
 
-	export type Attach = Insert | MoveIn | Bounce | Intake;
+	export type Attach = Insert | ModifyInsert | MoveIn | ModifyMoveIn | Bounce | Intake;
 
 	export type GapEffect = Scorch | Forward | Heal | Unforward;
 
