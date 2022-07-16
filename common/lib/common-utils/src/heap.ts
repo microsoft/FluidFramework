@@ -28,7 +28,7 @@ export const NumberComparer: IComparer<number> = {
      * The compare function for numbers,
      * @returns difference of the two number
      */
-    compare: (a, b) => a - b,
+    compare: (a, b): number => a - b,
 
     /**
      * The minimum value of a javascript number, which is Number.MIN_VALUE
@@ -97,7 +97,7 @@ export class Heap<T> {
     /**
      * Allows for heap to be updated after a node's value changes
      */
-    public update(node: IHeapNode<T>) {
+    public update(node: IHeapNode<T>): void {
         const k = node.position;
         if (this.isGreaterThanParent(k)) {
             this.fixup(k);
@@ -111,7 +111,7 @@ export class Heap<T> {
      *
      * @param node - the node to remove from the heap
      */
-    public remove(node: IHeapNode<T>) {
+    public remove(node: IHeapNode<T>): void {
         // Move the node we want to remove to the end of the array
         const position = node.position;
         this.swap(node.position, this.L.length - 1);
@@ -128,11 +128,11 @@ export class Heap<T> {
      *
      * @returns the number of elements in the Heap
      */
-    public count() {
+    public count(): number {
         return this.L.length - 1;
     }
 
-    private fixup(pos: number) {
+    private fixup(pos: number): void {
         let k = pos;
         while (this.isGreaterThanParent(k)) {
             // eslint-disable-next-line no-bitwise
@@ -147,7 +147,7 @@ export class Heap<T> {
         return k > 1 && (this.comp.compare(this.L[k >> 1].value, this.L[k].value) > 0);
     }
 
-    private fixdown(pos: number) {
+    private fixdown(pos: number): void {
         let k = pos;
         // eslint-disable-next-line no-bitwise
         while ((k << 1) <= this.count()) {
@@ -164,7 +164,7 @@ export class Heap<T> {
         }
     }
 
-    private swap(k: number, j: number) {
+    private swap(k: number, j: number): void {
         const tmp = this.L[k];
         this.L[k] = this.L[j];
         this.L[k].position = k;

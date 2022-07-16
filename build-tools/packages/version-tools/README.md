@@ -40,7 +40,7 @@ $ npm install -g @fluid-internal/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version)
-@fluid-internal/version-tools/0.3.0 linux-x64 node-v14.20.0
+@fluid-internal/version-tools/0.3.0 linux-x64 node-v14.19.2
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
