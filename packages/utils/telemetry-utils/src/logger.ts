@@ -386,6 +386,7 @@ export class MultiSinkLogger extends TelemetryLogger {
      */
     public send(event: ITelemetryBaseEvent): void {
         const newEvent = this.prepareEvent(event);
+        stringifyEventFields(newEvent);
         this.loggers.forEach((logger: ITelemetryBaseLogger) => {
             logger.send(newEvent);
         });
@@ -566,15 +567,13 @@ export class PerformanceEvent {
      * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
      * @param event - Event with fields you want to stringify.
      */
-function stringifyEventFields(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
-    const newEvent: ITelemetryBaseEvent = { category: event.category, eventName: event.eventName };
+function stringifyEventFields(event: ITelemetryBaseEvent): void {
     for (const key of Object.keys(event)) {
         const filteredEventVal = filterValidTelemetryProps(event[key]);
         if (filteredEventVal !== null) {
-            newEvent[key] = filteredEventVal;
+            event[key] = filteredEventVal;
         }
     }
-    return newEvent;
 }
 /**
  * Takes in parameter, if parameter is of primitive type, return the original value.
