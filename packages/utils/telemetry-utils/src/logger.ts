@@ -561,3 +561,40 @@ export class PerformanceEvent {
         throw error;
     }
 }
+
+/**
+     * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
+     * @param event - Event with fields you want to stringify.
+     */
+function stringifyEventFields(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
+    const newEvent: ITelemetryBaseEvent = { category: event.category, eventName: event.eventName };
+    for (const key of Object.keys(event)) {
+        const filteredEventVal = filterValidTelemetryProps(event[key]);
+        if (filteredEventVal !== null) {
+            newEvent[key] = filteredEventVal;
+        }
+    }
+    return newEvent;
+}
+/**
+ * Takes in parameter, if parameter is of primitive type, return the original value.
+ * If parameter is an array, stringify then return the result.
+ * @param x - parameter passed to validate/filter
+ */
+function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
+    switch (typeof x) {
+        case "string":
+        case "number":
+        case "boolean":
+        case "undefined":
+            return x;
+        default:
+            if (!Array.isArray(x)) {
+                return null;
+            }
+            if (x.every((val) => filterValidTelemetryProps(val) !== null)) {
+                return JSON.stringify(x);
+            }
+            return null;
+    }
+}
