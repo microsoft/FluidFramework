@@ -206,7 +206,8 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - Event to send
      * @param error - optional error object to log
      */
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent | ITelemetryPerformanceEventExt, error?: any): void {
+        stringifyEventFields(event);
         const perfEvent = {
             ...event,
             category: event.category ?? "performance",

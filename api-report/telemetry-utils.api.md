@@ -317,7 +317,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     static sanitizePkgName(name: string): string;
     abstract send(event: ITelemetryBaseEvent | ITelemetryBaseEventExt): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
-    sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+    sendPerformanceEvent(event: ITelemetryPerformanceEvent | ITelemetryPerformanceEventExt, error?: any): void;
     sendTelemetryEvent(event: ITelemetryGenericEvent | ITelemetryGenericEventExt, error?: any): void;
     protected sendTelemetryEventCore(event: ITelemetryGenericEvent & {
         category: TelemetryEventCategory;
