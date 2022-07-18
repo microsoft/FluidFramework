@@ -50,9 +50,9 @@ export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
 
     /**
-     * Anchor at the beginning or root field.
+     * Anchor at the beginning of a root field.
      */
-    readonly root: Anchor;
+    root(range: DetachedRange): Anchor;
 
     /**
      * If observer is provided, it will be invalidated if the value returned from this changes

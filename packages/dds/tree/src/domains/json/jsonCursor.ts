@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
     ITreeCursor,
+    mapCursorField,
     TreeNavigationResult,
 } from "../../forest";
 import {
@@ -197,15 +198,7 @@ export function cursorToJsonObject(reader: ITreeCursor): unknown {
         case jsonString.name:
             return reader.value;
         case jsonArray.name: {
-            const length = reader.length(EmptyKey);
-            const result = new Array(length);
-            for (let index = 0; index < result.length; index++) {
-                assert(reader.down(EmptyKey, index) === TreeNavigationResult.Ok, "expected navigation ok");
-                result[index] = cursorToJsonObject(reader);
-                assert(reader.up() === TreeNavigationResult.Ok, "expected navigation ok");
-            }
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            const result = mapCursorField(reader, EmptyKey, cursorToJsonObject);
             return result;
         }
         case jsonObject.name: {
