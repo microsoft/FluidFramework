@@ -153,6 +153,8 @@ export interface IFluidModuleWithDetails {
 // @public (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
     // (undocumented)
+    disableLocationRedirectionHandling?: boolean;
+    // (undocumented)
     summarizeProtocolTree?: boolean;
 }
 

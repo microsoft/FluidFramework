@@ -385,11 +385,11 @@ export class Loader implements IHostLoader {
         const disableLocationRedirectionHandling =
             this.mc.config.getBoolean("Fluid.Container.disableLocationRedirectionHandling")
             ?? this.services.options.disableLocationRedirectionHandling;
-        if (disableLocationRedirectionHandling) {
+        if (disableLocationRedirectionHandling === true) {
             return this.resolveCore(request, pendingLocalState);
         }
-        return await resolveWithLocationRedirectionHandling(
-            (request: IRequest) => this.resolveCore(request, pendingLocalState),
+        return resolveWithLocationRedirectionHandling(
+            async (req: IRequest) => this.resolveCore(req, pendingLocalState),
             request,
             this.services.urlResolver,
             this.mc.logger,
