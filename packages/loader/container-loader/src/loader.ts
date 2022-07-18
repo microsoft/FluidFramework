@@ -129,6 +129,8 @@ function createCachedResolver(resolver: IUrlResolver) {
 
 export interface ILoaderOptions extends ILoaderOptions1 {
     summarizeProtocolTree?: boolean;
+
+    disableLocationRedirectionHandling?: boolean;
 }
 
 /**
@@ -380,6 +382,12 @@ export class Loader implements IHostLoader {
         request: IRequest,
         pendingLocalState?: IPendingContainerState,
     ): Promise<{ container: Container; parsed: IParsedUrl; }> {
+        const disableLocationRedirectionHandling =
+            this.mc.config.getBoolean("Fluid.Container.disableLocationRedirectionHandling")
+            ?? this.services.options.disableLocationRedirectionHandling;
+        if (disableLocationRedirectionHandling) {
+            return this.resolveCore(request, pendingLocalState);
+        }
         return await resolveWithLocationRedirectionHandling(
             (request: IRequest) => this.resolveCore(request, pendingLocalState),
             request,
