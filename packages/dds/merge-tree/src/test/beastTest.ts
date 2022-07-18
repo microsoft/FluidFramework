@@ -19,11 +19,9 @@ import {
     KeyComparer,
     Property,
     PropertyAction,
-    SortedDictionary,
-} from "../base";
-import {
     ProxString,
     RedBlackTree,
+    SortedDictionary,
     Stack,
     TST,
 } from "../collections";
