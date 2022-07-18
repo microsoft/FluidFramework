@@ -6,9 +6,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import { assert } from "chai";
-import {
-    detectVersionScheme
-} from "../src/schemes";
+import { detectVersionScheme } from "../src/schemes";
 
 describe("detectVersionScheme", () => {
     it("detects 2.0.0-internal.1.0.0 is internal", () => {

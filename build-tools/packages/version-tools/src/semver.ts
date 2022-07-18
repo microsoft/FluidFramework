@@ -4,7 +4,7 @@
  */
 
 import * as semver from "semver";
-import { VersionBumpType } from "@fluidframework/build-tools";
+import { adjustVersion, VersionBumpType } from "@fluidframework/build-tools";
 import { bumpInternalVersion, getVersionRange } from "./internalVersionScheme";
 import { detectVersionScheme } from "./schemes";
 
@@ -20,37 +20,42 @@ import { detectVersionScheme } from "./schemes";
  * @returns a bumped range string.
  */
 export function incRange(range: string, bumpType: VersionBumpType): string {
-    if(semver.validRange(range) === null) {
+    if (semver.validRange(range) === null) {
         throw new Error(`${range} is not a valid semver range.`);
     }
 
-    switch(detectVersionScheme(range)) {
+    const scheme = detectVersionScheme(range);
+    switch (scheme) {
         default:
         case "virtualPatch":
         case "semver": {
-            const operator = range.slice(0,1);
-            const original = range.slice(1);
-            const newVersion = semver.inc(original, bumpType);
-            if(newVersion === null) {
+            const operator = range.slice(0, 1);
+            const isPreciseVersion = operator !== "^" && operator !== "~";
+            const original = isPreciseVersion ? range : range.slice(1);
+            const newVersion =
+                scheme === "virtualPatch"
+                    ? adjustVersion(original, bumpType, "virtualPatch")
+                    : semver.inc(original, bumpType);
+            if (newVersion === null) {
                 throw new Error(`Failed to increment ${original}.`);
             }
-            return `${operator}${newVersion}`;
+            return `${isPreciseVersion ? "" : operator}${newVersion}`;
         }
 
         case "internal": {
-            let bumpTypeToApply = bumpType;
-            if(bumpType === "major") {
-                console.warn(
-                    `WARNING: Can't do a major bump on the internal version scheme. Treating as a minor bump.`
-                );
-                bumpTypeToApply = "minor";
-            }
+            // let bumpTypeToApply = bumpType;
+            // if (bumpType === "major") {
+            //     console.warn(
+            //         `WARNING: Can't do a major bump on the internal version scheme. Treating as a minor bump.`
+            //     );
+            //     bumpTypeToApply = "minor";
+            // }
             const constraintType = detectConstraintType(range);
             const original = semver.minVersion(range);
-            if(original === null) {
+            if (original === null) {
                 throw new Error(`Couldn't determine minVersion from ${range}.`);
             }
-            const newVersion = bumpInternalVersion(original, bumpTypeToApply);
+            const newVersion = bumpInternalVersion(original, bumpType);
             return getVersionRange(newVersion, constraintType);
         }
     }
@@ -58,7 +63,7 @@ export function incRange(range: string, bumpType: VersionBumpType): string {
 
 export function detectConstraintType(range: string): "minor" | "patch" {
     const minVer = semver.minVersion(range);
-    if(minVer === null) {
+    if (minVer === null) {
         throw new Error(`Couldn't determine minVersion from ${range}.`);
     }
 
