@@ -289,6 +289,9 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 // @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
+// @public (undocumented)
+export type TelemetryEventTypes = ITelemetryBaseEvent | ITelemetryBaseEventExt | ITelemetryGenericEvent | ITelemetryGenericEventExt;
+
 // @public
 export abstract class TelemetryLogger implements ITelemetryLogger {
     constructor(namespace?: string | undefined, properties?: ITelemetryLoggerPropertyBags | undefined);

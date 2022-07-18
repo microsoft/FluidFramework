@@ -66,6 +66,12 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     category?: TelemetryEventCategory;
 }
 
+export type TelemetryEventTypes =
+    | ITelemetryBaseEvent
+    | ITelemetryBaseEventExt
+    | ITelemetryGenericEvent
+    | ITelemetryGenericEventExt;
+
 /**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
@@ -147,6 +153,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent | ITelemetryGenericEventExt, error?: any) {
+        stringifyEventFields(event);
         this.sendTelemetryEventCore({ ...event, category: event.category ?? "generic" }, error);
     }
 
@@ -585,7 +592,7 @@ export class PerformanceEvent {
      * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
      * @param event - Event with fields you want to stringify.
      */
-function stringifyEventFields(event: ITelemetryBaseEvent): void {
+function stringifyEventFields(event: TelemetryEventTypes): void {
     for (const key of Object.keys(event)) {
         const filteredEventVal = filterValidTelemetryProps(event[key]);
         if (filteredEventVal !== null) {
