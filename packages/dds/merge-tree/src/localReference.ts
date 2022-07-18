@@ -280,6 +280,10 @@ export class LocalReferenceCollection {
             assertLocalReferences(lref);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             ListRemoveEntry(lref.getListNode()!);
+            lref.link(
+                lref.getSegment(),
+                lref.getOffset(),
+                undefined);
             if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                 this.hierRefCount--;
             }
