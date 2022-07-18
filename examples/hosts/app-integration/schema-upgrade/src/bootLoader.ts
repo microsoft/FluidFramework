@@ -13,7 +13,7 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-import { IApp, IBootLoader, IBootLoaderEvents, IMigratable, MigrationState } from "./interfaces";
+import { IApp, IBootLoader, IBootLoaderEvents } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
     App as App1,
@@ -76,7 +76,6 @@ const getContainerId = (container: IContainer) => {
     return resolved.id;
 };
 
-// Split into BootLoader vs. Migrator?
 export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements IBootLoader {
     private readonly loader: IHostLoader = createLoader();
 
@@ -101,40 +100,5 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         const model = getModel(container);
         await model.initialize();
         return model;
-    }
-
-    public async ensureMigrated(app: IMigratable) {
-        const acceptedVersion = app.acceptedVersion;
-        if (acceptedVersion === undefined) {
-            throw new Error("Cannot ensure migrated before code details are accepted");
-        }
-        if (acceptedVersion !== "one" && acceptedVersion !== "two") {
-            throw new Error("Unknown accepted version");
-        }
-        const extractedData = await app.exportStringData();
-        // Possibly transform the extracted data here
-        const { attach } = await this.createDetached(acceptedVersion, extractedData);
-        // Maybe here apply the extracted data instead of passing it into createDetached
-
-        // Before attaching, let's check to make sure no one else has already done the migration
-        // To avoid creating unnecessary extra containers.
-        if (app.getMigrationState() === MigrationState.ended) {
-            return;
-        }
-
-        // TODO: Maybe need retry here.
-        // TODO: Use TaskManager here to reduce container noise.
-        const containerId = await attach();
-
-        // Again, it could be the case that someone else finished the migration during our attach.
-        if (app.getMigrationState() === MigrationState.ended) {
-            return;
-        }
-
-        // TODO: Maybe need retry here.
-        app.finalizeMigration(containerId);
-        // Here we let the newly created container/app fall out of scope intentionally.
-        // If we don't win the race to set the container, it is the wrong container/app to use anyway
-        // And the loader is probably caching the container anyway too.
     }
 }

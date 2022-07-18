@@ -10,7 +10,7 @@ import { AppView } from "./appView";
 import { BootLoader } from "./bootLoader";
 import { DebugView } from "./debugView";
 import { externalDataSource } from "./externalData";
-import { IApp, MigrationState } from "./interfaces";
+import { IApp, IMigratable, MigrationState } from "./interfaces";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -42,6 +42,41 @@ const renderApp = (app: IApp) => {
         }),
         debugDiv,
     );
+};
+
+const ensureMigrated = async (bootLoader: BootLoader, app: IMigratable) => {
+    const acceptedVersion = app.acceptedVersion;
+    if (acceptedVersion === undefined) {
+        throw new Error("Cannot ensure migrated before code details are accepted");
+    }
+    if (acceptedVersion !== "one" && acceptedVersion !== "two") {
+        throw new Error("Unknown accepted version");
+    }
+    const extractedData = await app.exportStringData();
+    // Possibly transform the extracted data here
+    const { attach } = await bootLoader.createDetached(acceptedVersion, extractedData);
+    // Maybe here apply the extracted data instead of passing it into createDetached
+
+    // Before attaching, let's check to make sure no one else has already done the migration
+    // To avoid creating unnecessary extra containers.
+    if (app.getMigrationState() === MigrationState.ended) {
+        return;
+    }
+
+    // TODO: Maybe need retry here.
+    // TODO: Use TaskManager here to reduce container noise.
+    const containerId = await attach();
+
+    // Again, it could be the case that someone else finished the migration during our attach.
+    if (app.getMigrationState() === MigrationState.ended) {
+        return;
+    }
+
+    // TODO: Maybe need retry here.
+    app.finalizeMigration(containerId);
+    // Here we let the newly created container/app fall out of scope intentionally.
+    // If we don't win the race to set the container, it is the wrong container/app to use anyway
+    // And the loader is probably caching the container anyway too.
 };
 
 async function start(): Promise<void> {
@@ -88,7 +123,7 @@ async function start(): Promise<void> {
                     _app.close();
                 }).catch(console.error);
             } else if (migrationState === MigrationState.migrating) {
-                bootLoader.ensureMigrated(_app).catch(console.error);
+                ensureMigrated(bootLoader, _app).catch(console.error);
             }
         });
     };
