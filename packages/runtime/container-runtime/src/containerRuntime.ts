@@ -2622,15 +2622,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
             const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
             const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-
-            // We should be here is we haven't processed be here. If we are of if the last message's sequence number
-            // doesn't match the last processed sequence number, log an error.
-            if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
-                summaryNumberLogger.sendErrorEvent({
-                    eventName: "LastSequenceMismatch",
-                    error: message,
-                });
-            }
+            const lastAck = this.summaryCollection.latestAck;
 
             this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
 
@@ -2658,6 +2650,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         continue: false,
                         // eslint-disable-next-line max-len
                         error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+                    };
+                }
+                assert(summaryRefSeqNum === this.deltaManager.lastMessage?.sequenceNumber,
+                    "it's one and the same thing");
+
+                if (lastAck !== this.summaryCollection.latestAck) {
+                    return {
+                        continue: false,
+                        // eslint-disable-next-line max-len
+                        error: `Last summary changed while summarizing. ${this.summaryCollection.latestAck} !== ${lastAck}`,
                     };
                 }
                 return { continue: true };
@@ -2733,7 +2735,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "generate", ...generateSummaryData, error: continueResult.error };
             }
 
-            const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
                     ? {
