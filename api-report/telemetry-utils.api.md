@@ -262,6 +262,9 @@ export enum TelemetryDataTag {
 }
 
 // @public (undocumented)
+export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[];
+
+// @public (undocumented)
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
 // @public

@@ -38,6 +38,8 @@ export enum TelemetryDataTag {
     UserData = "UserData",
 }
 
+export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[];
+
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
 export interface ITelemetryLoggerPropertyBag {
