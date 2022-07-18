@@ -19,7 +19,6 @@ export {
     isRuntimeMessage,
     RuntimeMessage,
     unpackRuntimeMessage,
-    ScheduleManager,
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
@@ -83,3 +82,4 @@ export {
     SummaryCollection,
 } from "./summaryCollection";
 export { ICancellableSummarizerController, neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";
+export { ScheduleManager } from "./scheduleManager";

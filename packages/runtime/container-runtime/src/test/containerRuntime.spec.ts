@@ -26,7 +26,8 @@ import {
     MockLogger,
 } from "@fluidframework/telemetry-utils";
 import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
-import { ContainerMessageType, ContainerRuntime, ScheduleManager } from "../containerRuntime";
+import { ContainerMessageType, ContainerRuntime } from "../containerRuntime";
+import { ScheduleManager } from "../scheduleManager";
 import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
