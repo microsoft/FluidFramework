@@ -641,7 +641,7 @@ export function configureWebSocketServices(
 
 function addAlfredTrace(message: IDocumentMessage, numberOfMessagesPerTrace: number,
     clientId: string, tenantId: string, documentId: string) {
-    if (message && core.DefaultServiceConfiguration.enableTraces && sampleMessages(message, numberOfMessagesPerTrace)) {
+    if (message && core.DefaultServiceConfiguration.enableTraces && sampleMessages(numberOfMessagesPerTrace)) {
         if (message.traces === undefined) {
             message.traces = [];
         }
@@ -666,6 +666,6 @@ function addAlfredTrace(message: IDocumentMessage, numberOfMessagesPerTrace: num
     return message;
 }
 
-function sampleMessages(message: IDocumentMessage, numberOfMessagesPerTrace: number): boolean {
+function sampleMessages(numberOfMessagesPerTrace: number): boolean {
     return getRandomInt(numberOfMessagesPerTrace) === 0;
 }

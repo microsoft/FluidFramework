@@ -336,7 +336,8 @@ export class RedisSocketIoAdapter extends Adapter {
                 rooms: new Set([room]),
             };
 
-            if (packet.data?.length > 1) {
+            // Packet data is an array of [opType, documentId, opList]
+            if (packet.data?.length > 2) {
                 const msgList = packet.data[2];
                 if (msgList?.length > 0) {
                     msgList.forEach((element) => {
