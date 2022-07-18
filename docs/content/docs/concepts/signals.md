@@ -11,14 +11,14 @@ draft: true
 
 Signals are similar to ops, but are not stored; they're useful to implement features like user presence. They provide a simple way to communicate transient data to connected clients within a Fluid application.
 
-They are lossy and not guaranteed to be ordered on delivery relative to other signals and ops. A good analogy to help conceptualize is that signals can be interpreted as UDP protocol, whereas standard ops can be thought of as TCP protocol.
+They are lossy and not guaranteed to be ordered on delivery relative to other signals and ops. A good analogy to help conceptualize signals is that they can be interpreted as UDP protocol, whereas standard ops can be thought of as TCP protocol.
 
 ## Why are signals useful?
 Signals provide a transient data channel for sharing short-lived information that does not need to be persisted in the Fluid op stream.
 
 By sending signals, you avoid the storage and sequencing of data that will not be relevant or useful in the long-term.
 
-Signals are the most appropriate data channel in many user presence scenarios, where each user has the responsibility of sharing their current presence state to other connected users. In these scenarios, the user shares current presence data is short-lived, their past presence state is irrelevant, and their data is not persisted on disconnect.
+Signals are the most appropriate data channel in many user presence scenarios, where each user has the responsibility of sharing their current presence state to other connected users. In these scenarios, current presence data is short-lived, past presence state is irrelevant, and the shared data is not persisted on disconnect.
 
 ## How can I use signals in Fluid?
 The `Signaler` DataObject can be used to effectively integrate and send communications via signals in a Fluid application. `Signaler` allows clients to efficiently send signals to other connected clients and add/remove listeners for specified signal types.
