@@ -108,11 +108,13 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         if (acceptedVersion === undefined) {
             throw new Error("Cannot ensure migrated before code details are accepted");
         }
+        if (acceptedVersion !== "one" && acceptedVersion !== "two") {
+            throw new Error("Unknown accepted version");
+        }
         const extractedData = await app.exportStringData();
         // Possibly transform the extracted data here
-        const newContainer = await this.loader.createDetachedContainer({ package: acceptedVersion });
-        const newApp = getModel(newContainer);
-        await newApp.initialize(extractedData);
+        const { attach } = await this.createDetached(acceptedVersion, extractedData);
+        // Maybe here apply the extracted data instead of passing it into createDetached
 
         // Before attaching, let's check to make sure no one else has already done the migration
         // To avoid creating unnecessary extra containers.
@@ -122,9 +124,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
 
         // TODO: Maybe need retry here.
         // TODO: Use TaskManager here to reduce container noise.
-        await newContainer.attach(createTinyliciousCreateNewRequest());
-        // Discover the container ID after attaching
-        const containerId = getContainerId(newContainer);
+        const containerId = await attach();
 
         // Again, it could be the case that someone else finished the migration during our attach.
         if (app.getMigrationState() === MigrationState.ended) {
