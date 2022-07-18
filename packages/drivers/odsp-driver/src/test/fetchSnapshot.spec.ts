@@ -12,7 +12,7 @@ import { EpochTracker } from "../epochTracker";
 import { HostStoragePolicyInternal } from "../contracts";
 import * as fetchSnapshotImport from "../fetchSnapshot";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
-import { INewFileInfo, IOdspResponse, IRelayServiceSessionId } from "../odspUtils";
+import { INewFileInfo, IOdspResponse } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -81,10 +81,6 @@ describe("Tests for snapshot fetch", () => {
         );
         epochTracker.setEpoch("epoch1", true, "test");
         const resolved = await resolver.resolve({ url: odspUrl });
-        const relayServiceSessionId: IRelayServiceSessionId = {
-            tenantId: "tenantId",
-            id: "id",
-        };
         service = new OdspDocumentStorageService(
             resolved,
             async (_options) => "token",
@@ -94,7 +90,7 @@ describe("Tests for snapshot fetch", () => {
             hostPolicy,
             epochTracker,
             async () => { return {}; },
-            () => relayServiceSessionId,
+            () => "tenantid/id",
         );
     });
 

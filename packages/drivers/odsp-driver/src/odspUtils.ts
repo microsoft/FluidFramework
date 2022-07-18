@@ -54,7 +54,7 @@ export interface TokenFetchOptionsEx extends TokenFetchOptions {
     previousError?: any;
 }
 
-export interface IRelayServiceSessionId {
+export interface IRelaySessionId {
     tenantId: string;
     id: string;
 }

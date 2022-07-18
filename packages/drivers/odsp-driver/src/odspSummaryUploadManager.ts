@@ -20,7 +20,7 @@ import {
 } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
-import { getWithRetryForTokenRefresh, IRelayServiceSessionId } from "./odspUtils";
+import { getWithRetryForTokenRefresh } from "./odspUtils";
 
 /* eslint-disable max-len */
 
@@ -39,7 +39,7 @@ export class OdspSummaryUploadManager {
         logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
         private readonly forceAccessTokenViaAuthorizationHeader: boolean,
-        private readonly relayServiceSessionId: () => (IRelayServiceSessionId | undefined),
+        private readonly relaySessionId: () => string,
     ) {
         this.mc = loggerToMonitoringContext(logger);
     }
@@ -94,17 +94,8 @@ export class OdspSummaryUploadManager {
                 this.forceAccessTokenViaAuthorizationHeader,
             );
             headers["Content-Type"] = "application/json";
-            const ifMatchHeader: string[] = [];
-            const relayServiceSessionId = this.relayServiceSessionId();
-            if (relayServiceSessionId !== undefined) {
-                ifMatchHeader.push(`sessionid=${relayServiceSessionId.tenantId}/${relayServiceSessionId.id}`);
-            }
-            if (parentHandle) {
-                ifMatchHeader.push(`containerid=${parentHandle}`);
-            }
-            if (ifMatchHeader.length > 0) {
-                headers["If-Match"] = `fluid:${ifMatchHeader.join(";")}`;
-            }
+            headers["If-Match"] =
+                `fluid:sessionid=${this.relaySessionId()}${parentHandle ? `;containerid=${parentHandle}`: ""}`;
 
             const postBody = JSON.stringify(snapshot);
 
