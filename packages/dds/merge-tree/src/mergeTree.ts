@@ -97,6 +97,10 @@ export interface IHierBlock extends IMergeBlock {
     addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
     rightmostTiles: MapLike<ReferencePosition>;
     leftmostTiles: MapLike<ReferencePosition>;
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     rangeStacks: RangeStackMap;
 }
 
@@ -838,21 +842,37 @@ export interface IConsensusInfo {
     callback: (m: Marker) => void;
 }
 
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
 export interface ClientSeq {
     refSeq: number;
     clientId: string;
 }
 
-export const clientSeqComparer: Comparer<ClientSeq> = {
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
+ export const clientSeqComparer: Comparer<ClientSeq> = {
     min: { refSeq: -1, clientId: "" },
     compare: (a, b) => a.refSeq - b.refSeq,
 };
 
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
 export interface LRUSegment {
     segment?: ISegment;
     maxSeq: number;
 }
 
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
 const LRUSegmentComparer: Comparer<LRUSegment> = {
     min: { maxSeq: -2 },
     compare: (a, b) => a.maxSeq - b.maxSeq,
@@ -984,6 +1004,11 @@ export class MergeTree {
     root: IMergeBlock;
     private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
     public readonly collabWindow = new CollaborationWindow();
+
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     public pendingSegments: List<SegmentGroup> | undefined;
     private segmentsToScour: Heap<LRUSegment> | undefined;
     // TODO: add remove on segment remove
@@ -1591,7 +1616,10 @@ export class MergeTree {
         }
         return DetachedReferencePosition;
     }
-
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
         const searchInfo: IMarkerSearchRangeInfo = {
             mergeTree: this,
@@ -2614,6 +2642,10 @@ export class MergeTree {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
         while (!stateStack.empty()) {
             // We already check the stack is not empty

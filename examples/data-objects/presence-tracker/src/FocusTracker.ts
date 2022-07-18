@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SignalManager } from "@fluid-experimental/data-objects";
+import { Signaler } from "@fluid-experimental/data-objects";
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -46,7 +46,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     public constructor(
         container: IFluidContainer,
         public readonly audience: IServiceAudience<IMember>,
-        private readonly signalManager: SignalManager,
+        private readonly signaler: Signaler,
     ) {
         super();
 
@@ -61,14 +61,14 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
             this.emit("focusChanged");
         });
 
-        this.signalManager.on("error", (error) => {
+        this.signaler.on("error", (error) => {
             this.emit("error", error);
         });
-        this.signalManager.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
+        this.signaler.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
             this.onFocusSignalFn(clientId, payload);
         });
 
-        this.signalManager.onSignal(FocusTracker.focusRequestType, () => {
+        this.signaler.onSignal(FocusTracker.focusRequestType, () => {
             this.sendFocusSignal(document.hasFocus());
         });
         window.addEventListener("focus", () => {
@@ -78,16 +78,16 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
             this.sendFocusSignal(false);
         });
         container.on("connected", () => {
-            this.signalManager.submitSignal(FocusTracker.focusRequestType);
+            this.signaler.submitSignal(FocusTracker.focusRequestType);
         });
-        this.signalManager.submitSignal(FocusTracker.focusRequestType);
+        this.signaler.submitSignal(FocusTracker.focusRequestType);
     }
 
     /**
      * Alert all connected clients that there has been a change to a client's focus
      */
     private sendFocusSignal(hasFocus: boolean) {
-        this.signalManager.submitSignal(
+        this.signaler.submitSignal(
             FocusTracker.focusSignalType,
             { userId: this.audience.getMyself()?.userId, focus: hasFocus },
         );

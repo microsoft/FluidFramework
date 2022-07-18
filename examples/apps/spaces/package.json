@@ -54,7 +54,7 @@
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/view-adapters": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "office-ui-fabric-react": "^7.28.1",
+    "office-ui-fabric-react": "^7.189.0",
     "prop-types": "^15.7.2",
     "react": "^16.10.2",
     "react-collapsible": "^2.7.0",

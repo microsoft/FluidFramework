@@ -50,7 +50,9 @@ export class AlfredRunner implements IRunner {
         private readonly producer: IProducer,
         private readonly metricClientConfig: any,
         private readonly documentsCollection: ICollection<IDocument>,
-        private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager) {
+        private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
+        private readonly verifyMaxMessageSize?: boolean,
+    ) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -98,7 +100,9 @@ export class AlfredRunner implements IRunner {
             this.socketConnectThrottler,
             this.socketSubmitOpThrottler,
             this.socketSubmitSignalThrottler,
-            this.throttleAndUsageStorageManager);
+            this.throttleAndUsageStorageManager,
+            this.verifyMaxMessageSize,
+        );
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

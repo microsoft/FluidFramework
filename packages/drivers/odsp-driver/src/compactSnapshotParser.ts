@@ -81,9 +81,11 @@ function readTreeSection(node: NodeCore) {
         if (records.value !== undefined) {
             assertBlobCoreInstance(records.value, "Blob value should be BlobCore");
             snapshotTree.blobs[path] = records.value.toString();
-        } else {
+        } else if (records.children !== undefined) {
             assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
             snapshotTree.trees[path] = readTreeSection(records.children);
+        } else {
+            snapshotTree.trees[path] = { blobs: {}, commits: {}, trees: {} };
         }
         if (records.unreferenced !== undefined) {
             assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
