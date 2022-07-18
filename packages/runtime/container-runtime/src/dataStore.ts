@@ -92,13 +92,7 @@ class DataStore implements IDataStore {
             alias,
         };
 
-        // back-compat 0.58.2000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel. For
-        // older versions, we still have to call bindToContext.
-        if (this.fluidDataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
-            this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
-        } else {
-            this.fluidDataStoreChannel.bindToContext();
-        }
+        this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
         if (this.runtime.attachState === AttachState.Detached) {
             const localResult = this.datastores.processAliasMessageCore(message);
@@ -128,7 +122,7 @@ class DataStore implements IDataStore {
                 },
                 internalId: {
                     value: this.internalId,
-                    tag: TelemetryDataTag.PackageData,
+                    tag: TelemetryDataTag.CodeArtifact,
                 },
             }, error);
             this.aliasState = AliasState.None;

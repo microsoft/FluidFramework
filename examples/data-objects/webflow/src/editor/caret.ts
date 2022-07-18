@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReference } from "@fluidframework/merge-tree";
+import { LocalReferencePosition, ReferencePosition } from "@fluidframework/merge-tree";
 import { DocSegmentKind, getDocSegmentKind } from "../document";
 import { clamp, Dom, hasTagName, TagName } from "../util";
 import { updateRef } from "../util/localref";
@@ -30,8 +30,8 @@ export class Caret {
             ? { start, end }
             : { start: end, end: start };
     }
-    private startRef: LocalReference;
-    private endRef: LocalReference;
+    private startRef: LocalReferencePosition;
+    private endRef: LocalReferencePosition;
 
     public constructor(private readonly layout: Layout) {
         this.startRef = this.doc.addLocalRef(0);
@@ -90,12 +90,12 @@ export class Caret {
         this.setSelection(start, end);
     };
 
-    private positionToNodeOffset(ref: LocalReference) {
+    private positionToNodeOffset(ref: ReferencePosition) {
         let result: { node: Node; nodeOffset: number; };
 
         const position = this.doc.localRefToPosition(ref);
         const { segment: rightSegment, offset: rightOffset } = this.doc.getSegmentAndOffset(position);
-        const rightKind = getDocSegmentKind(ref.segment);
+        const rightKind = getDocSegmentKind(ref.getSegment());
 
         // The position -> { node, offset } mapping places the caret "just before" the content at the given
         // position.  For text nodes, an offset of 0 is "just before" the first character.

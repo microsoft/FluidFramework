@@ -22,6 +22,7 @@ import * as winston from "winston";
 import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { AlfredRunner } from "./runner";
+import { DeltaService } from "./services";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
     private readonly webSocketServer: ws.Server;
@@ -92,11 +93,13 @@ export class AlfredResources implements core.IResources {
         public storage: core.IDocumentStorage,
         public appTenants: IAlfredTenant[],
         public mongoManager: core.MongoManager,
+        public deltaService: core.IDeltaService,
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
         public documentsCollection: core.ICollection<core.IDocument>,
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
+        public verifyMaxMessageSize?: boolean,
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -320,6 +323,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const storage = new services.DocumentStorage(databaseManager, tenantManager, enableWholeSummaryUpload);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
+        // Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
+        // Therefore, default clients will ignore server's 16kb message size limit.
+        const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
         const address = `${await utils.getHostIp()}:4000`;
 
         const nodeFactory = new LocalNodeFactory(
@@ -355,6 +361,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         // This wanst to create stuff
         const port = utils.normalizePort(process.env.PORT || "3000");
 
+        const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
+
         return new AlfredResources(
             config,
             producer,
@@ -371,11 +379,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             storage,
             appTenants,
             operationsDbMongoManager,
+            deltaService,
             port,
             documentsCollectionName,
             metricClientConfig,
             documentsCollection,
-            throttleAndUsageStorageManager);
+            throttleAndUsageStorageManager,
+            verifyMaxMessageSize);
     }
 }
 
@@ -395,10 +405,11 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.storage,
             resources.clientManager,
             resources.appTenants,
-            resources.mongoManager,
+            resources.deltaService,
             resources.producer,
             resources.metricClientConfig,
             resources.documentsCollection,
-            resources.throttleAndUsageStorageManager);
+            resources.throttleAndUsageStorageManager,
+            resources.verifyMaxMessageSize);
     }
 }
