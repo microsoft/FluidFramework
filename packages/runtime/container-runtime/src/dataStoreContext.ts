@@ -813,11 +813,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 
         const localReadAndParse = async <T>(id: string) => readAndParse<T>(this.storage, id);
         if (tree) {
-            const loadedSummary = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
-            tree = loadedSummary.baseSummary;
-            // Prepend outstanding ops to pending queue of ops to process.
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.pending = loadedSummary.outstandingOps.concat(this.pending!);
+            tree = await this.summarizerNode.loadBaseSummary(tree, localReadAndParse);
         }
 
         if (!!tree && tree.blobs[dataStoreAttributesBlobName] !== undefined) {
