@@ -38,6 +38,7 @@ to be `string | undefined`.
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
+- [IntervalCollection event semantics changed](#IntervalCollection-event-semantics-changed)
 - [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
 - [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
 - [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
@@ -65,6 +66,20 @@ The following deprecated methods are  now removed from sequence and merge-tree. 
  - addLocalReference to createLocalReferencePosition
  - localRefToPos to localReferencePositionToPosition
  - removeLocalReference to removeLocalReferencePosition
+
+### IntervalCollection event semantics changed
+
+The semantics of events emitted by IntervalCollection were changed to be more consistent:
+
+- propertyChanged events receive the same "isLocal" and op information that other events received
+- changeInterval events will no longer take place for changes that impact an interval's properties only. Clients that need to perform work on such changes should listen to "propertyChanged" events instead.
+- For local changes, changeInterval events will only be emitted on initial application of the change (as opposed to the
+  previous behavior, which fired an event on the local application of a change as well as on server ack of that change))
+- changeInterval events now receive information about the interval's previous position.
+- addInterval and deleteInterval event handler now properly reflects that the `op` argument can be undefined. This was true
+  before, but not reflected in the type system.
+
+More details can be found on `IIntervalCollectionEvent`'s doc comment.
 
 ### Remove TelemetryDataTag.PackageData
 `TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
