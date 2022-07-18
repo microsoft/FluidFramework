@@ -36,6 +36,10 @@ interface SnapshotHeader {
     minSeq?: number;
 }
 
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
 export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";

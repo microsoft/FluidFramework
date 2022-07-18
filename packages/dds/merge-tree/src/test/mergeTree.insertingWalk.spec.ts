@@ -11,11 +11,11 @@ import {
     MaxNodesInBlock,
 } from "../mergeTreeNodes";
 import {
-    MergeTreeTextHelper,
     TextSegment,
 } from "../textSegment";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { insertText, nodeOrdinalsHaveIntegrity } from "./testUtils";
 
 interface ITestTreeFactory {

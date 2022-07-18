@@ -335,7 +335,7 @@ function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefine
     return base;
 }
 
-class HierMergeBlock extends MergeBlock implements IMergeBlock {
+class HierMergeBlock extends MergeBlock implements IHierBlock {
     public rightmostTiles: MapLike<ReferencePosition>;
     public leftmostTiles: MapLike<ReferencePosition>;
     public rangeStacks: MapLike<Stack<ReferencePosition>>;
@@ -347,6 +347,10 @@ class HierMergeBlock extends MergeBlock implements IMergeBlock {
         this.rangeStacks = createMap<Stack<ReferencePosition>>();
     }
 
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     public addNodeReferences(mergeTree: MergeTree, node: IMergeNode) {
         addNodeReferences(mergeTree, node, this.rightmostTiles, this.leftmostTiles,
             this.rangeStacks);
@@ -1980,8 +1984,13 @@ export class MergeTree {
             const child = block.children[i];
             len += nodeTotalLength(this, child) ?? 0;
             if (hierBlock) {
-                hierBlock.addNodeReferences(this, child);
-            }
+                addNodeReferences(
+                    this,
+                    child,
+                    hierBlock.rightmostTiles,
+                    hierBlock.leftmostTiles,
+                    hierBlock.rangeStacks);
+                }
             if (this.blockUpdateActions) {
                 this.blockUpdateActions.child(block, i);
             }

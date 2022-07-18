@@ -50,10 +50,11 @@ import {
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
-import { MergeTreeTextHelper } from "./textSegment";
+import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import { MergeTree } from "./mergeTree";
+import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -970,7 +971,7 @@ export class Client {
         return opList.length === 1 ? opList[0] : createGroupOp(...opList);
     }
 
-    public createTextHelper() {
+    public createTextHelper(): IMergeTreeTextHelper {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
