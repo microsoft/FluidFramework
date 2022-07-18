@@ -11,9 +11,36 @@ import {
     fromInternalScheme,
     toInternalScheme,
     getVersionRange,
+    isInternalVersionScheme,
 } from "../src/internalVersionScheme";
 
 describe("internalScheme", () => {
+    describe("checking for internal version scheme", () => {
+        it("2.0.0-internal.1.0.0 is internal scheme", () => {
+            const input = `2.0.0-internal.1.0.0`;
+            const result = isInternalVersionScheme(input);
+            assert.isTrue(result);
+        });
+
+        it("2.0.0-alpha.1.0.0 is not internal scheme (must use internal)", () => {
+            const input = `2.0.0-alpha.1.0.0`;
+            const result = isInternalVersionScheme(input);
+            assert.isFalse(result);
+        });
+
+        it("1.1.1-internal.1.0.0 is not internal scheme (public must be 2.0.0+)", () => {
+            const input = `1.1.1-internal.1.0.0`;
+            const result = isInternalVersionScheme(input);
+            assert.isFalse(result);
+        });
+
+        it("2.0.0-internal.1.1.0.0 is not internal scheme (prerelease must only have four items)", () => {
+            const input = `2.0.0-internal.1.1.0.0`;
+            const result = isInternalVersionScheme(input);
+            assert.isFalse(result);
+        });
+    });
+
     describe("converting FROM internal scheme", () => {
         it("parses 2.0.0-internal.1.0.0", () => {
             const input = `2.0.0-internal.1.0.0`;
@@ -59,10 +86,15 @@ describe("internalScheme", () => {
             const range = getVersionRange(input, "patch");
             assert.strictEqual(range, expected);
 
-            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.0`, range))
-            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.1`, range))
-            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.2`, range))
-            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.3`, range))
+            // Check that patch bumps satisfy the range
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.0`, range));
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.1`, range));
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.2`, range));
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.3`, range));
+
+            // Check that minor and major bumps do not saisfy the range
+            assert.isFalse(semver.satisfies(`2.0.0-internal.1.1.0`, range));
+            assert.isFalse(semver.satisfies(`2.0.0-internal.2.1.0`, range));
         });
 
         it("caret ^ dependency equivalent (auto-upgrades minor versions)", () => {
@@ -71,10 +103,15 @@ describe("internalScheme", () => {
             const range = getVersionRange(input, "minor");
             assert.strictEqual(range, expected);
 
-            assert.isTrue(semver.satisfies(`2.0.0-internal.1.1.0`, range))
-            assert.isTrue(semver.satisfies(`2.0.0-internal.1.1.1`, range))
-            assert.isTrue(semver.satisfies(`2.0.0-internal.1.2.2`, range))
-            assert.isTrue(semver.satisfies(`2.0.0-internal.1.3.3`, range))
+            // Check that minor and patch bumps satisfy the range
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.0.1`, range));
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.1.1`, range));
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.2.2`, range));
+            assert.isTrue(semver.satisfies(`2.0.0-internal.1.3.3`, range));
+
+            // Check that major bumps do not saisfy the range
+            assert.isFalse(semver.satisfies(`2.0.0-internal.2.0.0`, range));
+            assert.isFalse(semver.satisfies(`2.0.0-internal.3.1.0`, range));
         });
     });
 });
