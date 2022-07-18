@@ -135,14 +135,14 @@ export class List<T> {
     }
 
     public [Symbol.iterator]() {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let node: List<T> | undefined = this;
+        let node: List<T> | undefined = this.next;
         const iterator: IterableIterator<T> = {
             next(): IteratorResult<T> {
-                while (node && node.next.isHead === false) {
+                while (node && node.isHead === false) {
+                    const value = node.data;
                     node = node.next;
-                    if (node.data !== undefined) {
-                        return { value: node.data, done: false };
+                    if (value !== undefined) {
+                        return { value, done: false };
                     }
                 }
                 return { value: undefined, done: true };
