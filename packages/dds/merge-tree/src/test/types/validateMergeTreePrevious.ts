@@ -162,26 +162,50 @@ use_old_ClassDeclaration_Client(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ClientSeq": {"forwardCompat": false}
+* "InterfaceDeclaration_ClientSeq": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_ClientSeq():
+    TypeOnly<old.ClientSeq>;
+declare function use_current_InterfaceDeclaration_ClientSeq(
+    use: TypeOnly<current.ClientSeq>);
+use_current_InterfaceDeclaration_ClientSeq(
+    get_old_InterfaceDeclaration_ClientSeq());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ClientSeq": {"backCompat": false}
+* "InterfaceDeclaration_ClientSeq": {"backCompat": false}
 */
+declare function get_current_InterfaceDeclaration_ClientSeq():
+    TypeOnly<current.ClientSeq>;
+declare function use_old_InterfaceDeclaration_ClientSeq(
+    use: TypeOnly<old.ClientSeq>);
+use_old_InterfaceDeclaration_ClientSeq(
+    get_current_InterfaceDeclaration_ClientSeq());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_clientSeqComparer": {"forwardCompat": false}
+* "VariableDeclaration_clientSeqComparer": {"forwardCompat": false}
 */
+declare function get_old_VariableDeclaration_clientSeqComparer():
+    TypeOnly<typeof old.clientSeqComparer>;
+declare function use_current_VariableDeclaration_clientSeqComparer(
+    use: TypeOnly<typeof current.clientSeqComparer>);
+use_current_VariableDeclaration_clientSeqComparer(
+    get_old_VariableDeclaration_clientSeqComparer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_clientSeqComparer": {"backCompat": false}
+* "VariableDeclaration_clientSeqComparer": {"backCompat": false}
 */
+declare function get_current_VariableDeclaration_clientSeqComparer():
+    TypeOnly<typeof current.clientSeqComparer>;
+declare function use_old_VariableDeclaration_clientSeqComparer(
+    use: TypeOnly<typeof old.clientSeqComparer>);
+use_old_VariableDeclaration_clientSeqComparer(
+    get_current_VariableDeclaration_clientSeqComparer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1926,14 +1950,27 @@ use_old_InterfaceDeclaration_LocalReferencePosition(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_LRUSegment": {"forwardCompat": false}
+* "InterfaceDeclaration_LRUSegment": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_LRUSegment():
+    TypeOnly<old.LRUSegment>;
+declare function use_current_InterfaceDeclaration_LRUSegment(
+    use: TypeOnly<current.LRUSegment>);
+use_current_InterfaceDeclaration_LRUSegment(
+    // @ts-expect-error compatibility expected to be broken
+    get_old_InterfaceDeclaration_LRUSegment());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_LRUSegment": {"backCompat": false}
+* "InterfaceDeclaration_LRUSegment": {"backCompat": false}
 */
+declare function get_current_InterfaceDeclaration_LRUSegment():
+    TypeOnly<current.LRUSegment>;
+declare function use_old_InterfaceDeclaration_LRUSegment(
+    use: TypeOnly<old.LRUSegment>);
+use_old_InterfaceDeclaration_LRUSegment(
+    get_current_InterfaceDeclaration_LRUSegment());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2110,14 +2147,28 @@ use_old_ClassDeclaration_MergeNode(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MergeTree": {"forwardCompat": false}
+* "ClassDeclaration_MergeTree": {"forwardCompat": false}
 */
+declare function get_old_ClassDeclaration_MergeTree():
+    TypeOnly<old.MergeTree>;
+declare function use_current_ClassDeclaration_MergeTree(
+    use: TypeOnly<current.MergeTree>);
+use_current_ClassDeclaration_MergeTree(
+    // @ts-expect-error compatibility expected to be broken
+    get_old_ClassDeclaration_MergeTree());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_MergeTree": {"backCompat": false}
+* "ClassDeclaration_MergeTree": {"backCompat": false}
 */
+declare function get_current_ClassDeclaration_MergeTree():
+    TypeOnly<current.MergeTree>;
+declare function use_old_ClassDeclaration_MergeTree(
+    use: TypeOnly<old.MergeTree>);
+use_old_ClassDeclaration_MergeTree(
+    // @ts-expect-error compatibility expected to be broken
+    get_current_ClassDeclaration_MergeTree());
 
 /*
 * Validate forward compat by using old type in place of current type

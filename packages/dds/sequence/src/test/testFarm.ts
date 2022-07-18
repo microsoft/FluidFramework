@@ -14,8 +14,6 @@
 import path from "path";
 import { assert, Trace } from "@fluidframework/common-utils";
 import * as MergeTree from "@fluidframework/merge-tree";
-// eslint-disable-next-line import/no-internal-modules
-import { MergeTree as MergeTreeMergeTree } from "@fluidframework/merge-tree/dist/mergeTree";
 import {
     TextSegment,
     createGroupOp,
@@ -200,9 +198,9 @@ export function TestPack(verbose = true) {
 
     function manyMergeTrees() {
         const mergeTreeCount = 2000000;
-        const a = <MergeTreeMergeTree[]>Array(mergeTreeCount);
+        const a = <MergeTree.MergeTree[]>Array(mergeTreeCount);
         for (let i = 0; i < mergeTreeCount; i++) {
-            a[i] = new MergeTreeMergeTree();
+            a[i] = new MergeTree.MergeTree();
         }
         for (; ;) { }
     }
@@ -277,7 +275,7 @@ export function TestPack(verbose = true) {
             const clockStart = clock();
             // Let segs = Paparazzo.Snapshot.loadSync("snap-initial");
             console.log(`sync load time ${elapsedMicroseconds(clockStart)}`);
-            const fromLoad = new MergeTreeMergeTree();
+            const fromLoad = new MergeTree.MergeTree();
             // FromLoad.reloadFromSegments(segs);
             const fromLoadText = new MergeTreeTextHelper(fromLoad).getText(UniversalSequenceNumber, NonCollabClient);
             const serverText = testServer.getText();
@@ -1023,7 +1021,7 @@ const editFlat = (source: string, s: number, dl: number, nt = "") =>
 let accumTime = 0;
 
 function checkInsertMergeTree(
-    mergeTree: MergeTreeMergeTree,
+    mergeTree: MergeTree.MergeTree,
     pos: number,
     textSegment: MergeTree.TextSegment,
     verbose = false,
@@ -1049,7 +1047,7 @@ function checkInsertMergeTree(
     return result;
 }
 
-function checkMarkRemoveMergeTree(mergeTree: MergeTreeMergeTree, start: number, end: number, verbose = false) {
+function checkMarkRemoveMergeTree(mergeTree: MergeTree.MergeTree, start: number, end: number, verbose = false) {
     const helper = new MergeTreeTextHelper(mergeTree);
     const origText = helper.getText(UniversalSequenceNumber, LocalClientId);
     const checkText = editFlat(origText, start, end - start);
@@ -1079,7 +1077,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTreeMergeTree, start: number, 
 const makeCollabTextSegment = (text: string) => new MergeTree.TextSegment(text);
 
 export function mergeTreeCheckedTest() {
-    const mergeTree = new MergeTreeMergeTree();
+    const mergeTree = new MergeTree.MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
     const insertCount = 2000;
     const removeCount = 1400;
