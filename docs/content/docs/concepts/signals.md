@@ -6,6 +6,7 @@ discussion: 5469
 aliases:
   - "/docs/advanced/signals/"
   - "/docs/deep/signals/"
+draft: true
 ---
 
 Signals are similar to ops, but are not stored; they're useful to implement features like user presence. They provide a simple way to communicate transient data to connected clients within a Fluid application.
