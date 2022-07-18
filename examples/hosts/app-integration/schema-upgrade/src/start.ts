@@ -77,7 +77,11 @@ async function start(): Promise<void> {
     const watchForAppMigration = (_app: IApp) => {
         _app.on("migrationStateChanged", (migrationState: MigrationState) => {
             if (migrationState === MigrationState.ended) {
-                bootLoader.getMigrated(_app).then(async ({ model: migratedApp, id: migratedId }) => {
+                const migratedId = _app.newContainerId;
+                if (migratedId === undefined) {
+                    throw new Error("Migration ended without a new container being created");
+                }
+                bootLoader.loadExisting(migratedId).then((migratedApp: IApp) => {
                     // bootLoader.getView(migratedApp) ???
                     watchForAppMigration(migratedApp);
                     renderApp(migratedApp);

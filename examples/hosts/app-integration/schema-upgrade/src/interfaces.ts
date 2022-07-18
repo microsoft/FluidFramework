@@ -30,7 +30,8 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
     // attach()?
     readonly version: string;
     /**
-     * Initialize must be called after constructing the IApp.
+     * Initialize must be called after constructing the IApp.  Aside from importing the specified data, this is also
+     * our opportunity to do whatever async stuff is needed to prepare a sync API surface on the app.
      * Split into import() vs initialize()?
      * Avoid implying that string is a requirement - can even be an in-memory type
      * @param initialData - String data to initially populate the app with.  May only be used in detached state.

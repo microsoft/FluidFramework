@@ -80,6 +80,8 @@ const getContainerId = (container: IContainer) => {
 export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements IBootLoader {
     private readonly loader: IHostLoader = createLoader();
 
+    // Would probably be nicer for this to return a detached thing and have a service.attach(app) call
+    // which would return the ID.
     public async createNew(version: "one" | "two", externalData?: string): Promise<{ app: IApp; id: string; }> {
         const container = await this.loader.createDetachedContainer({ package: version });
         const app = getModel(container);
@@ -132,19 +134,5 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         // Here we let the newly created container/app fall out of scope intentionally.
         // If we don't win the race to set the container, it is the wrong container/app to use anyway
         // And the loader is probably caching the container anyway too.
-    }
-
-    public async getMigrated(oldApp: IMigratable): Promise<{ model: IApp; id: string; }> {
-        if (oldApp.getMigrationState() !== MigrationState.ended) {
-            throw new Error("Tried to get migrated container but migration hasn't happened yet");
-        }
-        const newContainerId = oldApp.newContainerId;
-        if (newContainerId === undefined) {
-            throw new Error("Migration ended without a new container being created");
-        }
-        const newContainer = await this.loader.resolve({ url: newContainerId });
-        const model = getModel(newContainer);
-        await model.initialize();
-        return { model, id: newContainerId };
     }
 }
