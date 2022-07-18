@@ -224,9 +224,7 @@ export class PromiseTimer implements IPromiseTimer {
     constructor(defaultTimeout: number, defaultHandler: () => void);
     // (undocumented)
     clear(): void;
-    // (undocumented)
     get hasTimer(): boolean;
-    // (undocumented)
     start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult>;
     // (undocumented)
     protected wrapHandler(handler: () => void): void;
