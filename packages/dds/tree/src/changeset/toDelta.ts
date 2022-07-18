@@ -49,7 +49,7 @@ function toPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.PositionedMa
             const type = mark.type;
             switch (type) {
                 case "Modify": {
-                    if (mark.tomb !== undefined) {
+                    if (mark.tomb === undefined) {
                         out.push({
                             offset,
                             mark: {
@@ -134,8 +134,16 @@ function applyOrCollectModifications(
     modify: Pick<T.Modify, "value" | "fields">,
 ): Pick<Delta.InsertAndModify, "content" | "fields"> {
     const outFields: Delta.FieldMarks<Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify> = new Map();
-    if ("value" in modify) {
-        node.value = modify.value;
+    if (modify.value !== undefined) {
+        const type = modify.value.type;
+        switch (type) {
+            case "Set":
+                node.value = modify.value.value;
+                break;
+            case "Revert":
+                fail("Not implemented");
+            default: unreachableCase(type);
+        }
     }
     if (modify.fields !== undefined) {
         const fields = modify.fields;
@@ -252,8 +260,16 @@ interface DeltaModifyLike<TMark> {
 
 function convertModify<TMarks>(mark: ModifyLike): DeltaModifyLike<TMarks> {
     const out: DeltaModifyLike<TMarks> = {};
-    if ("value" in mark) {
-        out.setValue = mark.value;
+    if (mark.value !== undefined) {
+        const type = mark.value.type;
+        switch (type) {
+            case "Set":
+                out.setValue = mark.value.value;
+                break;
+            case "Revert":
+                fail("Not implemented");
+            default: unreachableCase(type);
+        }
     }
     const fields = mark.fields;
     if (fields !== undefined) {
