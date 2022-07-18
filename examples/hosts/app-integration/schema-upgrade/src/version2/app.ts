@@ -117,12 +117,20 @@ export class App extends TypedEventEmitter<IAppEvents> implements IApp {
         return extractStringData(this.inventoryList);
     };
 
-    public get acceptedCodeDetails() {
-        return this.containerKillBit.acceptedCodeDetails;
+    public get acceptedVersion() {
+        const version = this.containerKillBit.acceptedCodeDetails?.package;
+        if (typeof version !== "string") {
+            throw new Error("Unexpected code detail format");
+        }
+        return version;
     }
 
     public readonly proposeCodeDetails = (codeDetails: IFluidCodeDetails) => {
         this.containerKillBit.proposeCodeDetails(codeDetails).catch(console.error);
+    };
+
+    public readonly proposeVersion = (version: string) => {
+        this.containerKillBit.proposeCodeDetails({ package: version }).catch(console.error);
     };
 
     public get newContainerId() {

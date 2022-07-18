@@ -49,14 +49,14 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
     getMigrationState(): MigrationState;
 
     /**
-     * The accepted migratory code details, if migration has been accepted.
+     * The accepted migratory version, if migration has been accepted.
      */
-    acceptedCodeDetails: IFluidCodeDetails | undefined;
+    acceptedVersion: string | undefined;
     /**
-     * Propose migration using the provided code details.
-     * @param codeDetails - The code details that the new IApp should use.
+     * Propose migration using the provided version.
+     * @param version - The version that the new IApp should use.
      */
-    proposeCodeDetails: (codeDetails: IFluidCodeDetails) => void;
+    proposeVersion: (version: string) => void;
 
     /**
      * The containerId of the migrated IApp, if migration has completed.

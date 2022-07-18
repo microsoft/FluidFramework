@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-
 import React, { useEffect, useRef, useState } from "react";
 
 import type { ExternalDataSource } from "./externalData";
@@ -25,7 +23,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
         <div>
             <MigrationStatusView app={ app } />
             <ImportedDataView data={ undefined } />
-            <ControlsView proposeCodeDetails={ app.proposeCodeDetails } />
+            <ControlsView proposeVersion={ app.proposeVersion } />
             <ExternalDataSourceView externalDataSource={ externalDataSource }/>
         </div>
     );
@@ -78,17 +76,17 @@ const ImportedDataView: React.FC<IImportedDataViewProps> = (props: IImportedData
 };
 
 interface IControlsViewProps {
-    proposeCodeDetails: (codeDetails: IFluidCodeDetails) => void;
+    proposeVersion: (version: string) => void;
 }
 
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
     const {
-        proposeCodeDetails,
+        proposeVersion,
     } = props;
 
     return (
         <div>
-            <button onClick={ () => { proposeCodeDetails({ package: "two" }); } }>
+            <button onClick={ () => { proposeVersion("two"); } }>
                 Propose code upgrade
             </button>
         </div>

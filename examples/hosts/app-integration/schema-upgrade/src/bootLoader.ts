@@ -99,16 +99,13 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
     }
 
     public async ensureMigrated(app: IMigratable) {
-        const acceptedCodeDetails = app.acceptedCodeDetails;
-        if (acceptedCodeDetails === undefined) {
+        const acceptedVersion = app.acceptedVersion;
+        if (acceptedVersion === undefined) {
             throw new Error("Cannot ensure migrated before code details are accepted");
         }
         const extractedData = await app.exportStringData();
         // Possibly transform the extracted data here
-        const newContainer = await this.loader.createDetachedContainer(acceptedCodeDetails);
-        if (typeof acceptedCodeDetails.package !== "string") {
-            throw new Error("Unexpected code detail format");
-        }
+        const newContainer = await this.loader.createDetachedContainer({ package: acceptedVersion });
         const newApp = getModel(newContainer);
         await newApp.initialize(extractedData);
 

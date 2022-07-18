@@ -29,7 +29,6 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
                 rootDataStoreRequestHandler,
             ],
         );
-        console.info("Using runtime factory version one");
     }
 
     /**
@@ -40,5 +39,9 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
         await inventoryList.trySetAlias(inventoryListId);
         const containerKillBit = await runtime.createDataStore(ContainerKillBitInstantiationFactory.type);
         await containerKillBit.trySetAlias(containerKillBitId);
+    }
+
+    protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
+        console.info("Using runtime factory version one");
     }
 }
