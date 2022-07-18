@@ -6,7 +6,11 @@
 export { EmptyKey, FieldKey, TreeType, Value, TreeValue } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult } from "./forest";
-export { LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier } from "./schema";
+export {
+    LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
+    FieldSchema, ValueSchema, TreeSchema, FieldKind,
+    emptyField, neverTree,
+} from "./schema";
 
 export {
     Brand,

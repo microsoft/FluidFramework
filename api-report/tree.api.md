@@ -33,6 +33,9 @@ export interface Covariant<T> {
 export function cursorToJsonObject(reader: ITreeCursor): unknown;
 
 // @public
+export const emptyField: FieldSchema;
+
+// @public
 export const EmptyKey: FieldKey;
 
 // @public
@@ -43,6 +46,21 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(valu
 
 // @public (undocumented)
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
+
+// @public
+export enum FieldKind {
+    Forbidden = 3,
+    Optional = 1,
+    Sequence = 2,
+    Value = 0
+}
+
+// @public (undocumented)
+export interface FieldSchema {
+    // (undocumented)
+    readonly kind: FieldKind;
+    readonly types?: ReadonlySet<TreeSchemaIdentifier>;
+}
 
 // @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
@@ -71,8 +89,6 @@ export interface ITreeCursor {
     readonly value: Value;
 }
 
-// Warning: (ae-forgotten-export) The symbol "NamedTreeSchema" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export const jsonArray: NamedTreeSchema;
 
@@ -123,6 +139,18 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 export interface MakeNominal {
 }
 
+// @public (undocumented)
+export interface Named<TName> {
+    // (undocumented)
+    readonly name: TName;
+}
+
+// @public (undocumented)
+export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
+
+// @public
+export const neverTree: TreeSchema;
+
 // @public
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
@@ -131,6 +159,15 @@ export const enum TreeNavigationResult {
     NotFound = -1,
     Ok = 1,
     Pending = 0
+}
+
+// @public (undocumented)
+export interface TreeSchema {
+    readonly extraGlobalFields: boolean;
+    readonly extraLocalFields: FieldSchema;
+    readonly globalFields: ReadonlySet<GlobalFieldKey>;
+    readonly localFields: ReadonlyMap<LocalFieldKey, FieldSchema>;
+    readonly value: ValueSchema;
 }
 
 // @public
@@ -145,6 +182,19 @@ export interface TreeValue extends Serializable {
 
 // @public
 export type Value = undefined | TreeValue;
+
+// @public
+export enum ValueSchema {
+    // (undocumented)
+    Boolean = 3,
+    // (undocumented)
+    Nothing = 0,
+    // (undocumented)
+    Number = 1,
+    Serializable = 4,
+    // (undocumented)
+    String = 2
+}
 
 // (No @packageDocumentation comment for this package)
 
