@@ -170,6 +170,12 @@ export interface ITelemetryLoggerPropertyBags {
 }
 
 // @public (undocumented)
+export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
+    // (undocumented)
+    duration?: number;
+}
+
+// @public (undocumented)
 export interface ITelemetryPropertiesExt {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType | TelemetryEventPropertyTypeExt;
@@ -290,7 +296,7 @@ export type TelemetryEventPropertyTypeExt = string | number | boolean | undefine
 export type TelemetryEventPropertyTypes = TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 
 // @public (undocumented)
-export type TelemetryEventTypes = ITelemetryBaseEvent | ITelemetryBaseEventExt | ITelemetryGenericEvent | ITelemetryGenericEventExt;
+export type TelemetryEventTypes = ITelemetryBaseEvent | ITelemetryBaseEventExt | ITelemetryGenericEvent | ITelemetryGenericEventExt | ITelemetryPerformanceEvent | ITelemetryPerformanceEventExt;
 
 // @public
 export abstract class TelemetryLogger implements ITelemetryLogger {

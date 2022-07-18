@@ -65,12 +65,17 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
     eventName: string;
     category?: TelemetryEventCategory;
 }
+export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
+    duration?: number; // Duration of event (optional)
+}
 
 export type TelemetryEventTypes =
     | ITelemetryBaseEvent
     | ITelemetryBaseEventExt
     | ITelemetryGenericEvent
-    | ITelemetryGenericEventExt;
+    | ITelemetryGenericEventExt
+    | ITelemetryPerformanceEvent
+    | ITelemetryPerformanceEventExt;
 
 /**
  * TelemetryLogger class contains various helper telemetry methods,
