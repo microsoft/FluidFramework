@@ -4,6 +4,7 @@
 
 ```ts
 
+import { Jsonable } from '@fluidframework/datastore-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @public
@@ -29,6 +30,9 @@ export interface Covariant<T> {
 }
 
 // @public
+export function cursorToJsonObject(reader: ITreeCursor): unknown;
+
+// @public
 export const EmptyKey: FieldKey;
 
 // @public
@@ -41,7 +45,8 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(valu
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
 
 // @public
-export type GlobalFieldKey = Opaque<Brand<string, "tree.GlobalFieldKey">>;
+export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
+}
 
 // @public
 export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
@@ -65,6 +70,51 @@ export interface ITreeCursor {
     up(): TreeNavigationResult;
     readonly value: Value;
 }
+
+// Warning: (ae-forgotten-export) The symbol "NamedTreeSchema" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export const jsonArray: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonBoolean: NamedTreeSchema;
+
+// @public
+export class JsonCursor<T> implements ITreeCursor {
+    constructor(root: Jsonable<T>);
+    // (undocumented)
+    down(key: FieldKey, index: number): TreeNavigationResult;
+    // (undocumented)
+    get keys(): Iterable<FieldKey>;
+    // (undocumented)
+    length(key: FieldKey): number;
+    // (undocumented)
+    seek(offset: number): {
+        result: TreeNavigationResult;
+        moved: number;
+    };
+    // (undocumented)
+    get type(): TreeType;
+    // (undocumented)
+    up(): TreeNavigationResult;
+    // (undocumented)
+    get value(): Value;
+}
+
+// @public (undocumented)
+export const jsonNull: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonNumber: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonObject: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonString: NamedTreeSchema;
+
+// @public (undocumented)
+export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema>;
 
 // @public
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
@@ -90,7 +140,11 @@ export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 export type TreeType = TreeSchemaIdentifier;
 
 // @public
-export type Value = undefined | Serializable;
+export interface TreeValue extends Serializable {
+}
+
+// @public
+export type Value = undefined | TreeValue;
 
 // (No @packageDocumentation comment for this package)
 

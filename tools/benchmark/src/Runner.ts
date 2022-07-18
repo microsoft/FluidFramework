@@ -60,7 +60,13 @@ export function benchmark(args: BenchmarkArguments): Test {
             // - --parentProcess flag removed.
             // - --childProcess flag added (so data will be returned via stdout as json)
 
-            const childArgs = [...process.argv];
+            // Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
+            const command = process.argv0 ?? assert.fail("there must be a command");
+
+            // We expect all node-specific flags to be present in execArgv so they can be passed to the child process.
+            // At some point mocha was processing the expose-gc flag itself and not passing it here, unless explicitly
+            // put in mocha's --node-option flag.
+            const childArgs = [...process.execArgv, ...process.argv.slice(1)];
             const processFlagIndex = childArgs.indexOf("--parentProcess");
             childArgs[processFlagIndex] = "--childProcess";
 
@@ -76,8 +82,13 @@ export function benchmark(args: BenchmarkArguments): Test {
             // Add test filter so child process only run the current test.
             childArgs.push("--fgrep", test.fullTitle());
 
-            // Pull the command (Node.js most likely) out of the first argument since spawnSync takes it separately.
-            const command = childArgs.shift() ?? assert.fail("there must be a command");
+            // Remove arguments for debugging if they're present; in order to debug child processes we need
+            // to specify a new debugger port for each, or they'll fail to start. Doable, but leaving it out
+            // of scope for now.
+            let inspectArgIndex: number = -1;
+            while ((inspectArgIndex = childArgs.findIndex((x) => x.match(/^(--inspect|--debug).*/))) >= 0) {
+                childArgs.splice(inspectArgIndex, 1);
+            }
 
             // Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
             const childProcess = await import("child_process");
@@ -125,7 +136,6 @@ export function benchmark(args: BenchmarkArguments): Test {
                 // Run a garbage collection, if possible, before the test.
                 // This helps noise from allocations before the test (ex: from previous tests or startup) from
                 // impacting the test.
-                // TODO: determine why --expose-gc is not working when `isChildProcess`.
                 benchmarkInstance.on("start end", () => global?.gc?.());
                 benchmarkInstance.on("complete", async () => {
                     const stats: BenchmarkData = {

@@ -31,12 +31,16 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
      * Gets the accepted value for the given key.
      * @param key - The key to retrieve from
      */
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     get(key: string): any;
 
     /**
      * Gets the pending value for the given key.
      * @param key - The key to retrieve from
      */
+    // TODO: this should be updated to return something other than `any` (unknown)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getPending(key: string): any;
 
     /**
@@ -45,7 +49,7 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
      * @param key - The key to set
      * @param value - The value to store
      */
-    set(key: string, value: any): void;
+    set(key: string, value: unknown): void;
 
     /**
      * Deletes the key/value pair at the given key.  After issuing the delete, the delete is in "pending" state until

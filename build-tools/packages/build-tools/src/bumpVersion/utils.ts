@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { execAsync } from "../common/utils";
 import * as semver from "semver";
-import { isVersionBumpType, VersionBumpType, VersionChangeType, VersionChangeTypeExtended } from "./context";
+import {
+    VersionScheme,
+    isVersionBumpType,
+    VersionBumpType,
+    VersionChangeType,
+    VersionChangeTypeExtended,
+} from "./versionSchemes";
 
 export function fatal(error: string): never {
     const e = new Error(error);
@@ -99,17 +105,6 @@ function translateVirtualVersion(
     virtualVersion.format(); // semver must be reformated after edits
     return virtualVersion;
 }
-
-/**
- * A type defining the version schemes that can be used for packages.
- *
- * "semver" is the standard semver scheme.
- *
- * "internal" is the 2.0.0-internal.1.0.0 scheme.
- *
- * "virtualPatch" is the 0.36.1002 scheme.
- */
-export type VersionScheme = "semver" | "internal" | "virtualPatch";
 
 /**
  * Adjusts the provided version according to the bump type and version scheme. Returns the adjusted version.

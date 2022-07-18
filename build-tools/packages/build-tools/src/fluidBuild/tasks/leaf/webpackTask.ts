@@ -14,11 +14,6 @@ interface DoneFileContent {
     dependencies: { [pkgName: string]: { [command: string]: any } },
 }
 export class WebpackTask extends LeafWithDoneFileTask {
-    protected get doneFile() {
-        // TODO: This assume there is only one webpack task per package
-        return "webpack.done.build.log";
-    }
-
     protected async getDoneFileContent() {
         try {
             const content: DoneFileContent = {

@@ -46,9 +46,9 @@ describe("RestLess", () => {
             app.use(restLessMiddleware());
             app.use(authMiddleware());
         }
-        app.use(json());
+        app.use(json({ limit: "1gb" }));
         // urlencoded does not recognize content-type: application/x-www-form-urlencoded;restless
-        app.use(urlencoded({ extended: true, type: (req) => req.headers["content-type"]?.startsWith("application/x-www-form-urlencoded") }));
+        app.use(urlencoded({ limit: "1gb", extended: true, type: (req) => req.headers["content-type"]?.startsWith("application/x-www-form-urlencoded") }));
         if (!restLessBeforeBodyParser) {
             app.use(restLessMiddleware());
             app.use(authMiddleware());
@@ -235,6 +235,30 @@ describe("RestLess", () => {
                         assert.deepStrictEqual(res.body, {
                             id: resource1.id,
                             content: resource1.content,
+                            query: {},
+                        });
+                    });
+                });
+                it("201, POST (Large) /resource", async () => {
+                    const largeResource = {
+                        id: "large-request",
+                        content: "x".repeat(1024 /* 1kb */ * 1024 /* 1mb */ * 10 /* 10mb */) // 10mb of "x"s
+                    };
+                    const requestConfig: AxiosRequestConfig = {
+                        method: "post",
+                        url: `/resource`,
+                        headers: {
+                            "Authorization": `Bearer ${authToken}`,
+                            "Content-type": "application/json",
+                        },
+                        data: largeResource,
+                    };
+                    const req = superRequest(requestConfig, true);
+                    await req.expect((res) => {
+                        assert.strictEqual(res.status, 201);
+                        assert.deepStrictEqual(res.body, {
+                            id: largeResource.id,
+                            content: largeResource.content,
                             query: {},
                         });
                     });

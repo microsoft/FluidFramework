@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Context, VersionBumpType } from "./context";
+import { Context } from "./context";
 import { getReleasedPrereleaseDependencies } from "./bumpDependencies";
 import { bumpRepo } from "./bumpVersion";
 import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
@@ -12,6 +12,7 @@ import { fatal } from "./utils";
 import { isMonoRepoKind, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
+import { VersionBumpType } from "./versionSchemes";
 
 /**
  * Create release bump branch based on the repo state for either main or next branches,bump minor version immediately
@@ -79,7 +80,10 @@ export async function createReleaseBump(
     }
 
     // Bump the version
-    const bumpType = bumpTypeOverride ?? context.originalBranchName === "next" ? "major" : "minor";
+    const bumpType = bumpTypeOverride ?? "";
+    if(!bumpType) {
+        fatal(`No bump type provided.`);
+    }
 
     console.log(`Release bump: bumping ${bumpType} version for development`)
     console.log(await bumpCurrentBranch(context, bumpType, releaseName, depVersions, virtualPatch));
