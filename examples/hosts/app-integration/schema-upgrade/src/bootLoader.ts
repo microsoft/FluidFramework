@@ -97,15 +97,14 @@ const getContainerId = (container: IContainer) => {
     return resolved.id;
 };
 
+// Split into BootLoader vs. Migrator?
 export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements IBootLoader {
     private readonly loader: IHostLoader = createLoader();
 
-    // Here, the BootLoader knows the specific version it wants to create (normally the latest one,
-    // but for this demo we're creating an old one to then upgrade).
-    // So, we can specify the code details and instantiate the App directly.
-    public async createNew(externalData?: string): Promise<{ app: IApp; id: string; }> {
-        const container = await this.loader.createDetachedContainer({ package: "one" });
-        const app = new App1(container);
+    public async createNew(version: "one" | "two", externalData?: string): Promise<{ app: IApp; id: string; }> {
+        const container = await this.loader.createDetachedContainer({ package: version });
+        const code = getCode(version);
+        const app = code.getModel(container);
         await app.initialize(externalData);
         await container.attach(createTinyliciousCreateNewRequest());
         const id = getContainerId(container);
