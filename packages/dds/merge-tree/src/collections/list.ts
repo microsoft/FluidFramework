@@ -15,6 +15,8 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
     } else {
         entry.next.prev = entry.prev;
         entry.prev.next = entry.next;
+        entry.next = deadhead;
+        entry.prev = deadhead;
     }
     return (entry);
 }
@@ -154,3 +156,5 @@ export class List<T> {
         return iterator;
     }
 }
+
+const deadhead = ListMakeHead<any>();
