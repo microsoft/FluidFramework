@@ -140,6 +140,22 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
 
 // @public (undocumented)
+export interface ITelemetryBaseEventExt extends ITelemetryPropertiesExt {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public (undocumented)
+export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
+    // (undocumented)
+    category?: TelemetryEventCategory;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public (undocumented)
 export interface ITelemetryLoggerPropertyBag {
     // (undocumented)
     [index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
@@ -151,6 +167,12 @@ export interface ITelemetryLoggerPropertyBags {
     all?: ITelemetryLoggerPropertyBag;
     // (undocumented)
     error?: ITelemetryLoggerPropertyBag;
+}
+
+// @public (undocumented)
+export interface ITelemetryPropertiesExt {
+    // (undocumented)
+    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType | TelemetryEventPropertyTypeExt;
 }
 
 // @public (undocumented)
@@ -284,10 +306,10 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     protected readonly properties?: ITelemetryLoggerPropertyBags | undefined;
     // (undocumented)
     static sanitizePkgName(name: string): string;
-    abstract send(event: ITelemetryBaseEvent): void;
+    abstract send(event: ITelemetryBaseEvent | ITelemetryBaseEventExt): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
-    sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void;
+    sendTelemetryEvent(event: ITelemetryGenericEvent | ITelemetryGenericEventExt, error?: any): void;
     protected sendTelemetryEventCore(event: ITelemetryGenericEvent & {
         category: TelemetryEventCategory;
     }, error?: any): void;

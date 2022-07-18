@@ -50,6 +50,22 @@ export interface ITelemetryLoggerPropertyBags{
     error?: ITelemetryLoggerPropertyBag;
 }
 
+// Less restrictive telemetry properties to include arrays with primitives.
+export interface ITelemetryPropertiesExt {
+    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType | TelemetryEventPropertyTypeExt;
+}
+
+// Base interface for logging telemetry statements allowing flat arrays containing primitives.
+export interface ITelemetryBaseEventExt extends ITelemetryPropertiesExt {
+    category: string;
+    eventName: string;
+}
+
+export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
+    eventName: string;
+    category?: TelemetryEventCategory;
+}
+
 /**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
@@ -122,7 +138,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      *
      * @param event - the event to send
      */
-    public abstract send(event: ITelemetryBaseEvent): void;
+    public abstract send(event: ITelemetryBaseEvent | ITelemetryBaseEventExt): void;
 
     /**
      * Send a telemetry event with the logger
@@ -130,7 +146,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param event - the event to send
      * @param error - optional error object to log
      */
-    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+    public sendTelemetryEvent(event: ITelemetryGenericEvent | ITelemetryGenericEventExt, error?: any) {
         this.sendTelemetryEventCore({ ...event, category: event.category ?? "generic" }, error);
     }
 
