@@ -87,9 +87,10 @@ export function create(
         async (request, response) => {
             const tenantId = getParam(request.params, "tenantId");
             const blobData = request.body as IBlobData;
-            const historian = config.get("worker:blobStorageUrl") as string;
+            // TODO: why is this contacting external blob storage?
+            const externalHistorianUrl = config.get("worker:blobStorageUrl") as string;
             const requestToken = fromUtf8ToBase64(tenantId);
-            const uri = `${historian}/repos/${tenantId}/git/blobs?token=${requestToken}`;
+            const uri = `${externalHistorianUrl}/repos/${tenantId}/git/blobs?token=${requestToken}`;
             const requestBody: git.ICreateBlobParams = {
                 content: blobData.content,
                 encoding: "base64",
