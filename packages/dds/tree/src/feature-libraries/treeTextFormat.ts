@@ -135,6 +135,7 @@ export class TextCursor implements ITreeCursor {
     }
 
     getField(key: FieldKey): readonly PlaceholderTree[] {
+        // Save result to a constant to work around linter bug:
         // https://github.com/typescript-eslint/typescript-eslint/issues/5014
         const field: readonly PlaceholderTree[] = this.getFields()[key as string] ?? [];
         return field;
