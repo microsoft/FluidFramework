@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-interfaces",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "View interfaces for rendering views",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -32,7 +32,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": "^1.0.2"
+    "@fluidframework/core-interfaces": "^1.0.3"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.23.0",
