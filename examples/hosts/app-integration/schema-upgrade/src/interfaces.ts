@@ -38,6 +38,12 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
      */
     initialize: (initialData?: string) => Promise<void>;
     /**
+     * importStringData must be called after initialization but before modifying or attaching the app (i.e. can only
+     * be called on an unaltered, detached app).  Here I use a string as the export/import format, but it could be
+     * some other format if you prefer.
+     */
+    importStringData: (initialData: string) => Promise<void>;
+    /**
      * Export the string data from the IApp.  Can be passed into initialize() for a new container to replicate
      * the data.
      */

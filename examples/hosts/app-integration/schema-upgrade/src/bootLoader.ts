@@ -87,7 +87,10 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
     ): Promise<{ app: IApp; attach: () => Promise<string>; }> {
         const container = await this.loader.createDetachedContainer({ package: version });
         const app = getModel(container);
-        await app.initialize(externalData);
+        await app.initialize();
+        if (externalData !== undefined) {
+            await app.importStringData(externalData);
+        }
         const attach = async () => {
             await container.attach(createTinyliciousCreateNewRequest());
             return getContainerId(container);

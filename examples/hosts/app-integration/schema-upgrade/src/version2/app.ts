@@ -106,6 +106,15 @@ export class App extends TypedEventEmitter<IAppEvents> implements IApp {
         }
     };
 
+    // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
+    // importing data into a completely untouched app.
+    public readonly importStringData = async (initialData: string) => {
+        if (this.container.attachState !== AttachState.Detached) {
+            throw new Error("Cannot set initial data after attach");
+        }
+        await applyStringData(this.inventoryList, initialData);
+    };
+
     private readonly onStateChanged = () => {
         const newState = getStateFromKillBit(this.containerKillBit);
         // assert new state !== old state
