@@ -151,7 +151,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
                 if (!Array.isArray(x)) {
                     return null;
                 }
-                if (x.every((val) => this.filterValidTelemetryProps(val) !== null)) {
+                if (x.every((val) => typeof val === "boolean" || typeof val === "string" || typeof val === "number")) {
                     return JSON.stringify(x);
                 }
                 return null;
