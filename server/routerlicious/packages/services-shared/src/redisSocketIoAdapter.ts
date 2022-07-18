@@ -371,7 +371,7 @@ export class RedisSocketIoAdapter extends Adapter {
                 // Parse it to get the tenantId and documentId
                 const channelMetadata = JSON.stringify(channel).split("/");
                 const tenantId = channelMetadata[1].replace("#", "");
-                const documentId = channelMetadata[2].replace("#", "").replace("\"", "");
+                const documentId = channelMetadata[2].replace("#", "").replace(/"/g, "");
                 const lumberjackProperties = {
                     [BaseTelemetryProperties.tenantId]: tenantId,
                     [BaseTelemetryProperties.documentId]: documentId,
