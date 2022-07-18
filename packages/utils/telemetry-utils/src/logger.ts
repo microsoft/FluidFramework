@@ -591,7 +591,7 @@ function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
             if (!Array.isArray(x)) {
                 return null;
             }
-            if (x.every((val) => filterValidTelemetryProps(val) !== null)) {
+            if (x.every((val) => typeof val === "boolean" || typeof val === "string" || typeof val === "number")) {
                 return JSON.stringify(x);
             }
             return null;
