@@ -13,6 +13,7 @@ import {
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
     FieldLocation, TreeLocation, isFieldLocation,
+    mapCursorField,
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
 import { FieldKey, TreeType, DetachedRange, AnchorSet, Value } from "../../tree";
@@ -94,7 +95,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         if (!isFieldLocation(range)) {
             return this.getRoot(range);
         } else {
-            const children = this.lookupNodeId(range.parent).children;
+            const children = this.lookupNodeId(range.parent).fields;
             const field = children.get(range.key);
             if (field !== undefined) {
                     return field;
@@ -222,20 +223,9 @@ function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: bool
 export function nodeFromCursor(cursor: ITreeCursor): ObjectNode {
     const node = new ObjectNode(cursor.type, cursor.value);
     for (const key of cursor.keys) {
-        const field: ObjectField = [];
-        let result = cursor.down(key, 0);
-        // TODO: do we want to require that the keys list only has non-empty fields? This assumes that.
-        // If this fails, the "up" call below would be wrong.
-        assert(result === TreeNavigationResult.Ok, "expected non empty field for listed key");
-        while (result === TreeNavigationResult.Ok) {
-            field.push(nodeFromCursor(cursor));
-            result = cursor.seek(1).result;
-        }
-        assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
-        cursor.up();
-        node.children.set(key, field);
+        const field: ObjectField = mapCursorField(cursor, key, nodeFromCursor);
+        node.fields.set(key, field);
     }
-
     return node;
 }
 
@@ -283,7 +273,7 @@ class NodeAnchor extends ObjectAnchor {
 
 class ObjectNode {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
-    public readonly children: Map<FieldKey, ObjectField> = new Map();
+    public readonly fields: Map<FieldKey, ObjectField> = new Map();
     public constructor(public type: TreeType, public value: Value = undefined) { }
     free(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33a /* Anchor must not be double freed */);
@@ -313,7 +303,7 @@ class Cursor implements ITreeSubscriptionCursor {
     // Indices traversed to visit this node
     private readonly indexStack: number[] = [];
 
-    private siblings?: ObjectNode[];
+    private siblings?: readonly ObjectNode[];
 
     public clear(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33b /* Cursor must not be freed */);
@@ -351,7 +341,7 @@ class Cursor implements ITreeSubscriptionCursor {
         return this.getNode().type;
     }
     get keys(): Iterable<FieldKey> {
-        return this.getNode().children.keys();
+        return this.getNode().fields.keys();
     }
 
     fork(observer?: ObservingDependent | undefined): ITreeSubscriptionCursor {
@@ -365,7 +355,7 @@ class Cursor implements ITreeSubscriptionCursor {
         return new NodeAnchor(this.getNode());
     }
     down(key: FieldKey, index: number): TreeNavigationResult {
-        const siblings = (this.getNode().children.get(key) ?? []);
+        const siblings = (this.getNode().fields.get(key) ?? []);
         const child = siblings[index];
         if (child !== undefined) {
             this.parentStack.push(child);
@@ -401,11 +391,11 @@ class Cursor implements ITreeSubscriptionCursor {
         this.siblings = this.parentStack.length === 0 ?
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.forest.getRoot(this.root!) :
-            this.parentStack[this.parentStack.length - 1].children.get(this.keyStack[this.keyStack.length - 1]);
+            this.parentStack[this.parentStack.length - 1].fields.get(this.keyStack[this.keyStack.length - 1]);
         return TreeNavigationResult.Ok;
     }
 
     length(key: FieldKey): number {
-        return (this.getNode().children.get(key) ?? []).length;
+        return (this.getNode().fields.get(key) ?? []).length;
     }
 }
