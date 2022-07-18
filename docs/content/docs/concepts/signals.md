@@ -8,7 +8,7 @@ aliases:
   - "/docs/deep/signals/"
 ---
 
-Signals are similar to ops, but are not stored; they're useful to implement features like user presence. They provide a simple way to send data to connected clients within a Fluid application.
+Signals are similar to ops, but are not stored; they're useful to implement features like user presence. They provide a simple way to communicate transient data to connected clients within a Fluid application.
 
 They are lossy and not guaranteed to be ordered on delivery relative to other signals and ops. A good analogy to help conceptualize is that signals can be interpreted as UDP protocol, whereas standard ops can be thought of as TCP protocol.
 
