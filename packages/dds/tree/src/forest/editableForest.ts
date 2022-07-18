@@ -33,11 +33,10 @@ export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
 
     /**
-     * Adds the supplied nodes to the forest.
+     * Adds the supplied subtrees to the forest.
      * @param nodes - the sequence of nodes to add to the forest.
-     * If any of them have children which exist in the forest already, those children will be parented.
-     * Any trait arrays present in a node must be non-empty.
-     * The nodes may be provided in any order.
+     *
+     * TODO: there should be a way to include existing detached ranges in the inserted trees.
      */
     add(nodes: Iterable<ITreeCursor>): DetachedRange;
 

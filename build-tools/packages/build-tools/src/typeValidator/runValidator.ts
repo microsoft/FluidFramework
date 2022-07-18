@@ -68,7 +68,7 @@ async function main() {
         validationResults.forEach((value, key) => {
             depMap.set(key, undefined);
         });
-        bumpDependencies(context, "Bump dependencies version", depMap, false, false, false);
+        bumpDependencies(context, depMap, false, false, "Bump dependencies version", false);
     }
 }
 

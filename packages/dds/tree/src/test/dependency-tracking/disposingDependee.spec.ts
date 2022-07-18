@@ -15,13 +15,7 @@ import {
 	recordDependency,
 	SimpleObservingDependent,
 } from "../../dependency-tracking";
-
-class MockDependent extends SimpleObservingDependent {
-	public readonly tokens: (InvalidationToken | undefined)[] = [];
-	public constructor(name: string = "MockDependent") {
-		super((token) => this.tokens.push(token), name);
-	}
-}
+import { MockDependent } from "../utils";
 
 describe("DisposingDependee", () => {
 	it("unused", () => {

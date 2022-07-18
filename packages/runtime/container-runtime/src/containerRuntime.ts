@@ -1236,6 +1236,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
 
+        if (this.summaryConfiguration.state === "enabled") {
+            this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
+        }
+
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
@@ -3281,6 +3285,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // we may not have seen every sequence number (because of system ops) so apply everything once we
         // don't have any more saved ops
         await this.pendingStateManager.applyStashedOpsAt();
+    }
+
+    private validateSummaryHeuristicConfiguration(configuration: ISummaryConfigurationHeuristics) {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const prop in configuration) {
+            if (typeof configuration[prop] === "number" && configuration[prop] < 0) {
+                throw new UsageError(`Summary heuristic configuration property "${prop}" cannot be less than 0`);
+            }
+        }
     }
 }
 
