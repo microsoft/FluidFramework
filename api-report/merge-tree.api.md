@@ -25,8 +25,8 @@ export interface AugmentedIntervalNode {
 
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    // (undocumented)
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
+    // @internal @deprecated (undocumented)
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
     // (undocumented)
