@@ -8,11 +8,15 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { defaultGCConfig } from "./gcTestConfigs";
-import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
  * Validates that unchanged Fluid objects are not summarized again. Basically, only objects that have changed since
@@ -171,5 +175,57 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
         dataStoreSummaryTypesMap.set(dataStoreA._context.id, SummaryType.Handle);
         dataStoreSummaryTypesMap.set(dataStoreB._context.id, SummaryType.Handle);
         await validateIncrementalSummary(summarizer3, dataStoreSummaryTypesMap);
+    });
+
+    async function summarizeNow1(summarizer: ISummarizer, dataStoreC: ITestDataObject,
+        reason: string = "end-to-end test") {
+        const result = summarizer.summarizeOnDemand({ reason });
+
+        const submitResult = await result.summarySubmitted;
+        assert(submitResult.success, "on-demand summary should submit");
+        assert(submitResult.data.stage === "submit",
+            "on-demand summary submitted data stage should be submit");
+        assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+        // B -> D
+        dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+        await provider.ensureSynchronized();
+        const broadcastResult = await result.summaryOpBroadcasted;
+        assert(broadcastResult.success, "summary op should be broadcast");
+
+        const ackNackResult = await result.receivedSummaryAckOrNack;
+        assert(ackNackResult.success, "summary op should be acked");
+
+        await new Promise((resolve) => process.nextTick(resolve));
+
+        return {
+            summaryTree: submitResult.data.summaryTree,
+            summaryVersion: ackNackResult.data.summaryAckOp.contents.handle,
+        };
+    }
+
+    it("should generate 0X1A6 error", async () => {
+        const summarizer1 = await createSummarizer(provider, mainContainer);
+        // Create data store C, and mark is as referenced.
+        const dataStoreC = await requestFluidObject<ITestDataObject>(
+            await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType), "");
+        // A -> C
+        dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+
+        // const dataStoreB = await requestFluidObject<ITestDataObject>(
+        //     await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType), "");
+
+        // B -> C
+        // dataStoreB._root.set("dataStoreC", dataStoreC.handle);
+
+        await provider.ensureSynchronized();
+        const summarizerResult2 = await summarizeNow1(summarizer1, dataStoreC);
+        assert(summarizerResult2.summaryVersion !== undefined, "version is invalid");
+
+        // Remove reference from A to B.
+        // dataStoreA._root.delete("dataStoreB");
+        // await provider.ensureSynchronized();
+        // const summarizerResult2 = await summarizeNow2(summarizer1, dataStoreD, dataStoreB, dataStoreC);
+        // assert(summarizerResult2.summaryVersion !== undefined, "version is invalid");
     });
 });
