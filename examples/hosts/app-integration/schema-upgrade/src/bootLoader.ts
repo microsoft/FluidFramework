@@ -80,15 +80,20 @@ const getContainerId = (container: IContainer) => {
 export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements IBootLoader {
     private readonly loader: IHostLoader = createLoader();
 
-    // Would probably be nicer for this to return a detached thing and have a service.attach(app) call
-    // which would return the ID.
-    public async createNew(version: "one" | "two", externalData?: string): Promise<{ app: IApp; id: string; }> {
+    // Would be preferable to have a way for the customer to call service.attach(app) rather than returning an
+    // attach callback here.
+    public async createDetached(
+        version: "one" | "two",
+        externalData?: string,
+    ): Promise<{ app: IApp; attach: () => Promise<string>; }> {
         const container = await this.loader.createDetachedContainer({ package: version });
         const app = getModel(container);
         await app.initialize(externalData);
-        await container.attach(createTinyliciousCreateNewRequest());
-        const id = getContainerId(container);
-        return { app, id };
+        const attach = async () => {
+            await container.attach(createTinyliciousCreateNewRequest());
+            return getContainerId(container);
+        };
+        return { app, attach };
     }
 
     public async loadExisting(id: string): Promise<IApp> {

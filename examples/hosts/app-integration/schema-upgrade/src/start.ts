@@ -60,10 +60,9 @@ async function start(): Promise<void> {
     // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
     if (location.hash.length === 0) {
         const fetchedData = await externalDataSource.fetchData();
-        // Consider adding an attach() to the IApp?  Or a bootLoader.attach(app)?
-        const createResponse = await bootLoader.createNew("one", fetchedData);
-        id = createResponse.id;
+        const createResponse = await bootLoader.createDetached("one", fetchedData);
         app = createResponse.app;
+        id = await createResponse.attach();
     } else {
         id = location.hash.substring(1);
         // here won't know the exact type of the app yet though
