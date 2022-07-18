@@ -25,7 +25,6 @@ import {
     UniversalSequenceNumber,
 } from "./constants";
 import {
-     assertLocalReferences,
      LocalReferenceCollection,
      LocalReferencePosition,
 } from "./localReference";
@@ -1412,12 +1411,12 @@ export class MergeTree {
 
     /**
      * @internal must only be used by client
-     * @param segoff - The segment and offset to slide from
-     * @returns The segment and offset to slide to
+     * @param segment - The segment to slide from
+     * @returns The segment to
      */
-    public _getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
-        if (!segoff.segment || !isRemovedAndAcked(segoff.segment)) {
-            return segoff;
+    public _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined {
+        if (!segment || !isRemovedAndAcked(segment)) {
+            return segment;
         }
         let slideToSegment: ISegment | undefined;
         const goFurtherToFindSlideToSegment = (seg) => {
@@ -1428,22 +1427,13 @@ export class MergeTree {
             return true;
         };
         // Slide to the next farthest valid segment in the tree.
-        this.rightExcursion(segoff.segment, goFurtherToFindSlideToSegment);
+        this.rightExcursion(segment, goFurtherToFindSlideToSegment);
         if (slideToSegment) {
-            return { segment: slideToSegment, offset: 0 };
+            return slideToSegment;
         }
         // If no such segment is found, slide to the last valid segment.
-        this.leftExcursion(segoff.segment, goFurtherToFindSlideToSegment);
-
-        // Workaround TypeScript issue (https://github.com/microsoft/TypeScript/issues/9998)
-        slideToSegment = slideToSegment as ISegment | undefined;
-
-        if (slideToSegment) {
-            // If slid nearer then offset should be at the end of the segment
-            return { segment: slideToSegment, offset: slideToSegment.cachedLength - 1 };
-        }
-
-        return { segment: undefined, offset: 0 };
+        this.leftExcursion(segment, goFurtherToFindSlideToSegment);
+        return slideToSegment;
     }
 
     /**
@@ -1457,21 +1447,20 @@ export class MergeTree {
             isRemovedAndAcked(segment),
             0x2f1 /* slideReferences from a segment which has not been removed and acked */);
         assert(!!segment.localRefs, 0x2f2 /* Ref not in the segment localRefs */);
-        const newSegoff = this._getSlideToSegment({ segment, offset: 0 });
-        const newSegment = newSegoff.segment;
-        if (newSegment && !newSegment.localRefs) {
-            newSegment.localRefs = new LocalReferenceCollection(newSegment);
-        }
-        for (const ref of refsToSlide) {
-            assertLocalReferences(ref);
-            ref.callbacks?.beforeSlide?.();
-            const removedRef = segment.localRefs.removeLocalRef(ref);
-            assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
-            if (newSegment) {
-                assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
-                newSegment.localRefs.addLocalRef(ref, newSegoff.offset ?? 0);
+        const newSegment = this._getSlideToSegment(segment);
+        if (newSegment) {
+            const localRefs = newSegment.localRefs ??= new LocalReferenceCollection(newSegment);
+            if (newSegment.ordinal < segment.ordinal) {
+                localRefs.addAfterTombstones(refsToSlide);
+            } else {
+                localRefs.addBeforeTombstones(refsToSlide);
             }
-            ref.callbacks?.afterSlide?.();
+        } else {
+            for (const ref of refsToSlide) {
+                ref.callbacks?.beforeSlide?.();
+                segment.localRefs.removeLocalRef(ref);
+                ref.callbacks?.afterSlide?.();
+            }
         }
         // TODO is it required to update the path lengths?
         if (newSegment) {
