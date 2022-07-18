@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-experimental/xtree";
-export const pkgVersion = "1.1.2";
+export const pkgVersion = "1.1.3";
