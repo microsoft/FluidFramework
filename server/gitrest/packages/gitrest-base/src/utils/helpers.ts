@@ -142,8 +142,8 @@ export function getRepoPath(
     return [owner, tenantId, documentId].filter((x) => x !== undefined).join("/");
 }
 
-export function getGitDirectory(repoPath: string, baseDir?: string): string {
-    return baseDir ? `${baseDir}/${repoPath}/summaries` : `${repoPath}/summaries`;
+export function getGitDirectory(repoPath: string, baseDir?: string, suffixPath?: string): string {
+    return [baseDir, repoPath, suffixPath].filter((x) => x !== undefined).join("/");
 }
 
 export function parseStorageRoutingId(storageRoutingId?: string): IStorageRoutingId | undefined {
