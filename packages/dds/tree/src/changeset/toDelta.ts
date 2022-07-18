@@ -29,11 +29,20 @@ function toPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.PositionedMa
                         break;
                     }
                     case "MInsert": {
-                        const insertMark: Delta.InsertAndModify = {
-                            type: Delta.MarkType.InsertAndModify,
-                            ...cloneModifiedContent(attach),
-                        };
-                        out.push({ offset, mark: insertMark });
+                        const clone = cloneModifiedContent(attach);
+                        if (clone.fields.size > 0) {
+                            const insertMark: Delta.InsertAndModify = {
+                                type: Delta.MarkType.InsertAndModify,
+                                ...clone,
+                            };
+                            out.push({ offset, mark: insertMark });
+                        } else {
+                            const insertMark: Delta.Insert = {
+                                type: Delta.MarkType.Insert,
+                                content: [clone.content],
+                            };
+                            out.push({ offset, mark: insertMark });
+                        }
                         break;
                     }
                     case "Move": break;
@@ -133,7 +142,7 @@ function applyOrCollectModifications(
     node: Delta.ProtoNode,
     modify: Pick<T.Modify, "value" | "fields">,
 ): Pick<Delta.InsertAndModify, "content" | "fields"> {
-    const outFields: Delta.FieldMarks<Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify> = new Map();
+    const outFieldsMarks: Delta.FieldMarks<Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify> = new Map();
     if (modify.value !== undefined) {
         const type = modify.value.type;
         switch (type) {
@@ -146,14 +155,15 @@ function applyOrCollectModifications(
         }
     }
     if (modify.fields !== undefined) {
-        const fields = modify.fields;
-        for (const key of Object.keys(fields)) {
+        const protoFields = node.fields ?? new Map();
+        const modifyFields = modify.fields;
+        for (const key of Object.keys(modifyFields)) {
             const brandedKey = brand<FieldKey>(key);
-            const outNodes = node.fields?.get(brandedKey) ?? fail(MOD_ON_MISSING_FIELD);
+            const outNodes = protoFields.get(brandedKey) ?? fail(MOD_ON_MISSING_FIELD);
             const outMarks: Delta.PositionedMarks<Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify> = [];
             let index = 0;
             let offset = 0;
-            for (const markWithOffset of fields[key]) {
+            for (const markWithOffset of modifyFields[key]) {
                 index += markWithOffset.offset;
                 offset += markWithOffset.offset;
                 const mark = markWithOffset.mark;
@@ -238,11 +248,17 @@ function applyOrCollectModifications(
                 }
             }
             if (outMarks.length > 0) {
-                outFields.set(brandedKey, outMarks);
+                outFieldsMarks.set(brandedKey, outMarks);
+            }
+            if (outNodes.length === 0) {
+                protoFields.delete(brandedKey);
             }
         }
+        if (protoFields.size === 0) {
+            delete node.fields;
+        }
     }
-    return { content: node, fields: outFields };
+    return { content: node, fields: outFieldsMarks };
 }
 
 const TOMB_IN_INSERT = "Encountered a concurrent deletion in inserted content";

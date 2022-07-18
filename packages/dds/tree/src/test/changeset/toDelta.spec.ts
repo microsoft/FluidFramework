@@ -21,19 +21,21 @@ function toDelta(changeset: T.Changeset): Delta.Root {
 }
 
 const fooKey = "foo" as FieldKey;
-const nodeIdX = brandOpaque<Delta.NodeId>("X");
-const nodeIdY = brandOpaque<Delta.NodeId>("Y");
+const nodeIdA = brandOpaque<Delta.NodeId>("A");
+const nodeIdB = brandOpaque<Delta.NodeId>("B");
+const nodeIdC = brandOpaque<Delta.NodeId>("C");
+const nodeIdD = brandOpaque<Delta.NodeId>("D");
 const changesetContent: ProtoNode[] = [{
-    id: nodeIdX,
+    id: nodeIdA,
     value: 42,
-    fields: { foo: [{ id: nodeIdY, value: 43 }] },
+    fields: { foo: [{ id: nodeIdB, value: 43 }] },
 }];
 const deltaContent: Delta.ProtoNode[] = [{
-    id: nodeIdX,
+    id: nodeIdA,
     value: 42,
     fields: new Map([[
         fooKey,
-        [{ id: nodeIdY, value: 43 }],
+        [{ id: nodeIdB, value: 43 }],
     ]]),
 }];
 const opId = 42;
@@ -272,5 +274,166 @@ describe("toDelta", () => {
         }];
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
+    });
+
+    describe("Modifications to inserted content", () => {
+        it("values", () => {
+            const changeset: T.Changeset = {
+                marks: [{
+                    offset: 0,
+                    mark: [{
+                        type: "MInsert",
+                        id: opId,
+                        content: changesetContent[0],
+                        value: { type: "Set", value: 4242 },
+                        fields: {
+                            foo: [{
+                                offset: 0,
+                                mark: {
+                                    type: "Modify",
+                                    value: { type: "Set", value: 4343 },
+                                },
+                            }],
+                        },
+                    }],
+                }],
+            };
+            const mark: Delta.Insert = {
+                type: Delta.MarkType.Insert,
+                content: [{
+                    id: nodeIdA,
+                    value: 4242,
+                    fields: new Map([[
+                        fooKey,
+                        [{ id: nodeIdB, value: 4343 }],
+                    ]]),
+                }],
+            };
+            const expected: Delta.Root = [{ offset: 0, mark }];
+            const actual = toDelta(changeset);
+            assert.deepStrictEqual(actual, expected);
+        });
+
+        it("inserts", () => {
+            const changeset: T.Changeset = {
+                marks: [{
+                    offset: 0,
+                    mark: [{
+                        type: "MInsert",
+                        id: opId,
+                        content: changesetContent[0],
+                        fields: {
+                            foo: [
+                                {
+                                    offset: 0,
+                                    mark: [{
+                                        type: "Insert",
+                                        id: opId,
+                                        content: [{ id: nodeIdC, value: 44 }],
+                                    }],
+                                },
+                                {
+                                    offset: 1,
+                                    mark: [{
+                                        type: "Insert",
+                                        id: opId,
+                                        content: [{ id: nodeIdD, value: 45 }],
+                                    }],
+                                },
+                            ],
+                        },
+                    }],
+                }],
+            };
+            const mark: Delta.Insert = {
+                type: Delta.MarkType.Insert,
+                content: [{
+                    id: nodeIdA,
+                    value: 42,
+                    fields: new Map([[
+                        fooKey,
+                        [{ id: nodeIdC, value: 44 }, { id: nodeIdB, value: 43 }, { id: nodeIdD, value: 45 }],
+                    ]]),
+                }],
+            };
+            const expected: Delta.Root = [{ offset: 0, mark }];
+            const actual = toDelta(changeset);
+            assert.deepStrictEqual(actual, expected);
+        });
+
+        it("modified inserts", () => {
+            const changeset: T.Changeset = {
+                marks: [{
+                    offset: 0,
+                    mark: [{
+                        type: "MInsert",
+                        id: opId,
+                        content: changesetContent[0],
+                        fields: {
+                            foo: [
+                                {
+                                    offset: 1,
+                                    mark: [{
+                                        type: "MInsert",
+                                        id: opId,
+                                        content: { id: nodeIdD, value: 45 },
+                                        value: { type: "Set", value: 4545 },
+                                    }],
+                                },
+                            ],
+                        },
+                    }],
+                }],
+            };
+            const mark: Delta.Insert = {
+                type: Delta.MarkType.Insert,
+                content: [{
+                    id: nodeIdA,
+                    value: 42,
+                    fields: new Map([[
+                        fooKey,
+                        [{ id: nodeIdB, value: 43 }, { id: nodeIdD, value: 4545 }],
+                    ]]),
+                }],
+            };
+            const expected: Delta.Root = [{ offset: 0, mark }];
+            const actual = toDelta(changeset);
+            assert.deepStrictEqual(actual, expected);
+        });
+
+        it("delete", () => {
+            const changeset: T.Changeset = {
+                marks: [{
+                    offset: 0,
+                    mark: [{
+                        type: "MInsert",
+                        id: opId,
+                        content: changesetContent[0],
+                        fields: {
+                            foo: [
+                                {
+                                    offset: 0,
+                                    mark: {
+                                        type: "Delete",
+                                        id: opId,
+                                        count: 1,
+                                    },
+                                },
+                            ],
+                        },
+                    }],
+                }],
+            };
+            const mark: Delta.Insert = {
+                type: Delta.MarkType.Insert,
+                content: [{
+                    id: nodeIdA,
+                    value: 42,
+                }],
+            };
+            const expected: Delta.Root = [{ offset: 0, mark }];
+            const actual = toDelta(changeset);
+            assert.deepStrictEqual(actual, expected);
+        });
     });
 });
