@@ -45,6 +45,7 @@ import {
     MultiUrlResolver,
     MultiDocumentServiceFactory,
 } from "@fluidframework/driver-utils";
+import { resolveWithLocationRedirectionHandling } from "@fluidframework/location-redirection-utils";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
@@ -336,7 +337,7 @@ export class Loader implements IHostLoader {
     public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
         const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
         return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
-            const resolved = await this.resolveCore(
+            const resolved = await this.resolveWithLocationRedirectionHandling(
                 request,
                 pendingLocalState !== undefined ? JSON.parse(pendingLocalState) : undefined,
             );
@@ -346,7 +347,7 @@ export class Loader implements IHostLoader {
 
     public async request(request: IRequest): Promise<IResponse> {
         return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName: "Request" }, async () => {
-            const resolved = await this.resolveCore(request);
+            const resolved = await this.resolveWithLocationRedirectionHandling(request);
             return resolved.container.request({
                 ...request,
                 url: `${resolved.parsed.path}${resolved.parsed.query}`,
@@ -373,6 +374,18 @@ export class Loader implements IHostLoader {
                 });
             }
         }).catch((error) => {});
+    }
+
+    private async resolveWithLocationRedirectionHandling(
+        request: IRequest,
+        pendingLocalState?: IPendingContainerState,
+    ): Promise<{ container: Container; parsed: IParsedUrl; }> {
+        return await resolveWithLocationRedirectionHandling(
+            (request: IRequest) => this.resolveCore(request, pendingLocalState),
+            request,
+            this.services.urlResolver,
+            this.mc.logger,
+        );
     }
 
     private async resolveCore(
