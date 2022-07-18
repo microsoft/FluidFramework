@@ -54,6 +54,7 @@
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",
         "maxNumberOfClientsPerDocument": 1000000,
+        "numberOfMessagesPerTrace": 100,
         "throttling": {
             "restCalls": {
                 "maxPerMs": 1000000,
