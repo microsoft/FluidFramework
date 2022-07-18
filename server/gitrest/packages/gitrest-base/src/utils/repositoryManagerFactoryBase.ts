@@ -145,7 +145,10 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
             params.repoName,
             undefined,
             this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
-        const directoryPath = helpers.getGitDirectory(repoPath, this.storageDirectoryConfig.baseDir);
+        const directoryPath = helpers.getGitDirectory(
+            repoPath,
+            this.storageDirectoryConfig.baseDir,
+            this.storageDirectoryConfig.suffixPath);
 
         return this.internalHandlerCore(
             params,
