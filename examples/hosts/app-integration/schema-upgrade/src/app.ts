@@ -63,6 +63,8 @@ const extractStringData = async (inventoryList: IInventoryList) => {
  * exist to bridge the gap between loading the container and being sure the App is the right type for the container.
  */
 export class App extends TypedEventEmitter<IAppEvents> implements IApp {
+    // To be used by the consumer of the model to pair with an appropriate view.
+    public readonly version = "one";
     private _migrationState = MigrationState.collaborating;
     public getMigrationState(): MigrationState {
         return this._migrationState;

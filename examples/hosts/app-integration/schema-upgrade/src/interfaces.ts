@@ -27,7 +27,8 @@ export interface IMigrationEvents extends IEvent {
 }
 
 export interface IMigratable extends IEventProvider<IMigrationEvents> {
-    // attach()?, version?
+    // attach()?
+    readonly version: string;
     /**
      * Initialize must be called after constructing the IApp.
      * Split into import() vs initialize()?
