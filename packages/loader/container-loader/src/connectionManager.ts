@@ -695,7 +695,7 @@ export class ConnectionManager implements IConnectionManager {
             this._connectionVerboseProps.relayServiceAgent = connection.relayServiceAgent;
             this._connectionProps.relayServiceAgent = connection.relayServiceAgent;
         }
-        this._connectionProps.socketDocumentId = connection.claims.documentId;
+        this._connectionProps.relaySessionId = connection.claims.documentId;
         this._connectionProps.connectionMode = connection.mode;
 
         let last = -1;

@@ -309,7 +309,7 @@ export class OdspDocumentService implements IDocumentService {
                     "createDeltaConnection",
                     !requestWebsocketTokenFromJoinSession);
                 if (typeof error === "object" && error !== null) {
-                    normalizedError.addTelemetryProperties({ socketDocumentId: websocketEndpoint.id });
+                    normalizedError.addTelemetryProperties({ relaySessionId: websocketEndpoint.id });
                 }
                 throw normalizedError;
             }

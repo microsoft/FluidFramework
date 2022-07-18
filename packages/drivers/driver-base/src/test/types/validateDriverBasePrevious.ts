@@ -35,4 +35,5 @@ declare function get_current_ClassDeclaration_DocumentDeltaConnection():
 declare function use_old_ClassDeclaration_DocumentDeltaConnection(
     use: TypeOnly<old.DocumentDeltaConnection>);
 use_old_ClassDeclaration_DocumentDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DocumentDeltaConnection());

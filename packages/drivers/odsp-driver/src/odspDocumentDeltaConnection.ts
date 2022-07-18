@@ -51,7 +51,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
     // such sockets should be reused, despite socket.disconnected === true
     private isPendingInitialConnection = true;
 
-    // Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
+    // Map of all existing socket io sockets. [url, tenantId, relaySessionId] -> socket
     private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
 
     public static find(key: string, logger: ITelemetryLogger) {
@@ -184,7 +184,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      * If url #1 fails to connect, will try url #2 if applicable.
      *
      * @param tenantId - the ID of the tenant
-     * @param documentId - document ID
+     * @param relaySessionId - document ID
      * @param token - authorization token for storage service
      * @param io - websocket library
      * @param client - information about the client
@@ -197,7 +197,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
      */
     public static async create(
         tenantId: string,
-        documentId: string,
+        relaySessionId: string,
         token: string | null,
         io: typeof SocketIOClientStatic,
         client: IClient,
@@ -215,16 +215,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         // do not include the specific tenant/doc id in the ref key when multiplexing
         // this will allow multiple documents to share the same websocket connection
         const key = socketReferenceKeyPrefix ? `${socketReferenceKeyPrefix},${url}` : url;
-        const socketReferenceKey = enableMultiplexing ? key : `${key},${tenantId},${documentId}`;
+        const socketReferenceKey = enableMultiplexing ? key : `${key},${tenantId},${relaySessionId}`;
 
         const socketReference = OdspDocumentDeltaConnection.getOrCreateSocketIoReference(
-            io, timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, documentId, telemetryLogger);
+            io, timeoutMs, socketReferenceKey, url, enableMultiplexing, tenantId, relaySessionId, telemetryLogger);
 
         const socket = socketReference.socket;
 
         const connectMessage: IConnect = {
             client,
-            id: documentId,
+            id: relaySessionId,
             mode: client.mode,
             tenantId,
             token,  // Token is going to indicate tenant level information, etc...
@@ -242,7 +242,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
         const deltaConnection = new OdspDocumentDeltaConnection(
             socket,
-            documentId,
+            relaySessionId,
             socketReference,
             telemetryLogger,
             enableMultiplexing);
@@ -307,7 +307,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         url: string,
         enableMultiplexing: boolean,
         tenantId: string,
-        documentId: string,
+        relaySessionId: string,
         logger: ITelemetryLogger,
     ): SocketReference {
         const existingSocketReference = SocketReference.find(key, logger);
@@ -315,7 +315,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
             return existingSocketReference;
         }
 
-        const query = enableMultiplexing ? undefined : { documentId, tenantId };
+        const query = enableMultiplexing ? undefined : { documentId: relaySessionId, tenantId };
 
         const socket = io(
             url,
@@ -332,19 +332,19 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
     /**
      * @param socket - websocket to be used
-     * @param documentId - ID of the document
+     * @param relaySessionId - ID of relay service session
      * @param details - details of the websocket connection
      * @param socketReferenceKey - socket reference key
      * @param enableMultiplexing - If the websocket is multiplexing multiple documents
      */
     private constructor(
         socket: Socket,
-        documentId: string,
+        relaySessionId: string,
         socketReference: SocketReference,
         logger: ITelemetryLogger,
         private readonly enableMultiplexing?: boolean,
     ) {
-        super(socket, documentId, logger);
+        super(socket, relaySessionId, logger);
         this.socketReference = socketReference;
         this.requestOpsNoncePrefix = `${uuid()}-`;
     }
@@ -447,14 +447,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
     protected async initialize(connectMessage: IConnect, timeout: number) {
         if (this.enableMultiplexing) {
             // multiplex compatible early handlers
-            this.earlyOpHandler = (messageDocumentId: string, msgs: ISequencedDocumentMessage[]) => {
-                if (this.documentId === messageDocumentId) {
+            this.earlyOpHandler = (relaySessionId: string, msgs: ISequencedDocumentMessage[]) => {
+                if (this.relaySessionId === relaySessionId) {
                     this.queuedMessages.push(...msgs);
                 }
             };
 
-            this.earlySignalHandler = (msg: ISignalMessage, messageDocumentId?: string) => {
-                if (messageDocumentId === undefined || messageDocumentId === this.documentId) {
+            this.earlySignalHandler = (msg: ISignalMessage, relaySessionId?: string) => {
+                if (relaySessionId === undefined || relaySessionId === this.relaySessionId) {
                     this.queuedSignals.push(msg);
                 }
             };
@@ -487,7 +487,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                         last: messages[messages.length - 1].sequenceNumber,
                         length: messages.length,
                     });
-                    this.emit("op", this.documentId, messages);
+                    this.emit("op", this.relaySessionId, messages);
                 } else {
                     this.logger.sendPerformanceEvent({
                         ...common,
@@ -534,28 +534,28 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
         switch (event) {
             case "op":
                 // per document op handling
-                super.addTrackedListener(event, (documentId: string, msgs: ISequencedDocumentMessage[]) => {
-                    if (!this.enableMultiplexing || this.documentId === documentId) {
-                        listener(documentId, msgs);
+                super.addTrackedListener(event, (relaySessionId: string, msgs: ISequencedDocumentMessage[]) => {
+                    if (!this.enableMultiplexing || this.relaySessionId === relaySessionId) {
+                        listener(relaySessionId, msgs);
                     }
                 });
                 break;
 
             case "signal":
                 // per document signal handling
-                super.addTrackedListener(event, (msg: ISignalMessage, documentId?: string) => {
-                    if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
-                        listener(msg, documentId);
+                super.addTrackedListener(event, (msg: ISignalMessage, relaySessionId?: string) => {
+                    if (!this.enableMultiplexing || !relaySessionId || relaySessionId === this.relaySessionId) {
+                        listener(msg, relaySessionId);
                     }
                 });
                 break;
 
             case "nack":
                 // per client / document nack handling
-                super.addTrackedListener(event, (clientIdOrDocumentId: string, nacks: INack[]) => {
-                    const handle = clientIdOrDocumentId.length === 0 ||
-                        clientIdOrDocumentId === this.documentId ||
-                        (clientIdOrDocumentId === this.clientId);
+                super.addTrackedListener(event, (cliendIdOrRelaySessionId: string, nacks: INack[]) => {
+                    const handle = cliendIdOrRelaySessionId.length === 0 ||
+                        cliendIdOrRelaySessionId === this.relaySessionId ||
+                        (cliendIdOrRelaySessionId === this.clientId);
                     const { code, type, message, retryAfter } = nacks[0]?.content ?? {};
                     this.logger.sendTelemetryEvent({
                         eventName: "ServerNack",
@@ -567,7 +567,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
                         handle,
                     });
                     if (handle) {
-                        this.emit("nack", clientIdOrDocumentId, nacks);
+                        this.emit("nack", cliendIdOrRelaySessionId, nacks);
                     }
                 });
                 break;
@@ -590,7 +590,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
         if (!socketProtocolError && this.hasDetails) {
             // tell the server we are disconnecting this client from the document
-            this.socket.emit("disconnect_document", this.clientId, this.documentId);
+            this.socket.emit("disconnect_document", this.clientId, this.relaySessionId);
         }
 
         socket.removeSocketIoReference(socketProtocolError);

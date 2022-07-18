@@ -284,7 +284,7 @@ export function configureWebSocketServices(
                 }
                 // We don't understand the error, so it is likely an internal service error.
                 const errMsg = `Could not verify connect document token. Error: ${safeStringify(error, undefined, 2)}`;
-                return handleServerError(logger, errMsg, claims.tenantId, claims.documentId);
+                return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
             }
 
             const clientId = generateClientId();

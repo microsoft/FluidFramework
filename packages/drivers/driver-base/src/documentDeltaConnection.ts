@@ -102,13 +102,13 @@ export class DocumentDeltaConnection
 
     /**
      * @param socket - websocket to be used
-     * @param documentId - ID of the document
+     * @param relaySessionId - ID of relay service session
      * @param logger - for reporting telemetry events
      * @param enableLongPollingDowngrades - allow connection to be downgraded to long-polling on websocket failure
      */
     protected constructor(
         protected readonly socket: Socket,
-        public documentId: string,
+        protected relaySessionId: string,
         logger: ITelemetryLogger,
         private readonly enableLongPollingDowngrades: boolean = false,
     ) {
@@ -492,7 +492,7 @@ export class DocumentDeltaConnection
         assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
     }
 
-    protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
+    protected earlyOpHandler = (relaySessionId: string, msgs: ISequencedDocumentMessage[]) => {
         this.queuedMessages.push(...msgs);
     };
 

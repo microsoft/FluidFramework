@@ -23,7 +23,7 @@ import type { Socket } from 'socket.io-client';
 
 // @public
 export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents> implements IDocumentDeltaConnection, IDisposable {
-    protected constructor(socket: Socket, documentId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean);
+    protected constructor(socket: Socket, relaySessionId: string, logger: ITelemetryLogger, enableLongPollingDowngrades?: boolean);
     // (undocumented)
     protected addTrackedListener(event: string, listener: (...args: any[]) => void): void;
     checkpointSequenceNumber: number | undefined;
@@ -40,9 +40,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     get disposed(): boolean;
     protected _disposed: boolean;
     // (undocumented)
-    documentId: string;
-    // (undocumented)
-    protected earlyOpHandler: (documentId: string, msgs: ISequencedDocumentMessage[]) => void;
+    protected earlyOpHandler: (relaySessionId: string, msgs: ISequencedDocumentMessage[]) => void;
     // (undocumented)
     protected earlySignalHandler: (msg: ISignalMessage) => void;
     // (undocumented)
@@ -67,6 +65,8 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     protected readonly queuedMessages: ISequencedDocumentMessage[];
     // (undocumented)
     protected readonly queuedSignals: ISignalMessage[];
+    // (undocumented)
+    protected relaySessionId: string;
     get serviceConfiguration(): IClientConfiguration;
     // (undocumented)
     protected readonly socket: Socket;
