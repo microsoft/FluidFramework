@@ -24,7 +24,11 @@ import {
     UnassignedSequenceNumber,
     UniversalSequenceNumber,
 } from "./constants";
-import { LocalReference, LocalReferenceCollection, LocalReferencePosition } from "./localReference";
+import {
+     assertLocalReferences,
+     LocalReferenceCollection,
+     LocalReferencePosition,
+} from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
     IMergeTreeSegmentDelta,
@@ -58,13 +62,11 @@ import {
     refGetRangeLabels,
     refGetTileLabels,
     refHasRangeLabel,
-    refHasRangeLabels,
     refHasTileLabel,
-    refHasTileLabels,
+    DetachedReferencePosition,
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager } from "./segmentPropertiesManager";
-import { Client } from "./client";
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
@@ -95,6 +97,10 @@ export interface IHierBlock extends IMergeBlock {
     addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
     rightmostTiles: MapLike<ReferencePosition>;
     leftmostTiles: MapLike<ReferencePosition>;
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     rangeStacks: RangeStackMap;
 }
 
@@ -696,43 +702,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
         }
     }
 
-    /**
-     * @deprecated - use refHasTileLabels
-     */
-    hasTileLabels() {
-        return refHasTileLabels(this);
-    }
-    /**
-     * @deprecated - use refHasRangeLabels
-     */
-    hasRangeLabels() {
-        return refHasRangeLabels(this);
-    }
-    /**
-     * @deprecated - use refHasTileLabel
-     */
-    hasTileLabel(label: string): boolean {
-        return refHasTileLabel(this, label);
-    }
-    /**
-     * @deprecated - use refHasRangeLabel
-     */
-    hasRangeLabel(label: string): boolean {
-        return refHasRangeLabel(this, label);
-    }
-    /**
-     * @deprecated - use refGetTileLabels
-     */
-    getTileLabels(): string[] | undefined {
-        return refGetTileLabels(this);
-    }
-    /**
-     * @deprecated - use refGetRangeLabels
-     */
-    getRangeLabels(): string[] | undefined {
-        return refGetRangeLabels(this);
-    }
-
     toString() {
         let bbuf = "";
         if (refTypeIncludesFlag(this, ReferenceType.Tile)) {
@@ -873,21 +842,37 @@ export interface IConsensusInfo {
     callback: (m: Marker) => void;
 }
 
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
 export interface ClientSeq {
     refSeq: number;
     clientId: string;
 }
 
-export const clientSeqComparer: Comparer<ClientSeq> = {
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
+ export const clientSeqComparer: Comparer<ClientSeq> = {
     min: { refSeq: -1, clientId: "" },
     compare: (a, b) => a.refSeq - b.refSeq,
 };
 
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
 export interface LRUSegment {
     segment?: ISegment;
     maxSeq: number;
 }
 
+/**
+ * @deprecated  for internal use only. public export will be removed.
+ * @internal
+ */
 const LRUSegmentComparer: Comparer<LRUSegment> = {
     min: { maxSeq: -2 },
     compare: (a, b) => a.maxSeq - b.maxSeq,
@@ -1004,8 +989,6 @@ const minListenerComparer: Comparer<MinListener> = {
     compare: (a, b) => a.minRequired - b.minRequired,
 };
 
-export type LocalReferenceMapper = (id: string) => LocalReference;
-
 // Represents a sequence of text segments
 export class MergeTree {
     private static readonly zamboniSegmentsMaxCount = 2;
@@ -1021,6 +1004,11 @@ export class MergeTree {
     root: IMergeBlock;
     private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
     public readonly collabWindow = new CollaborationWindow();
+
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     public pendingSegments: List<SegmentGroup> | undefined;
     private segmentsToScour: Heap<LRUSegment> | undefined;
     // TODO: add remove on segment remove
@@ -1464,7 +1452,7 @@ export class MergeTree {
      * Otherwise eventual consistency is not guaranteed.
      * See `packages\dds\merge-tree\REFERENCEPOSITIONS.md`
      */
-    private slideReferences(segment: ISegment, refsToSlide: LocalReference[]) {
+    private slideReferences(segment: ISegment, refsToSlide: Iterable<LocalReferencePosition>) {
         assert(
             isRemovedAndAcked(segment),
             0x2f1 /* slideReferences from a segment which has not been removed and acked */);
@@ -1475,18 +1463,13 @@ export class MergeTree {
             newSegment.localRefs = new LocalReferenceCollection(newSegment);
         }
         for (const ref of refsToSlide) {
+            assertLocalReferences(ref);
             ref.callbacks?.beforeSlide?.();
             const removedRef = segment.localRefs.removeLocalRef(ref);
             assert(ref === removedRef, 0x2f3 /* Ref not in the segment localRefs */);
-            if (!newSegment) {
-                // No valid segments (all nodes removed or not yet created)
-                ref.segment = undefined;
-                ref.offset = 0;
-            } else {
-                ref.segment = newSegment;
-                ref.offset = newSegoff.offset ?? 0;
+            if (newSegment) {
                 assert(!!newSegment.localRefs, 0x2f4 /* localRefs must be allocated */);
-                newSegment.localRefs.addLocalRef(ref);
+                newSegment.localRefs.addLocalRef(ref, newSegoff.offset ?? 0);
             }
             ref.callbacks?.afterSlide?.();
         }
@@ -1501,28 +1484,22 @@ export class MergeTree {
         if (!segment.localRefs || segment.localRefs.empty) {
             return;
         }
-        const refsToSlide: LocalReference[] = [];
-        const refsToStay: LocalReference[] = [];
+        const refsToSlide: ReferencePosition[] = [];
         for (const lref of segment.localRefs) {
             if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
-                refsToStay.push(lref);
-            } else if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
-                if (pending) {
-                    refsToStay.push(lref);
-                } else {
+                continue;
+            } if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                if (!pending) {
                     refsToSlide.push(lref);
                 }
+            } else {
+                segment.localRefs.removeLocalRef(lref);
             }
         }
         // Rethink implementation of keeping and sliding refs once other reference
         // changes are complete. This works but is fragile and possibly slow.
         if (!pending) {
             this.slideReferences(segment, refsToSlide);
-        }
-        segment.localRefs.clear();
-        for (const lref of refsToStay) {
-            lref.segment = segment;
-            segment.localRefs.addLocalRef(lref);
         }
     }
 
@@ -1626,13 +1603,23 @@ export class MergeTree {
         refSeq = this.collabWindow.currentSeq,
         clientId = this.collabWindow.clientId) {
         const seg = refPos.getSegment();
-        if (seg && seg.parent) {
-            const offset = !seg.removedSeq ? refPos.getOffset() : 0;
-            return offset + this.getPosition(seg, refSeq, clientId);
+        if (seg?.parent === undefined) {
+            return DetachedReferencePosition;
         }
-        return LocalReference.DetachedPosition;
+        if (refPos.isLeaf()) {
+            return this.getPosition(refPos, refSeq, clientId);
+        }
+        if (refTypeIncludesFlag(refPos, ReferenceType.Transient)
+            || seg.localRefs?.has(refPos)) {
+                const offset = isRemoved(seg) ? 0 : refPos.getOffset();
+                return offset + this.getPosition(seg, refSeq, clientId);
+        }
+        return DetachedReferencePosition;
     }
-
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
         const searchInfo: IMarkerSearchRangeInfo = {
             mergeTree: this,
@@ -1667,8 +1654,8 @@ export class MergeTree {
                 const marker = <Marker>searchInfo.tile;
                 pos = this.getPosition(marker, UniversalSequenceNumber, clientId);
             } else {
-                const localRef = <LocalReference>searchInfo.tile;
-                pos = localRef.toPosition();
+                const localRef = searchInfo.tile;
+                pos = this.referencePositionToLocalPosition(localRef, UniversalSequenceNumber, clientId);
             }
             return { tile: searchInfo.tile, pos };
         }
@@ -2455,7 +2442,7 @@ export class MergeTree {
         this.ensureIntervalBoundary(end, refSeq, clientId);
         let segmentGroup: SegmentGroup;
         const removedSegments: IMergeTreeSegmentDelta[] = [];
-        const segmentsWithRefs: ISegment[] = [];
+        const localOverlapWithRefs: ISegment[] = [];
         const localSeq = seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
         const markRemoved = (segment: ISegment, pos: number, _start: number, _end: number) => {
             const existingRemovalInfo = toRemovalInfo(segment);
@@ -2469,6 +2456,9 @@ export class MergeTree {
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
                     segment.localRemovedSeq = undefined;
+                    if (segment.localRefs?.empty === false) {
+                        localOverlapWithRefs.push(segment);
+                    }
                 } else {
                     // Do not replace earlier sequence number for remove
                     existingRemovalInfo.removedClientIds.push(clientId);
@@ -2479,9 +2469,6 @@ export class MergeTree {
                 segment.localRemovedSeq = localSeq;
 
                 removedSegments.push({ segment });
-            }
-            if (segment.localRefs && !segment.localRefs.empty) {
-                segmentsWithRefs.push(segment);
             }
 
             // Save segment so can assign removed sequence number when acked by server
@@ -2505,11 +2492,9 @@ export class MergeTree {
             return true;
         };
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
-        const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
-        for (const segment of segmentsWithRefs) {
-            this.updateSegmentRefsAfterMarkRemoved(segment, pending);
-        }
-
+        // these segments are already viewed as being removed locally and are not event-ed
+        // so can slide immediately
+        localOverlapWithRefs.forEach((s) => this.slideReferences(s, s.localRefs!));
         // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
             this.mergeTreeDeltaCallback(
@@ -2519,6 +2504,13 @@ export class MergeTree {
                     deltaSegments: removedSegments,
                 });
         }
+        const pending = this.collabWindow.collaborating && clientId === this.collabWindow.clientId;
+        // these events are newly removed
+        // so we slide after eventing in case the consumer wants to make reference
+        // changes at remove time, like add a ref to track undo redo.
+        removedSegments.forEach(
+            (rSeg) => this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending));
+
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
@@ -2545,8 +2537,7 @@ export class MergeTree {
         }
     }
     public createLocalReferencePosition(
-        segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined,
-        client: Client,
+        segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined,
     ): LocalReferencePosition {
         if (isRemoved(segment)) {
             if (!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)) {
@@ -2557,39 +2548,11 @@ export class MergeTree {
         const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
         segment.localRefs = localRefs;
 
-        const segRef = localRefs.createLocalRef(offset, refType, properties, client);
+        const segRef = localRefs.createLocalRef(offset, refType, properties);
 
         this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
             LocalClientId);
         return segRef;
-    }
-
-    /**
-     * @deprecated - use removeLocalReferencePosition
-     */
-    public removeLocalReference(segment: ISegment, lref: LocalReference) {
-        if (segment.localRefs) {
-            const removedRef = segment.localRefs.removeLocalRef(lref);
-            if (removedRef) {
-                this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-                    LocalClientId);
-            }
-        }
-    }
-
-    /**
-     * @deprecated - use createLocalReference
-     */
-    public addLocalReference(lref: LocalReference) {
-        const segment = lref.segment!;
-        let localRefs = segment.localRefs;
-        if (!localRefs) {
-            localRefs = new LocalReferenceCollection(segment);
-            segment.localRefs = localRefs;
-        }
-        localRefs.addLocalRef(lref);
-        this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber,
-            LocalClientId);
     }
 
     private blockUpdate(block: IMergeBlock) {
@@ -2679,6 +2642,10 @@ export class MergeTree {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
         while (!stateStack.empty()) {
             // We already check the stack is not empty

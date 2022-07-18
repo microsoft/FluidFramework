@@ -74,12 +74,12 @@ describe("Error Logging", () => {
             const event = freshEvent();
             const error = createILoggingError({
                 message: { value: "Mark Fields", tag: "UserData" }, // hopefully no one does this!
-                stack: { value: "tagged", tag: TelemetryDataTag.PackageData },
+                stack: { value: "tagged", tag: TelemetryDataTag.CodeArtifact },
             });
             TelemetryLogger.prepareErrorObject(event, error, false);
             assert.deepStrictEqual(event.message, { value: "Mark Fields", tag: "UserData" });
             assert.deepStrictEqual(event.error, "[object Object]"); // weird but ok
-            assert.deepStrictEqual(event.stack, { value: "tagged", tag: "PackageData" }); // weird but ok
+            assert.deepStrictEqual(event.stack, { value: "tagged", tag: TelemetryDataTag.CodeArtifact });
         });
         it("getTelemetryProperties absent - no further props added", () => {
             const event = freshEvent();
@@ -143,12 +143,12 @@ describe("Error Logging", () => {
             assert.strictEqual(events[0].userDataObject, "REDACTED (UserData)", "someUserData should be redacted");
             events.pop();
         });
-        it("TaggedLoggerAdapter - tagged PackageData are preserved", () => {
+        it("TaggedLoggerAdapter - tagged CodeArtifact are preserved", () => {
             const event = {
                 category: "cat",
                 eventName: "event",
                 packageDataObject: {
-                    tag: TelemetryDataTag.PackageData,
+                    tag: TelemetryDataTag.CodeArtifact,
                     value: "somePackageData",
                 },
             };
@@ -173,7 +173,7 @@ describe("Error Logging", () => {
     describe("TaggedTelemetryData", () => {
         it("Ensure backwards compatibility", () => {
             // The values of the enum should never change (even if the keys are renamed)
-            assert(TelemetryDataTag.PackageData === "PackageData" as TelemetryDataTag);
+            assert(TelemetryDataTag.CodeArtifact === "CodeArtifact" as TelemetryDataTag);
             assert(TelemetryDataTag.UserData === "UserData" as TelemetryDataTag);
         });
     });
@@ -205,14 +205,6 @@ describe("Error Logging", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(
                 { value: Symbol("okay"), tag: "any string" }), true);
         });
-        it("object or null value not ok", () => {
-            assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: { foo: "bar" }, tag: "any string" }), false, "object value not ok");
-            assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: { }, tag: "any string" }), false, "object value not ok");
-            assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: null, tag: "any string" }), false, "null value not ok");
-        });
         it("non-string tag not ok", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(
                 { value: "hello", tag: 1 }), false, "number tag is bad");
@@ -230,13 +222,13 @@ describe("Error Logging", () => {
         it("ctor props are assigned to the object", () => {
             const loggingError = new LoggingError(
                 "myMessage",
-                { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: "PackageData" } });
+                { p1: 1, p2: "two", p3: true, tagged: { value: 4, tag: "CodeArtifact" } });
             const errorAsAny = loggingError as any;
             assert.strictEqual(errorAsAny.message, "myMessage");
             assert.strictEqual(errorAsAny.p1, 1);
             assert.strictEqual(errorAsAny.p2, "two");
             assert.strictEqual(errorAsAny.p3, true);
-            assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: "PackageData" });
+            assert.deepStrictEqual(errorAsAny.tagged, { value: 4, tag: "CodeArtifact" });
         });
         it("errorInstanceId unique each time", () => {
             const e1 = new LoggingError("1");
@@ -268,15 +260,15 @@ describe("Error Logging", () => {
             const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
             (loggingError as any).p1 = "should not be overwritten";
             loggingError.addTelemetryProperties(
-                { p1: "ignored", p4: 4, p5: { value: 5, tag: "PackageData" } });
+                { p1: "ignored", p4: 4, p5: { value: 5, tag: "CodeArtifact" } });
             const props = loggingError.getTelemetryProperties();
             assert.strictEqual(props.p1, "should not be overwritten");
             assert.strictEqual(props.p4, 4);
-            assert.deepStrictEqual(props.p5, { value: 5, tag: "PackageData" });
+            assert.deepStrictEqual(props.p5, { value: 5, tag: "CodeArtifact" });
             const errorAsAny = loggingError as any;
             assert.strictEqual(errorAsAny.p1, "should not be overwritten");
             assert.strictEqual(errorAsAny.p4, 4);
-            assert.deepStrictEqual(errorAsAny.p5, { value: 5, tag: "PackageData" });
+            assert.deepStrictEqual(errorAsAny.p5, { value: 5, tag: "CodeArtifact" });
         });
         it("Set valid props via 'as any' - returned from getTelemetryProperties, overwrites", () => {
             const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });
@@ -284,12 +276,12 @@ describe("Error Logging", () => {
             const errorAsAny = loggingError as any;
             errorAsAny.p1 = "one";
             errorAsAny.p4 = 4;
-            errorAsAny.p5 = { value: 5, tag: "PackageData" };
+            errorAsAny.p5 = { value: 5, tag: "CodeArtifact" };
             errorAsAny.pii6 = { value: 5, tag: "UserData" };
             const props = loggingError.getTelemetryProperties();
             assert.strictEqual(props.p1, "one");
             assert.strictEqual(props.p4, 4);
-            assert.deepStrictEqual(props.p5, { value: 5, tag: "PackageData" });
+            assert.deepStrictEqual(props.p5, { value: 5, tag: "CodeArtifact" });
             assert.deepStrictEqual(props.pii6, { value: 5, tag: "UserData" });
         });
         it("Set invalid props via 'as any' - excluded from getTelemetryProperties, overwrites", () => {
@@ -297,11 +289,17 @@ describe("Error Logging", () => {
             const errorAsAny = loggingError as any;
             errorAsAny.p1 = { one: 1 };
             errorAsAny.p4 = null;
-            errorAsAny.p5 = ["a", "b", "c"];
+            errorAsAny.p5 = ["a", "b", "c", 1, true, undefined];
+            errorAsAny.p6 = ["a", "b", "c", null];
+            errorAsAny.p7 = { value: null, tag: "tag" };
+            errorAsAny.p8 = { value: errorAsAny.p5, tag: "tag" };
             const props = loggingError.getTelemetryProperties();
             assert.strictEqual(props.p1, "REDACTED (arbitrary object)");
             assert.strictEqual(props.p4, "REDACTED (arbitrary object)");
-            assert.strictEqual(props.p5, "REDACTED (arbitrary object)");
+            assert.strictEqual(props.p5, `["a","b","c",1,true,null]`);
+            assert.strictEqual(props.p6, "REDACTED (arbitrary object)");
+            assert.deepStrictEqual(props.p7, { value: "REDACTED (arbitrary object)", tag: "tag" });
+            assert.deepStrictEqual(props.p8, { value: props.p5, tag: "tag" });
         });
         it("addTelemetryProperties - Does not overwrite base class Error fields (untagged)", () => {
             const loggingError = new LoggingError("myMessage");
@@ -316,7 +314,7 @@ describe("Error Logging", () => {
             const loggingError = new LoggingError("myMessage");
             const propsWillBeIgnored = {
                 message: { value: "Mark Fields", tag: "UserData" },
-                stack: { value: "surprise2", tag: "PackageData" },
+                stack: { value: "surprise2", tag: "CodeArtifact" },
             };
             loggingError.addTelemetryProperties(propsWillBeIgnored);
             const props = loggingError.getTelemetryProperties();

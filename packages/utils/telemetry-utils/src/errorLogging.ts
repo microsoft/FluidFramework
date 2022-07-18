@@ -8,6 +8,7 @@ import {
     ITaggedTelemetryPropertyType,
     ITelemetryLogger,
     ITelemetryProperties,
+    TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
@@ -262,9 +263,39 @@ export function isExternalError(e: any): boolean {
  * Type guard to identify if a particular value (loosely) appears to be a tagged telemetry property
  */
 export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPropertyType {
-    return (typeof (x?.value) !== "object" && typeof (x?.tag) === "string");
+    return typeof (x?.tag) === "string";
 }
 
+/**
+ * Filter serializable telemetry properties
+ * @param x - any telemetry prop
+ * @returns - as-is if x is primitive. returns stringified if x is an array of primitive.
+ * otherwise returns null since this is what we support at the moment.
+ */
+function filterValidTelemetryProps(x: any, key: string): TelemetryEventPropertyType {
+    if (Array.isArray(x) && x.every((val) => isTelemetryEventPropertyValue(val))) {
+        return JSON.stringify(x);
+    }
+    if (isTelemetryEventPropertyValue(x)) {
+        return x;
+    }
+    // We don't support logging arbitrary objects
+    console.error(`UnSupported Format of Logging Error Property for key ${key}:`, x);
+    return "REDACTED (arbitrary object)";
+}
+
+// checking type of x, returns false if x is null
+function isTelemetryEventPropertyValue(x: any): x is TelemetryEventPropertyType {
+    switch (typeof x) {
+        case "string":
+        case "number":
+        case "boolean":
+        case "undefined":
+            return true;
+        default:
+            return false;
+    }
+}
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
@@ -275,29 +306,23 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
             continue;
         }
         const val = obj[key];
-        switch (typeof val) {
-            case "string":
-            case "number":
-            case "boolean":
-            case "undefined":
-                props[key] = val;
-                break;
-            default: {
-                if (isTaggedTelemetryPropertyValue(val)) {
-                    props[key] = val;
-                } else {
-                    // We don't support logging arbitrary objects
-                    props[key] = "REDACTED (arbitrary object)";
-                }
-                break;
-            }
+
+        // ensure only valid props get logged, since props of logging error could be in any shape
+        if (isTaggedTelemetryPropertyValue(val)) {
+            props[key] = {
+                value: filterValidTelemetryProps(val.value, key),
+                tag: val.tag,
+            };
+        } else {
+            props[key] = filterValidTelemetryProps(val, key);
         }
     }
     return props;
 }
 
 /**
- * Borrowed from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples
+ * Borrowed from
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#examples}
  * Avoids runtime errors with circular references.
  * Not ideal, as will cut values that are not necessarily circular references.
  * Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)

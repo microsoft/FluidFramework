@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-core",
-  "version": "0.1037.0",
+  "version": "0.1037.1000",
   "description": "Fluid server services core definitions",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -28,11 +28,11 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/gitresources": "^0.1037.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/server-services-client": "^0.1037.0",
-    "@fluidframework/server-services-telemetry": "^0.1037.0",
+    "@fluidframework/common-utils": "^0.33.1000-74526",
+    "@fluidframework/gitresources": "^0.1037.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
+    "@fluidframework/server-services-client": "^0.1037.1000-0",
+    "@fluidframework/server-services-telemetry": "^0.1037.1000-0",
     "@types/nconf": "^0.10.2",
     "@types/node": "^14.18.0",
     "debug": "^4.1.1",

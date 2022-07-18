@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/test-loader-utils",
-  "version": "1.2.0",
+  "version": "2.0.0-internal.1.0.0",
   "description": "Mocks and other test utilities for the Fluid Framework Loader",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -31,14 +31,14 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": "^1.2.0",
-    "@fluidframework/driver-utils": "^1.2.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000"
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@1.1.0",
+    "@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@^1.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
@@ -47,7 +47,11 @@
     "typescript-formatter": "7.1.0"
   },
   "typeValidation": {
-    "version": "1.2.0",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "ClassDeclaration_MockDocumentDeltaConnection": {
+        "backCompat": false
+      }
+    }
   }
 }

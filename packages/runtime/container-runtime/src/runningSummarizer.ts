@@ -6,6 +6,7 @@
 import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
     ISequencedDocumentMessage,
     MessageType,
@@ -14,6 +15,7 @@ import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
     ISummaryConfiguration,
 } from "./containerRuntime";
+import { opSize } from "./opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
     IEnqueueSummarizeOptions,
@@ -28,6 +30,7 @@ import {
     ISummaryCancellationToken,
     ISummarizeResults,
     ISummarizeTelemetryProperties,
+    ISummarizerRuntime,
     ISummarizeRunnerTelemetry,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
@@ -58,6 +61,7 @@ export class RunningSummarizer implements IDisposable {
         summaryCollection: SummaryCollection,
         cancellationToken: ISummaryCancellationToken,
         stopSummarizerCallback: (reason: SummarizerStopReason) => void,
+        runtime: ISummarizerRuntime,
     ): Promise<RunningSummarizer> {
         const summarizer = new RunningSummarizer(
             logger,
@@ -68,12 +72,36 @@ export class RunningSummarizer implements IDisposable {
             raiseSummarizingError,
             summaryCollection,
             cancellationToken,
-            stopSummarizerCallback);
+            stopSummarizerCallback,
+            runtime);
 
         await summarizer.waitStart();
 
-        // Run the heuristics after starting
+        // Update heuristic counts
+        // By the time we get here, there are potentially ops missing from the heuristic summary counts
+        // Examples of where this could happen:
+        // 1. Op is processed during the time that we are initiating the RunningSummarizer instance but before we
+        //    listen for the op events (will get missed by the handlers in the current workflow)
+        // 2. Op was sequenced after the last time we summarized (op sequence number > summarize ref sequence number)
+        const diff = runtime.deltaManager.lastSequenceNumber - (
+            heuristicData.lastSuccessfulSummary.refSequenceNumber
+            + heuristicData.numNonRuntimeOps
+            + heuristicData.numRuntimeOps);
+        heuristicData.hasMissingOpData = diff > 0;
+
+        if (heuristicData.hasMissingOpData) {
+            // Split the diff 50-50 and increment the counts appropriately
+            heuristicData.numNonRuntimeOps += Math.ceil(diff / 2);
+            heuristicData.numRuntimeOps += Math.floor(diff / 2);
+        }
+
+        // Update last seq number (in case the handlers haven't processed anything yet)
+        heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
+
+        // Start heuristics
+        summarizer.heuristicRunner?.start();
         summarizer.heuristicRunner?.run();
+
         return summarizer;
     }
 
@@ -95,6 +123,7 @@ export class RunningSummarizer implements IDisposable {
     } | undefined;
     private summarizeCount = 0;
     private totalSuccessfulAttempts = 0;
+    private initialized = false;
 
     private constructor(
         baseLogger: ITelemetryLogger,
@@ -106,6 +135,7 @@ export class RunningSummarizer implements IDisposable {
         private readonly summaryCollection: SummaryCollection,
         private readonly cancellationToken: ISummaryCancellationToken,
         private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
+        private readonly runtime: ISummarizerRuntime,
     ) {
         const telemetryProps: ISummarizeRunnerTelemetry = {
             summarizeCount: () => this.summarizeCount,
@@ -175,9 +205,13 @@ export class RunningSummarizer implements IDisposable {
             this.summaryWatcher,
             this.logger,
         );
+
+        // Listen for ops
+        this.runtime.deltaManager.on("op", (op) => { this.handleOp(op); });
     }
 
     public dispose(): void {
+        this.runtime.deltaManager.off("op", (op) => { this.handleOp(op); });
         this.summaryWatcher.dispose();
         this.heuristicRunner?.dispose();
         this.heuristicRunner = undefined;
@@ -199,30 +233,48 @@ export class RunningSummarizer implements IDisposable {
             ? this.logger
             : undefined;
 
-    public handleSystemOp(op: ISequencedDocumentMessage) {
-        switch (op.type) {
-            case MessageType.ClientLeave:
-            case MessageType.ClientJoin:
-            case MessageType.Propose: {
-                // Synchronously handle quorum ops like regular ops
-                this.handleOp(undefined, op);
-                return;
-            }
-            default: {
-                return;
-            }
+    /** We only want a single heuristic runner micro-task (will provide better optimized grouping of ops) */
+    private heuristicRunnerMicroTaskExists = false;
+
+    public handleOp(op: ISequencedDocumentMessage) {
+        this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
+
+        if (op.type !== MessageType.Summarize && isRuntimeMessage(op)) {
+            this.heuristicData.numRuntimeOps++;
+        } else {
+            this.heuristicData.numNonRuntimeOps++;
+        }
+
+        this.heuristicData.totalOpsSize += opSize(op);
+
+        // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
+        if (this.initialized
+            && this.opCanTriggerSummary(op)
+            && !this.tryRunEnqueuedSummary()
+            && !this.heuristicRunnerMicroTaskExists) {
+            this.heuristicRunnerMicroTaskExists = true;
+            Promise.resolve().then(() => {
+                this.heuristicRunner?.run();
+            }).finally(() => {
+                this.heuristicRunnerMicroTaskExists = false;
+            });
         }
     }
 
-    public handleOp(error: any, { sequenceNumber, type, clientId, contents }: ISequencedDocumentMessage) {
-        if (error !== undefined) {
-            return;
-        }
-        this.heuristicData.lastOpSequenceNumber = sequenceNumber;
-
-        // Check for enqueued on-demand summaries; Intentionally do nothing otherwise
-        if (!this.tryRunEnqueuedSummary()) {
-            this.heuristicRunner?.run();
+    /**
+     * Can the given op trigger a summary?
+     * # Currently only prevents summaries for Summarize and SummaryAck ops
+     * @param op - op to check
+     * @returns true if this type of op can trigger a summary
+     */
+    private opCanTriggerSummary(op: ISequencedDocumentMessage): boolean {
+        switch (op.type) {
+            case MessageType.Summarize:
+            case MessageType.SummaryAck:
+            case MessageType.SummaryNack:
+                return false;
+            default:
+                return true;
         }
     }
 
@@ -274,6 +326,7 @@ export class RunningSummarizer implements IDisposable {
                 summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
             });
         }
+        this.initialized = true;
     }
 
     /**

@@ -26,17 +26,9 @@ import {
     FlushMode,
     IContainerRuntimeBase,
     IContainerRuntimeBaseEvents,
-    IDataStore,
     IFluidDataStoreContextDetached,
     IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-
-/**
- * @deprecated - This will be removed once https://github.com/microsoft/FluidFramework/issues/9127 is fixed.
- */
-export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
-    fluidDataStoreChannel?: { bindToContext?(): void; };
-}
 
 /**
  * @deprecated - This will be removed in a later release.
@@ -107,7 +99,7 @@ export interface IContainerRuntime extends
     createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
 
     /**
-     * Creates detached data store context. Data store initialization is considered compete
+     * Creates detached data store context. Data store initialization is considered complete
      * only after context.attachRuntime() is called.
      * @param pkg - package path
      * @param rootDataStoreId - data store ID (unique name). Must not contain slashes.
@@ -115,7 +107,7 @@ export interface IContainerRuntime extends
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
 
     /**
-     * Returns true of document is dirty, i.e. there are some pending local changes that
+     * Returns true if document is dirty, i.e. there are some pending local changes that
      * either were not sent out to delta stream or were not yet acknowledged.
      */
     readonly isDirty: boolean;

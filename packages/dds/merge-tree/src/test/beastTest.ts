@@ -19,11 +19,9 @@ import {
     KeyComparer,
     Property,
     PropertyAction,
-    SortedDictionary,
-} from "../base";
-import {
     ProxString,
     RedBlackTree,
+    SortedDictionary,
     Stack,
     TST,
 } from "../collections";
@@ -622,7 +620,7 @@ export function TestPack(verbose = true) {
         const windowTime = stats.windowTime!;
         const packTime = stats.packTime;
         const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
-        const avePackTime = ((packTime || 0) / (client.accumOps)).toFixed(1);
+        const avePackTime = ((packTime ?? 0) / (client.accumOps)).toFixed(1);
         const aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
         const aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
         const adjTime = ((client.accumTime - (windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);

@@ -171,7 +171,7 @@
             "error"
         ],
         "@typescript-eslint/no-explicit-any": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-extra-non-null-assertion": [
             "error"
@@ -210,7 +210,7 @@
             "error"
         ],
         "@typescript-eslint/no-namespace": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-non-null-asserted-optional-chain": [
             "error"
@@ -261,7 +261,7 @@
             "error"
         ],
         "@typescript-eslint/no-unsafe-argument": [
-            "off"
+            "error"
         ],
         "@typescript-eslint/no-unsafe-assignment": [
             "error"
@@ -307,6 +307,9 @@
             "error"
         ],
         "@typescript-eslint/prefer-namespace-keyword": [
+            "error"
+        ],
+        "@typescript-eslint/prefer-nullish-coalescing": [
             "error"
         ],
         "@typescript-eslint/prefer-optional-chain": [

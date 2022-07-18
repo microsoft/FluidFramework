@@ -19,6 +19,7 @@ import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definiti
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
 import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
+import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -246,6 +247,17 @@ export interface ISummaryTreeAssemblerProps {
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)
+export class LocationRedirectionError extends LoggingError implements ILocationRedirectionError, IFluidErrorBase {
+    constructor(message: string, redirectUrl: IResolvedUrl, props: DriverErrorTelemetryProps);
+    // (undocumented)
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.locationRedirection;
+    // (undocumented)
+    readonly redirectUrl: IResolvedUrl;
+}
+
+// @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
 
 // @public (undocumented)
@@ -358,8 +370,8 @@ export class RateLimiter {
 // @public
 export function readAndParse<T>(storage: Pick<IDocumentStorageService, "readBlob">, id: string): Promise<T>;
 
-// @public (undocumented)
-export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal, fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
+// @public
+export function requestOps(get: (from: number, to: number, telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>, concurrency: number, fromTotal: number, toTotal: number | undefined, payloadSize: number, logger: ITelemetryLogger, signal?: AbortSignal, scenarioName?: string): IStream<ISequencedDocumentMessage[]>;
 
 // @public (undocumented)
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {

@@ -32,8 +32,8 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
     private calledGetVersions = false;
 
     public async getVersions(blobid: string | null, count: number, _scenarioName?: string): Promise<api.IVersion[]> {
-        assert(blobid === null, "Invalid usage. \"blobid\" should always be null");
-        assert(count === 1, "Invalid usage. \"count\" should always be 1");
+        assert(blobid === null, 0x342 /* Invalid usage. "blobid" should always be null */);
+        assert(count === 1, 0x343 /* Invalid usage. "count" should always be 1 */);
 
         // No reason to re-parse the data since it will never change
         if (this.calledGetVersions) {
