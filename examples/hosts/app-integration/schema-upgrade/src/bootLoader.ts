@@ -18,14 +18,15 @@ import { IFluidMountableView } from "@fluidframework/view-interfaces";
 
 import React from "react";
 
-import { App } from "./app";
 import { AppView } from "./appView";
 import { IApp, IBootLoader, IBootLoaderEvents, IMigratable, MigrationState } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
+    App as App1,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
 } from "./version1";
 import {
+    App as App2,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
 } from "./version2";
 
@@ -41,7 +42,7 @@ const v1Code: ICodePackage<IApp> = {
         details: { package: "one" },
     },
     getModel: (container: IContainer) => {
-        return new App(container);
+        return new App1(container);
     },
     getView: (model: IApp) => {
         const reactView = React.createElement(AppView, { app: model });
@@ -55,7 +56,7 @@ const v2Code: ICodePackage<IApp> = {
         details: { package: "two" },
     },
     getModel: (container: IContainer) => {
-        return new App(container);
+        return new App2(container);
     },
     getView: (model: IApp) => {
         const reactView = React.createElement(AppView, { app: model });
@@ -104,7 +105,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
     // So, we can specify the code details and instantiate the App directly.
     public async createNew(externalData?: string): Promise<{ app: IApp; id: string; }> {
         const container = await this.loader.createDetachedContainer({ package: "one" });
-        const app = new App(container);
+        const app = new App1(container);
         await app.initialize(externalData);
         await container.attach(createTinyliciousCreateNewRequest());
         const id = getContainerId(container);

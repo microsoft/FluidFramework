@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
+export * from "./app";
 export * from "./containerCode";
 export * from "./inventoryList";

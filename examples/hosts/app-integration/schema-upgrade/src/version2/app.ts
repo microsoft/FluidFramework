@@ -7,9 +7,9 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { IApp, IAppEvents, IContainerKillBit, IInventoryList } from "./interfaces";
-import { MigrationState } from "./interfaces";
-import { containerKillBitId } from "./version1";
+import type { IApp, IAppEvents, IContainerKillBit, IInventoryList } from "../interfaces";
+import { MigrationState } from "../interfaces";
+import { containerKillBitId } from "./containerCode";
 
 async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
     // Our inventory list is available at the URL "/".
@@ -64,7 +64,7 @@ const extractStringData = async (inventoryList: IInventoryList) => {
  */
 export class App extends TypedEventEmitter<IAppEvents> implements IApp {
     // To be used by the consumer of the model to pair with an appropriate view.
-    public readonly version = "one";
+    public readonly version = "two";
     private _migrationState = MigrationState.collaborating;
     public getMigrationState(): MigrationState {
         return this._migrationState;
