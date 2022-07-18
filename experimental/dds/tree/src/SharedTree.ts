@@ -454,7 +454,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return this.cachingLogViewer;
 	}
 
-	protected readonly logger: ITelemetryLogger;
+	/**
+	 * logger for SharedTree events.
+	 */
+	public readonly logger: ITelemetryLogger;
 	private readonly sequencedEditAppliedLogger: ITelemetryLogger;
 
 	private readonly encoder_0_0_2: SharedTreeEncoder_0_0_2;
