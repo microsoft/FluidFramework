@@ -4,12 +4,12 @@
  */
 
 import { IIntegerRange } from "./base";
-import { BaseSegment, ISegment, Marker } from "./mergeTree";
+import { BaseSegment, ISegment, Marker } from "./mergeTreeNodes";
 import { IJSONSegment } from "./ops";
 import { PropertySet } from "./properties";
 import { LocalReferenceCollection } from "./localReference";
 import { refHasTileLabel } from "./referencePositions";
-import { MergeTree } from "./mergeTreeInt";
+import { MergeTree } from "./mergeTree";
 
 // Maximum length of text segment to be considered to be merged with other segment.
 // Maximum segment length is at least 2x of it (not taking into account initial segment creation).

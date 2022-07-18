@@ -25,7 +25,7 @@ import {
     ISegmentAction,
     Marker,
     SegmentGroup,
-} from "./mergeTree";
+} from "./mergeTreeNodes";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
 import {
     createAnnotateMarkerOp,
@@ -53,7 +53,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
-import { MergeTree } from "./mergeTreeInt";
+import { MergeTree } from "./mergeTree";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,

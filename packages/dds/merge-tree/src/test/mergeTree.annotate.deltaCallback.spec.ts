@@ -8,7 +8,7 @@ import { MergeTreeDeltaType } from "../ops";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import { TextSegment } from "../textSegment";
-import { MergeTree } from "../mergeTreeInt";
+import { MergeTree } from "../mergeTree";
 import { countOperations, insertText } from "./testUtils";
 
 describe("MergeTree", () => {

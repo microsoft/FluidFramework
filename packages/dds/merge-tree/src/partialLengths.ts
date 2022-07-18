@@ -13,8 +13,8 @@ import {
     IRemovalInfo,
     ISegment,
     toRemovalInfo,
-} from "./mergeTree";
-import { MergeTree } from "./mergeTreeInt";
+} from "./mergeTreeNodes";
+import { MergeTree } from "./mergeTree";
 
 interface IOverlapClient {
     clientId: number;

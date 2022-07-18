@@ -32,7 +32,7 @@ import {
     ISegment,
     Marker,
     reservedMarkerIdKey,
-} from "../mergeTree";
+} from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { createRemoveRangeOp } from "../opBuilder";
 import {
@@ -47,7 +47,7 @@ import {
     TextSegment,
 } from "../textSegment";
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
-import { MergeTree } from "../mergeTreeInt";
+import { MergeTree } from "../mergeTree";
 import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";

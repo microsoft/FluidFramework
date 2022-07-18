@@ -15,8 +15,8 @@ import {
     IncrementalExecOp,
     IncrementalMapState,
     ISegment,
-} from "../mergeTree";
-import { ClientSeq, clientSeqComparer } from "../mergeTreeInt";
+} from "../mergeTreeNodes";
+import { ClientSeq, clientSeqComparer } from "../mergeTree";
 import { PropertySet } from "../properties";
 import { MergeTreeTextHelper, TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";

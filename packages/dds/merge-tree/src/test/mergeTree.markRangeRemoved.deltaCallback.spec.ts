@@ -9,7 +9,7 @@ import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { MergeTreeDeltaType } from "../ops";
 import { TextSegment } from "../textSegment";
-import { MergeTree } from "../mergeTreeInt";
+import { MergeTree } from "../mergeTree";
 import { countOperations } from "./testUtils";
 
 describe("MergeTree", () => {

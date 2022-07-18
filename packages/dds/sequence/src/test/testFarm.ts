@@ -15,7 +15,7 @@ import path from "path";
 import { assert, Trace } from "@fluidframework/common-utils";
 import * as MergeTree from "@fluidframework/merge-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { MergeTree as MergeTreeMergeTree } from "@fluidframework/merge-tree/dist/mergeTreeInt";
+import { MergeTree as MergeTreeMergeTree } from "@fluidframework/merge-tree/dist/mergeTree";
 import {
     TextSegment,
     createGroupOp,
