@@ -27,7 +27,9 @@ export interface IMigrationEvents extends IEvent {
 }
 
 export interface IMigratable extends IEventProvider<IMigrationEvents> {
-    // attach()?
+    /**
+     * The string version of the App, matching the version of the container code it's paired with.
+     */
     readonly version: string;
     /**
      * Initialize must be called after constructing the IApp.  This is where we do whatever async stuff is needed
