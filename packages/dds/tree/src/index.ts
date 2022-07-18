@@ -5,7 +5,7 @@
 
 export { EmptyKey, FieldKey, TreeType, Value, TreeValue } from "./tree";
 
-export { ITreeCursor, TreeNavigationResult } from "./forest";
+export { ITreeCursor, TreeNavigationResult, SynchronousNavigationResult } from "./forest";
 export { LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier } from "./schema";
 
 export {
