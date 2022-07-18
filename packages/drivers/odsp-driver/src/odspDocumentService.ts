@@ -41,7 +41,12 @@ import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import { getWithRetryForTokenRefresh, getOdspResolvedUrl, TokenFetchOptionsEx } from "./odspUtils";
+import {
+    getWithRetryForTokenRefresh,
+    getOdspResolvedUrl,
+    TokenFetchOptionsEx,
+    IRelayServiceSessionId,
+} from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
@@ -108,6 +113,8 @@ export class OdspDocumentService implements IDocumentService {
     private _opsCache?: OpsCache;
 
     private currentConnection?: OdspDocumentDeltaConnection;
+
+    private relayServiceSessionId: IRelayServiceSessionId | undefined;
 
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
@@ -185,6 +192,7 @@ export class OdspDocumentService implements IDocumentService {
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
+                () => this.relayServiceSessionId,
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
             );
         }
@@ -379,6 +387,7 @@ export class OdspDocumentService implements IDocumentService {
                 disableJoinSessionRefresh,
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
+            this.relayServiceSessionId = { tenantId: joinSessionResponse.tenantId, id: joinSessionResponse.id };
             return {
                 entryTime: Date.now(),
                 joinSessionResponse,

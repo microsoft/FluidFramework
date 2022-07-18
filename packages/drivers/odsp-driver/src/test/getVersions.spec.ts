@@ -17,7 +17,7 @@ import {
     persistedCacheValueVersion,
 } from "../contracts";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache";
-import { INewFileInfo } from "../odspUtils";
+import { INewFileInfo, IRelayServiceSessionId } from "../odspUtils";
 import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
@@ -116,6 +116,10 @@ describe("Tests for snapshot fetch", () => {
             );
 
             const resolved = await resolver.resolve({ url: odspUrl });
+            const relayServiceSessionId: IRelayServiceSessionId = {
+                tenantId: "tenantId",
+                id: "id",
+            };
             service = new OdspDocumentStorageService(
                 resolved,
                 async (_options) => "token",
@@ -125,6 +129,7 @@ describe("Tests for snapshot fetch", () => {
                 GetHostStoragePolicyInternal(),
                 epochTracker,
                 async () => { return {}; },
+                () => relayServiceSessionId,
             );
         });
 

@@ -36,6 +36,7 @@ import { IOdspCache } from "./odspCache";
 import {
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
+    IRelayServiceSessionId,
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { EpochTracker } from "./epochTracker";
@@ -92,6 +93,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
+        private readonly relayServiceSessionId: () => (IRelayServiceSessionId | undefined),
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
         super();
@@ -107,6 +109,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
             logger,
             epochTracker,
             !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
+            this.relayServiceSessionId,
         );
     }
 
