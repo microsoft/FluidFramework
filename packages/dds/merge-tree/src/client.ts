@@ -24,7 +24,6 @@ import {
     ISegment,
     ISegmentAction,
     Marker,
-    MergeTree,
     SegmentGroup,
 } from "./mergeTree";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
@@ -54,6 +53,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { MergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
+import { MergeTree } from "./mergeTreeInt";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -88,6 +88,10 @@ export class Client {
         this.mergeTree.mergeTreeMaintenanceCallback = callback;
     }
 
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     protected readonly mergeTree: MergeTree;
 
     private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);

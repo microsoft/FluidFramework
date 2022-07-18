@@ -157,9 +157,6 @@
       "ClassDeclaration_LocalReferenceCollection": {
         "forwardCompat": false
       },
-      "InterfaceDeclaration_LRUSegment": {
-        "forwardCompat": false
-      },
       "ClassDeclaration_MergeBlock": {
         "forwardCompat": false
       },
@@ -174,7 +171,12 @@
       },
       "ClassDeclaration_TextSegment": {
         "forwardCompat": false
-      }
+      },
+      "RemovedClassDeclaration_MergeTree": {"forwardCompat": false, "backCompat": false},
+      "RemovedInterfaceDeclaration_ClientSeq": {"forwardCompat": false, "backCompat": false},
+      "RemovedVariableDeclaration_clientSeqComparer": {"forwardCompat": false, "backCompat": false},
+      "RemovedInterfaceDeclaration_LRUSegment": {"forwardCompat": false, "backCompat": false}
+
     }
   }
 }

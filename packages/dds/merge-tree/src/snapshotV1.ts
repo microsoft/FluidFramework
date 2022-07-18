@@ -14,7 +14,6 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { UnassignedSequenceNumber } from "./constants";
 import {
     ISegment,
-    MergeTree,
 } from "./mergeTree";
 import {
     matchProperties,
@@ -29,6 +28,7 @@ import {
     serializeAsMaxSupportedVersion,
 } from "./snapshotChunks";
 import { SnapshotLegacy } from "./snapshotlegacy";
+import { MergeTree } from "./mergeTreeInt";
 
 export class SnapshotV1 {
     // Split snapshot into two entries - headers (small) and body (overflow) for faster loading initial content
