@@ -1266,22 +1266,20 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        const idsToSweep = new Set<{ nodeId: string; nodeType: string; age: number; }>();
+        const idsToSweep = new Set<string>();
         this.unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
             if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
                 return;
             }
 
+            // We only sweep DataStores and Attachment Blobs
             const nodeType = this.runtime.getNodeType(nodeId);
             if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
                 return;
             }
 
-            const age = currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs;
-            idsToSweep.add({ nodeId, nodeType, age });
-        });
+            idsToSweep.add(nodeId);
 
-        idsToSweep.forEach(({ nodeId, nodeType, age }) => {
             // Log deleted event for each node only once to reduce noise in telemetry.
             const uniqueEventId = `Deleted-${nodeId}`;
             if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
@@ -1292,7 +1290,7 @@ export class GarbageCollector implements IGarbageCollector {
                 eventName: "GCObjectDeleted",
                 id: nodeId,
                 type: nodeType,
-                age,
+                age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
                 timeout: this.sweepTimeoutMs,
                 completedGCRuns: this.completedRuns,
                 lastSummaryTime: this.getLastSummaryTimestampMs(),
@@ -1300,7 +1298,7 @@ export class GarbageCollector implements IGarbageCollector {
         });
 
         if (this.sweepV0) {
-            this.runtime.deleteUnusedRoutes(Array.from(idsToSweep).map(({ nodeId }) => nodeId));
+            this.runtime.deleteUnusedRoutes(Array.from(idsToSweep));
         }
     }
 
@@ -1323,8 +1321,10 @@ export class GarbageCollector implements IGarbageCollector {
             return;
         }
 
-        // For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
-        // summarizer clients if they are based off of user actions (such as scrolling to content for these objects).
+        // For non-summarizer clients, only log "Loaded" type events. Other events are triggered by ops
+        // (either on the node or on another node referencing it) so we only log from the Summarizer to dedupe.
+        // But "Loaded" events may only fire on a main client (not also in the Summarizer client)
+        // if they are based off of user actions, such as scrolling to content for these objects.
         if (!this.isSummarizerClient && usageType !== "Loaded") {
             return;
         }
