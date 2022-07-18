@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { NodeId } from ".";
+
 // TODOs:
 // Clipboard
 // Constraint scheme
@@ -37,7 +39,7 @@
 		hops?: TreePath[];
 	}
 
-	export type PositionedMarks = MarkWithOffset[];
+	export type PositionedMarks<TMark = Mark> = MarkWithOffset<TMark>[];
 
 	/**
 	 * See PositionedMarks.
@@ -144,9 +146,11 @@
 		content: ProtoNode[];
 	}
 
-	export interface ModifyInsert extends HasOpId, HasPlaceFields, Modify {
-		type: "Insert";
+	export interface ModifyInsert extends HasOpId, HasPlaceFields {
+		type: "MInsert";
 		content: ProtoNode;
+		value?: ValueMark;
+		fields?: FieldMarks;
 	}
 
 	export interface Bounce extends HasOpId, HasPlaceFields {
@@ -171,8 +175,10 @@
 		count: NodeCount;
 	}
 
-	export interface ModifyMoveIn extends HasOpId, HasPlaceFields, Modify {
+	export interface ModifyMoveIn extends HasOpId, HasPlaceFields {
 		type: "Move";
+		value?: ValueMark;
+		fields?: FieldMarks;
 	}
 
 	export type Attach = Insert | ModifyInsert | MoveIn | ModifyMoveIn | Bounce | Intake;
@@ -213,18 +219,23 @@
 		count: NodeCount;
 	}
 
-	export interface ModifyDetach extends HasOpId, Modify {
+	export interface ModifyDetach extends HasOpId {
 		type: "Delete" | "Move";
+		tomb?: SeqNumber;
+		value?: ValueMark;
+		fields?: FieldMarks;
 	}
 
 	export interface Reattach extends HasOpId {
-		tomb: SeqNumber;
 		type: "Revive" | "Return";
+		tomb: SeqNumber;
 		count: NodeCount;
 	}
-	export interface ModifyReattach extends HasOpId, Modify {
-		tomb: SeqNumber;
+	export interface ModifyReattach extends HasOpId {
 		type: "Revive" | "Return";
+		tomb: SeqNumber;
+		value?: ValueMark;
+		fields?: FieldMarks;
 	}
 
 	/**
@@ -323,7 +334,7 @@ export interface HasOpId {
  * The contents of a node to be created
  */
 export interface ProtoNode {
-	id?: string;
+	id?: NodeId;
 	type?: string;
 	value?: Value;
 	fields?: ProtoFields;
@@ -344,9 +355,7 @@ export type GapCount = number;
 export type Offset = number;
 export type SeqNumber = number;
 export type Value = number | string | boolean;
-export type NodeId = string;
 export type ClientId = number;
-export type FieldLabel = string;
 export enum Tiebreak { Left, Right }
 export enum Effects {
 	All = "All",

@@ -5,6 +5,7 @@
 
 import { FieldKey, Value } from "../tree";
 import { Brand, Opaque } from "../util";
+import { NodeId as TreeNodeId } from ".";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
@@ -202,7 +203,7 @@ export interface Modify {
  */
 export interface ModifyDeleted {
     type: typeof MarkType.Modify;
-    fields: FieldMarks<ModifyDeleted | MoveOut>;
+    fields: FieldMarks<ModifyDeleted | ModifyAndMoveOut | MoveOut>;
 }
 
 /**
@@ -211,7 +212,7 @@ export interface ModifyDeleted {
 export interface ModifyMovedOut {
     type: typeof MarkType.Modify;
     setValue?: Value;
-    fields?: FieldMarks<ModifyMovedOut | Delete | MoveOut>;
+    fields?: FieldMarks<ModifyMovedOut | Delete | ModifyAndDelete | ModifyAndMoveOut | MoveOut>;
 }
 
 /**
@@ -219,7 +220,7 @@ export interface ModifyMovedOut {
  */
 export interface ModifyMovedIn {
     type: typeof MarkType.Modify;
-    fields: FieldMarks<ModifyMovedIn | MoveIn | Insert>;
+    fields: FieldMarks<ModifyMovedIn | MoveIn | MoveInAndModify | Insert | InsertAndModify>;
 }
 
 /**
@@ -227,7 +228,7 @@ export interface ModifyMovedIn {
  */
 export interface ModifyInserted {
     type: typeof MarkType.Modify;
-    fields: FieldMarks<ModifyMovedIn | MoveIn>;
+    fields: FieldMarks<ModifyInserted | MoveIn | MoveInAndModify>;
 }
 
 /**
@@ -312,7 +313,7 @@ export interface Insert {
 export interface InsertAndModify {
     type: typeof MarkType.InsertAndModify;
     content: ProtoNode;
-    fields: FieldMarks<ModifyMovedIn | MoveIn>;
+    fields: FieldMarks<ModifyInserted | MoveIn | MoveInAndModify>;
 }
 
 /**
@@ -342,7 +343,7 @@ export type Offset = number;
  * No uniqueness guarantees (across any scope) are made at this time.
  * TODO: Update comment once uniqueness guarantees can be made.
  */
-export type NodeId = Opaque<Brand<string, "delta.NodeId">>;
+export type NodeId = TreeNodeId;
 
 export type FieldMap<T> = Map<FieldKey, T>;
 export type FieldMarks<TMark> = FieldMap<PositionedMarks<TMark>>;
