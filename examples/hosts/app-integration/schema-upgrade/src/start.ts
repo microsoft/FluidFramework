@@ -21,6 +21,9 @@ const updateTabForId = (id: string) => {
 };
 
 const renderApp = (app: IApp) => {
+    // Here, could switch on the app.version to determine different views to load (AppView1 vs. AppView2).
+    // For this demo, the view can currently render either app type.
+
     // The AppView is what a normal user would see in a normal scenario...
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);

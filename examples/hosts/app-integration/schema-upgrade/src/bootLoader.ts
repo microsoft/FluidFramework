@@ -13,12 +13,6 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-import { MountableView } from "@fluidframework/view-adapters";
-import { IFluidMountableView } from "@fluidframework/view-interfaces";
-
-import React from "react";
-
-import { AppView } from "./appView";
 import { IApp, IBootLoader, IBootLoaderEvents, IMigratable, MigrationState } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
@@ -30,45 +24,25 @@ import {
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
 } from "./version2";
 
-interface ICodePackage<T> {
-    fluidModuleWithDetails: IFluidModuleWithDetails;
-    getModel: (container: IContainer) => T;
-    getView: (model: T) => IFluidMountableView;
-}
-
-const v1Code: ICodePackage<IApp> = {
-    fluidModuleWithDetails: {
-        module: { fluidExport: new InventoryListContainerRuntimeFactory1() },
-        details: { package: "one" },
-    },
-    getModel: (container: IContainer) => {
-        return new App1(container);
-    },
-    getView: (model: IApp) => {
-        const reactView = React.createElement(AppView, { app: model });
-        return new MountableView(reactView);
-    },
+const v1ModuleWithDetails: IFluidModuleWithDetails = {
+    module: { fluidExport: new InventoryListContainerRuntimeFactory1() },
+    details: { package: "one" },
 };
 
-const v2Code: ICodePackage<IApp> = {
-    fluidModuleWithDetails: {
-        module: { fluidExport: new InventoryListContainerRuntimeFactory2() },
-        details: { package: "two" },
-    },
-    getModel: (container: IContainer) => {
-        return new App2(container);
-    },
-    getView: (model: IApp) => {
-        const reactView = React.createElement(AppView, { app: model });
-        return new MountableView(reactView);
-    },
+const v2ModuleWithDetails: IFluidModuleWithDetails = {
+    module: { fluidExport: new InventoryListContainerRuntimeFactory2() },
+    details: { package: "two" },
 };
 
-// Return ICodePackage<IApp1> | ICodePackage<IApp2> ?
-const getCode = (version: string): ICodePackage<IApp> => {
+const getModel = (container: IContainer) => {
+    const version = container.getSpecifiedCodeDetails()?.package;
+    if (typeof version !== "string") {
+        throw new Error("Unexpected code detail format");
+    }
+
     switch (version) {
-        case "one": return v1Code;
-        case "two": return v2Code;
+        case "one": return new App1(container);
+        case "two": return new App2(container);
         default: throw new Error("Unknown version");
     }
 };
@@ -77,10 +51,15 @@ function createLoader(): IHostLoader {
     const tinyliciousService = new TinyliciousService();
 
     const load = async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
-        if (typeof source.package !== "string") {
+        const version = source.package;
+        if (typeof version !== "string") {
             throw new Error("Unexpected code detail format");
         }
-        return getCode(source.package).fluidModuleWithDetails;
+        switch (version) {
+            case "one": return v1ModuleWithDetails;
+            case "two": return v2ModuleWithDetails;
+            default: throw new Error("Unknown version");
+        }
     };
     const codeLoader = { load };
 
@@ -103,8 +82,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
 
     public async createNew(version: "one" | "two", externalData?: string): Promise<{ app: IApp; id: string; }> {
         const container = await this.loader.createDetachedContainer({ package: version });
-        const code = getCode(version);
-        const app = code.getModel(container);
+        const app = getModel(container);
         await app.initialize(externalData);
         await container.attach(createTinyliciousCreateNewRequest());
         const id = getContainerId(container);
@@ -113,12 +91,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
 
     public async loadExisting(id: string): Promise<IApp> {
         const container = await this.loader.resolve({ url: id });
-        const codeDetails = container.getSpecifiedCodeDetails();
-        if (typeof codeDetails?.package !== "string") {
-            throw new Error("Unexpected code details");
-        }
-        const code = getCode(codeDetails.package);
-        const model = code.getModel(container);
+        const model = getModel(container);
         await model.initialize();
         return model;
     }
@@ -134,8 +107,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         if (typeof acceptedCodeDetails.package !== "string") {
             throw new Error("Unexpected code detail format");
         }
-        const code = getCode(acceptedCodeDetails.package);
-        const newApp = code.getModel(newContainer);
+        const newApp = getModel(newContainer);
         await newApp.initialize(extractedData);
 
         // Before attaching, let's check to make sure no one else has already done the migration
@@ -171,12 +143,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
             throw new Error("Migration ended without a new container being created");
         }
         const newContainer = await this.loader.resolve({ url: newContainerId });
-        const codeDetails = newContainer.getSpecifiedCodeDetails();
-        if (typeof codeDetails?.package !== "string") {
-            throw new Error("Unexpected code details");
-        }
-        const code = getCode(codeDetails.package);
-        const model = code.getModel(newContainer);
+        const model = getModel(newContainer);
         await model.initialize();
         return { model, id: newContainerId };
     }
