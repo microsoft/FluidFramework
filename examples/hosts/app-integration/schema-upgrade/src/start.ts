@@ -54,7 +54,8 @@ const ensureMigrated = async (bootLoader: BootLoader, app: IMigratable) => {
     }
     const extractedData = await app.exportStringData();
     // Possibly transform the extracted data here
-    const { attach } = await bootLoader.createDetached(acceptedVersion, extractedData);
+    const { app: migratedApp, attach } = await bootLoader.createDetached(acceptedVersion);
+    await migratedApp.importStringData(extractedData);
     // Maybe here apply the extracted data instead of passing it into createDetached
 
     // Before attaching, let's check to make sure no one else has already done the migration
@@ -95,8 +96,9 @@ async function start(): Promise<void> {
     // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
     if (location.hash.length === 0) {
         const fetchedData = await externalDataSource.fetchData();
-        const createResponse = await bootLoader.createDetached("one", fetchedData);
+        const createResponse = await bootLoader.createDetached("one");
         app = createResponse.app;
+        await app.importStringData(fetchedData);
         id = await createResponse.attach();
     } else {
         id = location.hash.substring(1);

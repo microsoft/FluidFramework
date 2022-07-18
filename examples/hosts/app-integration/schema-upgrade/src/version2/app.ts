@@ -90,20 +90,12 @@ export class App extends TypedEventEmitter<IAppEvents> implements IApp {
         super();
     }
 
-    public readonly initialize = async (initialData?: string) => {
-        if (initialData !== undefined && this.container.attachState !== AttachState.Detached) {
-            throw new Error("Cannot set initial data after attach");
-        }
-
+    public readonly initialize = async () => {
         this._inventoryList = await getInventoryListFromContainer(this.container);
         this._containerKillBit = await getContainerKillBitFromContainer(this.container);
         this._migrationState = getStateFromKillBit(this._containerKillBit);
         this.containerKillBit.on("codeDetailsAccepted", this.onStateChanged);
         this.containerKillBit.on("migrated", this.onStateChanged);
-
-        if (initialData !== undefined) {
-            await applyStringData(this.inventoryList, initialData);
-        }
     };
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
