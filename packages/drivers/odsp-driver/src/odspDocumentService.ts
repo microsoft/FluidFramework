@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     IFluidErrorBase,
@@ -45,7 +45,7 @@ import {
     getWithRetryForTokenRefresh,
     getOdspResolvedUrl,
     TokenFetchOptionsEx,
-    IRelayServiceSessionId,
+    IRelaySessionId,
 } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
@@ -114,7 +114,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private currentConnection?: OdspDocumentDeltaConnection;
 
-    private relayServiceSessionId: IRelayServiceSessionId | undefined;
+    private relaySessionId: IRelaySessionId | undefined;
 
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
@@ -192,7 +192,12 @@ export class OdspDocumentService implements IDocumentService {
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
-                () => this.relayServiceSessionId,
+                () => {
+                    assert(this.relaySessionId !== undefined, "Relay session id should be defined");
+                    assert(this.relaySessionId.tenantId !== undefined && this.relaySessionId.id !== undefined,
+                        "tenantId/id should be present in join session response");
+                    return `${this.relaySessionId.tenantId}/${this.relaySessionId.id}`;
+                },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
             );
         }
@@ -387,7 +392,7 @@ export class OdspDocumentService implements IDocumentService {
                 disableJoinSessionRefresh,
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
-            this.relayServiceSessionId = { tenantId: joinSessionResponse.tenantId, id: joinSessionResponse.id };
+            this.relaySessionId = { tenantId: joinSessionResponse.tenantId, id: joinSessionResponse.id };
             return {
                 entryTime: Date.now(),
                 joinSessionResponse,
