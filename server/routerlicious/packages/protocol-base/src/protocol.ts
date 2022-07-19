@@ -60,7 +60,6 @@ export interface IProtocolHandler {
 
     close(): void;
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
-    processSignal(message: ISignalMessage);
     getProtocolState(): IScribeProtocolState;
 }
 
@@ -112,8 +111,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
     public close() {
         this._quorum.close();
     }
-
-    public processSignal(_message: ISignalMessage) {}
 
     public processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult {
         // verify it's moving sequentially
