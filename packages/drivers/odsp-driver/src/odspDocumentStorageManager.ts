@@ -10,6 +10,7 @@ import {
     delay,
 } from "@fluidframework/common-utils";
 import {
+    mixinMonitoringContext,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
@@ -83,10 +84,12 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     // limits the amount of parallel "attachment" blob uploads
     private readonly createBlobRateLimiter = new RateLimiter(1);
 
+    private get logger(): ITelemetryLogger { return this.mc.logger; }
+
     constructor(
         private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-        private readonly logger: ITelemetryLogger,
+        logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
         private readonly hostPolicy: HostStoragePolicyInternal,
@@ -94,7 +97,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         private readonly flushCallback: () => Promise<FlushResult>,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
-        super();
+        super(mixinMonitoringContext(logger));
+
+        epochTracker.initializePolicies(this.policies);
 
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;

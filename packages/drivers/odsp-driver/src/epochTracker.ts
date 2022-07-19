@@ -16,7 +16,7 @@ import {
     IPersistedCache,
     IOdspError,
 } from "@fluidframework/odsp-driver-definitions";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorType, IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, fetchHelper, getOdspResolvedUrl, IOdspResponse } from "./odspUtils";
 import {
@@ -27,6 +27,7 @@ import {
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { defaultCacheExpiryTimeoutMs } from "./odspDocumentStorageServiceBase";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -34,9 +35,6 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
 export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
-
-// Please update the README file in odsp-driver-definitions if you change the defaultCacheExpiryTimeoutMs.
-export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -46,6 +44,7 @@ export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
  */
 export class EpochTracker implements IPersistedFileCache {
     private _fluidEpoch: string | undefined;
+    private policies: { maximumCacheDurationMs: number; _initialized: boolean; };
 
     public readonly rateLimiter: RateLimiter;
     private readonly driverId = uuid();
@@ -59,6 +58,13 @@ export class EpochTracker implements IPersistedFileCache {
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
+        this.policies = { maximumCacheDurationMs: NaN, _initialized: false };
+    }
+
+    public initializePolicies(policies: IDocumentStorageServicePolicies) {
+        assert(!this.policies._initialized, "Cannot initialize policies twice");
+        this.policies._initialized = true;
+        this.policies.maximumCacheDurationMs = policies.maximumCacheDurationMs ?? defaultCacheExpiryTimeoutMs;
     }
 
     // public for UT purposes only!
@@ -95,17 +101,17 @@ export class EpochTracker implements IPersistedFileCache {
             } else if (this._fluidEpoch !== value.fluidEpoch) {
                 return undefined;
             }
-            // Expire the cached snapshot if it's older than the defaultCacheExpiryTimeoutMs and immediately
+            // Expire the cached snapshot if it's older than the maximumCacheDurationMs policy and immediately
             // expire all old caches that do not have cacheEntryTime
             if (entry.type === snapshotKey) {
                 const cacheTime = value.value?.cacheEntryTime;
                 const currentTime = Date.now();
-                if (cacheTime === undefined || currentTime - cacheTime >= defaultCacheExpiryTimeoutMs) {
+                if (cacheTime === undefined || currentTime - cacheTime >= this.policies.maximumCacheDurationMs) {
                     this.logger.sendTelemetryEvent(
                         {
                             eventName: "odspVersionsCacheExpired",
                             duration: currentTime - cacheTime,
-                            maxCacheAgeMs: defaultCacheExpiryTimeoutMs,
+                            maxCacheAgeMs: this.policies.maximumCacheDurationMs,
                         });
                     await this.removeEntries();
                     return undefined;
@@ -122,7 +128,7 @@ export class EpochTracker implements IPersistedFileCache {
     public async put(entry: IEntry, value: any) {
         assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
         // For snapshots, the value should have the cacheEntryTime. This will be used to expire snapshots older
-        // than the defaultCacheExpiryTimeoutMs.
+        // than the maximumCacheDurationMs policy.
         if (entry.type === snapshotKey) {
             value.cacheEntryTime = value.cacheEntryTime ?? Date.now();
         }
