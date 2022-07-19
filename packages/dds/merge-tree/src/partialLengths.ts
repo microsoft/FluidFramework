@@ -14,7 +14,6 @@ import {
     ISegment,
     toRemovalInfo,
 } from "./mergeTreeNodes";
-import { MergeTree } from "./mergeTree";
 
 interface IOverlapClient {
     clientId: number;
