@@ -12,6 +12,7 @@ import {
     toInternalScheme,
     getVersionRange,
     isInternalVersionScheme,
+    isInternalVersionRange,
 } from "../src/internalVersionScheme";
 
 describe("internalScheme", () => {
@@ -38,6 +39,37 @@ describe("internalScheme", () => {
             const input = `2.0.0-internal.1.1.0.0`;
             const result = isInternalVersionScheme(input);
             assert.isFalse(result);
+        });
+
+        it("2.0.0 is not internal scheme (no prerelease)", () => {
+            const input = `2.0.0`;
+            const result = isInternalVersionScheme(input);
+            assert.isFalse(result);
+        });
+
+        it(">=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0 is internal", () => {
+            const input = `>=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0`;
+            assert.isTrue(isInternalVersionRange(input));
+        });
+
+        it(">=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0 is internal", () => {
+            const input = `>=2.0.0-internal.2.2.1 <2.0.0-internal.3.0.0`;
+            assert.isTrue(isInternalVersionRange(input));
+        });
+
+        it(">=1.0.0 <2.0.0 is not internal", () => {
+            const input = `>=1.0.0 <2.0.0`;
+            assert.isFalse(isInternalVersionRange(input));
+        });
+
+        it(">=2.0.0-2.2.1 <2.0.0-3.0.0 is not internal", () => {
+            const input = `>=2.0.0-2.2.1 <2.0.0-3.0.0`;
+            assert.isFalse(isInternalVersionRange(input));
+        });
+
+        it("^2.0.0-internal.2.2.1 is not internal", () => {
+            const input = `^2.0.0-internal.2.2.1`;
+            assert.isFalse(isInternalVersionRange(input));
         });
     });
 

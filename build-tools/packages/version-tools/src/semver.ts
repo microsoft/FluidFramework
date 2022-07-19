@@ -27,7 +27,6 @@ export function incRange(range: string, bumpType: VersionBumpType, prerelease = 
 
     const scheme = detectVersionScheme(range);
     switch (scheme) {
-        default:
         case "virtualPatch":
         case "semver": {
             const operator = range.slice(0, 1);
@@ -51,6 +50,10 @@ export function incRange(range: string, bumpType: VersionBumpType, prerelease = 
             }
             const newVersion = bumpInternalVersion(original, bumpType);
             return getVersionRange(newVersion, constraintType);
+        }
+
+        default: {
+            throw new Error(`${scheme} wasn't handled. Was a new version scheme added?`);
         }
     }
 }

@@ -5,8 +5,11 @@
 
 import * as semver from "semver";
 import { VersionScheme } from "@fluidframework/build-tools";
-import { isInternalVersionScheme } from "./internalVersionScheme";
+import { isInternalVersionRange, isInternalVersionScheme } from "./internalVersionScheme";
 
+/**
+ * Determines if a version is a virtual patch format or not using a very simplistic algorithm.
+ */
 function isVirtualPatch(version: semver.SemVer | string): boolean {
     // If the major is 0 and the patch is >= 1000 assume it's a virtualPatch version
     if (semver.major(version) === 0 && semver.patch(version) >= 1000) {
@@ -35,7 +38,7 @@ export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
         return "semver";
     } else if (semver.validRange(rangeOrVersion) !== null) {
         // Must be a range string
-        if (rangeOrVersion.startsWith(">=")) {
+        if (isInternalVersionRange(rangeOrVersion)) {
             return "internal";
         }
 
@@ -47,6 +50,10 @@ export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
         const operator = rangeOrVersion.slice(0, 1);
         if (operator === "^" || operator === "~") {
             if (isVirtualPatch(coercedVersion)) {
+                return "virtualPatch";
+            }
+        } else {
+            if (isVirtualPatch(rangeOrVersion)) {
                 return "virtualPatch";
             }
         }
