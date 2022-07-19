@@ -7,6 +7,14 @@ import * as semver from "semver";
 import { VersionScheme } from "@fluidframework/build-tools";
 import { isInternalVersionScheme } from "./internalVersionScheme";
 
+function isVirtualPatch(version: semver.SemVer | string): boolean {
+    // If the major is 0 and the patch is >= 1000 assume it's a virtualPatch version
+    if (semver.major(version) === 0 && semver.patch(version) >= 1000) {
+        return true;
+    }
+    return false;
+}
+
 /**
  * Given a version or a range string, determines what version scheme the string is using.
  * @param rangeOrVersion - a version or range string.
@@ -20,8 +28,7 @@ export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
 
     if (semver.valid(rangeOrVersion) !== null) {
         // Must be a version string
-        // If the major is less than 0 assume it's a virtualPatch version
-        if (semver.major(rangeOrVersion) === 0) {
+        if (isVirtualPatch(rangeOrVersion)) {
             return "virtualPatch";
         }
 
@@ -39,7 +46,7 @@ export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
 
         const operator = rangeOrVersion.slice(0, 1);
         if (operator === "^" || operator === "~") {
-            if (semver.major(coercedVersion) === 0) {
+            if (isVirtualPatch(coercedVersion)) {
                 return "virtualPatch";
             }
         }
