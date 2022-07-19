@@ -292,7 +292,18 @@ describe("Odsp Error", () => {
                 new Error("Request to https://6c482541-f706-4168-9e58-8e35a9992f58.sharepoint.com failed"));
             assert.fail("Fetch should throw an error");
         } catch (error: any) {
-            assert((error.message as string).includes("REDACTED (sharepoint url)"), "sharepoint url should get redacted");
+            assert((error.message as string).includes("REDACTED (url)"), "sharepoint url should get redacted");
+        }
+    });
+
+    it("url should be redacted in the error", async () => {
+        try {
+            await mockFetchError(
+                async () => fetchAndParseAsJSONHelper("https://microsoft.sharepoint-df.com/siteUrl", {}),
+                new Error("Request to http://f706-4168-9e58-8e35a9992f58.COM failed"));
+            assert.fail("Fetch should throw an error");
+        } catch (error: any) {
+            assert((error.message as string).includes("REDACTED (url)"), "url should get redacted");
         }
     });
 });
