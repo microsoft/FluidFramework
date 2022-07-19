@@ -1,4 +1,4 @@
-// prettier.config.js or .prettierrc.js
+// TODO: Use shared config in build-common once version with config has been published.
 module.exports = {
 	printWidth: 100,
 	semi: true,
