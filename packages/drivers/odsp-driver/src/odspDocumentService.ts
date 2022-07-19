@@ -347,7 +347,7 @@ export class OdspDocumentService implements IDocumentService {
         requestSocketToken: boolean,
         options: TokenFetchOptionsEx,
     ) {
-        return this.joinSessionCore(requestSocketToken, options).catch((e) => {
+        const response = await this.joinSessionCore(requestSocketToken, options).catch((e) => {
             if (hasFacetCodes(e) && e.facetCodes !== undefined) {
                 for (const code of e.facetCodes) {
                     switch (code) {
@@ -366,6 +366,8 @@ export class OdspDocumentService implements IDocumentService {
             }
             throw e;
         });
+        this.relayServiceTenantAndSessionId = `${response.tenantId}/${response.id}`;
+        return response;
     }
 
     private async joinSessionCore(
@@ -386,7 +388,6 @@ export class OdspDocumentService implements IDocumentService {
                 disableJoinSessionRefresh,
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
-            this.relayServiceTenantAndSessionId = `${joinSessionResponse.tenantId}/${joinSessionResponse.id}`;
             return {
                 entryTime: Date.now(),
                 joinSessionResponse,
