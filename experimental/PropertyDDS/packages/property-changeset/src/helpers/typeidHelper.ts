@@ -208,7 +208,11 @@ export namespace TypeIdHelper {
      */
     export function extractTypeId(in_typeid): string {
         const matches = in_typeid.match(/\<(.*?)\>/);
-        return matches !== null && matches.length > 0 ? matches[0].replace(/[\<\>]/gi, "") : in_typeid;
+        if (matches !== null && matches.length > 0) {
+            return matches[0].replace(/[\<\>]/gi, "");
+        } else {
+            return in_typeid;
+        }
     }
 
     /**
