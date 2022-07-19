@@ -123,7 +123,7 @@ export class TextCursor implements ITreeCursor {
         this.root = [root];
         this.indexStack.push(0);
         this.siblings = this.root;
-        this.parentStack.push(this.siblings[0]);
+        this.parentStack.push(root);
     }
 
     getNode(): PlaceholderTree {
