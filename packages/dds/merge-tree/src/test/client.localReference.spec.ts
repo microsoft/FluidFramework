@@ -7,7 +7,7 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Client } from "../client";
-import { toRemovalInfo } from "../mergeTree";
+import { toRemovalInfo } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { DetachedReferencePosition } from "../referencePositions";

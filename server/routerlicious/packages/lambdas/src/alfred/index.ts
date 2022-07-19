@@ -38,8 +38,8 @@ import {
     createRoomJoinMessage,
     createNackMessage,
     createRoomLeaveMessage,
-    getRandomInt,
     generateClientId,
+    getRandomInt,
 } from "../utils";
 
 const summarizerClientType = "summarizer";
@@ -83,15 +83,6 @@ const getSubmitSignalThrottleId = (clientId: string, tenantId: string) => `${cli
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
-    // Trace sampling.
-    if (message.operation?.traces && getRandomInt(100) === 0) {
-        message.operation.traces.push(
-            {
-                action: "start",
-                service: "alfred",
-                timestamp: Date.now(),
-            });
-    }
     const sanitizedMessage: IDocumentMessage = {
         clientSequenceNumber: message.clientSequenceNumber,
         contents: message.contents,
@@ -210,6 +201,7 @@ export function configureWebSocketServices(
     metricLogger: core.IMetricClient,
     logger: core.ILogger,
     maxNumberOfClientsPerDocument: number = 1000000,
+    numberOfMessagesPerTrace: number = 100,
     maxTokenLifetimeSec: number = 60 * 60,
     isTokenExpiryEnabled: boolean = false,
     isClientConnectivityCountingEnabled: boolean = false,
@@ -578,7 +570,13 @@ export function configureWebSocketServices(
 
                                     return true;
                                 })
-                                .map((message) => sanitizeMessage(message));
+                              .map((message) => {
+                                  const sanitizedMessage: IDocumentMessage = sanitizeMessage(message);
+                                  const sanitizedMessageWithTrace = addAlfredTrace(sanitizedMessage,
+                                      numberOfMessagesPerTrace, connection.clientId,
+                                      connection.tenantId, connection.documentId);
+                                  return sanitizedMessageWithTrace;
+                              });
 
                             if (sanitized.length > 0) {
                                 // Cannot await this order call without delaying other message batches in this submitOp.
@@ -679,4 +677,35 @@ export function configureWebSocketServices(
             await Promise.all(removeAndStoreP);
         });
     });
+}
+
+function addAlfredTrace(message: IDocumentMessage, numberOfMessagesPerTrace: number,
+    clientId: string, tenantId: string, documentId: string) {
+    if (message && core.DefaultServiceConfiguration.enableTraces && sampleMessages(numberOfMessagesPerTrace)) {
+        if (message.traces === undefined) {
+            message.traces = [];
+        }
+        message.traces.push(
+        {
+            action: "start",
+            service: "alfred",
+            timestamp: Date.now(),
+        });
+
+        const lumberjackProperties = {
+            [BaseTelemetryProperties.tenantId]: tenantId,
+            [BaseTelemetryProperties.documentId]: documentId,
+            clientId,
+            clientSequenceNumber: message.clientSequenceNumber,
+            traces: message.traces,
+            opType: message.type,
+        };
+        Lumberjack.info(`Message received by Alfred.`, lumberjackProperties);
+    }
+
+    return message;
+}
+
+function sampleMessages(numberOfMessagesPerTrace: number): boolean {
+    return getRandomInt(numberOfMessagesPerTrace) === 0;
 }

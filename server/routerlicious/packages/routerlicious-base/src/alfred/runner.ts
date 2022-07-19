@@ -77,6 +77,7 @@ export class AlfredRunner implements IRunner {
         const httpServer = this.server.httpServer;
 
         const maxNumberOfClientsPerDocument = this.config.get("alfred:maxNumberOfClientsPerDocument");
+        const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
         const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
@@ -91,6 +92,7 @@ export class AlfredRunner implements IRunner {
             createMetricClient(this.metricClientConfig),
             winston,
             maxNumberOfClientsPerDocument,
+            numberOfMessagesPerTrace,
             maxTokenLifetimeSec,
             isTokenExpiryEnabled,
             isClientConnectivityCountingEnabled,

@@ -21,6 +21,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
 - [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
+- [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
 
 ### Remove `documentId` field from `MockFluidDataStoreContext`
 This field has been deprecated and will be removed in a future breaking change.
@@ -34,6 +35,9 @@ to be `string | undefined`.
 
 ### `IContainerRuntime.flush` is deprecated
 `IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
+### MergeTree class is deprecated
+    The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
