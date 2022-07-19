@@ -34,7 +34,6 @@ import {
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { defaultCacheExpiryTimeoutMs } from "./odspDocumentServiceFactoryCore";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
@@ -43,6 +42,9 @@ export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "
 export type FetchTypeInternal = FetchType | "cache";
 
 export const Odsp409Error = "Odsp409Error";
+
+// Please update the README file in odsp-driver-definitions if you change the defaultCacheExpiryTimeoutMs.
+export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
 
 /**
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
@@ -62,7 +64,6 @@ export class EpochTracker implements IPersistedFileCache {
         protected readonly fileEntry: IFileEntry,
         protected readonly logger: ITelemetryLogger,
         protected readonly clientIsSummarizer?: boolean,
-        private readonly maximumCacheDurationMs: number = defaultCacheExpiryTimeoutMs,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
@@ -102,17 +103,17 @@ export class EpochTracker implements IPersistedFileCache {
             } else if (this._fluidEpoch !== value.fluidEpoch) {
                 return undefined;
             }
-            // Expire the cached snapshot if it's older than the maximumCacheDurationMs policy and immediately
+            // Expire the cached snapshot if it's older than the defaultCacheExpiryTimeoutMs and immediately
             // expire all old caches that do not have cacheEntryTime
             if (entry.type === snapshotKey) {
                 const cacheTime = value.value?.cacheEntryTime;
                 const currentTime = Date.now();
-                if (cacheTime === undefined || currentTime - cacheTime >= this.maximumCacheDurationMs) {
+                if (cacheTime === undefined || currentTime - cacheTime >= defaultCacheExpiryTimeoutMs) {
                     this.logger.sendTelemetryEvent(
                         {
                             eventName: "odspVersionsCacheExpired",
                             duration: currentTime - cacheTime,
-                            maxCacheAgeMs: this.maximumCacheDurationMs,
+                            maxCacheAgeMs: defaultCacheExpiryTimeoutMs,
                         });
                     await this.removeEntries();
                     return undefined;
@@ -129,7 +130,7 @@ export class EpochTracker implements IPersistedFileCache {
     public async put(entry: IEntry, value: any) {
         assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
         // For snapshots, the value should have the cacheEntryTime. This will be used to expire snapshots older
-        // than the maximumCacheDurationMs policy.
+        // than the defaultCacheExpiryTimeoutMs.
         if (entry.type === snapshotKey) {
             value.cacheEntryTime = value.cacheEntryTime ?? Date.now();
         }
@@ -509,15 +510,8 @@ export function createOdspCacheAndTracker(
     nonpersistentCache: INonPersistentCache,
     fileEntry: IFileEntry,
     logger: ITelemetryLogger,
-    clientIsSummarizer?: boolean,
-    maximumCacheDurationMs: number = defaultCacheExpiryTimeoutMs,
-): ICacheAndTracker {
-    const epochTracker = new EpochTrackerWithRedemption(
-        persistedCacheArg,
-        fileEntry,
-        logger,
-        clientIsSummarizer,
-        maximumCacheDurationMs);
+    clientIsSummarizer?: boolean): ICacheAndTracker {
+    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger, clientIsSummarizer);
     return {
         cache: {
             ...nonpersistentCache,

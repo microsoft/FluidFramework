@@ -20,7 +20,6 @@ import {
     IDocumentStorageService,
     IDocumentServicePolicies,
     DriverErrorType,
-    IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
 import { canRetryOnError, DeltaStreamConnectionForbiddenError, NonRetryableError } from "@fluidframework/driver-utils";
 import {
@@ -68,7 +67,7 @@ export class OdspDocumentService implements IDocumentService {
      * @param logger - a logger that can capture performance and diagnostic information
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
-     * @param policies - Policies from various sources which customizes service behavior.
+     * @param hostPolicy - This host constructed policy which customizes service behavior.
      * @param epochTracker - This helper class which adds epoch to backend calls made by returned service instance.
      * @param socketReferenceKeyPrefix - (optional) prefix to isolate socket reuse cache
      */
@@ -79,7 +78,7 @@ export class OdspDocumentService implements IDocumentService {
         logger: ITelemetryLogger,
         socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         cache: IOdspCache,
-        policies: { hostPolicy: HostStoragePolicy; storagePolicy: IDocumentStorageServicePolicies; },
+        hostPolicy: HostStoragePolicy,
         epochTracker: EpochTracker,
         socketReferenceKeyPrefix?: string,
         clientIsSummarizer?: boolean,
@@ -91,8 +90,7 @@ export class OdspDocumentService implements IDocumentService {
             logger,
             socketIoClientFactory,
             cache,
-            policies.hostPolicy,
-            policies.storagePolicy,
+            hostPolicy,
             epochTracker,
             socketReferenceKeyPrefix,
             clientIsSummarizer,
@@ -124,7 +122,6 @@ export class OdspDocumentService implements IDocumentService {
      * @param socketIoClientFactory - A factory that returns a promise to the socket io library required by the driver
      * @param cache - This caches response for joinSession.
      * @param hostPolicy - host constructed policy which customizes service behavior.
-     * @param storagePolicy - policy which customizes Document Storage Service behavior.
      * @param epochTracker - This helper class which adds epoch to backend calls made by this service instance.
      * @param socketReferenceKeyPrefix - (optional) prefix to isolate socket reuse cache
      */
@@ -136,7 +133,6 @@ export class OdspDocumentService implements IDocumentService {
         private readonly socketIoClientFactory: () => Promise<typeof SocketIOClientStatic>,
         private readonly cache: IOdspCache,
         hostPolicy: HostStoragePolicy,
-        private readonly storagePolicy: IDocumentStorageServicePolicies,
         private readonly epochTracker: EpochTracker,
         private readonly socketReferenceKeyPrefix?: string,
         private readonly clientIsSummarizer?: boolean,
@@ -182,7 +178,7 @@ export class OdspDocumentService implements IDocumentService {
                 this.mc.logger,
                 true,
                 this.cache,
-                { hostPolicy: this.hostPolicy, storagePolicy: this.storagePolicy },
+                this.hostPolicy,
                 this.epochTracker,
                 // flushCallback
                 async () => {

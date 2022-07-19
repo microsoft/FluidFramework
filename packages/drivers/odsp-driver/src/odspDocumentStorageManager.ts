@@ -16,7 +16,6 @@ import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
     DriverErrorType,
-    IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
@@ -84,22 +83,19 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     // limits the amount of parallel "attachment" blob uploads
     private readonly createBlobRateLimiter = new RateLimiter(1);
 
-    private readonly hostPolicy: HostStoragePolicyInternal;
-
     constructor(
         private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
         private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
-        allPolicies: { hostPolicy: HostStoragePolicyInternal; storagePolicy: IDocumentStorageServicePolicies; },
+        private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
         private readonly relayServiceTenantAndSessionId: () => string,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
-        super(allPolicies.storagePolicy);
-        this.hostPolicy = allPolicies.hostPolicy;
+        super();
 
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
