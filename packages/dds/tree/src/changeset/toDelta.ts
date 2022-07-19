@@ -99,6 +99,7 @@ function toPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.PositionedMa
                 case "MoveOut":
                 case "Revive":
                 case "Return":
+                case "Gap":
                     fail("Not implemented");
                 case "Tomb": {
                     // These tombs are only used to precisely describe the location of other attaches.
@@ -244,7 +245,8 @@ function applyOrCollectModifications(
                         case "MoveOut":
                         case "Revive":
                         case "Return":
-                            fail("Not implemented");
+                        case "Gap":
+                                fail("Not implemented");
                         default: unreachableCase(type);
                     }
                 }
