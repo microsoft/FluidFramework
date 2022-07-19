@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { brandOpaque } from "../util";
 import {
     FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "./Schema";
@@ -35,7 +36,7 @@ export const itemsKey = "items" as LocalFieldKey;
  * TODO: if we do want to standardize on a single value for this,
  * it likely should be namespaced or a UUID to avoid risk of collisions.
  */
-export const rootFieldKey = "rootFieldKey" as GlobalFieldKey;
+export const rootFieldKey = brandOpaque<GlobalFieldKey>("rootFieldKey");
 
 /**
  * Default field which only permits emptiness.

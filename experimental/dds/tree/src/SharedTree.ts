@@ -454,7 +454,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return this.cachingLogViewer;
 	}
 
-	protected readonly logger: ITelemetryLogger;
+	/**
+	 * logger for SharedTree events.
+	 */
+	public readonly logger: ITelemetryLogger;
 	private readonly sequencedEditAppliedLogger: ITelemetryLogger;
 
 	private readonly encoder_0_0_2: SharedTreeEncoder_0_0_2;
@@ -800,7 +803,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @internal
 	 */
 	public saveSerializedSummary(options?: { serializer?: IFluidSerializer }): string {
-		const { serializer } = options || {};
+		const { serializer } = options ?? {};
 		return serialize(this.saveSummary(), serializer ?? this.serializer, this.handle);
 	}
 

@@ -9,13 +9,14 @@ import { bumpVersionCommand } from "./bumpVersion";
 import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
-import { Context, isVersionBumpType, VersionBumpType, VersionChangeType } from "./context";
+import { Context } from "./context";
 import { createReleaseBump } from "./createReleaseBump";
 import { GitRepo } from "./gitRepo";
 import { releaseVersion } from "./releaseVersion";
 import { showVersions } from "./showVersions";
 import { fatal } from "./utils";
 import { writeReleaseVersions } from "./writeReleaseVersions";
+import { isVersionBumpType, VersionBumpType, VersionChangeType } from "./versionSchemes";
 
 function printUsage() {
     console.log(
@@ -294,7 +295,13 @@ async function main() {
                 break;
             case "dep":
                 console.log("Bumping dependencies");
-                await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramLocal, paramCommit);
+                await bumpDependencies(
+                    context,
+                    paramBumpDepPackages,
+                    /*updateLock*/ paramLocal,
+                    /*commit*/ paramCommit,
+                    "Bump dependencies version"
+                );
                 break;
             case "release":
                 await releaseVersion(context, paramReleaseName!, paramLocal, paramVirtualPatch, paramReleaseVersion);

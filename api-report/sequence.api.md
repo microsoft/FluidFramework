@@ -60,11 +60,9 @@ export type DeserializeCallback = (properties: PropertySet) => void;
 
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "changeInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
-    // (undocumented)
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage) => void): any;
-    // (undocumented)
-    (event: "propertyChanged", listener: (interval: TInterval, propertyArgs: PropertySet) => void): any;
+    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
+    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
+    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
 }
 
 // @public (undocumented)
@@ -72,7 +70,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
+    create(label: string, start: number, end: number, client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean): TInterval;
 }
 
 // @public (undocumented)
@@ -571,7 +569,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
         posStart: number;
         posAfterEnd: number;
     };
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
@@ -767,7 +765,5 @@ export class SubSequence<T> extends BaseSegment {
     // (undocumented)
     static readonly typeString: string;
 }
-
-// (No @packageDocumentation comment for this package)
 
 ```

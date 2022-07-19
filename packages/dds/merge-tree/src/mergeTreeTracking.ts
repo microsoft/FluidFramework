@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "./mergeTree";
+import { ISegment } from "./mergeTreeNodes";
 import { SortedSegmentSet } from "./sortedSegmentSet";
 
 export class TrackingGroup {

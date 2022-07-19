@@ -17,7 +17,7 @@ import {
 } from "./interfaces";
 
 /**
- * A local value to be stored in a container type DDS.
+ * A local value to be stored in a container type Distributed Data Store (DDS).
  */
 export interface ILocalValue {
     /**
@@ -90,8 +90,8 @@ export class PlainLocalValue implements ILocalValue {
 }
 
 /**
- * A LocalValueMaker enables a container type DDS to produce and store local values with minimal awareness of how
- * those objects are stored, serialized, and deserialized.
+ * Enables a container type {@link https://fluidframework.com/docs/build/dds/ | DDS} to produce and store local
+ * values with minimal awareness of how those objects are stored, serialized, and deserialized.
  */
 export class LocalValueMaker {
     /**

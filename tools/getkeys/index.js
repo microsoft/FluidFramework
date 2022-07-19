@@ -43,10 +43,10 @@ async function saveEnv(env) {
     // However, the environment will be inherited when their preferred shell is
     // launched from the login shell.
     const shell = process.env.SHELL;
-    const shellName = shell && path.basename(shell);
+    const shellName = shell && path.basename(shell, path.extname(shell));
     switch (shellName) {
         // Gitbash on windows will appear as bash.exe
-        case "bash" | "bash.exe":
+        case "bash":
             return exportToShellRc(
                 // '.bash_profile' is used for the "login shell" ('bash -l').
                 process.env.TERM_PROGRAM === "Apple_Terminal"
@@ -117,7 +117,7 @@ async function execAsync(command, options) {
 class AzCliKeyVaultClient {
     static async get() {
 
-        await execAsync("az account set --subscription Fluid");
+        await execAsync("az ad signed-in-user show");
         return new AzCliKeyVaultClient();
 
         // Disabling fallback to REST client while we decide how to streamline the getkeys tool
@@ -201,9 +201,6 @@ async function getClient() {
 })().catch(e => {
     if (e.message.includes("'az' is not recognized as an internal or external command")) {
         console.error(`ERROR: Azure CLI is not installed. Install it and run 'az login' before running this tool.`);
-        exit(0);
-    } else if(e.message.includes("The subscription of 'fluid' doesn't exist in cloud 'AzureCloud'.")) {
-        console.error(`ERROR: Could not find the Azure Subscription for Fluid. Did you run 'az login' already?`);
         exit(0);
     }
 

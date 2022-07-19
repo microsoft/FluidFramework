@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, DetachedRange } from "../tree";
-import { Value, ITreeCursor } from "./cursor";
+import { StoredSchemaRepository } from "../schema";
+import { AnchorSet, FieldKey, DetachedRange, Value } from "../tree";
+import { ITreeCursor } from "./cursor";
 import { IForestSubscription, NodeId } from "./forest";
 
 /**
@@ -17,12 +18,25 @@ import { IForestSubscription, NodeId } from "./forest";
  * TODO: improve these APIs, addressing the above.
  */
 export interface IEditableForest extends IForestSubscription {
+
+    // Overrides field from IForestSubscription adding editing support.
+    readonly schema: StoredSchemaRepository;
+
     /**
-     * Adds the supplied nodes to the forest.
+     * Set of anchors this forest is tracking.
+     *
+     * To keep these anchors usable, this AnchorSet must be updated / rebased for any changes made to the forest.
+     * It is the responsibility of the called of the forest editing methods to do this, not the forest itself.
+     * The caller performs these updates because it has more semantic knowledge about the edits, which can be needed to
+     * update the anchors in a semantically optimal way.
+     */
+    readonly anchors: AnchorSet;
+
+    /**
+     * Adds the supplied subtrees to the forest.
      * @param nodes - the sequence of nodes to add to the forest.
-     * If any of them have children which exist in the forest already, those children will be parented.
-     * Any trait arrays present in a node must be non-empty.
-     * The nodes may be provided in any order.
+     *
+     * TODO: there should be a way to include existing detached ranges in the inserted trees.
      */
     add(nodes: Iterable<ITreeCursor>): DetachedRange;
 
@@ -62,6 +76,10 @@ export interface IEditableForest extends IForestSubscription {
 export interface TreeLocation {
     readonly range: FieldLocation | DetachedRange;
     readonly index: number;
+}
+
+export function isFieldLocation(range: FieldLocation | DetachedRange): range is FieldLocation {
+    return typeof range === "object";
 }
 
 /**

@@ -177,7 +177,8 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 }
 
 export interface ISignalMessage {
-
+    // TODO: Update this to use undefined instead of null.
+    // eslint-disable-next-line @rushstack/no-new-null
     clientId: string | null;
 
     content: any;

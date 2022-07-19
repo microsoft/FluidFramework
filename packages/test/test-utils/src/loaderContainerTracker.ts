@@ -195,7 +195,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 debugWait(`Waiting container to be saved ${dirtyContainers.map((c) => this.containers.get(c)!.index)}`);
                 waitingSequenceNumberSynchronized = false;
-                await Promise.all(dirtyContainers.map(async (c) => new Promise((resolve) => c.once("saved", resolve))));
+                await Promise.all(dirtyContainers.map(async (c) => Promise.race(
+                    [new Promise((resolve) => c.once("saved", resolve)),
+                    new Promise((resolve) => c.once("closed", resolve))],
+                )));
             }
 
             // yield a turn to allow side effect of the ops we just processed execute before we check again

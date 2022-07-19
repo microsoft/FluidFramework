@@ -76,6 +76,13 @@ export interface IAudience extends EventEmitter {
 }
 
 // @public
+export interface IAudienceOwner extends IAudience {
+    addMember(clientId: string, details: IClient): any;
+    clear(): any;
+    removeMember(clientId: string): boolean;
+}
+
+// @public
 export interface ICodeAllowList {
     // (undocumented)
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
@@ -269,8 +276,10 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     peek(): T | undefined;
     resume(): void;
     toArray(): T[];
-    // (undocumented)
-    waitTillProcessingDone(): Promise<void>;
+    waitTillProcessingDone(): Promise<{
+        count: number;
+        duration: number;
+    }>;
 }
 
 // @public
@@ -537,7 +546,5 @@ export type ReadOnlyInfo = {
     readonly permissions: boolean | undefined;
     readonly storageOnly: boolean;
 };
-
-// (No @packageDocumentation comment for this package)
 
 ```

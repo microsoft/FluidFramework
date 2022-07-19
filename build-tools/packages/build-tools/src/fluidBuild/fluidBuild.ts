@@ -6,7 +6,7 @@
 import { commonOptions } from "../common/commonOptions";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
-import { logStatus, logError, logVerbose } from "../common/logging";
+import { logStatus, logError } from "../common/logging";
 import { Timer } from "../common/timer";
 import { existsSync } from "../common/utils";
 import { BuildResult } from "./buildGraph";

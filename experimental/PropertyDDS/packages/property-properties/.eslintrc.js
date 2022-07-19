@@ -19,6 +19,7 @@ module.exports = {
         "@typescript-eslint/no-extraneous-class": "off",
         "@typescript-eslint/no-extraneous-dependencies": "off",
         "@typescript-eslint/no-implied-eval": "off",
+        "@typescript-eslint/no-invalid-this": "off",
         "@typescript-eslint/no-require-imports": "off",
         "@typescript-eslint/no-shadow": "off",
         "@typescript-eslint/no-this-alias": "off",
