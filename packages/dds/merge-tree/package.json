@@ -193,7 +193,6 @@
       "RemovedClassDeclaration_MergeTree": {"forwardCompat": false, "backCompat": false},
       "RemovedClassDeclaration_MergeTreeTextHelper": {"forwardCompat": false, "backCompat": false},
       "RemovedInterfaceDeclaration_ProxString": {"forwardCompat": false, "backCompat": false},
-      "RemovedClassDeclaration_Stack": {"forwardCompat": false, "backCompat": false},
       "RemovedClassDeclaration_TST": {"forwardCompat": false, "backCompat": false},
       "RemovedInterfaceDeclaration_TSTNode": {"forwardCompat": false, "backCompat": false},
       "RemovedInterfaceDeclaration_TSTResult": {"forwardCompat": false, "backCompat": false},

@@ -17,7 +17,7 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    // @internal @deprecated (undocumented)
+    // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
@@ -151,7 +151,7 @@ export class Client {
         segment: ISegment | undefined;
         offset: number | undefined;
     };
-    // @internal @deprecated (undocumented)
+    // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
@@ -327,15 +327,13 @@ export interface IHierBlock extends IMergeBlock {
     hierToString(indentCount: number): string;
     // (undocumented)
     leftmostTiles: MapLike<ReferencePosition>;
-    // @internal @deprecated (undocumented)
+    // (undocumented)
     rangeStacks: RangeStackMap;
     // (undocumented)
     rightmostTiles: MapLike<ReferencePosition>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "IIntegerRange" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
+// @public
 export interface IIntegerRange {
     // (undocumented)
     end: number;
@@ -945,9 +943,7 @@ export interface QProperty<TKey, TData> {
     key?: TKey;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "RangeStackMap" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
+// @public (undocumented)
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 // Warning: (ae-internal-missing-underscore) The name "RBColor" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1187,9 +1183,7 @@ export class SortedSegmentSet<T extends ISegment | {
     get size(): number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "Stack" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
+// @public (undocumented)
 export class Stack<T> {
     // (undocumented)
     empty(): boolean;

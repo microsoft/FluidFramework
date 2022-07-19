@@ -346,15 +346,6 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
         this.rangeStacks = createMap<Stack<ReferencePosition>>();
     }
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
-    public addNodeReferences(mergeTree: MergeTree, node: IMergeNode) {
-        addNodeReferences(mergeTree, node, this.rightmostTiles, this.leftmostTiles,
-            this.rangeStacks);
-    }
-
     public hierBlock() {
         return this;
     }
@@ -375,28 +366,16 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
     }
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
  export interface ClientSeq {
     refSeq: number;
     clientId: string;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
  export const clientSeqComparer: Comparer<ClientSeq> = {
     min: { refSeq: -1, clientId: "" },
     compare: (a, b) => a.refSeq - b.refSeq,
 };
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export interface LRUSegment {
     segment?: ISegment;
     maxSeq: number;
@@ -420,10 +399,6 @@ export class MergeTree {
     private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
     public readonly collabWindow = new CollaborationWindow();
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
     public pendingSegments: List<SegmentGroup> | undefined;
     private segmentsToScour: Heap<LRUSegment> | undefined;
     // TODO: add remove on segment remove
@@ -1021,10 +996,7 @@ export class MergeTree {
         }
         return DetachedReferencePosition;
     }
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
+
     public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
         const searchInfo: IMarkerSearchRangeInfo = {
             mergeTree: this,
@@ -2052,10 +2024,6 @@ export class MergeTree {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
     public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
         while (!stateStack.empty()) {
             // We already check the stack is not empty

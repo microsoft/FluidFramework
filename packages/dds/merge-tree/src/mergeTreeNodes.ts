@@ -72,10 +72,6 @@ export interface IHierBlock extends IMergeBlock {
     hierToString(indentCount: number): string;
     rightmostTiles: MapLike<ReferencePosition>;
     leftmostTiles: MapLike<ReferencePosition>;
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
     rangeStacks: RangeStackMap;
 }
 
@@ -362,10 +358,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     public abstract toJSONObject(): any;
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
     public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);

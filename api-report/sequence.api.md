@@ -56,7 +56,7 @@ export type CompressedSerializedInterval = [number, number, number, IntervalType
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
-// @internal @deprecated (undocumented)
+// @public (undocumented)
 export interface IInterval {
     // (undocumented)
     clone(): IInterval;
@@ -155,8 +155,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // @internal (undocumented)
     ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
-    // Warning: (ae-incompatible-release-tags) The symbol "addConflictResolver" is marked as @public, but its signature references "IntervalConflictResolver" which is marked as @internal
-    //
     // (undocumented)
     addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
     // (undocumented)
@@ -207,7 +205,7 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     };
 }
 
-// @internal @deprecated (undocumented)
+// @public (undocumented)
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 // @public (undocumented)
@@ -231,8 +229,6 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     segment: ISegment;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "ISerializableInterval" is marked as @public, but its signature references "IInterval" which is marked as @internal
-//
 // @public (undocumented)
 export interface ISerializableInterval extends IInterval {
     // (undocumented)
@@ -592,7 +588,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
         posStart: number;
         posAfterEnd: number;
     };
-    // @internal @deprecated (undocumented)
+    // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
