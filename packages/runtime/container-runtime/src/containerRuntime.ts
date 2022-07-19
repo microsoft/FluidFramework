@@ -1270,6 +1270,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
             getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
             readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
+            snapshotCacheExpiryMs: _storage.policies?.maximumCacheDurationMs,
         });
 
         const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
