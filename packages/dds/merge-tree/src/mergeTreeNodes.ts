@@ -16,7 +16,6 @@ import {
 import {
      LocalReferenceCollection,
 } from "./localReference";
-import { MergeTree } from "./mergeTree";
 import {
     IMergeTreeDeltaOpArgs,
 } from "./mergeTreeDeltaCallback";
@@ -71,17 +70,8 @@ export interface IMergeBlock extends IMergeNodeCommon {
 
 export interface IHierBlock extends IMergeBlock {
     hierToString(indentCount: number): string;
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
-    addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
     rightmostTiles: MapLike<ReferencePosition>;
     leftmostTiles: MapLike<ReferencePosition>;
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
     rangeStacks: RangeStackMap;
 }
 
@@ -133,10 +123,8 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      * The only current false case is overlapping remove, where a segment is removed
      * by a previously sequenced operation before the current operation is acked.
      *
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
      */
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
 }
 
 export interface IMarkerModifiedAction {
@@ -370,11 +358,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
     public abstract toJSONObject(): any;
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
-    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean {
+    public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
         const currentSegmentGroup = this.segmentGroups.dequeue();
         assert(currentSegmentGroup === segmentGroup, 0x043 /* "On ack, unexpected segmentGroup!" */);
         switch (opArgs.op.type) {

@@ -29,10 +29,6 @@ function isTextAndMarkerAccumulator(accum: ITextAccumulator): accum is ITextAndM
 
 type ITextAccumulatorType = ITextAccumulator | ITextAndMarkerAccumulator;
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export class MergeTreeTextHelper implements IMergeTreeTextHelper {
     constructor(private readonly mergeTree: MergeTree) { }
 

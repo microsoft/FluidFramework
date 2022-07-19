@@ -52,6 +52,7 @@ to be `string | undefined`.
 - [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
 - [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
 - [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
+- [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -100,6 +101,9 @@ See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluid
 
 ### Remove `aliasing` return value from `AliasResult`
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
+
+### MergeTree class no longer exported
+    The MergeTree class was deprecated and is no longer be exported. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
 # 1.2.0
 
