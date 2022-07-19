@@ -177,44 +177,38 @@ export class PartialSequenceLengths {
 
             const childPartialsLen = childPartials.length;
 
-            const sortedChildPartialLengths: PartialSequenceLength[] = [];
+            const childPartialLengths: PartialSequenceLength[][] = [];
             for (let i = 0; i < childPartialsLen; i++) {
                 const { segmentCount, minLength, partialLengths } = childPartials[i];
                 combinedPartialLengths.segmentCount += segmentCount;
                 combinedPartialLengths.minLength += minLength;
-                sortedChildPartialLengths.push(...partialLengths);
+                childPartialLengths.push(partialLengths);
             }
-            sortedChildPartialLengths.sort((a, b) => a.seq - b.seq);
 
             // All child PartialSequenceLengths are now sorted temporally (i.e. by seq). Since
             // a given MergeTree operation can affect multiple segments, there may be multiple entries
             // for a given seq. We run through them in order, coalescing all length information for a given
             // seq together into `combinedPartialLengths`.
-            let prevPartial: PartialSequenceLength | undefined;
-            for (const partialLength of sortedChildPartialLengths) {
-                if (!prevPartial || prevPartial.seq !== partialLength.seq) {
+            let currentPartial: PartialSequenceLength | undefined;
+            for (const partialLength of mergeSortedListsBySeq(childPartialLengths)) {
+                if (!currentPartial || currentPartial.seq !== partialLength.seq) {
                     // Start a new seq entry.
-                    if (prevPartial) {
-                        // Previous sequence number is finished: finalize it in the combined partials.
-                        combinedPartialLengths.addClientSeqNumberFromPartial(prevPartial);
-                    }
-                    prevPartial = {
+                    currentPartial = {
                         ...partialLength,
-                        len: (prevPartial?.len ?? 0) + partialLength.seglen,
+                        len: (currentPartial?.len ?? 0) + partialLength.seglen,
                         overlapRemoveClients: cloneOverlapRemoveClients(partialLength.overlapRemoveClients),
                     };
-                    combinedPartialLengths.partialLengths.push(prevPartial);
+                    combinedPartialLengths.partialLengths.push(currentPartial);
                 } else {
                     // Update existing entry
-                    prevPartial.seglen += partialLength.seglen;
-                    prevPartial.len += partialLength.seglen;
-                    combineOverlapClients(prevPartial, partialLength);
+                    currentPartial.seglen += partialLength.seglen;
+                    currentPartial.len += partialLength.seglen;
+                    combineOverlapClients(currentPartial, partialLength);
                 }
             }
 
-            // Add client entry for last partial, if any
-            if (prevPartial) {
-                combinedPartialLengths.addClientSeqNumberFromPartial(prevPartial);
+            for (const partial of combinedPartialLengths.partialLengths) {
+                combinedPartialLengths.addClientSeqNumberFromPartial(partial);
             }
         }
         // TODO: incremental zamboni during build
@@ -757,4 +751,55 @@ function combineOverlapClients(a: PartialSequenceLength, b: PartialSequenceLengt
     } else {
         a.overlapRemoveClients = cloneOverlapRemoveClients(b.overlapRemoveClients);
     }
+}
+
+/**
+ * Given a collection of PartialSequenceLength lists--each sorted by sequence number--returns an iterable that yields
+ * each PartialSequenceLength in sequence order.
+ *
+ * This is equivalent to flattening the input list and sorting it by sequence number. If the number of lists to merge is
+ * a constant, however, this approach is advantageous asymptotically.
+ */
+function mergeSortedListsBySeq(lists: PartialSequenceLength[][]): Iterable<PartialSequenceLength> {
+    class PartialSequenceLengthIterator {
+        /**
+         * nextSmallestIndex[i] is the next element of sublists[i] to check.
+         * In other words, the iterator has already yielded elements of sublists[i] *up through*
+         * sublists[i][nextSmallestIndex[i] - 1].
+         */
+        private readonly nextSmallestIndex: number[];
+
+        constructor(private readonly sublists: PartialSequenceLength[][]) {
+            this.nextSmallestIndex = new Array(sublists.length);
+            for (let i = 0; i < sublists.length; i++) {
+                this.nextSmallestIndex[i] = 0;
+            }
+        }
+
+        public next(): { value: PartialSequenceLength; done: false; } | { value: undefined; done: true; } {
+            const len = this.sublists.length;
+            let currentMin: PartialSequenceLength | undefined;
+            let currentMinIndex: number | undefined;
+            for (let i = 0; i < len; i++) {
+                const candidateIndex = this.nextSmallestIndex[i];
+                if (candidateIndex < this.sublists[i].length) {
+                    const candidate = this.sublists[i][candidateIndex];
+                    if (!currentMin || candidate.seq < currentMin.seq) {
+                        currentMin = candidate;
+                        currentMinIndex = i;
+                    }
+                }
+            }
+
+            if (currentMin) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.nextSmallestIndex[currentMinIndex!]++;
+                return { value: currentMin, done: false };
+            } else {
+                return { value: undefined, done: true };
+            }
+        }
+    }
+
+    return { [Symbol.iterator]: () => new PartialSequenceLengthIterator(lists) };
 }
