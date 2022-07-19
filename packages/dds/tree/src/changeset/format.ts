@@ -45,7 +45,10 @@ import { NodeId } from ".";
 	 * See PositionedMarks.
 	 */
 	export interface MarkWithOffset<TMark = Mark> {
-		offset: Offset;
+		/**
+		 * Interpreted as zero when omitted.
+		 */
+		offset?: Offset;
 		mark: TMark;
 	}
 
@@ -56,6 +59,7 @@ import { NodeId } from ".";
 		| Reattach
 		| ModifyReattach
 		| ModifyDetach
+		| GapEffectSegment
 		| AttachGroup;
 
 	export type AttachGroup = Attach[];
@@ -168,7 +172,7 @@ import { NodeId } from ".";
 	}
 
 	export interface MoveIn extends HasOpId, HasPlaceFields {
-		type: "Move";
+		type: "MoveIn";
 		/**
 		 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
 		 */
@@ -176,7 +180,7 @@ import { NodeId } from ".";
 	}
 
 	export interface ModifyMoveIn extends HasOpId, HasPlaceFields {
-		type: "Move";
+		type: "MoveIn";
 		value?: ValueMark;
 		fields?: FieldMarks;
 	}
@@ -188,11 +192,13 @@ import { NodeId } from ".";
 	export type GapEffectType = GapEffect["type"];
 
 	export interface GapEffectSegment {
+		tombs?: SeqNumber;
+		type: "Gap";
 		count: GapCount;
 		/**
 		 * Stack of effects applying to the gaps.
 		 */
-		stack: (GapEffect)[];
+		stack: GapEffect[];
 	}
 
 	export interface Scorch extends HasOpId, GapEffectPolicy {
@@ -215,12 +221,13 @@ import { NodeId } from ".";
 
 	export interface Detach extends HasOpId {
 		tomb?: SeqNumber;
-		type: "Delete" | "Move";
+		gaps?: GapEffect[];
+		type: "Delete" | "MoveOut";
 		count: NodeCount;
 	}
 
 	export interface ModifyDetach extends HasOpId {
-		type: "Delete" | "Move";
+		type: "Delete" | "MoveOut";
 		tomb?: SeqNumber;
 		value?: ValueMark;
 		fields?: FieldMarks;

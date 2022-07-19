@@ -53,7 +53,6 @@ describe("toDelta", () => {
     it("set root value", () => {
         const changeset: T.Changeset = {
             marks: [{
-                offset: 0,
                 mark: {
                     type: "Modify",
                     value: { type: "Set", value: 1 },
@@ -72,7 +71,6 @@ describe("toDelta", () => {
     it("set child value", () => {
         const changeset: T.Changeset = {
             marks: [{
-                offset: 0,
                 mark: {
                     type: "Modify",
                     fields: {
@@ -105,7 +103,6 @@ describe("toDelta", () => {
     it("insert root", () => {
         const changeset: T.Changeset = {
             marks: [{
-                offset: 0,
                 mark: [{
                     type: "Insert",
                     id: opId,
@@ -125,7 +122,6 @@ describe("toDelta", () => {
     it("insert child", () => {
         const changeset: T.Changeset = {
             marks: [{
-                offset: 0,
                 mark: {
                     type: "Modify",
                     fields: {
@@ -159,7 +155,6 @@ describe("toDelta", () => {
     it("delete root", () => {
         const changeset: T.Changeset = {
             marks: [{
-                offset: 0,
                 mark: {
                     type: "Delete",
                     id: opId,
@@ -179,7 +174,6 @@ describe("toDelta", () => {
     it("delete child", () => {
         const changeset: T.Changeset = {
             marks: [{
-                offset: 0,
                 mark: {
                     type: "Modify",
                     fields: {
@@ -213,13 +207,11 @@ describe("toDelta", () => {
     it("the lot on a field", () => {
         const changeset: T.Changeset = {
             marks: [{
-                offset: 0,
                 mark: {
                     type: "Modify",
                     fields: {
                         foo: [
                             {
-                                offset: 0,
                                 mark: {
                                     type: "Delete",
                                     id: opId,
@@ -280,7 +272,6 @@ describe("toDelta", () => {
         it("values", () => {
             const changeset: T.Changeset = {
                 marks: [{
-                    offset: 0,
                     mark: [{
                         type: "MInsert",
                         id: opId,
@@ -288,7 +279,6 @@ describe("toDelta", () => {
                         value: { type: "Set", value: 4242 },
                         fields: {
                             foo: [{
-                                offset: 0,
                                 mark: {
                                     type: "Modify",
                                     value: { type: "Set", value: 4343 },
@@ -317,7 +307,6 @@ describe("toDelta", () => {
         it("inserts", () => {
             const changeset: T.Changeset = {
                 marks: [{
-                    offset: 0,
                     mark: [{
                         type: "MInsert",
                         id: opId,
@@ -364,7 +353,6 @@ describe("toDelta", () => {
         it("modified inserts", () => {
             const changeset: T.Changeset = {
                 marks: [{
-                    offset: 0,
                     mark: [{
                         type: "MInsert",
                         id: opId,
@@ -404,7 +392,6 @@ describe("toDelta", () => {
         it("delete", () => {
             const changeset: T.Changeset = {
                 marks: [{
-                    offset: 0,
                     mark: [{
                         type: "MInsert",
                         id: opId,
@@ -412,7 +399,6 @@ describe("toDelta", () => {
                         fields: {
                             foo: [
                                 {
-                                    offset: 0,
                                     mark: {
                                         type: "Delete",
                                         id: opId,

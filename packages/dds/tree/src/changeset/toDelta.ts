@@ -14,7 +14,9 @@ export function toDelta(change: T.Changeset): Delta.Root {
 
 function toPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.PositionedMarks<TMarks> {
     const out: Delta.PositionedMarks<Delta.Mark> = [];
-    for (const { offset, mark } of marks) {
+    for (const offsetMark of marks) {
+        const offset = offsetMark.offset || 0;
+        const mark = offsetMark.mark;
         if (Array.isArray(mark)) {
             for (const attach of mark) {
                 // Inline into `switch(attach.type)` once we upgrade to TS 4.7
@@ -45,7 +47,7 @@ function toPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.PositionedMa
                         }
                         break;
                     }
-                    case "Move": break;
+                    case "MoveIn": break;
                     case "Bounce":
                     case "Intake":
                         fail("Not implemented");
@@ -94,7 +96,7 @@ function toPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.PositionedMa
                     }
                     break;
                 }
-                case "Move":
+                case "MoveOut":
                 case "Revive":
                 case "Return":
                     fail("Not implemented");
@@ -164,8 +166,8 @@ function applyOrCollectModifications(
             let index = 0;
             let offset = 0;
             for (const markWithOffset of modifyFields[key]) {
-                index += markWithOffset.offset;
-                offset += markWithOffset.offset;
+                index += markWithOffset.offset || 0;
+                offset += markWithOffset.offset || 0;
                 const mark = markWithOffset.mark;
                 if (Array.isArray(mark)) {
                     for (const attach of mark) {
@@ -195,7 +197,7 @@ function applyOrCollectModifications(
                                 index += 1;
                                 break;
                             }
-                            case "Move":
+                            case "MoveIn":
                             case "Bounce":
                             case "Intake":
                                 fail("Not implemented");
@@ -239,7 +241,7 @@ function applyOrCollectModifications(
                         case "Tomb": {
                             fail(TOMB_IN_INSERT);
                         }
-                        case "Move":
+                        case "MoveOut":
                         case "Revive":
                         case "Return":
                             fail("Not implemented");
