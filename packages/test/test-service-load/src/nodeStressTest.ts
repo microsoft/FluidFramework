@@ -59,7 +59,7 @@ async function main() {
     const profileArg: string = commander.profile;
     const testId: string | undefined = commander.testId;
     const debug: true | undefined = commander.debug;
-    // const log: string | undefined = commander.log;
+    const log: string | undefined = commander.log;
     const verbose: true | undefined = commander.verbose;
     const seed: number | undefined = commander.seed;
     const browserAuth: true | undefined = commander.browserAuth;
@@ -68,7 +68,9 @@ async function main() {
 
     const profile = getProfile(profileArg);
 
-        process.env.DEBUG = "reading*";
+    if (log !== undefined) {
+        process.env.DEBUG = log;
+    }
 
     const testUsers = await getTestUsers(credFile);
 

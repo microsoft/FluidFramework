@@ -1,9 +1,9 @@
 {
     "profiles": {
         "ci": {
-            "opRatePerMin": 1000,
+            "opRatePerMin": 10,
             "progressIntervalMs": 15000,
-            "numClients": 10,
+            "numClients": 120,
             "totalSendCount": 10000,
             "totalBlobCount": 480,
             "blobSize": 256,
@@ -27,20 +27,20 @@
         "full": {
             "opRatePerMin": 1920,
             "progressIntervalMs": 1500000,
-            "numClients": 10,
+            "numClients": 60,
             "totalSendCount": 200000,
             "readWriteCycleMs": 30000,
             "faultInjectionMinMs": 0,
             "faultInjectionMaxMs": 150000
         },
         "mini": {
-            "opRatePerMin": 120,
-            "progressIntervalMs": 15000,
-            "numClients": 4,
-            "totalSendCount": 60,
+            "opRatePerMin": 60,
+            "progressIntervalMs": 5000,
+            "numClients": 2,
+            "totalSendCount": 30,
             "readWriteCycleMs": 10000,
             "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 150000,
+            "faultInjectionMaxMs": 50000,
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
