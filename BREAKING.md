@@ -37,7 +37,7 @@ to be `string | undefined`.
 `IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
 
 ### MergeTree class is deprecated
-    The MergeTree class is deprecated and will no longer be exported in the next release. This should no affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
+    The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
