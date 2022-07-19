@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/protocol-base",
-  "version": "0.1037.0",
+  "version": "0.1037.1000",
   "description": "Fluid protocol base",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -58,9 +58,9 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/gitresources": "^0.1037.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
+    "@fluidframework/common-utils": "^0.33.1000-74526",
+    "@fluidframework/gitresources": "^0.1037.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {

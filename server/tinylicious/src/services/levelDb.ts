@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
-import level from "level";
+import { Level } from "level";
 import sublevel from "level-sublevel";
 import { Collection, ICollectionProperty } from "./levelDbCollection";
 
@@ -16,7 +16,7 @@ export class LevelDb extends EventEmitter implements IDb {
 
     constructor(private readonly path: string) {
         super();
-        this.db = sublevel(level(this.path, {
+        this.db = sublevel(new Level(this.path, {
             valueEncoding: "json",
         }));
     }

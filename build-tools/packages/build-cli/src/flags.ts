@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { supportedMonoRepoValues, isVersionBumpTypeExtended } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
 /**
@@ -21,8 +22,8 @@ export const rootPathFlag = Flags.build({
 export const releaseGroupFlag = Flags.build({
     char: "g",
     description: "release group",
-    options: ["Azure", "Client", "Server"], // releaseGroupOptions,
-    parse: async (str: string, _: never) => str.charAt(0).toUpperCase() + str.slice(1),
+    options: [...supportedMonoRepoValues()], // releaseGroupOptions,
+    parse: async (str: string, _: never) => str.toLowerCase(),
     // Can't be used with individual packages.
     exclusive: ["p"],
 });
@@ -35,6 +36,17 @@ export const packageSelectorFlag = Flags.build({
     description: "package",
     // Can't be used with release groups.
     exclusive: ["g"],
+    multiple: false,
+    parse: async (input) => {
+        // TODO: This function was inherited from previous build-tools commands. We should re-evaluate whether we want
+        // to support parsing versions out of strings or make it a separate explicit argument.
+
+        // If the package string includes a "=", then the string is assumed to be a package name and a version together.
+        const split = input.split("=");
+        const pkg = split[0];
+        const version = split[1];
+        return { pkg, version };
+    },
 });
 
 /**
@@ -42,8 +54,21 @@ export const packageSelectorFlag = Flags.build({
  */
 export const bumpTypeFlag = Flags.build({
     char: "t",
-    description: "bump type",
+    description: "Version bump type.",
     options: ["major", "minor", "patch", "current"],
-    default: "current",
-    required: true,
+    parse: async (input): Promise<string | undefined> => {
+        if (isVersionBumpTypeExtended(input)) {
+            return input;
+        }
+    },
+});
+
+/**
+ * A re-usable CLI flag to parse version schemes used to adjust versions.
+ */
+export const versionSchemeFlag = Flags.build({
+    char: "S",
+    description: "Version scheme to use.",
+    options: ["semver", "internal", "virtualPatch"],
+    default: "semver",
 });

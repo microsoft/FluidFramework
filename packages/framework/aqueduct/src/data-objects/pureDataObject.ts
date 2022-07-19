@@ -90,7 +90,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
         (this.runtime as any)._dataObject = this;
 
         // Create a FluidObjectHandle with empty string as `path`. This is because reaching this PureDataObject is the
-        // same as reaching its routeContext (FluidDataStoreRuntime) so there is so the relative path to it from the
+        // same as reaching its routeContext (FluidDataStoreRuntime) so the relative path to it from the
         // routeContext is empty.
         this.innerHandle = new FluidObjectHandle(this, "", this.runtime.objectsRoutingContext);
 
@@ -120,11 +120,11 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // #endregion IFluidLoadable
 
     /**
-     * Call this API to ensure PureDataObject is fully initialized
-     * initialization happens on demand, only on as-needed bases.
+     * Call this API to ensure PureDataObject is fully initialized.
+     * Initialization happens on demand, only on as-needed bases.
      * In most cases you should allow factory/object to decide when to finish initialization.
      * But if you are supplying your own implementation of DataStoreRuntime factory and overriding some methods
-     * and need fully initialized object, then you can call this API to ensure object is fully initialized.
+     * and need a fully initialized object, then you can call this API to ensure object is fully initialized.
      */
     public async finishInitialization(existing: boolean): Promise<void> {
         if (this.initializeP !== undefined) {

@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import registerDebug from "debug";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 import { toPosixPath, globFn, unquote, statAsync, readFileAsync } from "../../../common/utils";
 import { logVerbose } from "../../../common/logging";
 import { ScriptDependencies } from "../../../common/npmPackage";
 import * as path from "path";
 import { BuildPackage } from "../../buildGraph";
+import { assert } from "console";
 
 /* eslint-disable @typescript-eslint/no-empty-function */
 
@@ -44,7 +46,9 @@ export class LesscTask extends LeafTask {
     }
 }
 
-export class CopyfilesTask extends LeafTask {
+const traceCopyFileTrigger = registerDebug("fluid-build:task:trigger:copyfiles");
+
+export class CopyfilesTask extends LeafWithDoneFileTask {
     private parsed: boolean = false;
     private readonly upLevel: number = 0;
     private readonly copySrcArg: string = "";
@@ -88,54 +92,64 @@ export class CopyfilesTask extends LeafTask {
         }
         this.addAllDependentPackageTasks(dependentTasks);
     }
-    protected async checkLeafIsUpToDate() {
-        if (!this.parsed) {
-            // If we could parse the argument, just say it is not up to date and run the command
-            return false;
+
+    private _srcFiles: string[] | undefined;
+    private _dstFiles: string[] | undefined;
+    private async getCopySourceFiles() {
+        assert(this.parsed);
+        if (!this._srcFiles) {
+            const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg!);
+            this._srcFiles = await globFn(srcGlob, { nodir: true });
         }
-
-        const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg!);
-        const srcFiles = await globFn(srcGlob, { nodir: true });
-        const directory = toPosixPath(this.node.pkg.directory);
-        const dstPath = directory + "/" + this.copyDstArg;
-        const dstFiles = srcFiles.map(match => {
-            const relPath = path.relative(directory, match);
-            let currRelPath = relPath;
-            for (let i = 0; i < this.upLevel; i++) {
-                const index = currRelPath.indexOf(path.sep);
-                if (index === -1) {
-                    break;
-                }
-                currRelPath = currRelPath.substring(index + 1);
-            }
-
-            return path.join(dstPath, currRelPath);
-        });
-        return this.isFileSame(srcFiles, dstFiles);
+        return this._srcFiles;
     }
 
-    private async isFileSame(srcFiles: string[], dstFiles: string[]) {
+    private async getCopyDestFiles() {
+        assert(this.parsed);
+        if (!this._dstFiles) {
+            const directory = toPosixPath(this.node.pkg.directory);
+            const dstPath = directory + "/" + this.copyDstArg;
+            const srcFiles = await this.getCopySourceFiles();
+            this._dstFiles = srcFiles.map(match => {
+                const relPath = path.relative(directory, match);
+                let currRelPath = relPath;
+                for (let i = 0; i < this.upLevel; i++) {
+                    const index = currRelPath.indexOf(path.sep);
+                    if (index === -1) {
+                        break;
+                    }
+                    currRelPath = currRelPath.substring(index + 1);
+                }
+
+                return path.join(dstPath, currRelPath);
+            });
+        }
+
+        return this._dstFiles;
+    }
+
+    protected async getDoneFileContent(): Promise<string | undefined> {
+        if (!this.parsed) {
+            // If we can't parse the argument, we don't know what we are doing.
+            return undefined;
+        }
+
+        const srcFiles = await this.getCopySourceFiles();
+        const dstFiles = await this.getCopyDestFiles();
+
+        // Gather the file informations
         try {
             const srcTimesP = Promise.all(srcFiles.map((match) => statAsync(match)));
             const dstTimesP = Promise.all(dstFiles.map((match) => statAsync(match)));
             const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
 
-            for (let i = 0; i < srcTimes.length; i++) {
-                if (srcTimes[i].mtimeMs !== dstTimes[i].mtimeMs) {
-                    this.logVerboseNotUpToDate();
-                    return false;
-                }
-
-                if (srcTimes[i].size !== dstTimes[i].size) {
-                    this.logVerboseNotUpToDate();
-                    return false;
-                }
-            }
-            return true;
+            const srcInfo = srcTimes.map((srcTime) => { return { mtimeMs: srcTime.mtimeMs, size: srcTime.size } });
+            const dstInfo = dstTimes.map((dstTime) => { return { mtimeMs: dstTime.mtimeMs, size: dstTime.size } });
+            return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
         } catch (e: any) {
-            logVerbose(`${this.node.pkg.nameColored}: ${e.message}`);
+            this.logVerboseTask(`error comparing file times ${e.message}`);
             this.logVerboseTrigger("failed to get file stats");
-            return false;
+            return undefined;
         }
     }
 }
@@ -143,21 +157,31 @@ export class CopyfilesTask extends LeafTask {
 export class GenVerTask extends LeafTask {
     protected addDependentTasks(dependentTasks: LeafTask[]) { }
     protected async checkLeafIsUpToDate() {
+        const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
         try {
-            const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
             const content = await readFileAsync(file, "utf8");
-            const match = content.match(/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9.]+)";.*/m);
-            return (match !== null && this.node.pkg.name === match[1] && this.node.pkg.version === match[2]);
+            const match = content.match(/.*\nexport const pkgName = "(.*)";[\n\r]*export const pkgVersion = "([0-9A-Za-z.+-]+)";.*/m);
+            if (match === null) {
+                this.logVerboseTrigger("src/packageVersion.ts content not matched");
+                return false;
+            }
+            if (this.node.pkg.name !== match[1]) {
+                this.logVerboseTrigger("package name in src/packageVersion.ts not matched");
+                return false;
+            }
+            if (this.node.pkg.version !== match[2]) {
+                this.logVerboseTrigger("package version in src/packageVersion.ts not matched");
+                return false;
+            }
+            return true;
         } catch {
+            this.logVerboseTrigger(`failed to read src/packageVersion.ts`)
             return false;
         }
     }
 }
 
 export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
-    protected get doneFile(): string {
-        return "package.json.done.build.log"
-    }
     protected async getDoneFileContent(): Promise<string | undefined> {
         return JSON.stringify(this.package.packageJson);
     }

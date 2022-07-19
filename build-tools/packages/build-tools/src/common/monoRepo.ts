@@ -69,7 +69,11 @@ export class MonoRepo {
      * package.json file with a workspaces field, or a lerna.json file with a packages field.
      * @param ignoredDirs Paths to ignore when loading the monorepo.
      */
-    constructor(public readonly kind: MonoRepoKind, public readonly repoPath: string, ignoredDirs?: string[]) {
+    constructor(
+        public readonly kind: MonoRepoKind,
+        public readonly repoPath: string,
+        ignoredDirs?: string[],
+        logVerbose = false) {
         this.version = "";
         const lernaPath = path.join(repoPath, "lerna.json");
         const packagePath = path.join(repoPath, "package.json");
@@ -78,13 +82,17 @@ export class MonoRepo {
         if (existsSync(lernaPath)) {
             const lerna = readJsonSync(lernaPath);
             if (lerna.version !== undefined) {
-                console.log(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
+                if (logVerbose) {
+                    console.log(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
+                }
                 this.version = lerna.version;
                 versionFromLerna = true;
             }
 
             if (lerna.packages !== undefined) {
-                console.log(`${kind}: Loading packages from ${lernaPath}`);
+                if (logVerbose) {
+                    console.log(`${kind}: Loading packages from ${lernaPath}`);
+                }
                 for (const dir of lerna.packages as string[]) {
                     // TODO: other glob pattern?
                     const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
@@ -100,11 +108,15 @@ export class MonoRepo {
         const pkgJson = readJsonSync(packagePath);
         if (pkgJson.version === undefined && !versionFromLerna) {
             this.version = pkgJson.version;
-            console.log(`${kind}: Loading version (${pkgJson.version}) from ${packagePath}`);
+            if (logVerbose) {
+                console.log(`${kind}: Loading version (${pkgJson.version}) from ${packagePath}`);
+            }
         }
 
         if (pkgJson.workspaces !== undefined) {
-            console.log(`${kind}: Loading packages from ${packagePath}`);
+            if (logVerbose) {
+                console.log(`${kind}: Loading packages from ${packagePath}`);
+            }
             for (const dir of pkgJson.workspaces as string[]) {
                 this.packages.push(...Packages.loadGlob(dir, kind, ignoredDirs, this));
             }
