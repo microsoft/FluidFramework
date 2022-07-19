@@ -304,21 +304,11 @@ export enum RangeType {
 }
 
 /**
- * A monotonically increasing positive integer assigned to each segment.
- * The first segment is assigned OpId 0. The next one is assigned OpID 1, and so on.
- * These IDs define total a temporal ordering over all the changes within a change frame.
- * OpIds are scoped to a single frame, so referring to OpIds across frames would require
- * qualifying them by frame number (and potentially sequence/commit number).
+ * A monotonically increasing positive integer assigned to each change within the changeset.
+ * OpIds are scoped to a single changeset, so referring to OpIds across changesets requires
+ * qualifying them by sequence/commit number.
  *
- * The temporal ordering is leveraged in the `Original` format to resolve which node a given segment is anchored to:
- * A segment is anchored to the first node, when scanning in the direction indicated by the `side`
- * field, that was either inserted by an operation whose OpId is lower, or left untouched (i.e.
- * represented by an offset), or the end of the field, whichever is encountered first.
- *
- * The uniqueness of IDs is leveraged in either format to
- * 1. uniquely identify tombstones so that two changes can tell whether they carry tombstones for the same nodes or
- * for different nodes.
- * 2. uniquely identify the matching move-out for a move-in/return and vice-versa.
+ * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */
 export type OpId = number;
 
