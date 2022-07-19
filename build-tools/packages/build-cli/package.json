@@ -45,7 +45,6 @@
     "version": "npm run build:readme && git add README.md"
   },
   "dependencies": {
-    "@fluid-internal/version-tools": "^0.3.0",
     "@fluidframework/build-tools": "^0.3.0",
     "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
@@ -98,8 +97,7 @@
     "plugins": [
       "@oclif/plugin-commands",
       "@oclif/plugin-help",
-      "@oclif/plugin-not-found",
-      "@fluid-internal/version-tools"
+      "@oclif/plugin-not-found"
     ],
     "topicSeparator": " ",
     "topics": {}

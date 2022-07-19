@@ -23,3 +23,4 @@ export {
 export {
     Package
 } from "./common/npmPackage";
+export { LayerGraph } from "./layerCheck/layerGraph";
