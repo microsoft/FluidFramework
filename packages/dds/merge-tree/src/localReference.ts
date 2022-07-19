@@ -8,7 +8,7 @@ import { UsageError } from "@fluidframework/container-utils";
 import { List, ListMakeHead, ListRemoveEntry } from "./collections";
 import {
     ISegment,
-} from "./mergeTree";
+} from "./mergeTreeNodes";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
