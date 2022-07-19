@@ -124,7 +124,7 @@ export async function fetchHelper(
         const online = isOnline();
         const errorText = `${error}`;
         const spoRegex = /((http|https):\/\/.*\.com)/i;
-        const redactedErrorText = errorText.replace(spoRegex, "REDACTED (url)");
+        const redactedErrorText = errorText.replace(spoRegex, "REDACTED_URL");
         // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
             throw new RetryableError(
