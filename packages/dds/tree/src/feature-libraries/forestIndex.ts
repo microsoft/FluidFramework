@@ -50,7 +50,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
             recordDependency(observer, this.forest);
             const text = this.getTreeString();
 
-            // For now we are not chunking the data, and instead put it in a one blob:
+            // For now we are not chunking the data, and instead put it in a single blob:
             const buffer = IsoBuffer.from(text);
             const blob = await this.runtime.uploadBlob(buffer);
             const tree: ISummaryAttachment = { type: SummaryType.Attachment, id: idFromBlob(blob) };

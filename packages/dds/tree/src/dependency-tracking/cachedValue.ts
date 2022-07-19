@@ -40,6 +40,8 @@ export interface ICachedValue<T> {
  * Create a ICachedValue that is invalidated when `observer` (as provided to `compute`) gets invalidated.
  */
 export function cachedValue<T>(
-    compute: (observer: ObservingDependent) => T, computationName = "CachedValue"): ICachedValue<T> {
+    compute: (observer: ObservingDependent) => T,
+    computationName = "CachedValue",
+): ICachedValue<T> {
     return new CachedValue(compute, computationName);
 }
