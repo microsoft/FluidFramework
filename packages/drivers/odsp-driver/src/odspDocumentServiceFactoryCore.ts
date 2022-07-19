@@ -15,7 +15,7 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
     TelemetryLogger,
     PerformanceEvent,
-    mixinMonitoringContext,
+    loggerToMonitoringContext,
     MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
@@ -46,7 +46,7 @@ import { INewFileInfo, getOdspResolvedUrl, createOdspLogger, toInstrumentedOdspT
 import { createNewFluidFile } from "./createFile";
 
 // Please update the README file in odsp-driver-definitions if you change the defaultCacheExpiryTimeoutMs.
-export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
+const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
 
 export const defaultStoragePolicy: Required<IDocumentStorageServicePolicies> = {
     // By default, ODSP tells the container not to prefetch/cache.
@@ -137,8 +137,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.nonPersistentCache,
             fileEntry,
             odspLogger,
-            clientIsSummarizer,
-            getMaximumCacheDurationMs(mixinMonitoringContext(odspLogger)));
+            getMaximumCacheDurationMs(loggerToMonitoringContext(odspLogger)),
+            clientIsSummarizer);
 
         return PerformanceEvent.timedExecAsync(
             odspLogger,
@@ -226,8 +226,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             this.nonPersistentCache,
             { resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
             odspLogger,
-            clientIsSummarizer,
-            getMaximumCacheDurationMs(mixinMonitoringContext(odspLogger)));
+            getMaximumCacheDurationMs(loggerToMonitoringContext(odspLogger)),
+            clientIsSummarizer);
 
         const storageTokenFetcher = toInstrumentedOdspTokenFetcher(
             odspLogger,
@@ -247,7 +247,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 
         const storagePolicy: IDocumentStorageServicePolicies = {
             ...defaultStoragePolicy,
-            maximumCacheDurationMs: getMaximumCacheDurationMs(mixinMonitoringContext(odspLogger)),
+            maximumCacheDurationMs: getMaximumCacheDurationMs(loggerToMonitoringContext(odspLogger)),
         };
 
         return OdspDocumentService.create(

@@ -15,6 +15,7 @@ import {
 import { EpochTrackerWithRedemption } from "../epochTracker";
 import { LocalPersistentCache } from "../odspCache";
 import { getHashedDocumentId } from "../odspPublicUtils";
+import { defaultStoragePolicy } from "../odspDocumentServiceFactoryCore";
 import { mockFetchSingle, mockFetchMultiple, okResponse, notFound } from "./mockFetch";
 
 class DeferralWithCallback extends Deferred<void> {
@@ -54,7 +55,8 @@ describe("Tests for Epoch Tracker With Redemption", () => {
                 docId: hashedDocumentId,
                 resolvedUrl,
             },
-            new TelemetryUTLogger());
+            new TelemetryUTLogger(),
+            defaultStoragePolicy.maximumCacheDurationMs);
         epochCallback = new DeferralWithCallback();
         (epochTracker as any).treesLatestDeferral = epochCallback;
     });

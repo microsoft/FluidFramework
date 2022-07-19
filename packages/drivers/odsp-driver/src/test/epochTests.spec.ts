@@ -15,6 +15,7 @@ import { EpochTracker } from "../epochTracker";
 import { LocalPersistentCache } from "../odspCache";
 import { getHashedDocumentId } from "../odspPublicUtils";
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts";
+import { defaultStoragePolicy } from "../odspDocumentServiceFactoryCore";
 import { mockFetchOk, mockFetchSingle, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache();
@@ -41,7 +42,8 @@ describe("Tests for Epoch Tracker", () => {
                 docId: hashedDocumentId,
                 resolvedUrl,
             },
-            new TelemetryNullLogger());
+            new TelemetryNullLogger(),
+            defaultStoragePolicy.maximumCacheDurationMs);
     });
 
     afterEach(async () => {

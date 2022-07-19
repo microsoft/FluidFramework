@@ -57,9 +57,6 @@ export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 export const currentReadVersion = "1.0";
 
 // @public (undocumented)
-export const defaultCacheExpiryTimeoutMs: number;
-
-// @public (undocumented)
 export const defaultStoragePolicy: Required<IDocumentStorageServicePolicies>;
 
 // @public

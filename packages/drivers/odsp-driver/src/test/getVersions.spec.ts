@@ -24,7 +24,7 @@ import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService, defaultSummarizerCacheExpiryTimeout } from "../odspDocumentStorageManager";
-import { defaultCacheExpiryTimeoutMs, defaultStoragePolicy } from "../odspDocumentServiceFactoryCore";
+import { defaultStoragePolicy } from "../odspDocumentServiceFactoryCore";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache();
@@ -116,6 +116,7 @@ describe("Tests for snapshot fetch", () => {
                     resolvedUrl,
                 },
                 new TelemetryNullLogger(),
+                defaultStoragePolicy.maximumCacheDurationMs,
             );
 
             const resolved = await resolver.resolve({ url: odspUrl });
@@ -217,7 +218,7 @@ describe("Tests for snapshot fetch", () => {
                 type: "snapshot",
                 file: { docId: hashedDocumentId, resolvedUrl },
             };
-            await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
+            await localCache.put(cacheEntry, valueWithExpiredCache(defaultStoragePolicy.maximumCacheDurationMs));
 
             const version = await mockFetchSingle(
                 async () => service.getVersions(null, 1),
@@ -236,7 +237,7 @@ describe("Tests for snapshot fetch", () => {
                 type: "snapshot",
                 file: { docId: hashedDocumentId, resolvedUrl },
             };
-            await localCache.put(cacheEntry, valueWithExpiredCache(defaultCacheExpiryTimeoutMs));
+            await localCache.put(cacheEntry, valueWithExpiredCache(defaultStoragePolicy.maximumCacheDurationMs));
 
             await assert.rejects(async () => {
                 await mockFetchSingle(
@@ -258,6 +259,7 @@ describe("Tests for snapshot fetch", () => {
                     resolvedUrl,
                 },
                 new TelemetryNullLogger(),
+                defaultStoragePolicy.maximumCacheDurationMs,
             );
 
             const resolved = await resolver.resolve({ url: odspUrl });

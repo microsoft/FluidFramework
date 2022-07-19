@@ -79,6 +79,7 @@ describe("Tests for snapshot fetch", () => {
                 resolvedUrl,
             },
             new TelemetryNullLogger(),
+            defaultStoragePolicy.maximumCacheDurationMs,
         );
         epochTracker.setEpoch("epoch1", true, "test");
         const resolved = await resolver.resolve({ url: odspUrl });

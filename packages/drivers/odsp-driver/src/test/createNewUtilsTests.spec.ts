@@ -13,6 +13,7 @@ import { EpochTracker } from "../epochTracker";
 import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { INewFileInfo, createCacheSnapshotKey } from "../odspUtils";
 import { LocalPersistentCache } from "../odspCache";
+import { defaultStoragePolicy } from "../odspDocumentServiceFactoryCore";
 import { mockFetchOk } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache();
@@ -79,7 +80,8 @@ describe("Create New Utils Tests", () => {
                 docId: hashedDocumentId,
                 resolvedUrl,
             },
-            new TelemetryNullLogger());
+            new TelemetryNullLogger(),
+            defaultStoragePolicy.maximumCacheDurationMs);
         newFileParams = {
             driveId,
             siteUrl,

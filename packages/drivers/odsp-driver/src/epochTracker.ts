@@ -35,7 +35,6 @@ import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contract
 import { ClpCompliantAppHeader } from "./contractsPublic";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection";
-import { defaultCacheExpiryTimeoutMs } from "./odspDocumentServiceFactoryCore";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -61,8 +60,8 @@ export class EpochTracker implements IPersistedFileCache {
         protected readonly cache: IPersistedCache,
         protected readonly fileEntry: IFileEntry,
         protected readonly logger: ITelemetryLogger,
+        private readonly maximumCacheDurationMs: number,
         protected readonly clientIsSummarizer?: boolean,
-        private readonly maximumCacheDurationMs: number = defaultCacheExpiryTimeoutMs,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
@@ -509,15 +508,15 @@ export function createOdspCacheAndTracker(
     nonpersistentCache: INonPersistentCache,
     fileEntry: IFileEntry,
     logger: ITelemetryLogger,
+    maximumCacheDurationMs: number,
     clientIsSummarizer?: boolean,
-    maximumCacheDurationMs: number = defaultCacheExpiryTimeoutMs,
 ): ICacheAndTracker {
     const epochTracker = new EpochTrackerWithRedemption(
         persistedCacheArg,
         fileEntry,
         logger,
-        clientIsSummarizer,
-        maximumCacheDurationMs);
+        maximumCacheDurationMs,
+        clientIsSummarizer);
     return {
         cache: {
             ...nonpersistentCache,
