@@ -23,10 +23,12 @@ import {
     DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
-import { ConfigTypes, IConfigProviderBase, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { Loader } from "@fluidframework/container-loader";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidRouter } from "@fluidframework/core-interfaces";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -100,8 +102,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const createDataStoreWithProps = async (dataObject: ITestFluidObject, id: string, root: boolean) =>
         runtimeOf(dataObject)._createDataStoreWithProps(packageName, {}, id, root);
 
-    const getRootDataStore = async (dataObject: ITestFluidObject, id: string) =>
-        runtimeOf(dataObject).getRootDataStore(id);
+    const getRootDataStore = async (dataObject: ITestFluidObject, id: string, wait = true) =>
+        runtimeOf(dataObject).getRootDataStore(id, wait);
 
     const corruptedAPIAliasOp = async (runtime: IContainerRuntime, alias: string): Promise<boolean | Error> =>
         new Promise<boolean>((resolve, reject) => {
@@ -175,52 +177,25 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert(await dataCorruption);
         });
 
-        it("Root datastore creation with aliasing turned on throws exception", async () => {
+        it("Root datastore creation with aliasing turned on", async () => {
             // Containers need to be recreated in order for the settings to be picked up
             await reset();
             await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
 
-            await createRootDataStore(dataObject1, "2");
-            let error: Error | undefined;
-            try {
-                await createRootDataStore(dataObject2, "2");
-            } catch (err) {
-                error = err as Error;
-            }
+            const ds1 = await createRootDataStore(dataObject1, "2");
+            const ds2 = await createRootDataStore(dataObject2, "2");
+            const ds3 = await createDataStoreWithProps(dataObject1, "2", true /* root */);
+            const ds4 = await createDataStoreWithProps(dataObject2, "2", true /* root */);
+            // All aliased datastores are the same
+            const internalIDs = new Set([ds1, ds2, ds3, ds4].map((ds) => (ds.IFluidRouter as IFluidDataStoreChannel).id));
+            assert.equal(internalIDs.size, 1);
 
-            assert.ok(error instanceof GenericError);
-            assert.deepEqual(
-                error.getTelemetryProperties().alias,
-                {
-                    value: "2",
-                    tag: TelemetryDataTag.UserData,
-                });
-            assert.equal(error.getTelemetryProperties().aliasResult, "Conflict");
-            assert.ok(await getRootDataStore(dataObject1, "2"));
-        });
-
-        it("Root datastore creation with aliasing turned on and legacy API throws exception", async () => {
-            // Containers need to be recreated in order for the settings to be picked up
-            await reset();
-            await setupContainers(testContainerConfig, { "Fluid.ContainerRuntime.UseDataStoreAliasing": "true" });
-
-            await createRootDataStore(dataObject1, "2");
-            let error: Error | undefined;
-            try {
-                await createDataStoreWithProps(dataObject2, "2", true /* root */);
-            } catch (err) {
-                error = err as Error;
-            }
-
-            assert.ok(error instanceof GenericError);
-            assert.deepEqual(
-                error.getTelemetryProperties().alias,
-                {
-                    value: "2",
-                    tag: TelemetryDataTag.UserData,
-                });
-            assert.equal(error.getTelemetryProperties().aliasResult, "Conflict");
-            assert.ok(await getRootDataStore(dataObject1, "2"));
+            // Cannot re-alias an aliased datastore
+            const aliasResults = await Promise.all([
+                ds3.trySetAlias("1"),
+                ds4.trySetAlias("1"),
+            ]);
+            assert(aliasResults.every((x) => x === "AlreadyAliased"));
         });
 
         it("Root datastore creation with aliasing turned on and legacy API returns already aliased datastore", async () => {
@@ -362,6 +337,52 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.equal(aliasResult6, "AlreadyAliased");
         });
 
+        it("Trying to create multiple datastores aliased to the same value on the same client " +
+            "will always return the same datastore", async () => {
+                const datastores: IFluidRouter[] = [];
+                const createAliasedDataStore = async () => {
+                    try {
+                        const datastore = await getRootDataStore(dataObject1, alias, /* wait */ false);
+                        return datastore;
+                    } catch (err) {
+                        const newDataStore = await runtimeOf(dataObject1).createDataStore(packageName);
+                        datastores.push(newDataStore);
+                        await newDataStore.trySetAlias(alias);
+                        return getRootDataStore(dataObject1, alias);
+                    }
+                };
+
+                await Promise.all([
+                    await createAliasedDataStore(),
+                    await createAliasedDataStore(),
+                    await createAliasedDataStore(),
+                    await createAliasedDataStore(),
+                ]);
+
+                assert.equal(datastores.length, 1);
+            });
+
+        it("Aliasing a datastore during an alias operation with the same name", async () => {
+            const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
+
+            const [aliasResult1, aliasResult2] = await Promise.all([
+                ds1.trySetAlias(alias),
+                ds2.trySetAlias(alias),
+            ]);
+
+            assert.equal(aliasResult1, "Success");
+            assert.equal(aliasResult2, "Conflict");
+
+            const [aliasResult3, aliasResult4] = await Promise.all([
+                ds1.trySetAlias(alias + alias),
+                ds2.trySetAlias(alias + alias),
+            ]);
+
+            assert.equal(aliasResult3, "AlreadyAliased");
+            assert.equal(aliasResult4, "Success");
+        });
+
         it("Aliasing a previously aliased datastore will fail", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -374,7 +395,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             assert.ok(await getRootDataStore(dataObject1, alias));
         });
 
-        it("Aliasing a datastore which previously failed to alias will fail", async () => {
+        it("Aliasing a datastore which previously failed to alias will succeed", async () => {
             const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
             const ds2 = await runtimeOf(dataObject1).createDataStore(packageName);
 
@@ -384,7 +405,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 
             assert.equal(aliasResult1, "Success");
             assert.equal(aliasResult2, "Conflict");
-            assert.equal(aliasResult3, "AlreadyAliased");
+            assert.equal(aliasResult3, "Success");
 
             assert.ok(await getRootDataStore(dataObject1, alias));
         });

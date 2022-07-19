@@ -90,6 +90,7 @@ describe("Tests for snapshot fetch", () => {
             hostPolicy,
             epochTracker,
             async () => { return {}; },
+            () => "tenantid/id",
         );
     });
 

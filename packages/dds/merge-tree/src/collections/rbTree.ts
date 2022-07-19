@@ -7,243 +7,22 @@
 
 /* Remove once strictNullCheck is enabled */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-    ConflictAction,
-    IIntegerRange,
-    KeyComparer,
-    PropertyAction,
-    SortedDictionary,
-} from "./base";
-
-export class Stack<T> {
-    public items: T[] = [];
-    public push(val: T) {
-        this.items.push(val);
-    }
-
-    public empty() {
-        return this.items.length === 0;
-    }
-
-    public top(): T | undefined {
-        return this.items[this.items.length - 1];
-    }
-
-    public pop(): T | undefined {
-        return this.items.pop();
-    }
-}
-
-export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
-    if (entry === undefined) {
-        return undefined;
-    } else if (entry.isHead) {
-        return undefined;
-    } else {
-        entry.next.prev = entry.prev;
-        entry.prev.next = entry.next;
-    }
-    return (entry);
-}
-
-function ListMakeEntry<U>(data: U): List<U> {
-    return new List<U>(false, data);
-}
-
-export function ListMakeHead<U>(): List<U> {
-    return new List<U>(true, undefined);
-}
-
-export class List<T> {
-    public next: List<T>;
-    public prev: List<T>;
-
-    constructor(public isHead: boolean, public data: T | undefined) {
-        this.prev = this;
-        this.next = this;
-    }
-
-    public clear(): void {
-        if (this.isHead) {
-            this.prev = this;
-            this.next = this;
-        }
-    }
-
-    private add(data: T): List<T> {
-        const entry = ListMakeEntry(data);
-        this.prev.next = entry;
-        entry.next = this;
-        entry.prev = this.prev;
-        this.prev = entry;
-        return (entry);
-    }
-
-    public dequeue(): T | undefined {
-        if (!this.empty()) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const removedEntry = ListRemoveEntry(this.next)!;
-            return removedEntry.data;
-        }
-    }
-
-    public enqueue(data: T): List<T> {
-        return this.add(data);
-    }
-
-    public walk(fn: (data: T, l: List<T>) => void): void {
-        for (let entry = this.next; !(entry.isHead); entry = entry.next) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            fn(entry.data!, entry);
-        }
-    }
-
-    public some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[] {
-        const rtn: T[] = [];
-        const start = rev ? this.prev : this.next;
-        for (let entry = start; !(entry.isHead); entry = rev ? entry.prev : entry.next) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const data = entry.data!;
-            if (fn(data, entry)) {
-                if (rev) {
-                    // preserve list order when in reverse
-                    rtn.unshift(data);
-                } else {
-                    rtn.push(data);
-                }
-            }
-        }
-        return rtn;
-    }
-
-    public count(): number {
-        let entry: List<T>;
-        let i: number;
-
-        entry = this.next;
-        for (i = 0; !(entry.isHead); i++) {
-            entry = entry.next;
-        }
-        return (i);
-    }
-
-    public first(): T | undefined {
-        if (!this.empty()) {
-            return (this.next.data);
-        }
-    }
-
-    public last(): T | undefined {
-        if (!this.empty()) {
-            return (this.prev.data);
-        }
-    }
-
-    public empty(): boolean {
-        return (this.next === this);
-    }
-
-    public unshift(data: T): void {
-        const entry = ListMakeEntry(data);
-        entry.data = data;
-        entry.isHead = false;
-        entry.next = this.next;
-        entry.prev = this;
-        this.next = entry;
-        entry.next.prev = entry;
-    }
-
-    public [Symbol.iterator]() {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let node: List<T> | undefined = this;
-        const iterator: IterableIterator<T> = {
-            next(): IteratorResult<T> {
-                while (node && node.next.isHead === false) {
-                    node = node.next;
-                    if (node.data !== undefined) {
-                        return { value: node.data, done: false };
-                    }
-                }
-                return { value: undefined, done: true };
-            },
-            [Symbol.iterator]() {
-                return this;
-            },
-        };
-        return iterator;
-    }
-}
-
-export interface Comparer<T> {
-    compare(a: T, b: T): number;
-    min: T;
-}
-
-export class Heap<T> {
-    private L: T[];
-    public count() {
-        return this.L.length - 1;
-    }
-    constructor(a: T[], public comp: Comparer<T>) {
-        this.L = [comp.min];
-        for (let i = 0, len = a.length; i < len; i++) {
-            this.add(a[i]);
-        }
-    }
-    public peek() {
-        return this.L[1];
-    }
-
-    public get() {
-        const x = this.L[1];
-        this.L[1] = this.L[this.count()];
-        this.L.pop();
-        this.fixDown(1);
-        return x;
-    }
-
-    public add(x: T) {
-        this.L.push(x);
-        this.fixup(this.count());
-    }
-
-    /* eslint-disable no-bitwise */
-    private fixup(k: number) {
-        let _k = k;
-        while (_k > 1 && (this.comp.compare(this.L[_k >> 1], this.L[_k]) > 0)) {
-            const tmp = this.L[_k >> 1];
-            this.L[_k >> 1] = this.L[_k];
-            this.L[_k] = tmp;
-            _k = _k >> 1;
-        }
-    }
-
-    private fixDown(k: number) {
-        let _k = k;
-        while ((_k << 1) <= (this.count())) {
-            let j = _k << 1;
-            if ((j < this.count()) && (this.comp.compare(this.L[j], this.L[j + 1]) > 0)) {
-                j++;
-            }
-            if (this.comp.compare(this.L[_k], this.L[j]) <= 0) {
-                break;
-            }
-            const tmp = this.L[_k];
-            this.L[_k] = this.L[j];
-            this.L[j] = tmp;
-            _k = j;
-        }
-    }
-    /* eslint-enable no-bitwise */
-}
-
+/**
+ * @internal
+ */
 export const RBColor = {
     RED: 0,
     BLACK: 1,
 } as const;
+
+/**
+ * @internal
+ */
 export type RBColor = typeof RBColor[keyof typeof RBColor];
 
+/**
+ * @internal
+ */
 export interface RBNode<TKey, TData> {
     key: TKey;
     data: TData;
@@ -252,16 +31,23 @@ export interface RBNode<TKey, TData> {
     color: RBColor;
     size: number;
 }
-
+/**
+ * @internal
+ */
 export interface IRBAugmentation<TKey, TData> {
     update(node: RBNode<TKey, TData>): void;
 }
-
+/**
+ * @internal
+ */
 export interface IRBMatcher<TKey, TData> {
     continueSubtree(node: RBNode<TKey, TData> | undefined, key: TKey): boolean;
     matchNode(node: RBNode<TKey, TData> | undefined, key: TKey): boolean;
 }
 
+/**
+ * @internal
+ */
 export interface RBNodeActions<TKey, TData> {
     infix?(node: RBNode<TKey, TData>): boolean;
     pre?(node: RBNode<TKey, TData>): boolean;
@@ -269,6 +55,66 @@ export interface RBNodeActions<TKey, TData> {
     showStructure?: boolean;
 }
 
+/**
+ * @internal
+ */
+export interface KeyComparer<TKey> {
+    // eslint-disable-next-line @typescript-eslint/prefer-function-type
+    (a: TKey, b: TKey): number;
+}
+
+/**
+ * @internal
+ */
+ export interface Property<TKey, TData> {
+    key: TKey;
+    data: TData;
+}
+
+/**
+ * @internal
+ */
+ export interface PropertyAction<TKey, TData> {
+    // eslint-disable-next-line @typescript-eslint/prefer-function-type
+    <TAccum>(p: Property<TKey, TData>, accum?: TAccum): boolean;
+}
+
+/**
+ * @internal
+ */
+ export interface QProperty<TKey, TData> {
+    key?: TKey;
+    data?: TData;
+}
+
+/**
+ * @internal
+ */
+export type ConflictAction<TKey, TData> =
+    (key: TKey, currentKey: TKey, data: TData, currentData: TData) => QProperty<TKey, TData>;
+
+/**
+ * @internal
+ */
+export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
+    max(): Property<TKey, TData> | undefined;
+    min(): Property<TKey, TData> | undefined;
+    mapRange<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum, start?: TKey, end?: TKey): void;
+}
+
+/**
+ * @internal
+ */
+export interface Dictionary<TKey, TData> {
+    get(key: TKey): Property<TKey, TData> | undefined;
+    put(key: TKey, data: TData, conflict?: ConflictAction<TKey, TData>): void;
+    remove(key: TKey): void;
+    map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void;
+}
+
+/**
+ * @internal
+ */
 export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> {
     private root: RBNode<TKey, TData> | undefined;
 
@@ -828,303 +674,5 @@ export class RedBlackTree<TKey, TData> implements SortedDictionary<TKey, TData> 
             go = this.nodeMap(node.right, action, accum, _start, _end);
         }
         return go;
-    }
-}
-
-export interface AugmentedIntervalNode {
-    minmax: IInterval;
-}
-
-export const integerRangeToString = (range: IIntegerRange) => `[${range.start},${range.end})`;
-
-export interface IInterval {
-    clone(): IInterval;
-    compare(b: IInterval): number;
-    compareStart(b: IInterval): number;
-    compareEnd(b: IInterval): number;
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
-    overlaps(b: IInterval): boolean;
-    union(b: IInterval): IInterval;
-}
-
-const intervalComparer = (a: IInterval, b: IInterval) => a.compare(b);
-export type IntervalNode<T extends IInterval> = RBNode<T, AugmentedIntervalNode>;
-export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
-
-export class IntervalTree<T extends IInterval> implements IRBAugmentation<T, AugmentedIntervalNode>,
-    IRBMatcher<T, AugmentedIntervalNode> {
-    public intervals = new RedBlackTree<T, AugmentedIntervalNode>(intervalComparer, this);
-
-    public remove(x: T) {
-        this.intervals.remove(x);
-    }
-
-    public removeExisting(x: T) {
-        this.intervals.removeExisting(x);
-    }
-
-    public put(x: T, conflict?: IntervalConflictResolver<T>) {
-        let rbConflict: ConflictAction<T, AugmentedIntervalNode> | undefined;
-        if (conflict) {
-            rbConflict = (key: T, currentKey: T) => {
-                const ival = conflict(key, currentKey);
-                return {
-                    key: ival,
-                };
-            };
-        }
-        this.intervals.put(x, { minmax: x.clone() }, rbConflict);
-    }
-
-    public map(fn: (x: T) => void) {
-        const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
-            infix: (node) => {
-                fn(node.key);
-                return true;
-            },
-            showStructure: true,
-        };
-        this.intervals.walk(actions);
-    }
-
-    public mapUntil(fn: (X: T) => boolean) {
-        const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
-            infix: (node) => {
-                return fn(node.key);
-            },
-            showStructure: true,
-        };
-        this.intervals.walk(actions);
-    }
-
-    public mapBackward(fn: (x: T) => void) {
-        const actions = <RBNodeActions<T, AugmentedIntervalNode>>{
-            infix: (node) => {
-                fn(node.key);
-                return true;
-            },
-            showStructure: true,
-        };
-        this.intervals.walkBackward(actions);
-    }
-
-    // TODO: toString()
-    public match(x: T) {
-        return this.intervals.gather(x, this);
-    }
-
-    public matchNode(node: IntervalNode<T> | undefined, key: T) {
-        return !!node && node.key.overlaps(key);
-    }
-
-    public continueSubtree(node: IntervalNode<T> | undefined, key: T) {
-        return !!node && node.data.minmax.overlaps(key);
-    }
-
-    public update(node: IntervalNode<T>) {
-        if (node.left && node.right) {
-            node.data.minmax = node.key.union(
-                node.left.data.minmax.union(node.right.data.minmax));
-        } else {
-            if (node.left) {
-                node.data.minmax = node.key.union(node.left.data.minmax);
-            } else if (node.right) {
-                node.data.minmax = node.key.union(node.right.data.minmax);
-            } else {
-                node.data.minmax = node.key.clone();
-            }
-        }
-    }
-}
-
-export interface TSTResult<T> {
-    key: string;
-    val: T;
-}
-
-export interface TSTNode<T> {
-    c: string;
-    left?: TSTNode<T>;
-    mid?: TSTNode<T>;
-    right?: TSTNode<T>;
-    val?: T;
-}
-
-interface TSTPrefix {
-    text: string;
-}
-
-export interface ProxString<T> {
-    text: string;
-    invDistance: number;
-    val: T;
-}
-
-export class TST<T> {
-    private n = 0;
-    private root: TSTNode<T> | undefined;
-
-    public size() {
-        return this.n;
-    }
-
-    private contains(key: string) {
-        return this.get(key);
-    }
-
-    public get(key: string) {
-        const x = this.nodeGet(this.root, key, 0);
-        if (x === undefined) {
-            return undefined;
-        }
-        return x.val;
-    }
-
-    private nodeGet(x: TSTNode<T> | undefined, key: string, d: number): TSTNode<T> | undefined {
-        if (x === undefined) {
-            return undefined;
-        }
-        const c = key.charAt(d);
-        if (c < x.c) {
-            return this.nodeGet(x.left, key, d);
-        } else if (c > x.c) {
-            return this.nodeGet(x.right, key, d);
-        } else if (d < (key.length - 1)) {
-            return this.nodeGet(x.mid, key, d + 1);
-        } else { return x; }
-    }
-
-    public put(key: string, val: T) {
-        if (!this.contains(key)) {
-            this.n++;
-        }
-        this.root = this.nodePut(this.root, key, val, 0);
-    }
-
-    private nodePut(x: TSTNode<T> | undefined, key: string, val: T, d: number) {
-        let _x = x;
-        const c = key.charAt(d);
-        if (_x === undefined) {
-            _x = { c };
-        }
-        if (c < _x.c) {
-            _x.left = this.nodePut(_x.left, key, val, d);
-        } else if (c > _x.c) {
-            _x.right = this.nodePut(_x.right, key, val, d);
-        } else if (d < (key.length - 1)) {
-            _x.mid = this.nodePut(_x.mid, key, val, d + 1);
-        } else {
-            _x.val = val;
-        }
-        return _x;
-    }
-
-    public neighbors(text: string, distance = 2) {
-        let q = <ProxString<T>[]>[];
-        this.nodeProximity(this.root, { text: "" }, 0, text, distance, q);
-        q = q.filter((value) => (value.text.length > 0));
-        return q;
-    }
-
-    public keysWithPrefix(text: string) {
-        const q = <string[]>[];
-        const x = this.nodeGet(this.root, text, 0);
-        if (x === undefined) {
-            return q;
-        }
-        if (x.val !== undefined) {
-            q.push(text);
-        }
-        this.collect(x.mid, { text }, q);
-        return q;
-    }
-
-    private collect(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: string[]) {
-        if (x === undefined) {
-            return;
-        }
-        this.collect(x.left, prefix, q);
-        if (x.val !== undefined) {
-            q.push(prefix.text + x.c);
-        }
-        this.collect(x.mid, { text: prefix.text + x.c }, q);
-        this.collect(x.right, prefix, q);
-    }
-
-    private mapNode(x: TSTNode<T> | undefined, prefix: TSTPrefix, fn: (key: string, val: T) => void) {
-        if (x === undefined) {
-            return;
-        }
-        const key = prefix.text + x.c;
-        this.mapNode(x.left, prefix, fn);
-        if (x.val) {
-            fn(key, x.val);
-        }
-        this.mapNode(x.mid, { text: key }, fn);
-        this.mapNode(x.right, prefix, fn);
-    }
-
-    public map(fn: (key: string, val: T) => void) {
-        this.mapNode(this.root, { text: "" }, fn);
-    }
-
-    public pairsWithPrefix(text: string) {
-        const q = <TSTResult<T>[]>[];
-        const x = this.nodeGet(this.root, text, 0);
-        if (x === undefined) {
-            return q;
-        }
-        if (x.val !== undefined) {
-            q.push({ key: text, val: x.val });
-        }
-        this.collectPairs(x.mid, { text }, q);
-        return q;
-    }
-
-    private collectPairs(x: TSTNode<T> | undefined, prefix: TSTPrefix, q: TSTResult<T>[]) {
-        if (x === undefined) {
-            return;
-        }
-        this.collectPairs(x.left, prefix, q);
-        if (x.val !== undefined) {
-            q.push({ key: prefix.text + x.c, val: x.val });
-        }
-        this.collectPairs(x.mid, { text: prefix.text + x.c }, q);
-        this.collectPairs(x.right, prefix, q);
-    }
-
-    private nodeProximity(
-        x: TSTNode<T> | undefined,
-        prefix: TSTPrefix,
-        d: number,
-        pattern: string,
-        distance: number,
-        q: ProxString<T>[]) {
-        if ((x === undefined) || (distance < 0)) {
-            return;
-        }
-        const c = pattern.charAt(d);
-        if ((distance > 0) || (c < x.c)) {
-            this.nodeProximity(x.left, prefix, d, pattern, distance, q);
-        }
-        if (x.val !== undefined) {
-            const remD = distance - (pattern.length - d);
-            if (remD >= 0) {
-                let invD = distance;
-                if (c !== x.c) {
-                    invD--;
-                }
-                q.push({ text: prefix.text + x.c, val: x.val, invDistance: invD });
-            }
-        }
-        const recurD = (d < (pattern.length - 1)) ? d + 1 : d;
-        if (c === x.c) {
-            this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance, q);
-        } else {
-            this.nodeProximity(x.mid, { text: prefix.text + x.c }, recurD, pattern, distance - 1, q);
-        }
-        if ((distance > 0) || (c > x.c)) {
-            this.nodeProximity(x.right, prefix, d, pattern, distance, q);
-        }
     }
 }
