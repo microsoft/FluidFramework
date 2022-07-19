@@ -42,3 +42,4 @@ export * from "./sharedObjectSequence";
 export * from "./sharedNumberSequence";
 export * from "./sparsematrix";
 export * from "./sharedIntervalCollection";
+export { IInterval, IntervalConflictResolver } from "./intervalTree";

@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
     IIntegerRange,
-} from "../base";
-import { ConflictAction, IRBAugmentation, IRBMatcher, RBNode, RBNodeActions, RedBlackTree } from "./rbTree";
+    RBNode,
+    IRBAugmentation,
+    IRBMatcher,
+    RedBlackTree,
+    ConflictAction,
+    RBNodeActions,
+} from "@fluidframework/merge-tree";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
  * @deprecated  for internal use only. public export will be removed.

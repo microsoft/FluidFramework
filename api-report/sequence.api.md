@@ -17,7 +17,6 @@ import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IInterval } from '@fluidframework/merge-tree';
 import { IJSONSegment } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
@@ -26,7 +25,6 @@ import { IMergeTreeInsertMsg } from '@fluidframework/merge-tree';
 import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeOp } from '@fluidframework/merge-tree';
 import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
-import { IntervalConflictResolver } from '@fluidframework/merge-tree';
 import { IRelativePosition } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISegmentAction } from '@fluidframework/merge-tree';
@@ -57,6 +55,24 @@ export type CompressedSerializedInterval = [number, number, number, IntervalType
 
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
+
+// @internal @deprecated (undocumented)
+export interface IInterval {
+    // (undocumented)
+    clone(): IInterval;
+    // (undocumented)
+    compare(b: IInterval): number;
+    // (undocumented)
+    compareEnd(b: IInterval): number;
+    // (undocumented)
+    compareStart(b: IInterval): number;
+    // (undocumented)
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
+    // (undocumented)
+    overlaps(b: IInterval): boolean;
+    // (undocumented)
+    union(b: IInterval): IInterval;
+}
 
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
@@ -139,6 +155,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // @internal (undocumented)
     ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
+    // Warning: (ae-incompatible-release-tags) The symbol "addConflictResolver" is marked as @public, but its signature references "IntervalConflictResolver" which is marked as @internal
+    //
     // (undocumented)
     addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
     // (undocumented)
@@ -189,6 +207,9 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     };
 }
 
+// @internal @deprecated (undocumented)
+export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
+
 // @public (undocumented)
 export enum IntervalType {
     // (undocumented)
@@ -210,6 +231,8 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
     segment: ISegment;
 }
 
+// Warning: (ae-incompatible-release-tags) The symbol "ISerializableInterval" is marked as @public, but its signature references "IInterval" which is marked as @internal
+//
 // @public (undocumented)
 export interface ISerializableInterval extends IInterval {
     // (undocumented)
