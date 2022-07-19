@@ -189,7 +189,7 @@ export class OdspDocumentService implements IDocumentService {
                 },
                 () => {
                     assert(this.relayServiceTenantAndSessionId !== undefined,
-                        "RelayServiceSessionId should be defined");
+                        "relayServiceTenantAndSessionId should be present");
                     return this.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
@@ -386,7 +386,7 @@ export class OdspDocumentService implements IDocumentService {
                 disableJoinSessionRefresh,
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
-            this.relayServiceTenantAndSessionId =  `${joinSessionResponse.tenantId}/${joinSessionResponse.id}`;
+            this.relayServiceTenantAndSessionId = `${joinSessionResponse.tenantId}/${joinSessionResponse.id}`;
             return {
                 entryTime: Date.now(),
                 joinSessionResponse,
