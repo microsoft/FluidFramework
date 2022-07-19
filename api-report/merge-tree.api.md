@@ -17,10 +17,8 @@ export function addProperties(oldProps: PropertySet | undefined, newProps: Prope
 
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    // Warning: (ae-forgotten-export) The symbol "MergeTree" needs to be exported by the entry point index.d.ts
-    //
     // @internal @deprecated (undocumented)
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
     // (undocumented)
@@ -179,8 +177,6 @@ export class Client {
     maxWindowTime: number;
     // (undocumented)
     measureOps: boolean;
-    // @internal @deprecated (undocumented)
-    protected readonly mergeTree: MergeTree;
     // (undocumented)
     get mergeTreeDeltaCallback(): MergeTreeDeltaCallback | undefined;
     set mergeTreeDeltaCallback(callback: MergeTreeDeltaCallback | undefined);
@@ -327,8 +323,6 @@ export interface IConsensusValue {
 
 // @public (undocumented)
 export interface IHierBlock extends IMergeBlock {
-    // @internal @deprecated (undocumented)
-    addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
     // (undocumented)
     hierToString(indentCount: number): string;
     // (undocumented)
@@ -639,8 +633,7 @@ export interface IRemovalInfo {
 
 // @public
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
-    // @internal @deprecated
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
+    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
     // (undocumented)
@@ -1164,28 +1157,6 @@ export class SegmentGroupCollection {
     enqueue(segmentGroup: SegmentGroup): void;
     // (undocumented)
     get size(): number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "SnapshotLegacy" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal @deprecated (undocumented)
-export class SnapshotLegacy {
-    constructor(mergeTree: MergeTree, logger: ITelemetryLogger, filename?: string | undefined, onCompletion?: (() => void) | undefined);
-    // (undocumented)
-    static readonly body = "body";
-    emit(catchUpMsgs: ISequencedDocumentMessage[], serializer: IFluidSerializer, bind: IFluidHandle): ISummaryTreeWithStats;
-    // (undocumented)
-    extractSync(): IJSONSegment[];
-    // (undocumented)
-    filename?: string | undefined;
-    // (undocumented)
-    static readonly header = "header";
-    // (undocumented)
-    mergeTree: MergeTree;
-    // (undocumented)
-    onCompletion?: (() => void) | undefined;
-    // (undocumented)
-    static readonly sizeOfFirstChunk: number;
 }
 
 // Warning: (ae-internal-missing-underscore) The name "SortedDictionary" should be prefixed with an underscore because the declaration is marked as @internal

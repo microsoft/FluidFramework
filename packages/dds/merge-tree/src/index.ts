@@ -36,7 +36,6 @@ export * from "./ops";
 export * from "./properties";
 export * from "./segmentGroupCollection";
 export * from "./segmentPropertiesManager";
-export * from "./snapshotlegacy";
 export * from "./sortedSegmentSet";
 export * from "./textSegment";
 export * from "./referencePositions";

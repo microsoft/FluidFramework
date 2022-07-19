@@ -724,6 +724,7 @@ declare function get_current_InterfaceDeclaration_IHierBlock():
 declare function use_old_InterfaceDeclaration_IHierBlock(
     use: TypeOnly<old.IHierBlock>);
 use_old_InterfaceDeclaration_IHierBlock(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IHierBlock());
 
 /*
@@ -2488,6 +2489,7 @@ declare function get_current_TypeAliasDeclaration_RangeStackMap():
 declare function use_old_TypeAliasDeclaration_RangeStackMap(
     use: TypeOnly<old.RangeStackMap>);
 use_old_TypeAliasDeclaration_RangeStackMap(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_RangeStackMap());
 
 /*
@@ -2632,6 +2634,7 @@ declare function get_current_InterfaceDeclaration_ReferencePosition():
 declare function use_old_InterfaceDeclaration_ReferencePosition(
     use: TypeOnly<old.ReferencePosition>);
 use_old_InterfaceDeclaration_ReferencePosition(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ReferencePosition());
 
 /*
@@ -3045,28 +3048,14 @@ use_old_ClassDeclaration_SegmentGroupCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SnapshotLegacy": {"forwardCompat": false}
+* "RemovedClassDeclaration_SnapshotLegacy": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SnapshotLegacy():
-    TypeOnly<old.SnapshotLegacy>;
-declare function use_current_ClassDeclaration_SnapshotLegacy(
-    use: TypeOnly<current.SnapshotLegacy>);
-use_current_ClassDeclaration_SnapshotLegacy(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_ClassDeclaration_SnapshotLegacy());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SnapshotLegacy": {"backCompat": false}
+* "RemovedClassDeclaration_SnapshotLegacy": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SnapshotLegacy():
-    TypeOnly<current.SnapshotLegacy>;
-declare function use_old_ClassDeclaration_SnapshotLegacy(
-    use: TypeOnly<old.SnapshotLegacy>);
-use_old_ClassDeclaration_SnapshotLegacy(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_ClassDeclaration_SnapshotLegacy());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -3119,14 +3108,26 @@ use_old_ClassDeclaration_SortedSegmentSet(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_Stack": {"forwardCompat": false}
+* "ClassDeclaration_Stack": {"forwardCompat": false}
 */
+declare function get_old_ClassDeclaration_Stack():
+    TypeOnly<old.Stack<any>>;
+declare function use_current_ClassDeclaration_Stack(
+    use: TypeOnly<current.Stack<any>>);
+use_current_ClassDeclaration_Stack(
+    get_old_ClassDeclaration_Stack());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_Stack": {"backCompat": false}
+* "ClassDeclaration_Stack": {"backCompat": false}
 */
+declare function get_current_ClassDeclaration_Stack():
+    TypeOnly<current.Stack<any>>;
+declare function use_old_ClassDeclaration_Stack(
+    use: TypeOnly<old.Stack<any>>);
+use_old_ClassDeclaration_Stack(
+    get_current_ClassDeclaration_Stack());
 
 /*
 * Validate forward compat by using old type in place of current type

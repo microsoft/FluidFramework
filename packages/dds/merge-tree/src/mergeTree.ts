@@ -403,7 +403,6 @@ export interface LRUSegment {
 }
 
 /**
- * @deprecated  for internal use only. public export will be removed.
  * @internal
  */
 export class MergeTree {
@@ -1181,7 +1180,7 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, this);
+                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {

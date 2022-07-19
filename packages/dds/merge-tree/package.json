@@ -140,7 +140,8 @@
         "forwardCompat": false
       },
       "InterfaceDeclaration_IHierBlock": {
-        "forwardCompat": false
+        "forwardCompat": false,
+        "backCompat": false
       },
       "InterfaceDeclaration_IMergeBlock": {
         "forwardCompat": false
@@ -195,7 +196,10 @@
       "RemovedClassDeclaration_Stack": {"forwardCompat": false, "backCompat": false},
       "RemovedClassDeclaration_TST": {"forwardCompat": false, "backCompat": false},
       "RemovedInterfaceDeclaration_TSTNode": {"forwardCompat": false, "backCompat": false},
-      "RemovedInterfaceDeclaration_TSTResult": {"forwardCompat": false, "backCompat": false}
+      "RemovedInterfaceDeclaration_TSTResult": {"forwardCompat": false, "backCompat": false},
+      "RemovedClassDeclaration_SnapshotLegacy": {"forwardCompat": false, "backCompat": false},
+      "TypeAliasDeclaration_RangeStackMap": {"backCompat": false},
+      "InterfaceDeclaration_ReferencePosition": {"backCompat": false}
     }
   }
 }
