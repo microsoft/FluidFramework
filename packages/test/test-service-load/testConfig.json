@@ -3,7 +3,7 @@
         "ci": {
             "opRatePerMin": 10,
             "progressIntervalMs": 15000,
-            "numClients": 120,
+            "numClients": 100,
             "totalSendCount": 10000,
             "totalBlobCount": 480,
             "blobSize": 256,
