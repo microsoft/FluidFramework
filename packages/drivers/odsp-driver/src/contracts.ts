@@ -25,7 +25,11 @@ export interface ISnapshotTreeEx {
  * Socket storage discovery api response
  */
 export interface ISocketStorageDiscovery {
-    // The id of the web socket
+    /**
+     * relaySessionId - identifies relay service session for this document.
+     * There is at most one session per document at any given time.
+     * Same as ITokenClaims.documentId, IConnect.id
+     */
     id: string;
 
     // SPO gives us runtimeTenantId, we remap it to tenantId
