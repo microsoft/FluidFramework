@@ -7,10 +7,10 @@ import {
     ICombiningOp,
     IMergeTreeInsertMsg,
     IMergeTreeRemoveMsg,
+    IMergeTreeTextHelper,
     IRelativePosition,
     ISegment,
     Marker,
-    MergeTreeTextHelper,
     PropertySet,
     ReferencePosition,
     ReferenceType,
@@ -81,7 +81,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this;
     }
 
-    private readonly mergeTreeTextHelper: MergeTreeTextHelper;
+    private readonly mergeTreeTextHelper: IMergeTreeTextHelper;
 
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
         super(document, id, attributes, SharedStringFactory.segmentFromSpec);

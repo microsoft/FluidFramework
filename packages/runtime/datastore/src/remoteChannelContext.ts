@@ -69,7 +69,7 @@ export class RemoteChannelContext implements IChannelContext {
         getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase>,
         private readonly attachMessageType?: string,
     ) {
-        assert(!this.id.includes("/"), "Channel context ID cannot contain slashes");
+        assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
 
         this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
 
@@ -194,11 +194,11 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new DataCorruptionError("channelTypeNotAvailable", {
                     channelId: {
                         value: this.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                 });
@@ -209,11 +209,11 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
                     channelId: {
                         value: this.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: this.attachMessageType,
@@ -227,11 +227,11 @@ export class RemoteChannelContext implements IChannelContext {
                 throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
                     channelId: {
                         value: this.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStoreId: {
                         value: this.dataStoreContext.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                     dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
                     channelFactoryType: attributes.type,
@@ -245,14 +245,14 @@ export class RemoteChannelContext implements IChannelContext {
                 this.subLogger.sendTelemetryEvent(
                     {
                         eventName: "ChannelAttributesVersionMismatch",
-                        channelType: { value: attributes.type, tag: TelemetryDataTag.PackageData },
+                        channelType: { value: attributes.type, tag: TelemetryDataTag.CodeArtifact },
                         channelSnapshotVersion: {
                             value: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
-                            tag: TelemetryDataTag.PackageData,
+                            tag: TelemetryDataTag.CodeArtifact,
                         },
                         channelCodeVersion: {
                             value: `${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`,
-                            tag: TelemetryDataTag.PackageData,
+                            tag: TelemetryDataTag.CodeArtifact,
                         },
                     },
                 );
@@ -305,7 +305,7 @@ export class RemoteChannelContext implements IChannelContext {
 
     public updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number) {
         /**
-         * Currently, DDSs are always considered referenced and are not garbage collected. Update the summarizer node's
+         * Currently, DDSes are always considered referenced and are not garbage collected. Update the summarizer node's
          * used routes to contain a route to this channel context.
          * Once we have GC at DDS level, this will be updated to use the passed usedRoutes. See -
          * https://github.com/microsoft/FluidFramework/issues/4611

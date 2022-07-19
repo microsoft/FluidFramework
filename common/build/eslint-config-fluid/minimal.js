@@ -224,6 +224,7 @@ module.exports = {
         // #endregion
 
         "@typescript-eslint/prefer-includes": "error",
+        "@typescript-eslint/prefer-nullish-coalescing": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
     },
     "overrides": [
@@ -244,6 +245,7 @@ module.exports = {
             // Rules only for test files
             "files": ["*.spec.ts", "src/test/**"],
             "rules": {
+                "@typescript-eslint/no-invalid-this": "off",
                 "@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
             }
         },
@@ -253,8 +255,6 @@ module.exports = {
             "rules": {
                 "@typescript-eslint/comma-spacing": "off",
                 "@typescript-eslint/consistent-type-imports": "off",
-                "@typescript-eslint/no-explicit-any": "off",
-                "@typescript-eslint/no-unsafe-argument": "off",
                 "max-lines": "off",
             }
         },

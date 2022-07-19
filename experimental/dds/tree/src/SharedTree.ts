@@ -35,6 +35,7 @@ import {
 	OpSpaceNodeId,
 	isDetachedSequenceId,
 	AttributionId,
+	SessionId,
 } from './Identifiers';
 import { initialTree } from './InitialTree';
 import {
@@ -345,6 +346,18 @@ export type SequencedEditAppliedHandler = (args: SequencedEditAppliedEventArgume
 const sharedTreeTelemetryProperties: ITelemetryLoggerPropertyBags = { all: { isSharedTreeEvent: true } };
 
 /**
+ * Contains information resulting from processing stashed shared tree ops
+ * @public
+ */
+export interface StashedLocalOpMetadata {
+	/** A modified version of the edit in an edit op that should be resubmitted rather than the original edit */
+	transformedEdit?: Edit<ChangeInternal>;
+}
+
+/** The SessionId of the temporary IdCompressor that records stashed ops */
+const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
+
+/**
  * A [distributed tree](../Readme.md).
  * @public
  */
@@ -416,6 +429,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		normalizeToOpSpace: (id) => this.idCompressor.normalizeToOpSpace(id) as OpSpaceNodeId,
 		normalizeToSessionSpace: (id, sessionId) => this.idCompressor.normalizeToSessionSpace(id, sessionId) as NodeId,
 	};
+	/** Temporarily created to apply stashed ops from a previous session */
+	private stashedIdCompressor?: IdCompressor | null;
 
 	// The initial tree's definition isn't included in any op by default but it should still be interned. Including it here ensures that.
 	private interner: MutableStringInterner = new MutableStringInterner([initialTree.definition]);
@@ -439,7 +454,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return this.cachingLogViewer;
 	}
 
-	protected readonly logger: ITelemetryLogger;
+	/**
+	 * logger for SharedTree events.
+	 */
+	public readonly logger: ITelemetryLogger;
 	private readonly sequencedEditAppliedLogger: ITelemetryLogger;
 
 	private readonly encoder_0_0_2: SharedTreeEncoder_0_0_2;
@@ -785,7 +803,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @internal
 	 */
 	public saveSerializedSummary(options?: { serializer?: IFluidSerializer }): string {
-		const { serializer } = options || {};
+		const { serializer } = options ?? {};
 		return serialize(this.saveSummary(), serializer ?? this.serializer, this.handle);
 	}
 
@@ -1549,20 +1567,21 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 *
 	 * @param content - op to apply locally.
 	 */
-	protected applyStashedOp(op: unknown): void {
+	protected applyStashedOp(op: unknown): StashedLocalOpMetadata {
+		// In some scenarios, edit ops need to have their edits transformed before application and resubmission. The transformation
+		// occurs in this method, and the result is passed to `resubmitCore` via the return value of this function.
 		const sharedTreeOp = op as SharedTreeOp | SharedTreeOp_0_0_2;
 		switch (sharedTreeOp.type) {
 			case SharedTreeOpType.Edit: {
+				let stashedEdit: Edit<ChangeInternal> | undefined;
 				switch (this.writeFormat) {
 					case WriteFormat.v0_0_2:
 						switch (sharedTreeOp.version) {
 							case WriteFormat.v0_0_2: {
-								const edit = this.parseSequencedEdit(sharedTreeOp);
-								this.applyEditLocally(edit, undefined);
+								stashedEdit = this.parseSequencedEdit(sharedTreeOp);
 								break;
 							}
 							case WriteFormat.v0_1_1:
-								// TODO:#74390: Implement
 								fail('Received stashed op 0.1.1 before upgrade');
 							default:
 								fail('Unknown version');
@@ -1570,28 +1589,90 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 						break;
 					case WriteFormat.v0_1_1:
 						switch (sharedTreeOp.version) {
-							case WriteFormat.v0_0_2:
-								// TODO:#74390: Implement
-								fail('v0.1.1 does not support stashed ops.');
-							case WriteFormat.v0_1_1:
-								// TODO:#74390: Implement
-								fail('v0.1.1 does not support stashed ops.');
+							case WriteFormat.v0_0_2: {
+								// Use the IDs from the stashed ops as overrides for the equivalent new ops
+								stashedEdit = convertEditIds(sharedTreeOp.edit, (id) => this.generateNodeId(id));
+								break;
+							}
+							case WriteFormat.v0_1_1: {
+								assert(this.stashedIdCompressor !== null, 'Stashed op applied after expected window');
+								if (this.stashedIdCompressor === undefined) {
+									// Use a temporary compressor that will help translate the stashed ops
+									this.stashedIdCompressor = IdCompressor.deserialize(
+										this.idCompressor.serialize(false),
+										stashedSessionId,
+										sharedTreeOp.idRange.attributionId
+									);
+									// Once all stashed ops have been applied, clear the temporary state
+									this.runtime.on('connected', () => {
+										this.stashedIdCompressor = null;
+									});
+								}
+								// Pretend (from the perspective of the temporary compressor) that the stashed ops have been sequenced
+								this.stashedIdCompressor.finalizeCreationRange(sharedTreeOp.idRange);
+								const stashedIdContext = getNodeIdContext(this.stashedIdCompressor);
+								// Use a normalizer to translate all node IDs in the stashed ops
+								const normalizer: NodeIdNormalizer<OpSpaceNodeId> = {
+									localSessionId: this.idCompressor.localSessionId,
+									normalizeToSessionSpace: (id, _sessionId) => {
+										// Interpret the IDs from the stashed ops as stable IDs, and use those as overrides for the equivalent new ops
+										const sessionSpaceId = stashedIdContext.normalizeToSessionSpace(
+											id,
+											sharedTreeOp.idRange.sessionId
+										);
+										return this.generateNodeId(
+											stashedIdContext.convertToStableNodeId(sessionSpaceId)
+										);
+									},
+									normalizeToOpSpace: (id) => this.idNormalizer.normalizeToOpSpace(id),
+								};
+
+								stashedEdit = this.encoder_0_1_1.decodeEditOp(
+									sharedTreeOp,
+									this.encodeSemiSerializedEdit.bind(this),
+									normalizer,
+									this.interner
+								);
+								break;
+							}
 							default:
 								fail('Unknown version');
 						}
+						break;
 					default:
 						fail('Unknown version');
 				}
-				break;
+				this.applyEditLocally(stashedEdit, undefined);
+				return { transformedEdit: stashedEdit };
 			}
 			// Handle and update ops are only acknowledged by the client that generated them upon sequencing--no local changes necessary.
 			case SharedTreeOpType.Handle:
 			case SharedTreeOpType.Update:
 			case SharedTreeOpType.NoOp:
-				break;
+				return {};
 			default:
 				fail('Unrecognized op');
 		}
+	}
+
+	protected reSubmitCore(op: unknown, localOpMetadata?: StashedLocalOpMetadata): void {
+		const sharedTreeOp = op as SharedTreeOp | SharedTreeOp_0_0_2;
+		switch (sharedTreeOp.type) {
+			case SharedTreeOpType.Edit:
+				if (compareSummaryFormatVersions(sharedTreeOp.version, this.writeFormat) > 0) {
+					fail('Attempted to resubmit op of version newer than current version');
+				} else if (localOpMetadata?.transformedEdit !== undefined) {
+					// Optimization: stashed 0.0.2 ops require no transformation in 0.0.2; don't re-encode
+					if (this.writeFormat !== WriteFormat.v0_0_2 || sharedTreeOp.version !== WriteFormat.v0_0_2) {
+						this.submitEditOp(localOpMetadata.transformedEdit);
+						return;
+					}
+				}
+				break;
+			default:
+				break;
+		}
+		super.reSubmitCore(sharedTreeOp, localOpMetadata);
 	}
 
 	private changeWriteFormat(newFormat: WriteFormat): void {

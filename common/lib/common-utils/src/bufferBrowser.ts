@@ -31,7 +31,9 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
 }
 
 /**
- * Convert base64 or utf8 string to array buffer
+ * Converts a {@link https://en.wikipedia.org/wiki/Base64 | base64} or
+ * {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8} string to array buffer.
+ *
  * @param encoding - input string's encoding
  */
 export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike =>

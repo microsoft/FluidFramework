@@ -20,6 +20,7 @@ import { IQuorumProposalsEvents } from '@fluidframework/protocol-definitions';
 import { ISequencedClient } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
+import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { ITree as ITree_2 } from '@fluidframework/gitresources';
@@ -89,6 +90,8 @@ export interface IProtocolHandler {
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
+    processSignal(message: ISignalMessage): any;
+    // (undocumented)
     readonly quorum: IQuorum;
     // (undocumented)
     setConnectionState(connected: boolean, clientId: string | undefined): any;
@@ -142,9 +145,9 @@ export class ProtocolOpHandler implements IProtocolHandler {
     // (undocumented)
     processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
     // (undocumented)
-    get quorum(): Quorum;
+    processSignal(_message: ISignalMessage): void;
     // (undocumented)
-    readonly _quorum: Quorum;
+    get quorum(): Quorum;
     // (undocumented)
     sequenceNumber: number;
     // (undocumented)
@@ -153,12 +156,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
     snapshot(): IQuorumSnapshot;
     // (undocumented)
     readonly term: number;
-}
-
-// @public (undocumented)
-export class ProtocolOpHandlerWithClientValidation extends ProtocolOpHandler {
-    // (undocumented)
-    processMessage(message: ISequencedDocumentMessage, local: boolean): IProcessMessageResult;
 }
 
 // @public

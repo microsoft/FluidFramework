@@ -97,7 +97,7 @@ export class Timer implements ITimer {
     /**
      * Returns true if the timer is running.
      */
-    public get hasTimer() {
+    public get hasTimer(): boolean {
         return !!this.runningState;
     }
 
@@ -106,21 +106,21 @@ export class Timer implements ITimer {
     constructor(
         private readonly defaultTimeout: number,
         private readonly defaultHandler: () => void,
-        private readonly getCurrentTick: () => number = () => Date.now()) { }
+        private readonly getCurrentTick: () => number = (): number => Date.now()) { }
 
     /**
      * Calls setTimeout and tracks the resulting timeout.
      * @param ms - overrides default timeout in ms
      * @param handler - overrides default handler
      */
-    public start(ms: number = this.defaultTimeout, handler: () => void = this.defaultHandler) {
+    public start(ms: number = this.defaultTimeout, handler: () => void = this.defaultHandler): void {
         this.startCore(ms, handler, ms);
     }
 
     /**
      * Calls clearTimeout on the underlying timeout if running.
      */
-    public clear() {
+    public clear(): void {
         if (!this.runningState) {
             return;
         }
@@ -137,7 +137,7 @@ export class Timer implements ITimer {
      * @param ms - overrides previous or default timeout in ms
      * @param handler - overrides previous or default handler
      */
-    public restart(ms?: number, handler?: () => void) {
+    public restart(ms?: number, handler?: () => void): void {
         if (!this.runningState) {
             // If restart is called first, it behaves as a call to start
             this.start(ms, handler);
@@ -167,7 +167,7 @@ export class Timer implements ITimer {
         }
     }
 
-    private startCore(duration: number, handler: () => void, intendedDuration: number) {
+    private startCore(duration: number, handler: () => void, intendedDuration: number): void {
         this.clear();
         this.runningState = {
             startTick: this.getCurrentTick(),
@@ -186,7 +186,7 @@ export class Timer implements ITimer {
         };
     }
 
-    private handler() {
+    private handler(): void {
         assert(!!this.runningState, 0x00a /* "Running timer missing handler" */);
         const restart = this.runningState.restart;
         if (restart !== undefined) {
@@ -233,7 +233,10 @@ export class PromiseTimer implements IPromiseTimer {
     private deferred?: Deferred<IPromiseTimerResult>;
     private readonly timer: Timer;
 
-    public get hasTimer() {
+    /**
+     * {@inheritDoc Timer.hasTimer}
+     */
+    public get hasTimer(): boolean {
         return this.timer.hasTimer;
     }
 
@@ -244,14 +247,17 @@ export class PromiseTimer implements IPromiseTimer {
         this.timer = new Timer(defaultTimeout, () => this.wrapHandler(defaultHandler));
     }
 
+    /**
+     * {@inheritDoc IPromiseTimer.start}
+     */
     public async start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult> {
         this.clear();
         this.deferred = new Deferred<IPromiseTimerResult>();
-        this.timer.start(ms, handler ? () => this.wrapHandler(handler) : undefined);
+        this.timer.start(ms, handler ? (): void => this.wrapHandler(handler) : undefined);
         return this.deferred.promise;
     }
 
-    public clear() {
+    public clear(): void {
         this.timer.clear();
         if (this.deferred) {
             this.deferred.resolve({ timerResult: "cancel" });
@@ -259,7 +265,7 @@ export class PromiseTimer implements IPromiseTimer {
         }
     }
 
-    protected wrapHandler(handler: () => void) {
+    protected wrapHandler(handler: () => void): void {
         handler();
         assert(!!this.deferred, 0x00b /* "Handler executed without deferred" */);
         this.deferred.resolve({ timerResult: "timeout" });

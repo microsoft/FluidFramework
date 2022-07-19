@@ -108,7 +108,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
                 fileName,
                 summarizer: false,
                 codeHint: {
-                    containerPackageName: packageName ? packageName : undefined,
+                    containerPackageName: packageName ?? undefined,
                 },
                 fileVersion: undefined,
                 shareLinkInfo,
