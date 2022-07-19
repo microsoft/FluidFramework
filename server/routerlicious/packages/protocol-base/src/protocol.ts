@@ -15,7 +15,6 @@ import {
     ISequencedDocumentSystemMessage,
     ISequencedProposal,
     MessageType,
-    ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
