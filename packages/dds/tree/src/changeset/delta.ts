@@ -334,7 +334,7 @@ export type ProtoField = ProtoNode[];
 /**
  * Uniquely identifies a MoveOut/MoveIn pair within a delta.
  */
-export type MoveId = Opaque<Brand<number, "delta.MoveId">>;
+export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 
 export type Offset = number;
 

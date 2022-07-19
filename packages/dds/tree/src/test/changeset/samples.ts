@@ -4,7 +4,7 @@
  */
 
 import { Effects, Transposed as T, Sequenced as S, Tiebreak, NodeId } from "../../changeset";
-import { brand, brandOpaque } from "../../util";
+import { brandOpaque } from "../../util";
 
 const id = (str: string): NodeId => brandOpaque<NodeId>(str);
 
