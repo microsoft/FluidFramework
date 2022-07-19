@@ -48,7 +48,7 @@ import { createNewFluidFile } from "./createFile";
 // Please update the README file in odsp-driver-definitions if you change the defaultCacheExpiryTimeoutMs.
 export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
 
-const defaultStoragePolicy: Required<IDocumentStorageServicePolicies> = {
+export const defaultStoragePolicy: Required<IDocumentStorageServicePolicies> = {
     // By default, ODSP tells the container not to prefetch/cache.
     caching: LoaderCachingPolicy.NoCaching,
 

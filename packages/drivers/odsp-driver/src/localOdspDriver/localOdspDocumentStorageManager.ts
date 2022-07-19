@@ -14,6 +14,7 @@ import { IOdspSnapshot } from "../contracts";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser";
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser";
 import { ReadBuffer } from "../ReadBufferUtils";
+import { defaultStoragePolicy } from "../odspDocumentServiceFactoryCore";
 
 /**
  * ODSP document storage service that works on a provided snapshot for all its processing.
@@ -26,7 +27,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
         private readonly logger: ITelemetryLogger,
         private readonly localSnapshot: Uint8Array | string,
     ) {
-        super();
+        super(defaultStoragePolicy);
     }
 
     private calledGetVersions = false;
