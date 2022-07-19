@@ -17,9 +17,10 @@ import { detectVersionScheme } from "./schemes";
  *
  * @param range - A dependency range string to increment.
  * @param bumpType - The type of bump.
+ * @param prerelease - If true, will bump to a prerelease version.
  * @returns a bumped range string.
  */
-export function incRange(range: string, bumpType: VersionBumpType): string {
+export function incRange(range: string, bumpType: VersionBumpType, prerelease = false): string {
     if (semver.validRange(range) === null) {
         throw new Error(`${range} is not a valid semver range.`);
     }
@@ -39,17 +40,10 @@ export function incRange(range: string, bumpType: VersionBumpType): string {
             if (newVersion === null) {
                 throw new Error(`Failed to increment ${original}.`);
             }
-            return `${isPreciseVersion ? "" : operator}${newVersion}`;
+            return `${isPreciseVersion ? "" : operator}${newVersion}${prerelease ? "-0" : ""}`;
         }
 
         case "internal": {
-            // let bumpTypeToApply = bumpType;
-            // if (bumpType === "major") {
-            //     console.warn(
-            //         `WARNING: Can't do a major bump on the internal version scheme. Treating as a minor bump.`
-            //     );
-            //     bumpTypeToApply = "minor";
-            // }
             const constraintType = detectConstraintType(range);
             const original = semver.minVersion(range);
             if (original === null) {

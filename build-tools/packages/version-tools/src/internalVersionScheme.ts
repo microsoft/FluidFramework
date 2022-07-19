@@ -165,7 +165,6 @@ export function bumpInternalVersion(
     bumpType: VersionBumpType,
 ): semver.SemVer {
     validateVersionScheme(version);
-
     const [pubVer, intVer] = fromInternalScheme(version);
     const newIntVer = intVer.inc(bumpType);
     return toInternalScheme(pubVer, newIntVer);
