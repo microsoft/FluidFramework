@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -54,6 +56,8 @@ const ensureMigrated = async (bootLoader: BootLoader, app: IMigratable) => {
     }
     const extractedData = await app.exportStringData();
     // Possibly transform the extracted data here
+    // It's possible that our bootLoader is older and doesn't understand the new acceptedVersion.  Probably
+    // should gracefully fail quietly in this case, or find a way to get the new BootLoader.
     const { app: migratedApp, attach } = await bootLoader.createDetached(acceptedVersion);
     await migratedApp.importStringData(extractedData);
     // Maybe here apply the extracted data instead of passing it into createDetached
@@ -79,6 +83,48 @@ const ensureMigrated = async (bootLoader: BootLoader, app: IMigratable) => {
     // If we don't win the race to set the container, it is the wrong container/app to use anyway
     // And the loader is probably caching the container anyway too.
 };
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface IMigratorEvents extends IEvent {
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface IMigrator extends IEventProvider<IMigratorEvents> {
+}
+
+class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
+    private _currentApp: IApp;
+    public get currentApp() {
+        return this._currentApp;
+    }
+
+    public constructor(private readonly bootLoader: BootLoader, initialApp: IApp) {
+        super();
+        this._currentApp = initialApp;
+        this.watchAppForMigration();
+    }
+
+    private watchAppForMigration() {
+        const app = this._currentApp;
+        app.on("migrationStateChanged", (migrationState: MigrationState) => {
+            if (migrationState === MigrationState.ended) {
+                const migratedId = app.newContainerId;
+                if (migratedId === undefined) {
+                    throw new Error("Migration ended without a new container being created");
+                }
+                this.bootLoader.loadExisting(migratedId).then((migratedApp: IApp) => {
+                    this._currentApp = migratedApp;
+                    this.watchAppForMigration();
+                    this.emit("appMigrated", this._currentApp, migratedId);
+                    app.close();
+                }).catch(console.error);
+            } else if (migrationState === MigrationState.migrating) {
+                this.emit("appMigrating");
+                ensureMigrated(this.bootLoader, app).catch(console.error);
+            }
+        });
+    }
+}
 
 async function start(): Promise<void> {
     let id: string;
@@ -110,27 +156,11 @@ async function start(): Promise<void> {
 
     // Note - here I proceed to rendering, but instead we could just propose the new version without rendering
 
-    const watchForAppMigration = (_app: IApp) => {
-        _app.on("migrationStateChanged", (migrationState: MigrationState) => {
-            if (migrationState === MigrationState.ended) {
-                const migratedId = _app.newContainerId;
-                if (migratedId === undefined) {
-                    throw new Error("Migration ended without a new container being created");
-                }
-                bootLoader.loadExisting(migratedId).then((migratedApp: IApp) => {
-                    // bootLoader.getView(migratedApp) ???
-                    watchForAppMigration(migratedApp);
-                    renderApp(migratedApp);
-                    updateTabForId(migratedId);
-                    _app.close();
-                }).catch(console.error);
-            } else if (migrationState === MigrationState.migrating) {
-                ensureMigrated(bootLoader, _app).catch(console.error);
-            }
-        });
-    };
-
-    watchForAppMigration(app);
+    const migrator = new Migrator(bootLoader, app);
+    migrator.on("appMigrated", (newApp: IApp, newAppId: string) => {
+        renderApp(newApp);
+        updateTabForId(newAppId);
+    });
 
     // bootLoader.getView(initialApp) ???
     // viewLoader?
