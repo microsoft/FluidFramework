@@ -11,6 +11,7 @@ import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
 import { IdentityType } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
+import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IEntry } from '@fluidframework/odsp-driver-definitions';
 import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import type { io } from 'socket.io-client';
@@ -54,6 +55,12 @@ export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
 
 // @public (undocumented)
 export const currentReadVersion = "1.0";
+
+// @public (undocumented)
+export const defaultCacheExpiryTimeoutMs: number;
+
+// @public (undocumented)
+export const defaultStoragePolicy: Required<IDocumentStorageServicePolicies>;
 
 // @public
 export function encodeOdspFluidDataStoreLocator(locator: OdspFluidDataStoreLocator): string;

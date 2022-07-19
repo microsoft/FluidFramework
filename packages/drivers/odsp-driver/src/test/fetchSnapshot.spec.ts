@@ -18,6 +18,7 @@ import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager";
+import { defaultStoragePolicy } from "../odspDocumentServiceFactoryCore";
 import { createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache();
@@ -87,7 +88,7 @@ describe("Tests for snapshot fetch", () => {
             logger,
             true,
             { ...nonPersistentCache, persistedCache: epochTracker },
-            hostPolicy,
+            { hostPolicy, storagePolicy: defaultStoragePolicy },
             epochTracker,
             async () => { return {}; },
             () => "tenantid/id",

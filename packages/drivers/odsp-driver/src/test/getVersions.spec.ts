@@ -3,13 +3,15 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
+
 import { strict as assert } from "assert";
 import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import {
     IOdspResolvedUrl,
     ICacheEntry,
 } from "@fluidframework/odsp-driver-definitions";
-import { EpochTracker, defaultCacheExpiryTimeoutMs } from "../epochTracker";
+import { EpochTracker } from "../epochTracker";
 import {
     IOdspSnapshot,
     HostStoragePolicyInternal,
@@ -22,6 +24,7 @@ import { createOdspUrl } from "../createOdspUrl";
 import { getHashedDocumentId, ISnapshotContents } from "../odspPublicUtils";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver";
 import { OdspDocumentStorageService, defaultSummarizerCacheExpiryTimeout } from "../odspDocumentStorageManager";
+import { defaultCacheExpiryTimeoutMs, defaultStoragePolicy } from "../odspDocumentServiceFactoryCore";
 import { mockFetchSingle, notFound, createResponse } from "./mockFetch";
 
 const createUtLocalCache = () => new LocalPersistentCache();
@@ -122,7 +125,7 @@ describe("Tests for snapshot fetch", () => {
                 logger,
                 true,
                 { ...nonPersistentCache, persistedCache: epochTracker },
-                GetHostStoragePolicyInternal(),
+                { hostPolicy: GetHostStoragePolicyInternal(), storagePolicy: defaultStoragePolicy },
                 epochTracker,
                 async () => { return {}; },
                 () => "tenantid/id",
@@ -264,7 +267,7 @@ describe("Tests for snapshot fetch", () => {
                 logger,
                 true,
                 { ...nonPersistentCache, persistedCache: epochTracker },
-                GetHostStoragePolicyInternal(true /* isSummarizer */),
+                { hostPolicy: GetHostStoragePolicyInternal(true /* isSummarizer */), storagePolicy: defaultStoragePolicy },
                 epochTracker,
                 async () => { return {}; },
                 () => "tenantid/id",
