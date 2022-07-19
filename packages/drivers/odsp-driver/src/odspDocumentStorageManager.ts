@@ -10,13 +10,13 @@ import {
     delay,
 } from "@fluidframework/common-utils";
 import {
-    mixinMonitoringContext,
     PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
     DriverErrorType,
+    IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
@@ -84,23 +84,22 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
     // limits the amount of parallel "attachment" blob uploads
     private readonly createBlobRateLimiter = new RateLimiter(1);
 
-    private get logger(): ITelemetryLogger { return this.mc.logger; }
+    private readonly hostPolicy: HostStoragePolicyInternal;
 
     constructor(
         private readonly odspResolvedUrl: IOdspResolvedUrl,
         private readonly getStorageToken: InstrumentedStorageTokenFetcher,
-        logger: ITelemetryLogger,
+        private readonly logger: ITelemetryLogger,
         private readonly fetchFullSnapshot: boolean,
         private readonly cache: IOdspCache,
-        private readonly hostPolicy: HostStoragePolicyInternal,
+        allPolicies: { hostPolicy: HostStoragePolicyInternal; storagePolicy: IDocumentStorageServicePolicies; },
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
         private readonly relayServiceTenantAndSessionId: () => string,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
-        super(mixinMonitoringContext(logger));
-
-        epochTracker.initializePolicies(this.policies);
+        super(allPolicies.storagePolicy);
+        this.hostPolicy = allPolicies.hostPolicy;
 
         this.documentId = this.odspResolvedUrl.hashedDocumentId;
         this.snapshotUrl = this.odspResolvedUrl.endpoints.snapshotStorageUrl;
