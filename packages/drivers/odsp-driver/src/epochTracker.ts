@@ -16,7 +16,7 @@ import {
     IPersistedCache,
     IOdspError,
 } from "@fluidframework/odsp-driver-definitions";
-import { DriverErrorType, IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, fetchHelper, getOdspResolvedUrl, IOdspResponse } from "./odspUtils";
 import {
@@ -27,7 +27,7 @@ import {
 import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { defaultCacheExpiryTimeoutMs } from "./odspDocumentStorageServiceBase";
+import { defaultCacheExpiryTimeoutMs } from "./odspDocumentServiceFactoryCore";
 
 export type FetchType = "blob" | "createBlob" | "createFile" | "joinSession" | "ops" | "test" | "snapshotTree" |
     "treesLatest" | "uploadSummary" | "push" | "versions";
@@ -44,7 +44,6 @@ export const Odsp409Error = "Odsp409Error";
  */
 export class EpochTracker implements IPersistedFileCache {
     private _fluidEpoch: string | undefined;
-    private policies: { maximumCacheDurationMs: number; _initialized: boolean; };
 
     public readonly rateLimiter: RateLimiter;
     private readonly driverId = uuid();
@@ -55,16 +54,10 @@ export class EpochTracker implements IPersistedFileCache {
         protected readonly fileEntry: IFileEntry,
         protected readonly logger: ITelemetryLogger,
         protected readonly clientIsSummarizer?: boolean,
+        private readonly maximumCacheDurationMs: number = defaultCacheExpiryTimeoutMs,
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
-        this.policies = { maximumCacheDurationMs: NaN, _initialized: false };
-    }
-
-    public initializePolicies(policies: IDocumentStorageServicePolicies) {
-        assert(!this.policies._initialized, "Cannot initialize policies twice");
-        this.policies._initialized = true;
-        this.policies.maximumCacheDurationMs = policies.maximumCacheDurationMs ?? defaultCacheExpiryTimeoutMs;
     }
 
     // public for UT purposes only!
@@ -106,12 +99,12 @@ export class EpochTracker implements IPersistedFileCache {
             if (entry.type === snapshotKey) {
                 const cacheTime = value.value?.cacheEntryTime;
                 const currentTime = Date.now();
-                if (cacheTime === undefined || currentTime - cacheTime >= this.policies.maximumCacheDurationMs) {
+                if (cacheTime === undefined || currentTime - cacheTime >= this.maximumCacheDurationMs) {
                     this.logger.sendTelemetryEvent(
                         {
                             eventName: "odspVersionsCacheExpired",
                             duration: currentTime - cacheTime,
-                            maxCacheAgeMs: this.policies.maximumCacheDurationMs,
+                            maxCacheAgeMs: this.maximumCacheDurationMs,
                         });
                     await this.removeEntries();
                     return undefined;
@@ -488,8 +481,15 @@ export function createOdspCacheAndTracker(
     nonpersistentCache: INonPersistentCache,
     fileEntry: IFileEntry,
     logger: ITelemetryLogger,
-    clientIsSummarizer?: boolean): ICacheAndTracker {
-    const epochTracker = new EpochTrackerWithRedemption(persistedCacheArg, fileEntry, logger, clientIsSummarizer);
+    clientIsSummarizer?: boolean,
+    maximumCacheDurationMs: number = defaultCacheExpiryTimeoutMs,
+): ICacheAndTracker {
+    const epochTracker = new EpochTrackerWithRedemption(
+        persistedCacheArg,
+        fileEntry,
+        logger,
+        clientIsSummarizer,
+        maximumCacheDurationMs);
     return {
         cache: {
             ...nonpersistentCache,
