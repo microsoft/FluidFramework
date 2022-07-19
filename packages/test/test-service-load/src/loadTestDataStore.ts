@@ -20,6 +20,7 @@ import { delay, assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
+import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 export interface IRunConfig {
     runId: number;
@@ -134,7 +135,7 @@ export class LoadTestDataStoreModel {
         root: ISharedDirectory,
         runtime: IFluidDataStoreRuntime,
         containerRuntime: IContainerRuntimeBase,
-        logger,
+        logger: TelemetryLogger,
     ) {
         await LoadTestDataStoreModel.waitForCatchup(runtime);
 
@@ -204,7 +205,7 @@ export class LoadTestDataStoreModel {
         public readonly counter: ISharedCounter,
         private readonly runDir: IDirectory,
         private readonly gcDataStoreHandle: IFluidHandle,
-        private readonly logger,
+        private readonly logger: TelemetryLogger,
     ) {
         const halfClients = Math.floor(this.config.testConfig.numClients / 2);
         // The runners are paired up and each pair shares a single taskId
@@ -257,7 +258,7 @@ export class LoadTestDataStoreModel {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     this.root.get<IFluidHandle>(v.key)!.get().catch((error) => {
                         this.logger.sendErrorEvent({
-                            eventName: "hi",
+                            eventName: "ReadBlobFailed_OnValueChanged",
                             key: v.key,
                         }, error);
                     });
@@ -268,7 +269,7 @@ export class LoadTestDataStoreModel {
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                      this.root.get<IFluidHandle>(key)!.get().catch((error) => {
                         this.logger.sendErrorEvent({
-                            eventName: "hi",
+                            eventName: "ReadBlobFailed",
                             key,
                         }, error);
                     });
@@ -307,7 +308,6 @@ export class LoadTestDataStoreModel {
             assert(buffer.byteLength === blobSize, "incorrect buffer size");
             const handle = await this.runtime.uploadBlob(buffer);
             this.root.set(this.blobKey(blobNumber), handle);
-            console.log("write");
         }
     }
 
@@ -430,7 +430,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         );
     }
 
-    public async run(config: IRunConfig, reset: boolean, logger) {
+    public async run(config: IRunConfig, reset: boolean, logger: TelemetryLogger) {
         const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
             config, reset, this.root, this.runtime, this.context.containerRuntime, logger);
 

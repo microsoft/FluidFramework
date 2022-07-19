@@ -142,12 +142,12 @@ export async function initialize(testDriver: ITestDriver, seed: number, testConf
         generateConfigurations(seed, testConfig?.optionOverrides?.[optionsOverride]?.configurations));
 
     const logger = ChildLogger.create(await loggerP, undefined,
-        {
-            all: {
-                driverType: testDriver.type,
-                driverEndpointName: testDriver.endpointName,
-            },
-        });
+    {
+        all: {
+            driverType: testDriver.type,
+            driverEndpointName: testDriver.endpointName,
+        },
+    });
     // Construct the loader
     const loader = new Loader({
         urlResolver: testDriver.createUrlResolver(),
