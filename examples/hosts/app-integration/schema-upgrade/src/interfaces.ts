@@ -32,11 +32,6 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
      */
     readonly version: string;
     /**
-     * Initialize must be called after constructing the IApp.  This is where we do whatever async stuff is needed
-     * to prepare a sync API surface on the app.
-     */
-    initialize: () => Promise<void>;
-    /**
      * importStringData must be called after initialization but before modifying or attaching the app (i.e. can only
      * be called on an unaltered, detached app).  Here I use a string as the export/import format, but it could be
      * some other format if you prefer.
@@ -78,6 +73,11 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
 export interface IAppEvents extends IMigrationEvents { }
 
 export interface IApp extends IMigratable, IEventProvider<IAppEvents> {
+    /**
+     * Initialize must be called after constructing the IApp.  This is where we do whatever async stuff is needed
+     * to prepare a sync API surface on the app.
+     */
+    initialize: () => Promise<void>;
     /**
      * An inventory tracker list, which is the relevant data for this particular IApp.
      */

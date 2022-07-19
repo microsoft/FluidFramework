@@ -67,13 +67,11 @@ async function start(): Promise<void> {
         id = await createResponse.attach();
     } else {
         id = location.hash.substring(1);
-        // here won't know the exact type of the app yet though
-        // Might not matter if the pattern is to say "if (old) then upgrade() else <now I know the type>"
-        // Or could include a version on the app object
         app = await bootLoader.loadExisting(id);
     }
 
     // Note - here I proceed to rendering, but instead we could just propose the new version without rendering
+    // if we decide the current version is too old.
 
     const migrator = new Migrator(bootLoader, app);
     migrator.on("appMigrated", (newApp: IApp, newAppId: string) => {

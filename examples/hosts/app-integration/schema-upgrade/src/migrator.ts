@@ -9,15 +9,15 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { BootLoader } from "./bootLoader";
 import { IApp, IMigratable, MigrationState } from "./interfaces";
 
-const ensureMigrated = async (bootLoader: BootLoader, app: IMigratable) => {
-    const acceptedVersion = app.acceptedVersion;
+const ensureMigrated = async (bootLoader: BootLoader, migratable: IMigratable) => {
+    const acceptedVersion = migratable.acceptedVersion;
     if (acceptedVersion === undefined) {
         throw new Error("Cannot ensure migrated before code details are accepted");
     }
     if (acceptedVersion !== "one" && acceptedVersion !== "two") {
         throw new Error("Unknown accepted version");
     }
-    const extractedData = await app.exportStringData();
+    const extractedData = await migratable.exportStringData();
     // Possibly transform the extracted data here
     // It's possible that our bootLoader is older and doesn't understand the new acceptedVersion.  Probably
     // should gracefully fail quietly in this case, or find a way to get the new BootLoader.
@@ -27,7 +27,7 @@ const ensureMigrated = async (bootLoader: BootLoader, app: IMigratable) => {
 
     // Before attaching, let's check to make sure no one else has already done the migration
     // To avoid creating unnecessary extra containers.
-    if (app.getMigrationState() === MigrationState.ended) {
+    if (migratable.getMigrationState() === MigrationState.ended) {
         return;
     }
 
@@ -36,12 +36,12 @@ const ensureMigrated = async (bootLoader: BootLoader, app: IMigratable) => {
     const containerId = await attach();
 
     // Again, it could be the case that someone else finished the migration during our attach.
-    if (app.getMigrationState() === MigrationState.ended) {
+    if (migratable.getMigrationState() === MigrationState.ended) {
         return;
     }
 
     // TODO: Maybe need retry here.
-    app.finalizeMigration(containerId);
+    migratable.finalizeMigration(containerId);
     // Here we let the newly created container/app fall out of scope intentionally.
     // If we don't win the race to set the container, it is the wrong container/app to use anyway
     // And the loader is probably caching the container anyway too.
@@ -60,6 +60,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     public get currentApp() {
         return this._currentApp;
     }
+
+    // Maybe also have a prop for the id and the current MigrationState?
 
     public constructor(private readonly bootLoader: BootLoader, initialApp: IApp) {
         super();
