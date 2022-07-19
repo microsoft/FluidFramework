@@ -66,11 +66,13 @@ const defaultStoragePolicy: Required<IDocumentStorageServicePolicies> = {
     maximumCacheDurationMs: defaultCacheExpiryTimeoutMs,
 };
 
+/**
+ * Get the appropriate value for storage policy maximumCacheDurationMs,
+ * allowing overrides via MonitoringContext.config
+ * @param mc - MonitoringContext to use to check for any override settings
+ */
 function getMaximumCacheDurationMs(mc: MonitoringContext): number {
-    //* Change Key
-    return mc.config.getBoolean("SWEEPV0")
-        ? 0
-        : defaultStoragePolicy.maximumCacheDurationMs;
+    return defaultStoragePolicy.maximumCacheDurationMs;
 }
 
 /**
