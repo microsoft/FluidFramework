@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -21,10 +21,9 @@ import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gc
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
 describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
-    const summaryLogger = new TelemetryNullLogger();
-    const revivedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Revived";
-    const changedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Changed";
-    const loadedEvent = "fluid:telemetry:ContainerRuntime:GarbageCollector:inactiveObject_Loaded";
+    const revivedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Revived";
+    const changedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Changed";
+    const loadedEvent = "fluid:telemetry:ContainerRuntime:InactiveObject_Loaded";
     const inactiveTimeoutMs = 100;
     const testContainerConfig: ITestContainerConfig = {
         runtimeOptions: {
@@ -81,7 +80,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             runGC: true,
             fullTree: true,
             trackState: false,
-            summaryLogger,
         });
     }
 
@@ -117,16 +115,9 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
             const dataObject = await requestFluidObject<ITestDataObject>(dataStore, "");
             const url = dataObject.handle.absolutePath;
+
             defaultDataStore._root.set("dataStore1", dataObject.handle);
-
-            // Make changes to the data store - send an op and load it.
-            dataObject._root.set("key", "value1");
             await provider.ensureSynchronized();
-            await summarizerRuntime.resolveHandle({ url });
-
-            // Summarize and validate that no unreferenced errors were logged.
-            await summarize(summarizerRuntime);
-            validateNoInactiveEvents();
 
             // Mark dataStore1 as unreferenced, send an op and load it.
             defaultDataStore._root.delete("dataStore1");
@@ -144,49 +135,46 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
             // Make changes to the inactive data store and validate that we get the changedEvent.
             dataObject._root.set("key", "value");
             await provider.ensureSynchronized();
-            assert(
-                mockLogger.matchEvents([
+            // Load the data store and validate that we get loadedEvent.
+            await summarizerRuntime.resolveHandle({ url });
+            await summarize(summarizerRuntime);
+            mockLogger.assertMatch(
+                [
                     {
                         eventName: changedEvent,
                         timeout: inactiveTimeoutMs,
                         id: url,
-                        pkg: { value: TestDataObjectType, tag: TelemetryDataTag.PackageData },
+                        pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
                     },
-                ]),
-                "changed event not generated as expected",
-            );
-
-            // Load the data store and validate that we get loadedEvent.
-            await summarizerRuntime.resolveHandle({ url });
-            assert(
-                mockLogger.matchEvents([
                     {
                         eventName: loadedEvent,
                         timeout: inactiveTimeoutMs,
                         id: url,
+                        pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
                     },
-                ]),
-                "loaded event not generated as expected",
+                ],
+                "changed and loaded events not generated as expected",
             );
 
             // Make a change again and validate that we don't get another changedEvent as we only log it
             // once per data store per session.
             dataObject._root.set("key2", "value2");
-            await provider.ensureSynchronized();
+            await summarize(summarizerRuntime);
             validateNoInactiveEvents();
 
             // Revive the inactive data store and validate that we get the revivedEvent event.
             defaultDataStore._root.set("dataStore1", dataObject.handle);
-            await provider.ensureSynchronized();
-            assert(
-                mockLogger.matchEvents([
+            await summarize(summarizerRuntime);
+            mockLogger.assertMatch(
+                [
                     {
                         eventName: revivedEvent,
                         timeout: inactiveTimeoutMs,
                         id: url,
-                        pkg: { value: TestDataObjectType, tag: TelemetryDataTag.PackageData },
+                        pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
+                        fromId: defaultDataStore._root.handle.absolutePath,
                     },
-                ]),
+                ],
                 "revived event not generated as expected",
             );
         });
@@ -227,28 +215,30 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
             // Retrieve the blob in the summarizer client now and validate that we get the loadedEvent.
             await summarizerBlobHandle.get();
-            assert(
-                mockLogger.matchEvents([
+            await summarize(summarizerRuntime);
+            mockLogger.assertMatch(
+            [
                     {
                         eventName: loadedEvent,
                         timeout: inactiveTimeoutMs,
                         id: summarizerBlobHandle.absolutePath,
                     },
-                ]),
+                ],
                 "updated event not generated as expected for attachment blobs",
             );
 
             // Add the handle back, summarize and validate that we get the revivedEvent.
             defaultDataStore._root.set("blob", blobHandle);
             await provider.ensureSynchronized();
-            assert(
-                mockLogger.matchEvents([
+            await summarize(summarizerRuntime);
+            mockLogger.assertMatch(
+                [
                     {
                         eventName: revivedEvent,
                         timeout: inactiveTimeoutMs,
                         id: summarizerBlobHandle.absolutePath,
                     },
-                ]),
+                ],
                 "revived event not generated as expected for attachment blobs",
             );
         });
@@ -258,13 +248,11 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
          * when we identify the error. The following bug was fixed in this code path and this test covers that
          * scenario - https://github.com/microsoft/FluidFramework/pull/10237.
          *
-         * Note that the namespace for "inactiveObject_Changed" is different because it is logged when collectGarbage
-         * runs where a different logger is used. It is not logged immediately because the data store is not loaded
-         * so the packageData is not available.
+         * Note that the namespace for "inactiveObject_Revived" is different than the tests above because it is logged
+         * via the running summarizer's logger.
          */
         itExpects("can generate events for data stores that are not loaded", [
-            { eventName: revivedEvent, timeout: inactiveTimeoutMs },
-            { eventName: "fluid:telemetry:Summarizer:Running:inactiveObject_Changed", timeout: inactiveTimeoutMs },
+            { eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Revived", timeout: inactiveTimeoutMs },
         ], async () => {
             const waitForSummary = async (summarizer: ISummarizer) => {
                 await provider.ensureSynchronized();

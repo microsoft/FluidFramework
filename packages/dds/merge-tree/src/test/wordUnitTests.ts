@@ -9,13 +9,13 @@
 import path from "path";
 import random from "random-js";
 import { Trace } from "@fluidframework/common-utils";
-import { LocalReference } from "../localReference";
 import { ReferenceType } from "../ops";
 import {
     createMap,
     extend,
     MapLike,
 } from "../properties";
+import { ReferencePosition } from "../referencePositions";
 import { TestClient } from "./testClient";
 import { loadTextFromFileWithMarkers } from "./testUtils";
 
@@ -115,7 +115,7 @@ export function propertyCopy() {
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
     const mt = random.engines.mt19937();
     mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
-    const bookmarks: LocalReference[] = [];
+    const bookmarks: ReferencePosition[] = [];
     const len = client.getLength();
     for (let i = 0; i < bookmarkCount; i++) {
         const pos = random.integer(0, len - 1)(mt);
@@ -124,8 +124,8 @@ function makeBookmarks(client: TestClient, bookmarkCount: number) {
         if (i & 1) {
             refType = ReferenceType.SlideOnRemove;
         }
-        const lref = new LocalReference(client, segoff.segment!, segoff.offset, refType);
-        client.mergeTree.addLocalReference(lref);
+        const lref = client.mergeTree.createLocalReferencePosition(
+             segoff.segment!, segoff.offset!, refType, undefined);
         bookmarks.push(lref);
     }
     return bookmarks;

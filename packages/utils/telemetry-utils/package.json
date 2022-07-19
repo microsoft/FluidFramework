@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/telemetry-utils",
-  "version": "1.2.0",
+  "version": "2.0.0-internal.1.0.0",
   "description": "Collection of telemetry relates utilities for Fluid",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -74,8 +74,8 @@
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.2.74327",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": "^1.2.0",
-    "@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@1.1.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/debug": "^4.1.5",
@@ -93,7 +93,15 @@
     "typescript": "~4.5.5"
   },
   "typeValidation": {
-    "version": "1.2.0",
-    "broken": {}
+    "version": "2.0.0",
+    "broken": {
+      "RemovedFunctionDeclaration_originatedAsExternalError": {
+        "forwardCompat": false,
+        "backCompat": false
+      },
+      "EnumDeclaration_TelemetryDataTag": {
+        "forwardCompat": false
+      }
+    }
   }
 }

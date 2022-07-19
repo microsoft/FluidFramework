@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This package contains common interfaces and definitions used by the Fluid Framework.
+ *
+ * @packageDocumentation
+ */
+
 export type {
     IDisposable,
 } from "./disposable";

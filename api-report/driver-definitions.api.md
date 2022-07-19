@@ -25,7 +25,7 @@ import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
-export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | IDriverBasicError;
+export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
 // @public
 export enum DriverErrorType {
@@ -37,6 +37,7 @@ export enum DriverErrorType {
     genericError = "genericError",
     genericNetworkError = "genericNetworkError",
     incorrectServerResponse = "incorrectServerResponse",
+    locationRedirection = "locationRedirection",
     offlineError = "offlineError",
     throttlingError = "throttlingError",
     // (undocumented)
@@ -219,6 +220,14 @@ export interface IGenericNetworkError extends IDriverErrorBase {
 }
 
 // @public (undocumented)
+export interface ILocationRedirectionError extends IDriverErrorBase {
+    // (undocumented)
+    readonly errorType: DriverErrorType.locationRedirection;
+    // (undocumented)
+    readonly redirectUrl: IResolvedUrl;
+}
+
+// @public (undocumented)
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
 // @public (undocumented)
@@ -259,7 +268,6 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 
 // @public (undocumented)
 export interface IUrlResolver {
-    // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;

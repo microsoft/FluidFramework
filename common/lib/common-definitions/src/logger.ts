@@ -3,12 +3,18 @@
  * Licensed under the MIT License.
  */
 
-// Examples of known categories, however category can be any string for extensibility
+/**
+ * Examples of known categories, however category can be any string for extensibility.
+ */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// Logging entire objects is considered extremely dangerous from a telemetry point of view because people
-// can easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
-// General best practice is to explicitly log the fields you care about from objects
+/**
+ * Property types that can be logged.
+ *
+ * @remarks Logging entire objects is considered extremely dangerous from a telemetry point of view because people can
+ * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
+ * General best practice is to explicitly log the fields you care about from objects.
+ */
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
 /**
@@ -20,6 +26,9 @@ export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType;
     tag: string;
 }
+/**
+ * JSON-serializable properties, which will be logged with telemetry.
+ */
 export interface ITelemetryProperties {
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }

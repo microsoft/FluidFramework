@@ -12,6 +12,7 @@ import {
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
+    AliasResult,
     channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
@@ -82,6 +83,7 @@ export class DataStores implements IDisposable {
     // The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
     // the container runtime to other nodes.
     private readonly containerRuntimeHandle: IFluidHandle;
+    private readonly pendingAliasMap: Map<string, Promise<AliasResult>> = new Map<string, Promise<AliasResult>>();
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
@@ -173,8 +175,17 @@ export class DataStores implements IDisposable {
         };
     }
 
-    public aliases(): ReadonlyMap<string, string> {
+    public get aliases(): ReadonlyMap<string, string> {
         return this.aliasMap;
+    }
+
+    public get pendingAliases(): Map<string, Promise<AliasResult>> {
+        return this.pendingAliasMap;
+    }
+
+    public async waitIfPendingAlias(maybeAlias: string): Promise<AliasResult> {
+        const pendingAliasPromise = this.pendingAliases.get(maybeAlias);
+        return pendingAliasPromise === undefined ? "Success" : pendingAliasPromise;
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -201,7 +212,7 @@ export class DataStores implements IDisposable {
                     ...extractSafePropertiesFromMessage(message),
                     dataStoreId: {
                         value: attachMessage.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                 },
             );
@@ -440,7 +451,7 @@ export class DataStores implements IDisposable {
                 eventName: "SignalFluidDataStoreNotFound",
                 fluidDataStoreId: {
                     value: address,
-                    tag: TelemetryDataTag.PackageData,
+                    tag: TelemetryDataTag.CodeArtifact,
                 },
             });
             return;
@@ -647,13 +658,13 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Called during GC to retrieve the package path of a data store node with the given path.
+     * Called by GC to retrieve the package path of a data store node with the given path.
      */
-    public getDataStorePackagePath(nodePath: string): readonly string[] | undefined {
-        // If the node belongs to a data store, return its package path if the data store is loaded. For DDSs, we return
-        // the package path of the data store that contains it.
+    public async getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
+        // If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
+        // data store that contains it.
         const context = this.contexts.get(nodePath.split("/")[1]);
-        return context?.isLoaded ? context.packagePath : undefined;
+        return (await context?.getInitialSnapshotDetails())?.pkg;
     }
 
     /**

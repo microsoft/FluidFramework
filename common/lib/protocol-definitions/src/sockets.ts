@@ -25,6 +25,8 @@ export interface IConnect {
     /**
      * Authorization token
      */
+    // TODO: Update this to use undefined instead of null.
+    // eslint-disable-next-line @rushstack/no-new-null
     token: string | null;
 
     /**

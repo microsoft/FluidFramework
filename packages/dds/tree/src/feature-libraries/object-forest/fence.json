@@ -1,0 +1,5 @@
+{
+    "tags": [ "object-forest" ],
+    "exports": [ "index"],
+    "imports": ["schema","tree","dependency-tracking","forest","util","rebase"]
+}
