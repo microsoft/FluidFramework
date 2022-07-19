@@ -19,9 +19,7 @@ export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
     }
 
     if (semver.valid(rangeOrVersion) !== null) {
-        // console.log(`Must be a version string`);
         // Must be a version string
-
         // If the major is less than 0 assume it's a virtualPatch version
         if (semver.major(rangeOrVersion) === 0) {
             return "virtualPatch";
@@ -29,14 +27,12 @@ export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
 
         return "semver";
     } else if (semver.validRange(rangeOrVersion) !== null) {
-        // console.log(`Must be a range string`);
         // Must be a range string
         if (rangeOrVersion.startsWith(">=")) {
             return "internal";
         }
 
         const coercedVersion = semver.coerce(rangeOrVersion);
-        // console.log(`coerced version: ${coercedVersion}`);
         if (coercedVersion === null) {
             throw new Error(`Couldn't parse a usable version from '${rangeOrVersion}'.`);
         }
