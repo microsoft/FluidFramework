@@ -48,23 +48,19 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         this.treeBlob = cachedValue(async (observer) => {
             // TODO: could optimize to depend on tree only, not also schema.
             recordDependency(observer, this.forest);
-            const text = this.getTreeString();
+            const treeText = this.getTreeString();
 
             // For now we are not chunking the data, and instead put it in a single blob:
-            const buffer = IsoBuffer.from(text);
-            const blob = await this.runtime.uploadBlob(buffer);
-            const tree: ISummaryAttachment = { type: SummaryType.Attachment, id: idFromBlob(blob) };
-            return tree;
+            const blob = await this.runtime.uploadBlob(IsoBuffer.from(treeText));
+            return { type: SummaryType.Attachment, id: idFromBlob(blob) };
         });
         this.schemaBlob = cachedValue(async (observer) => {
             recordDependency(observer, this.forest.schema);
-            const text = this.getSchemaString();
+            const schemaText = this.getSchemaString();
 
-            // For now we are not chunking the data, and instead put it in a one blob:
-            const buffer = IsoBuffer.from(text);
-            const blob = await this.runtime.uploadBlob(buffer);
-            const schema: ISummaryAttachment = { type: SummaryType.Attachment, id: idFromBlob(blob) };
-            return schema;
+            // For now we are not chunking the the schema, but still put it in a reusable blob:
+            const blob = await this.runtime.uploadBlob(IsoBuffer.from(schemaText));
+            return { type: SummaryType.Attachment, id: idFromBlob(blob) };
         });
     }
 
