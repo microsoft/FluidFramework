@@ -93,7 +93,7 @@ describe("semver", () => {
                 assert.strictEqual(result, expected);
             });
 
-           it("bump major", () => {
+            it("bump major", () => {
                 const input = `0.59.1001`;
                 const expected = `0.60.1000`;
                 const result = incRange(input, "major");
@@ -107,7 +107,7 @@ describe("semver", () => {
                 assert.strictEqual(result, expected);
             });
 
-             it("bump minor prerelease", () => {
+            it("bump minor prerelease", () => {
                 const input = `0.59.1001`;
                 const expected = `0.59.2000-0`;
                 const result = incRange(input, "minor", true);
