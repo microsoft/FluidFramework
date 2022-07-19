@@ -17,10 +17,10 @@ import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
+import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 export interface IRunConfig {
     runId: number;
