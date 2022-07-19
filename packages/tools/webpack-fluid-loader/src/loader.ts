@@ -185,6 +185,7 @@ async function createWebLoader(
         assert(options.mode === "spo-df" || options.mode === "spo",
             0x240 /* "Binary format snapshot only for odsp driver!!" */);
         odspHostStoragePolicy.fetchBinarySnapshotFormat = true;
+        odspHostStoragePolicy.enableShareLinkWithCreate = true;
     }
     let documentServiceFactory: IDocumentServiceFactory =
         getDocumentServiceFactory(documentId, options, odspPersistantCache, odspHostStoragePolicy);

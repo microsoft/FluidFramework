@@ -127,4 +127,12 @@ export interface HostStoragePolicy {
      * that a sharing can be created with the creation of file to save number for round trips made to ODSP.
      */
      enableShareLinkWithCreate?: boolean;
+
+    /**
+     * Enable creation of sharing link along with the creation of file by setting this value to true.
+     * If the host provides a 'createLinkScope' parameter in the request URL to the container.attach()
+     * method, we will request for send the request to ODSP with the same (if the flag is enabled) so
+     * that a sharing can be created with the creation of file to save number for round trips made to ODSP.
+     */
+    enableSingleRoundTripForShareLinkWithCreate?: boolean;
 }

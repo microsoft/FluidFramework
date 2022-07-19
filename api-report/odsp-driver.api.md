@@ -30,6 +30,7 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { OdspResourceTokenFetchOptions } from '@fluidframework/odsp-driver-definitions';
 import { PromiseCache } from '@fluidframework/common-utils';
 import { RateLimiter } from '@fluidframework/driver-utils';
+import { ShareLink } from '@fluidframework/odsp-driver-definitions';
 import { ShareLinkTypes } from '@fluidframework/odsp-driver-definitions';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 import { TokenFetcher } from '@fluidframework/odsp-driver-definitions';
@@ -47,7 +48,7 @@ export enum ClpCompliantAppHeader {
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @public
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createLinkType?: ShareLinkTypes): IRequest;
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ShareLinkTypes | ShareLink): IRequest;
 
 // @public
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;

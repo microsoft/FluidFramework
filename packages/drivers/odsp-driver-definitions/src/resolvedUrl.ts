@@ -12,14 +12,49 @@ export interface IOdspUrlParts {
 }
 
 /**
+ * @deprecated Use ShareLink type instead.
  * Type of shareLink requested/created when creating the file for the first time.
- * At the time of adding this comment (Sept/2021) ODSP only supports creation of CSL links
- * when provided as a request parameter with the /snapshot api call.
- * In future, we can add more types here.
 */
 export enum ShareLinkTypes {
     csl = "csl",
 }
+
+/**
+ * Sharing scope of the share links created for a file.
+*/
+export enum ShareLinkScope {
+    organization = "organization",
+    users = "users",
+    anonymous = "anonymous",
+    default = "default",
+}
+
+/**
+ * View/edit permission role for a sharing link.
+ */
+export enum ShareLinkRole {
+    view = "view",
+    edit = "edit",
+}
+
+/**
+ * Defines the sharing scope and permissions for a share link created for a file.
+*/
+export interface ShareLink {
+    linkScope: ShareLinkScope;
+    /*
+     * If this parameter is not provided, the API will default to "edit" links (provided
+     * a valid createLinkScope setting is given).
+    */
+    linkRole?: ShareLinkRole;
+}
+
+export interface SharingLink {
+    webUrl: string;
+    scope: ShareLinkScope;
+    type?: ShareLinkRole;
+}
+
 /**
  * Sharing link data created for the ODSP item.
  * Contains information about either sharing link created while creating a new file or
@@ -39,11 +74,12 @@ export interface ShareLinkInfoType {
          * At the time of adding this comment (Sept/2021) ODSP only supports creation of CSL links
          * when provided as a request parameter with the /snapshot api call.
         */
-        type?: ShareLinkTypes;
+        type?: ShareLinkTypes | ShareLink;
 
         /**
          * Share link created when the file is created for the first time with /snapshot api call.
          * This link does not require redemption.
+         * Will be deprecated, please use "sharing" facet property instead
          */
         link?: string;
 
@@ -51,6 +87,10 @@ export interface ShareLinkInfoType {
          * Error message if creation of sharing link fails with /snapshot api call
          */
         error?: any;
+
+        shareId?: string;
+
+        sharingLink?: SharingLink;
     };
 
     /**

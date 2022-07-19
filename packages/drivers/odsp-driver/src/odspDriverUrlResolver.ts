@@ -67,6 +67,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 
     public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
         if (request.headers?.[DriverHeader.createNew]) {
+            debugger;
             const [siteURL, queryString] = request.url.split("?");
 
             const searchParams = new URLSearchParams(queryString);

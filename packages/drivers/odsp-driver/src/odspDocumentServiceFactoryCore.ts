@@ -26,6 +26,10 @@ import {
     HostStoragePolicy,
     IFileEntry,
     IOdspUrlParts,
+    ShareLinkScope,
+    ShareLinkRole,
+    ShareLinkTypes,
+    ShareLink,
 } from "@fluidframework/odsp-driver-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
@@ -83,16 +87,28 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 throw new Error("Seq number in detached ODSP container should be 0");
             }
         }
+        let createShareLinkParam: ShareLinkTypes | ShareLink | undefined;
+        if (this.hostPolicy.enableSingleRoundTripForShareLinkWithCreate) {
+            const createLinkScope = searchParams.get("createLinkScope");
+            const createLinkRole = searchParams.get("createLinkRole");
+            if (createLinkScope && ShareLinkScope[createLinkScope]) {
+                createShareLinkParam = { linkScope: ShareLinkScope[createLinkScope],
+                    ...(createLinkRole && ShareLinkRole[createLinkRole] ?
+                        { linkRole: ShareLinkRole[createLinkRole] } : {}) };
+            }
+        } else if (this.hostPolicy.enableShareLinkWithCreate) {
+            const createLinkType = searchParams.get("createLinkType");
+             if (createLinkType && ShareLinkTypes[createLinkType]) {
+                createShareLinkParam = ShareLinkTypes[createLinkType || ""];
+             }
+        }
 
         const newFileInfo: INewFileInfo = {
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
             filePath,
             filename: odspResolvedUrl.fileName,
-            // set createLinkType to undefined if enableShareLinkWithCreate is set to false,
-            // so that share link creation with create file can be enabled
-            createLinkType: this.hostPolicy.enableShareLinkWithCreate ?
-            odspResolvedUrl.shareLinkInfo?.createLink?.type : undefined,
+            createLinkType: createShareLinkParam,
         };
 
         const odspLogger = createOdspLogger(logger);
@@ -110,6 +126,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             {
                 eventName: "CreateNew",
                 isWithSummaryUpload: true,
+                createShareLinkParam: JSON.stringify(createShareLinkParam),
+                enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
+                enableSingleRoundTripForShareLinkWithCreate:
+                this.hostPolicy.enableSingleRoundTripForShareLinkWithCreate,
             },
             async (event) => {
                 odspResolvedUrl = await createNewFluidFile(

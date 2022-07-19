@@ -15,6 +15,7 @@ import {
     InstrumentedStorageTokenFetcher,
     IOdspResolvedUrl,
     OdspErrorType,
+    ShareLinkInfoType,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -41,6 +42,7 @@ import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ClpCompliantAppHeader } from "./contractsPublic";
+import { buildOdspShareLinkReqParams } from "./buildOdspShareLinkReqParams";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -70,14 +72,14 @@ export async function createNewFluidFile(
     }
 
     let itemId: string;
+    let content: any;
     let summaryHandle: string = "";
-    let sharingLink: string | undefined;
-    let sharingLinkErrorReason: string | undefined;
+    let shareLinkInfo: ShareLinkInfoType | undefined;
     if (createNewSummary === undefined) {
         itemId = await createNewEmptyFluidFile(
             getStorageToken, newFileInfo, logger, epochTracker, forceAccessTokenViaAuthorizationHeader);
     } else {
-        const content = await createNewFluidFileFromSummary(
+        content = await createNewFluidFileFromSummary(
             getStorageToken,
             newFileInfo,
             logger,
@@ -85,10 +87,34 @@ export async function createNewFluidFile(
             epochTracker,
             forceAccessTokenViaAuthorizationHeader,
         );
+        debugger;
         itemId = content.itemId;
         summaryHandle = content.id;
-        sharingLink = content.sharingLink;
-        sharingLinkErrorReason = content.sharingLinkErrorReason;
+        const { sharingLink, sharingLinkErrorReason, sharing } = content;
+        if (sharingLink || (sharingLinkErrorReason && !sharing)) {
+            shareLinkInfo = {
+                createLink: {
+                    type: newFileInfo.createLinkType,
+                    link: sharingLink,
+                    error: sharingLinkErrorReason,
+                },
+            };
+        } else if (sharing) {
+            if (sharing.sharingLink) {
+                shareLinkInfo = {
+                    createLink: {
+                        shareId: sharing.shareId,
+                        sharingLink: sharing.sharingLink,
+                    },
+                };
+            } else if (sharing.error) {
+                shareLinkInfo = {
+                    createLink: {
+                        error: sharing.error,
+                    },
+                };
+            }
+        }
     }
 
     const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
@@ -97,18 +123,7 @@ export async function createNewFluidFile(
         url: odspUrl,
         headers: { [ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp },
     });
-    fileEntry.docId = odspResolvedUrl.hashedDocumentId;
-    fileEntry.resolvedUrl = odspResolvedUrl;
-
-    if (sharingLink || sharingLinkErrorReason) {
-        odspResolvedUrl.shareLinkInfo = {
-            createLink: {
-                type: newFileInfo.createLinkType,
-                link: sharingLink,
-                error: sharingLinkErrorReason,
-            },
-        };
-    }
+    odspResolvedUrl.shareLinkInfo = shareLinkInfo;
 
     if (createNewSummary !== undefined && createNewCaching) {
         assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
@@ -192,8 +207,12 @@ export async function createNewFluidFileFromSummary(
         `${filePath}/${encodedFilename}`;
 
     const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
-    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${newFileInfo.createLinkType ?
-        `?createLinkType=${newFileInfo.createLinkType}` : ""}`;
+
+    // Build share link parameter based on the createLinkType provided so that the
+    // snapshot api can create and return the share link along with creation of file in the response.
+    const createShareLinkParam = buildOdspShareLinkReqParams(newFileInfo.createLinkType);
+    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}`
+    : ""}`;
 
     return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");

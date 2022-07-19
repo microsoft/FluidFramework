@@ -20,6 +20,7 @@ export interface HostStoragePolicy {
     // @deprecated (undocumented)
     enableRedeemFallback?: boolean;
     enableShareLinkWithCreate?: boolean;
+    enableSingleRoundTripForShareLinkWithCreate?: boolean;
     // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
@@ -177,19 +178,59 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 }
 
 // @public
+export interface ShareLink {
+    // (undocumented)
+    linkRole?: ShareLinkRole;
+    // (undocumented)
+    linkScope: ShareLinkScope;
+}
+
+// @public
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes;
+        type?: ShareLinkTypes | ShareLink;
         link?: string;
         error?: any;
+        shareId?: string;
+        sharingLink?: SharingLink;
     };
     sharingLinkToRedeem?: string;
 }
 
 // @public
+export enum ShareLinkRole {
+    // (undocumented)
+    edit = "edit",
+    // (undocumented)
+    view = "view"
+}
+
+// @public
+export enum ShareLinkScope {
+    // (undocumented)
+    anonymous = "anonymous",
+    // (undocumented)
+    default = "default",
+    // (undocumented)
+    organization = "organization",
+    // (undocumented)
+    users = "users"
+}
+
+// @public @deprecated (undocumented)
 export enum ShareLinkTypes {
     // (undocumented)
     csl = "csl"
+}
+
+// @public (undocumented)
+export interface SharingLink {
+    // (undocumented)
+    scope: ShareLinkScope;
+    // (undocumented)
+    type?: ShareLinkRole;
+    // (undocumented)
+    webUrl: string;
 }
 
 // @public

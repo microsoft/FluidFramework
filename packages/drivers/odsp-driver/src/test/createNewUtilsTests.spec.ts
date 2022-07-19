@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
 import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes } from "@fluidframework/odsp-driver-definitions";
+import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes, ShareLink,
+    ShareLinkScope, ShareLinkRole } from "@fluidframework/odsp-driver-definitions";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { EpochTracker } from "../epochTracker";
@@ -143,7 +144,7 @@ describe("Create New Utils Tests", () => {
         await epochTracker.removeEntries().catch(() => { });
     });
 
-    it("Should save share link information received during createNewFluidFile", async () => {
+    it("Should save CSL specific share link information received during createNewFluidFile", async () => {
         const createLinkType = ShareLinkTypes.csl;
         newFileParams.createLinkType = createLinkType;
 
@@ -160,7 +161,19 @@ describe("Create New Utils Tests", () => {
                 false,
                 false,
             ),
-            { itemId: "mockItemId", id: "mockId", sharingLink: mockSharingLink, sharingLinkErrorReason: undefined },
+            {
+                itemId: "mockItemId",
+                id: "mockId",
+                sharingLink: mockSharingLink,
+                sharingLinkErrorReason: undefined,
+                sharing: {
+                    shareId: "id",
+                    shareLink: {
+                        scope: "organization",
+                        type: "edit",
+                    },
+                },
+            },
             { "x-fluid-epoch": "epoch1" },
         );
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
@@ -189,6 +202,79 @@ describe("Create New Utils Tests", () => {
             type: createLinkType,
             link: undefined,
             error: mockError,
+        });
+        await epochTracker.removeEntries().catch(() => { });
+    });
+
+    it("Should save 'sharing' information received during createNewFluidFile", async () => {
+        const createLinkType: ShareLink = { linkScope: ShareLinkScope.users, linkRole: ShareLinkRole.edit };
+        newFileParams.createLinkType = createLinkType;
+
+        // Test that sharing link is set appropriately when it is received in the response from ODSP
+        const mockSharingLinkData = {
+            localizedDescription: "Specific users with the link can view",
+            iconUrl: "https://mock.icon.url",
+            scope: "organization",
+            type: "view",
+            webUrl: "https://mock.url",
+            blocksDownload: false,
+            createOnly: false,
+            status: "Created",
+            createdDateTime: "2022-05-18T02:58:17.0256105Z",
+        };
+        const mockSharingData = {
+            shareId: "c40e6f0a-666e-48bf-9509-066900a73b2b",
+            sharingLink: mockSharingLinkData,
+        };
+        let odspResolvedUrl = await mockFetchOk(
+            async () => createNewFluidFile(
+                async (_options) => "token",
+                newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                false,
+                false,
+            ),
+            { itemId: "mockItemId", id: "mockId", sharing: mockSharingData, sharingLinkErrorReason: undefined },
+            { "x-fluid-epoch": "epoch1" },
+        );
+        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
+            shareId: mockSharingData.shareId,
+            sharingLink: mockSharingData,
+        });
+
+        // Test that error message is set appropriately when it is received in the response from ODSP
+        const mockSharingError = {
+            error: {
+                code: "invalidRequest",
+                message: "Invalid request",
+                innerError: {
+                    code: "invalidRequest",
+                    errorType: "expected",
+                    message: "The CreateLinkScope 'asdf' is not valid or supported.",
+                    stackTrace: "Exceptions.InvalidRequestException",
+                    throwSite: "",
+                },
+            },
+        };
+        odspResolvedUrl = await mockFetchOk(
+            async () => createNewFluidFile(
+                async (_options) => "token",
+                newFileParams,
+                new TelemetryNullLogger(),
+                createSummary(),
+                epochTracker,
+                fileEntry,
+                false,
+                false,
+            ),
+            { itemId: "mockItemId", id: "mockId", sharingLinkErrorReason: "mockError", sharing: mockSharingError },
+            { "x-fluid-epoch": "epoch1" },
+        );
+        assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
+            error: mockSharingError.error,
         });
         await epochTracker.removeEntries().catch(() => { });
     });
