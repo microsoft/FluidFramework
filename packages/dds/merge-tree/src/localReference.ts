@@ -8,7 +8,7 @@ import { UsageError } from "@fluidframework/container-utils";
 import { List, ListMakeHead, ListRemoveEntry } from "./collections";
 import {
     ISegment,
-} from "./mergeTree";
+} from "./mergeTreeNodes";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
 import {
@@ -65,7 +65,7 @@ class LocalReference implements LocalReferencePosition {
     public link(segment: ISegment | undefined, offset: number, listNode: List<LocalReference> | undefined) {
         if (listNode !== this.listNode
             && this.listNode !== undefined) {
-            ListRemoveEntry(this.listNode);
+            this.segment?.localRefs?.removeLocalRef(this);
         }
         this.segment = segment;
         this.offset = offset;
@@ -204,9 +204,7 @@ export class LocalReferenceCollection {
         const detachSegments = (refs: List<LocalReference> | undefined) => {
             if (refs) {
                 for (const r of refs) {
-                    if (r.getSegment() === this.segment) {
-                        r.link(undefined, r.getOffset(), undefined);
-                    }
+                    this.removeLocalRef(r);
                 }
             }
         };
@@ -215,7 +213,7 @@ export class LocalReferenceCollection {
             if (refsAtOffset) {
                 detachSegments(refsAtOffset.before);
                 detachSegments(refsAtOffset.at);
-                detachSegments(refsAtOffset.before);
+                detachSegments(refsAtOffset.after);
                 this.refsByOffset[i] = undefined;
             }
         }
@@ -280,10 +278,16 @@ export class LocalReferenceCollection {
     public removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined {
         if (this.has(lref)) {
             assertLocalReferences(lref);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            ListRemoveEntry(lref.getListNode()!);
             lref.link(
                 lref.getSegment(),
                 lref.getOffset(),
                 undefined);
+            if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
+                this.hierRefCount--;
+            }
+            this.refCount--;
             return lref;
         }
     }
@@ -341,15 +345,15 @@ export class LocalReferenceCollection {
             next = next?.next;
         }
 
-        const headNode = prev?.isHead ? prev : next;
+        const headNode = prev?.isHead === true ? prev : next;
         if (headNode?.isHead !== true || headNode.empty()) {
             return false;
         }
         const offset = lref.getOffset();
         const refsAtOffset = this.refsByOffset[offset];
-        if (refsAtOffset?.after === headNode
+        if (refsAtOffset?.before === headNode
             || refsAtOffset?.at === headNode
-            || refsAtOffset?.before === headNode) {
+            || refsAtOffset?.after === headNode) {
                 return true;
             }
         return false;
@@ -396,53 +400,55 @@ export class LocalReferenceCollection {
     public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]) {
         const beforeRefs = this.refsByOffset[0]?.before ?? ListMakeHead();
 
+        if (this.refsByOffset[0]?.before === undefined) {
+            const refsAtOffset = this.refsByOffset[0] ??= { before: beforeRefs };
+            refsAtOffset.before ??= beforeRefs;
+        }
+
         for (const iterable of refs) {
             for (const lref of iterable) {
                 assertLocalReferences(lref);
                 if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
+                    lref.callbacks?.beforeSlide?.();
                     beforeRefs.unshift(lref);
                     lref.link(this.segment, 0, beforeRefs.next);
                     if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount++;
                     }
                     this.refCount++;
+                    lref.callbacks?.afterSlide?.();
                 } else {
                     lref.link(undefined, 0, undefined);
                 }
             }
         }
-        if (!beforeRefs.empty() && this.refsByOffset[0]?.before === undefined) {
-            const refsAtOffset = this.refsByOffset[0] =
-                this.refsByOffset[0]
-                ?? { before: beforeRefs };
-            refsAtOffset.before = refsAtOffset.before ?? beforeRefs;
-        }
     }
 
     public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]) {
-        const lastOffset = this.refsByOffset.length - 1;
-        const afterRefs =
-            this.refsByOffset[lastOffset]?.after ?? ListMakeHead();
+        const lastOffset = this.segment.cachedLength - 1;
+        const afterRefs = this.refsByOffset[lastOffset]?.after ?? ListMakeHead();
+
+        if (this.refsByOffset[lastOffset]?.after === undefined) {
+            const refsAtOffset = this.refsByOffset[lastOffset] ??= { after: afterRefs };
+            refsAtOffset.after ??= afterRefs;
+        }
 
         for (const iterable of refs) {
             for (const lref of iterable) {
                 assertLocalReferences(lref);
                 if (refTypeIncludesFlag(lref, ReferenceType.SlideOnRemove)) {
-                    lref.link(this.segment, lastOffset, afterRefs.enqueue(lref));
+                    lref.callbacks?.beforeSlide?.();
+                    afterRefs.enqueue(lref);
+                    lref.link(this.segment, lastOffset, afterRefs.prev);
                     if (refHasRangeLabels(lref) || refHasTileLabels(lref)) {
                         this.hierRefCount++;
                     }
                     this.refCount++;
+                    lref.callbacks?.afterSlide?.();
                 } else {
                     lref.link(undefined, 0, undefined);
                 }
             }
-        }
-        if (!afterRefs.empty() && this.refsByOffset[lastOffset]?.after === undefined) {
-            const refsAtOffset = this.refsByOffset[lastOffset] =
-                this.refsByOffset[lastOffset]
-                ?? { after: afterRefs };
-            refsAtOffset.after = refsAtOffset.after ?? afterRefs;
         }
     }
 }

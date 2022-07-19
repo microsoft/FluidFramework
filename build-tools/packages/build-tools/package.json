@@ -24,8 +24,11 @@
     "fluid-type-validator": "bin/fluid-type-validator"
   },
   "scripts": {
-    "build": "npm run build:genver && npm run build:compile && npm run lint",
-    "build:compile": "tsc -b && npm run build:test",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+    "build:commonjs": "npm run tsc && npm run build:test",
+    "build:compile": "npm run build:commonjs",
+    "build:full": "npm run build",
+    "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "bump": "node dist/bumpVersion/bumpVersionCli.js",
@@ -33,8 +36,8 @@
     "debug:layer-check": "node --inspect-brk dist/layerCheck/layerCheck.js --root ../..",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-    "layer-check": "node dist/layerCheck/layerCheck.js --root ../..",
-    "layer-check:doc": "node dist/layerCheck/layerCheck.js --root ../.. --md",
+    "layer-check": "node dist/layerCheck/layerCheck.js --root ../../..",
+    "layer-check:doc": "node dist/layerCheck/layerCheck.js --root ../../.. --md",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
     "list-repo-files": "cd ../../.. && git ls-files -co --exclude-standard",
@@ -42,7 +45,8 @@
     "policy-check:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js",
     "policy-check:fix": "npm run policy-check -- -r",
     "policy-check:fix:debug": "cd ../../.. && node --inspect-brk build-tools/packages/build-tools/dist/repoPolicyCheck/repoPolicyCheck.js -r",
-    "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000"
+    "test": "mocha --recursive dist/test --unhandled-rejections=strict --timeout 15000",
+    "tsc": "tsc -b"
   },
   "dependencies": {
     "@fluidframework/bundle-size-tools": "^0.0.8505",

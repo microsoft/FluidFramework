@@ -191,22 +191,6 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
         // upload the blob twice and make sure nothing bad happens.
         await Promise.all([dataStore._runtime.uploadBlob(blob), dataStore._runtime.uploadBlob(blob)]);
     });
-
-    it("uploadBlob() rejects when runtime is disposed", async () => {
-        const container = await provider.makeTestContainer(testContainerConfig);
-        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-
-        const blobOpP = new Promise<void>((resolve) => container.deltaManager.on("submitOp", (op) => {
-            if (op.contents.includes("blobAttach")) {
-                (container.deltaManager as any)._inbound.pause();
-                resolve();
-            }
-        }));
-        const blobP = dataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8"));
-        await blobOpP;
-        container.close();
-        await assert.rejects(blobP, /runtime disposed/);
-    });
 });
 
 // TODO: #7684

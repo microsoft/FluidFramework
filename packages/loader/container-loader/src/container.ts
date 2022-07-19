@@ -53,10 +53,7 @@ import {
     isRuntimeMessage,
     isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
-import {
-    IProtocolHandler,
-    ProtocolOpHandlerWithClientValidation,
-} from "@fluidframework/protocol-base";
+import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
     IClient,
     IClientConfiguration,
@@ -109,6 +106,11 @@ import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, Quorum
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
+import {
+    IProtocolHandler,
+    ProtocolHandler,
+    ProtocolHandlerBuilder,
+} from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -270,6 +272,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         loadOptions: IContainerLoadOptions,
         pendingLocalState?: IPendingContainerState,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
             loader,
@@ -278,7 +281,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
                 serializedContainerState: pendingLocalState,
-            });
+            },
+            protocolHandlerBuilder);
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -326,10 +330,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async createDetached(
         loader: Loader,
         codeDetails: IFluidCodeDetails,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
             loader,
-            {});
+            {},
+            protocolHandlerBuilder);
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -348,10 +354,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async rehydrateDetachedFromSnapshot(
         loader: Loader,
         snapshot: string,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
             loader,
-            {});
+            {},
+            protocolHandlerBuilder);
+
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
             { eventName: "RehydrateDetachedFromSnapshot" },
@@ -405,7 +414,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
-    private readonly _audience: Audience;
+    private _initialClients: ISignalClient[] | undefined;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -528,7 +537,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Retrieves the audience associated with the document
      */
     public get audience(): IAudience {
-        return this._audience;
+        return this.protocolHandler.audience;
     }
 
     /**
@@ -549,6 +558,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     constructor(
         private readonly loader: Loader,
         config: IContainerConfig,
+        private readonly protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ) {
         super((name, error) => {
             this.mc.logger.sendErrorEvent(
@@ -558,7 +568,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 error);
         });
-        this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._resolvedUrl = config.resolvedUrl;
@@ -1178,12 +1187,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // ...load in the existing quorum
         // Initialize the protocol handler
         this._protocolHandler = pendingLocalState === undefined
-            ? await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot)
-            : await this.initializeProtocolState(
+            ? await this.initializeProtocolStateFromSnapshot(
                 attributes,
-                pendingLocalState.protocol.members,
-                pendingLocalState.protocol.proposals,
-                pendingLocalState.protocol.values,
+                this.storageService,
+                snapshot,
+            ) : await this.initializeProtocolState(
+                attributes,
+                {
+                    members: pendingLocalState.protocol.members,
+                    proposals: pendingLocalState.protocol.proposals,
+                    values: pendingLocalState.protocol.values,
+                }, // pending IQuorumSnapshot
             );
 
         const codeDetails = this.getCodeDetailsFromQuorum();
@@ -1261,9 +1275,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const qValues = initQuorumValuesFromCodeDetails(source);
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
-            [], // members
-            [], // proposals
-            qValues,
+            {
+                members: [],
+                proposals: [],
+                values: qValues,
+            }, // IQuorumSnapShot
         );
 
         // The load context - given we seeded the quorum - will be great
@@ -1297,9 +1313,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.initializeProtocolState(
                 attributes,
-                [], // members
-                [], // proposals
-                codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : []);
+                {
+                    members: [],
+                    proposals: [],
+                    values: codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
+                }, // IQuorumSnapShot
+            );
 
         await this.instantiateContextDetached(
             true, // existing
@@ -1363,43 +1382,39 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
     ): Promise<IProtocolHandler> {
-        let members: [string, ISequencedClient][] = [];
-        let proposals: [number, ISequencedProposal, string[]][] = [];
-        let values: [string, any][] = [];
+        const quorumSnapshot: IQuorumSnapshot = {
+            members: [],
+            proposals: [],
+            values: [],
+        };
 
         if (snapshot !== undefined) {
             const baseTree = getProtocolSnapshotTree(snapshot);
-            [members, proposals, values] = await Promise.all([
+            [quorumSnapshot.members, quorumSnapshot.proposals, quorumSnapshot.values] = await Promise.all([
                 readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
                 readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),
                 readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
             ]);
         }
 
-        const protocolHandler = await this.initializeProtocolState(
-            attributes,
-            members,
-            proposals,
-            values);
-
+        const protocolHandler = await this.initializeProtocolState(attributes, quorumSnapshot);
         return protocolHandler;
     }
 
     private async initializeProtocolState(
         attributes: IDocumentAttributes,
-        members: [string, ISequencedClient][],
-        proposals: [number, ISequencedProposal, string[]][],
-        values: [string, any][],
+        quorumSnapshot: IQuorumSnapshot,
     ): Promise<IProtocolHandler> {
-        const protocol = new ProtocolOpHandlerWithClientValidation(
-            attributes.minimumSequenceNumber,
-            attributes.sequenceNumber,
-            attributes.term,
-            members,
-            proposals,
-            values,
+        const protocolHandlerBuilder =
+            this.protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
+        const protocol = protocolHandlerBuilder(
+            attributes,
+            quorumSnapshot,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+            this._initialClients ?? [],
         );
+
+        this._initialClients = undefined;
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1521,12 +1536,19 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         deltaManager.inboundSignal.pause();
 
-        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
-            // Back-compat for new client and old server.
-            this._audience.clear();
+        deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+            if (this._protocolHandler === undefined) {
+                // Store the initial clients so that they can be submitted to the
+                // protocol handler when it is created.
+                this._initialClients = details.initialClients;
+            } else {
+                // When reconnecting, the protocol handler is already created,
+                // so we can update the audience right now.
+                this._protocolHandler.audience.clear();
 
-            for (const priorClient of details.initialClients ?? []) {
-                this._audience.addMember(priorClient.clientId, priorClient.client);
+                for (const priorClient of details.initialClients ?? []) {
+                    this._protocolHandler.audience.addMember(priorClient.clientId, priorClient.client);
+                }
             }
 
             this.connectionStateHandler.receivedConnectEvent(
@@ -1757,14 +1779,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         if (message.clientId === null) {
-            const innerContent = message.content as { content: any; type: string; };
-            if (innerContent.type === MessageType.ClientJoin) {
-                const newClient = innerContent.content as ISignalClient;
-                this._audience.addMember(newClient.clientId, newClient.client);
-            } else if (innerContent.type === MessageType.ClientLeave) {
-                const leftClientId = innerContent.content as string;
-                this._audience.removeMember(leftClientId);
-            }
+            this.protocolHandler.processSignal(message);
         } else {
             const local = this.clientId === message.clientId;
             this.context.processSignal(message, local);

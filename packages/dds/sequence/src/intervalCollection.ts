@@ -132,8 +132,26 @@ export interface ISerializableInterval extends IInterval {
 
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     compareEnds(a: TInterval, b: TInterval): number;
-    create(label: string, start: number, end: number,
-        client: Client, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
+    /**
+     *
+     * @param label - label of the interval collection this interval is being added to. This parameter is
+     * irrelevant for transient intervals.
+     * @param start - numerical start position of the interval
+     * @param end - numberical end position of the interval
+     * @param client - client creating the interval
+     * @param intervalType - Type of interval to create. Default is SlideOnRemove
+     * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
+     * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
+     */
+    create(
+        label: string,
+        start: number,
+        end: number,
+        client: Client,
+        intervalType?: IntervalType,
+        op?: ISequencedDocumentMessage,
+        fromSnapshot?: boolean,
+    ): TInterval;
 }
 
 export class Interval implements ISerializableInterval {
@@ -473,14 +491,16 @@ function createPositionReference(
     client: Client,
     pos: number,
     refType: ReferenceType,
-    op?: ISequencedDocumentMessage): LocalReferencePosition {
+    op?: ISequencedDocumentMessage,
+    fromSnapshot?: boolean): LocalReferencePosition {
     let segoff;
     if (op) {
         assert((refType & ReferenceType.SlideOnRemove) !== 0, 0x2f5 /* op create references must be SlideOnRemove */);
         segoff = client.getContainingSegment(pos, op);
         segoff = client.getSlideToSegment(segoff);
     } else {
-        assert((refType & ReferenceType.SlideOnRemove) === 0, 0x2f6 /* SlideOnRemove references must be op created */);
+        assert((refType & ReferenceType.SlideOnRemove) === 0 || fromSnapshot,
+            0x2f6 /* SlideOnRemove references must be op created */);
         segoff = client.getContainingSegment(pos);
     }
     return createPositionReferenceFromSegoff(client, segoff, refType, op);
@@ -492,7 +512,8 @@ function createSequenceInterval(
     end: number,
     client: Client,
     intervalType?: IntervalType,
-    op?: ISequencedDocumentMessage): SequenceInterval {
+    op?: ISequencedDocumentMessage,
+    fromSnapshot?: boolean): SequenceInterval {
     let beginRefType = ReferenceType.RangeBegin;
     let endRefType = ReferenceType.RangeEnd;
     if (intervalType === IntervalType.Transient) {
@@ -506,7 +527,7 @@ function createSequenceInterval(
         // All non-transient interval references must eventually be SlideOnRemove
         // To ensure eventual consistency, they must start as StayOnRemove when
         // pending (created locally and creation op is not acked)
-        if (op) {
+        if (op || fromSnapshot) {
             beginRefType |= ReferenceType.SlideOnRemove;
             endRefType |= ReferenceType.SlideOnRemove;
         } else {
@@ -515,8 +536,8 @@ function createSequenceInterval(
         }
     }
 
-    const startLref = createPositionReference(client, start, beginRefType, op);
-    const endLref = createPositionReference(client, end, endRefType, op);
+    const startLref = createPositionReference(client, start, beginRefType, op, fromSnapshot);
+    const endLref = createPositionReference(client, end, endRefType, op, fromSnapshot);
     const rangeProp = {
         [reservedRangeLabelsKey]: [label],
     };
@@ -1140,11 +1161,18 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (this.savedSerializedIntervals) {
             for (const serializedInterval of this.savedSerializedIntervals) {
                 this.localCollection.ensureSerializedId(serializedInterval);
-                this.localCollection.addInterval(
-                    serializedInterval.start,
-                    serializedInterval.end,
-                    serializedInterval.intervalType,
-                    serializedInterval.properties);
+                const { start, end, intervalType, properties } = serializedInterval;
+                const interval = this.helpers.create(
+                    label,
+                    start,
+                    end,
+                    client,
+                    intervalType,
+                    undefined,
+                    true,
+                );
+                interval.addProperties(properties);
+                this.localCollection.add(interval);
             }
         }
         this.savedSerializedIntervals = undefined;

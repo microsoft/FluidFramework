@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     IFluidErrorBase,
@@ -109,6 +109,8 @@ export class OdspDocumentService implements IDocumentService {
 
     private currentConnection?: OdspDocumentDeltaConnection;
 
+    private relayServiceTenantAndSessionId: string | undefined;
+
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -184,6 +186,11 @@ export class OdspDocumentService implements IDocumentService {
                         return this.currentConnection.flush();
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
+                },
+                () => {
+                    assert(this.relayServiceTenantAndSessionId !== undefined,
+                        "relayServiceTenantAndSessionId should be present");
+                    return this.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
             );
@@ -267,7 +274,7 @@ export class OdspDocumentService implements IDocumentService {
                     this.socketIoClientFactory().catch(annotateAndRethrowConnectionError("socketIoClientFactory")),
                 ]);
 
-            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken || null);
+            const finalWebsocketToken = websocketToken ?? (websocketEndpoint.socketToken ?? null);
             if (finalWebsocketToken === null) {
                 throw this.annotateConnectionError(
                     new NonRetryableError(
@@ -379,6 +386,7 @@ export class OdspDocumentService implements IDocumentService {
                 disableJoinSessionRefresh,
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
+            this.relayServiceTenantAndSessionId = `${joinSessionResponse.tenantId}/${joinSessionResponse.id}`;
             return {
                 entryTime: Date.now(),
                 joinSessionResponse,

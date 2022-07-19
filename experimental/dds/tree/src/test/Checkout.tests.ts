@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { expect } from 'chai';
 import {
 	setTrait,
@@ -30,8 +31,9 @@ export function checkoutTests(
 	additionalTests?: () => void
 ): void {
 	async function setUpTestCheckout(
-		options: SharedTreeTestingOptions = { localMode: true, noFailOnError: true }
+		optionsArg?: SharedTreeTestingOptions
 	): Promise<{ checkout: Checkout; tree: SharedTree }> {
+		const options = { localMode: true, noFailOnError: true, ...optionsArg };
 		const { tree } = setUpTestSharedTree(options);
 		return { checkout: await checkoutFactory(tree), tree };
 	}
@@ -68,12 +70,12 @@ export function checkoutTests(
 		return data.changeCount;
 	}
 
-	async function setUpTestTreeCheckout(): Promise<{
+	async function setUpTestTreeCheckout(options?: SharedTreeTestingOptions): Promise<{
 		checkout: Checkout;
 		sharedTree: SharedTree;
 		testTree: TestTree;
 	}> {
-		const { checkout, tree } = await setUpTestCheckout();
+		const { checkout, tree } = await setUpTestCheckout(options);
 		const testTree = setUpTestTree(tree);
 		await checkout.waitForPendingUpdates();
 		return { checkout, sharedTree: tree, testTree };
@@ -163,6 +165,41 @@ export function checkoutTests(
 			checkout.openEdit();
 			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
 			checkout.closeEdit();
+		});
+
+		it.only('emits error telemetry on attempted close of malformed edits', async () => {
+			const events: ITelemetryBaseEvent[] = [];
+			const { checkout } = await setUpTestTreeCheckout({
+				logger: { send: (event) => event.eventName.includes('Checkout') && events.push(event) },
+			});
+			checkout.openEdit();
+			// Starts as valid
+			expect(checkout.getEditStatus()).equals(EditStatus.Applied);
+
+			// Is malformed after a malformed edit
+			const malformedMove = Change.move(
+				{
+					start: { side: Side.Before },
+					end: { side: Side.After },
+				},
+				{ side: Side.After }
+			);
+			expect(() => checkout.applyChanges(...malformedMove)).throws(
+				'Locally constructed edits must be well-formed and valid.'
+			);
+			expect(events.length).to.equal(0);
+			expect(() => checkout.closeEdit()).throws('Locally constructed edits must be well-formed and valid');
+			expect(events.length).to.equal(1);
+			expect(events[0]).to.deep.equal({
+				category: 'error',
+				error: 'FailedLocalEdit',
+				eventName: 'SharedTree:Checkout:FailedLocalEdit',
+				failureKind: 'BadRange',
+				isSharedTreeEvent: true,
+				rangeFailure: 'BadPlace',
+				rangeEndpointFailure: 'Malformed',
+				status: 'Malformed',
+			});
 		});
 
 		it('can try to apply an invalid edit and abort without causing an error', async () => {
