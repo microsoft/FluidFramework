@@ -230,7 +230,11 @@ export namespace ScenarioA {
         seq: 2,
         ref: 0,
         newRef: 1,
-        moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 0 } }],
+        moves: [
+            { id: 0, src: { foo: 1 }, dst: { bar: 0 } },
+            { id: 1, src: { foo: 1 }, dst: { bar: 0 } },
+            { id: 2, src: { foo: 1 }, dst: { bar: 0 } },
+        ],
         marks: [{
             mark: {
                 type: "Modify",
@@ -250,7 +254,7 @@ export namespace ScenarioA {
                             mark: {
                                 type: "Gap",
                                 count: 1,
-                                stack: [{ id: 0, type: "Forward" }],
+                                stack: [{ id: 1, type: "Forward" }],
                             },
                         },
                         {
@@ -258,16 +262,16 @@ export namespace ScenarioA {
                                 type: "MoveOut",
                                 id: 0,
                                 count: 1, // D
-                                gaps: [{ id: 0, type: "Forward" }],
+                                gaps: [{ id: 2, type: "Forward" }],
                             },
                         },
                     ],
                     bar: [{
-                        mark: [{
-                            type: "MoveIn",
-                            id: 0,
-                            count: 3, // B C D
-                        }],
+                        mark: [
+                            { type: "MoveIn", id: 0, count: 0 }, // B C
+                            { type: "MoveIn", id: 1, count: 0 }, // C-D
+                            { type: "MoveIn", id: 2, count: 1 }, // D
+                        ],
                     }],
                 },
             },
@@ -307,13 +311,17 @@ export namespace ScenarioA {
                         { mark: { type: "Tomb", seq: 1, count: 1 } }, // C
                     ],
                     bar: [{
-                        mark: [{
-                            type: "Insert",
-                            id: 0,
-                            content: [{ id: id("X") }],
-                            heed: Effects.All,
-                            src: { seq: 2, id: 0 },
-                        }],
+                        mark: [
+                            {
+                                type: "Insert",
+                                id: 0,
+                                content: [{ id: id("X") }],
+                                heed: Effects.All,
+                                src: { seq: 2, id: 0 },
+                            },
+                            { type: "Intake", seq: 2, id: 1 },
+                            { type: "Intake", seq: 2, id: 2 },
+                        ],
                     }],
                 },
             },
