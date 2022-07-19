@@ -6,7 +6,7 @@
 import random from "random-js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IMergeTreeOp } from "../ops";
-import { SegmentGroup } from "../mergeTree";
+import { SegmentGroup } from "../mergeTreeNodes";
 import {
     generateClientNames,
     doOverRange,

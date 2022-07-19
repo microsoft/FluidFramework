@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { InvalidationToken, SimpleObservingDependent } from "../dependency-tracking";
+
+// Testing utilities
+
 export function deepFreeze<T>(object: T): void {
 	// Retrieve the property names defined on object
 	const propNames: (keyof T)[] = Object.getOwnPropertyNames(object) as (keyof T)[];
@@ -14,4 +18,11 @@ export function deepFreeze<T>(object: T): void {
 		}
 	}
 	Object.freeze(object);
+}
+
+export class MockDependent extends SimpleObservingDependent {
+	public readonly tokens: (InvalidationToken | undefined)[] = [];
+	public constructor(name: string = "MockDependent") {
+		super((token) => this.tokens.push(token), name);
+	}
 }

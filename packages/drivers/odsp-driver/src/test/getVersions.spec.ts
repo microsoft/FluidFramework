@@ -125,6 +125,8 @@ describe("Tests for snapshot fetch", () => {
                 GetHostStoragePolicyInternal(),
                 epochTracker,
                 async () => { return {}; },
+                () => "tenantid/id",
+                undefined,
             );
         });
 
@@ -265,6 +267,7 @@ describe("Tests for snapshot fetch", () => {
                 GetHostStoragePolicyInternal(true /* isSummarizer */),
                 epochTracker,
                 async () => { return {}; },
+                () => "tenantid/id",
             );
         });
 

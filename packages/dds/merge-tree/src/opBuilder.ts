@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment, Marker } from "./mergeTree";
+import { ISegment, Marker } from "./mergeTreeNodes";
 import {
     ICombiningOp,
     IMergeTreeAnnotateMsg,
