@@ -54,11 +54,6 @@ export interface TokenFetchOptionsEx extends TokenFetchOptions {
     previousError?: any;
 }
 
-export interface IRelaySessionId {
-    tenantId: string;
-    id: string;
-}
-
 function headersToMap(headers: Headers) {
     const newHeaders = new Map<string, string>();
     for (const [key, value] of headers.entries()) {

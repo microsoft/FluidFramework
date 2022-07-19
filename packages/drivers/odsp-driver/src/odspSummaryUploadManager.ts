@@ -39,7 +39,7 @@ export class OdspSummaryUploadManager {
         logger: ITelemetryLogger,
         private readonly epochTracker: EpochTracker,
         private readonly forceAccessTokenViaAuthorizationHeader: boolean,
-        private readonly relaySessionId: () => string,
+        private readonly relayServiceTenantAndSessionId: () => string,
     ) {
         this.mc = loggerToMonitoringContext(logger);
     }
@@ -94,8 +94,8 @@ export class OdspSummaryUploadManager {
                 this.forceAccessTokenViaAuthorizationHeader,
             );
             headers["Content-Type"] = "application/json";
-            headers["If-Match"] =
-                `fluid:sessionid=${this.relaySessionId()}${parentHandle ? `;containerid=${parentHandle}`: ""}`;
+            headers["If-Match"] = `fluid:sessionid=${
+                this.relayServiceTenantAndSessionId()}${parentHandle ? `;containerid=${parentHandle}` : ""}`;
 
             const postBody = JSON.stringify(snapshot);
 

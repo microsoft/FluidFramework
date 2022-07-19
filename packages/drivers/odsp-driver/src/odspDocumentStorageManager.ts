@@ -92,7 +92,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         private readonly hostPolicy: HostStoragePolicyInternal,
         private readonly epochTracker: EpochTracker,
         private readonly flushCallback: () => Promise<FlushResult>,
-        private readonly relaySessionId: () => string,
+        private readonly relayServiceTenantAndSessionId: () => string,
         private readonly snapshotFormatFetchType?: SnapshotFormatSupportType,
     ) {
         super();
@@ -108,7 +108,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
             logger,
             epochTracker,
             !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
-            this.relaySessionId,
+            this.relayServiceTenantAndSessionId,
         );
     }
 

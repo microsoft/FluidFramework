@@ -41,12 +41,7 @@ import { IOdspCache } from "./odspCache";
 import { OdspDeltaStorageService, OdspDeltaStorageWithCache } from "./odspDeltaStorageService";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager";
-import {
-    getWithRetryForTokenRefresh,
-    getOdspResolvedUrl,
-    TokenFetchOptionsEx,
-    IRelaySessionId,
-} from "./odspUtils";
+import { getWithRetryForTokenRefresh, getOdspResolvedUrl, TokenFetchOptionsEx } from "./odspUtils";
 import { fetchJoinSession } from "./vroom";
 import { isOdcOrigin } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
@@ -114,7 +109,7 @@ export class OdspDocumentService implements IDocumentService {
 
     private currentConnection?: OdspDocumentDeltaConnection;
 
-    private relaySessionId: IRelaySessionId | undefined;
+    private relayServiceTenantAndSessionId: string | undefined;
 
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
@@ -193,10 +188,9 @@ export class OdspDocumentService implements IDocumentService {
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
                 },
                 () => {
-                    assert(this.relaySessionId !== undefined, "Relay session id should be defined");
-                    assert(this.relaySessionId.tenantId !== undefined && this.relaySessionId.id !== undefined,
-                        "tenantId/id should be present in join session response");
-                    return `${this.relaySessionId.tenantId}/${this.relaySessionId.id}`;
+                    assert(this.relayServiceTenantAndSessionId !== undefined,
+                        "RelayServiceSessionId should be defined");
+                    return this.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
             );
@@ -392,7 +386,7 @@ export class OdspDocumentService implements IDocumentService {
                 disableJoinSessionRefresh,
                 this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
             );
-            this.relaySessionId = { tenantId: joinSessionResponse.tenantId, id: joinSessionResponse.id };
+            this.relayServiceTenantAndSessionId =  `${joinSessionResponse.tenantId}/${joinSessionResponse.id}`;
             return {
                 entryTime: Date.now(),
                 joinSessionResponse,
