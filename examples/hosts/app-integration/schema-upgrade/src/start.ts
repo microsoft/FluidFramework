@@ -7,7 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { AppView } from "./appView";
-import { BootLoader } from "./bootLoader";
+import { ModelLoader } from "./modelLoader";
 import { DebugView } from "./debugView";
 import { externalDataSource } from "./externalData";
 import { IApp } from "./interfaces";
@@ -48,7 +48,7 @@ const renderApp = (app: IApp) => {
 async function start(): Promise<void> {
     let id: string;
     let app: IApp;
-    const bootLoader = new BootLoader();
+    const modelLoader = new ModelLoader();
 
     // In interacting with the service, we need to be explicit about whether we're creating a new container vs.
     // loading an existing one.  If loading, we also need to provide the unique ID for the container we are
@@ -61,19 +61,19 @@ async function start(): Promise<void> {
     // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
     if (location.hash.length === 0) {
         const fetchedData = await externalDataSource.fetchData();
-        const createResponse = await bootLoader.createDetached("one");
+        const createResponse = await modelLoader.createDetached("one");
         app = createResponse.app;
         await app.importStringData(fetchedData);
         id = await createResponse.attach();
     } else {
         id = location.hash.substring(1);
-        app = await bootLoader.loadExisting(id);
+        app = await modelLoader.loadExisting(id);
     }
 
     // Note - here I proceed to rendering, but instead we could just propose the new version without rendering
     // if we decide the current version is too old.
 
-    const migrator = new Migrator(bootLoader, app);
+    const migrator = new Migrator(modelLoader, app);
     migrator.on("appMigrated", (newApp: IApp, newAppId: string) => {
         renderApp(newApp);
         updateTabForId(newAppId);

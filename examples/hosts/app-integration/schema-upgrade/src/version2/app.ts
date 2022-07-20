@@ -59,8 +59,7 @@ const extractStringData = async (inventoryList: IInventoryList) => {
  * The App serves the purpose of wrapping this particular Container in a friendlier interface, with stronger typing
  * and accessory functionality.  It should have the same layering restrictions as we want for the Container (e.g. no
  * direct access to the Loader).  It does not have a goal of being general-purpose like Container does -- instead it
- * is specially designed for the specific container code.  It seems likely that a bootloader layer might want to
- * exist to bridge the gap between loading the container and being sure the App is the right type for the container.
+ * is specially designed for the specific container code.
  */
 export class App extends TypedEventEmitter<IAppEvents> implements IApp {
     // To be used by the consumer of the model to pair with an appropriate view.

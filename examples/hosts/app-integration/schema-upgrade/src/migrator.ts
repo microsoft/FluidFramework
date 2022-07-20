@@ -6,10 +6,10 @@
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
-import { BootLoader } from "./bootLoader";
+import { ModelLoader } from "./modelLoader";
 import { IApp, IMigratable, MigrationState } from "./interfaces";
 
-const ensureMigrated = async (bootLoader: BootLoader, migratable: IMigratable) => {
+const ensureMigrated = async (modelLoader: ModelLoader, migratable: IMigratable) => {
     const acceptedVersion = migratable.acceptedVersion;
     if (acceptedVersion === undefined) {
         throw new Error("Cannot ensure migrated before code details are accepted");
@@ -19,9 +19,9 @@ const ensureMigrated = async (bootLoader: BootLoader, migratable: IMigratable) =
     }
     const extractedData = await migratable.exportStringData();
     // Possibly transform the extracted data here
-    // It's possible that our bootLoader is older and doesn't understand the new acceptedVersion.  Probably
-    // should gracefully fail quietly in this case, or find a way to get the new BootLoader.
-    const { app: migratedApp, attach } = await bootLoader.createDetached(acceptedVersion);
+    // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Probably
+    // should gracefully fail quietly in this case, or find a way to get the new ModelLoader.
+    const { app: migratedApp, attach } = await modelLoader.createDetached(acceptedVersion);
     await migratedApp.importStringData(extractedData);
     // Maybe here apply the extracted data instead of passing it into createDetached
 
@@ -63,7 +63,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
     // Maybe also have a prop for the id and the current MigrationState?
 
-    public constructor(private readonly bootLoader: BootLoader, initialApp: IApp) {
+    public constructor(private readonly modelLoader: ModelLoader, initialApp: IApp) {
         super();
         this._currentApp = initialApp;
         this.watchAppForMigration();
@@ -77,7 +77,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 if (migratedId === undefined) {
                     throw new Error("Migration ended without a new container being created");
                 }
-                this.bootLoader.loadExisting(migratedId).then((migratedApp: IApp) => {
+                this.modelLoader.loadExisting(migratedId).then((migratedApp: IApp) => {
                     this._currentApp = migratedApp;
                     this.watchAppForMigration();
                     this.emit("appMigrated", this._currentApp, migratedId);
@@ -85,7 +85,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 }).catch(console.error);
             } else if (migrationState === MigrationState.migrating) {
                 this.emit("appMigrating");
-                ensureMigrated(this.bootLoader, app).catch(console.error);
+                ensureMigrated(this.modelLoader, app).catch(console.error);
             }
         });
     }

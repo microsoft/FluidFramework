@@ -12,7 +12,7 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-import { IApp, IBootLoader } from "./interfaces";
+import { IApp, IModelLoader } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
     App as App1,
@@ -81,7 +81,7 @@ const getModel = async (container: IContainer) => {
     }
 };
 
-export class BootLoader implements IBootLoader {
+export class ModelLoader implements IModelLoader {
     private readonly loader: IHostLoader = createLoader();
 
     // Would be preferable to have a way for the customer to call service.attach(app) rather than returning an
