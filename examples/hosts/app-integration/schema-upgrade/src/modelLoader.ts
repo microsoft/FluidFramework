@@ -101,8 +101,8 @@ export class ModelLoader implements IModelLoader {
         }
         const container = await this.loader.createDetachedContainer({ package: version });
         const model = await getModel(container);
-        // The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach
-        // But without leaking out the loader, service, etc.  We also return the container ID here so we don't have
+        // The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach,
+        // without leaking out the loader, service, etc.  We also return the container ID here so we don't have
         // to stamp it on something that would rather not know it (e.g. the model).
         const attach = async () => {
             await container.attach(createTinyliciousCreateNewRequest());

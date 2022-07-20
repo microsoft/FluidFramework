@@ -10,7 +10,7 @@ import { IMigratable, IMigrator, IMigratorEvents, IModelLoader, MigrationState }
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
     private _currentMigratable: IMigratable;
 
-    // Maybe also have a prop for the id and the current MigrationState?
+    // TODO: Maybe also have a prop for the id and the current MigrationState?
 
     public constructor(private readonly modelLoader: IModelLoader, initialMigratable: IMigratable) {
         super();

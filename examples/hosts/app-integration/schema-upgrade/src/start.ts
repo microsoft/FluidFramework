@@ -76,8 +76,8 @@ async function start(): Promise<void> {
         // Fetching and importing the data here is optional
         // For demo purposes it's nice to have some prepopulated entries though.
         const fetchedData = await externalDataSource.fetchData();
-        // Choosing for demo purposes to create with the old version, so we can demo the upgrade.
-        // Normally would create with the most-recent version.
+        // Choosing to create with the old version for demo purposes, so we can demo the upgrade flow.
+        // Normally we would create with the most-recent version.
         const createResponse = await modelLoader.createDetached("one");
         model = createResponse.model;
         // TODO: Validate that the model is capable of importing the fetchedData (format check)
@@ -88,8 +88,8 @@ async function start(): Promise<void> {
         model = await modelLoader.loadExisting(id);
     }
 
-    // Note - here I proceed to rendering without waiting to see if an upgrade is needed, but instead we could
-    // check first and defer rendering until the upgrade is complete.
+    // TODO: here I proceed to rendering without waiting to see if an upgrade is needed, but instead we could
+    // check first and defer rendering until the upgrade is complete.  Consider whether this would be better.
 
     // Could be reasonable to merge Migrator into the ModelLoader, for a MigratingModelLoader.
     const migrator = new Migrator(modelLoader, model);
@@ -98,6 +98,7 @@ async function start(): Promise<void> {
         updateTabForId(newModelId);
     });
     migrator.on("migrationNotSupported", (version: string) => {
+        // TODO: Figure out what a reasonable end-user experience might be in this case.
         console.error(`Tried to migrate to version ${version} which is not supported by the current ModelLoader`);
     });
 
