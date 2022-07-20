@@ -27,7 +27,6 @@ export interface MemoryTestStats {
 }
 
 export function benchmarkMemory(args: BenchmarkArguments): Test {
-    // const consoleLog = console.log;
     const options: Required<BenchmarkOptions> = {
         maxBenchmarkDurationSeconds: args.maxBenchmarkDurationSeconds ?? 5,
         minSampleCount: args.minSampleCount ?? 5,
