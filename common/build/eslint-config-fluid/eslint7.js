@@ -174,18 +174,18 @@ module.exports = {
         // eslint
         "arrow-body-style": "off",
         "arrow-parens": ["error", "always"],
-        camelcase: "off", // Superseded by @typescript-eslint/camelcase
+        "camelcase": "off", // Superseded by @typescript-eslint/camelcase
         "brace-style": "off", // Superseded by @typescript-eslint/brace-style
         "capitalized-comments": "off",
         "comma-dangle": "off", // Superseded by @typescript-eslint/comma-dangle
         "comma-spacing": "off", // Superseded by @typescript-eslint/comma-spacing
-        complexity: "off",
+        "complexity": "off",
         "constructor-super": "error",
-        curly: "error",
+        "curly": "error",
         "default-case": "error",
         "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
         "eol-last": "error",
-        eqeqeq: ["error", "smart"],
+        "eqeqeq": ["error", "smart"],
         "func-call-spacing": "off", // Superseded by @typescript-eslint/func-call-spacing
         "guard-for-in": "error",
         "id-match": "error",
@@ -272,10 +272,10 @@ module.exports = {
         "prefer-promise-reject-errors": "error",
         "prefer-template": "error",
         "quote-props": ["error", "consistent-as-needed"],
-        quotes: "off", // Superseded by @typescript-eslint/quotes
-        radix: "error",
+        "quotes": "off", // Superseded by @typescript-eslint/quotes
+        "radix": "error",
         "require-await": "off", // Superseded by @typescript-eslint/require-await
-        semi: "off", // Superseded by @typescript-eslint/semi
+        "semi": "off", // Superseded by @typescript-eslint/semi
         "semi-spacing": "error",
         "space-before-blocks": "error",
         "space-before-function-paren": "off", // Superseded by @typescript-eslint/space-before-function-paren
@@ -293,7 +293,7 @@ module.exports = {
         ],
         "use-isnan": "error",
         "valid-typeof": "off",
-        yoda: "off",
+        "yoda": "off",
     },
     overrides: [
         {

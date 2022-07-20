@@ -81,7 +81,7 @@ module.exports = {
         "@typescript-eslint/dot-notation": "error",
         "@typescript-eslint/no-non-null-assertion": "error",
         "@typescript-eslint/no-unnecessary-type-assertion": "error",
-        eqeqeq: ["error", "smart"],
+        "eqeqeq": ["error", "smart"],
         "max-len": [
             "error",
             {
@@ -257,7 +257,7 @@ module.exports = {
                 extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
             },
         },
-        jsdoc: {
+        "jsdoc": {
             // The following are intended to keep js/jsx jsdoc comments in line with tsdoc syntax used in ts/tsx code.
             tagNamePreference: {
                 arg: {
