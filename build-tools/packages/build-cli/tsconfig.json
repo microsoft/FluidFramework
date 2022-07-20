@@ -1,20 +1,20 @@
 {
-    "exclude": ["dist", "node_modules"],
-    "compilerOptions": {
-        "declaration": true,
-        "importHelpers": true,
-        "module": "commonjs",
-        "outDir": "dist",
-        "rootDir": "src",
-        "strict": true,
-        "target": "es2019",
-        "types": ["node"],
-        "esModuleInterop": true,
-        "incremental": false,
-        "pretty": true,
-    },
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./test/tsconfig.json"],
-    },
-    "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules"],
+  "compilerOptions": {
+    "declaration": true,
+    "importHelpers": true,
+    "module": "commonjs",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "target": "es2019",
+    "types": ["node"],
+    "esModuleInterop": true,
+    "incremental": false,
+    "pretty": true,
+  },
+  "parserOptions": {
+    "project": ["./tsconfig.json", "./test/tsconfig.json"],
+  },
+  "include": ["src/**/*"],
 }
