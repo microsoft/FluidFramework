@@ -40,7 +40,7 @@ export class DefaultTokenProvider implements ITokenProvider {
 
 // @public
 export class DeltaStorageService implements IDeltaStorageService {
-    constructor(url: string, restWrapper: RestWrapper, logger: ITelemetryLogger, getRestWrapper?: () => Promise<RestWrapper>);
+    constructor(url: string, restWrapper: RestWrapper, logger: ITelemetryLogger, getRestWrapper?: () => Promise<RestWrapper>, getDeltaStorageUrl?: () => string);
     // (undocumented)
     get(tenantId: string, id: string, from: number, // inclusive
     to: number): Promise<IDeltasFetchResult>;
