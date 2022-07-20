@@ -17,7 +17,6 @@ import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
-import { IInterval } from '@fluidframework/merge-tree';
 import { IJSONSegment } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
@@ -26,7 +25,6 @@ import { IMergeTreeInsertMsg } from '@fluidframework/merge-tree';
 import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeOp } from '@fluidframework/merge-tree';
 import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
-import { IntervalConflictResolver } from '@fluidframework/merge-tree';
 import { IRelativePosition } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISegmentAction } from '@fluidframework/merge-tree';
@@ -57,6 +55,24 @@ export type CompressedSerializedInterval = [number, number, number, IntervalType
 
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
+
+// @public (undocumented)
+export interface IInterval {
+    // (undocumented)
+    clone(): IInterval;
+    // (undocumented)
+    compare(b: IInterval): number;
+    // (undocumented)
+    compareEnd(b: IInterval): number;
+    // (undocumented)
+    compareStart(b: IInterval): number;
+    // (undocumented)
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage): IInterval | undefined;
+    // (undocumented)
+    overlaps(b: IInterval): boolean;
+    // (undocumented)
+    union(b: IInterval): IInterval;
+}
 
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
@@ -188,6 +204,9 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
         done: boolean;
     };
 }
+
+// @public (undocumented)
+export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 // @public (undocumented)
 export enum IntervalType {
@@ -569,7 +588,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
         posStart: number;
         posAfterEnd: number;
     };
-    // @internal @deprecated (undocumented)
+    // (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;

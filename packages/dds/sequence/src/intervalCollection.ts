@@ -15,10 +15,6 @@ import {
     ConflictAction,
     createMap,
     ICombiningOp,
-    IInterval,
-    IntervalConflictResolver,
-    IntervalNode,
-    IntervalTree,
     ISegment,
     MergeTreeDeltaType,
     minReferencePosition,
@@ -44,6 +40,7 @@ import {
     IValueType,
     IValueTypeOperationValue,
 } from "./defaultMapInterfaces";
+import { IInterval, IntervalConflictResolver, IntervalTree, IntervalNode } from "./intervalTree";
 
 const reservedIntervalIdKey = "intervalId";
 
