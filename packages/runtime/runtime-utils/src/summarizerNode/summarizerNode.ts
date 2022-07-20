@@ -222,6 +222,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
             if (maybeSummaryNode !== undefined) {
                 this.refreshLatestSummaryFromPending(proposalHandle, maybeSummaryNode.referenceSequenceNumber);
+                return { latestSummaryUpdated: true, wasSummaryTracked: true };
             }
         }
 
