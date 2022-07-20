@@ -25,9 +25,13 @@ The `FluidContainer` is then created (or fetched if it already exists) alongside
 
 Let's now take a look at how the `MouseTracker` class uses the `Signaler` DataObject to achieve the first form of user presence within the application.
 
-The class first defines the `mouseSignalType` that will be sent and listened to the connected clients when there is a presence change:
+The class defines the `mouseSignalType` that will be sent and listened to the connected clients when there is a presence change:
 
 ```typescript
+export interface IMouseTrackerEvents extends IEvent {
+    (event: "mousePositionChanged", listener: () => void): void;
+}
+
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     private static readonly mouseSignalType = "positionChanged";
 
@@ -37,13 +41,17 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 The class also initializes a local map of `IMousePosition` values for all of the connected clients. Each userID can have multiple clientIDs (e.g. same user on seperate devices), which explains the nested `Map`. This local map is what populates the view and what will be updated on `mouseSignalType` signals:
 
 ```typescript
+export interface IMouseTrackerEvents extends IEvent {
+    (event: "mousePositionChanged", listener: () => void): void;
+}
+
 export interface IMousePosition {
     x: number;
     y: number;
 }
 
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
-    /*...*/
+    private static readonly mouseSignalType = "positionChanged";
 
     /**
      * Local map of mouse position status for clients
@@ -84,6 +92,10 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 Whenever a member leaves the audience (e.g. a client disconnects from the container), we would want to remove their presence from our local data. After this is done, we would have to let the view know that the local presence data has changed. To do this, we emit our `mousePositionChanged` `IMouseTrackerEvent` so the view knows to re-render:
 
 ```typescript
+export interface IMouseTrackerEvents extends IEvent {
+    (event: "mousePositionChanged", listener: () => void): void;
+}
+
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     /*...*/
 
@@ -194,6 +206,110 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 
 
 ## FocusTracker
+
+Let's now take a look at how the `FocusTracker` class uses the `Signaler` DataObject to achieve the second form of user presence within the application.
+
+The class defines the `focusSignalType` that will be sent and listened to the connected clients when there is a presence change. It also defines the `focusRequestType` that will be sent to request the focus status of all the connected clients:
+
+```typescript
+export interface IFocusTrackerEvents extends IEvent {
+    (event: "focusChanged", listener: () => void): void;
+}
+
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+    private static readonly focusSignalType = "changedFocus";
+    private static readonly focusRequestType = "focusRequest";
+
+    /*...*/
+}
+```
+The class then initializes a local map of boolean values for all of the connected clients. The boolean denotes wheter or not the client has has focus or not:
+
+```typescript
+export interface IFocusTrackerEvents extends IEvent {
+    (event: "focusChanged", listener: () => void): void;
+}
+
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+    private static readonly focusSignalType = "changedFocus";
+    private static readonly focusRequestType = "focusRequest";
+
+    /**
+     * Local map of focus status for clients
+     *
+     * @example
+     * ```typescript
+     * Map<userId, Map<clientid, hasFocus>>
+     * ```
+     */
+    private readonly focusMap = new Map<string, Map<string, boolean>>();
+}
+```
+We can now move to the constructor where we can see that `FocusTracker` takes in the `container`, the `audience`, and the `Signaler` instance from `initialObjects` as arguments:
+
+```typescript
+export interface IFocusTrackerEvents extends IEvent {
+    (event: "focusChanged", listener: () => void): void;
+}
+
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+    /*...*/
+
+     public constructor(
+        container: IFluidContainer,
+        public readonly audience: IServiceAudience<IMember>,
+        private readonly signaler: Signaler,
+    ) {
+        super();
+
+        /*...*/
+    }
+
+    /*...*/
+}
+```
+Just like in the `MouseTracker` class, whenever a member leaves the audience we need to remove their presence from our local data and emit an event to let the view know that it needs to re-render to display the updated presence:
+
+```typescript
+export interface IFocusTrackerEvents extends IEvent {
+    (event: "focusChanged", listener: () => void): void;
+}
+
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+    /*...*/
+
+     public constructor(
+        container: IFluidContainer,
+        public readonly audience: IServiceAudience<IMember>,
+        private readonly signaler: Signaler,
+    ) {
+        super();
+
+        this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
+            const focusClientIdMap = this.focusMap.get(member.userId);
+            if (focusClientIdMap !== undefined) {
+                focusClientIdMap.delete(clientId);
+                if (focusClientIdMap.size === 0) {
+                    this.focusMap.delete(member.userId);
+                }
+            }
+            this.emit("focusChanged");
+        });
+
+        /*...*/
+    }
+
+    /*...*/
+}
+```
+
+
+
+
+
+
+
+
 
 ## View
 
