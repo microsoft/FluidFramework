@@ -14,9 +14,9 @@ export interface IModelLoader {
     createDetached(
         version: string,
         externalData?: string,
-    ): Promise<{ model: IApp; attach: () => Promise<string>; }>;
+    ): Promise<{ model: IMigratable; attach: () => Promise<string>; }>;
 
-    loadExisting(id: string): Promise<IApp>;
+    loadExisting(id: string): Promise<IMigratable>;
 }
 
 export enum MigrationState {
@@ -94,11 +94,6 @@ export interface IMigrator extends IEventProvider<IMigratorEvents> {
 export interface IAppEvents extends IMigrationEvents { }
 
 export interface IApp extends IMigratable, IEventProvider<IAppEvents> {
-    /**
-     * Initialize must be called after constructing the IApp.  This is where we do whatever async stuff is needed
-     * to prepare a sync API surface on the app.
-     */
-    initialize: () => Promise<void>;
     /**
      * An inventory tracker list, which is the relevant data for this particular IApp.
      */

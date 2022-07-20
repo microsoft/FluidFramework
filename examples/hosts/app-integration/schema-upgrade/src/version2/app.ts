@@ -89,6 +89,10 @@ export class App extends TypedEventEmitter<IAppEvents> implements IApp {
         super();
     }
 
+    /**
+     * Initialize must be called after constructing the app.  This is where we do whatever async stuff is needed
+     * to prepare a sync API surface on the app.
+     */
     public readonly initialize = async () => {
         this._inventoryList = await getInventoryListFromContainer(this.container);
         this._containerKillBit = await getContainerKillBitFromContainer(this.container);

@@ -12,7 +12,7 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-import { IApp, IModelLoader } from "./interfaces";
+import { IMigratable, IModelLoader } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
     App as App1,
@@ -56,7 +56,7 @@ function createLoader(): IHostLoader {
     });
 }
 
-const getModel = async (container: IContainer) => {
+const getModel = async (container: IContainer): Promise<IMigratable> => {
     // Here I'm using the specified code details for convenience since it already exists (a real code proposal).
     // However, it could be reasonable to use an alternative in-container storage for the container type (e.g. a
     // standalone Quorum DDS).  The important thing is that we need a dependable way to discover the version of the
@@ -81,6 +81,8 @@ const getModel = async (container: IContainer) => {
     }
 };
 
+// This ModelLoader specifically supports versions one and two.  Other approaches might have network calls to
+// dynamically load in the appropriate model for unknown versions.
 export class ModelLoader implements IModelLoader {
     private readonly loader: IHostLoader = createLoader();
 
@@ -89,12 +91,12 @@ export class ModelLoader implements IModelLoader {
         return version === "one" || version === "two";
     }
 
-    // Would be preferable to have a way for the customer to call service.attach(app) rather than returning an
+    // Would be preferable to have a way for the customer to call service.attach(model) rather than returning an
     // attach callback here.
     public async createDetached(
         version: "one" | "two",
         externalData?: string,
-    ): Promise<{ model: IApp; attach: () => Promise<string>; }> {
+    ): Promise<{ model: IMigratable; attach: () => Promise<string>; }> {
         if (!this.isVersionSupported(version)) {
             throw new Error("Unknown accepted version");
         }
@@ -115,7 +117,7 @@ export class ModelLoader implements IModelLoader {
         return { model, attach };
     }
 
-    public async loadExisting(id: string): Promise<IApp> {
+    public async loadExisting(id: string): Promise<IMigratable> {
         const container = await this.loader.resolve({ url: id });
         const model = await getModel(container);
         return model;
