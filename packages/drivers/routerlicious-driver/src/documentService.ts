@@ -9,6 +9,7 @@ import { RateLimiter } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { GitManager, Historian, RestWrapper } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
@@ -21,17 +22,18 @@ import { ICache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
 
 /**
- * Amount of time after disconnect within which we don't need to rediscover.
+ * Amount of time between discoveries within which we don't need to rediscover on re-connect.
+ * Currently, R11s defines session length at 10 minutes. To avoid any weird unknown edge-cases though,
+ * we set the limit to 5 minutes here.
  * In the future, we likely want to retrieve this information from service's "inactive session" definition.
  */
-const RediscoverAfterTimeDisconnectedMs = 60000; // 1 minute
+const RediscoverAfterTimeSinceDiscoveryMs = 5 * 60000; // 5 minute
 
 /**
  * The DocumentService manages the Socket.IO connection and manages routing requests to connected
- * clients
+ * clients.
  */
 export class DocumentService implements api.IDocumentService {
-    private lastDisconnectAt: number = Date.now();
     private lastDiscoveredAt: number = Date.now();
     private discoverP: Promise<void> | undefined;
 
@@ -78,8 +80,11 @@ export class DocumentService implements api.IDocumentService {
         }
 
         const getStorageManager = async (disableCache?: boolean): Promise<GitManager> => {
-            if (!this.storageManager || !this.noCacheStorageManager || this.shouldUpdateDiscoveredSessionInfo()) {
+            const shouldUpdateDiscoveredSessionInfo = this.shouldUpdateDiscoveredSessionInfo();
+            if (shouldUpdateDiscoveredSessionInfo) {
                 await this.refreshDiscovery();
+            }
+            if (!this.storageManager || !this.noCacheStorageManager || shouldUpdateDiscoveredSessionInfo) {
                 const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests);
                 const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
                     this.tenantId,
@@ -139,8 +144,11 @@ export class DocumentService implements api.IDocumentService {
         assert(!!this.documentStorageService, 0x0b1 /* "Storage service not initialized" */);
 
         const getRestWrapper = async (): Promise<RestWrapper> => {
-            if (!this.ordererRestWrapper || this.shouldUpdateDiscoveredSessionInfo()) {
+            const shouldUpdateDiscoveredSessionInfo = this.shouldUpdateDiscoveredSessionInfo();
+            if (shouldUpdateDiscoveredSessionInfo) {
                 await this.refreshDiscovery();
+            }
+            if (!this.ordererRestWrapper || shouldUpdateDiscoveredSessionInfo) {
                 const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
                 this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
                     this.tenantId,
@@ -207,10 +215,6 @@ export class DocumentService implements api.IDocumentService {
             }
             throw error;
         }
-        // Listen to disconnect events after successful connection to know if we need to rediscover the session.
-        connection.on("disconnect", (reason: any) => {
-            this.lastDisconnectAt = Date.now();
-        });
         return connection;
     }
 
@@ -218,12 +222,14 @@ export class DocumentService implements api.IDocumentService {
      * Re-discover session URLs if necessary.
      */
     private async refreshDiscovery(): Promise<void> {
-        if (this.lastDiscoveredAt >= this.lastDisconnectAt) {
-            // We already rediscovered since latest disconnect.
-            return;
-        }
         if (!this.discoverP) {
-            this.discoverP = this.refreshDiscoveryCore();
+            this.discoverP = PerformanceEvent.timedExecAsync(
+                this.logger,
+                {
+                    eventName: "refreshSessionDiscovery",
+                },
+                async () => this.refreshDiscoveryCore(),
+            );
         }
         return this.discoverP;
     }
@@ -244,9 +250,12 @@ export class DocumentService implements api.IDocumentService {
         if (!this.driverPolicies.enableDiscovery) {
             return false;
         }
+        const now = Date.now();
         // When connection is disconnected, we cannot know if session has moved or document has been deleted
         // without re-doing discovery on the next attempt to connect.
-        // Make sure client was disconnected for a reasonably long enough time to avoid spamming discovery endpoint.
-        return Date.now() - this.lastDisconnectAt > RediscoverAfterTimeDisconnectedMs;
+        // Disconnect event is not so reliable in local testing. To ensure re-discovery when necessary,
+        // re-discover if enough time has passed since last discovery.
+        const pastLastDiscoveryTimeThreshold = (now - this.lastDiscoveredAt) > RediscoverAfterTimeSinceDiscoveryMs;
+        return pastLastDiscoveryTimeThreshold;
     }
 }
