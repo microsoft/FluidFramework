@@ -97,18 +97,19 @@ export namespace SwapParentChild {
                     foo: [
                         {
                             mark: {
-                                type: "MoveOut",
+                                type: "MMoveOut",
                                 id: 0,
                                 fields: {
                                     bar: [{
                                         mark: {
-                                            type: "MoveOut",
+                                            type: "MMoveOut",
                                             id: 1,
                                             fields: {
                                                 baz: [{
                                                     mark: {
                                                         type: "MoveOut",
                                                         id: 2,
+                                                        count: 1,
                                                     },
                                                 }],
                                             },
@@ -119,18 +120,19 @@ export namespace SwapParentChild {
                         },
                         {
                             mark: [{
-                                type: "MoveIn",
+                                type: "MMoveIn",
                                 id: 1,
                                 fields: {
                                     bar: [{
                                         mark: [{
-                                            type: "MoveIn",
+                                            type: "MMoveIn",
                                             id: 0,
                                             fields: {
                                                 baz: [{
                                                     mark: [{
                                                         type: "MoveIn",
                                                         id: 2,
+                                                        count: 1,
                                                     }],
                                                 }],
                                             },

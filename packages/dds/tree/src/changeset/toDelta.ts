@@ -52,7 +52,9 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.Positio
                         }
                         break;
                     }
-                    case "MoveIn": break;
+                    case "MoveIn":
+                    case "MMoveIn":
+                        fail(ERR_NOT_IMPLEMENTED);
                     case "Bounce":
                     case "Intake":
                         // These have no impacts on the document state.
@@ -77,33 +79,36 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.Positio
                     break;
                 }
                 case "Delete": {
-                    if ("count" in mark) {
-                        const deleteMark: Delta.Delete = {
-                            type: Delta.MarkType.Delete,
-                            count: mark.count,
+                    const deleteMark: Delta.Delete = {
+                        type: Delta.MarkType.Delete,
+                        count: mark.count,
+                    };
+                    out.push({ offset, mark: deleteMark });
+                    break;
+                }
+                case "MDelete": {
+                    const fields = convertModify<Delta.ModifyDeleted | Delta.MoveOut>(mark).fields;
+                    if (fields !== undefined) {
+                        const deleteMark: Delta.ModifyAndDelete = {
+                            type: Delta.MarkType.ModifyAndDelete,
+                            fields,
                         };
                         out.push({ offset, mark: deleteMark });
                     } else {
-                        const fields = convertModify<Delta.ModifyDeleted | Delta.MoveOut>(mark).fields;
-                        if (fields !== undefined) {
-                            const deleteMark: Delta.ModifyAndDelete = {
-                                type: Delta.MarkType.ModifyAndDelete,
-                                fields,
-                            };
-                            out.push({ offset, mark: deleteMark });
-                        } else {
-                            const deleteMark: Delta.Delete = {
-                                type: Delta.MarkType.Delete,
-                                count: 1,
-                            };
-                            out.push({ offset, mark: deleteMark });
-                        }
+                        const deleteMark: Delta.Delete = {
+                            type: Delta.MarkType.Delete,
+                            count: 1,
+                        };
+                        out.push({ offset, mark: deleteMark });
                     }
                     break;
                 }
                 case "MoveOut":
+                case "MMoveOut":
                 case "Revive":
+                case "MRevive":
                 case "Return":
+                case "MReturn":
                 case "Gap":
                     fail(ERR_NOT_IMPLEMENTED);
                 case "Tomb": {
@@ -249,6 +254,7 @@ function applyOrCollectModifications(
                                 break;
                             }
                             case "MoveIn":
+                            case "MMoveIn":
                                 // TODO: convert into a Delta.MoveIn/MoveInAndModify
                                 fail(ERR_NOT_IMPLEMENTED);
                             case "Bounce":
@@ -284,15 +290,18 @@ function applyOrCollectModifications(
                             if ("tomb" in mark) {
                                 continue;
                             }
-                            if ("count" in mark) {
-                                outNodes.splice(index, mark.count);
-                            } else {
-                                // TODO: convert move-out of inserted content into insert at the destination
-                                fail(ERR_NOT_IMPLEMENTED);
-                            }
+                            outNodes.splice(index, mark.count);
                             break;
                         }
+                        case "MDelete": {
+                            if ("tomb" in mark) {
+                                continue;
+                            }
+                            // TODO: convert move-out of inserted content into insert at the destination
+                            fail(ERR_NOT_IMPLEMENTED);
+                        }
                         case "MoveOut":
+                        case "MMoveOut":
                             // TODO: convert move-out of inserted content into insert at the destination
                             fail(ERR_NOT_IMPLEMENTED);
                         case "Gap":
@@ -301,8 +310,10 @@ function applyOrCollectModifications(
                         case "Tomb":
                             fail(ERR_TOMB_IN_INSERT);
                         case "Revive":
+                        case "MRevive":
                             fail(ERR_REVIVE_ON_INSERT);
                         case "Return":
+                        case "MReturn":
                             fail(ERR_RETURN_ON_INSERT);
                         default: unreachableCase(type);
                     }

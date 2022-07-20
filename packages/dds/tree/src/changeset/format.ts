@@ -180,7 +180,7 @@ import { NodeId } from ".";
 	}
 
 	export interface ModifyMoveIn extends HasOpId, HasPlaceFields {
-		type: "MoveIn";
+		type: "MMoveIn";
 		value?: ValueMark;
 		fields?: FieldMarks;
 	}
@@ -227,7 +227,7 @@ import { NodeId } from ".";
 	}
 
 	export interface ModifyDetach extends HasOpId {
-		type: "Delete" | "MoveOut";
+		type: "MDelete" | "MMoveOut";
 		tomb?: SeqNumber;
 		value?: ValueMark;
 		fields?: FieldMarks;
@@ -239,7 +239,7 @@ import { NodeId } from ".";
 		count: NodeCount;
 	}
 	export interface ModifyReattach extends HasOpId {
-		type: "Revive" | "Return";
+		type: "MRevive" | "MReturn";
 		tomb: SeqNumber;
 		value?: ValueMark;
 		fields?: FieldMarks;
