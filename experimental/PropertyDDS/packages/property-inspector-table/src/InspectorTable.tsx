@@ -40,7 +40,14 @@ import { Utils } from "./typeUtils";
 import { expandAll, fillExpanded, getReferenceValue, IInspectorSearchControls, isPrimitive, search, showNextResult,
   toTableRows } from "./utils";
 
-const defaultSort = { key: "name", order: SortOrder.ASC };
+// @TODO Figure out why SortOrder is not resolved as value after
+// updating the table version.
+enum TableSortOrder {
+  ASC = "asc",
+  DSC = "dsc",
+}
+
+const defaultSort = { key: "name", order: TableSortOrder.ASC } as { key: React.Key; order: SortOrder; };
 
 const footerHeight = 32;
 
@@ -265,15 +272,18 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     private readonly dataCreation: boolean;
     private columns: any;
     private readonly debouncedSearchChange: (searchExpression: string) => void;
-    private readonly table = React.createRef();
+    private readonly table;
     private toTableRowOptions;
 
     public constructor(props) {
       super(props);
+
+      this.table = React.createRef<BaseTable>();
+
       const { followReferences } = props;
       this.dataCreation = !!this.props.dataCreationHandler && !!this.props.dataCreationOptionGenerationHandler;
       this.columns = this.generateColumns(props.width);
-      this.toTableRowOptions = { addDummy: true, ascending: defaultSort.order === SortOrder.ASC,
+      this.toTableRowOptions = { addDummy: true, ascending: defaultSort.order === TableSortOrder.ASC,
         depth: 0, followReferences };
 
       this.debouncedSearchChange = debounce((searchExpression: string) => {
@@ -968,7 +978,11 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private readonly forceUpdateBaseTable = () => {
-      (this.table.current as any).table.bodyRef.recomputeGridSize();
+      // @TODO Revisit this logic.
+      // With the new table it may not need force render if the
+      // right events handlers are used.
+      this.table.current.columnManager.resetCache();
+      this.table.current.forceUpdateTable();
     };
   }
 
