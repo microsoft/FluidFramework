@@ -25,40 +25,172 @@ The `FluidContainer` is then created (or fetched if it already exists) alongside
 
 Let's now take a look at how the `MouseTracker` class uses the `Signaler` DataObject to achieve the first form of user presence within the application.
 
-The `MouseTracker` constructor takes the `audience` and the `Signaler` instance as arguments:
-
-```typescript
-export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
-    /*...*/
-    public constructor(
-      public readonly audience: IServiceAudience<IMember>,
-      private readonly signaler: Signaler,
-    ){
-      super();
-      /*...*/
-    }
-    /*...*/
-}
-```
-
-The class first defines what signal types will need to be sent to the connected clients when there is a presence change:
+The class first defines the `mouseSignalType` that will be sent and listened to the connected clients when there is a presence change:
 
 ```typescript
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     private static readonly mouseSignalType = "positionChanged";
+
     /*...*/
+}
+```
+The class also initializes a local map of `IMousePosition` values for all of the connected clients. Each userID can have multiple clientIDs (e.g. same user on seperate devices), which explains the nested `Map`. This local map is what populates the view and what will be updated on `mouseSignalType` signals:
+
+```typescript
+export interface IMousePosition {
+    x: number;
+    y: number;
+}
+
+export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
+    /*...*/
+
+    /**
+     * Local map of mouse position status for clients
+     *
+     * ```
+     * Map<userId, Map<clientid, position>>
+     * ```
+     */
+    private readonly posMap = new Map<string, Map<string, IMousePosition>>();
+
+    /*...*/
+}
+```
+Now that we have clarity about what `posMap` and `mouseSignalType` are, we can move to the constructor to see what other behavior our `MouseTracker` has.
+
+We'll begin by looking at the constructor arguments. `MouseTracker` takes in the `audience` and the `Signaler` instance from `initialObjects`:
+
+```typescript
+export interface IMouseTrackerEvents extends IEvent {
+    (event: "mousePositionChanged", listener: () => void): void;
+}
+
+export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
+    /*...*/
+
     public constructor(
       public readonly audience: IServiceAudience<IMember>,
       private readonly signaler: Signaler,
     ){
       super();
+
       /*...*/
     }
+
     /*...*/
 }
 ```
+Whenever a member leaves the audience (e.g. a client disconnects from the container), we would want to remove their presence from our local data. After this is done, we would have to let the view know that the local presence data has changed. To do this, we emit our `mousePositionChanged` `IMouseTrackerEvent` so the view knows to re-render:
 
+```typescript
+export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
+    /*...*/
 
+    public constructor(
+      public readonly audience: IServiceAudience<IMember>,
+      private readonly signaler: Signaler,
+    ){
+      super();
+
+      this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
+            const clientIdMap = this.posMap.get(member.userId);
+            if (clientIdMap !== undefined) {
+                clientIdMap.delete(clientId);
+
+                //If UserID has no connected clients, remove user from local data
+                if (clientIdMap.size === 0) {
+                    this.posMap.delete(member.userId);
+                }
+            }
+            this.emit("mousePositionChanged");
+        });
+
+        /*...*/
+    }
+
+    /*...*/
+}
+```
+We know that `MouseTracker` must be able to share information to all connected clients about where the current client's mouse position is. This is where `Signaler` comes in handy, as it specializes in communicating transient data to connected clients within a Fluid application.
+
+To track the client's mouse position, we use the `mousemouve` event to obtain the client's x and y coordinates. To alert the connected clients of a mouse position change, we then submit a `mouseSignalType` signal with the client's userID and updated position value as the paylod:
+
+```typescript
+export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
+    /*...*/
+
+    public constructor(
+      public readonly audience: IServiceAudience<IMember>,
+      private readonly signaler: Signaler,
+    ){
+      super();
+
+      /*...*/
+
+      window.addEventListener("mousemove", (e) => {
+            const position: IMousePosition = {
+                x: e.clientX,
+                y: e.clientY,
+            };
+            this.sendMouseSignal(position);
+        });
+
+        /*...*/
+    }
+
+    /**
+     * Alert all connected clients that there has been a change to a client's mouse position
+     */
+    private sendMouseSignal(position: IMousePosition) {
+        this.signaler.submitSignal(
+            MouseTracker.mouseSignalType,
+            { userId: this.audience.getMyself()?.userId, pos: position },
+        );
+    }
+
+    /*...*/
+}
+```
+But, what point is there of sending a signal if nobody is listening to it? To listen to the `mouseSignalType`, we use `Signaler`'s `onSignal` function. We then update the local data using the payload information from the signal. To display the new presence data, we then emit `mousePositionChanged` to let the view know to re-render:
+
+```typescript
+export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
+    /*...*/
+
+    public constructor(
+      public readonly audience: IServiceAudience<IMember>,
+      private readonly signaler: Signaler,
+    ){
+      super();
+
+      /*...*/
+
+      this.signaler.onSignal(MouseTracker.mouseSignalType, (clientId, local, payload) => {
+            this.onMouseSignalFn(clientId, payload);
+        });
+
+        /*...*/
+    }
+
+    /*...*/
+
+    private readonly onMouseSignalFn = (clientId: string, payload: any) => {
+        const userId: string = payload.userId;
+        const position: IMousePosition = payload.pos;
+
+        let clientIdMap = this.posMap.get(userId);
+        if (clientIdMap === undefined) {
+            clientIdMap = new Map<string, IMousePosition>();
+            this.posMap.set(userId, clientIdMap);
+        }
+        clientIdMap.set(clientId, position);
+        this.emit("mousePositionChanged");
+    };
+
+    /*...*/
+}
+```
 
 
 ## FocusTracker
