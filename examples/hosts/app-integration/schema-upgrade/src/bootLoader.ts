@@ -33,27 +33,6 @@ const v2ModuleWithDetails: IFluidModuleWithDetails = {
     details: { package: "two" },
 };
 
-const getModel = async (container: IContainer) => {
-    const version = container.getSpecifiedCodeDetails()?.package;
-    if (typeof version !== "string") {
-        throw new Error("Unexpected code detail format");
-    }
-
-    switch (version) {
-        case "one": {
-            const model = new App1(container);
-            await model.initialize();
-            return model;
-        }
-        case "two": {
-            const model = new App2(container);
-            await model.initialize();
-            return model;
-        }
-        default: throw new Error("Unknown version");
-    }
-};
-
 function createLoader(): IHostLoader {
     const tinyliciousService = new TinyliciousService();
 
@@ -77,10 +56,29 @@ function createLoader(): IHostLoader {
     });
 }
 
-const getContainerId = (container: IContainer) => {
-    const resolved = container.resolvedUrl;
-    ensureFluidResolvedUrl(resolved);
-    return resolved.id;
+const getModel = async (container: IContainer) => {
+    // Here I'm using the specified code details for convenience since it already exists (a real code proposal).
+    // However, it could be reasonable to use an alternative in-container storage for the container type (e.g. a
+    // standalone Quorum DDS).  The important thing is that we need a dependable way to discover the version of the
+    // container, so ideally it remains constant across versions.
+    const version = container.getSpecifiedCodeDetails()?.package;
+    if (typeof version !== "string") {
+        throw new Error("Unexpected code detail format");
+    }
+
+    switch (version) {
+        case "one": {
+            const model = new App1(container);
+            await model.initialize();
+            return model;
+        }
+        case "two": {
+            const model = new App2(container);
+            await model.initialize();
+            return model;
+        }
+        default: throw new Error("Unknown version");
+    }
 };
 
 export class BootLoader implements IBootLoader {
@@ -97,9 +95,14 @@ export class BootLoader implements IBootLoader {
         if (externalData !== undefined) {
             await app.importStringData(externalData);
         }
+        // The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach
+        // But without leaking out the loader, service, etc.  We also return the container ID here so we don't have
+        // to stamp it on something that would rather not know it (e.g. the model).
         const attach = async () => {
             await container.attach(createTinyliciousCreateNewRequest());
-            return getContainerId(container);
+            const resolved = container.resolvedUrl;
+            ensureFluidResolvedUrl(resolved);
+            return resolved.id;
         };
         return { app, attach };
     }
