@@ -167,7 +167,7 @@ const styles = (theme: Theme) => createStyles({
  */
 const themedSkeleton = (inSkeleton: JSX.Element) => {
   return (
-    <SkeletonTheme color="#C4C4C4">
+    <SkeletonTheme baseColor="#C4C4C4">
       {inSkeleton}
     </SkeletonTheme>
   );
@@ -472,7 +472,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         Object.keys(rest).length === 0 ? null : themedSkeleton(circleSkeleton);
       const components = this.props.checkoutInProgress ? { ExpandIcon: skeletonExpandIcon } : {};
       const fakeRows = Array.from(Array(getRandomRowsNum()), (x, i) => ({ id: i.toString() }));
-      const rowsData = this.props.checkoutInProgress ? fakeRows : rows;
+      const rowsData = this.props.checkoutInProgress ? fakeRows as any : rows;
       this.columns = this.generateColumns(width);
       const getHeader = ({ cells, headerIndex }) => {
         if (headerIndex === 1) {
@@ -922,8 +922,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
      * Maps the expanded row to either the filteredExpanded list or the whole dataset expanded list. This
      * allows the user to come back to the state before performing the filtering
      */
-    // eslint-disable-next-line max-len
-    private readonly handleRowExpanded = ({ rowData, expanded: newExpandedFlag }: { rowData: IInspectorRow; expanded: boolean; }) => {
+    private readonly handleRowExpanded = ({ expanded: newExpandedFlag, rowData }:
+       { expanded: boolean; rowData: IInspectorRow; }) => {
       const newExpanded = { ...this.state.expanded };
       const idInExpanded = rowData.id in newExpanded;
       if (newExpandedFlag && !idInExpanded) {
@@ -982,7 +982,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
       // With the new table it may not need force render if the
       // right events handlers are used.
       this.table.current.columnManager.resetCache();
-      this.table.current.forceUpdateTable();
+      this.table.current.forceUpdate();
     };
   }
 
