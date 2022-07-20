@@ -571,7 +571,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
         posStart: number;
         posAfterEnd: number;
     };
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;

@@ -4,7 +4,7 @@
  */
 
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { DefaultChangeSet, DefaultRebaser, ForestIndex } from "../feature-libraries";
+import { DefaultRebaser, ForestIndex } from "../feature-libraries";
 import { SharedTreeCore } from "../shared-tree-core";
 
 /**
@@ -20,7 +20,7 @@ export class SharedTree extends SharedTreeCore<DefaultRebaser> {
         attributes: IChannelAttributes,
         telemetryContextPrefix: string) {
             super(
-                [new ForestIndex<DefaultChangeSet>()],
+                [new ForestIndex(runtime)],
                 new DefaultRebaser(), id, runtime, attributes, telemetryContextPrefix);
     }
 }
