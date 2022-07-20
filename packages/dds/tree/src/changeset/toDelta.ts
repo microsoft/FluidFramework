@@ -222,8 +222,8 @@ function applyOrCollectModifications(
             let index = 0;
             let offset = 0;
             for (const markWithOffset of modifyFields[key]) {
-                index += markWithOffset.offset || 0;
-                offset += markWithOffset.offset || 0;
+                index += markWithOffset.offset ?? 0;
+                offset += markWithOffset.offset ?? 0;
                 const mark = markWithOffset.mark;
                 if (Array.isArray(mark)) {
                     for (const attach of mark) {
