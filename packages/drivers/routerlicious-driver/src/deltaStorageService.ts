@@ -83,6 +83,7 @@ export class DeltaStorageService implements IDeltaStorageService {
         private readonly restWrapper: RestWrapper,
         private readonly logger: ITelemetryLogger,
         private readonly getRestWrapper: () => Promise<RestWrapper> = async () => this.restWrapper,
+        private readonly getDeltaStorageUrl: () => string = () => this.url,
     ) {
     }
 
@@ -101,8 +102,9 @@ export class DeltaStorageService implements IDeltaStorageService {
             },
             async (event) => {
                 const restWrapper = await this.getRestWrapper();
+                const url = this.getDeltaStorageUrl();
                 const response = await restWrapper.get<ISequencedDocumentMessage[]>(
-                    this.url,
+                    url,
                     { from: from - 1, to });
                 event.end({
                     count: response.length,

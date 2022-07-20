@@ -167,6 +167,7 @@ export class DocumentService implements api.IDocumentService {
             restWrapper,
             this.logger,
             getRestWrapper,
+            () => this.deltaStorageUrl,
         );
         return new DocumentDeltaStorageService(
             this.tenantId,
