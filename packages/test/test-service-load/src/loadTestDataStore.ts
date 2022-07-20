@@ -440,16 +440,27 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
         // To set that up we start each client in a staggered way, each will independently go thru write
         // and listen cycles
 
-        const cycleMs = config.testConfig.readWriteCycleMs;
-        let t: NodeJS.Timeout | undefined;
+        let timeout: NodeJS.Timeout | undefined;
         if (config.verbose) {
             const printProgress = () => {
                 dataModel.printStatus();
-                t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
+                timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
             };
-            t = setTimeout(printProgress, config.testConfig.progressIntervalMs);
+            timeout = setTimeout(printProgress, config.testConfig.progressIntervalMs);
         }
 
+        const opsRun = this.sendOps(dataModel, config, timeout)
+        const signalsRun = this.sendSignals(config, timeout)
+        const runResult = await Promise.all([opsRun, signalsRun]); //runResult if of type [boolean, void] as we return boolean for Ops alone based on runtime.disposed value
+        return runResult[0];
+    }
+
+    async getRuntime() {
+        return this.runtime;
+    }
+
+    async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig, timeout: NodeJS.Timeout | undefined){
+        const cycleMs = config.testConfig.readWriteCycleMs;
         const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
         const opsPerCycle = config.testConfig.opRatePerMin * cycleMs / 60000;
         const opsGapMs = cycleMs / opsPerCycle;
@@ -480,10 +491,34 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
             }
             return !this.runtime.disposed;
         } finally {
-            if (t !== undefined) {
-                clearTimeout(t);
+            if (timeout !== undefined) {
+                clearTimeout(timeout);
             }
             dataModel.printStatus();
+        }
+    }
+
+    async sendSignals(config: IRunConfig, timeout: NodeJS.Timeout | undefined){
+        const clientSignalsSendCount = (typeof config.testConfig.totalSignalsSendCount === 'undefined') ? 
+                                        0 : config.testConfig.totalSignalsSendCount / config.testConfig.numClients;
+        const cycleMs = config.testConfig.readWriteCycleMs;
+        const signalsPerCycle = (typeof config.testConfig.signalsPerMin === 'undefined') ? 
+                                 0 : config.testConfig.signalsPerMin * cycleMs / 60000;
+        const signalsGapMs = cycleMs / signalsPerCycle;
+        var submittedSignals = 0;
+        try {
+            while (submittedSignals < clientSignalsSendCount) {
+                // all the clients are sending signals; with signals, there is no particular need to have staggered writers and readers
+                this.runtime.submitSignal("generic-signal", true);
+                submittedSignals++;
+                // Random jitter of +- 50% of signalGapMs
+                await delay(signalsGapMs + signalsGapMs * random.real(0, .5, true)(config.randEng));  
+            }
+        }
+        finally {
+            if (timeout !== undefined) {
+                clearTimeout(timeout);
+            }
         }
     }
 }
