@@ -3,16 +3,16 @@
 **/lerna-package-lock.json
 
 # Build output
-**/dist
-**/lib
-**/test/types/
+**/dist/*
+**/lib/*
+!common/lib/*
+common/lib/**/lib
+**/src/**/test/types/*
 
 # Dependencies
-**/node_modules
+**/node_modules/*
 
 # Used by API-Extractor
-**/_api-extractor-temp
-**/api-report
-
-# Omit markdown contents from formatting
-**/*.md
+**/_api-extractor-temp/*
+**/api-report/*
+**/*.api.md
