@@ -1486,8 +1486,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
                 createContainerTimestamp: metadata?.createContainerTimestamp,
             };
-            // back-compat 0.59.3000 - Older document may either write summaryCount or not write it at all. If it does
-            // not write it, initialize summaryNumber to 0.
+            // summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
+            // the count is reset to 0.
             loadSummaryNumber = metadata?.summaryNumber ?? 0;
         } else {
             this.createContainerMetadata = {
