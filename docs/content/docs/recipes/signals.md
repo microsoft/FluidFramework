@@ -106,17 +106,17 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
       super();
 
       this.audience.on("memberRemoved", (clientId: string, member: IMember) => {
-            const clientIdMap = this.posMap.get(member.userId);
-            if (clientIdMap !== undefined) {
-                clientIdMap.delete(clientId);
+        const clientIdMap = this.posMap.get(member.userId);
+        if (clientIdMap !== undefined) {
+            clientIdMap.delete(clientId);
 
-                //If UserID has no connected clients, remove user from local data
-                if (clientIdMap.size === 0) {
-                    this.posMap.delete(member.userId);
-                }
+            //If UserID has no connected clients, remove user from local data
+            if (clientIdMap.size === 0) {
+                this.posMap.delete(member.userId);
             }
-            this.emit("mousePositionChanged");
-        });
+        }
+        this.emit("mousePositionChanged");
+      });
 
         /*...*/
     }
@@ -141,12 +141,12 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
       /*...*/
 
       window.addEventListener("mousemove", (e) => {
-            const position: IMousePosition = {
-                x: e.clientX,
-                y: e.clientY,
-            };
-            this.sendMouseSignal(position);
-        });
+        const position: IMousePosition = {
+            x: e.clientX,
+            y: e.clientY,
+        };
+        this.sendMouseSignal(position);
+      });
 
         /*...*/
     }
@@ -171,16 +171,25 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     /*...*/
 
     public constructor(
-      public readonly audience: IServiceAudience<IMember>,
-      private readonly signaler: Signaler,
+        public readonly audience: IServiceAudience<IMember>,
+        private readonly signaler: Signaler,
     ){
-      super();
+        super();
 
-      /*...*/
+        /*...*/
 
-      this.signaler.onSignal(MouseTracker.mouseSignalType, (clientId, local, payload) => {
-            this.onMouseSignalFn(clientId, payload);
+        this.signaler.onSignal(MouseTracker.mouseSignalType, (clientId, local, payload) => {
+          this.onMouseSignalFn(clientId, payload);
         });
+
+        window.addEventListener("mousemove", (e) => {
+            const position: IMousePosition = {
+                x: e.clientX,
+                y: e.clientY,
+            };
+            this.sendMouseSignal(position);
+        });
+
 
         /*...*/
     }
@@ -200,6 +209,16 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
         this.emit("mousePositionChanged");
     };
 
+    /**
+     * Alert all connected clients that there has been a change to a client's mouse position
+     */
+    private sendMouseSignal(position: IMousePosition) {
+        this.signaler.submitSignal(
+            MouseTracker.mouseSignalType,
+            { userId: this.audience.getMyself()?.userId, pos: position },
+        );
+    }
+
     /*...*/
 }
 ```
@@ -209,7 +228,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 
 Let's now take a look at how the `FocusTracker` class uses the `Signaler` DataObject to achieve the second form of user presence within the application.
 
-The class defines the `focusSignalType` that will be sent and listened to the connected clients when there is a presence change. It also defines the `focusRequestType` that will be sent to request the focus status of all the connected clients:
+The class defines the `focusSignalType` that will be sent and listened to the connected clients when there is a presence change:
 
 ```typescript
 export interface IFocusTrackerEvents extends IEvent {
@@ -218,7 +237,6 @@ export interface IFocusTrackerEvents extends IEvent {
 
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
-    private static readonly focusRequestType = "focusRequest";
 
     /*...*/
 }
@@ -232,7 +250,6 @@ export interface IFocusTrackerEvents extends IEvent {
 
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
-    private static readonly focusRequestType = "focusRequest";
 
     /**
      * Local map of focus status for clients
@@ -303,10 +320,144 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 }
 ```
 
+To track the local client's focus status, we use the `focus` and `blur` events to know when the focus boolean must be updated. To alert the connected clients of this focus change, we then submit a `focusSignalType` signal with the client's userID and updated focus status as the paylod:
 
+```typescript
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+    /*...*/
 
+     public constructor(
+        container: IFluidContainer,
+        public readonly audience: IServiceAudience<IMember>,
+        private readonly signaler: Signaler,
+    ) {
+        super();
 
+        /*...*/
 
+        window.addEventListener("focus", () => {
+            this.sendFocusSignal(true);
+        });
+        window.addEventListener("blur", () => {
+            this.sendFocusSignal(false);
+        });
+
+        /*...*/
+    }
+
+    /*...*/
+
+    /**
+     * Alert all connected clients that there has been a change to a client's focus
+     */
+    private sendFocusSignal(hasFocus: boolean) {
+        this.signaler.submitSignal(
+            FocusTracker.focusSignalType,
+            { userId: this.audience.getMyself()?.userId, focus: hasFocus },
+        );
+    }
+
+    /*...*/
+}
+```
+To make sure all conected clients are notified of this focus change, we use the `onSignal` function to listen to the `focusSignalType`. We then update the local data using the payload information from the signal and emit a `focusChanged` event to re-render:
+
+```typescript
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+    /*...*/
+
+     public constructor(
+        container: IFluidContainer,
+        public readonly audience: IServiceAudience<IMember>,
+        private readonly signaler: Signaler,
+    ) {
+        super();
+
+        /*...*/
+
+        this.signaler.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
+            this.onFocusSignalFn(clientId, payload);
+        });
+
+        window.addEventListener("focus", () => {
+            this.sendFocusSignal(true);
+        });
+        window.addEventListener("blur", () => {
+            this.sendFocusSignal(false);
+        });
+
+        /*...*/
+    }
+
+    /*...*/
+
+    private readonly onFocusSignalFn = (clientId: string, payload: any) => {
+        const userId: string = payload.userId;
+        const hasFocus: boolean = payload.focus;
+
+        let clientIdMap = this.focusMap.get(userId);
+        if (clientIdMap === undefined) {
+            clientIdMap = new Map<string, boolean>();
+            this.focusMap.set(userId, clientIdMap);
+        }
+        clientIdMap.set(clientId, hasFocus);
+        this.emit("focusChanged");
+    };
+
+    /**
+     * Alert all connected clients that there has been a change to a client's focus
+     */
+    private sendFocusSignal(hasFocus: boolean) {
+        this.signaler.submitSignal(
+            FocusTracker.focusSignalType,
+            { userId: this.audience.getMyself()?.userId, focus: hasFocus },
+        );
+    }
+
+    /*...*/
+}
+```
+`FocusTracker` differs from `MouseTracker` as it uses the `Signal Request` pattern. This is when a newly joining client requests a specific sigal to be sent from other connected clients, so that the new client can recieve pertinent information immediately after connecting to the container.
+
+To achieve this pattern, `FocusTracker` defines the `focusRequestType` that will be sent to request the focus status of all the connected clients:
+
+```typescript
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+    private static readonly focusRequestType = "focusRequest";
+
+    /*...*/
+}
+```
+`FocusTracker` then sends this signal request immediately after the new client connects to the container. Once again, the `onSignal` function is used to listen to this `focusRequestType` signal and each client responds to the signal request with their current focus status:
+
+```typescript
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+    private static readonly focusRequestType = "focusRequest";
+
+    /*...*/
+
+    public constructor(
+        container: IFluidContainer,
+        public readonly audience: IServiceAudience<IMember>,
+        private readonly signaler: Signaler,
+    ) {
+        super();
+
+        /*...*/
+
+        this.signaler.onSignal(FocusTracker.focusRequestType, () => {
+            this.sendFocusSignal(document.hasFocus());
+        });
+
+        container.on("connected", () => {
+            this.signaler.submitSignal(FocusTracker.focusRequestType);
+        });
+
+        //Requests focus state of everyone on connection
+        this.signaler.submitSignal(FocusTracker.focusRequestType);
+    }
+}
+```
 
 
 
