@@ -21,7 +21,7 @@ const updateTabForId = (id: string) => {
     document.title = id;
 };
 
-const renderApp = (app: IApp) => {
+const render = (app: IApp) => {
     // Here, could switch on the app.version to determine different views to load (AppView1 vs. AppView2).
     // For this demo, the view can currently render either app type.
 
@@ -47,7 +47,7 @@ const renderApp = (app: IApp) => {
 
 async function start(): Promise<void> {
     let id: string;
-    let app: IApp;
+    let model: IApp;
     const modelLoader = new ModelLoader();
 
     // In interacting with the service, we need to be explicit about whether we're creating a new container vs.
@@ -64,27 +64,27 @@ async function start(): Promise<void> {
         // Choosing for demo purposes to create with the old version, so we can demo the upgrade.
         // Normally would create with the most-recent version.
         const createResponse = await modelLoader.createDetached("one");
-        app = createResponse.app;
-        await app.importStringData(fetchedData);
+        model = createResponse.model;
+        await model.importStringData(fetchedData);
         id = await createResponse.attach();
     } else {
         id = location.hash.substring(1);
-        app = await modelLoader.loadExisting(id);
+        model = await modelLoader.loadExisting(id);
     }
 
     // Note - here I proceed to rendering without waiting to see if an upgrade is needed, but instead we could
     // check first and defer rendering until the upgrade is complete.
 
     // Could be reasonable to merge Migrator into the ModelLoader, for a MigratingModelLoader.
-    const migrator = new Migrator(modelLoader, app);
-    migrator.on("migrated", (newApp: IApp, newAppId: string) => {
-        renderApp(newApp);
-        updateTabForId(newAppId);
+    const migrator = new Migrator(modelLoader, model);
+    migrator.on("migrated", (newModel: IApp, newModelId: string) => {
+        render(newModel);
+        updateTabForId(newModelId);
     });
 
     // It's not a given that a single view can render every version (esp. if functionality is added/removed).
     // Here we could check the app.version and select the appropriate view if that's the case.
-    renderApp(app);
+    render(model);
     updateTabForId(id);
 }
 

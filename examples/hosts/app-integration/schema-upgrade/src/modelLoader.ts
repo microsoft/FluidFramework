@@ -89,14 +89,14 @@ export class ModelLoader implements IModelLoader {
     public async createDetached(
         version: "one" | "two",
         externalData?: string,
-    ): Promise<{ app: IApp; attach: () => Promise<string>; }> {
+    ): Promise<{ model: IApp; attach: () => Promise<string>; }> {
         if (version !== "one" && version !== "two") {
             throw new Error("Unknown accepted version");
         }
         const container = await this.loader.createDetachedContainer({ package: version });
-        const app = await getModel(container);
+        const model = await getModel(container);
         if (externalData !== undefined) {
-            await app.importStringData(externalData);
+            await model.importStringData(externalData);
         }
         // The attach callback lets us defer the attach so the caller can do whatever initialization pre-attach
         // But without leaking out the loader, service, etc.  We also return the container ID here so we don't have
@@ -107,7 +107,7 @@ export class ModelLoader implements IModelLoader {
             ensureFluidResolvedUrl(resolved);
             return resolved.id;
         };
-        return { app, attach };
+        return { model, attach };
     }
 
     public async loadExisting(id: string): Promise<IApp> {

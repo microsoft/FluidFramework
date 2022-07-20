@@ -20,7 +20,7 @@ const ensureMigrated = async (modelLoader: IModelLoader, migratable: IMigratable
     // this call will throw, but instead ModelLoader should probably provide an isSupported(string) method and/or
     // the flow should fail gracefully/quietly and/or find a way to get the new ModelLoader.
     const createResponse = await modelLoader.createDetached(acceptedVersion);
-    const migratedModel: IMigratable = createResponse.app;
+    const migratedModel: IMigratable = createResponse.model;
     await migratedModel.importStringData(extractedData);
     // Maybe here apply the extracted data instead of passing it into createDetached
 

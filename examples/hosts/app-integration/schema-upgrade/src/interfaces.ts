@@ -13,7 +13,7 @@ export interface IModelLoader {
     createDetached(
         version: string,
         externalData?: string,
-    ): Promise<{ app: IApp; attach: () => Promise<string>; }>;
+    ): Promise<{ model: IApp; attach: () => Promise<string>; }>;
 
     loadExisting(id: string): Promise<IApp>;
 }
@@ -28,26 +28,27 @@ export interface IMigrationEvents extends IEvent {
     (event: "migrationStateChanged", listener: (migrationState: MigrationState) => void);
 }
 
+// A "migratable" is a model that can be migrated.
 export interface IMigratable extends IEventProvider<IMigrationEvents> {
     /**
-     * The string version of the App, matching the version of the container code it's paired with.
+     * The string version of the model, matching the version of the container code it's paired with.
      */
     readonly version: string;
 
     /**
-     * importStringData must be called after initialization but before modifying or attaching the app (i.e. can only
-     * be called on an unaltered, detached app).  Here I use a string as the export/import format, but it could be
+     * importStringData must be called after initialization but before modifying or attaching the model (i.e. can only
+     * be called on an unaltered, detached model).  Here I use a string as the export/import format, but it could be
      * some other format if you prefer.
      */
     importStringData: (initialData: string) => Promise<void>;
     /**
-     * Export the string data from the IApp.  Can be passed into initialize() for a new container to replicate
+     * Export the string data from the model.  Can be passed into initialize() for a new container to replicate
      * the data.
      */
     exportStringData: () => Promise<string>;
 
     /**
-     * Get the current migration state of the IApp.
+     * Get the current migration state of the model.
      */
     getMigrationState(): MigrationState;
 
@@ -57,12 +58,12 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
     acceptedVersion: string | undefined;
     /**
      * Propose migration using the provided version.
-     * @param version - The version that the new IApp should use.
+     * @param version - The version that the new model should use.
      */
     proposeVersion: (version: string) => void;
 
     /**
-     * The containerId of the migrated IApp, if migration has completed.
+     * The containerId of the migrated model, if migration has completed.
      */
     newContainerId: string | undefined;
     /**
@@ -72,14 +73,14 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
     finalizeMigration: (newContainerId: string) => void;
 
     /**
-     * Close the app, rendering it inoperable and closing connections.
+     * Close the model, rendering it inoperable and closing connections.
      * TODO: Decide whether the closing is an integral part of the migration, or if the caller should do the closing.
      */
     close(): void;
 }
 
 export interface IMigratorEvents extends IEvent {
-    (event: "migrated", listener: (newApp: IMigratable, newAppId: string) => void);
+    (event: "migrated", listener: (newModel: IMigratable, newModelId: string) => void);
     (event: "migrating", listener: () => void);
 }
 
