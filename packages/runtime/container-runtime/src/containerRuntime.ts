@@ -43,7 +43,6 @@ import {
     TaggedLoggerAdapter,
     MonitoringContext,
     loggerToMonitoringContext,
-    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
@@ -1071,6 +1070,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private consecutiveReconnects = 0;
 
+    /**
+     * Used to delay transition to "connected" state while we upload
+     * attachment blobs that were added while disconnected
+     */
+    private delayConnectClientId?: string;
+
     public get connected(): boolean {
         return this._connected;
     }
@@ -1231,6 +1236,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
 
+        if (this.summaryConfiguration.state === "enabled") {
+            this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
+        }
+
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
@@ -1322,10 +1331,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId: string) => this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId }),
+            (blobId, localId) => this.submit(
+                ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId }),
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
-            this.logger,
         );
 
         this.scheduleManager = new ScheduleManager(
@@ -1579,12 +1588,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
 
             if (id === BlobManager.basePath && requestParser.isLeaf(2)) {
-                const handle = await this.blobManager.getBlob(requestParser.pathParts[1]);
-                if (handle) {
+                const blob = await this.blobManager.getBlob(requestParser.pathParts[1]);
+                if (blob) {
                     return {
                         status: 200,
                         mimeType: "fluid/object",
-                        value: handle.get(),
+                        value: blob,
                     };
                 } else {
                     return create404Response(request);
@@ -1606,7 +1615,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private internalId(maybeAlias: string): string {
-        return this.dataStores.aliases().get(maybeAlias) ?? maybeAlias;
+        return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
     }
 
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
@@ -1614,6 +1623,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
 
+        await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
 
@@ -1680,7 +1690,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
 
-        const dataStoreAliases = this.dataStores.aliases();
+        const dataStoreAliases = this.dataStores.aliases;
         if (dataStoreAliases.size > 0) {
             addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
         }
@@ -1790,6 +1800,38 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public setConnectionState(connected: boolean, clientId?: string) {
+        if (connected === false && this.delayConnectClientId !== undefined) {
+            this.delayConnectClientId = undefined;
+            this.mc.logger.sendTelemetryEvent({
+                eventName: "UnsuccessfulConnectedTransition",
+            });
+            // Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
+            return;
+        }
+
+        // If attachment blobs were added while disconnected, we need to delay
+        // propagation of the "connected" event until we have uploaded them to
+        // ensure we don't submit ops referencing a blob that has not been uploaded
+        const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
+        if (connecting && this.blobManager.hasPendingOfflineUploads) {
+            assert(!this.delayConnectClientId, "Connect event delay must be canceled before subsequent connect event");
+            assert(!!clientId, "Must have clientId when connecting");
+            this.delayConnectClientId = clientId;
+            this.blobManager.onConnected().then(() => {
+                // make sure we didn't reconnect before the promise resolved
+                if (this.delayConnectClientId === clientId && !this.disposed) {
+                    this.delayConnectClientId = undefined;
+                    this.setConnectionStateCore(connected, clientId);
+                }
+            }, (error) => this.closeFn(error));
+            return;
+        }
+
+        this.setConnectionStateCore(connected, clientId);
+    }
+
+    private setConnectionStateCore(connected: boolean, clientId?: string) {
+        assert(!this.delayConnectClientId, "connect event delay must be cleared before propagating connect event");
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -1887,8 +1929,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
                     break;
                 case ContainerMessageType.BlobAttach:
-                    assert(message?.metadata?.blobId, 0x12a /* "Missing blob id on metadata" */);
-                    this.blobManager.processBlobAttachOp(message.metadata.blobId, local);
+                    this.blobManager.processBlobAttachOp(message, local);
                     break;
                 default:
             }
@@ -1970,6 +2011,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+        return this.getRootDataStoreChannel(id, wait);
+    }
+
+    private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
+        await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
@@ -2120,27 +2166,37 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
         const internalId = uuid();
-        const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-        const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.dataStores, this.mc.logger);
-        const result = await aliasedDataStore.trySetAlias(alias);
-        if (result !== "Success") {
-            throw new GenericError(
-                "dataStoreAliasFailure",
-                undefined /* error */,
-                {
-                    alias: {
-                        value: alias,
-                        tag: TelemetryDataTag.UserData,
-                    },
-                    internalId: {
-                        value: internalId,
-                        tag: TelemetryDataTag.CodeArtifact,
-                    },
-                    aliasResult: result,
-                });
-        }
 
-        return aliasedDataStore;
+        try {
+            // A similar call may have been initiated by the same client, so we should try to get
+            // a possible existing aliased datastore first.
+            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
+            return channelToDataStore(
+                existingDataStore,
+                internalId,
+                this,
+                this.dataStores,
+                this.mc.logger,
+                true, // AlreadyAliased. This will block further alias attempts for the datastore
+            );
+        } catch (err) {
+            const newChannel = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
+            const newDataStore = channelToDataStore(newChannel, internalId, this, this.dataStores, this.mc.logger);
+            const aliasResult = await newDataStore.trySetAlias(alias);
+            if (aliasResult === "Success") {
+                return newDataStore;
+            }
+
+            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
+            return channelToDataStore(
+                existingDataStore,
+                internalId,
+                this,
+                this.dataStores,
+                this.mc.logger,
+                true, // AlreadyAliased. This will block further alias attempts for the datastore
+            );
+        }
     }
 
     public createDetachedRootDataStore(
@@ -2581,15 +2637,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
             const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
             const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-
-            // We should be here is we haven't processed be here. If we are of if the last message's sequence number
-            // doesn't match the last processed sequence number, log an error.
-            if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
-                summaryNumberLogger.sendErrorEvent({
-                    eventName: "LastSequenceMismatch",
-                    error: message,
-                });
-            }
+            const lastAck = this.summaryCollection.latestAck;
 
             this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
 
@@ -2617,6 +2665,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         continue: false,
                         // eslint-disable-next-line max-len
                         error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+                    };
+                }
+                assert(summaryRefSeqNum === this.deltaManager.lastMessage?.sequenceNumber,
+                    "it's one and the same thing");
+
+                if (lastAck !== this.summaryCollection.latestAck) {
+                    return {
+                        continue: false,
+                        // eslint-disable-next-line max-len
+                        error: `Last summary changed while summarizing. ${this.summaryCollection.latestAck} !== ${lastAck}`,
                     };
                 }
                 return { continue: true };
@@ -2692,7 +2750,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "generate", ...generateSummaryData, error: continueResult.error };
             }
 
-            const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
                     ? {
@@ -3017,7 +3074,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             case ContainerMessageType.ChunkedOp:
                 throw new Error(`chunkedOp not expected here`);
             case ContainerMessageType.BlobAttach:
-                this.submit(type, content, localOpMetadata, opMetadata);
+                this.blobManager.reSubmit(opMetadata);
                 break;
             case ContainerMessageType.Rejoin:
                 this.submit(type, content);
@@ -3229,6 +3286,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // we may not have seen every sequence number (because of system ops) so apply everything once we
         // don't have any more saved ops
         await this.pendingStateManager.applyStashedOpsAt();
+    }
+
+    private validateSummaryHeuristicConfiguration(configuration: ISummaryConfigurationHeuristics) {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const prop in configuration) {
+            if (typeof configuration[prop] === "number" && configuration[prop] < 0) {
+                throw new UsageError(`Summary heuristic configuration property "${prop}" cannot be less than 0`);
+            }
+        }
     }
 }
 

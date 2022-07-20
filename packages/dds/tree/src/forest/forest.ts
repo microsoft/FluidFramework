@@ -5,6 +5,7 @@
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { SchemaRepository } from "../schema";
+import { DetachedRange } from "../tree";
 import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
 /**
@@ -41,15 +42,17 @@ export interface IForestSubscription extends Dependee {
      */
     readonly schema: SchemaRepository & Dependee;
 
+    readonly rootField: DetachedRange;
+
     /**
      * Allocates a cursor in the "cleared" state.
      */
     allocateCursor(): ITreeSubscriptionCursor;
 
     /**
-     * Anchor at the beginning or root field.
+     * Anchor at the beginning of a root field.
      */
-    readonly root: Anchor;
+    root(range: DetachedRange): Anchor;
 
     /**
      * If observer is provided, it will be invalidated if the value returned from this changes
@@ -87,11 +90,18 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 
     /**
      * Release any resources this cursor is holding onto.
-     * After doing this, further use of this object other than reading `state` or passing to `tryGet`
-     * is forbidden (undefined behavior).
+     * After doing this, further use of this object other than reading `state` is forbidden (undefined behavior).
      * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
      */
     free(): void;
+
+    /**
+     * Release any resources this cursor is holding onto.
+     * After doing this, further use of this object other than reading `state` or passing to `tryGet`
+     * or calling `free` is forbidden (undefined behavior).
+     * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
+     */
+    clear(): void;
 
     /**
      * Construct an `Anchor` which the IForestSubscription will keep rebased to `current`.

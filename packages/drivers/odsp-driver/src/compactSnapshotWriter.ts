@@ -60,9 +60,12 @@ function writeTreeSectionCore(treesNode: NodeCore, snapshotTree: ISnapshotTree) 
         if (snapshotTree.unreferenced) {
             addBoolProperty(treeNode, "unreferenced", snapshotTree.unreferenced);
         }
-        treeNode.addString("children", true);
-        const childNode = treeNode.addNode("list");
-        writeTreeSectionCore(childNode, value);
+        // Only write children prop if either blobs or trees are present.
+        if (Object.keys(value.blobs).length > 0 || Object.keys(value.trees).length > 0) {
+            treeNode.addString("children", true);
+            const childNode = treeNode.addNode("list");
+            writeTreeSectionCore(childNode, value);
+        }
     }
 
     if (snapshotTree.blobs) {

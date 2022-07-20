@@ -445,8 +445,8 @@ export function validateStableRange(
 		return { result: { kind: RangeValidationResultKind.BadPlace, place: end, placeFailure: validatedEnd.result } };
 	}
 
-	const startTraitLocation = validatedStart.referenceTrait || view.getTraitLocation(validatedStart.referenceSibling);
-	const endTraitLocation = validatedEnd.referenceTrait || view.getTraitLocation(validatedEnd.referenceSibling);
+	const startTraitLocation = validatedStart.referenceTrait ?? view.getTraitLocation(validatedStart.referenceSibling);
+	const endTraitLocation = validatedEnd.referenceTrait ?? view.getTraitLocation(validatedEnd.referenceSibling);
 	if (!compareTraits(startTraitLocation, endTraitLocation)) {
 		return { result: RangeValidationResultKind.PlacesInDifferentTraits };
 	}
