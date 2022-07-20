@@ -74,9 +74,9 @@ export class EpochTracker implements IPersistedFileCache {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
 
-        // We need this for GC testing until we can plumb through the snapshot expiration policy (see PR #11168)
+        // We need this for GC testing until we properly plumb through the snapshot expiration policy (see PR #11168)
         this.snapshotCacheExpiryTimeoutMs =
-            loggerToMonitoringContext(logger).config.getBoolean("Fluid.Driver.Odsp.DisableSnapshotCache")
+            loggerToMonitoringContext(logger).config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache")
                 ? 0
                 : defaultCacheExpiryTimeoutMs;
     }
