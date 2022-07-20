@@ -9,6 +9,8 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 export interface IModelLoader {
+    isVersionSupported(version: string): boolean;
+
     createDetached(
         version: string,
         externalData?: string,
@@ -81,6 +83,7 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
 export interface IMigratorEvents extends IEvent {
     (event: "migrated", listener: (newModel: IMigratable, newModelId: string) => void);
     (event: "migrating", listener: () => void);
+    (event: "migrationNotSupported", listener: (version: string) => void);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

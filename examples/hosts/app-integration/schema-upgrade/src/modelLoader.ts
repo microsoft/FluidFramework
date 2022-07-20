@@ -84,13 +84,18 @@ const getModel = async (container: IContainer) => {
 export class ModelLoader implements IModelLoader {
     private readonly loader: IHostLoader = createLoader();
 
+    // TODO: Make this async to support network calls (e.g. if dynamically retrieving the model code)?
+    public isVersionSupported(version: string): boolean {
+        return version === "one" || version === "two";
+    }
+
     // Would be preferable to have a way for the customer to call service.attach(app) rather than returning an
     // attach callback here.
     public async createDetached(
         version: "one" | "two",
         externalData?: string,
     ): Promise<{ model: IApp; attach: () => Promise<string>; }> {
-        if (version !== "one" && version !== "two") {
+        if (!this.isVersionSupported(version)) {
             throw new Error("Unknown accepted version");
         }
         const container = await this.loader.createDetachedContainer({ package: version });

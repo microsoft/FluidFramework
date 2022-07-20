@@ -21,6 +21,15 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     private watchForMigration() {
         const migratable = this._currentMigratable;
         migratable.on("migrationStateChanged", (migrationState: MigrationState) => {
+            const acceptedVersion = migratable.acceptedVersion;
+            if (acceptedVersion === undefined) {
+                throw new Error("Expect an accepted version before migration starts");
+            }
+            if (!this.modelLoader.isVersionSupported(acceptedVersion)) {
+                this.emit("migrationNotSupported", acceptedVersion);
+                // Maybe also unregister the listener to avoid double-firing?
+                return;
+            }
             if (migrationState === MigrationState.ended) {
                 const migratedId = migratable.newContainerId;
                 if (migratedId === undefined) {
@@ -44,6 +53,11 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         const acceptedVersion = migratable.acceptedVersion;
         if (acceptedVersion === undefined) {
             throw new Error("Cannot ensure migrated before code details are accepted");
+        }
+        // TODO: clean up this double-check
+        if (!this.modelLoader.isVersionSupported(acceptedVersion)) {
+            this.emit("migrationNotSupported", acceptedVersion);
+            return;
         }
         const extractedData = await migratable.exportStringData();
 

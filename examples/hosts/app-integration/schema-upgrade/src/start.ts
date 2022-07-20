@@ -81,6 +81,9 @@ async function start(): Promise<void> {
         render(newModel);
         updateTabForId(newModelId);
     });
+    migrator.on("migrationNotSupported", (version: string) => {
+        console.error(`Tried to migrate to version ${version} which is not supported by the current ModelLoader`);
+    });
 
     // It's not a given that a single view can render every version (esp. if functionality is added/removed).
     // Here we could check the model.version and select the appropriate view if that's the case.
