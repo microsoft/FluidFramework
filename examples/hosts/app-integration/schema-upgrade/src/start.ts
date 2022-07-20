@@ -77,7 +77,7 @@ async function start(): Promise<void> {
 
     // Could be reasonable to merge Migrator into the ModelLoader, for a MigratingModelLoader.
     const migrator = new Migrator(modelLoader, app);
-    migrator.on("appMigrated", (newApp: IApp, newAppId: string) => {
+    migrator.on("migrated", (newApp: IApp, newAppId: string) => {
         renderApp(newApp);
         updateTabForId(newAppId);
     });

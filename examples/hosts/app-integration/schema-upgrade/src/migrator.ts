@@ -5,7 +5,7 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
-import { IApp, IMigratable, IMigrator, IMigratorEvents, IModelLoader, MigrationState } from "./interfaces";
+import { IMigratable, IMigrator, IMigratorEvents, IModelLoader, MigrationState } from "./interfaces";
 
 const ensureMigrated = async (modelLoader: IModelLoader, migratable: IMigratable) => {
     const acceptedVersion = migratable.acceptedVersion;
@@ -19,8 +19,9 @@ const ensureMigrated = async (modelLoader: IModelLoader, migratable: IMigratable
     // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Currently
     // this call will throw, but instead ModelLoader should probably provide an isSupported(string) method and/or
     // the flow should fail gracefully/quietly and/or find a way to get the new ModelLoader.
-    const { app: migratedApp, attach } = await modelLoader.createDetached(acceptedVersion);
-    await migratedApp.importStringData(extractedData);
+    const createResponse = await modelLoader.createDetached(acceptedVersion);
+    const migratedModel: IMigratable = createResponse.app;
+    await migratedModel.importStringData(extractedData);
     // Maybe here apply the extracted data instead of passing it into createDetached
 
     // Before attaching, let's check to make sure no one else has already done the migration
@@ -31,7 +32,7 @@ const ensureMigrated = async (modelLoader: IModelLoader, migratable: IMigratable
 
     // TODO: Maybe need retry here.
     // TODO: Use TaskManager here to reduce container noise.
-    const containerId = await attach();
+    const containerId = await createResponse.attach();
 
     // Again, it could be the case that someone else finished the migration during our attach.
     if (migratable.getMigrationState() === MigrationState.ended) {
@@ -40,42 +41,40 @@ const ensureMigrated = async (modelLoader: IModelLoader, migratable: IMigratable
 
     // TODO: Maybe need retry here.
     migratable.finalizeMigration(containerId);
-    // Here we let the newly created container/app fall out of scope intentionally.
-    // If we don't win the race to set the container, it is the wrong container/app to use anyway
+    // Here we let the newly created container/model fall out of scope intentionally.
+    // If we don't win the race to set the container, it is the wrong container/model to use anyway
     // And the loader is probably caching the container anyway too.
 };
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
-    private _currentApp: IApp;
-    public get currentApp() {
-        return this._currentApp;
-    }
+    private _currentMigratable: IMigratable;
 
     // Maybe also have a prop for the id and the current MigrationState?
 
-    public constructor(private readonly modelLoader: IModelLoader, initialApp: IApp) {
+    public constructor(private readonly modelLoader: IModelLoader, initialMigratable: IMigratable) {
         super();
-        this._currentApp = initialApp;
-        this.watchAppForMigration();
+        this._currentMigratable = initialMigratable;
+        this.watchForMigration();
     }
 
-    private watchAppForMigration() {
-        const app = this._currentApp;
-        app.on("migrationStateChanged", (migrationState: MigrationState) => {
+    private watchForMigration() {
+        const migratable = this._currentMigratable;
+        migratable.on("migrationStateChanged", (migrationState: MigrationState) => {
             if (migrationState === MigrationState.ended) {
-                const migratedId = app.newContainerId;
+                const migratedId = migratable.newContainerId;
                 if (migratedId === undefined) {
                     throw new Error("Migration ended without a new container being created");
                 }
-                this.modelLoader.loadExisting(migratedId).then((migratedApp: IApp) => {
-                    this._currentApp = migratedApp;
-                    this.watchAppForMigration();
-                    this.emit("appMigrated", this._currentApp, migratedId);
-                    app.close();
+                this.modelLoader.loadExisting(migratedId).then((migrated: IMigratable) => {
+                    this._currentMigratable = migrated;
+                    this.watchForMigration();
+                    this.emit("migrated", migrated, migratedId);
+                    // Not sure I really want to do the closing here - should this be left to the caller to decide?
+                    migratable.close();
                 }).catch(console.error);
             } else if (migrationState === MigrationState.migrating) {
-                this.emit("appMigrating");
-                ensureMigrated(this.modelLoader, app).catch(console.error);
+                this.emit("migrating");
+                ensureMigrated(this.modelLoader, migratable).catch(console.error);
             }
         });
     }

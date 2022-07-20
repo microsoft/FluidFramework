@@ -70,11 +70,17 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
      * @param newContainerId - the ID of the container that the collaboration has migrated to.
      */
     finalizeMigration: (newContainerId: string) => void;
+
+    /**
+     * Close the app, rendering it inoperable and closing connections.
+     * TODO: Decide whether the closing is an integral part of the migration, or if the caller should do the closing.
+     */
+    close(): void;
 }
 
 export interface IMigratorEvents extends IEvent {
-    (event: "appMigrated", listener: (newApp: IApp, newAppId: string) => void);
-    (event: "appMigrating", listener: () => void);
+    (event: "migrated", listener: (newApp: IMigratable, newAppId: string) => void);
+    (event: "migrating", listener: () => void);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -94,11 +100,6 @@ export interface IApp extends IMigratable, IEventProvider<IAppEvents> {
      * An inventory tracker list, which is the relevant data for this particular IApp.
      */
     inventoryList: IInventoryList;
-
-    /**
-     * Close the app, rendering it inoperable and closing connections.
-     */
-    close(): void;
 }
 
 export interface IContainerKillBitEvents extends IEvent {
