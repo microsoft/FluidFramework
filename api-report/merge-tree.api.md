@@ -25,7 +25,7 @@ export interface AugmentedIntervalNode {
 
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
@@ -116,7 +116,7 @@ export class Client {
     // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
     // (undocumented)
-    createTextHelper(): MergeTreeTextHelper;
+    createTextHelper(): IMergeTreeTextHelper;
     protected findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     findTile(startPos: number, tileLabel: string, preceding?: boolean): {
@@ -185,7 +185,7 @@ export class Client {
     maxWindowTime: number;
     // (undocumented)
     measureOps: boolean;
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     protected readonly mergeTree: MergeTree;
     // (undocumented)
     get mergeTreeDeltaCallback(): MergeTreeDeltaCallback | undefined;
@@ -201,6 +201,7 @@ export class Client {
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
+    rollback?(op: any, localOpMetadata: unknown): void;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
     // (undocumented)
     readonly specToSegment: (spec: IJSONSegment) => ISegment;
@@ -375,7 +376,7 @@ export interface IConsensusValue {
 
 // @public (undocumented)
 export interface IHierBlock extends IMergeBlock {
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     addNodeReferences(mergeTree: MergeTree, node: IMergeNode): void;
     // (undocumented)
     hierToString(indentCount: number): string;
@@ -588,6 +589,17 @@ export interface IMergeTreeSegmentDelta {
 }
 
 // @public (undocumented)
+export interface IMergeTreeTextHelper {
+    // (undocumented)
+    getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
+    // (undocumented)
+    getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number): {
+        parallelText: string[];
+        parallelMarkers: Marker[];
+    };
+}
+
+// @public (undocumented)
 export interface IncrementalBlockAction<TContext> {
     // (undocumented)
     (state: IncrementalMapState<TContext>): any;
@@ -739,6 +751,7 @@ export interface IRemovalInfo {
 
 // @public
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
+    // @internal @deprecated
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
@@ -963,10 +976,8 @@ export class MergeBlock extends MergeNode implements IMergeBlock {
     childCount: number;
     // (undocumented)
     children: IMergeNode[];
-    // Warning: (ae-forgotten-export) The symbol "HierMergeBlock" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    hierBlock(): HierMergeBlock | undefined;
+    hierBlock(): IHierBlock | undefined;
     // (undocumented)
     setOrdinal(child: IMergeNode, index: number): void;
 }
@@ -985,7 +996,9 @@ export class MergeNode implements IMergeNodeCommon {
     parent?: IMergeBlock;
 }
 
-// @public (undocumented)
+// Warning: (ae-internal-missing-underscore) The name "MergeTree" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal @deprecated (undocumented)
 export class MergeTree {
     constructor(options?: PropertySet | undefined);
     ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs): void;
@@ -1018,19 +1031,12 @@ export class MergeTree {
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
     getPosition(node: MergeNode, refSeq: number, clientId: number): number;
-    // @internal
-    _getSlideToSegment(segoff: {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    }): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
-    // @internal @deprecated (undocumented)
+    _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined;
+    // @deprecated (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     getStats(): MergeTreeStats;
-    // @internal @deprecated (undocumented)
+    // @deprecated (undocumented)
     incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>): void;
     // (undocumented)
     insertAtReferencePosition(referencePosition: ReferencePosition, insertSegment: ISegment, opArgs: IMergeTreeDeltaOpArgs): void;
@@ -1059,7 +1065,7 @@ export class MergeTree {
         insertAfterRemovedSegs: boolean;
         zamboniSegments: boolean;
     };
-    // @internal @deprecated (undocumented)
+    // @deprecated (undocumented)
     pendingSegments: List<SegmentGroup> | undefined;
     posFromRelativePos(relativePos: IRelativePosition, refseq?: number, clientId?: number): number;
     // (undocumented)
@@ -1137,8 +1143,10 @@ export interface MergeTreeStats {
     windowTime?: number;
 }
 
-// @public (undocumented)
-export class MergeTreeTextHelper {
+// Warning: (ae-internal-missing-underscore) The name "MergeTreeTextHelper" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal @deprecated (undocumented)
+export class MergeTreeTextHelper implements IMergeTreeTextHelper {
     constructor(mergeTree: MergeTree);
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder?: string, start?: number, end?: number): string;
@@ -1442,7 +1450,9 @@ export class SegmentGroupCollection {
     get size(): number;
 }
 
-// @public (undocumented)
+// Warning: (ae-internal-missing-underscore) The name "SnapshotLegacy" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal @deprecated (undocumented)
 export class SnapshotLegacy {
     constructor(mergeTree: MergeTree, logger: ITelemetryLogger, filename?: string | undefined, onCompletion?: (() => void) | undefined);
     // (undocumented)
