@@ -24,12 +24,7 @@ import {
     IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import {
-    PerformanceEvent,
-    isFluidError,
-    normalizeError,
-    loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, isFluidError, normalizeError } from "@fluidframework/telemetry-utils";
 import { fetchAndParseAsJSONHelper, fetchArray, fetchHelper, getOdspResolvedUrl, IOdspResponse } from "./odspUtils";
 import {
     IOdspCache,
@@ -60,7 +55,6 @@ export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000;
 export class EpochTracker implements IPersistedFileCache {
     private _fluidEpoch: string | undefined;
 
-    private readonly snapshotCacheExpiryTimeoutMs: number;
     public readonly rateLimiter: RateLimiter;
     private readonly driverId = uuid();
     // This tracks the request number made by the driver instance.
@@ -73,12 +67,6 @@ export class EpochTracker implements IPersistedFileCache {
     ) {
         // Limits the max number of concurrent requests to 24.
         this.rateLimiter = new RateLimiter(24);
-
-        // We need this hook for GC until we can properly plumb through the policies
-        this.snapshotCacheExpiryTimeoutMs =
-            loggerToMonitoringContext(logger).config.getBoolean("SWEEPV0")  //* Use the correct key
-                ? 0
-                : defaultCacheExpiryTimeoutMs;
     }
 
     // public for UT purposes only!
@@ -115,17 +103,17 @@ export class EpochTracker implements IPersistedFileCache {
             } else if (this._fluidEpoch !== value.fluidEpoch) {
                 return undefined;
             }
-            // Expire the cached snapshot if it's older than snapshotCacheExpiryTimeoutMs and immediately
+            // Expire the cached snapshot if it's older than the defaultCacheExpiryTimeoutMs and immediately
             // expire all old caches that do not have cacheEntryTime
             if (entry.type === snapshotKey) {
                 const cacheTime = value.value?.cacheEntryTime;
                 const currentTime = Date.now();
-                if (cacheTime === undefined || currentTime - cacheTime >= this.snapshotCacheExpiryTimeoutMs) {
+                if (cacheTime === undefined || currentTime - cacheTime >= defaultCacheExpiryTimeoutMs) {
                     this.logger.sendTelemetryEvent(
                         {
                             eventName: "odspVersionsCacheExpired",
                             duration: currentTime - cacheTime,
-                            maxCacheAgeMs: this.snapshotCacheExpiryTimeoutMs,
+                            maxCacheAgeMs: defaultCacheExpiryTimeoutMs,
                         });
                     await this.removeEntries();
                     return undefined;
@@ -141,8 +129,8 @@ export class EpochTracker implements IPersistedFileCache {
 
     public async put(entry: IEntry, value: any) {
         assert(this._fluidEpoch !== undefined, 0x1dd /* "no epoch" */);
-        // For snapshots, the value should have the cacheEntryTime.
-        // This will be used to expire snapshots older than snapshotCacheExpiryTimeoutMs.
+        // For snapshots, the value should have the cacheEntryTime. This will be used to expire snapshots older
+        // than the defaultCacheExpiryTimeoutMs.
         if (entry.type === snapshotKey) {
             value.cacheEntryTime = value.cacheEntryTime ?? Date.now();
         }
