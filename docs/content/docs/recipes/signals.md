@@ -4,7 +4,7 @@ menuPosition: 5
 draft: true
 ---
 
-In this recipe, you'll learn how the `Signaler` DataObject is used in a Fluid application to deal with a couple user presence scenarios. The two forms of presence that are covered in this example are focus tracking and mouse tracking. This article will go over how the `Signaler` DataObject is created, how both `MouseTracker` and `FocusTracker` classes work using the `Signaler` object, and how the view uses both classes to render the presence data.
+In this recipe, you'll learn how the `Signaler` DataObject is used in a Fluid application to deal with a couple user presence scenarios. The two forms of presence that are covered in this example are focus tracking and mouse tracking. This article will go over how the `Signaler` DataObject is used in both the `MouseTracker` and `FocusTracker` classes to achieve user presence in a FLuid application.
 
 ## Creation
 
@@ -452,18 +452,63 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         container.on("connected", () => {
             this.signaler.submitSignal(FocusTracker.focusRequestType);
         });
-
-        //Requests focus state of everyone on connection
-        this.signaler.submitSignal(FocusTracker.focusRequestType);
     }
 }
 ```
 
-
-
-
 ## View
 
+In `app.ts`, we create instances of the `MouseTracker` and the `FocusTracker` to use in our application:
+
+```typescript
+/*...*/
+
+async function start(): Promise<void> {
+    /*...*/
+
+    // Render presence information for audience members
+    const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
+    const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
+    const focusTracker = new FocusTracker(
+        container,
+        services.audience,
+        container.initialObjects.signaler as Signaler,
+    );
+    const mouseTracker = new MouseTracker(
+        services.audience,
+        container.initialObjects.signaler as Signaler,
+    );
+
+    /*...*/
+}
+
+start().catch(console.error);
+```
+
+The view then renders the focus data by using `renderFocusPresence`, which uses the local focus status map to display which users are in focus and which users aren't. It also renders the mouse position data by using `renderMousePresence`, which uses the local position map to display the name of each user where they currently are in the window:
+
+```typescript
+async function start(): Promise<void> {
+    /*...*/
+
+    // Render presence information for audience members
+    const contentDiv = document.getElementById("focus-content") as HTMLDivElement;
+    const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
+    const focusTracker = new FocusTracker(
+        container,
+        services.audience,
+        container.initialObjects.signaler as Signaler,
+    );
+    const mouseTracker = new MouseTracker(
+        services.audience,
+        container.initialObjects.signaler as Signaler,
+    );
+    renderFocusPresence(focusTracker, contentDiv);
+    renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
+}
+
+start().catch(console.error);
+```
 
 
 
