@@ -91,7 +91,7 @@ export class TestClient extends Client {
         return client2;
     }
 
-    declare public mergeTree: MergeTree;
+    public readonly mergeTree: MergeTree;
 
     public readonly checkQ: List<string> = ListMakeHead<string>();
     protected readonly q: List<ISequencedDocumentMessage> = ListMakeHead<ISequencedDocumentMessage>();
@@ -104,6 +104,7 @@ export class TestClient extends Client {
             specToSeg,
             DebugLogger.create("fluid:testClient"),
             options);
+        this.mergeTree = (this as Record<"_mergeTree", MergeTree>)._mergeTree;
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
         // Validate by default
