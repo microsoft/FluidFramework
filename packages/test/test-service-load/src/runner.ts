@@ -428,6 +428,27 @@ async function setupOpsMetrics(container: IContainer, logger: ITelemetryLogger, 
             });
         }
 
+        if (submittedSignals > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Signals Submitted",
+                testHarnessEvent: true,
+                value: submittedSignals,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+        if (receivedSignals > 0) {
+            logger.send({
+                category: "metric",
+                eventName: "Fluid Signals Received",
+                testHarnessEvent: true,
+                value: receivedSignals,
+                clientId: container.clientId,
+                userName: getUserName(container),
+            });
+        }
+
         submitedOps = 0;
         receivedOps = 0;
         submittedSignals = 0;
