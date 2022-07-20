@@ -69,9 +69,13 @@ export class CollabWindowTracker {
         }
 
         this.opsCountSinceNoop++;
-        if (this.opsCountSinceNoop >= this.NoopCountFrequency) {
-            this.submitNoop(false /* immediate */);
-            return;
+        if (this.opsCountSinceNoop === this.NoopCountFrequency) {
+            Promise.resolve().then(() => {
+                this.submitNoop(false /* immediate */);
+                // reset count now that all ops are processed
+                this.opsCountSinceNoop = 0;
+                return;
+            })
         }
 
         if (this.timer !== undefined) {
