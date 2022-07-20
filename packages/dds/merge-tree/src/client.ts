@@ -14,7 +14,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
-import { RedBlackTree } from "./collections";
+import { ListRemoveEntry, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition } from "./localReference";
 import {
@@ -355,6 +355,63 @@ export class Client {
     }
 
     /**
+     * Revert an op
+     */
+    public rollback?(op: any, localOpMetadata: unknown) {
+        if (op.type !== MergeTreeDeltaType.INSERT) {
+            throw new Error("Unsupported op type for rollback");
+        }
+
+        const lastList = this._mergeTree.pendingSegments?.prev;
+        if (!lastList) {
+            throw new Error("No pending segments");
+        }
+        ListRemoveEntry(lastList);
+        const pendingSegmentGroup = lastList.data;
+        if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
+            throw new Error("Rollback op doesn't match last edit");
+        }
+        for (const segment of pendingSegmentGroup.segments) {
+            const segmentSegmentGroup = segment.segmentGroups.dequeue();
+            assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+
+            const start = this.findRollbackPosition(segment);
+            const segWindow = this.getCollabWindow();
+            const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
+            this._mergeTree.markRangeRemoved(
+                start,
+                start + segment.cachedLength,
+                UniversalSequenceNumber,
+                segWindow.clientId,
+                UniversalSequenceNumber,
+                false,
+                { op: removeOp });
+        }
+    }
+
+    /**
+     *  Walk the segments up to the current segment and calculate its position
+     */
+    private findRollbackPosition(segment: ISegment) {
+        let segmentPosition = 0;
+        this._mergeTree.walkAllSegments(this._mergeTree.root, (seg) => {
+            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
+            if (seg === segment) {
+                return false;
+            }
+
+            // If not removed, increase position
+            if (seg.removedSeq === undefined) {
+                segmentPosition += seg.cachedLength;
+            }
+
+            return true;
+        });
+
+        return segmentPosition;
+    }
+
+    /**
      * Performs the remove based on the provided op
      * @param opArgs - The ops args for the op
      * @returns True if the remove was applied. False if it could not be.
@@ -674,7 +731,7 @@ export class Client {
         assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         let segmentPosition = 0;
         /*
-            Walk the segments up to the current segment, and calculate it's
+            Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
             after the current segment.
 
