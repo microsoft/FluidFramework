@@ -94,11 +94,18 @@ export class SummaryNode {
     public set additionalPath(additionalPath: EscapedPath | undefined) {
         this.summary.additionalPath = additionalPath;
     }
+    public get waitingForPendingSummary(): boolean {
+        return this.summary.waitingForPendingSummary ?? false;
+    }
+    public set waitingForPendingSummary(waitingForPendingSummary: boolean) {
+        this.summary.waitingForPendingSummary = waitingForPendingSummary;
+    }
     constructor(private readonly summary: {
         readonly referenceSequenceNumber: number;
         readonly basePath: EscapedPath | undefined;
         readonly localPath: EscapedPath;
         additionalPath?: EscapedPath;
+        waitingForPendingSummary?: boolean;
     }) { }
 
     /** Gets the full path to this node, to be used when sending a handle */

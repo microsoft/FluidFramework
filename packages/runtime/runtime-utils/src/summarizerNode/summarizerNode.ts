@@ -170,6 +170,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             ...localPathsToUse,
             referenceSequenceNumber: this.wipReferenceSequenceNumber,
             basePath: parentPath,
+            waitingForPendingSummary: true,
         });
         const fullPathForChildren = summary.fullPathForChildren;
         for (const child of this.children.values()) {
@@ -258,8 +259,10 @@ export class SummarizerNode implements IRootSummarizerNode {
                 this.wipSummaryLogger?.sendTelemetryEvent({
                     eventName: "SummaryNodeWithoutPendingSummary",
                     proposalHandle,
+                    pendingSummary: this._latestSummary.waitingForPendingSummary,
                     referenceSequenceNumber,
                 });
+
                 // A data store is probably loading other data stores asynchronously or in response
                 // to some event/trigger which will cause a few data stores to be loaded in between summaries.
                 // We will simply re-use the summary node that was just created when the DataStore
@@ -281,13 +284,11 @@ export class SummarizerNode implements IRootSummarizerNode {
 
             // Clear earlier pending summaries
             this.pendingSummaries.delete(proposalHandle);
+            summaryNode.waitingForPendingSummary = false;
+            this._latestSummary = summaryNode;
         }
 
         this.refreshLatestSummaryCore(referenceSequenceNumber);
-
-        if (summaryNode !== undefined) {
-            this._latestSummary = summaryNode;
-        }
 
         // Propagate update to all child nodes
         for (const child of this.children.values()) {
