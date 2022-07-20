@@ -30,6 +30,6 @@ export function fail(message: string): never {
  *
  * @param never - The switch value
  */
- export function unreachableCase(never: never): never {
+export function unreachableCase(never: never): never {
     fail("unreachableCase was called");
 }
