@@ -375,7 +375,7 @@ export class Client {
             const start = this.findRollbackPosition(segment);
             const segWindow = this.getCollabWindow();
             const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
-            this.mergeTree.markRangeRemoved(
+            this._mergeTree.markRangeRemoved(
                 start,
                 start + segment.cachedLength,
                 UniversalSequenceNumber,
@@ -391,7 +391,7 @@ export class Client {
      */
     private findRollbackPosition(segment: ISegment) {
         let segmentPosition = 0;
-        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+        this._mergeTree.walkAllSegments(this._mergeTree.root, (seg) => {
             // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
             if (seg === segment) {
                 return false;
