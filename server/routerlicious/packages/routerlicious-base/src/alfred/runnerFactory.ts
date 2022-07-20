@@ -99,6 +99,7 @@ export class AlfredResources implements core.IResources {
         public metricClientConfig: any,
         public documentsCollection: core.ICollection<core.IDocument>,
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
+        public verifyMaxMessageSize?: boolean,
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
         const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -322,6 +323,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const storage = new services.DocumentStorage(databaseManager, tenantManager, enableWholeSummaryUpload);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
+        // Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
+        // Therefore, default clients will ignore server's 16kb message size limit.
+        const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
         const address = `${await utils.getHostIp()}:4000`;
 
         const nodeFactory = new LocalNodeFactory(
@@ -380,7 +384,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             documentsCollectionName,
             metricClientConfig,
             documentsCollection,
-            throttleAndUsageStorageManager);
+            throttleAndUsageStorageManager,
+            verifyMaxMessageSize);
     }
 }
 
@@ -404,6 +409,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.producer,
             resources.metricClientConfig,
             resources.documentsCollection,
-            resources.throttleAndUsageStorageManager);
+            resources.throttleAndUsageStorageManager,
+            resources.verifyMaxMessageSize);
     }
 }

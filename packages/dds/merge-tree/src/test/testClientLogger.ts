@@ -5,10 +5,10 @@
 
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "..";
 import { UnassignedSequenceNumber } from "../constants";
 import { IMergeTreeOp } from "../ops";
 import { TextSegment } from "../textSegment";
+import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { TestClient } from "./testClient";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined) {

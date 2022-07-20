@@ -8,7 +8,7 @@ import { UniversalSequenceNumber } from "../constants";
 import {
     Marker,
     reservedMarkerIdKey,
-} from "../mergeTree";
+} from "../mergeTreeNodes";
 import { ReferenceType } from "../ops";
 import { reservedTileLabelsKey } from "../referencePositions";
 import { TextSegment } from "../textSegment";

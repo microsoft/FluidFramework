@@ -76,6 +76,13 @@ export interface IAudience extends EventEmitter {
 }
 
 // @public
+export interface IAudienceOwner extends IAudience {
+    addMember(clientId: string, details: IClient): any;
+    clear(): any;
+    removeMember(clientId: string): boolean;
+}
+
+// @public
 export interface ICodeAllowList {
     // (undocumented)
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
