@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { Delta } from "../changeset";
 import { ChangeRebaser } from "../rebase";
 import { AnchorSet } from "../tree";
+import { Root as Delta } from "./delta";
 
 export abstract class ProgressiveEditBuilder<TChange> {
     private readonly changes: TChange[] = [];
     constructor(
         private readonly changeFamily: ChangeFamily<unknown, TChange>,
-        private readonly deltaReceiver: (delta: Delta.Root) => void,
+        private readonly deltaReceiver: (delta: Delta) => void,
         private readonly anchorSet: AnchorSet) {}
 
     /**
@@ -33,8 +33,8 @@ export abstract class ProgressiveEditBuilder<TChange> {
 }
 
 export interface ChangeFamily<TEditor, TChange> {
-    buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): TEditor;
-    intoDelta(change: TChange): Delta.Root;
+    buildEditor(deltaReceiver: (delta: Delta) => void, anchorSet: AnchorSet): TEditor;
+    intoDelta(change: TChange): Delta;
     // TODO more specific types
     readonly rebaser: ChangeRebaser<TChange, TChange, TChange>;
 }
