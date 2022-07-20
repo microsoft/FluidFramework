@@ -8,7 +8,6 @@ import type { IEvent, IEventProvider } from "@fluidframework/common-definitions"
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IModelLoader {
     createDetached(
         version: string,

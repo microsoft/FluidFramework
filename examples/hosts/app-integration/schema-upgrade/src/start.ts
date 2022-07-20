@@ -21,15 +21,15 @@ const updateTabForId = (id: string) => {
     document.title = id;
 };
 
-const render = (app: IApp) => {
-    // Here, could switch on the app.version to determine different views to load (AppView1 vs. AppView2).
-    // For this demo, the view can currently render either app type.
+const render = (model: IApp) => {
+    // Here, could switch on the model.version to determine different views to load (AppView1 vs. AppView2).
+    // For this demo, the view can currently render either model type.
 
     // The AppView is what a normal user would see in a normal scenario...
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     ReactDOM.render(
-        React.createElement(AppView, { app }),
+        React.createElement(AppView, { model }),
         appDiv,
     );
 
@@ -38,7 +38,7 @@ const render = (app: IApp) => {
     ReactDOM.unmountComponentAtNode(debugDiv);
     ReactDOM.render(
         React.createElement(DebugView, {
-            app,
+            model,
             externalDataSource,
         }),
         debugDiv,
@@ -83,7 +83,7 @@ async function start(): Promise<void> {
     });
 
     // It's not a given that a single view can render every version (esp. if functionality is added/removed).
-    // Here we could check the app.version and select the appropriate view if that's the case.
+    // Here we could check the model.version and select the appropriate view if that's the case.
     render(model);
     updateTabForId(id);
 }

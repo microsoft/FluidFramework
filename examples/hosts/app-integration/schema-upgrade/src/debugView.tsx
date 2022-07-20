@@ -9,45 +9,45 @@ import type { ExternalDataSource } from "./externalData";
 import { IMigratable, MigrationState } from "./interfaces";
 
 export interface IDebugViewProps {
-    app: IMigratable;
+    model: IMigratable;
     externalDataSource: ExternalDataSource;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
     const {
-        app,
+        model,
         externalDataSource,
     } = props;
 
     return (
         <div>
-            <MigrationStatusView app={ app } />
+            <MigrationStatusView model={ model } />
             <ImportedDataView data={ undefined } />
-            <ControlsView proposeVersion={ app.proposeVersion } />
+            <ControlsView proposeVersion={ model.proposeVersion } />
             <ExternalDataSourceView externalDataSource={ externalDataSource }/>
         </div>
     );
 };
 
 interface IMigrationStatusViewProps {
-    app: IMigratable;
+    model: IMigratable;
 }
 
 const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrationStatusViewProps) => {
-    const { app } = props;
+    const { model } = props;
 
-    const [migrationState, setMigrationState] = useState<MigrationState>(app.getMigrationState());
+    const [migrationState, setMigrationState] = useState<MigrationState>(model.getMigrationState());
 
     useEffect(() => {
         const migrationStateChangedHandler = () => {
-            setMigrationState(app.getMigrationState());
+            setMigrationState(model.getMigrationState());
         };
-        app.on("migrationStateChanged", migrationStateChangedHandler);
+        model.on("migrationStateChanged", migrationStateChangedHandler);
         migrationStateChangedHandler();
         return () => {
-            app.off("migrationStateChanged", migrationStateChangedHandler);
+            model.off("migrationStateChanged", migrationStateChangedHandler);
         };
-    }, [app]);
+    }, [model]);
 
     return (
         <>

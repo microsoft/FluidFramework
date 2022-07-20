@@ -9,26 +9,28 @@ import { IApp, MigrationState } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
 export interface IAppViewProps {
-    app: IApp;
+    model: IApp;
 }
 
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
-    const { app } = props;
+    const { model } = props;
 
-    const [disableInput, setDisableInput] = useState<boolean>(app.getMigrationState() !== MigrationState.collaborating);
+    const [disableInput, setDisableInput] = useState<boolean>(
+        model.getMigrationState() !== MigrationState.collaborating,
+    );
 
     useEffect(() => {
         const migrationStateChangedHandler = () => {
-            setDisableInput(app.getMigrationState() !== MigrationState.collaborating);
+            setDisableInput(model.getMigrationState() !== MigrationState.collaborating);
         };
-        app.on("migrationStateChanged", migrationStateChangedHandler);
+        model.on("migrationStateChanged", migrationStateChangedHandler);
         migrationStateChangedHandler();
         return () => {
-            app.off("migrationStateChanged", migrationStateChangedHandler);
+            model.off("migrationStateChanged", migrationStateChangedHandler);
         };
-    }, [app]);
+    }, [model]);
 
     return (
-        <InventoryListView inventoryList={ app.inventoryList } disabled={ disableInput } />
+        <InventoryListView inventoryList={ model.inventoryList } disabled={ disableInput } />
     );
 };
