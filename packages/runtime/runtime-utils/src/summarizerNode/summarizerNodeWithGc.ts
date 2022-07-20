@@ -263,7 +263,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     protected refreshLatestSummaryFromPending(
         proposalHandle: string,
         referenceSequenceNumber: number,
-    ): boolean {
+        key?: string,
+        parentLatestSummary?: SummaryNode,
+    ): void {
         // If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
         if (!this.gcDisabled) {
             const summaryNode = this.pendingSummaries.get(proposalHandle) as SummaryNodeWithGC;
@@ -272,7 +274,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             }
         }
 
-        return super.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
+        super.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber, key, parentLatestSummary);
     }
 
     /**
