@@ -151,7 +151,7 @@ export function adjustVersion(
                     fatal(`Applying virtual patch failed. The version returned was: ${translatedVersion}`);
                 }
             } else {
-                fatal("Can only use virtual patches when doing major/minor/patch bumps");
+                return sv;
             }
         }
     }

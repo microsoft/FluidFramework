@@ -4,7 +4,7 @@
  */
 
 import * as semver from "semver";
-import { adjustVersion, VersionBumpType } from "@fluidframework/build-tools";
+import { adjustVersion, VersionBumpTypeExtended } from "@fluidframework/build-tools";
 import { bumpInternalVersion, getVersionRange } from "./internalVersionScheme";
 import { detectVersionScheme } from "./schemes";
 
@@ -20,7 +20,11 @@ import { detectVersionScheme } from "./schemes";
  * @param prerelease - If true, will bump to a prerelease version.
  * @returns a bumped range string.
  */
-export function incRange(range: string, bumpType: VersionBumpType, prerelease = false): string {
+export function incRange(
+    range: string,
+    bumpType: VersionBumpTypeExtended,
+    prerelease = false,
+): string {
     if (semver.validRange(range) === null) {
         throw new Error(`${range} is not a valid semver range.`);
     }
@@ -32,10 +36,14 @@ export function incRange(range: string, bumpType: VersionBumpType, prerelease = 
             const operator = range.slice(0, 1);
             const isPreciseVersion = operator !== "^" && operator !== "~";
             const original = isPreciseVersion ? range : range.slice(1);
+            const parsedVersion = semver.parse(original);
+            const originalNoPrerelease = `${parsedVersion?.major}.${parsedVersion?.minor}.${parsedVersion?.patch}`;
             const newVersion =
-                scheme === "virtualPatch"
-                    ? adjustVersion(original, bumpType, "virtualPatch")
-                    : semver.inc(original, bumpType);
+                bumpType === "current"
+                    ? originalNoPrerelease
+                    : scheme === "virtualPatch"
+                    ? adjustVersion(originalNoPrerelease, bumpType, "virtualPatch")
+                    : semver.inc(originalNoPrerelease, bumpType);
             if (newVersion === null) {
                 throw new Error(`Failed to increment ${original}.`);
             }
@@ -57,6 +65,23 @@ export function incRange(range: string, bumpType: VersionBumpType, prerelease = 
         }
     }
 }
+
+// export function removePrerelease(range: string): string {
+//     const scheme = detectVersionScheme(range);
+//     const isPrerelease = semver.prerelease(range)?.length ?? 0 > 0;
+//     if(!isPrerelease) {
+//         return range;
+//     }
+//     switch (scheme) {
+//         case "internal": {
+//             throw new Error(`Cannot remove prerelease secrtions from Fluid internal version ranges.`);
+//         }
+//         default: {
+//             const ver = semver.parse()
+//             return `${}`
+//         }
+
+// }
 
 export function detectConstraintType(range: string): "minor" | "patch" {
     const minVer = semver.minVersion(range);

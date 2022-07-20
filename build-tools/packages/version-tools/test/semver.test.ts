@@ -100,6 +100,13 @@ describe("semver", () => {
                 assert.strictEqual(result, expected);
             });
 
+            it("bump current", () => {
+                const input = `0.59.1001`;
+                const expected = `0.59.1001`;
+                const result = incRange(input, "current");
+                assert.strictEqual(result, expected);
+            });
+
             it("bump patch prerelease", () => {
                 const input = `0.1029.1000`;
                 const expected = `0.1029.1001-0`;
@@ -118,6 +125,20 @@ describe("semver", () => {
                 const input = `0.59.1001`;
                 const expected = `0.60.1000-0`;
                 const result = incRange(input, "major", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current", () => {
+                const input = `0.1029.1000-0`;
+                const expected = `0.1029.1000`;
+                const result = incRange(input, "current", false);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current prerelease (no-op)", () => {
+                const input = `0.1029.1000-0`;
+                const expected = `0.1029.1000-0`;
+                const result = incRange(input, "current", true);
                 assert.strictEqual(result, expected);
             });
         });
@@ -144,6 +165,13 @@ describe("semver", () => {
                 assert.strictEqual(result, expected);
             });
 
+            it("bump current", () => {
+                const input = `^0.59.1001`;
+                const expected = `^0.59.1001`;
+                const result = incRange(input, "current");
+                assert.strictEqual(result, expected);
+            });
+
             it("bump patch prerelease", () => {
                 const input = `^0.59.1001`;
                 const expected = `^0.59.1002-0`;
@@ -162,6 +190,20 @@ describe("semver", () => {
                 const input = `^0.59.1001`;
                 const expected = `^0.60.1000-0`;
                 const result = incRange(input, "major", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current", () => {
+                const input = `^0.1029.1000-0`;
+                const expected = `^0.1029.1000`;
+                const result = incRange(input, "current", false);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current prerelease (no-op)", () => {
+                const input = `^0.1029.1000-0`;
+                const expected = `^0.1029.1000-0`;
+                const result = incRange(input, "current", true);
                 assert.strictEqual(result, expected);
             });
         });
@@ -188,6 +230,13 @@ describe("semver", () => {
                 assert.strictEqual(result, expected);
             });
 
+            it("bump current", () => {
+                const input = `~0.59.1234`;
+                const expected = `~0.59.1234`;
+                const result = incRange(input, "current");
+                assert.strictEqual(result, expected);
+            });
+
             it("bump patch prerelease", () => {
                 const input = `~0.59.2001`;
                 const expected = `~0.59.2002-0`;
@@ -206,6 +255,27 @@ describe("semver", () => {
                 const input = `~0.59.1234`;
                 const expected = `~0.60.1000-0`;
                 const result = incRange(input, "major", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump current prerelease", () => {
+                const input = `~0.59.1234`;
+                const expected = `~0.59.1234-0`;
+                const result = incRange(input, "current", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current", () => {
+                const input = `~0.1029.1000-0`;
+                const expected = `~0.1029.1000`;
+                const result = incRange(input, "current", false);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current prerelease (no-op)", () => {
+                const input = `~0.1029.1000-0`;
+                const expected = `~0.1029.1000-0`;
+                const result = incRange(input, "current", true);
                 assert.strictEqual(result, expected);
             });
         });
@@ -234,6 +304,13 @@ describe("semver", () => {
                 assert.strictEqual(result, expected);
             });
 
+            it("bump current", () => {
+                const input = `2.4.3`;
+                const expected = `2.4.3`;
+                const result = incRange(input, "current");
+                assert.strictEqual(result, expected);
+            });
+
             it("bump patch prerelease", () => {
                 const input = `2.4.3`;
                 const expected = `2.4.4-0`;
@@ -252,6 +329,27 @@ describe("semver", () => {
                 const input = `2.4.3`;
                 const expected = `3.0.0-0`;
                 const result = incRange(input, "major", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump current prerelease", () => {
+                const input = `2.4.3`;
+                const expected = `2.4.3-0`;
+                const result = incRange(input, "current", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current", () => {
+                const input = `2.4.3-0`;
+                const expected = `2.4.3`;
+                const result = incRange(input, "current", false);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current prerelease (no-op)", () => {
+                const input = `2.4.3-0`;
+                const expected = `2.4.3-0`;
+                const result = incRange(input, "current", true);
                 assert.strictEqual(result, expected);
             });
         });
@@ -278,6 +376,13 @@ describe("semver", () => {
                 assert.strictEqual(result, expected);
             });
 
+            it("bump current", () => {
+                const input = `^2.4.3`;
+                const expected = `^2.4.3`;
+                const result = incRange(input, "current");
+                assert.strictEqual(result, expected);
+            });
+
             it("bump patch prerelease", () => {
                 const input = `^2.4.3`;
                 const expected = `^2.4.4-0`;
@@ -296,6 +401,27 @@ describe("semver", () => {
                 const input = `^2.4.3`;
                 const expected = `^3.0.0-0`;
                 const result = incRange(input, "major", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump current prerelease", () => {
+                const input = `^2.4.3`;
+                const expected = `^2.4.3-0`;
+                const result = incRange(input, "current", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current", () => {
+                const input = `^2.4.3-0`;
+                const expected = `^2.4.3`;
+                const result = incRange(input, "current", false);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current prerelease (no-op)", () => {
+                const input = `^2.4.3-0`;
+                const expected = `^2.4.3-0`;
+                const result = incRange(input, "current", true);
                 assert.strictEqual(result, expected);
             });
         });
@@ -340,6 +466,27 @@ describe("semver", () => {
                 const input = `~2.4.3`;
                 const expected = `~3.0.0-0`;
                 const result = incRange(input, "major", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump current prerelease", () => {
+                const input = `~2.4.3`;
+                const expected = `~2.4.3-0`;
+                const result = incRange(input, "current", true);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current", () => {
+                const input = `~2.4.3-0`;
+                const expected = `~2.4.3`;
+                const result = incRange(input, "current", false);
+                assert.strictEqual(result, expected);
+            });
+
+            it("bump prerelease to current prerelease (no-op)", () => {
+                const input = `~2.4.3-0`;
+                const expected = `~2.4.3-0`;
+                const result = incRange(input, "current", true);
                 assert.strictEqual(result, expected);
             });
         });
