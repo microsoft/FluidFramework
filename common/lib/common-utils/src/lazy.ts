@@ -4,8 +4,8 @@
  */
 
 /**
-  * Helper class for lazy initialized values. Ensures the value is only generated once, and remain immutable
-  */
+ * Helper class for lazy initialized values. Ensures the value is only generated once, and remain immutable
+ */
 export class Lazy<T> {
     private _value: T | undefined;
     private _evaluated: boolean = false;
@@ -13,7 +13,7 @@ export class Lazy<T> {
      * Instantiates an instance of Lazy<T>
      * @param valueGenerator - the function that will generate the value when value is accessed the first time
      */
-    constructor(private readonly valueGenerator: () => T) { }
+    constructor(private readonly valueGenerator: () => T) {}
 
     /**
      * Return true if the value as been generated, otherwise false

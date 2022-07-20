@@ -6,13 +6,9 @@
         "outDir": "./dist",
         "baseUrl": ".",
         "paths": {
-            "perf_hooks": ["types/perf_hooks.d.ts"]
-        }
+            "perf_hooks": ["types/perf_hooks.d.ts"],
+        },
     },
-    "include": [
-        "src/**/*"
-    ],
-    "exclude": [
-        "src/test/**/*"
-    ]
+    "include": ["src/**/*"],
+    "exclude": ["src/test/**/*"],
 }

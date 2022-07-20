@@ -72,22 +72,22 @@ export class LazyPromise<T> implements Promise<T> {
 
     private result: Promise<T> | undefined;
 
-    constructor(private readonly execute: () => Promise<T>) { }
+    constructor(private readonly execute: () => Promise<T>) {}
 
     public async then<TResult1 = T, TResult2 = never>(
         // eslint-disable-next-line @rushstack/no-new-null
         onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
         // eslint-disable-next-line @rushstack/no-new-null
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined):
-        Promise<TResult1 | TResult2> {
+        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined,
+    ): Promise<TResult1 | TResult2> {
         // eslint-disable-next-line prefer-rest-params
         return this.getPromise().then<TResult1, TResult2>(...arguments);
     }
 
     public async catch<TResult = never>(
         // eslint-disable-next-line @rushstack/no-new-null
-        onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined):
-        Promise<T | TResult> {
+        onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined,
+    ): Promise<T | TResult> {
         // eslint-disable-next-line prefer-rest-params
         return this.getPromise().catch<TResult>(...arguments);
     }

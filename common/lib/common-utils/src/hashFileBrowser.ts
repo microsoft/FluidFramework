@@ -15,9 +15,11 @@ function encodeDigest(hashArray: Uint8Array, encoding: "hex" | "base64"): string
     // eslint-disable-next-line default-case
     switch (encoding) {
         case "hex": {
-            const hashHex = Array.prototype.map.call(hashArray, (byte) => {
-                return byte.toString(16).padStart(2, "0") as string;
-            }).join("");
+            const hashHex = Array.prototype.map
+                .call(hashArray, (byte) => {
+                    return byte.toString(16).padStart(2, "0") as string;
+                })
+                .join("");
             return hashHex;
         }
         case "base64": {
