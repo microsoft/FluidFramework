@@ -178,16 +178,25 @@ async function deleteSummary(
     const lumberjackProperties = {
         ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
         [BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
-        // Currently, we ignore the softDelete header and always implement hard delete. Soft delete will come next.
-        [BaseGitRestTelemetryProperties.softDelete]: false,
+        [BaseGitRestTelemetryProperties.softDelete]: softDelete,
     };
     // In repo-per-doc model, the repoManager's path represents the directory that contains summary data.
     const summaryFolderPath = repoManager.path;
     Lumberjack.info(`Deleting summary`, lumberjackProperties);
+
+    if (softDelete) {
+        // Currently, we ignore the softDelete header and always implement hard delete. Soft delete will come next.
+        Lumberjack.info(`Skipping soft delete as it will be implemented later.`, lumberjackProperties);
+        return;
+    }
+
     try {
         await fileSystemManager.promises.rm(summaryFolderPath, { recursive: true });
     } catch (error: any) {
-        if (error?.code === "ENOENT") {
+        if (error?.code === "ENOENT" ||
+                (error instanceof NetworkError &&
+                error?.code === 400 &&
+                error?.message.startsWith("Repo does not exist"))) {
             // File does not exist.
             Lumberjack.warning(
                 "Tried to delete summary, but it does not exist",
