@@ -9,13 +9,23 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 export interface IModelLoader {
+    // TODO: Make async to support dynamic loading of model
+    /**
+     * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
+     * @param version - the container code version to check
+     */
     isVersionSupported(version: string): boolean;
 
-    createDetached(
-        version: string,
-        externalData?: string,
-    ): Promise<{ model: IMigratable; attach: () => Promise<string>; }>;
+    /**
+     * Create a detached model using the specified version of container code.
+     * @param version - the container code version to create a model for
+     */
+    createDetached(version: string): Promise<{ model: IMigratable; attach: () => Promise<string>; }>;
 
+    /**
+     * Load a model for the container with the given id.
+     * @param id - the id of the container to load
+     */
     loadExisting(id: string): Promise<IMigratable>;
 }
 
