@@ -34,15 +34,23 @@ const v2ModuleWithDetails: IFluidModuleWithDetails = {
     details: { package: "two" },
 };
 
-const getModel = (container: IContainer) => {
+const getModel = async (container: IContainer) => {
     const version = container.getSpecifiedCodeDetails()?.package;
     if (typeof version !== "string") {
         throw new Error("Unexpected code detail format");
     }
 
     switch (version) {
-        case "one": return new App1(container);
-        case "two": return new App2(container);
+        case "one": {
+            const model = new App1(container);
+            await model.initialize();
+            return model;
+        }
+        case "two": {
+            const model = new App2(container);
+            await model.initialize();
+            return model;
+        }
         default: throw new Error("Unknown version");
     }
 };
@@ -86,8 +94,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
         externalData?: string,
     ): Promise<{ app: IApp; attach: () => Promise<string>; }> {
         const container = await this.loader.createDetachedContainer({ package: version });
-        const app = getModel(container);
-        await app.initialize();
+        const app = await getModel(container);
         if (externalData !== undefined) {
             await app.importStringData(externalData);
         }
@@ -100,8 +107,7 @@ export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements 
 
     public async loadExisting(id: string): Promise<IApp> {
         const container = await this.loader.resolve({ url: id });
-        const model = getModel(container);
-        await model.initialize();
+        const model = await getModel(container);
         return model;
     }
 }

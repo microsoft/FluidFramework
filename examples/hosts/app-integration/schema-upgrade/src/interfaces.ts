@@ -31,6 +31,7 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
      * The string version of the App, matching the version of the container code it's paired with.
      */
     readonly version: string;
+
     /**
      * importStringData must be called after initialization but before modifying or attaching the app (i.e. can only
      * be called on an unaltered, detached app).  Here I use a string as the export/import format, but it could be
