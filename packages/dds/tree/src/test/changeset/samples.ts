@@ -1400,8 +1400,8 @@ export namespace ScenarioA {
 // }
 
 // /**
-//  * This scenario was originally meant to demonstrate the need to replicate tombstone information when inserting at the
-//  * destination of a slice-move.
+//  * This scenario was originally meant to demonstrate the need to replicate tombstone information when inserting at
+//  * the destination of a slice-move.
 //  *
 //  * This scenario was predicated on the notion that inserts that commuted with a move would be solely represented by a
 //  * mark at the destination of the move, which forces the format to replicate tombstone information at the destination
@@ -2676,9 +2676,9 @@ export namespace ScenarioA {
 // }
 
 // /**
-//  * This scenario was originally meant to demonstrate that if an edit has tombstones that fall in the same cursor gap as
-//  * some move-in that it is being rebased over, then that edit must include the tombstones introduced by the extremities
-//  * of that move-in (if any).
+//  * This scenario was originally meant to demonstrate that if an edit has tombstones that fall in the same cursor gap
+//  * as some move-in that it is being rebased over, then that edit must include the tombstones introduced by the
+//  * extremities of that move-in (if any).
 //  *
 //  * This scenario was predicated on the notion that inserts that commuted with a move would be solely represented by a
 //  * mark at the destination of the move, which forces the format to replicate tombstone information at the destination
