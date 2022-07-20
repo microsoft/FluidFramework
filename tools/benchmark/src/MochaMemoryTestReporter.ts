@@ -67,7 +67,7 @@ function getName(name: string): string {
  *
  * See https://mochajs.org/api/tutorial-custom-reporter.html for more information about custom mocha reporters.
  */
-class MemoryTestMochaReporter {
+class MochaMemoryTestReporter {
     private readonly inProgressSuites: Map<string, [string, MemoryBenchmarkStats][]> = new Map();
     private readonly outputDirectory: string;
 
@@ -262,4 +262,4 @@ function getArrayStatistics(array: number[]): Benchmark.Stats {
     return { mean, variance, deviation, moe, sem, sample: array, rme };
 }
 
-module.exports = MemoryTestMochaReporter;
+module.exports = MochaMemoryTestReporter;

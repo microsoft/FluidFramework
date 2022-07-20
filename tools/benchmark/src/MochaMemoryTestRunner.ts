@@ -11,7 +11,7 @@ import {
     isInPerformanceTestingMode,
     performanceTestSuiteTag,
 } from "./Configuration";
-import { MemoryBenchmarkStats } from "./MochaMemoryReporter";
+import { MemoryBenchmarkStats } from "./MochaMemoryTestReporter";
 
 export function benchmarkMemory(args: BenchmarkArguments): Test {
     const options: Required<BenchmarkOptions> = {

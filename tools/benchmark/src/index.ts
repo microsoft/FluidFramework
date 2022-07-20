@@ -28,6 +28,6 @@ export {
     validateBenchmarkArguments,
 } from "./Configuration";
 export { benchmark } from "./Runner";
-export { benchmarkMemory } from "./MemoryTestRunner";
+export { benchmarkMemory } from "./MochaMemoryTestRunner";
 export { prettyNumber, geometricMean } from "./ReporterUtilities";
 export { BenchmarkReporter, BenchmarkData } from "./Reporter";
