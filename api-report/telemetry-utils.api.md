@@ -76,6 +76,9 @@ export const hasErrorInstanceId: (x: any) => x is {
     errorInstanceId: string;
 };
 
+// @public (undocumented)
+export const hasTelemetryPropFunctions: (x: any) => boolean;
+
 // @public
 export interface IConfigProvider extends IConfigProviderBase {
     // (undocumented)
@@ -165,6 +168,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
     getTelemetryProperties(): ITelemetryProperties;
     // (undocumented)
     overwriteErrorInstanceId(id: string): void;
+    static typeCheck(object: any): object is LoggingError;
 }
 
 // @public
@@ -203,6 +207,16 @@ export class MultiSinkLogger extends TelemetryLogger {
     // (undocumented)
     protected loggers: ITelemetryBaseLogger[];
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export class NormalizedExternalError extends LoggingError {
+    constructor(errorProps: Pick<IFluidErrorBase, "message" | "stack">);
+    // (undocumented)
+    errorType: string;
+    // (undocumented)
+    static readonly normalizedErrorType = "genericError";
+    static typeCheck(object: any): object is NormalizedExternalError;
 }
 
 // @public
