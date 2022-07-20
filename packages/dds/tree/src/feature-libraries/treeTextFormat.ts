@@ -87,7 +87,7 @@ export interface GenericTreeNode<TChild> extends NodeData {
 }
 
 /**
- * A tree whose nodes are either tree nodes or a placeholders.
+ * A tree whose nodes are either tree nodes or placeholders.
  */
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
