@@ -3,4 +3,5 @@ api-report
 dist
 lib
 node_modules
+package-lock.json
 src/test/types/
