@@ -9,10 +9,21 @@ import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import * as fs from "fs";
 import FileLogger from "./logger/FileLogger";
 import { getArgsValidationError } from "./getArgsValidationError";
-import { isCodeLoaderBundle } from "./codeLoaderBundle";
+import { IFluidFileConverter, isCodeLoaderBundle } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
 import path from "path";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+
+export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
+
+interface IExportFileResponseSuccess {
+    success: true;
+}
+
+interface IExportFileResponseFailure {
+    success: false;
+    errorMessage: string;
+}
 
 export async function exportFile(
     codeLoader: string,
@@ -20,53 +31,69 @@ export async function exportFile(
     outputFolder: string,
     scenario: string,
     telemetryFile: string,
-    loggerOverride?: ITelemetryBaseLogger,
-) {
+): Promise<IExportFileResponse> {
     if (fs.existsSync(telemetryFile)) {
-        console.error("Telemetry file already exists. " + telemetryFile);
-        throw new Error("Telemetry file already exists.");
+        return { success: false, errorMessage: `Telemetry file already exists [${telemetryFile}]` };
     }
 
-    const logger = ChildLogger.create(loggerOverride ?? new FileLogger(telemetryFile), "LocalSnapshotRunnerApp");
+    const fileLogger = new FileLogger(telemetryFile, 50);
 
-    await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
-        const codeLoaderBundle = require(codeLoader);
-        if (!isCodeLoaderBundle(codeLoaderBundle)) {
-            logger.sendErrorEvent({
-                eventName: "Client_ArgsValidationError",
-                message: "Code loader bundle is not of type CodeLoaderBundle",
-            });
-            return; // TODO: standardize error exit
-        }
+    const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp",
+        { all: { "Event_Time": () => Date.now() } });
 
-        const argsValidationError = getArgsValidationError(inputFile, outputFolder, scenario);
-        if (argsValidationError) {
-            logger.sendErrorEvent({
-                eventName: "Client_ArgsValidationError",
-                message: argsValidationError,
-            });
-            return; // TODO: standardize error exit
-        }
+    try {
+        await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
+            const codeLoaderBundle = require(codeLoader);
+            if (!isCodeLoaderBundle(codeLoaderBundle)) {
+                const message = "Code loader bundle is not of type CodeLoaderBundle";
+                logger.sendErrorEvent({
+                    eventName: "Client_ArgsValidationError",
+                    message,
+                });
+                return { success: false, errorMessage: message };
+            }
 
-        // TODO: read file stream
-        const inputFileContent = fs.readFileSync(inputFile, { encoding: "utf-8" });
+            const argsValidationError = getArgsValidationError(inputFile, outputFolder, scenario);
+            if (argsValidationError) {
+                logger.sendErrorEvent({
+                    eventName: "Client_ArgsValidationError",
+                    message: argsValidationError,
+                });
+                return { success: false, errorMessage: argsValidationError };
+            }
 
-        const loader = new Loader({
-            urlResolver: new FakeUrlResolver(),
-            documentServiceFactory: createLocalOdspDocumentServiceFactory(inputFileContent),
-            codeLoader: await codeLoaderBundle.getCodeLoader(),
-            scope: await codeLoaderBundle.getLoaderScope(),
+            // TODO: read file stream
+            const inputFileContent = fs.readFileSync(inputFile, { encoding: "utf-8" });
+
+            const results = await createContainerAndExecute(inputFileContent, logger, await codeLoaderBundle.fluidExport);
+            for (const key in results) {
+                fs.appendFileSync(path.join(outputFolder, key), results[key]);
+            }
         });
+    } catch (error) {
+        logger.sendErrorEvent({ eventName: "Client_UnexpectedError" }, error);
+        return { success: false, errorMessage: "Unexpected error" };
+    } finally {
+        await fileLogger.flush();
+    }
 
-        // This needs a ISummaryTree, while what we give to the local ODSP driver is IOdspSnapshot
-        // See LocalOdspDocumentStorageService.getVersions(...) > calls to convertOdspSnapshotToSnapshotTreeAndBlobs
-        // const container = await loader.rehydrateDetachedContainerFromSnapshot(inputFileContent);
-        
-        const container = await loader.resolve({ url: "/fakeUrl/" });
+    return { success: true };
+}
 
-        const results = await codeLoaderBundle.getResults(container, logger);
-        for (const key in results) {
-            fs.appendFileSync(path.join(outputFolder, key), results[key]);
-        }
+export async function createContainerAndExecute(
+    localOdspSnapshot: string,
+    logger: ITelemetryLogger,
+    fluidFileConverter: IFluidFileConverter,
+): Promise<Record<string, string>> {
+    const loader = new Loader({
+        urlResolver: new FakeUrlResolver(),
+        documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
+        codeLoader: fluidFileConverter.codeLoader,
+        scope: fluidFileConverter.scope,
     });
+    
+    const container = await loader.resolve({ url: "/fakeUrl/" });
+
+    return await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () =>
+        fluidFileConverter.execute(container, logger));
 }

@@ -12,7 +12,7 @@ import path from 'path';
 describe("exportFile", () => {
     const folderRoot = path.join(__dirname, "../../src/test");
     const outputFolder = path.join(folderRoot, "outputFolder");
-    const snapshotFolder = path.join(folderRoot, "localSnapshots");
+    const snapshotFolder = path.join(folderRoot, "localOdspSnapshots");
 
     beforeEach(() => {
         fs.mkdirSync(outputFolder);

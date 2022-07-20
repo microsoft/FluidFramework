@@ -23,6 +23,6 @@ export async function getLoaderScope(): Promise<FluidObject | undefined> {
     return undefined;
 }
 
-export async function getResults(_container: IContainer, _logger: ITelemetryBaseLogger): Promise<Record<string, string>> {
+export async function execute(_container: IContainer, _logger: ITelemetryBaseLogger): Promise<Record<string, string>> {
     return { "result.txt": "sample result" };
 }

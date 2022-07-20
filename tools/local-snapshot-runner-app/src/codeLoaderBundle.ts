@@ -11,24 +11,35 @@ import { FluidObject } from "@fluidframework/core-interfaces";
  * Contract that defines the necessary exports for the bundle provided at runtime
  * For an example, see "src/test/sampleCodeLoader.ts"
  */
-export interface ICodeLoaderBundle {
+ export interface ICodeLoaderBundle {
     /**
-     * Get the code loader details to provide at Loader creation
+     * Fluid export of all the required objects and functions
      */
-    getCodeLoader(): Promise<ICodeDetailsLoader>;
+    fluidExport: Promise<IFluidFileConverter>;
+}
+
+/**
+ * Instance that holds all the details for fluid file conversion
+ */
+export interface IFluidFileConverter {
+    /**
+     * Code loader details to provide at Loader creation
+     */
+    codeLoader: ICodeDetailsLoader;
 
     /**
-     * Get the scope object to provide at Loader creation
+     * Scope object to provide at Loader creation
      */
-    getLoaderScope(): Promise<FluidObject | undefined>;
+    scope?: FluidObject;
 
     /**
-     * Get the results to write from the provided bundle
+     * Execute code and return the results
      * @param container - container created by this application
      * @param logger
+     * @returns - object containing file names as property keys and file content as values
      */
-    getResults(container: IContainer, logger: ITelemetryBaseLogger): Promise<Record<string, string>>;
-}
+    execute(container: IContainer, logger: ITelemetryBaseLogger): Promise<Record<string, string>>;
+};
 
 /**
  * Type cast to ensure necessary methods are present in the provided bundle
@@ -36,7 +47,5 @@ export interface ICodeLoaderBundle {
  */
 export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
     return bundle
-        && bundle.getCodeLoader && typeof bundle.getCodeLoader === "function"
-        && bundle.getLoaderScope && typeof bundle.getLoaderScope === "function"
-        && bundle.getResults && typeof bundle.getResults === "function";
+        && bundle.fluidExport && typeof bundle.fluidExport === "function";
 }

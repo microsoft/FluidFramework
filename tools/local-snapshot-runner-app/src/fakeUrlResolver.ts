@@ -7,31 +7,34 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo, IResolvedUrl, IUrlResolver, } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 
+const fakeId = "b9d30c31-dd2a-4658-bd01-cf77a7dec25c";
+const fakeUrl = "FakeUrlResolver";
+
 /**
  * Fake URL resolver that returns hard coded values on every request
  */
 export class FakeUrlResolver implements IUrlResolver {
 
-    public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
+    public async resolve(_request: IRequest): Promise<IResolvedUrl | undefined> {
         const fakeOdspResolvedUrl: IOdspResolvedUrl = {
             type: "fluid",
             odspResolvedUrl: true,
-            id: "1",
-            siteUrl: request.url,
-            driveId: "1",
-            itemId: "1",
-            url: request.url,
-            hashedDocumentId: "1",
+            id: fakeId,
+            siteUrl: fakeUrl,
+            driveId: fakeId,
+            itemId: fakeId,
+            url: fakeUrl,
+            hashedDocumentId: fakeId,
             endpoints: {
-                snapshotStorageUrl: request.url,
-                attachmentPOSTStorageUrl: request.url,
-                attachmentGETStorageUrl: request.url,
-                deltaStorageUrl: request.url,
+                snapshotStorageUrl: fakeUrl,
+                attachmentPOSTStorageUrl: fakeUrl,
+                attachmentGETStorageUrl: fakeUrl,
+                deltaStorageUrl: fakeUrl,
             },
             tokens: {},
-            fileName: "fakeName",
+            fileName: fakeId,
             summarizer: false,
-            fileVersion: "1",
+            fileVersion: fakeId,
         };
 
         return fakeOdspResolvedUrl;

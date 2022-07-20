@@ -40,8 +40,19 @@ function localSnapshotRunnerApp() {
                         type: "string",
                         demandOption: true
                     }),
-            async (argv) =>
-                await exportFile(argv.codeLoader, argv.inputFile, argv.outputFolder, argv.scenario, argv.telemetryFile)
+            async (argv) => {
+                const result = await exportFile(
+                    argv.codeLoader,
+                    argv.inputFile,
+                    argv.outputFolder,
+                    argv.scenario,
+                    argv.telemetryFile,
+                );
+                if (!result.success) {
+                    console.error(result.errorMessage);
+                    process.exit(1);
+                }
+            }
         )
         .help()
         .demandCommand().argv;
