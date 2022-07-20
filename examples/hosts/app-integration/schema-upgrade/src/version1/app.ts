@@ -7,7 +7,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { IApp, IAppEvents, IContainerKillBit, IInventoryList } from "../interfaces";
+import type { IInventoryListApp, IInventoryListAppEvents, IContainerKillBit, IInventoryList } from "../interfaces";
 import { MigrationState } from "../interfaces";
 import { containerKillBitId } from "./containerCode";
 
@@ -61,7 +61,7 @@ const extractStringData = async (inventoryList: IInventoryList) => {
  * direct access to the Loader).  It does not have a goal of being general-purpose like Container does -- instead it
  * is specially designed for the specific container code.
  */
-export class App extends TypedEventEmitter<IAppEvents> implements IApp {
+export class App extends TypedEventEmitter<IInventoryListAppEvents> implements IInventoryListApp {
     // To be used by the consumer of the model to pair with an appropriate view.
     public readonly version = "one";
     private _migrationState = MigrationState.collaborating;

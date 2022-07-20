@@ -5,11 +5,11 @@
 
 import React, { useEffect, useState } from "react";
 
-import { IApp, MigrationState } from "./interfaces";
+import { IInventoryListApp, MigrationState } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
 export interface IAppViewProps {
-    model: IApp;
+    model: IInventoryListApp;
 }
 
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {

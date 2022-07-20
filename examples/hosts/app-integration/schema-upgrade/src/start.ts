@@ -73,11 +73,14 @@ async function start(): Promise<void> {
 
     // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
     if (location.hash.length === 0) {
+        // Fetching and importing the data here is optional
+        // For demo purposes it's nice to have some prepopulated entries though.
         const fetchedData = await externalDataSource.fetchData();
         // Choosing for demo purposes to create with the old version, so we can demo the upgrade.
         // Normally would create with the most-recent version.
         const createResponse = await modelLoader.createDetached("one");
         model = createResponse.model;
+        // TODO: Validate that the model is capable of importing the fetchedData (format check)
         await model.importStringData(fetchedData);
         id = await createResponse.attach();
     } else {

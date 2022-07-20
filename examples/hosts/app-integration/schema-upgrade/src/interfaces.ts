@@ -91,11 +91,15 @@ export interface IMigrator extends IEventProvider<IMigratorEvents> {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IAppEvents extends IMigrationEvents { }
+export interface IInventoryListAppEvents extends IMigrationEvents { }
 
-export interface IApp extends IMigratable, IEventProvider<IAppEvents> {
+/**
+ * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
+ * for the application to run.
+ */
+export interface IInventoryListApp extends IMigratable, IEventProvider<IInventoryListAppEvents> {
     /**
-     * An inventory tracker list, which is the relevant data for this particular IApp.
+     * An inventory tracker list.
      */
     inventoryList: IInventoryList;
 }

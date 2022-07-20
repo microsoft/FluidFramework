@@ -68,8 +68,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         // the flow should fail gracefully/quietly and/or find a way to get the new ModelLoader.
         const createResponse = await this.modelLoader.createDetached(acceptedVersion);
         const migratedModel: IMigratable = createResponse.model;
+        // TODO: Validate that the migratedModel is capable of importing the extractedData (format check)
         await migratedModel.importStringData(extractedData);
-        // Maybe here apply the extracted data instead of passing it into createDetached
 
         // Before attaching, let's check to make sure no one else has already done the migration
         // To avoid creating unnecessary extra containers.
