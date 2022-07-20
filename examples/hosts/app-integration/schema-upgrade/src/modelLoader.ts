@@ -90,6 +90,9 @@ export class ModelLoader implements IModelLoader {
         version: "one" | "two",
         externalData?: string,
     ): Promise<{ app: IApp; attach: () => Promise<string>; }> {
+        if (version !== "one" && version !== "two") {
+            throw new Error("Unknown accepted version");
+        }
         const container = await this.loader.createDetachedContainer({ package: version });
         const app = await getModel(container);
         if (externalData !== undefined) {

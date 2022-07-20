@@ -10,6 +10,12 @@ import { SharedString } from "@fluidframework/sequence";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IModelLoader {
+    createDetached(
+        version: string,
+        externalData?: string,
+    ): Promise<{ app: IApp; attach: () => Promise<string>; }>;
+
+    loadExisting(id: string): Promise<IApp>;
 }
 
 export enum MigrationState {

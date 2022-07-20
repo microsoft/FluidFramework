@@ -6,21 +6,20 @@
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
-import { ModelLoader } from "./modelLoader";
-import { IApp, IMigratable, MigrationState } from "./interfaces";
+import { IApp, IMigratable, IModelLoader, MigrationState } from "./interfaces";
 
-const ensureMigrated = async (modelLoader: ModelLoader, migratable: IMigratable) => {
+const ensureMigrated = async (modelLoader: IModelLoader, migratable: IMigratable) => {
     const acceptedVersion = migratable.acceptedVersion;
     if (acceptedVersion === undefined) {
         throw new Error("Cannot ensure migrated before code details are accepted");
     }
-    if (acceptedVersion !== "one" && acceptedVersion !== "two") {
-        throw new Error("Unknown accepted version");
-    }
     const extractedData = await migratable.exportStringData();
+
     // Possibly transform the extracted data here
-    // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Probably
-    // should gracefully fail quietly in this case, or find a way to get the new ModelLoader.
+
+    // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Currently
+    // this call will throw, but instead ModelLoader should probably provide an isSupported(string) method and/or
+    // the flow should fail gracefully/quietly and/or find a way to get the new ModelLoader.
     const { app: migratedApp, attach } = await modelLoader.createDetached(acceptedVersion);
     await migratedApp.importStringData(extractedData);
     // Maybe here apply the extracted data instead of passing it into createDetached
@@ -63,7 +62,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
     // Maybe also have a prop for the id and the current MigrationState?
 
-    public constructor(private readonly modelLoader: ModelLoader, initialApp: IApp) {
+    public constructor(private readonly modelLoader: IModelLoader, initialApp: IApp) {
         super();
         this._currentApp = initialApp;
         this.watchAppForMigration();
