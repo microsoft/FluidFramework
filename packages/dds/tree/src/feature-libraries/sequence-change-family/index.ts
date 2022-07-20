@@ -5,5 +5,4 @@
 
 export * from "./sequenceChangeFamily";
 export * from "./sequenceChangeRebaser";
-export { MoveId } from "./sequenceChangeset";
 export * from "./sequenceEditBuilder";

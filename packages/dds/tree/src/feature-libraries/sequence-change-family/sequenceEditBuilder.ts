@@ -7,7 +7,7 @@ import { Delta, ProgressiveEditBuilder } from "../../changeset";
 import { ITreeCursor } from "../../forest";
 import { AnchorSet, UpPath, Value } from "../../tree";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
-import { MoveId, SequenceChangeset } from "./sequenceChangeset";
+import { SequenceChangeset } from "./sequenceChangeset";
 
 export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangeset> {
     constructor(
@@ -23,13 +23,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
 
     public delete(place: PlacePath, count: number) { }
 
-    public detach(place: PlacePath, count: number): MoveId {
-        throw new Error("Not implemented.");
-    }
-
-    public attach(place: PlacePath, moveId: MoveId) { }
-
-    public discard(moveId: MoveId) { }
+    public move(source: PlacePath, count: number, destination: PlacePath) { }
 }
 
 type NodePath = UpPath;
