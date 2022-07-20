@@ -359,7 +359,7 @@ export class Client {
             throw new Error("Unsupported op type for rollback");
         }
 
-        const lastList = this.mergeTree.pendingSegments?.prev;
+        const lastList = this._mergeTree.pendingSegments?.prev;
         if (!lastList) {
             throw new Error("No pending segments");
         }
