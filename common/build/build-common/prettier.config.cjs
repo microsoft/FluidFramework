@@ -3,7 +3,7 @@
 // overrides should be avoided unless absolutely necessary.
 module.exports = {
     printWidth: 100,
-    quoteProps: 'consistent',
+    quoteProps: "consistent",
     semi: true,
     singleQuote: false,
     tabWidth: 4,

@@ -1,7 +1,7 @@
 // TODO: Use shared config in build-common once version with config has been published.
 module.exports = {
     printWidth: 100,
-    quoteProps: 'consistent',
+    quoteProps: "consistent",
     semi: true,
     singleQuote: false,
     trailingComma: "all",
