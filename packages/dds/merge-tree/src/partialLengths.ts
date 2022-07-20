@@ -4,8 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Property } from "./base";
-import { RedBlackTree } from "./collections";
+import { Property, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";
 import {
     CollaborationWindow,
@@ -13,9 +12,9 @@ import {
     IMergeBlock,
     IRemovalInfo,
     ISegment,
-    MergeTree,
     toRemovalInfo,
-} from "./mergeTree";
+} from "./mergeTreeNodes";
+import { MergeTree } from "./mergeTree";
 
 interface IOverlapClient {
     clientId: number;
