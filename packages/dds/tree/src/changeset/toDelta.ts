@@ -20,7 +20,7 @@ export function toDelta(changeset: T.Changeset): Delta.Root {
 function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.PositionedMarks<TMarks> {
     const out: Delta.PositionedMarks<Delta.Mark> = [];
     for (const offsetMark of marks) {
-        const offset = offsetMark.offset || 0;
+        const offset = offsetMark.offset ?? 0;
         const mark = offsetMark.mark;
         if (Array.isArray(mark)) {
             for (const attach of mark) {
@@ -55,7 +55,7 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.Positio
                     case "MoveIn": break;
                     case "Bounce":
                     case "Intake":
-                        fail(ERR_NOT_IMPLEMENTED);
+                        // These have no impacts on the document state.
                         break;
                     default: unreachableCase(type);
                 }
