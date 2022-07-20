@@ -133,7 +133,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * any expected events that have not occurred.
  */
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
-    constructor(protected readonly baseLogger: ITelemetryBaseLogger) {
+    constructor(private readonly baseLogger: ITelemetryBaseLogger) {
         super();
     }
 
@@ -231,6 +231,10 @@ export class TestObjectProvider implements ITestObjectProvider {
         return this._logger;
     }
 
+    set logger(logger: EventAndErrorTrackingLogger) {
+        this._logger = logger;
+    }
+
     get documentServiceFactory() {
         if (!this._documentServiceFactory) {
             this._documentServiceFactory = this.driver.createDocumentServiceFactory();
@@ -255,10 +259,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 
     get opProcessingController(): IOpProcessingController {
         return this._loaderContainerTracker;
-    }
-
-    public setOverrideLogger(overrideLogger: EventAndErrorTrackingLogger) {
-        this._logger = overrideLogger;
     }
 
     /**

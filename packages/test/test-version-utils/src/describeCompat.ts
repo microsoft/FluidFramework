@@ -4,7 +4,7 @@
  */
 
 // eslint-disable-next-line max-len
-import { EventAndErrorTrackingLogger, getUnexpectedLogErrorException, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
+import { getUnexpectedLogErrorException, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
 import { configList } from "./compatConfig";
 import { CompatKind, baseVersion, driver, r11sEndpointName, tenantIndex } from "./compatOptions";
 import { getVersionedTestObjectProvider } from "./compatUtils";
@@ -26,7 +26,6 @@ function createCompatSuite(
             describe(config.name, function() {
                 let provider: TestObjectProvider;
                 let resetAfterEach: boolean;
-                let loggerOverride: EventAndErrorTrackingLogger | undefined;
                 before(async function() {
                     provider = await getVersionedTestObjectProvider(
                         baseVersion,
@@ -46,16 +45,10 @@ function createCompatSuite(
                 });
                 tests.bind(this)((options?: ITestObjectProviderOptions) => {
                     resetAfterEach = options?.resetAfterEach ?? true;
-                    loggerOverride = options?.loggerOverride;
                     if (options?.syncSummarizer === true) {
                         provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
                     }
                     return provider;
-                });
-                beforeEach(() => {
-                    if (loggerOverride !== undefined) {
-                        provider.setOverrideLogger(loggerOverride);
-                    }
                 });
                 // eslint-disable-next-line prefer-arrow-callback
                 afterEach(function(done: Mocha.Done) {
@@ -74,7 +67,6 @@ export interface ITestObjectProviderOptions {
     resetAfterEach?: boolean;
     /** If true, synchronizes summarizer client as well when ensureSynchronized() is called. */
     syncSummarizer?: boolean;
-    loggerOverride?: EventAndErrorTrackingLogger;
 }
 
 export type DescribeCompatSuite =
