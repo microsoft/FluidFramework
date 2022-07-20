@@ -12,11 +12,11 @@ import {
     IServiceAudience,
 } from "fluid-framework";
 
-export interface IFocusTrackerEvent extends IEvent {
+export interface IFocusTrackerEvents extends IEvent {
     (event: "focusChanged", listener: () => void): void;
 }
 
-export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvent> {
+export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     private static readonly focusSignalType = "changedFocus";
     private static readonly focusRequestType = "focusRequest";
 

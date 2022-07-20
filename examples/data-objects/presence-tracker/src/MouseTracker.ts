@@ -11,7 +11,7 @@ import {
     IServiceAudience,
 } from "fluid-framework";
 
-export interface IMouseTrackerEvent extends IEvent {
+export interface IMouseTrackerEvents extends IEvent {
     (event: "mousePositionChanged", listener: () => void): void;
 }
 
@@ -20,7 +20,7 @@ export interface IMousePosition {
     y: number;
 }
 
-export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvent> {
+export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     private static readonly mouseSignalType = "positionChanged";
 
     /**
