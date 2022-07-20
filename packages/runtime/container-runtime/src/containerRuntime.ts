@@ -33,6 +33,7 @@ import {
     Trace,
     TypedEventEmitter,
     unreachableCase,
+    IsoBuffer,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -101,6 +102,7 @@ import {
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
+import { decompress } from "lz4js";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
@@ -1588,6 +1590,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // the document is no longer dirty.
             if (!this.pendingStateManager.hasPendingMessages()) {
                 this.updateDocumentDirtyState(false);
+            }
+
+            if (message.metadata?.compressed) {
+                this.logger.sendTelemetryEvent({
+                    eventName: "opToDecompress",
+                    message: JSON.stringify(message),
+                });
+
+                const contents = IsoBuffer.from(message.contents, "base64");
+                const decompressedMessage = decompress(contents);
+                const intoString = new TextDecoder().decode(decompressedMessage);
+                const asObj = JSON.parse(intoString);
+                message = { ...message, contents: asObj };
             }
 
             switch (message.type) {

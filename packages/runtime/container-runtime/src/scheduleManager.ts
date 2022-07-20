@@ -1,11 +1,12 @@
 import EventEmitter from "events";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, performance } from "@fluidframework/common-utils";
+import { assert, IsoBuffer, performance } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import { isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, IDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { compress } from "lz4js";
 import { latencyThreshold } from "./connectionTelemetry";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
@@ -46,6 +47,24 @@ type IRuntimeMessageMetadata = undefined | {
                 delete firstMessageMetadata.batch;
                 return;
             }
+
+            messages.map((msg) => {
+                const parsedMessage = JSON.parse(msg.contents);
+                const innerContents = JSON.stringify(parsedMessage.contents);
+                const bufferedContent = new TextEncoder().encode(innerContents);
+                const compressedContent = compress(bufferedContent);
+                const base64 = IsoBuffer.from(compressedContent).toString("base64");
+
+                parsedMessage.contents = { ...parsedMessage, contents: base64 };
+
+                msg.metadata = { ...msg.metadata, compressed: true };
+                msg.contents = JSON.stringify(parsedMessage.contents);
+
+                this.logger.sendTelemetryEvent({
+                    eventName: "compressedOp",
+                    message: JSON.stringify(msg),
+                });
+            });
 
             // Set the batch flag to false on the last message to indicate the end of the send batch
             const lastMessage = messages[messages.length - 1];
@@ -145,6 +164,7 @@ type IRuntimeMessageMetadata = undefined | {
                 length: endBatch - startBatch,
             });
         }
+
         this.deltaManager.inbound.resume();
     }
 
