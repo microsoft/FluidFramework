@@ -251,8 +251,6 @@ export class SummarizerNode implements IRootSummarizerNode {
     protected refreshLatestSummaryFromPending(
         proposalHandle: string,
         referenceSequenceNumber: number,
-        key?: string,
-        parentLatestSummary?: SummaryNode,
     ): void {
         const summaryNode = this.pendingSummaries.get(proposalHandle);
         if (summaryNode === undefined) {
@@ -264,14 +262,13 @@ export class SummarizerNode implements IRootSummarizerNode {
                 });
                 // A data store is probably loading other data stores asynchronously or in response
                 // to some event/trigger which will cause a few data stores to be loaded in between summaries.
-                // Instead of reloading from the snapshot, we will simply re-create the summary node and
-                // continue processing in case the current reference number is smaller than the one returned by the ack.
+                // We will simply re-use the summary node that was just created when the DataStore
+                // was realized (parentLatestSummary.createForChild), and we can safely continue processing.
+                // The only check is to make sure the reference number from the lastSummary is smaller
+                // than the one returned by the ack.
                 // https://dev.azure.com/fluidframework/internal/_workitems/edit/645
                 assert(this._latestSummary.referenceSequenceNumber < referenceSequenceNumber,
                     "Existing summary referencenumber needs to be less than the reference");
-                assert(parentLatestSummary !== undefined, "Parent Latest Summary needs to be defined");
-                assert(key !== undefined, "ChildKey needs to be defined");
-                this._latestSummary = parentLatestSummary.createForChild(key);
             } else {
                 // This should only happen if parent skipped recursion AND no prior summary existed.
                 return;
@@ -293,12 +290,8 @@ export class SummarizerNode implements IRootSummarizerNode {
         }
 
         // Propagate update to all child nodes
-        for (const [childKey, child] of this.children.entries()) {
-            child.refreshLatestSummaryFromPending(
-                proposalHandle,
-                referenceSequenceNumber,
-                childKey,
-                this._latestSummary);
+        for (const child of this.children.values()) {
+            child.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
         }
     }
 
