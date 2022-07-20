@@ -9,11 +9,7 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IBootLoaderEvents extends IEvent {
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IBootLoader extends IEventProvider<IBootLoaderEvents> {
+export interface IBootLoader {
 }
 
 export enum MigrationState {

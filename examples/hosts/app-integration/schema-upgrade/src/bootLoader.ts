@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     IContainer,
     IFluidCodeDetails,
@@ -13,7 +12,7 @@ import {
 import { Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-import { IApp, IBootLoader, IBootLoaderEvents } from "./interfaces";
+import { IApp, IBootLoader } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
     App as App1,
@@ -84,7 +83,7 @@ const getContainerId = (container: IContainer) => {
     return resolved.id;
 };
 
-export class BootLoader extends TypedEventEmitter<IBootLoaderEvents> implements IBootLoader {
+export class BootLoader implements IBootLoader {
     private readonly loader: IHostLoader = createLoader();
 
     // Would be preferable to have a way for the customer to call service.attach(app) rather than returning an
