@@ -4,3 +4,5 @@
  */
 
 export * from "./internalVersionScheme";
+export * from "./schemes";
+export * from "./semver";
