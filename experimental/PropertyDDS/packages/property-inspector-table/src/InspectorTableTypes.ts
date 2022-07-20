@@ -5,6 +5,7 @@
 
 import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 import { BaseProperty } from "@fluid-experimental/property-properties";
+import { SortOrder } from "react-base-table";
 import { IRepoExpiryGetter, IRepoExpirySetter } from "./CommonTypes";
 import { IInspectorSearchState } from "./utils";
 
@@ -203,6 +204,9 @@ export interface IInspectorTableState {
   searchInProgress: boolean;
   searchState?: IInspectorSearchState;
   showFormRowID: string;
-  sortBy: { [key: string]: string; };
+  sortBy: {
+    key: React.Key;
+    order: SortOrder;
+  };
   tableRows: IInspectorRow[];
 }
