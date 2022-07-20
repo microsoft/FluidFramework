@@ -204,13 +204,10 @@ export class Client {
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
      */
-    public removeRangeLocal(start: number, end: number) {
+    public removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg {
         const removeOp = createRemoveRangeOp(start, end);
-
-        if (this.applyRemoveRangeOp({ op: removeOp })) {
-            return removeOp;
-        }
-        return undefined;
+        this.applyRemoveRangeOp({ op: removeOp });
+        return removeOp;
     }
 
     /**
@@ -370,9 +367,6 @@ export class Client {
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
-        if (!range) {
-            return false;
-        }
 
         let traceStart: Trace | undefined;
         if (this.measureOps) {
@@ -507,7 +501,7 @@ export class Client {
      */
     private getValidOpRange(
         op: IMergeTreeAnnotateMsg | IMergeTreeInsertMsg | IMergeTreeRemoveMsg,
-        clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange | undefined {
+        clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange {
         let start: number | undefined = op.pos1;
         if (start === undefined && op.relativePos1) {
             start = this.mergeTree.posFromRelativePos(

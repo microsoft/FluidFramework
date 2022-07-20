@@ -180,7 +180,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
      * @param end - The exclusive end of the range to replace
      * @returns the message sent.
      */
-    public removeText(start: number, end: number): IMergeTreeRemoveMsg | undefined {
+    public removeText(start: number, end: number): IMergeTreeRemoveMsg {
         return this.removeRange(start, end);
     }
 

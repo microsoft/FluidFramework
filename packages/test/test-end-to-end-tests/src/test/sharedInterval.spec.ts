@@ -34,7 +34,7 @@ const assertIntervalsHelper = (
 ) => {
     let actual = intervalView.findOverlappingIntervals(0, sharedString.getLength() - 1);
     if (sharedString.getLength() === 0) {
-        actual = Array.from(intervalView).filter((v): v is SequenceInterval => !!v);
+        actual = Array.from<SequenceInterval>(intervalView);
     }
     assert.strictEqual(actual.length, expected.length,
         `findOverlappingIntervals() must return the expected number of intervals`);

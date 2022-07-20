@@ -143,7 +143,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 case MergeTreeDeltaType.REMOVE: {
                     const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
                     if (lastRem?.pos1 === r.position) {
-                        lastRem.pos2 ??= 0;
+                        assert(lastRem.pos2 !== undefined, "pos2 should not be undefined here");
                         lastRem.pos2 += r.segment.cachedLength;
                     } else {
                         ops.push(createRemoveRangeOp(
@@ -164,7 +164,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     protected loadedDeferred = new Deferred<void>();
     // cache out going ops created when partial loading
     private readonly loadedDeferredOutgoingOps:
-        [IMergeTreeOp, SegmentGroup | SegmentGroup[] | undefined][] = [];
+        [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] = [];
     // cache incoming ops that arrive when partial loading
     private deferIncomingOps = true;
     private readonly loadedDeferredIncomingOps: ISequencedDocumentMessage[] = [];
@@ -236,11 +236,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
      */
-    public removeRange(start: number, end: number): IMergeTreeRemoveMsg | undefined {
+    public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
         const removeOp = this.client.removeRangeLocal(start, end);
-        if (removeOp) {
-            this.submitSequenceMessage(removeOp);
-        }
+        this.submitSequenceMessage(removeOp);
         return removeOp;
     }
 
@@ -351,7 +349,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         // local ops until loading is complete, and then
         // they will be resent
         if (!this.loadedDeferred.isCompleted) {
-            this.loadedDeferredOutgoingOps.push([translated, metadata]);
+            this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
         } else {
             this.submitLocalMessage(translated, metadata);
         }

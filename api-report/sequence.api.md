@@ -72,7 +72,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType?: IntervalType, op?: ISequencedDocumentMessage): TInterval;
+    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage): TInterval;
 }
 
 // @public (undocumented)
@@ -135,11 +135,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // @internal
     constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2);
     // @internal (undocumented)
-    ackAdd(serializedInterval: ISerializedInterval, local: boolean, op?: ISequencedDocumentMessage): TInterval | undefined;
+    ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): TInterval | undefined;
     // @internal (undocumented)
-    ackChange(serializedInterval: ISerializedInterval, local: boolean, op?: ISequencedDocumentMessage): void;
+    ackChange(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     // @internal (undocumented)
-    ackDelete(serializedInterval: ISerializedInterval, local: boolean, op?: ISequencedDocumentMessage): void;
+    ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
     // (undocumented)
     addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
@@ -182,13 +182,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 }
 
 // @public (undocumented)
-export class IntervalCollectionIterator<TInterval extends ISerializableInterval> {
+export class IntervalCollectionIterator<TInterval extends ISerializableInterval> implements Iterator<TInterval> {
     constructor(collection: IntervalCollection<TInterval>, iteratesForward?: boolean, start?: number, end?: number);
     // (undocumented)
-    next(): {
-        value: TInterval | undefined;
-        done: boolean;
-    };
+    next(): IteratorResult<TInterval>;
 }
 
 // @public (undocumented)
@@ -503,7 +500,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
     // @deprecated (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // @deprecated (undocumented)
-    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number> | undefined;
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number>;
     // @deprecated (undocumented)
     static Type: string;
     // @deprecated (undocumented)
@@ -535,7 +532,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
     // @deprecated (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedObject>;
     // @deprecated (undocumented)
-    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object> | undefined;
+    static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object>;
     // @deprecated (undocumented)
     static Type: string;
     // @deprecated (undocumented)
@@ -603,7 +600,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
-    removeRange(start: number, end: number): IMergeTreeRemoveMsg | undefined;
+    removeRange(start: number, end: number): IMergeTreeRemoveMsg;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     // (undocumented)
@@ -665,7 +662,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
     // (undocumented)
     get ISharedString(): ISharedString;
-    removeText(start: number, end: number): IMergeTreeRemoveMsg | undefined;
+    removeText(start: number, end: number): IMergeTreeRemoveMsg;
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
 }
 
@@ -680,7 +677,7 @@ export class SharedStringFactory implements IChannelFactory {
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedString>;
     // (undocumented)
-    static segmentFromSpec(spec: any): SharedStringSegment | undefined;
+    static segmentFromSpec(spec: any): SharedStringSegment;
     // (undocumented)
     static Type: string;
     // (undocumented)

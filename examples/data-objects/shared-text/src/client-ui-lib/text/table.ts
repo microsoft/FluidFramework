@@ -10,6 +10,7 @@ eslint-disable
 @typescript-eslint/strict-boolean-expressions,
 */
 
+import { assert } from "@fluidframework/common-utils";
 import * as MergeTree from "@fluidframework/merge-tree";
 import { refGetRangeLabels, refHasRangeLabel, refHasRangeLabels, refHasTileLabel } from "@fluidframework/merge-tree";
 import * as Sequence from "@fluidframework/sequence";
@@ -351,7 +352,8 @@ export function createTable(pos: number, sharedString: SharedString, idBase: str
     let pgAtStart = true;
     if (pos > 0) {
         const segoff = sharedString.getContainingSegment(pos - 1);
-        if (segoff.segment && MergeTree.Marker.is(segoff.segment)) {
+        assert(segoff.segment !== undefined, "segment cannot be undefined here");
+        if (MergeTree.Marker.is(segoff.segment)) {
             if (refHasTileLabel(segoff.segment, "pg")) {
                 pgAtStart = false;
             }
