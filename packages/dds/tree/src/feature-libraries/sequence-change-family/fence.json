@@ -1,5 +1,5 @@
 {
     "tags": [ "sequene-change-family" ],
     "exports": [ "index" ],
-    "imports": [ "changeset", "util" ]
+    "imports": [ "changeset", "forest", "rebase", "tree", "util" ]
 }
