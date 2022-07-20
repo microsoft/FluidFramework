@@ -20,27 +20,31 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
     private watchForMigration() {
         const migratable = this._currentMigratable;
-        migratable.on("migrating", () => {
+        const onMigrating = () => {
             const acceptedVersion = migratable.acceptedVersion;
             if (acceptedVersion === undefined) {
                 throw new Error("Expect an accepted version before migration starts");
             }
             if (!this.modelLoader.isVersionSupported(acceptedVersion)) {
                 this.emit("migrationNotSupported", acceptedVersion);
-                // Maybe also unregister the listener to avoid double-firing?
+                // Unregister handlers to clean up - mostly to prevent firing migrationNotSupported again.
+                migratable.off("migrating", onMigrating);
+                migratable.off("migrated", onMigrated);
                 return;
             }
             this.emit("migrating");
             this.ensureMigrated(migratable).catch(console.error);
-        });
-        migratable.on("migrated", () => {
+        };
+        const onMigrated = () => {
             const acceptedVersion = migratable.acceptedVersion;
             if (acceptedVersion === undefined) {
                 throw new Error("Expect an accepted version before migration starts");
             }
             if (!this.modelLoader.isVersionSupported(acceptedVersion)) {
                 this.emit("migrationNotSupported", acceptedVersion);
-                // Maybe also unregister the listener to avoid double-firing?
+                // Unregister handlers to clean up.
+                migratable.off("migrating", onMigrating);
+                migratable.off("migrated", onMigrated);
                 return;
             }
             const migratedId = migratable.newContainerId;
@@ -54,7 +58,9 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 // Not sure I really want to do the closing here - should this be left to the caller to decide?
                 migratable.close();
             }).catch(console.error);
-        });
+        };
+        migratable.on("migrating", onMigrating);
+        migratable.on("migrated", onMigrated);
     }
 
     private async ensureMigrated(migratable: IMigratable) {
