@@ -162,7 +162,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     get attached(): boolean;
     // (undocumented)
-    attachGraph(client: Client | undefined, label: string): void;
+    attachGraph(client: Client, label: string): void;
     // (undocumented)
     change(id: string, start?: number, end?: number): TInterval | undefined;
     // (undocumented)

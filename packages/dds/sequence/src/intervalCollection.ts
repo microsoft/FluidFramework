@@ -571,7 +571,7 @@ export function createIntervalIndex(conflict?: IntervalConflictResolver<Interval
         compareEnds: compareIntervalEnds,
         create: createInterval,
     };
-    const lc = new LocalIntervalCollection<Interval>(undefined, "", helpers);
+    const lc = new LocalIntervalCollection<Interval>(undefined as any as Client, "", helpers);
     if (conflict) {
         lc.addConflictResolver(conflict);
     } else {
@@ -590,7 +590,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     private static readonly legacyIdPrefix = "legacy";
 
     constructor(
-        private readonly client: Client | undefined,
+        private readonly client: Client,
         private readonly label: string,
         private readonly helpers: IIntervalHelpers<TInterval>,
         /** Callback invoked each time one of the endpoints of an interval slides. */
@@ -859,10 +859,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
 
-        if (!client) {
-            throw new Error("Unable to serialize interval without client");
-        }
-
         return {
             label: this.label,
             intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
@@ -878,10 +874,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
                 // never get slid back on. Creation code for refs doesn't accept undefined segment
                 // either, so this must be special-cased.
                 return ref;
-            }
-
-            if (!this.client) {
-                throw new LoggingError("client does not exist");
             }
 
             return this.client.createLocalReferencePosition(
@@ -984,7 +976,7 @@ class IntervalCollectionFactory
             create: createInterval,
         };
         const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw);
-        collection.attachGraph(undefined, "");
+        collection.attachGraph(undefined as any as Client, "");
         return collection;
     }
 
@@ -1170,7 +1162,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
     }
 
-    public attachGraph(client: Client | undefined, label: string) {
+    public attachGraph(client: Client, label: string) {
         if (this.attached) {
             throw new LoggingError("Only supports one Sequence attach");
         }
