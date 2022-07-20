@@ -149,11 +149,26 @@ function cloneTreeContent(content: ProtoNode[]): Delta.ProtoNode[] {
  *
  * The returned `fields` map may be empty if all modifications are applied by the function.
  */
-function cloneAndModify(insert: T.ModifyInsert): Pick<Delta.InsertAndModify, "content" | "fields"> {
+function cloneAndModify(insert: T.ModifyInsert): DeltaInsertModification {
     // TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
     const outNode = cloneTreeContent([insert.content])[0];
     const outModifications = applyOrCollectModifications(outNode, insert);
     return { content: outNode, fields: outModifications };
+}
+
+/**
+ * Modifications to be applied to an inserted tree in a Delta.
+ */
+interface DeltaInsertModification {
+    /**
+     * The subtree to be inserted.
+     */
+    content: Delta.ProtoNode;
+    /**
+     * The modifications to make to the inserted subtree.
+     * May be empty.
+     */
+    fields: Delta.FieldMarks<Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify>;
 }
 
 /**
@@ -178,7 +193,7 @@ type InsertedFieldsMarks = Delta.PositionedMarks<Delta.ModifyInserted | Delta.Mo
  */
 function applyOrCollectModifications(
     node: Delta.ProtoNode,
-    modify: Pick<T.Modify, "value" | "fields">,
+    modify: ChangesetMods,
 ): InsertedFieldsMarksMap {
     const outFieldsMarks: InsertedFieldsMarksMap = new Map();
     if (modify.value !== undefined) {
