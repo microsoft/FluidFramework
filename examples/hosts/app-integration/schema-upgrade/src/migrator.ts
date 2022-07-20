@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
-import { IApp, IMigratable, IModelLoader, MigrationState } from "./interfaces";
+import { IApp, IMigratable, IMigrator, IMigratorEvents, IModelLoader, MigrationState } from "./interfaces";
 
 const ensureMigrated = async (modelLoader: IModelLoader, migratable: IMigratable) => {
     const acceptedVersion = migratable.acceptedVersion;
@@ -45,14 +44,6 @@ const ensureMigrated = async (modelLoader: IModelLoader, migratable: IMigratable
     // If we don't win the race to set the container, it is the wrong container/app to use anyway
     // And the loader is probably caching the container anyway too.
 };
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IMigratorEvents extends IEvent {
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IMigrator extends IEventProvider<IMigratorEvents> {
-}
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
     private _currentApp: IApp;

@@ -61,6 +61,8 @@ async function start(): Promise<void> {
     // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
     if (location.hash.length === 0) {
         const fetchedData = await externalDataSource.fetchData();
+        // Choosing for demo purposes to create with the old version, so we can demo the upgrade.
+        // Normally would create with the most-recent version.
         const createResponse = await modelLoader.createDetached("one");
         app = createResponse.app;
         await app.importStringData(fetchedData);
@@ -70,16 +72,18 @@ async function start(): Promise<void> {
         app = await modelLoader.loadExisting(id);
     }
 
-    // Note - here I proceed to rendering, but instead we could just propose the new version without rendering
-    // if we decide the current version is too old.
+    // Note - here I proceed to rendering without waiting to see if an upgrade is needed, but instead we could
+    // check first and defer rendering until the upgrade is complete.
 
+    // Could be reasonable to merge Migrator into the ModelLoader, for a MigratingModelLoader.
     const migrator = new Migrator(modelLoader, app);
     migrator.on("appMigrated", (newApp: IApp, newAppId: string) => {
         renderApp(newApp);
         updateTabForId(newAppId);
     });
 
-    // viewLoader?
+    // It's not a given that a single view can render every version (esp. if functionality is added/removed).
+    // Here we could check the app.version and select the appropriate view if that's the case.
     renderApp(app);
     updateTabForId(id);
 }

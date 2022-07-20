@@ -72,6 +72,15 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
     finalizeMigration: (newContainerId: string) => void;
 }
 
+export interface IMigratorEvents extends IEvent {
+    (event: "appMigrated", listener: (newApp: IApp, newAppId: string) => void);
+    (event: "appMigrating", listener: () => void);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IMigrator extends IEventProvider<IMigratorEvents> {
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IAppEvents extends IMigrationEvents { }
 
