@@ -32,7 +32,8 @@ class MockRuntime {
     ) { }
 }
 
-describe("Runtime", () => {
+//* SKIP
+describe.skip("Runtime", () => {
     describe("Summarization", () => {
         describe("RunningSummarizer", () => {
             let stopCall: number;
