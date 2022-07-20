@@ -7,45 +7,6 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 import { IMigratable, IMigrator, IMigratorEvents, IModelLoader, MigrationState } from "./interfaces";
 
-const ensureMigrated = async (modelLoader: IModelLoader, migratable: IMigratable) => {
-    const acceptedVersion = migratable.acceptedVersion;
-    if (acceptedVersion === undefined) {
-        throw new Error("Cannot ensure migrated before code details are accepted");
-    }
-    const extractedData = await migratable.exportStringData();
-
-    // Possibly transform the extracted data here
-
-    // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Currently
-    // this call will throw, but instead ModelLoader should probably provide an isSupported(string) method and/or
-    // the flow should fail gracefully/quietly and/or find a way to get the new ModelLoader.
-    const createResponse = await modelLoader.createDetached(acceptedVersion);
-    const migratedModel: IMigratable = createResponse.model;
-    await migratedModel.importStringData(extractedData);
-    // Maybe here apply the extracted data instead of passing it into createDetached
-
-    // Before attaching, let's check to make sure no one else has already done the migration
-    // To avoid creating unnecessary extra containers.
-    if (migratable.getMigrationState() === MigrationState.ended) {
-        return;
-    }
-
-    // TODO: Maybe need retry here.
-    // TODO: Use TaskManager here to reduce container noise.
-    const containerId = await createResponse.attach();
-
-    // Again, it could be the case that someone else finished the migration during our attach.
-    if (migratable.getMigrationState() === MigrationState.ended) {
-        return;
-    }
-
-    // TODO: Maybe need retry here.
-    migratable.finalizeMigration(containerId);
-    // Here we let the newly created container/model fall out of scope intentionally.
-    // If we don't win the race to set the container, it is the wrong container/model to use anyway
-    // And the loader is probably caching the container anyway too.
-};
-
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
     private _currentMigratable: IMigratable;
 
@@ -74,8 +35,47 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 }).catch(console.error);
             } else if (migrationState === MigrationState.migrating) {
                 this.emit("migrating");
-                ensureMigrated(this.modelLoader, migratable).catch(console.error);
+                this.ensureMigrated(migratable).catch(console.error);
             }
         });
+    }
+
+    private async ensureMigrated(migratable: IMigratable) {
+        const acceptedVersion = migratable.acceptedVersion;
+        if (acceptedVersion === undefined) {
+            throw new Error("Cannot ensure migrated before code details are accepted");
+        }
+        const extractedData = await migratable.exportStringData();
+
+        // Possibly transform the extracted data here
+
+        // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Currently
+        // this call will throw, but instead ModelLoader should probably provide an isSupported(string) method and/or
+        // the flow should fail gracefully/quietly and/or find a way to get the new ModelLoader.
+        const createResponse = await this.modelLoader.createDetached(acceptedVersion);
+        const migratedModel: IMigratable = createResponse.model;
+        await migratedModel.importStringData(extractedData);
+        // Maybe here apply the extracted data instead of passing it into createDetached
+
+        // Before attaching, let's check to make sure no one else has already done the migration
+        // To avoid creating unnecessary extra containers.
+        if (migratable.getMigrationState() === MigrationState.ended) {
+            return;
+        }
+
+        // TODO: Maybe need retry here.
+        // TODO: Use TaskManager here to reduce container noise.
+        const containerId = await createResponse.attach();
+
+        // Again, it could be the case that someone else finished the migration during our attach.
+        if (migratable.getMigrationState() === MigrationState.ended) {
+            return;
+        }
+
+        // TODO: Maybe need retry here.
+        migratable.finalizeMigration(containerId);
+        // Here we let the newly created container/model fall out of scope intentionally.
+        // If we don't win the race to set the container, it is the wrong container/model to use anyway
+        // And the loader is probably caching the container anyway too.
     }
 }
