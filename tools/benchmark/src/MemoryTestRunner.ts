@@ -11,20 +11,7 @@ import {
     isInPerformanceTestingMode,
     performanceTestSuiteTag,
 } from "./Configuration";
-
-export interface BeforeAfter<T> {
-    before: T;
-    after: T;
-}
-
-export interface MemoryTestStats {
-    runs: number;
-    memoryUsageStats: BeforeAfter<NodeJS.MemoryUsage>[];
-    heapStats: BeforeAfter<v8.HeapInfo>[];
-    heapSpaceStats: BeforeAfter<v8.HeapSpaceInfo[]>[];
-    aborted: boolean;
-    error?: Error;
-}
+import { MemoryBenchmarkStats } from "./MochaMemoryReporter";
 
 export function benchmarkMemory(args: BenchmarkArguments): Test {
     const options: Required<BenchmarkOptions> = {
@@ -109,11 +96,20 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
         }
 
         await options.before();
-        const memoryTestStats: MemoryTestStats = {
+        const benchmarkStats: MemoryBenchmarkStats = {
             runs: 0,
-            memoryUsageStats: [],
-            heapStats: [],
-            heapSpaceStats: [],
+            samples: {
+                before: {
+                    memoryUsage: [],
+                    heap: [],
+                    heapSpace: [],
+                },
+                after: {
+                    memoryUsage: [],
+                    heap: [],
+                    heapSpace: [],
+                },
+            },
             aborted: false,
         };
 
@@ -121,40 +117,28 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
             const startTime = performance.now();
             do {
                 global.gc();
-                const memoryUsageStats: BeforeAfter<NodeJS.MemoryUsage> = {
-                    before: process.memoryUsage(),
-                    after: undefined as unknown as NodeJS.MemoryUsage,
-                };
-                const heapStats: BeforeAfter<v8.HeapInfo> = {
-                    before: v8.getHeapStatistics(),
-                    after: undefined as unknown as v8.HeapInfo,
-                };
-                const heapSpaceStats: BeforeAfter<v8.HeapSpaceInfo[]> = {
-                    before: v8.getHeapSpaceStatistics(),
-                    after: undefined as unknown as v8.HeapSpaceInfo[],
-                };
-                global.gc();
+                benchmarkStats.samples.before.memoryUsage.push(process.memoryUsage());
+                benchmarkStats.samples.before.heap.push(v8.getHeapStatistics());
+                benchmarkStats.samples.before.heapSpace.push(v8.getHeapSpaceStatistics());
 
+                global.gc();
                 await argsBenchmarkFn();
 
-                memoryUsageStats.after = process.memoryUsage();
-                heapStats.after = v8.getHeapStatistics();
-                heapSpaceStats.after = v8.getHeapSpaceStatistics();
+                benchmarkStats.samples.after.memoryUsage.push(process.memoryUsage());
+                benchmarkStats.samples.after.heap.push(v8.getHeapStatistics());
+                benchmarkStats.samples.after.heapSpace.push(v8.getHeapSpaceStatistics());
 
-                memoryTestStats.runs++;
-                memoryTestStats.memoryUsageStats.push(memoryUsageStats);
-                memoryTestStats.heapStats.push(heapStats);
-                memoryTestStats.heapSpaceStats.push(heapSpaceStats);
+                benchmarkStats.runs++;
                 if ((performance.now() - startTime) / 1000 > (args.maxBenchmarkDurationSeconds ?? 60)) {
                     break;
                 }
-            } while (memoryTestStats.runs < (args.minSampleCount ?? 5));
+            } while (benchmarkStats.runs < (args.minSampleCount ?? 5));
         } catch (error) {
-            memoryTestStats.aborted = true;
-            memoryTestStats.error = error as Error;
+            benchmarkStats.aborted = true;
+            benchmarkStats.error = error as Error;
         }
 
-        test.emit("benchmark end", memoryTestStats);
+        test.emit("benchmark end", benchmarkStats);
         await options.after();
 
         return Promise.resolve();

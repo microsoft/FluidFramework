@@ -3,15 +3,37 @@
  * Licensed under the MIT License.
  */
 
+import * as v8 from "v8";
 import * as path from "path";
 import * as fs from "fs";
 import Benchmark from "benchmark";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 import { benchmarkTypes, isChildProcess, performanceTestSuiteTag } from "./Configuration";
-// import { BenchmarkReporter, failedData } from "./Reporter";
-import { MemoryTestStats } from "./MemoryTestRunner";
 import { bold, green, italicize, pad, prettyNumber, red } from "./ReporterUtilities";
+
+/**
+ * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was
+ * potentially iterated several times). Each property is an array and all should be the same length, which
+ * is the number of iterations done during the benchmark.
+ */
+ export interface MemoryTestData {
+    memoryUsage: NodeJS.MemoryUsage[];
+    heap: v8.HeapInfo[];
+    heapSpace: v8.HeapSpaceInfo[][];
+}
+
+/**
+ * Contains the full results for a benchmark (a test which was potentially iterated several times).
+ * 'samples' contains the raw 'before' and 'after' measurements instead of calculated deltas
+ * for flexibility, at the cost of more memory and bigger output.
+ */
+export interface MemoryBenchmarkStats {
+    runs: number;
+    samples: { before: MemoryTestData; after: MemoryTestData; };
+    aborted: boolean;
+    error?: Error;
+}
 
 const tags = [performanceTestSuiteTag];
 
@@ -46,7 +68,7 @@ function getName(name: string): string {
  * See https://mochajs.org/api/tutorial-custom-reporter.html for more information about custom mocha reporters.
  */
 class MemoryTestMochaReporter {
-    private readonly inProgressSuites: Map<string, [string, MemoryTestStats][]> = new Map();
+    private readonly inProgressSuites: Map<string, [string, MemoryBenchmarkStats][]> = new Map();
     private readonly outputDirectory: string;
 
     public constructor(runner: Runner, options?: { reporterOption?: { reportDir?: string; }; }) {
@@ -59,12 +81,12 @@ class MemoryTestMochaReporter {
         }
 
         // const benchmarkReporter = new BenchmarkReporter(options?.reportDir);
-        const data: Map<Test, MemoryTestStats> = new Map();
+        const data: Map<Test, MemoryBenchmarkStats> = new Map();
 
         runner
             .on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
                 // Forward results from `benchmark end` to BenchmarkReporter.
-                test.on("benchmark end", (memoryTestStats: MemoryTestStats) => {
+                test.on("benchmark end", (memoryTestStats: MemoryBenchmarkStats) => {
                     // There are (at least) two ways a benchmark can fail:
                     // The actual benchmark part of the test aborts for some reason OR
                     // the mocha test fails (ex: validation after the benchmark reports an issue).
@@ -142,8 +164,11 @@ class MemoryTestMochaReporter {
                         }
                         table.cell("name", italicize(testName));
                         if (!testData.aborted) {
-                            const heapUsedArray = testData.memoryUsageStats
-                                .map((memUsageStats) => memUsageStats.after.heapUsed - memUsageStats.before.heapUsed);
+                            const heapUsedArray: number[] = [];
+                            for (let i = 0; i < testData.samples.before.memoryUsage.length; i++) {
+                                heapUsedArray.push(testData.samples.after.memoryUsage[i].heapUsed
+                                                   - testData.samples.before.memoryUsage[i].heapUsed);
+                            }
                             const heapUsedStats = getArrayStatistics(heapUsedArray);
                             table.cell("Heap Used Avg", prettyNumber(heapUsedStats.mean, 2), Table.padLeft);
                             table.cell("Heap Used StdDev", prettyNumber(heapUsedStats.deviation, 2), Table.padLeft);
@@ -195,7 +220,6 @@ class MemoryTestMochaReporter {
         const outputFilename = `${suiteNameEscaped}_memoryresult.json`;
         const fullPath: string = path.join(this.outputDirectory, outputFilename);
         fs.writeFileSync(fullPath, outputContentString);
-        console.info(`Wrote file to ${fullPath}`);
         return fullPath;
     }
 }
