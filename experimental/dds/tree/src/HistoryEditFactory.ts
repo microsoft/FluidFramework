@@ -77,6 +77,9 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 					result.unshift(createInvertedInsert(change, nodesBuilt));
 					builtNodes.delete(source);
 				} else if (nodesDetached !== undefined) {
+                    if (isInsertedTraitEmpty(before, nodesDetached)) {
+                        return undefined;
+                    }
 					result.unshift(createInvertedInsert(change, nodesDetached, true));
 					detachedNodes.delete(source);
 				} else {
@@ -130,6 +133,39 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 
 	editor.close();
 	return result;
+}
+
+function isInsertedTraitEmpty(
+    viewBeforeChange: TreeView,
+    nodesInserted: readonly NodeId[]
+): boolean {
+    const leftmostNode = nodesInserted[0];
+	const rightmostNode = nodesInserted[nodesInserted.length - 1];
+
+	const source: StableRangeInternal = {
+		start: {
+			referenceSibling: leftmostNode,
+			side: Side.Before,
+		},
+		end: {
+			referenceSibling: rightmostNode,
+			side: Side.After,
+		},
+	};
+    const validatedSource = validateStableRange(viewBeforeChange, source);
+	if (validatedSource.result !== RangeValidationResultKind.Valid) {
+		// TODO:#68574: having the reference view would potentially allow us to revert some detaches that currently conflict
+		return false;
+	}
+
+	const { start } = rangeFromStableRange(viewBeforeChange, validatedSource);
+	const { trait: referenceTrait } = start;
+	const nodes = viewBeforeChange.getTrait(referenceTrait);
+
+    if (nodes.length === 0) {
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -198,6 +234,10 @@ function createInvertedDetach(
 	const { start, end } = rangeFromStableRange(viewBeforeChange, validatedSource);
 	const { trait: referenceTrait } = start;
 	const nodes = viewBeforeChange.getTrait(referenceTrait);
+
+    if (nodes.length === 0) {
+        return undefined;
+    }
 
 	const startIndex = viewBeforeChange.findIndexWithinTrait(start);
 	const endIndex = viewBeforeChange.findIndexWithinTrait(end);
