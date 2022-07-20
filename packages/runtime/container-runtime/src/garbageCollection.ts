@@ -42,6 +42,7 @@ import {
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
+import { configForExistingContainer, configForNewContainer, GcContainerConfig } from "./gcConfig";
 import {
     getGCVersion,
     GCVersion,
@@ -430,6 +431,9 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly gcOptions: IGCRuntimeOptions;
     private readonly isSummarizerClient: boolean;
 
+    private readonly containerConfig: GcContainerConfig;
+    // private readonly sessionConfig: GcSessionConfig;
+
     /** The time in ms to expire a session for a client for gc. */
     private readonly sessionExpiryTimeoutMs: number | undefined;
     /** The time after which an unreferenced node is inactive. */
@@ -457,8 +461,6 @@ export class GarbageCollector implements IGarbageCollector {
             createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
         ));
 
-        let prevSummaryGCVersion: number | undefined;
-
         /**
          * The following GC state is enabled during container creation and cannot be changed throughout its lifetime:
          * 1. Whether running GC mark phase is allowed or not.
@@ -466,31 +468,15 @@ export class GarbageCollector implements IGarbageCollector {
          * 3. Whether GC session expiry is enabled or not.
          * For existing containers, we get this information from the metadata blob of its summary.
          */
-        if (createParams.existing) {
-            prevSummaryGCVersion = getGCVersion(metadata);
-            // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
-            // other existing documents, GC is enabled.
-            this.gcEnabled = prevSummaryGCVersion > 0;
-            this.sweepEnabled = metadata?.sweepEnabled ?? false;
-            this.sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-        } else {
-            // Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
-            // scenario but explicitly failing makes it clearer and promotes correct usage.
-            if (this.gcOptions.sweepAllowed && this.gcOptions.gcAllowed === false) {
-                throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
-            }
+        this.containerConfig = createParams.existing
+            ? configForExistingContainer(metadata)
+            : configForNewContainer(this.gcOptions, this.mc.config);
 
-            // For new documents, GC is enabled by default. It can be explicitly disabled by setting the gcAllowed
-            // flag in GC options to false.
-            this.gcEnabled = this.gcOptions.gcAllowed !== false;
-            // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
-            this.sweepEnabled = this.gcOptions.sweepAllowed === true;
-
-            // Set the Session Expiry only if the flag is enabled or the test option is set.
-            if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
-                this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
-            }
-        }
+        //* TODO: Move to property getters instead of readonly props
+        this.gcEnabled = this.containerConfig.gcAllowed;
+        this.sweepEnabled = this.containerConfig.sweepAllowed;
+        this.sessionExpiryTimeoutMs =
+            this.containerConfig.sweepAllowed ? this.containerConfig.sessionExpiryTimeoutMs : undefined;
 
         // Sweep V0 is a test mode for using a very short timeout in order to enable testing of real sweep behavior.
         // It's similar to testMode but rather than deleting immediately, it exercises the Sweep timers and codepaths
@@ -528,7 +514,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
         // latest tracked GC version. For new documents, we will be writing the first summary with the current version.
-        this.latestSummaryGCVersion = prevSummaryGCVersion ?? this.currentGCVersion;
+        this.latestSummaryGCVersion = this.containerConfig.prevSummaryGCVersion ?? this.currentGCVersion;
 
         /**
          * Whether GC should run or not. The following conditions have to be met to run sweep:
