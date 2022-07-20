@@ -175,7 +175,7 @@ export interface ISummarizerNode {
     loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: <T>(id: string) => Promise<T>,
-    ): Promise<{ baseSummary: ISnapshotTree; outstandingOps: ISequencedDocumentMessage[]; }>;
+    ): Promise<ISnapshotTree>;
     /**
      * Records an op representing a change to this node/subtree.
      * @param op - op of change to record

@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SignalManager } from "@fluid-experimental/data-objects";
+import { Signaler } from "@fluid-experimental/data-objects";
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    IFluidContainer,
     IMember,
     IServiceAudience,
 } from "fluid-framework";
@@ -47,9 +46,8 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     };
 
     public constructor(
-        container: IFluidContainer,
         public readonly audience: IServiceAudience<IMember>,
-        private readonly signalManager: SignalManager,
+        private readonly signaler: Signaler,
     ) {
         super();
 
@@ -64,10 +62,10 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
             this.emit("mousePositionChanged");
         });
 
-        this.signalManager.on("error", (error) => {
+        this.signaler.on("error", (error) => {
             this.emit("error", error);
         });
-        this.signalManager.onSignal(MouseTracker.mouseSignalType, (clientId, local, payload) => {
+        this.signaler.onSignal(MouseTracker.mouseSignalType, (clientId, local, payload) => {
             this.onMouseSignalFn(clientId, payload);
         });
         window.addEventListener("mousemove", (e) => {
@@ -83,7 +81,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
      * Alert all connected clients that there has been a change to a client's mouse position
      */
     private sendMouseSignal(position: IMousePosition) {
-        this.signalManager.submitSignal(
+        this.signaler.submitSignal(
             MouseTracker.mouseSignalType,
             { userId: this.audience.getMyself()?.userId, pos: position },
         );

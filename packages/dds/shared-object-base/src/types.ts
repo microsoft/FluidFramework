@@ -8,9 +8,30 @@ import { IChannel } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 
+/**
+ * Events emitted by {@link ISharedObject}.
+ */
 export interface ISharedObjectEvents extends IErrorEvent {
-    (event: "pre-op" | "op",
-        listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
+    /**
+     * Fires before an incoming operation (op) is applied to the shared object.
+     *
+     * @remarks Note: this should be considered an internal implementation detail. It is not recommended for external
+     * use.
+     *
+     * @eventProperty
+     */
+    (event: "pre-op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
+
+    /**
+     * Fires after an incoming op is applied to the shared object.
+     *
+     * @remarks Note: this should be considered an internal implementation detail. It is not recommended for external
+     * use.
+     *
+     * @eventProperty
+     */
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
+    (event: "op", listener: (op: ISequencedDocumentMessage, local: boolean, target: IEventThisPlaceHolder) => void);
 }
 
 /**

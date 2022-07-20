@@ -388,6 +388,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         return this.client.walkSegments<TClientData>(handler, start, end, accum, splitRange);
     }
 
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     public getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
         return this.client.getStackContext(startPos, rangeLabels);
     }
