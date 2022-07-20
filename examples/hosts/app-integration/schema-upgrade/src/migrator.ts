@@ -20,7 +20,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
     private watchForMigration() {
         const migratable = this._currentMigratable;
-        migratable.on("migrationStateChanged", (migrationState: MigrationState) => {
+        migratable.on("migrating", () => {
             const acceptedVersion = migratable.acceptedVersion;
             if (acceptedVersion === undefined) {
                 throw new Error("Expect an accepted version before migration starts");
@@ -30,22 +30,30 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 // Maybe also unregister the listener to avoid double-firing?
                 return;
             }
-            if (migrationState === MigrationState.ended) {
-                const migratedId = migratable.newContainerId;
-                if (migratedId === undefined) {
-                    throw new Error("Migration ended without a new container being created");
-                }
-                this.modelLoader.loadExisting(migratedId).then((migrated: IMigratable) => {
-                    this._currentMigratable = migrated;
-                    this.watchForMigration();
-                    this.emit("migrated", migrated, migratedId);
-                    // Not sure I really want to do the closing here - should this be left to the caller to decide?
-                    migratable.close();
-                }).catch(console.error);
-            } else if (migrationState === MigrationState.migrating) {
-                this.emit("migrating");
-                this.ensureMigrated(migratable).catch(console.error);
+            this.emit("migrating");
+            this.ensureMigrated(migratable).catch(console.error);
+        });
+        migratable.on("migrated", () => {
+            const acceptedVersion = migratable.acceptedVersion;
+            if (acceptedVersion === undefined) {
+                throw new Error("Expect an accepted version before migration starts");
             }
+            if (!this.modelLoader.isVersionSupported(acceptedVersion)) {
+                this.emit("migrationNotSupported", acceptedVersion);
+                // Maybe also unregister the listener to avoid double-firing?
+                return;
+            }
+            const migratedId = migratable.newContainerId;
+            if (migratedId === undefined) {
+                throw new Error("Migration ended without a new container being created");
+            }
+            this.modelLoader.loadExisting(migratedId).then((migrated: IMigratable) => {
+                this._currentMigratable = migrated;
+                this.watchForMigration();
+                this.emit("migrated", migrated, migratedId);
+                // Not sure I really want to do the closing here - should this be left to the caller to decide?
+                migratable.close();
+            }).catch(console.error);
         });
     }
 
@@ -73,7 +81,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
         // Before attaching, let's check to make sure no one else has already done the migration
         // To avoid creating unnecessary extra containers.
-        if (migratable.getMigrationState() === MigrationState.ended) {
+        if (migratable.getMigrationState() === MigrationState.migrated) {
             return;
         }
 
@@ -82,7 +90,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         const containerId = await createResponse.attach();
 
         // Again, it could be the case that someone else finished the migration during our attach.
-        if (migratable.getMigrationState() === MigrationState.ended) {
+        if (migratable.getMigrationState() === MigrationState.migrated) {
             return;
         }
 

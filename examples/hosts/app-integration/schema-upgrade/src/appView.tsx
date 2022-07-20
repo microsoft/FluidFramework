@@ -23,10 +23,12 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
         const migrationStateChangedHandler = () => {
             setDisableInput(model.getMigrationState() !== MigrationState.collaborating);
         };
-        model.on("migrationStateChanged", migrationStateChangedHandler);
+        model.on("migrating", migrationStateChangedHandler);
+        model.on("migrated", migrationStateChangedHandler);
         migrationStateChangedHandler();
         return () => {
-            model.off("migrationStateChanged", migrationStateChangedHandler);
+            model.off("migrating", migrationStateChangedHandler);
+            model.off("migrated", migrationStateChangedHandler);
         };
     }, [model]);
 

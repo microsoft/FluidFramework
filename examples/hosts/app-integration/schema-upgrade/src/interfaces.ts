@@ -32,11 +32,11 @@ export interface IModelLoader {
 export enum MigrationState {
     collaborating,
     migrating,
-    ended,
+    migrated,
 }
 
 export interface IMigrationEvents extends IEvent {
-    (event: "migrationStateChanged", listener: (migrationState: MigrationState) => void);
+    (event: "migrating" | "migrated", listener: () => void);
 }
 
 // A "migratable" is a model that can be migrated.
@@ -122,7 +122,7 @@ export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvent
     migrated: boolean;
     newContainerId: string | undefined;
     setNewContainerId(id: string): Promise<void>;
-    codeDetailsProposed: boolean;
+    codeDetailsAccepted: boolean;
     acceptedCodeDetails: IFluidCodeDetails | undefined;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<void>;
     volunteerForMigration(): Promise<void>;

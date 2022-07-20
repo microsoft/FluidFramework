@@ -42,17 +42,19 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
         const migrationStateChangedHandler = () => {
             setMigrationState(model.getMigrationState());
         };
-        model.on("migrationStateChanged", migrationStateChangedHandler);
+        model.on("migrating", migrationStateChangedHandler);
+        model.on("migrated", migrationStateChangedHandler);
         migrationStateChangedHandler();
         return () => {
-            model.off("migrationStateChanged", migrationStateChangedHandler);
+            model.off("migrating", migrationStateChangedHandler);
+            model.off("migrated", migrationStateChangedHandler);
         };
     }, [model]);
 
     return (
         <>
             { migrationState === MigrationState.migrating && <h1>Migration in progress...</h1> }
-            { migrationState === MigrationState.ended && <h1>This app has been migrated.</h1> }
+            { migrationState === MigrationState.migrated && <h1>This app has been migrated.</h1> }
         </>
     );
 };

@@ -23,8 +23,8 @@ async function getContainerKillBitFromContainer(container: IContainer): Promise<
 
 const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
     if (containerKillBit.migrated) {
-        return MigrationState.ended;
-    } else if (containerKillBit.codeDetailsProposed) {
+        return MigrationState.migrated;
+    } else if (containerKillBit.codeDetailsAccepted) {
         return MigrationState.migrating;
     } else {
         return MigrationState.collaborating;
@@ -97,8 +97,8 @@ export class App extends TypedEventEmitter<IInventoryListAppEvents> implements I
         this._inventoryList = await getInventoryListFromContainer(this.container);
         this._containerKillBit = await getContainerKillBitFromContainer(this.container);
         this._migrationState = getStateFromKillBit(this._containerKillBit);
-        this.containerKillBit.on("codeDetailsAccepted", this.onStateChanged);
-        this.containerKillBit.on("migrated", this.onStateChanged);
+        this.containerKillBit.on("codeDetailsAccepted", this.onCodeDetailsAccepted);
+        this.containerKillBit.on("migrated", this.onMigrated);
     };
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
@@ -110,11 +110,14 @@ export class App extends TypedEventEmitter<IInventoryListAppEvents> implements I
         await applyStringData(this.inventoryList, initialData);
     };
 
-    private readonly onStateChanged = () => {
-        const newState = getStateFromKillBit(this.containerKillBit);
-        // assert new state !== old state
-        this._migrationState = newState;
-        this.emit("migrationStateChanged", this._migrationState);
+    private readonly onCodeDetailsAccepted = () => {
+        this._migrationState = MigrationState.migrating;
+        this.emit("migrating");
+    };
+
+    private readonly onMigrated = () => {
+        this._migrationState = MigrationState.migrated;
+        this.emit("migrated");
     };
 
     public readonly exportStringData = async () => {

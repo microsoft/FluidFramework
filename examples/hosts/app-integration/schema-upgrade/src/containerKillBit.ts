@@ -59,7 +59,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         await this.crc.write(newContainerIdKey, id);
     }
 
-    public get codeDetailsProposed() {
+    public get codeDetailsAccepted() {
         return this.quorum.get(codeDetailsProposedKey) !== undefined;
     }
 
@@ -69,7 +69,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
         // Early exit/resolve if already marked.
-        if (this.codeDetailsProposed) {
+        if (this.codeDetailsAccepted) {
             return;
         }
 
