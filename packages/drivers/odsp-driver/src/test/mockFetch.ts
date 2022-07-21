@@ -65,3 +65,24 @@ export async function mockFetchOk<T>(
         callback,
         async () => okResponse(headers, response));
 }
+
+export async function mockFetchError<T>(
+    callback: () => Promise<T>,
+    response: Error,
+    type: FetchCallType = "single",
+): Promise<T> {
+    const fetchStub = stub(fetchModule, "default");
+    fetchStub.callsFake(async () => {
+        if (type === "external") {
+            fetchStub.restore();
+        }
+        throw response;
+    });
+    try {
+        return await callback();
+    } finally {
+        if (type !== "internal") {
+            fetchStub.restore();
+        }
+    }
+}

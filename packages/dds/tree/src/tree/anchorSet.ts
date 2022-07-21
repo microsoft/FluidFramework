@@ -17,7 +17,7 @@ import { UpPath } from "./pathTree";
 /**
  * A way to refer to a particular tree location within a {@link Rebaser} instance's revision.
  */
- export type Anchor = Brand<number, "rebaser.Anchor">;
+export type Anchor = Brand<number, "rebaser.Anchor">;
 
 /**
  * Collection of Anchors at a specific revision.
@@ -65,7 +65,7 @@ export class AnchorSet {
 /**
  * Base type for nodes in a path tree.
  */
- export class PathShared<TParent extends ChildCollection = ChildCollection> implements UpPath {
+export class PathShared<TParent extends ChildCollection = ChildCollection> implements UpPath {
     // PathNode arrays are kept sorted by index for efficient search.
     protected readonly children: Map<TParent, PathNode[]> = new Map();
     // public constructor() {}
@@ -90,7 +90,7 @@ export class AnchorSet {
     }
 }
 
-class PathNode extends PathShared<FieldKey> {
+export class PathNode extends PathShared<FieldKey> {
     public constructor(public parentPath: PathShared<FieldKey>, location: ChildLocation) {
         super();
     }
@@ -111,7 +111,7 @@ class PathNode extends PathShared<FieldKey> {
  * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors
  * (and thus need parent paths).
  */
-class PathCollection extends PathShared<RootRange> {
+export class PathCollection extends PathShared<RootRange> {
     public constructor() {
         super();
     }
