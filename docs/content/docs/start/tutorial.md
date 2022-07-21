@@ -26,7 +26,11 @@ Start by creating a new instance of the Tinylicious client. Tinylicious is the F
 
 Secondly, a constant is created to hold the key for a key-value pair that will represent the current value of the dice.
 
-Next, the app creates Fluid containers using a schema that defines a set of *initial objects* that will be available in the container. In this case, the there is a single initial object of type [SharedMap][SharedMap]. You can think of a `SharedMap` as a set of key-value pairs similar to a JavaScript `Map` object. The "Shared" in the name conveys the fact that the object is accessible to code in every client simultaneously. Learn more about initial objects in [Data modeling]({{< relref "data-modeling.md" >}}).
+Next, the app creates Fluid containers using a schema that defines a set of *initial objects* that will be available in the container.
+In this case, there is a single initial object of type [SharedMap][SharedMap].
+You can think of a `SharedMap` as a set of key-value pairs similar to a JavaScript `Map` object.
+The "Shared" in the name conveys the fact that the object is accessible to code in every client simultaneously.
+Learn more about initial objects in [Data modeling]({{< relref "data-modeling.md" >}}).
 
 Lastly, `root` specifies the HTML element that renders the dice.
 
@@ -55,7 +59,7 @@ Fluid data is stored within containers, and these containers need to be created 
 
 The first client to start the app creates the container. The creation section of the application starts with calling `createContainer` and passing in a schema that defines which shared objects will be available on the new `container`. After a new container is created, default data can be set on the shared objects before the container is attached to the Tinylicious service.
 
-The `attach` call returns the `id` of the container, which the app running on other clients can later use to load this container. Once attached, any further changes to the shared objects, made by the rendered app, will be communicated to all clients and, hence, all collaborators.
+The `attach` call returns the `id` of the container, which the app running on other clients can later use to load this container. Once attached, any further changes to the shared objects, made via button clicks in the rendered app UI, will be communicated to all clients and, hence, all collaborators.
 
 ```js
 const createNewDice = async () => {
@@ -84,7 +88,10 @@ const loadExistingDice = async (id) => {
 ### Switching between loading and creating
 
 The application supports both creating a new container and loading an existing container using its `id`.
-Each client, at startup, needs to know if it is the first client, in which case it needs to create the container. Otherwise, simply loads an existing container. The sample app uses its own URL to find this out. The app stores the container ID in the URL hash.
+Each client, at startup, needs to know if it is the first client, in which case it needs to create the container.
+Otherwise, it may simply load an existing container.
+The sample app uses its own URL to find this out.
+The app stores the container ID in the URL hash.
 If the URL has a hash, the app will load that existing container.
 Otherwise, the app creates a new container, attaches it, and sets the returned `id` as the hash.
 
@@ -158,7 +165,7 @@ Next, we needed to revise the `rollButton` method to assign the random dice valu
 This pattern is common in Fluid because it enables the view to behave the same way for both local and remote changes.
 
 ```js
-    rollButton.onclick = () => diceMap.set(diceValueKey, Math.floor(Math.random() * 6) + 1);
+rollButton.onclick = () => diceMap.set(diceValueKey, Math.floor(Math.random() * 6) + 1);
 ```
 
 ### Relying on Fluid data
@@ -180,7 +187,7 @@ The next change that we needed to make is to revise the `updateDice` function so
 Now our local client updates the dice value indirectly by updating the `diceMap` object. Updating that object causes all changes made on this client to propagate to all other clients. But we need to get our local view to update whenever _any_ of the clients rolls the dice. To keep the view up to date as the data changes an event handler must be registered on the `diceMap` to call `updateDice` each time that the `valueChanged` event is sent from the Fluid relay service. So we added the following handler. See the [documentation for SharedMap][SharedMap] to get a list of events fired and the values passed to those events.
 
 ```js
-    diceMap.on("valueChanged", updateDice);
+diceMap.on("valueChanged", updateDice);
 ```
 
 ## Run the app
