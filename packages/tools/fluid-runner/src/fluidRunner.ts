@@ -6,7 +6,7 @@
 import * as yargs from "yargs";
 import { exportFile } from "./exportFile";
 
-function localSnapshotRunnerApp() {
+function fluidRunner() {
     yargs
         .strict()
         .version(false)
@@ -58,4 +58,4 @@ function localSnapshotRunnerApp() {
         .demandCommand().argv;
 }
 
-localSnapshotRunnerApp();
+fluidRunner();
