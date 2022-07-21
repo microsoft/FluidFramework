@@ -63,7 +63,7 @@ describe("toDelta", () => {
             type: Delta.MarkType.Modify,
             setValue: 1,
         };
-        const expected: Delta.Root = [{ offset: 0, mark }];
+        const expected: Delta.Root = [mark];
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
@@ -90,11 +90,8 @@ describe("toDelta", () => {
             setValue: 1,
         };
         const expected: Delta.Root = [{
-            offset: 0,
-            mark: {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [{ offset: 42, mark }]]]),
-            },
+            type: Delta.MarkType.Modify,
+            fields: new Map([[fooKey, [42, mark]]]),
         }];
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
@@ -114,7 +111,7 @@ describe("toDelta", () => {
             type: Delta.MarkType.Insert,
             content: deltaContent,
         };
-        const expected: Delta.Root = [{ offset: 0, mark }];
+        const expected: Delta.Root = [mark];
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
@@ -142,11 +139,8 @@ describe("toDelta", () => {
             content: deltaContent,
         };
         const expected: Delta.Root = [{
-            offset: 0,
-            mark: {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [{ offset: 42, mark }]]]),
-            },
+            type: Delta.MarkType.Modify,
+            fields: new Map([[fooKey, [42, mark]]]),
         }];
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
@@ -166,7 +160,7 @@ describe("toDelta", () => {
             type: Delta.MarkType.Delete,
             count: 10,
         };
-        const expected: Delta.Root = [{ offset: 0, mark }];
+        const expected: Delta.Root = [mark];
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
@@ -194,11 +188,8 @@ describe("toDelta", () => {
             count: 10,
         };
         const expected: Delta.Root = [{
-            offset: 0,
-            mark: {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [{ offset: 42, mark }]]]),
-            },
+            type: Delta.MarkType.Modify,
+            fields: new Map([[fooKey, [42, mark]]]),
         }];
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
@@ -251,18 +242,11 @@ describe("toDelta", () => {
             setValue: 1,
         };
         const expected: Delta.Root = [{
-            offset: 0,
-            mark: {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[
-                    fooKey,
-                    [
-                        { offset: 0, mark: del },
-                        { offset: 3, mark: ins },
-                        { offset: 1, mark: set },
-                    ],
-                ]]),
-            },
+            type: Delta.MarkType.Modify,
+            fields: new Map([[
+                fooKey,
+                [del, 3, ins, 1, set],
+            ]]),
         }];
         const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
@@ -299,7 +283,7 @@ describe("toDelta", () => {
                     ]]),
                 }],
             };
-            const expected: Delta.Root = [{ offset: 0, mark }];
+            const expected: Delta.Root = [mark];
             const actual = toDelta(changeset);
             assert.deepStrictEqual(actual, expected);
         });
@@ -345,7 +329,7 @@ describe("toDelta", () => {
                     ]]),
                 }],
             };
-            const expected: Delta.Root = [{ offset: 0, mark }];
+            const expected: Delta.Root = [mark];
             const actual = toDelta(changeset);
             assert.deepStrictEqual(actual, expected);
         });
@@ -384,7 +368,7 @@ describe("toDelta", () => {
                     ]]),
                 }],
             };
-            const expected: Delta.Root = [{ offset: 0, mark }];
+            const expected: Delta.Root = [mark];
             const actual = toDelta(changeset);
             assert.deepStrictEqual(actual, expected);
         });
@@ -417,7 +401,7 @@ describe("toDelta", () => {
                     value: 42,
                 }],
             };
-            const expected: Delta.Root = [{ offset: 0, mark }];
+            const expected: Delta.Root = [mark];
             const actual = toDelta(changeset);
             assert.deepStrictEqual(actual, expected);
         });
