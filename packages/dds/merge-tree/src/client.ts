@@ -698,6 +698,12 @@ export class Client {
             return true;
         });
 
+        const { currentSeq, clientId } = this.getCollabWindow();
+        const fasterComputedPosition = this.mergeTree.getPosition(segment, currentSeq, clientId, localSeq);
+        if (fasterComputedPosition !== segmentPosition) {
+            this.mergeTree.getPosition(segment, currentSeq, clientId, localSeq);
+        }
+        assert(fasterComputedPosition === segmentPosition, "Expected fast-path computation to match result from walk all segments");
         return segmentPosition;
     }
 
@@ -943,6 +949,8 @@ export class Client {
         resetOp: IMergeTreeOp,
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): IMergeTreeOp {
+        // TODO: Obvious kludge :p
+        (this.mergeTree as any).nodeUpdateLengthNewStructure(this.mergeTree.root, true);
         const opList: IMergeTreeDeltaOp[] = [];
         if (resetOp.type === MergeTreeDeltaType.GROUP) {
             if (Array.isArray(segmentGroup)) {

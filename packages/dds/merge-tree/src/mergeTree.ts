@@ -476,13 +476,41 @@ export class MergeTree {
         return b;
     }
 
-    public localNetLength(segment: ISegment) {
+    /**
+     * Compute the net length of this segment from a local perspective.
+     * @param segment - Segment whose length to find
+     * @param localSeq - localSeq at which to find the length of this segment. If not provided,
+     *     default is to consider the local client's current perspective. Only local sequence
+     *     numbers corresponding to un-acked operations give valid results.
+     */
+    public localNetLength(segment: ISegment, localSeq?: number) {
         const removalInfo = toRemovalInfo(segment);
-        if (removalInfo !== undefined) {
+        if (localSeq === undefined) {
+            if (removalInfo !== undefined) {
+                return 0;
+            } else {
+                return segment.cachedLength;
+            }
+        }
+
+        if (removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber) {
             return 0;
-        } else {
+        }
+
+        if ((segment.localSeq === undefined && segment.localRemovedSeq === undefined)) {
             return segment.cachedLength;
         }
+
+        if (segment.localSeq === undefined || localSeq >= segment.localSeq) {
+            // inserted locally
+            if (segment.localRemovedSeq !== undefined && localSeq >= segment.localRemovedSeq) {
+                // removed locally
+                return 0;
+            }
+            return segment.cachedLength;
+        }
+
+        return 0;
     }
 
     // TODO: remove id when segment removed
@@ -794,7 +822,8 @@ export class MergeTree {
      */
     public get length() { return this.root.cachedLength; }
 
-    public getPosition(node: MergeNode, refSeq: number, clientId: number) {
+    // TODO: This API is currently broken as if localSeq !== undefined, returns incorrect results if refSeq is not latest.
+    public getPosition(node: MergeNode, refSeq: number, clientId: number, localSeq?: number) {
         let totalOffset = 0;
         let parent = node.parent;
         let prevParent: IMergeBlock | undefined;
@@ -805,7 +834,7 @@ export class MergeTree {
                 if ((prevParent && (child === prevParent)) || (child === node)) {
                     break;
                 }
-                totalOffset += this.nodeLength(child, refSeq, clientId) ?? 0;
+                totalOffset += this.nodeLength(child, refSeq, clientId, localSeq) ?? 0;
             }
             prevParent = parent;
             parent = parent.parent;
@@ -917,13 +946,16 @@ export class MergeTree {
         }
     }
 
-    private nodeLength(node: IMergeNode, refSeq: number, clientId: number) {
+    private nodeLength(node: IMergeNode, refSeq: number, clientId: number, localSeq?: number) {
         if ((!this.collabWindow.collaborating) || (this.collabWindow.clientId === clientId)) {
-            // Local client sees all segments, even when collaborating
-            if (!node.isLeaf()) {
+            if (node.isLeaf()) {
+                return this.localNetLength(node, localSeq);
+            } else if (localSeq === undefined) {
+                // Local client sees all segments, even when collaborating
                 return node.cachedLength;
             } else {
-                return this.localNetLength(node);
+                // Local client should see all segments except those after localSeq.
+                return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
             }
         } else {
             // Sequence number within window
@@ -1184,6 +1216,7 @@ export class MergeTree {
                 const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, this);
                 overwrite = overlappingRemove || overwrite;
 
+                // TODO: Block update length here or something in response to pending segment getting acked
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
                     this.updateSegmentRefsAfterMarkRemoved(pendingSegment, false);
                 }
@@ -1857,8 +1890,8 @@ export class MergeTree {
                 if (existingRemovalInfo.removedSeq === UnassignedSequenceNumber) {
                     // we removed this locally, but someone else removed it first
                     // so put them at the head of the list
-                    // the list isn't ordered, but we
-                    // keep first removal at the head.
+                    // The list isn't ordered, but we keep the first removal at the head
+                    // for partialLengths bookkeeping purposes
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
                     segment.localRemovedSeq = undefined;
@@ -2008,7 +2041,7 @@ export class MergeTree {
         this.blockUpdate(node);
         if (
             this.collabWindow.collaborating
-            && seq !== UnassignedSequenceNumber
+            && seq !== UnassignedSequenceNumber // right here
             && seq !== TreeMaintenanceSequenceNumber
         ) {
             if (
