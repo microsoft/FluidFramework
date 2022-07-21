@@ -120,17 +120,31 @@ export class FluidPackageCheck {
         return fixed;
     }
 
-    private static checkScript(pkg: Package, name: string, expected: string | undefined, fix: boolean) {
+    private static checkScript(pkg: Package, name: string, expected: string | string[] | undefined, fix: boolean) {
         let fixed = false;
         const actual = pkg.getScript(name);
-        if (expected !== actual) {
-            this.logWarn(pkg, `non-conformant script "${name}"`, fix);
-            this.logWarn(pkg, `  expect: ${expected}`, fix);
-            this.logWarn(pkg, `  actual: ${actual}`, fix);
+        if (Array.isArray(expected)) {
+            if (expected.every((x) => x !== actual)) {
+                if (fix) {
+                    if (expected.length > 1) {
+                        throw new Error(`Script ${name} has more than 1 expected option, cannot fix automatically.`);
+                    }
+                    pkg.packageJson.scripts[name] = expected[0];
+                    fixed = true;
+                }
+
+                this.logWarn(pkg, `non-conformant script "${name}"`, fixed);
+                this.logWarn(pkg, `  expect one of: ${JSON.stringify(expected)}`, fixed);
+                this.logWarn(pkg, `         actual: ${actual}`, fixed);
+            }
+        } else if (expected !== actual) {
             if (fix) {
                 pkg.packageJson.scripts[name] = expected;
                 fixed = true;
             }
+            this.logWarn(pkg, `non-conformant script "${name}"`, fixed);
+            this.logWarn(pkg, `  expect: ${expected}`, fixed);
+            this.logWarn(pkg, `  actual: ${actual}`, fixed);
         }
         return fixed;
     }
@@ -376,14 +390,18 @@ export class FluidPackageCheck {
 
             const testDirs = this.getTestDirs(pkg);
             if (testDirs.length === 1) {
-                const expectedBuildTest = `tsc --project ./src/test/${testDirs[0] ? testDirs[0] + "/" : ""}tsconfig.json`;
+                const testDir = testDirs[0] ? testDirs[0] + "/" : "";
+                const expectedBuildTest = [
+                    `tsc --project ./src/test/${testDir}tsconfig.json`,
+                    `tsc --build ./src/test/${testDir}tsconfig.json`,
+                ];
                 if (this.checkScript(pkg, "build:test", expectedBuildTest, fix)) {
                     fixed = true;
                 }
             } else if (testDirs.length !== 0) {
                 check("build:test", testDirs.map((dir) => {
                     const script = `build:test:${dir}`;
-                    const expectedBuildTest = `tsc --project ./src/test/${dir}/tsconfig.json`;
+                    const expectedBuildTest = [`tsc --project ./src/test/${dir}/tsconfig.json`, `tsc --build ./src/test/${dir}/tsconfig.json`];
                     if (this.checkScript(pkg, script, expectedBuildTest, fix)) {
                         fixed = true;
                     }
