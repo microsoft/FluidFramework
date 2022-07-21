@@ -454,7 +454,8 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private get sweepTimeoutMs(): number | undefined {
         const config = this.containerConfig;
-        if (!config.sweepAllowed) {
+        //* Double check
+        if (config.snapshotCacheExpiryMs === undefined || config.sessionExpiryTimeoutMs === undefined) {
             return undefined;
         }
         return config.snapshotCacheExpiryMs + config.sessionExpiryTimeoutMs + config.sweepTimeoutBufferMs;
@@ -482,8 +483,8 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Set this ASAP since many getters on this class assume it is set
         this.containerConfig = createParams.existing
-            ? configForExistingContainer(metadata)
-            : configForNewContainer(this.gcOptions, this.mc.config);
+            ? configForExistingContainer(metadata, createParams.snapshotCacheExpiryMs)
+            : configForNewContainer(this.gcOptions, this.mc.config, createParams.snapshotCacheExpiryMs);
 
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
         // This allows us to safely set Sweep Timeout
@@ -518,14 +519,21 @@ export class GarbageCollector implements IGarbageCollector {
             && !this.gcOptions.disableGC
         );
 
+        // If we had snapshotCacheExpiryMs in a previous session but now they don't match, this is a problem
+        const mismatchedSnapshotCacheExpiryMs =
+            metadata?.expectedSnapshotCacheExpiryMs !== undefined &&
+            createParams.snapshotCacheExpiryMs !== metadata?.expectedSnapshotCacheExpiryMs;
+
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
          * 1. Overall GC or mark phase must be enabled (this.shouldRunGC).
-         * 2. Sweep timeout should be available. Without this, we wouldn't know when an object should be deleted.
-         * 3. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
+         * 2. snapshotCacheExpiryMs is consistent with other sessions
+         * 3. Sweep timeout should be available. Without this, we wouldn't know when an object should be deleted.
+         * 4. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
          *    feature flag.
          */
         this.shouldRunSweep = this.shouldRunGC
+            && !mismatchedSnapshotCacheExpiryMs
             && this.sweepTimeoutMs !== undefined
             && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
 
@@ -862,6 +870,7 @@ export class GarbageCollector implements IGarbageCollector {
             gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
             sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
             sweepEnabled: this.sweepEnabled,
+            expectedSnapshotCacheExpiryMs: this.containerConfig.snapshotCacheExpiryMs,
             sweepTimeoutBufferMs: this.sweepTimeoutBufferMs,
             gcTestMode: this.containerConfig.testMode,
         };
@@ -1241,6 +1250,7 @@ export class GarbageCollector implements IGarbageCollector {
      * This will give us a view into how much deleted content a container has while rolling out Sweep.
      */
     private sweepIfEnabled(logger: ITelemetryLogger, currentReferenceTimestampMs?: number) {
+        // Even if shouldRunSweep is false, we can still log
         if (this.mc.config.getBoolean(disableSweepLogKey) === true
             || currentReferenceTimestampMs === undefined
             || this.sweepTimeoutMs === undefined) {
@@ -1278,9 +1288,9 @@ export class GarbageCollector implements IGarbageCollector {
             });
         });
 
-        // Only delete when in SweepV0 test mode (as opposed to checking this.shouldRunSweep)
+        // For now, restrict to SweepV0 test mode only
         // Proper sweep may need to meet additional considerations so we don't want to accidentally expose real users
-        if (this.sweepV0) {
+        if (this.shouldRunSweep && this.sweepV0) {
             this.runtime.deleteUnusedRoutes(Array.from(idsToSweep));
         }
     }

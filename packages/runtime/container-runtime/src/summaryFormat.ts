@@ -113,6 +113,9 @@ export interface IGCMetadata {
     /** Additional buffer time to wait, on top of required durations such as snapshot and session expiry */
     readonly sweepTimeoutBufferMs?: number;
 
+    /** Expected value for snapshotCacheExpiryMs used by the driver for this container */
+    readonly expectedSnapshotCacheExpiryMs?: number;
+
     /**
      * Tells whether the GC sweep phase is enabled for this container.
      * - True means sweep phase is enabled.

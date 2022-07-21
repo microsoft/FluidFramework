@@ -164,7 +164,7 @@ describe("Garbage Collection Tests", () => {
                 const inputMetadata: IGCMetadata = { sweepEnabled: true, gcFeature: 1, gcTestMode: "SweepV0", sessionExpiryTimeoutMs: 123, sweepTimeoutBufferMs: 456 };
                 const gc = createGcWithPrivateMembers(inputMetadata);
                 const outputMetadata = gc.getMetadata();
-                assert.deepEqual(outputMetadata, inputMetadata, "getMetadata returned different metadata than loaded from");
+                assert.deepEqual(outputMetadata, { ...inputMetadata, expectedSnapshotCacheExpiryMs: 0 }, "getMetadata returned different metadata than loaded from");
             });
         });
 
@@ -177,7 +177,7 @@ describe("Garbage Collection Tests", () => {
                 const gc = createGcWithPrivateMembers(undefined /* metadata */, {});
                 assert(gc.gcEnabled, "gcEnabled incorrect");
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
-                assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
+                assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
                 assert(gc.sweepTimeoutMs === undefined, "sweepTimeoutMs incorrect");
                 assert.equal(gc.latestSummaryGCVersion, 1, "latestSummaryGCVersion incorrect");
             });
