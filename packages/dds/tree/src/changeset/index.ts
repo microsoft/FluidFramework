@@ -10,6 +10,5 @@
 export * from "./common";
 export * as Delta from "./delta";
 export * from "./format";
-export * from "./progressiveEditBuilder";
 export * from "./toDelta";
 export * from "./visit";

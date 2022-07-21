@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeFamily, Delta, ProgressiveEditBuilder } from "../changeset";
+import { Delta } from "../changeset";
 import { IEditableForest, IForestSubscription } from "../forest";
+import { ChangeFamily, ProgressiveEditBuilder } from "../change-family";
 
 export interface Checkout<TEditor, TChange> {
     readonly forest: IEditableForest;

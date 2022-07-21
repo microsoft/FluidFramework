@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, ProgressiveEditBuilder } from "../../changeset";
+import { ProgressiveEditBuilder } from "../../change-family";
+import { Delta } from "../../changeset";
 import { ITreeCursor } from "../../forest";
 import { AnchorSet, UpPath, Value } from "../../tree";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
