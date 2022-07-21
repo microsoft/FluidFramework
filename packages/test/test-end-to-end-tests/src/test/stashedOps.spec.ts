@@ -24,7 +24,6 @@ import {
     ITestObjectProvider,
     DataObjectFactoryType,
     createAndAttachContainer,
-    ensureContainerConnected,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -65,6 +64,12 @@ const lots = 30;
 const testKey = "test key";
 const testKey2 = "another test key";
 const testValue = "test value";
+
+const ensureContainerConnected = async (container: IContainer) => {
+    if (container.connectionState !== ConnectionState.Connected) {
+        return new Promise<void>((resolve) => container.once("connected", () => resolve()));
+    }
+};
 
 const getPendingStateWithoutClose = (container: IContainer): string => {
     const containerClose = container.close;
