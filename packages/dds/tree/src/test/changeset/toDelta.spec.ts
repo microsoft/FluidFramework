@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { TreeSchemaIdentifier } from "../..";
 import {
     Delta,
     ProtoNode,
@@ -11,7 +12,7 @@ import {
     Transposed as T,
 } from "../../changeset";
 import { FieldKey } from "../../tree";
-import { brandOpaque } from "../../util";
+import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
 function toDelta(changeset: T.Changeset): Delta.Root {
@@ -20,24 +21,14 @@ function toDelta(changeset: T.Changeset): Delta.Root {
     return delta;
 }
 
+const type = brand<TreeSchemaIdentifier>("Node");
 const fooKey = "foo" as FieldKey;
-const nodeIdA = brandOpaque<Delta.NodeId>("A");
-const nodeIdB = brandOpaque<Delta.NodeId>("B");
-const nodeIdC = brandOpaque<Delta.NodeId>("C");
-const nodeIdD = brandOpaque<Delta.NodeId>("D");
-const changesetContent: ProtoNode[] = [{
-    id: nodeIdA,
+const content: ProtoNode[] = [{
+    type,
     value: 42,
-    fields: { foo: [{ id: nodeIdB, value: 43 }] },
+    fields: { foo: [{ type, value: 43 }] },
 }];
-const deltaContent: Delta.ProtoNode[] = [{
-    id: nodeIdA,
-    value: 42,
-    fields: new Map([[
-        fooKey,
-        [{ id: nodeIdB, value: 43 }],
-    ]]),
-}];
+
 const opId = 42;
 
 describe("toDelta", () => {
@@ -99,13 +90,13 @@ describe("toDelta", () => {
                 [{
                     type: "Insert",
                     id: opId,
-                    content: changesetContent,
+                    content,
                 }],
             ],
         };
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
-            content: deltaContent,
+            content,
         };
         const expected: Delta.Root = [mark];
         const actual = toDelta(changeset);
@@ -122,7 +113,7 @@ describe("toDelta", () => {
                         [{
                             type: "Insert",
                             id: opId,
-                            content: changesetContent,
+                            content,
                         }],
                     ],
                 },
@@ -130,7 +121,7 @@ describe("toDelta", () => {
         };
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
-            content: deltaContent,
+            content,
         };
         const expected: Delta.Root = [{
             type: Delta.MarkType.Modify,
@@ -200,7 +191,7 @@ describe("toDelta", () => {
                         [{
                             type: "Insert",
                             id: opId,
-                            content: changesetContent,
+                            content,
                         }],
                         1,
                         {
@@ -217,7 +208,7 @@ describe("toDelta", () => {
         };
         const ins: Delta.Insert = {
             type: Delta.MarkType.Insert,
-            content: deltaContent,
+            content,
         };
         const set: Delta.Modify = {
             type: Delta.MarkType.Modify,
@@ -241,7 +232,7 @@ describe("toDelta", () => {
                     [{
                         type: "MInsert",
                         id: opId,
-                        content: changesetContent[0],
+                        content: content[0],
                         value: { type: "Set", value: 4242 },
                         fields: {
                             foo: [{
@@ -255,12 +246,11 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [{
-                    id: nodeIdA,
+                    type,
                     value: 4242,
-                    fields: new Map([[
-                        fooKey,
-                        [{ id: nodeIdB, value: 4343 }],
-                    ]]),
+                    fields: {
+                        foo: [{ type, value: 4343 }],
+                    },
                 }],
             };
             const expected: Delta.Root = [mark];
@@ -274,19 +264,19 @@ describe("toDelta", () => {
                     [{
                         type: "MInsert",
                         id: opId,
-                        content: changesetContent[0],
+                        content: content[0],
                         fields: {
                             foo: [
                                 [{
                                     type: "Insert",
                                     id: opId,
-                                    content: [{ id: nodeIdC, value: 44 }],
+                                    content: [{ type, value: 44 }],
                                 }],
                                 1,
                                 [{
                                         type: "Insert",
                                         id: opId,
-                                        content: [{ id: nodeIdD, value: 45 }],
+                                        content: [{ type, value: 45 }],
                                 }],
                             ],
                         },
@@ -296,12 +286,15 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [{
-                    id: nodeIdA,
+                    type,
                     value: 42,
-                    fields: new Map([[
-                        fooKey,
-                        [{ id: nodeIdC, value: 44 }, { id: nodeIdB, value: 43 }, { id: nodeIdD, value: 45 }],
-                    ]]),
+                    fields: {
+                        foo: [
+                            { type, value: 44 },
+                            { type, value: 43 },
+                            { type, value: 45 },
+                        ],
+                    },
                 }],
             };
             const expected: Delta.Root = [mark];
@@ -315,14 +308,14 @@ describe("toDelta", () => {
                     [{
                         type: "MInsert",
                         id: opId,
-                        content: changesetContent[0],
+                        content: content[0],
                         fields: {
                             foo: [
                                 1,
                                 [{
                                     type: "MInsert",
                                     id: opId,
-                                    content: { id: nodeIdD, value: 45 },
+                                    content: { type, value: 45 },
                                     value: { type: "Set", value: 4545 },
                                 }],
                             ],
@@ -333,12 +326,11 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [{
-                    id: nodeIdA,
+                    type,
                     value: 42,
-                    fields: new Map([[
-                        fooKey,
-                        [{ id: nodeIdB, value: 43 }, { id: nodeIdD, value: 4545 }],
-                    ]]),
+                    fields: {
+                        foo: [{ type, value: 43 }, { type, value: 4545 }],
+                    },
                 }],
             };
             const expected: Delta.Root = [mark];
@@ -352,7 +344,7 @@ describe("toDelta", () => {
                     [{
                         type: "MInsert",
                         id: opId,
-                        content: changesetContent[0],
+                        content: content[0],
                         fields: {
                             foo: [
                                 {
@@ -368,7 +360,7 @@ describe("toDelta", () => {
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
                 content: [{
-                    id: nodeIdA,
+                    type,
                     value: 42,
                 }],
             };
