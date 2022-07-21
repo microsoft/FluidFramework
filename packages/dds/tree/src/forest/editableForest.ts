@@ -6,7 +6,12 @@
 import { StoredSchemaRepository } from "../schema";
 import { AnchorSet, FieldKey, DetachedRange, Value } from "../tree";
 import { ITreeCursor } from "./cursor";
-import { IForestSubscription, NodeId } from "./forest";
+import { IForestSubscription, ITreeSubscriptionCursor, ForestAnchor } from "./forest";
+
+/**
+ * Ways to refer to a node in an IEditableForest.
+ */
+ export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
 
 /**
  * Editing APIs.
@@ -65,7 +70,7 @@ export interface IEditableForest extends IForestSubscription {
      * @param nodeId - the id of the node
      * @param value - the new value
      */
-    setValue(nodeId: NodeId, value: Value): void;
+    setValue(nodeId: ForestLocation, value: Value): void;
 
     /**
      * Recursively deletes a range and its children.
@@ -87,5 +92,5 @@ export function isFieldLocation(range: FieldLocation | DetachedRange): range is 
  */
 export interface FieldLocation {
 	readonly key: FieldKey;
-    readonly parent: NodeId;
+    readonly parent: ForestLocation;
 }

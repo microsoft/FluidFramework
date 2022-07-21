@@ -9,9 +9,7 @@
  * @packageDocumentation
  */
 
-export type {
-    IDisposable,
-} from "./disposable";
+export type { IDisposable } from "./disposable";
 export type {
     ExtendEventProvider,
     IErrorEvent,

@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-module.exports = require("./minimal.js")
+module.exports = require("./minimal.js");
