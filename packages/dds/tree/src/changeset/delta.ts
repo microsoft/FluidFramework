@@ -5,7 +5,8 @@
 
 import { FieldKey, Value } from "../tree";
 import { Brand, Opaque } from "../util";
-import { NodeId as TreeNodeId } from ".";
+// eslint-disable-next-line import/no-internal-modules
+import { JsonableTree } from "../feature-libraries/treeTextFormat";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
@@ -318,18 +319,11 @@ export interface InsertAndModify {
 
 /**
  * The contents of a subtree to be created
+ * @remarks
+ * Delta does not rely on the fact that JsonableTree is serializable.
+ * We may use a non-serializable format in the future, but this is the most convenient for now.
  */
-export interface ProtoNode {
-    id?: NodeId;
-    type?: string;
-    value?: Value;
-    /**
-     * The fields of a subtree to be created
-     */
-    fields?: FieldMap<ProtoField>;
-}
-
-export type ProtoField = ProtoNode[];
+export type ProtoNode = JsonableTree;
 
 /**
  * Uniquely identifies a MoveOut/MoveIn pair within a delta.
@@ -337,13 +331,6 @@ export type ProtoField = ProtoNode[];
 export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 
 export type Offset = number;
-
-/**
- * An identifier that a node might carry.
- * No uniqueness guarantees (across any scope) are made at this time.
- * TODO: Update comment once uniqueness guarantees can be made.
- */
-export type NodeId = TreeNodeId;
 
 export type FieldMap<T> = Map<FieldKey, T>;
 export type FieldMarks<TMark> = FieldMap<PositionedMarks<TMark>>;

@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brand, fail } from "../util";
+import { brand, clone, fail } from "../util";
 import { FieldKey, Value } from "../tree";
 import { Delta, ProtoNode, Transposed as T } from ".";
 
@@ -128,24 +128,9 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.Positio
  * Clones the content described by a Changeset into tree content expected by Delta.
  */
 function cloneTreeContent(content: ProtoNode[]): Delta.ProtoNode[] {
-    const out: Delta.ProtoNode[] = [];
-    for (const node of content) {
-        const outNode: Delta.ProtoNode = {
-            id: node.id,
-            value: node.value,
-        };
-        if (node.fields !== undefined) {
-            const fields: Delta.FieldMap<Delta.ProtoField> = new Map();
-            for (const key of Object.keys(node.fields)) {
-                fields.set(brand<FieldKey>(key), cloneTreeContent(node.fields[key]));
-            }
-            if (fields.size > 0) {
-                outNode.fields = fields;
-            }
-        }
-        out.push(outNode);
-    }
-    return out;
+    // The changeset and Delta format currently use the same interface to represent inserted content.
+    // This is an implementation detail that may not remain true.
+    return clone(content);
 }
 
 /**
@@ -213,11 +198,11 @@ function applyOrCollectModifications(
         }
     }
     if (modify.fields !== undefined) {
-        const protoFields = node.fields ?? new Map();
+        const protoFields = node.fields ?? {};
         const modifyFields = modify.fields;
         for (const key of Object.keys(modifyFields)) {
             const brandedKey = brand<FieldKey>(key);
-            const outNodes = protoFields.get(brandedKey) ?? fail(ERR_MOD_ON_MISSING_FIELD);
+            const outNodes = protoFields[key] ?? fail(ERR_MOD_ON_MISSING_FIELD);
             const outMarks: InsertedFieldsMarks = [];
             let index = 0;
             let offset = 0;
@@ -323,10 +308,10 @@ function applyOrCollectModifications(
                 outFieldsMarks.set(brandedKey, outMarks);
             }
             if (outNodes.length === 0) {
-                protoFields.delete(brandedKey);
+                delete protoFields[key];
             }
         }
-        if (protoFields.size === 0) {
+        if (Object.keys(protoFields).length === 0) {
             delete node.fields;
         }
     }

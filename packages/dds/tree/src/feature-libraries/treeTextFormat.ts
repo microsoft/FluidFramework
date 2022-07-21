@@ -55,7 +55,7 @@ import {
  * Values are the content of the trait specified by the key.
  * @public
  */
- export interface FieldMap<TChild> {
+export interface FieldMap<TChild> {
     [key: string]: TreeNodeSequence<TChild>;
 }
 
@@ -63,14 +63,14 @@ import {
  * A sequence of Nodes that make up a trait under a Node
  * @public
  */
-export type TreeNodeSequence<TChild> = readonly TChild[];
+export type TreeNodeSequence<TChild> = TChild[];
 
 /**
  * An object which may have traits with children of the given type underneath it
  * @public
  */
 export interface WithFields<TChild> {
-    fields?: Readonly<FieldMap<TChild>>;
+    fields?: FieldMap<TChild>;
 }
 
 /**
@@ -101,6 +101,12 @@ export interface TreeNode<TChild> extends NodeData, WithFields<TChild> {}
  * A tree whose nodes are either TreeNodes or a placeholder
  */
 export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+
+/**
+ * A tree represented using plain JavaScript objects.
+ * Can be passed to `JSON.stringify()` to produce a human-readable/editable JSON tree.
+ */
+export interface JsonableTree extends PlaceholderTree {}
 
 /**
  * An ITreeCursor implementation for PlaceholderTree.

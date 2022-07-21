@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { NodeId } from ".";
+// eslint-disable-next-line import/no-internal-modules
+import { JsonableTree } from "../feature-libraries/treeTextFormat";
 
 // TODOs:
 // Clipboard
@@ -330,23 +331,10 @@ export interface HasOpId {
 /**
  * The contents of a node to be created
  */
-export interface ProtoNode {
-	id?: NodeId;
-	type?: string;
-	value?: Value;
-	fields?: ProtoFields;
-}
-
-/**
- * The fields of a node to be created
- */
-export interface ProtoFields {
-	[key: string]: ProtoField;
-}
+export type ProtoNode = JsonableTree;
 
 export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (TOffset | TContent)[];
 
-export type ProtoField = ProtoNode[];
 export type NodeCount = number;
 export type GapCount = number;
 export type Offset = number;
