@@ -39,7 +39,7 @@ export class SharedStringFactory implements IChannelFactory {
         const maybeMarker = Marker.fromJSONObject(spec);
         if (maybeMarker) { return maybeMarker; }
 
-        throw new Error(`Unrecognized IJSONObject: '${JSON.stringify(spec)}'`);
+        throw new Error(`Unrecognized IJSONObject`);
     }
 
     public get type() {
@@ -105,7 +105,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
             return seg;
         }
 
-        throw new Error(`Unrecognized IJSONObject: '${JSON.stringify(segSpec)}'`);
+        throw new Error(`Unrecognized IJSONObject`);
     }
 
     /**
@@ -186,7 +186,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
             return seg;
         }
 
-        throw new Error(`Unrecognized IJSONObject: '${JSON.stringify(segSpec)}'`);
+        throw new Error(`Unrecognized IJSONObject`);
     }
 
     /**
