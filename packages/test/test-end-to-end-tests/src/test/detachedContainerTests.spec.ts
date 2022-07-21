@@ -17,7 +17,7 @@ import {
     LocalCodeLoader,
     SupportedExportInterfaces,
     TestFluidObjectFactory,
-    timeoutPromise,
+    ensureContainerConnected,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred, TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -72,12 +72,6 @@ const createFluidObject = (async (
         await dataStoreContext.containerRuntime.createDataStore(type),
         "");
 });
-
-async function ensureContainerConnected(container: Container): Promise<void> {
-    if (!container.connected) {
-        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-    }
-}
 
 describeFullCompat("Detached Container", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
