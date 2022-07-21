@@ -15,10 +15,10 @@ import { IsoBuffer } from "./bufferNode";
  * If called under an insecure context for a browser, this will fallback to
  * using the node implementation.
  *
- * @param file - The contents of the file in a buffer
- * @param algorithm - The hash algorithm to use, artificially constrained by what is used internally
- * @param hashEncoding - The encoding of the returned hash, also artificially constrained
- * @returns The hash of the content of the buffer
+ * @param file - The contents of the file in a buffer.
+ * @param algorithm - The hash algorithm to use, artificially constrained by what is used internally.
+ * @param hashEncoding - The encoding of the returned hash, also artificially constrained.
+ * @returns The hash of the content of the buffer.
  */
 export async function hashFile(
     file: IsoBuffer,
