@@ -14,8 +14,6 @@ class MockDeltaManagerForCatchingUp
     extends TypedEventEmitter<IDeltaManagerEvents>
     implements Pick<IDeltaManager<any, any>, "lastSequenceNumber" | "lastKnownSeqNumber">
 { // eslint-disable-line @typescript-eslint/brace-style
-    public hasCheckpointSequenceNumber: boolean = false;
-
     constructor(
         public lastSequenceNumber: number = 5,
         public lastKnownSeqNumber: number = 10,
@@ -128,22 +126,6 @@ describe("CatchUpMonitor", () => {
         assert.equal(secondCaughtUpCount, 1, "Subsequent ops will not cause caughtUp again on second listener");
     });
 
-    it("hasCheckpointSequenceNumber matches DeltaManager", () => {
-        for (const hasCheckpointSequenceNumber_expected of [true, false]) {
-            const mockDeltaManager = MockDeltaManagerForCatchingUp.create();
-            mockDeltaManager.hasCheckpointSequenceNumber = hasCheckpointSequenceNumber_expected;
-            monitor = new CatchUpMonitor(mockDeltaManager);
-            let caughtUp = false;
-            monitor.on("caughtUp", (hasCheckpointSequenceNumber: boolean) => {
-                caughtUp = true;
-                assert.equal(hasCheckpointSequenceNumber, hasCheckpointSequenceNumber_expected,
-                     "hasCheckpointSequenceNumber in event should match DeltaManager");
-            });
-            mockDeltaManager.emitOpToCatchUp();
-            assert(caughtUp, "caughtUp event should have fired");
-        }
-    });
-
     it("Dispose removes all listeners", () => {
         const mockDeltaManager = MockDeltaManagerForCatchingUp.create();
         monitor = new CatchUpMonitor(mockDeltaManager);
@@ -163,8 +145,7 @@ describe("ImmediateCatchUpMonitor", () => {
     it("caughtUp event fires immediately upon adding a listener", () => {
         const monitor = new ImmediateCatchUpMonitor();
         let caughtUp = false;
-        monitor.on("caughtUp", (hasCheckpointSequenceNumber: boolean) => {
-            assert(!hasCheckpointSequenceNumber, "hasCheckpointSequenceNumber should be false");
+        monitor.on("caughtUp", () => {
             caughtUp = true;
         });
         assert(caughtUp, "callback should be invoked immediately");
