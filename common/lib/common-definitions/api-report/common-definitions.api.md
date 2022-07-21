@@ -260,7 +260,7 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @public
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+export type TelemetryEventPropertyType = string | number | boolean | undefined | (string | number | boolean)[];
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
