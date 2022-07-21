@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/common-utils";
 import { FieldKey, Value } from "../tree";
 import { Brand, Opaque } from "../util";
 import { NodeId as TreeNodeId } from ".";
-import { unreachableCase } from "@fluidframework/common-utils";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
