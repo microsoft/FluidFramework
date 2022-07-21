@@ -96,16 +96,17 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             }
 
             // TODO: Maybe need retry here.
-            // TODO: Probably need finalizeMigration to return promise we can await to avoid double-call between
-            // CRC write and ack.
-            migratable.finalizeMigration(containerId);
-            // Here we let the newly created container/model fall out of scope intentionally.
-            // If we don't win the race to set the container, it is the wrong container/model to use anyway
-            // And the loader is probably caching the container anyway too.
+            await migratable.finalizeMigration(containerId);
+
+            // Note that we do not assume the migratedModel is the correct new one, and let it fall out of scope
+            // intentionally.  This is because if we don't win the race to set the container, it will be the wrong
+            // container/model to use.  There could maybe be some efficiency gain by retaining the model in the
+            // case that we win the race?  But it likely just doesn't matter that much because the Loader probably
+            // cached the Container anyway.
 
             this._migrationP = undefined;
-            // TODO: Probably prefer to await CRC write rather than listen to this event?
-            migratable.once("migrated", this.takeAppropriateActionForCurrentMigratable);
+
+            this.takeAppropriateActionForCurrentMigratable();
         };
 
         this._migrationP = doTheMigration();

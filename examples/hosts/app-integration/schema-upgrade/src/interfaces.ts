@@ -81,7 +81,7 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
      * Complete the migration with the provided containerId.
      * @param newContainerId - the ID of the container that the collaboration has migrated to.
      */
-    finalizeMigration: (newContainerId: string) => void;
+    finalizeMigration: (newContainerId: string) => Promise<void>;
 
     /**
      * Close the model, rendering it inoperable and closing connections.

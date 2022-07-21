@@ -144,11 +144,11 @@ export class App extends TypedEventEmitter<IInventoryListAppEvents> implements I
         return this.containerKillBit.newContainerId;
     }
 
-    public readonly finalizeMigration = (newContainerId: string) => {
+    public readonly finalizeMigration = async (newContainerId: string) => {
         if (this.newContainerId !== undefined) {
             throw new Error("The migration has already been finalized.");
         }
-        this.containerKillBit.setNewContainerId(newContainerId).catch(console.error);
+        return this.containerKillBit.setNewContainerId(newContainerId);
     };
 
     public close() {
