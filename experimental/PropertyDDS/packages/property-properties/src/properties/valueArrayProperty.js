@@ -36,8 +36,8 @@ export class ValueArrayProperty extends ArrayProperty {
     }
 
     /**
-     * returns the value at in_position for a primitive array
-     * @param {number} in_position the array index
+     * Returns the value at in_position for a primitive array
+     * @param {number} in_position - The array index
      * @return {*} the value
      */
     _getValue(in_position) {
@@ -61,7 +61,7 @@ export class ValueArrayProperty extends ArrayProperty {
     /**
      * Resolves a direct child node based on the given path segment
      *
-     * @param {String} in_segment                                   - The path segment to resolve
+     * @param {String} in_segment - The path segment to resolve
      * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
      *
      * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
@@ -100,7 +100,7 @@ export class ValueArrayProperty extends ArrayProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {Array<property-properties.SerializedChangeSet>} in_serializedObj the serialized object
+     * @param {Array<property-properties.SerializedChangeSet>} in_serializedObj - The serialized object
      * @return {Array} in_array - The array of special objects that were deserialized
      */
     _deserializeArray(in_serializedObj) {
@@ -128,7 +128,7 @@ export class Float32ArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Float32Array, in_length);
@@ -155,7 +155,7 @@ export class Float64ArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Float64Array, in_length);
@@ -182,7 +182,7 @@ export class Uint8ArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Uint8Array, in_length);
@@ -210,7 +210,7 @@ export class Int8ArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Int8Array, in_length);
@@ -237,7 +237,7 @@ export class Uint16ArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Uint16Array, in_length);
@@ -264,7 +264,7 @@ export class Int16ArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Int16Array, in_length);
@@ -290,7 +290,7 @@ export class Uint32ArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Uint32Array, in_length);
@@ -317,7 +317,7 @@ export class Int32ArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BaseDataArray(Int32Array, in_length);
@@ -377,7 +377,7 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
      * Some primitive types (e.g. Int64, which is not natively supported by javascript) require
      * special treatment on deserialization. For supported types, we can just return the input here.
      *
-     * @param {Array<property-properties.SerializedChangeSet>} in_serializedObj the serialized object
+     * @param {Array<property-properties.SerializedChangeSet>} in_serializedObj - The serialized object
      * @return {Array} in_array - The array of special objects that were deserialized
      */
     _deserializeArray(in_serializedObj) {
@@ -397,7 +397,7 @@ export class Integer64ArrayProperty extends ValueArrayProperty {
         var int64Prop;
         for (var i = 0; i < this._dataArrayGetLength(); i++) {
             // TODO: The 'toString()' function is defined on Integer64Property, so we need to create
-            //       such object to use it. It would be better to have it in Integer64.prototype.toString
+            // such object to use it. It would be better to have it in Integer64.prototype.toString
             if (this._dataArrayGetValue(i) instanceof Int64) {
                 int64Prop = new Int64Property({});
             } else {
@@ -430,8 +430,8 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
     /**
      * Sets the array properties elements to the content of the given array
      * All changed elements must already exist. This will overwrite existing elements.
-     * @param {number} in_offset target start index
-     * @param {Array<*>|Array<property-properties.BaseProperty>} in_array contains the elements to be set
+     * @param {number} in_offset - Target start index
+     * @param {Array<*>|Array<property-properties.BaseProperty>} in_array - contains the elements to be set
      * @throws if in_offset is not a number
      * @throws if in_offset is smaller than zero or higher than the length of the array
      */
@@ -449,8 +449,8 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
      * Inserts the content of a given array into the array property
      * It will not overwrite the existing values but push them to the right instead.
      * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-     * @param {number} in_offset target index
-     * @param {Array<*>} in_array the array to be inserted
+     * @param {number} in_offset - Target index
+     * @param {Array<*>} in_array - The array to be inserted
      * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
      * @throws if trying to insert a property that already has a parent.
      * @throws if tyring to modify a referenced property.
@@ -476,7 +476,7 @@ export class Int64ArrayProperty extends Integer64ArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new UniversalDataArray(in_length);
@@ -519,8 +519,8 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
     /**
      * Sets the array properties elements to the content of the given array
      * All changed elements must already exist. This will overwrite existing elements.
-     * @param {number} in_offset target start index
-     * @param {Array<*>|Array<property-properties.BaseProperty>} in_array contains the elements to be set
+     * @param {number} in_offset - Target start index
+     * @param {Array<*>|Array<property-properties.BaseProperty>} in_array - contains the elements to be set
      * @throws if in_offset is not a number
      * @throws if in_offset is smaller than zero or higher than the length of the array
      */
@@ -538,8 +538,8 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
      * Inserts the content of a given array into the array property
      * It will not overwrite the existing values but push them to the right instead.
      * E.g. [1, 2, 3] .insertRange(1, [9, 8]) => [1, 9, 8, 2, 3]
-     * @param {number} in_offset target index
-     * @param {Array<*>} in_array the array to be inserted
+     * @param {number} in_offset - Target index
+     * @param {Array<*>} in_array - The array to be inserted
      * @throws if in_offset is smaller than zero, larger than the length of the array or not a number.
      * @throws if trying to insert a property that already has a parent.
      * @throws if tyring to modify a referenced property.
@@ -553,7 +553,7 @@ export class Uint64ArrayProperty extends Integer64ArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new UniversalDataArray(in_length);
@@ -583,7 +583,7 @@ export class StringArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new UniversalDataArray(in_length);
@@ -613,7 +613,7 @@ export class BoolArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new BoolDataArray(in_length);

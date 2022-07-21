@@ -3,41 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { Delta } from "../changeset";
 import { IEditableForest, IForestSubscription } from "../forest";
-import { ChangeRebaser } from "../rebase";
-import { AnchorSet } from "../tree";
-
-// TODO: move this to changeset directory
-export abstract class ProgressiveEditBuilder<TChange> {
-    private readonly changes: TChange[] = [];
-    constructor(
-        private readonly changeFamily: ChangeFamily<unknown, TChange>,
-        private readonly deltaReceiver: (delta: Delta) => void,
-        private readonly anchorSet: AnchorSet) {}
-
-    /**
-     * Subclasses add editing methods which call this with their generated edits.
-     */
-    protected applyChange(change: TChange): void {
-        this.changes.push(change);
-        this.changeFamily.rebaser.rebaseAnchors(this.anchorSet, change);
-        const delta = this.changeFamily.intoDelta(change);
-        this.deltaReceiver(delta);
-    }
-
-    /**
-     * @returns a copy of the internal change list so far.
-     */
-    public getChanges(): TChange[] {
-        return [...this.changes];
-    }
-}
-
-// TODO: move this to changeset directory
-export interface Delta {
-    // TODO: add actual members
-    changes: unknown;
-}
+import { ChangeFamily, ProgressiveEditBuilder } from "../change-family";
 
 export interface Checkout<TEditor, TChange> {
     readonly forest: IEditableForest;
@@ -87,19 +55,11 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 }
 
 // Does NOT update anchors.
-function applyDeltaToForest(forest: IEditableForest, delta: Delta) {
+function applyDeltaToForest(forest: IEditableForest, delta: Delta.Root) {
     // TODO
 }
 
 enum CommandResult {
     Abort,
     Apply,
-}
-
-// TODO: move this to changeset directory
-interface ChangeFamily<TEditor, TChange> {
-    buildEditor(deltaReceiver: (delta: Delta) => void, anchorSet: AnchorSet): TEditor;
-    intoDelta(change: TChange): Delta;
-    // TODO more specific types
-    readonly rebaser: ChangeRebaser<TChange, TChange, TChange>;
 }

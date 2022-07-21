@@ -116,7 +116,6 @@ async function start(): Promise<void> {
         container.initialObjects.signaler as Signaler,
     );
     const mouseTracker = new MouseTracker(
-        container,
         services.audience,
         container.initialObjects.signaler as Signaler,
     );

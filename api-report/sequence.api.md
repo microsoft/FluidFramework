@@ -664,6 +664,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     get ISharedString(): ISharedString;
     removeText(start: number, end: number): IMergeTreeRemoveMsg;
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
+    protected rollback(content: any, localOpMetadata: unknown): void;
 }
 
 // @public (undocumented)
