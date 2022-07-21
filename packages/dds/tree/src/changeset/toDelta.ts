@@ -17,30 +17,33 @@ export function toDelta(changeset: T.Changeset): Delta.Root {
     return convertPositionedMarks<Delta.OuterMark>(changeset.marks);
 }
 
-function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.MarkList<TMarks> {
+function convertPositionedMarks<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
     const out: Delta.MarkList<Delta.Mark> = [];
-    for (const offsetMark of marks) {
-        const offset = offsetMark.offset ?? 0;
-        const mark = offsetMark.mark;
-        if (Array.isArray(mark)) {
+    let offset = 0;
+    for (const mark of marks) {
+        if (typeof mark === "number") {
+            offset += mark;
+        } else if (Array.isArray(mark)) {
             for (const attach of mark) {
                 // Inline into `switch(attach.type)` once we upgrade to TS 4.7
                 const type = attach.type;
                 switch (type) {
                     case "Insert": {
+                        if (offset > 0) {
+                            out.push(offset);
+                            offset = 0;
+                        }
                         const insertMark: Delta.Insert = {
                             type: Delta.MarkType.Insert,
                             content: cloneTreeContent(attach.content),
                         };
-                        if (offset > 0) {
-                            out.push(offset);
-                        }
                         out.push(insertMark);
                         break;
                     }
                     case "MInsert": {
                         if (offset > 0) {
                             out.push(offset);
+                            offset = 0;
                         }
                         const clone = cloneAndModify(attach);
                         if (clone.fields.size > 0) {
@@ -76,6 +79,7 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.MarkLis
                     if (mark.tomb === undefined) {
                         if (offset > 0) {
                             out.push(offset);
+                            offset = 0;
                         }
                         out.push({
                             type: Delta.MarkType.Modify,
@@ -85,19 +89,21 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.MarkLis
                     break;
                 }
                 case "Delete": {
+                    if (offset > 0) {
+                        out.push(offset);
+                        offset = 0;
+                    }
                     const deleteMark: Delta.Delete = {
                         type: Delta.MarkType.Delete,
                         count: mark.count,
                     };
-                    if (offset > 0) {
-                        out.push(offset);
-                    }
                     out.push(deleteMark);
                     break;
                 }
                 case "MDelete": {
                     if (offset > 0) {
                         out.push(offset);
+                        offset = 0;
                     }
                     const fields = convertModify<Delta.ModifyDeleted | Delta.MoveOut>(mark).fields;
                     if (fields !== undefined) {
@@ -234,11 +240,11 @@ function applyOrCollectModifications(
             const outMarks: InsertedFieldsMarks = [];
             let index = 0;
             let offset = 0;
-            for (const markWithOffset of modifyFields[key]) {
-                index += markWithOffset.offset ?? 0;
-                offset += markWithOffset.offset ?? 0;
-                const mark = markWithOffset.mark;
-                if (Array.isArray(mark)) {
+            for (const mark of modifyFields[key]) {
+                if (typeof mark === "number") {
+                    index += mark;
+                    offset += mark;
+                } else if (Array.isArray(mark)) {
                     for (const attach of mark) {
                         // Inline into `switch(attach.type)` once we upgrade to TS 4.7
                         const type = attach.type;

@@ -53,10 +53,8 @@ describe("toDelta", () => {
     it("set root value", () => {
         const changeset: T.Changeset = {
             marks: [{
-                mark: {
-                    type: "Modify",
-                    value: { type: "Set", value: 1 },
-                },
+                type: "Modify",
+                value: { type: "Set", value: 1 },
             }],
         };
         const mark: Delta.Modify = {
@@ -71,17 +69,15 @@ describe("toDelta", () => {
     it("set child value", () => {
         const changeset: T.Changeset = {
             marks: [{
-                mark: {
-                    type: "Modify",
-                    fields: {
-                        foo: [{
-                            offset: 42,
-                            mark: {
-                                type: "Modify",
-                                value: { type: "Set", value: 1 },
-                            },
-                        }],
-                    },
+                type: "Modify",
+                fields: {
+                    foo: [
+                        42,
+                        {
+                            type: "Modify",
+                            value: { type: "Set", value: 1 },
+                        },
+                    ],
                 },
             }],
         };
@@ -99,13 +95,13 @@ describe("toDelta", () => {
 
     it("insert root", () => {
         const changeset: T.Changeset = {
-            marks: [{
-                mark: [{
+            marks: [
+                [{
                     type: "Insert",
                     id: opId,
                     content: changesetContent,
                 }],
-            }],
+            ],
         };
         const mark: Delta.Insert = {
             type: Delta.MarkType.Insert,
@@ -119,18 +115,16 @@ describe("toDelta", () => {
     it("insert child", () => {
         const changeset: T.Changeset = {
             marks: [{
-                mark: {
-                    type: "Modify",
-                    fields: {
-                        foo: [{
-                            offset: 42,
-                            mark: [{
-                                type: "Insert",
-                                id: opId,
-                                content: changesetContent,
-                            }],
+                type: "Modify",
+                fields: {
+                    foo: [
+                        42,
+                        [{
+                            type: "Insert",
+                            id: opId,
+                            content: changesetContent,
                         }],
-                    },
+                    ],
                 },
             }],
         };
@@ -149,11 +143,9 @@ describe("toDelta", () => {
     it("delete root", () => {
         const changeset: T.Changeset = {
             marks: [{
-                mark: {
-                    type: "Delete",
-                    id: opId,
-                    count: 10,
-                },
+                type: "Delete",
+                id: opId,
+                count: 10,
             }],
         };
         const mark: Delta.Delete = {
@@ -168,18 +160,16 @@ describe("toDelta", () => {
     it("delete child", () => {
         const changeset: T.Changeset = {
             marks: [{
-                mark: {
-                    type: "Modify",
-                    fields: {
-                        foo: [{
-                            offset: 42,
-                            mark: {
-                                type: "Delete",
-                                id: opId,
-                                count: 10,
-                            },
-                        }],
-                    },
+                type: "Modify",
+                fields: {
+                    foo: [
+                        42,
+                        {
+                            type: "Delete",
+                            id: opId,
+                            count: 10,
+                        },
+                    ],
                 },
             }],
         };
@@ -198,34 +188,26 @@ describe("toDelta", () => {
     it("the lot on a field", () => {
         const changeset: T.Changeset = {
             marks: [{
-                mark: {
-                    type: "Modify",
-                    fields: {
-                        foo: [
-                            {
-                                mark: {
-                                    type: "Delete",
-                                    id: opId,
-                                    count: 10,
-                                },
-                            },
-                            {
-                                offset: 3,
-                                mark: [{
-                                    type: "Insert",
-                                    id: opId,
-                                    content: changesetContent,
-                                }],
-                            },
-                            {
-                                offset: 1,
-                                mark: {
-                                    type: "Modify",
-                                    value: { type: "Set", value: 1 },
-                                },
-                            },
-                        ],
-                    },
+                type: "Modify",
+                fields: {
+                    foo: [
+                        {
+                            type: "Delete",
+                            id: opId,
+                            count: 10,
+                        },
+                        3,
+                        [{
+                            type: "Insert",
+                            id: opId,
+                            content: changesetContent,
+                        }],
+                        1,
+                        {
+                            type: "Modify",
+                            value: { type: "Set", value: 1 },
+                        },
+                    ],
                 },
             }],
         };
@@ -255,22 +237,20 @@ describe("toDelta", () => {
     describe("Modifications to inserted content", () => {
         it("values", () => {
             const changeset: T.Changeset = {
-                marks: [{
-                    mark: [{
+                marks: [
+                    [{
                         type: "MInsert",
                         id: opId,
                         content: changesetContent[0],
                         value: { type: "Set", value: 4242 },
                         fields: {
                             foo: [{
-                                mark: {
-                                    type: "Modify",
-                                    value: { type: "Set", value: 4343 },
-                                },
+                                type: "Modify",
+                                value: { type: "Set", value: 4343 },
                             }],
                         },
                     }],
-                }],
+                ],
             };
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
@@ -290,33 +270,28 @@ describe("toDelta", () => {
 
         it("inserts", () => {
             const changeset: T.Changeset = {
-                marks: [{
-                    mark: [{
+                marks: [
+                    [{
                         type: "MInsert",
                         id: opId,
                         content: changesetContent[0],
                         fields: {
                             foo: [
-                                {
-                                    offset: 0,
-                                    mark: [{
-                                        type: "Insert",
-                                        id: opId,
-                                        content: [{ id: nodeIdC, value: 44 }],
-                                    }],
-                                },
-                                {
-                                    offset: 1,
-                                    mark: [{
+                                [{
+                                    type: "Insert",
+                                    id: opId,
+                                    content: [{ id: nodeIdC, value: 44 }],
+                                }],
+                                1,
+                                [{
                                         type: "Insert",
                                         id: opId,
                                         content: [{ id: nodeIdD, value: 45 }],
-                                    }],
-                                },
+                                }],
                             ],
                         },
                     }],
-                }],
+                ],
             };
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
@@ -336,26 +311,24 @@ describe("toDelta", () => {
 
         it("modified inserts", () => {
             const changeset: T.Changeset = {
-                marks: [{
-                    mark: [{
+                marks: [
+                    [{
                         type: "MInsert",
                         id: opId,
                         content: changesetContent[0],
                         fields: {
                             foo: [
-                                {
-                                    offset: 1,
-                                    mark: [{
-                                        type: "MInsert",
-                                        id: opId,
-                                        content: { id: nodeIdD, value: 45 },
-                                        value: { type: "Set", value: 4545 },
-                                    }],
-                                },
+                                1,
+                                [{
+                                    type: "MInsert",
+                                    id: opId,
+                                    content: { id: nodeIdD, value: 45 },
+                                    value: { type: "Set", value: 4545 },
+                                }],
                             ],
                         },
                     }],
-                }],
+                ],
             };
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
@@ -375,24 +348,22 @@ describe("toDelta", () => {
 
         it("delete", () => {
             const changeset: T.Changeset = {
-                marks: [{
-                    mark: [{
+                marks: [
+                    [{
                         type: "MInsert",
                         id: opId,
                         content: changesetContent[0],
                         fields: {
                             foo: [
                                 {
-                                    mark: {
-                                        type: "Delete",
-                                        id: opId,
-                                        count: 1,
-                                    },
+                                    type: "Delete",
+                                    id: opId,
+                                    count: 1,
                                 },
                             ],
                         },
                     }],
-                }],
+                ],
             };
             const mark: Delta.Insert = {
                 type: Delta.MarkType.Insert,
