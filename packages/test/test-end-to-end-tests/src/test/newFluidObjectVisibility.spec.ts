@@ -10,7 +10,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidHandle, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, timeoutPromise } from "@fluidframework/test-utils";
+import { ITestObjectProvider, ensureContainerConnected } from "@fluidframework/test-utils";
 import {
     describeFullCompat,
     ITestDataObject,
@@ -68,12 +68,6 @@ async function getAndValidateDataObject(
     await assert.doesNotReject(requestTestObjectWithoutWait(container, dataObject._context.id),
         `Data object for key ${key} must be visible`);
     return dataObject;
-}
-
-async function ensureContainerConnected(container: Container): Promise<void> {
-    if (!container.connected) {
-        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-    }
 }
 
 /**

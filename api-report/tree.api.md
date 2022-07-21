@@ -115,10 +115,8 @@ declare namespace Delta {
         Insert,
         InsertAndModify,
         ProtoNode,
-        ProtoField,
         MoveId,
         Offset,
-        NodeId_2 as NodeId,
         FieldMap_2 as FieldMap,
         FieldMarks,
         MarkType
@@ -311,6 +309,10 @@ export enum ITreeSubscriptionCursorState {
     Freed = 2
 }
 
+// @public
+export interface JsonableTree extends PlaceholderTree {
+}
+
 // @public (undocumented)
 export const jsonArray: NamedTreeSchema;
 
@@ -498,13 +500,6 @@ export interface NodeData {
 }
 
 // @public
-export interface NodeId extends Opaque<Brand<string, "delta.NodeId">> {
-}
-
-// @public
-type NodeId_2 = NodeId;
-
-// @public
 export interface ObservingDependent extends Dependent {
     // @override
     listDependees(): Iterable<Dependee>;
@@ -556,19 +551,8 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
 // @public
 export function placeholderTreeFromCursor(cursor: ITreeCursor): PlaceholderTree;
 
-// @public (undocumented)
-type ProtoField = ProtoNode[];
-
 // @public
-interface ProtoNode {
-    fields?: FieldMap_2<ProtoField>;
-    // (undocumented)
-    id?: NodeId_2;
-    // (undocumented)
-    type?: string;
-    // (undocumented)
-    value?: Value;
-}
+type ProtoNode = JsonableTree;
 
 // @public
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
