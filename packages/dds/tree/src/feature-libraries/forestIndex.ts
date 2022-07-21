@@ -19,7 +19,7 @@ import { Index, SummaryElement } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
 import { Delta } from "../changeset";
 import { PlaceholderTree } from "../tree";
-import { ObjectForest } from "./object-forest";
+import { applyDeltaToForest } from "../transaction";
 import { placeholderTreeFromCursor, TextCursor } from "./treeTextCursor";
 
 /**
@@ -33,7 +33,6 @@ import { placeholderTreeFromCursor, TextCursor } from "./treeTextCursor";
  */
 export class ForestIndex implements Index<unknown>, SummaryElement {
     readonly key: string = "Forest";
-    private readonly forest: IEditableForest = new ObjectForest();
 
     // TODO: implement this to provide snapshots in summaries.
     readonly summaryElement?: SummaryElement = this;
@@ -44,7 +43,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     private readonly treeBlob: ICachedValue<Promise<ISummaryAttachment>>;
     private readonly schemaBlob: ICachedValue<Promise<ISummaryAttachment>>;
 
-    public constructor(private readonly runtime: IFluidDataStoreRuntime) {
+    public constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly forest: IEditableForest) {
         this.cursor = this.forest.allocateCursor();
         this.treeBlob = cachedValue(async (observer) => {
             // TODO: could optimize to depend on tree only, not also schema.
@@ -52,6 +51,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
             const treeText = this.getTreeString();
 
             // For now we are not chunking the data, and instead put it in a single blob:
+            // TODO: use lower level API to avoid blob manager?
             const blob = await this.runtime.uploadBlob(IsoBuffer.from(treeText));
             return { type: SummaryType.Attachment, id: idFromBlob(blob) };
         });
@@ -66,9 +66,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     }
 
     newLocalState(changeDelta: Delta.Root): void {
-        // TODO: apply changeDelta to the forest.
-        // TODO: unity this with logic in transaction.
-        throw new Error("Method not implemented.");
+        applyDeltaToForest(this.forest, changeDelta);
     }
 
     /**

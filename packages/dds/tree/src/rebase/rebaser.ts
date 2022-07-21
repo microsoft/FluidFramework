@@ -5,6 +5,7 @@
 
 import { brand, Brand, Contravariant, Covariant, Invariant } from "../util";
 import { AnchorSet } from "../tree";
+import { Delta, toDelta } from "../changeset";
 
 /**
  * A way to refer to a particular revision within a given {@link Rebaser} instance.
@@ -73,6 +74,11 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
     ): void {
         const over = this.getResolutionPath(from, to);
         this.rebaser.rebaseAnchors(anchors, over);
+    }
+
+    public delta(from: RevisionTag, to: RevisionTag): Delta.Root {
+        const over = this.getResolutionPath(from, to);
+        return toDelta(over);
     }
 
     // Separated out for easier testing

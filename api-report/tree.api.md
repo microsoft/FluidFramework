@@ -82,6 +82,48 @@ export interface Covariant<T> {
 export function cursorToJsonObject(reader: ITreeCursor): unknown;
 
 // @public
+interface Delete {
+    // (undocumented)
+    count: number;
+    // (undocumented)
+    type: typeof MarkType.Delete;
+}
+
+declare namespace Delta {
+    export {
+        inputLength,
+        Root,
+        Mark,
+        OuterMark,
+        InnerModify,
+        MarkList,
+        Skip,
+        Modify,
+        ModifyDeleted,
+        ModifyMovedOut,
+        ModifyMovedIn,
+        ModifyInserted,
+        Delete,
+        ModifyAndDelete,
+        MoveOut,
+        ModifyAndMoveOut,
+        MoveIn,
+        MoveInAndModify,
+        Insert,
+        InsertAndModify,
+        ProtoNode,
+        ProtoField,
+        MoveId,
+        Offset,
+        NodeId_2 as NodeId,
+        FieldMap_2 as FieldMap,
+        FieldMarks,
+        MarkType
+    }
+}
+export { Delta }
+
+// @public
 export interface Dependee extends NamedComputation {
     registerDependent(dependent: Dependent): boolean;
     removeDependent(dependent: Dependent): void;
@@ -134,6 +176,12 @@ export interface FieldMap<TChild> {
 }
 
 // @public (undocumented)
+type FieldMap_2<T> = Map<FieldKey, T>;
+
+// @public (undocumented)
+type FieldMarks<TMark> = FieldMap_2<MarkList<TMark>>;
+
+// @public (undocumented)
 export interface FieldSchema {
     // (undocumented)
     readonly kind: FieldKind;
@@ -182,6 +230,30 @@ export interface IForestSubscription extends Dependee {
     readonly rootField: DetachedRange;
     readonly schema: SchemaRepository & Dependee;
     tryGet(destination: ForestAnchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
+}
+
+// @public
+type InnerModify = ModifyDeleted | ModifyInserted | ModifyMovedIn | ModifyMovedOut;
+
+// @public
+function inputLength(mark: Mark): number;
+
+// @public
+interface Insert {
+    // (undocumented)
+    content: ProtoNode[];
+    // (undocumented)
+    type: typeof MarkType.Insert;
+}
+
+// @public
+interface InsertAndModify {
+    // (undocumented)
+    content: ProtoNode;
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+    // (undocumented)
+    type: typeof MarkType.InsertAndModify;
 }
 
 // @public
@@ -286,6 +358,117 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 export interface MakeNominal {
 }
 
+// @public
+type Mark = OuterMark | InnerModify;
+
+// @public
+type MarkList<TMark = Mark> = TMark[];
+
+// @public (undocumented)
+const MarkType: {
+    readonly Modify: 0;
+    readonly Insert: 1;
+    readonly InsertAndModify: 2;
+    readonly MoveIn: 3;
+    readonly MoveInAndModify: 4;
+    readonly Delete: 5;
+    readonly ModifyAndDelete: 6;
+    readonly MoveOut: 7;
+    readonly ModifyAndMoveOut: 8;
+};
+
+// @public
+interface Modify {
+    // (undocumented)
+    fields?: FieldMarks<OuterMark>;
+    // (undocumented)
+    setValue?: Value;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface ModifyAndDelete {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyDeleted | MoveOut>;
+    // (undocumented)
+    type: typeof MarkType.ModifyAndDelete;
+}
+
+// @public
+interface ModifyAndMoveOut {
+    // (undocumented)
+    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | MoveOut>;
+    moveId: MoveId;
+    // (undocumented)
+    setValue?: Value;
+    // (undocumented)
+    type: typeof MarkType.ModifyAndMoveOut;
+}
+
+// @public
+interface ModifyDeleted {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyDeleted | ModifyAndMoveOut | MoveOut>;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface ModifyInserted {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface ModifyMovedIn {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | MoveInAndModify | Insert | InsertAndModify>;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface ModifyMovedOut {
+    // (undocumented)
+    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | ModifyAndDelete | ModifyAndMoveOut | MoveOut>;
+    // (undocumented)
+    setValue?: Value;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
+}
+
+// @public
+interface MoveIn {
+    moveId: MoveId;
+    // (undocumented)
+    type: typeof MarkType.MoveIn;
+}
+
+// @public
+interface MoveInAndModify {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | Insert>;
+    moveId: MoveId;
+    // (undocumented)
+    type: typeof MarkType.MoveInAndModify;
+}
+
+// @public
+interface MoveOut {
+    // (undocumented)
+    count: number;
+    moveId: MoveId;
+    // (undocumented)
+    type: typeof MarkType.MoveOut;
+}
+
 // @public (undocumented)
 export interface Named<TName> {
     // (undocumented)
@@ -312,14 +495,27 @@ export interface NodeData {
 }
 
 // @public
+export interface NodeId extends Opaque<Brand<string, "delta.NodeId">> {
+}
+
+// @public
+type NodeId_2 = NodeId;
+
+// @public
 export interface ObservingDependent extends Dependent {
     // @override
     listDependees(): Iterable<Dependee>;
     registerDependee(dependee: Dependee): void;
 }
 
+// @public (undocumented)
+type Offset = number;
+
 // @public
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
+
+// @public
+type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
 
 // @public
 export class PathCollection extends PathShared<RootRange> {
@@ -357,9 +553,25 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
 // @public
 export function placeholderTreeFromCursor(cursor: ITreeCursor): PlaceholderTree;
 
+// @public (undocumented)
+type ProtoField = ProtoNode[];
+
+// @public
+interface ProtoNode {
+    fields?: FieldMap_2<ProtoField>;
+    // (undocumented)
+    id?: NodeId_2;
+    // (undocumented)
+    type?: string;
+    // (undocumented)
+    value?: Value;
+}
+
 // @public
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
     constructor(rebaser: TChangeRebaser);
+    // (undocumented)
+    delta(from: RevisionTag, to: RevisionTag): Delta.Root;
     discardRevision(revision: RevisionTag): void;
     // (undocumented)
     readonly empty: RevisionTag;
@@ -374,6 +586,9 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 
 // @public
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
+
+// @public
+type Root = MarkList<OuterMark>;
 
 // @public
 export const rootFieldKey: BrandedType<string, "tree.GlobalFieldKey">;
@@ -407,6 +622,9 @@ export class SimpleDependee implements Dependee {
     // (undocumented)
     removeDependent(dependent: Dependent): void;
 }
+
+// @public
+type Skip = number;
 
 // @public
 export class StoredSchemaRepository extends SimpleDependee implements SchemaRepository, Dependee {

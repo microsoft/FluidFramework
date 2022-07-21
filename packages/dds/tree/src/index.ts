@@ -54,6 +54,10 @@ export {
 } from "./rebase";
 
 export {
+    Delta, NodeId,
+} from "./changeset";
+
+export {
     cursorToJsonObject,
     JsonCursor,
     jsonTypeSchema,
