@@ -71,7 +71,7 @@ const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Feature gate key to turn GC sweep on / off.
 const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to turn GC test mode on / off.
-const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
+const gcInstantDeleteTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
@@ -186,7 +186,9 @@ export interface IGarbageCollectorCreateParams {
     readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
-    readonly snapshotCacheExpiryMs?: number;  //* BUG: This is unused (and hard to use)
+    /** NOTE: This is currently unused. See PR #11168 for challenges */
+    //* Make sure this is an ok state to leave things... it's a change
+    readonly snapshotCacheExpiryMs?: number;
 }
 
 /** The state of node that is unreferenced. */
@@ -344,12 +346,12 @@ export class GarbageCollector implements IGarbageCollector {
      * Tracks if GC is enabled for this document. This is specified during document creation and doesn't change
      * throughout its lifetime.
      */
-    private readonly gcEnabled: boolean;
+    private get gcEnabled(): boolean { return this.containerConfig.gcAllowed; }
     /**
      * Tracks if sweep phase is enabled for this document. This is specified during document creation and doesn't change
      * throughout its lifetime.
      */
-    private readonly sweepEnabled: boolean;
+    private get sweepEnabled(): boolean { return this.containerConfig.sweepAllowed; }
 
     /**
      * Tracks if GC should run or not. Even if GC is enabled for a document (see gcEnabled), it can be explicitly
@@ -364,9 +366,12 @@ export class GarbageCollector implements IGarbageCollector {
 
     public readonly trackGCState: boolean;
 
+    /** Aka "GC Test Mode", if true for this session, we'll delete notes upon detecting they're unreferenced */
     private readonly instantDeleteTestMode: boolean;
+
+    /** @see IGCTestConfig.SweepV0 */
     private get sweepV0(): boolean {
-        return this.containerConfig.sweepAllowed && this.containerConfig.testMode === "SweepV0";
+        return this.containerConfig.testMode === "SweepV0";
     }
     private readonly mc: MonitoringContext;
 
@@ -431,11 +436,13 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly gcOptions: IGCRuntimeOptions;
     private readonly isSummarizerClient: boolean;
 
+    /** Configuration that applies to this container (not just this session) */
     private readonly containerConfig: GcContainerConfig;
-    // private readonly sessionConfig: GcSessionConfig;
 
     /** The time in ms to expire a session for a client for gc. */
-    private readonly sessionExpiryTimeoutMs: number | undefined;
+    private get sessionExpiryTimeoutMs(): number | undefined {
+        return this.containerConfig.sweepAllowed ? this.containerConfig.sessionExpiryTimeoutMs : undefined;
+    }
     /** The time after which an unreferenced node is inactive. */
     private readonly inactiveTimeoutMs: number;
     /**
@@ -471,25 +478,14 @@ export class GarbageCollector implements IGarbageCollector {
             createParams.baseLogger, "GarbageCollector", { all: { completedGCRuns: () => this.completedRuns } },
         ));
 
-        /**
-         * The following GC state is enabled during container creation and cannot be changed throughout its lifetime:
-         * 1. Whether running GC mark phase is allowed or not.
-         * 2. Whether running GC sweep phase is allowed or not.
-         * 3. Whether GC session expiry is enabled or not.
-         * For existing containers, we get this information from the metadata blob of its summary.
-         */
+        // Set this ASAP since many getters on this class assume it is set
         this.containerConfig = createParams.existing
             ? configForExistingContainer(metadata)
             : configForNewContainer(this.gcOptions, this.mc.config);
 
-        //* TODO: Move to property getters instead of readonly props
-        this.gcEnabled = this.containerConfig.gcAllowed;
-        this.sweepEnabled = this.containerConfig.sweepAllowed;
-        this.sessionExpiryTimeoutMs =
-            this.containerConfig.sweepAllowed ? this.containerConfig.sessionExpiryTimeoutMs : undefined;
-
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
         // This allows us to safely set Sweep Timeout
+        //* factor in disableSessionExpiryKey when considering Sweep elsewhere. Also reconsider TestOverride behavior
         if (this.sessionExpiryTimeoutMs !== undefined && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
             // If Test Override config is set, override Session Expiry timeout.
             const overrideSessionExpiryTimeoutMs =
@@ -550,7 +546,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Whether we are running in "Instant Delete" test mode, where unreferenced nodes are immediately deleted.
         this.instantDeleteTestMode =
-            (this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true);
+            (this.mc.config.getBoolean(gcInstantDeleteTestModeKey) ?? this.gcOptions.runGCInTestMode === true);
 
         // GC state is written into root of the summary tree by default. Can be overridden via feature flag for now.
         this._writeDataAtRoot = this.mc.config.getBoolean(writeAtRootKey) ?? true;
@@ -690,6 +686,7 @@ export class GarbageCollector implements IGarbageCollector {
             return baseGCDetailsMap;
         });
 
+        //* Update this log
         // Log all the GC options and the state determined by the garbage collector. This is interesting only for the
         // summarizer client since it is the only one that runs GC. It also helps keep the telemetry less noisy.
         const gcConfigProps = JSON.stringify({
@@ -698,7 +695,7 @@ export class GarbageCollector implements IGarbageCollector {
             runGC: this.shouldRunGC,
             runSweep: this.shouldRunSweep,
             writeAtRoot: this._writeDataAtRoot,
-            testMode: this.instantDeleteTestMode,
+            instantDeleteTestMode: this.instantDeleteTestMode,
             sessionExpiry: this.sessionExpiryTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
             existing: createParams.existing,

@@ -31,29 +31,43 @@ export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 const defaultBufferMs = oneDayMs; // 1 day
 
+/**
+ * This type encapsulates state that is enabled during container creation and cannot be changed throughout its lifetime:
+ * - Whether running GC mark phase is allowed or not
+ * - Whether running GC sweep phase is allowed or not
+ * - Whether GC session expiry is enabled or not, and what the timeout is.
+ * - What Buffer is used when calculating file Sweep Timeout.
+ * - The Test Mode under which this file was created and must be loaded.
+ * For existing containers, we get this information from the metadata blob of its summary.
+ * For new containers, we compute these from several sources, and then write them to the metadata blob.
+ */
 export type GcContainerConfig =
     // Common props regardless of sweepAllowed
     {
-        prevSummaryGCVersion?: number;
+        /** The GC Version from the summary we loaded from. May be overwritten in subsequent summaries */
+        readonly prevSummaryGCVersion?: number;
+        /** Which Test Mode is this file under, if any? These tend to be incompatible with non-test environments */
+        readonly testMode: GCTestMode | undefined;
     }
     & (
         // Different sets of props depending on sweepAllowed
         | {
-            sweepAllowed: false;
-            gcAllowed: boolean;
+            readonly sweepAllowed: false;
+            readonly gcAllowed: boolean;
         }
         | {
-            sweepAllowed: true;
-            gcAllowed: true;
+            readonly sweepAllowed: true;
+            readonly gcAllowed: true;
 
-            testMode: GCTestMode | undefined;
-            snapshotCacheExpiryMs: number;
-            sessionExpiryTimeoutMs: number;
-            sweepTimeoutBufferMs: number;
+            /**
+             * This is not read from the file, but is hardcoded and assumed stable for the lifetime of the container.
+             * NOTE: This assumption is not sound and needs to be addressed before enabling Sweep broadly.
+             */
+            readonly snapshotCacheExpiryMs: number;
+            readonly sessionExpiryTimeoutMs: number;
+            readonly sweepTimeoutBufferMs: number;
         }
     );
-
-//* TODO: Add logging of different config sources and outcome (either here or in GC.ts)
 
 export function configForExistingContainer(
     metadata?: IGCMetadata,
@@ -76,6 +90,7 @@ export function configForExistingContainer(
         return {
             sweepAllowed: false,
             gcAllowed,
+            testMode,
             prevSummaryGCVersion,
         };
     }
@@ -95,6 +110,10 @@ export function configForExistingContainer(
     return configData;
 }
 
+/**
+ * Check the GC TestConfig setting key for a JSON-serialized specification of the given test mode,
+ * parsing the JSON and returning the test config data
+ */
 function getTestConfigFromSettings<TMode extends GCTestMode>(
     testMode: TMode,
     settings: IConfigProvider,
@@ -112,14 +131,17 @@ export function configForNewContainer(
     options: IGCRuntimeOptions,
     settings: IConfigProvider,
 ): GcContainerConfig {
+    // Note: If SessionExpiry is not enabled for the session when a container is created,
+    // it (and sweep) will always be disabled for that container.
     const sessionExpiryEnabled = settings.getBoolean(runSessionExpiryKey);
     const sweepAllowed = options.sweepAllowed === true && sessionExpiryEnabled;
-    const gcAllowed = options.gcAllowed !== false; // default to true
+    const gcAllowed = options.gcAllowed !== false; // default is true
 
     if (!sweepAllowed) {
         return {
             sweepAllowed: false,
             gcAllowed,
+            testMode: undefined,
         };
     }
 
@@ -131,6 +153,7 @@ export function configForNewContainer(
 
     const sweepV0Config = getTestConfigFromSettings<"SweepV0">("SweepV0", settings);
     const sweepV0: boolean = sweepV0Config !== undefined;
+
     const snapshotCacheExpiryMs = sweepV0 ? 0 : defaultCacheExpiryTimeoutMs; // Ignore snapshot expiry for SweepV0
     //* Test case:  Adding in reading from settings and options here
     const sessionExpiryTimeoutMs =

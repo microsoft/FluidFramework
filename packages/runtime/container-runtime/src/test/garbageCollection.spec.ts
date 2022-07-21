@@ -33,7 +33,7 @@ import {
     IGarbageCollectorCreateParams,
 } from "../garbageCollection";
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
-import { IGCRuntimeOptions } from "..";
+import { IGCRuntimeOptions } from "../containerRuntime";
 import { defaultSessionExpiryDurationMs, oneDayMs } from "../gcConfig";
 
 describe("Garbage Collection Tests", () => {
