@@ -140,7 +140,7 @@ export class PartialSequenceLengths {
     /**
      * Combine the partial lengths of block's children
      * @param block - an interior node. If `recur` is false, it is assumed that each interior node child of this block
-     * has its partials up to date. Otherwise,
+     * has its partials up to date.
      * @param collabWindow - segment window of the segment tree containing `block`.
      * @param recur - whether to recursively compute partial lengths for internal children of `block`.
      * This incurs more work, but gives correct bookkeeping in the case that a descendant in the merge tree has been
