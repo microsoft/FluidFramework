@@ -549,7 +549,7 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
  * This class controls pausing and resuming of inbound queue to ensure that we never
  * start processing ops in a batch IF we do not have all ops in the batch.
  */
- class ScheduleManagerCore {
+class ScheduleManagerCore {
     private pauseSequenceNumber: number | undefined;
     private currentBatchClientId: string | undefined;
     private localPaused = false;
