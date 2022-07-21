@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import EventEmitter from "events";
+import { EventEmitter } from "events";
 import { ITelemetryBaseLogger, ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     FluidObject,
@@ -34,6 +34,7 @@ import {
     Trace,
     TypedEventEmitter,
     unreachableCase,
+    performance,
     IsoBuffer,
 } from "@fluidframework/common-utils";
 import {
