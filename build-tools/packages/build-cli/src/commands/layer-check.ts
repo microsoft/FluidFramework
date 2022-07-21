@@ -3,19 +3,16 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-internal-modules */
 // eslint-disable-next-line unicorn/prefer-node-protocol
 import path from "path";
 import { Command } from '@oclif/core';
-import {
-    LayerGraph,
-    commonOptions,
-    commonOptionString,
-    parseOption,
-    Timer,
-    getResolvedFluidRoot,
-    writeFileAsync,
-    FluidRepo,
-} from "@fluidframework/build-tools";
+import { commonOptions, commonOptionString, parseOption } from "./layer/common/commonOptions";
+import { Timer } from "./layer/common/timer";
+import { getResolvedFluidRoot } from "./layer/common/fluidUtils";
+import { writeFileAsync } from "./layer/common/utils";
+import { FluidRepo } from "./layer/common/fluidRepo";
+import { LayerGraph } from "../../../build-tools/src/layerCheck/layerGraph";
 
 
 function printUsage() {
