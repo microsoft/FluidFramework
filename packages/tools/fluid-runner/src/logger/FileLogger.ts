@@ -10,7 +10,7 @@ import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definition
 /**
  * Logger that writes events into a defined file
  */
-export default class FileLogger implements ITelemetryBufferedLogger {
+export class FileLogger implements ITelemetryBufferedLogger {
     public supportsTags?: true | undefined;
 
     /** Hold events in memory until flushed */
@@ -38,6 +38,7 @@ export default class FileLogger implements ITelemetryBufferedLogger {
         this.events.push(logEvent);
 
         if (this.events.length >= this.eventsPerFlush || event.category === "error") {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
             this.flush();
         }
     }

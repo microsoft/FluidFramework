@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from 'fs';
+import * as fs from "fs";
+import path from "path";
 import { strict as assert } from "assert";
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { exportFile } from "../exportFile";
-import { MockLogger } from '@fluidframework/telemetry-utils';
-import path from 'path';
 
 describe("exportFile", () => {
     const folderRoot = path.join(__dirname, "../../src/test");
@@ -29,7 +29,7 @@ describe("exportFile", () => {
                 path.join(snapshotFolder, snapshotFileName),
                 outputFolder,
                 "sampleScenario",
-                path.join(outputFolder, "telemetry.txt")
+                path.join(outputFolder, "telemetry.txt"),
             );
 
             const resultFilePath = path.join(outputFolder, "result.txt");
@@ -47,6 +47,7 @@ describe("exportFile", () => {
     describe("Validates arguments", () => {
         // TODO
         const mockLogger = new MockLogger();
+        mockLogger.clear();
     });
 
     // TODO: potentially add tests for expecting certain telemetry logs
