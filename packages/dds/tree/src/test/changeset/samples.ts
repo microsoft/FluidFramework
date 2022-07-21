@@ -12,8 +12,8 @@ const id = (str: string): NodeId => brandOpaque<NodeId>(str);
  * Demonstrates how to represent a change that inserts a root tree.
  */
 export namespace InsertRoot {
-    export const e1: T.PositionedMarks = [{
-        mark: [{
+    export const e1: T.MarkList = [
+        [{
             type: "Insert",
             id: 0, // ID of the insert operation
             content: [ // Serialized trees
@@ -43,7 +43,7 @@ export namespace InsertRoot {
                 },
             ],
         }],
-    }];
+    ];
 }
 
 /**
@@ -56,18 +56,16 @@ export namespace SwapCousins {
             { id: 1, src: { bar: 0 }, dst: { foo: 0 } },
         ],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        { mark: { type: "MoveOut", id: 0, count: 1 } },
-                        { mark: [{ type: "MoveIn", id: 1, count: 1 }] },
-                    ],
-                    bar: [
-                        { mark: { type: "MoveOut", id: 1, count: 1 } },
-                        { mark: [{ type: "MoveIn", id: 0, count: 1 }] },
-                    ],
-                },
+            type: "Modify",
+            fields: {
+                foo: [
+                    { type: "MoveOut", id: 0, count: 1 },
+                    [{ type: "MoveIn", id: 1, count: 1 }],
+                ],
+                bar: [
+                    { type: "MoveOut", id: 1, count: 1 },
+                    [{ type: "MoveIn", id: 0, count: 1 }],
+                ],
             },
         }],
     };
@@ -91,58 +89,48 @@ export namespace SwapParentChild {
             },
         ],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        {
-                            mark: {
+            type: "Modify",
+            fields: {
+                foo: [
+                    {
+                        type: "MMoveOut",
+                        id: 0,
+                        fields: {
+                            bar: [{
                                 type: "MMoveOut",
-                                id: 0,
-                                fields: {
-                                    bar: [{
-                                        mark: {
-                                            type: "MMoveOut",
-                                            id: 1,
-                                            fields: {
-                                                baz: [{
-                                                    mark: {
-                                                        type: "MoveOut",
-                                                        id: 2,
-                                                        count: 1,
-                                                    },
-                                                }],
-                                            },
-                                        },
-                                    }],
-                                },
-                            },
-                        },
-                        {
-                            mark: [{
-                                type: "MMoveIn",
                                 id: 1,
                                 fields: {
-                                    bar: [{
-                                        mark: [{
-                                            type: "MMoveIn",
-                                            id: 0,
-                                            fields: {
-                                                baz: [{
-                                                    mark: [{
-                                                        type: "MoveIn",
-                                                        id: 2,
-                                                        count: 1,
-                                                    }],
-                                                }],
-                                            },
-                                        }],
+                                    baz: [{
+                                        type: "MoveOut",
+                                        id: 2,
+                                        count: 1,
                                     }],
                                 },
                             }],
                         },
-                    ],
-                },
+                    },
+                    [{
+                        type: "MMoveIn",
+                        id: 1,
+                        fields: {
+                            bar: [
+                                [{
+                                    type: "MMoveIn",
+                                    id: 0,
+                                    fields: {
+                                        baz: [
+                                            [{
+                                                type: "MoveIn",
+                                                id: 2,
+                                                count: 1,
+                                            }],
+                                        ],
+                                    },
+                                }],
+                            ],
+                        },
+                    }],
+                ],
             },
         }],
     };
@@ -167,18 +155,16 @@ export namespace ScenarioA {
         ref: 0,
         seq: 1,
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [{
-                        offset: 1, // A
-                        mark: {
-                            type: "Delete",
-                            id: 0,
-                            count: 2, // B C
-                        },
-                    }],
-                },
+            type: "Modify",
+            fields: {
+                foo: [
+                    1, // A
+                    {
+                        type: "Delete",
+                        id: 0,
+                        count: 2, // B C
+                    },
+                ],
             },
         }],
     };
@@ -188,26 +174,24 @@ export namespace ScenarioA {
         seq: 2,
         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 0 } }],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [{
-                        offset: 1, // A
-                        mark: {
-                            type: "MoveOut",
-                            id: 0,
-                            count: 3, // B C D
-                            gaps: [{ id: 0, type: "Forward" }],
-                        },
+            type: "Modify",
+            fields: {
+                foo: [
+                    1, // A
+                    {
+                        type: "MoveOut",
+                        id: 0,
+                        count: 3, // B C D
+                        gaps: [{ id: 0, type: "Forward" }],
+                    },
+                ],
+                bar: [
+                    [{
+                        type: "MoveIn",
+                        id: 0,
+                        count: 3, // B C D
                     }],
-                    bar: [{
-                        mark: [{
-                            type: "MoveIn",
-                            id: 0,
-                            count: 3, // B C D
-                        }],
-                    }],
-                },
+                ],
             },
         }],
     };
@@ -216,14 +200,12 @@ export namespace ScenarioA {
         ref: 0,
         seq: 3,
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [{
-                        offset: 2,
-                        mark: [{ type: "Insert", id: 0, content: [{ id: id("X") }], heed: Effects.All }],
-                    }],
-                },
+            type: "Modify",
+            fields: {
+                foo: [
+                    2,
+                    [{ type: "Insert", id: 0, content: [{ id: id("X") }], heed: Effects.All }],
+                ],
             },
         }],
     };
@@ -238,44 +220,36 @@ export namespace ScenarioA {
             { id: 2, src: { foo: 1 }, dst: { bar: 0 } },
         ],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        {
-                            offset: 1, // A
-                            mark: {
-                                type: "MoveOut",
-                                id: 0,
-                                tomb: 1,
-                                count: 2, // B C
-                                gaps: [{ id: 0, type: "Forward" }],
-                            },
-                        },
-                        {
-                            mark: {
-                                type: "Gap",
-                                count: 1,
-                                stack: [{ id: 1, type: "Forward" }],
-                            },
-                        },
-                        {
-                            mark: {
-                                type: "MoveOut",
-                                id: 0,
-                                count: 1, // D
-                                gaps: [{ id: 2, type: "Forward" }],
-                            },
-                        },
+            type: "Modify",
+            fields: {
+                foo: [
+                    1, // A
+                    {
+                        type: "MoveOut",
+                        id: 0,
+                        tomb: 1,
+                        count: 2, // B C
+                        gaps: [{ id: 0, type: "Forward" }],
+                    },
+                    {
+                        type: "Gap",
+                        count: 1,
+                        stack: [{ id: 1, type: "Forward" }],
+                    },
+                    {
+                        type: "MoveOut",
+                        id: 0,
+                        count: 1, // D
+                        gaps: [{ id: 2, type: "Forward" }],
+                    },
+                ],
+                bar: [
+                    [
+                        { type: "MoveIn", id: 0, count: 0 }, // B C
+                        { type: "MoveIn", id: 1, count: 0 }, // C-D
+                        { type: "MoveIn", id: 2, count: 1 }, // D
                     ],
-                    bar: [{
-                        mark: [
-                            { type: "MoveIn", id: 0, count: 0 }, // B C
-                            { type: "MoveIn", id: 1, count: 0 }, // C-D
-                            { type: "MoveIn", id: 2, count: 1 }, // D
-                        ],
-                    }],
-                },
+                ],
             },
         }],
     };
@@ -285,15 +259,14 @@ export namespace ScenarioA {
         ref: 0,
         newRef: 1,
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        { offset: 1, mark: { type: "Tomb", seq: 1, count: 1 } }, // B
-                        { mark: [{ type: "Insert", id: 0, content: [{ id: id("X") }], heed: Effects.All }] },
-                        { mark: { type: "Tomb", seq: 1, count: 1 } }, // C
-                    ],
-                },
+            type: "Modify",
+            fields: {
+                foo: [
+                    1,
+                    { type: "Tomb", seq: 1, count: 1 }, // B
+                    [{ type: "Insert", id: 0, content: [{ id: id("X") }], heed: Effects.All }],
+                    { type: "Tomb", seq: 1, count: 1 }, // C
+                ],
             },
         }],
     };
@@ -304,28 +277,27 @@ export namespace ScenarioA {
         newRef: 2,
         moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 0 } }],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        { offset: 1, mark: { type: "Tomb", seq: 1, count: 1 } }, // B
-                        { mark: [{ type: "Bounce", id: 0, heed: Effects.All }] },
-                        { mark: { type: "Tomb", seq: 1, count: 1 } }, // C
+            type: "Modify",
+            fields: {
+                foo: [
+                    1,
+                    { type: "Tomb", seq: 1, count: 1 }, // B
+                    [{ type: "Bounce", id: 0, heed: Effects.All }],
+                    { type: "Tomb", seq: 1, count: 1 }, // C
+                ],
+                bar: [
+                    [
+                        {
+                            type: "Insert",
+                            id: 0,
+                            content: [{ id: id("X") }],
+                            heed: Effects.All,
+                            src: { seq: 2, id: 0 },
+                        },
+                        { type: "Intake", seq: 2, id: 1 },
+                        { type: "Intake", seq: 2, id: 2 },
                     ],
-                    bar: [{
-                        mark: [
-                            {
-                                type: "Insert",
-                                id: 0,
-                                content: [{ id: id("X") }],
-                                heed: Effects.All,
-                                src: { seq: 2, id: 0 },
-                            },
-                            { type: "Intake", seq: 2, id: 1 },
-                            { type: "Intake", seq: 2, id: 2 },
-                        ],
-                    }],
-                },
+                ],
             },
         }],
     };
