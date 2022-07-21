@@ -131,7 +131,6 @@ export function configForNewContainer(
     // Note: If SessionExpiry is not enabled for the session when a container is created,
     // it (and sweep) will always be disabled for that container.
     const sessionExpiryEnabled = settings.getBoolean(runSessionExpiryKey);
-    //* Test case:  Adding in reading from settings and options here
     let sessionExpiryTimeoutMs = sessionExpiryEnabled
         ? (options.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs)
         : undefined;

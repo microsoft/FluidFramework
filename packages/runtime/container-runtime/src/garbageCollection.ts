@@ -706,7 +706,6 @@ export class GarbageCollector implements IGarbageCollector {
             return baseGCDetailsMap;
         });
 
-        //* Update this log
         // Log all the GC options and the state determined by the garbage collector. This is interesting only for the
         // summarizer client since it is the only one that runs GC. It also helps keep the telemetry less noisy.
         const gcConfigProps = JSON.stringify({
@@ -721,6 +720,12 @@ export class GarbageCollector implements IGarbageCollector {
             inactiveTimeout: this.inactiveTimeoutMs,
             existing: createParams.existing,
             trackGCState: this.trackGCState,
+            metadata_gcFeature: metadata?.gcFeature,
+            metadata_sessionExpiryTimeoutMs: metadata?.sessionExpiryTimeoutMs,
+            metadata_expectedSnapshotCacheExpiryMs: metadata?.expectedSnapshotCacheExpiryMs,
+            metadata_gcTestMode: metadata?.gcTestMode,
+            metadata_sweepEnabled: metadata?.sweepEnabled,
+            metadata_sweepTimeoutBufferMs: metadata?.sweepTimeoutBufferMs,
             ...this.gcOptions,
         });
         if (this.isSummarizerClient) {
