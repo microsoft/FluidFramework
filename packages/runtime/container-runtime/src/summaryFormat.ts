@@ -9,7 +9,6 @@ import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { gcTreeKey } from "./garbageCollection";
-import { GCTestMode } from "./gcConfig";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -106,28 +105,14 @@ export interface IGCMetadata {
      * - A value greater than 0 means GC is enabled.
      */
     readonly gcFeature?: GCVersion;
-
     /** If this is present, the session for this container will expire after this time and the container will close */
     readonly sessionExpiryTimeoutMs?: number;
-
-    /** Additional buffer time to wait, on top of required durations such as snapshot and session expiry */
-    readonly sweepTimeoutBufferMs?: number;
-
-    /** Expected value for snapshotCacheExpiryMs used by the driver for this container */
-    readonly expectedSnapshotCacheExpiryMs?: number;
-
     /**
      * Tells whether the GC sweep phase is enabled for this container.
      * - True means sweep phase is enabled.
      * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
      */
     readonly sweepEnabled?: boolean;
-
-    /**
-     * gcTestMode indicates the container is configured in a non-standard way to support certain testing scenarios.
-     * Only known values are supported in this version of the runtime code.
-     */
-    readonly gcTestMode?: GCTestMode;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
