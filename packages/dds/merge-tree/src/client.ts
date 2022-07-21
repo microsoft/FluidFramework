@@ -949,8 +949,6 @@ export class Client {
         resetOp: IMergeTreeOp,
         segmentGroup: SegmentGroup | SegmentGroup[],
     ): IMergeTreeOp {
-        // TODO: Obvious kludge :p
-        (this.mergeTree as any).nodeUpdateLengthNewStructure(this.mergeTree.root, true);
         const opList: IMergeTreeDeltaOp[] = [];
         if (resetOp.type === MergeTreeDeltaType.GROUP) {
             if (Array.isArray(segmentGroup)) {

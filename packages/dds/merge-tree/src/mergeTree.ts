@@ -427,6 +427,12 @@ export class MergeTree {
      */
     public pendingSegments: List<SegmentGroup> | undefined;
     private segmentsToScour: Heap<LRUSegment> | undefined;
+    /**
+     * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
+     * This information is only necessary on reconnect, and otherwise costly to bookkeep.
+     * This field enables tracking whether partials need to be recomputed using localSeq information.
+     */
+    private localPartialsComputed = false;
     // TODO: add remove on segment remove
     // for now assume only markers have ids and so point directly at the Segment
     // if we need to have pointers to non-markers, we can change to point at local refs
@@ -954,6 +960,10 @@ export class MergeTree {
                 // Local client sees all segments, even when collaborating
                 return node.cachedLength;
             } else {
+                if (!this.localPartialsComputed) {
+                    this.root.partialLengths = PartialSequenceLengths.combine(this.root, this.collabWindow, true, true);
+                    this.localPartialsComputed = true;
+                }
                 // Local client should see all segments except those after localSeq.
                 return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
             }
@@ -1960,6 +1970,7 @@ export class MergeTree {
     private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
+            this.localPartialsComputed = false;
             node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow, recur);
         }
     }
@@ -2044,6 +2055,7 @@ export class MergeTree {
             && seq !== UnassignedSequenceNumber // right here
             && seq !== TreeMaintenanceSequenceNumber
         ) {
+            this.localPartialsComputed = false;
             if (
                 node.partialLengths !== undefined
                 && MergeTree.options.incrementalUpdate

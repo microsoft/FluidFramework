@@ -145,9 +145,12 @@ export class PartialSequenceLengths {
      * @param recur - whether to recursively compute partial lengths for internal children of `block`.
      * This incurs more work, but gives correct bookkeeping in the case that a descendant in the merge tree has been
      * modified without bubbling up the resulting partial length change to this block's partials.
+     * @param computeLocalPartials - whether to compute partial length information about local unsequenced ops.
+     * This enables querying for the length of the block at a given localSeq, but incurs extra work.
+     * Local partial information doesn't support `update`.
      */
-    public static combine(block: IMergeBlock, collabWindow: CollaborationWindow, recur = false) {
-        const leafPartialLengths = PartialSequenceLengths.fromLeaves(block, collabWindow);
+    public static combine(block: IMergeBlock, collabWindow: CollaborationWindow, recur = false, computeLocalPartials = false) {
+        const leafPartialLengths = PartialSequenceLengths.fromLeaves(block, collabWindow, computeLocalPartials);
 
         let hasInternalChild = false;
         const childPartials: PartialSequenceLengths[] = [];
@@ -157,7 +160,7 @@ export class PartialSequenceLengths {
                 hasInternalChild = true;
                 if (recur) {
                     child.partialLengths =
-                        PartialSequenceLengths.combine(child, collabWindow, true);
+                        PartialSequenceLengths.combine(child, collabWindow, true, computeLocalPartials);
                 }
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 childPartials.push(child.partialLengths!);
@@ -167,7 +170,7 @@ export class PartialSequenceLengths {
         // If there are no internal children, the PartialSequenceLengths returns from `fromLeaves` is exactly correct.
         // Otherwise, we must additively combine all of the children partial lengths to get this block's totals.
         const combinedPartialLengths
-            = hasInternalChild ? new PartialSequenceLengths(collabWindow.minSeq) : leafPartialLengths;
+            = hasInternalChild ? new PartialSequenceLengths(collabWindow.minSeq, computeLocalPartials) : leafPartialLengths;
         if (hasInternalChild) {
             if (leafPartialLengths.partialLengths.length > 0) {
                 // Some children were leaves; add combined partials from these segments
@@ -183,11 +186,15 @@ export class PartialSequenceLengths {
                 combinedPartialLengths.segmentCount += segmentCount;
                 combinedPartialLengths.minLength += minLength;
                 childPartialLengths.push(partialLengths);
-                childUnsequencedPartialLengths.push(unsequencedPartialLengths);
+                if (unsequencedPartialLengths) {
+                    childUnsequencedPartialLengths.push(unsequencedPartialLengths);
+                }
             }
 
             combinedPartialLengths.partialLengths.push(...mergePartialLengths(childPartialLengths));
-            combinedPartialLengths.unsequencedPartialLengths.push(...mergePartialLengths(childUnsequencedPartialLengths));
+            if (computeLocalPartials) {
+                combinedPartialLengths.unsequencedPartialLengths = mergePartialLengths(childUnsequencedPartialLengths);
+            }
 
             // TODO: Same question here as in fromLeaves case.
             for (const partial of combinedPartialLengths.partialLengths) {
@@ -210,8 +217,8 @@ export class PartialSequenceLengths {
      * @returns a PartialSequenceLengths structure which tracks only lengths of leaf children of the provided
      * IMergeBlock.
      */
-    private static fromLeaves(block: IMergeBlock, collabWindow: CollaborationWindow): PartialSequenceLengths {
-        const combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq);
+    private static fromLeaves(block: IMergeBlock, collabWindow: CollaborationWindow, computeLocalPartials: boolean): PartialSequenceLengths {
+        const combinedPartialLengths = new PartialSequenceLengths(collabWindow.minSeq, computeLocalPartials);
         combinedPartialLengths.segmentCount = block.childCount;
 
         function seqLTE(seq: number | undefined, minSeq: number) {
@@ -252,10 +259,12 @@ export class PartialSequenceLengths {
         }
         prevLen = 0;
         let localPartials = combinedPartialLengths.unsequencedPartialLengths;
-        for (let i = 0; i < localPartials.length; i++) {
-            localPartials[i].len = prevLen + localPartials[i].seglen;
-            prevLen = localPartials[i].len;
-            // TODO: Do we need some analog of client seq here as well? and how does overlap work?
+        if (localPartials !== undefined) {
+            for (let i = 0; i < localPartials.length; i++) {
+                localPartials[i].len = prevLen + localPartials[i].seglen;
+                prevLen = localPartials[i].len;
+                // TODO: Do we need some analog of client seq here as well? and how does overlap work?
+            }
         }
 
         if (PartialSequenceLengths.options.verify) {
@@ -326,6 +335,10 @@ export class PartialSequenceLengths {
         }
 
         const seqPartials = isLocal ? combinedPartialLengths.unsequencedPartialLengths : combinedPartialLengths.partialLengths;
+        if (seqPartials === undefined) {
+            // Local partial but its computation isn't required
+            return;
+        }
         const seqPartialsLen = seqPartials.length;
         // Find the first entry with sequence number greater or equal to seq
         let indexFirstGTE = 0;
@@ -433,14 +446,19 @@ export class PartialSequenceLengths {
      * Contains entries for all local operations.
      * The "seq" field of each entry actually corresponds to the delta at that localSeq on the local client.
      */
-    private readonly unsequencedPartialLengths: PartialSequenceLength[] = [];
+    private unsequencedPartialLengths: PartialSequenceLength[] | undefined;
 
     constructor(
         /**
          * The minimumSequenceNumber as defined by the collab window used in the last call to `update`,
          * or if no such calls have been made, the one used on construction.
         */
-        public minSeq: number) { }
+        public minSeq: number,
+        computeLocalPartials: boolean) {
+            if (computeLocalPartials) {
+                this.unsequencedPartialLengths = [];
+            }
+        }
 
     // Assume: seq is latest sequence number; no structural change to sub-tree, but a segment
     // with sequence number seq has been added within the sub-tree (and `update` has been called
@@ -486,10 +504,7 @@ export class PartialSequenceLengths {
             }
         }
         this.segmentCount = segCount;
-
-        // TODO: Make this incremental. Current semantics are obviously bad.
-        this.unsequencedPartialLengths.length = 0;
-        this.unsequencedPartialLengths.push(...PartialSequenceLengths.combine(node, collabWindow, false).unsequencedPartialLengths)
+        this.unsequencedPartialLengths = undefined;
 
         PartialSequenceLengths.addSeq(this.partialLengths, seq, seqSeglen, clientId);
         if (this.clientSeqNumbers[clientId] === undefined) {
@@ -504,6 +519,17 @@ export class PartialSequenceLengths {
         }
     }
 
+    /**
+     * Returns the length of this block as viewed from the perspective of `clientId` at `refSeq`.
+     * This is the total length of all segments sequenced at or before refSeq OR submitted by `clientId`.
+     * If `clientId` is the local client, `localSeq` can also be provided. In that case, it is the total
+     * length of all segments submitted at or before `refSeq` in addition to any local, unacked segments
+     * with `segment.localSeq <= localSeq`.
+     *
+     * Note: currently, the local case (where `localSeq !== undefined`) is only supported if `refSeq` is the
+     * latest seq in the collab window. Additionally, it is only supported on a PartialSequenceLength object
+     * constructed with `computeLocalPartials` set to true and not subsequently updated with `update`.
+     */
     public getPartialLength(refSeq: number, clientId: number, localSeq?: number) {
         let pLen = this.minLength;
         const seqIndex = latestLEQ(this.partialLengths, refSeq);
@@ -537,6 +563,7 @@ export class PartialSequenceLengths {
         }
 
         if (localSeq !== undefined) {
+            assert(this.unsequencedPartialLengths !== undefined, "Local getPartialLength invoked without computing local partials.");
             // Local segments at or before localSeq should also be included
             // shoot--removedClientIds needs info about when it was removed locally for local remove cases
             const localIndex = latestLEQ(this.unsequencedPartialLengths, localSeq);
