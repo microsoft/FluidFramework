@@ -443,6 +443,10 @@ export class GarbageCollector implements IGarbageCollector {
     private get sessionExpiryTimeoutMs(): number | undefined {
         return this.containerConfig.sweepAllowed ? this.containerConfig.sessionExpiryTimeoutMs : undefined;
     }
+    /** Additional buffer time to wait, on top of required durations such as snapshot and session expiry */
+    private get sweepTimeoutBufferMs(): number | undefined {
+        return this.containerConfig.sweepAllowed ? this.containerConfig.sweepTimeoutBufferMs : undefined;
+    }
     /** The time after which an unreferenced node is inactive. */
     private readonly inactiveTimeoutMs: number;
     /**
@@ -860,6 +864,8 @@ export class GarbageCollector implements IGarbageCollector {
             gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
             sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
             sweepEnabled: this.sweepEnabled,
+            sweepTimeoutBufferMs: this.sweepTimeoutBufferMs,
+            gcTestMode: this.containerConfig.testMode,
         };
     }
 

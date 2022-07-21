@@ -118,7 +118,7 @@ describe("Garbage Collection Tests", () => {
     describe.only("Configuration", () => {
         const createGcWithPrivateMembers = (gcMetadata?: IGCMetadata, gcOptions?: IGCRuntimeOptions) => {
             const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && { summaryFormatVersion: 1, message: undefined, ...gcMetadata };
-            const gcWithPrivates: {
+            const gcWithPrivates: IGarbageCollector & {
                 readonly gcEnabled: boolean;
                 readonly sweepEnabled: boolean;
                 readonly shouldRunGC: boolean;
@@ -160,6 +160,12 @@ describe("Garbage Collection Tests", () => {
             it("sweepEnabled false", () => {
                 const gc = createGcWithPrivateMembers({ sweepEnabled: false });
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
+            });
+            it("Metadata Roundtrip", () => {
+                const inputMetadata: IGCMetadata = { sweepEnabled: true, gcFeature: 1, gcTestMode: "SweepV0", sessionExpiryTimeoutMs: 123, sweepTimeoutBufferMs: 456 };
+                const gc = createGcWithPrivateMembers(inputMetadata);
+                const outputMetadata = gc.getMetadata();
+                assert.deepEqual(outputMetadata, inputMetadata, "getMetadata returned different metadata than loaded from");
             });
         });
 
@@ -217,6 +223,13 @@ describe("Garbage Collection Tests", () => {
                 assert(gc.gcEnabled, "gcEnabled incorrect");
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
+            });
+            it("Metadata Roundtrip", () => {
+                injectedSettings["Fluid.GarbageCollection.TestConfig"] = JSON.stringify({ SweepV0: { sessionExpiryTimeoutMs: 1000 } });
+                const expectedMetadata: IGCMetadata = { sweepEnabled: true, gcFeature: 1, gcTestMode: "SweepV0", sessionExpiryTimeoutMs: 1000, sweepTimeoutBufferMs: 500 };
+                const gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
+                const outputMetadata = gc.getMetadata();
+                assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
             });
         });
     });
