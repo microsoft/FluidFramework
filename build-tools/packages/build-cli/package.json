@@ -53,7 +53,6 @@
     "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
-    "concurrently": "^6.2.0",
     "inquirer": "^9.0.0",
     "semver": "^7.3.7",
     "table": "^6.8.0"
@@ -68,6 +67,7 @@
     "@types/semver": "^7.3.10",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
+    "concurrently": "^6.2.0",
     "chai": "^4.2.0",
     "eslint": "~8.6.0",
     "eslint-config-oclif": "^4",
