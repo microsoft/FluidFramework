@@ -7,8 +7,9 @@ import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { PlaceholderTree, placeholderTreeFromCursor, TextCursor } from "../feature-libraries/treeTextFormat";
+import { placeholderTreeFromCursor, TextCursor } from "../feature-libraries/treeTextCursor";
 
+import { PlaceholderTree } from "../tree";
 import { brand } from "../util";
 
 const testCases: [string, PlaceholderTree][] = [
