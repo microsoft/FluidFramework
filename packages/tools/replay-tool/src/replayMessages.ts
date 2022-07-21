@@ -351,10 +351,7 @@ export class ReplayTool {
 
         // GC will consider unreferenced node in old documents to be inactive. When such nodes receive ops or are
         // loaded, GC will log an error. Ignore those errors since we don't care about them when replaying old docs.
-        if (event.eventName.includes("GarbageCollector:inactiveObject_")
-            // there is something wrong with summary ops, but we don't run the summarizer, so it shouldn't matter
-            || event.eventName.includes("SummaryAckWithoutOp")
-        ) {
+        if (event.eventName.includes("GarbageCollector:inactiveObject_")) {
             return false;
         }
 
@@ -608,7 +605,6 @@ export class ReplayTool {
 
         const startOp = op - this.args.overlappingContainers * this.args.snapFreq;
         while (this.documentsWindow.length > 0
-            // eslint-disable-next-line no-unmodified-loop-condition
             && (final || this.documentsWindow[0].fromOp <= startOp)) {
             const doc = this.documentsWindow.shift();
             assert(doc.fromOp === startOp || final,

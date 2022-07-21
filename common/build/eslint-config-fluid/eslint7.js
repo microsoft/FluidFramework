@@ -77,7 +77,6 @@ module.exports = {
         "@typescript-eslint/no-invalid-this": "off",
         "@typescript-eslint/no-magic-numbers": "off",
         "@typescript-eslint/no-misused-new": "error",
-        "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/no-non-null-assertion": "error",
         "@typescript-eslint/no-parameter-properties": "off",
         "@typescript-eslint/no-require-imports": "error",

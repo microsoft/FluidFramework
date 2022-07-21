@@ -8,11 +8,12 @@ import { assert } from "./assert";
 
 /**
  * Converts a Uint8Array to a string of the provided encoding
- * Useful when the array might be an IsoBuffer
- * @param arr - The array to convert
+ * Useful when the array might be an {@link IsoBuffer}.
+ *
+ * @param arr - The array to convert.
  * @param encoding - Optional target encoding; only "utf8" and "base64" are
- * supported, with "utf8" being default
- * @returns The converted string
+ * supported, with "utf8" being default.
+ * @returns The converted string.
  */
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
     switch (encoding) {
@@ -31,8 +32,10 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
 }
 
 /**
- * Convert base64 or utf8 string to array buffer
- * @param encoding - input string's encoding
+ * Converts a {@link https://en.wikipedia.org/wiki/Base64 | base64} or
+ * {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8} string to array buffer.
+ *
+ * @param encoding - The input string's encoding.
  */
 export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike =>
     IsoBuffer.from(input, encoding).buffer;
@@ -48,14 +51,16 @@ export const bufferToString = (blob: ArrayBufferLike, encoding: string): string 
      IsoBuffer.from(blob).toString(encoding);
 
 /**
- * Determines if an object is an array buffer
- * Will detect and reject TypedArrays, like Uint8Array.
+ * Determines if an object is an array buffer.
+ *
+ * @remarks Will detect and reject TypedArrays, like Uint8Array.
  * Reason - they can be viewport into Array, they can be accepted, but caller has to deal with
- * math properly (i.e. take into account byteOffset at minimum).
+ * math properly (i.e. Take into account byteOffset at minimum).
  * For example, construction of new TypedArray can be in the form of new TypedArray(typedArray) or
  * new TypedArray(buffer, byteOffset, length), but passing TypedArray will result in fist path (and
- * ignoring byteOffice, length)
- * @param obj - The object to determine if it is an ArrayBuffer
+ * ignoring byteOffice, length).
+ *
+ * @param obj - The object to determine if it is an ArrayBuffer.
  */
 export function isArrayBuffer(obj: any): obj is ArrayBuffer {
     const maybe = obj as (Partial<ArrayBuffer> & Partial<Uint8Array>) | undefined;
@@ -75,17 +80,18 @@ export class IsoBuffer extends Uint8Array {
     /**
      * Convert the buffer to a string.
      * Only supports encoding the whole string (unlike the Node Buffer equivalent)
-     * and only utf8 and base64 encodings
-     * @param encoding - encoding to use
+     * and only utf8 and base64 encodings.
+     *
+     * @param encoding - The encoding to use.
      */
     public toString(encoding?: string): string {
         return Uint8ArrayToString(this, encoding);
     }
 
     /**
-     * @param value - string | ArrayBuffer
-     * @param encodingOrOffset - string | number
-     * @param length - number
+     * @param value - (string | ArrayBuffer)
+     * @param encodingOrOffset - (string | number)
+     * @param length - (number)
      */
     static from(value, encodingOrOffset?, length?): IsoBuffer {
         if (typeof value === "string") {
@@ -140,8 +146,9 @@ export class IsoBuffer extends Uint8Array {
     }
 
     /**
-     * Sanitize a base64 string to provide to base64-js library.  base64-js
-     * is not as tolerant of the same malformed base64 as Node's Buffer is.
+     * Sanitize a base64 string to provide to base64-js library.
+     * {@link https://www.npmjs.com/package/base64-js} is not as tolerant of the same malformed base64 as Node'
+     * Buffer is.
      */
     private static sanitizeBase64(str: string): string {
         let sanitizedStr = str;

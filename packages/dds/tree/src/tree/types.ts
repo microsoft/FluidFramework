@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { Serializable } from "@fluidframework/datastore-definitions";
+import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema";
 import { Brand, Opaque } from "../util";
 
-export type FieldKey = Brand<number | string, "FieldKey">;
-export type TreeType = Brand<number | string, "TreeType">;
+export type FieldKey = LocalFieldKey | GlobalFieldKey;
+export type TreeType = TreeSchemaIdentifier;
 
 /**
  * The empty key ("") is used for unnamed relationships, such as the indexer
@@ -19,7 +21,7 @@ export const EmptyKey = "" as const as FieldKey;
  *
  * @public
  */
- export interface ChildLocation {
+export interface ChildLocation {
     readonly container: ChildCollection;
     readonly index: number;
 }
@@ -49,7 +51,7 @@ export type ChildCollection = FieldKey | RootRange;
  * DetachedRanges are not valid to use as across edits:
  * they are only valid within the edit in which they were created.
  */
-export type DetachedRange = Opaque<Brand<number, "tree.DetachedRange">>;
+export interface DetachedRange extends Opaque<Brand<number, "tree.DetachedRange">> {}
 
 /**
  * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.
@@ -62,3 +64,20 @@ export interface FieldKind {
     readonly minimumChildren: number;
     readonly maximumChildren: number;
 }
+
+/**
+ * Value that may be stored on a node.
+ *
+ * TODO: `Serializable` is not really the right type to use here,
+ * since many types (including functions) are "Serializable" (according to the type) despite not being serializable.
+ *
+ * Use this type instead of directly using Serializable for both clarity and so the above TODO can be addressed.
+ *
+ * This is a named interface instead of a Type alias so tooling (ex: refactors) will not replace it with `any`.
+ */
+export interface TreeValue extends Serializable {}
+
+ /**
+  * Value stored on a node.
+  */
+export type Value = undefined | TreeValue;

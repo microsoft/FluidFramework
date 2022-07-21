@@ -205,25 +205,76 @@ module.exports = {
 
         // #region eslint-plugin-jsdoc rules
 
-        // Ensures that conflicting access tags don't exist in the same comment.
-        // See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
+        /**
+         * Ensures that conflicting access tags don't exist in the same comment.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
+         */
         "jsdoc/check-access": "error",
 
-        // The syntax this validates does not accommodate the syntax used by API-Extractor
-        // See <https://api-extractor.com/pages/tsdoc/tag_example/>
+        /**
+         * Ensures consistent line formatting in JSDoc/TSDoc comments
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-check-alignment>
+         */
+        "jsdoc/check-line-alignment": "error",
+
+        /**
+         * The syntax this validates does not accommodate the syntax used by API-Extractor
+         * See <https://api-extractor.com/pages/tsdoc/tag_example/>
+         */
         'jsdoc/check-examples': 'off',
 
-        // Covered by `tsdoc/syntax`
+        /**
+         * Ensures correct indentation within JSDoc/TSDoc comment body
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-check-indentation>
+         */
+        "jsdoc/check-indentation": "error",
+
+        /**
+         * Covered by `tsdoc/syntax`
+         */
         'jsdoc/check-tag-names': 'off',
 
-        // Ensure function/method parameter comments include a `-` between name and description.
-        // Useful to ensure API-Extractor compatability.
-        // See <https://www.npmjs.com/package/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-hyphen-before-param-description>.
+        /**
+         * Ensures that JSDoc/TSDoc "modifier" tags are empty.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-empty-tags>
+         */
+        "jsdoc/empty-tags": "error",
+
+        /**
+         * Ensures multi-line formatting meets JSDoc/TSDoc requirements.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-no-bad-blocks>
+         */
+        "jsdoc/no-bad-blocks": "error",
+
+        /**
+         * Requires that each line in a JSDoc/TSDoc comment starts with a `*`.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-asterisk-prefix>
+         */
+        "jsdoc/require-asterisk-prefix": "error",
+
+        /**
+         * Ensure function/method parameter comments include a `-` between name and description.
+         * Useful to ensure API-Extractor compatability.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-hyphen-before-param-description>.
+         */
         "jsdoc/require-hyphen-before-param-description": "error",
+
+        /**
+         * Require `@param` tags be non-empty.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-param-description>
+         */
+        "jsdoc/require-param-description": "error",
+
+        /**
+         * Requires `@returns` tags to be non-empty.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-returns-description>
+         */
+        "jsdoc/require-returns-description": "error",
 
         // #endregion
 
         "@typescript-eslint/prefer-includes": "error",
+        "@typescript-eslint/prefer-nullish-coalescing": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
     },
     "overrides": [
@@ -244,6 +295,7 @@ module.exports = {
             // Rules only for test files
             "files": ["*.spec.ts", "src/test/**"],
             "rules": {
+                "@typescript-eslint/no-invalid-this": "off",
                 "@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
             }
         },
@@ -253,8 +305,6 @@ module.exports = {
             "rules": {
                 "@typescript-eslint/comma-spacing": "off",
                 "@typescript-eslint/consistent-type-imports": "off",
-                "@typescript-eslint/no-explicit-any": "off",
-                "@typescript-eslint/no-unsafe-argument": "off",
                 "max-lines": "off",
             }
         },
@@ -286,7 +336,7 @@ module.exports = {
             }
         },
         "jsdoc": {
-            // The following are intended to keep js/jsx jsdoc comments in line with tsdoc syntax used in ts/tsx code.
+            // The following are intended to keep js/jsx JSDoc comments in line with TSDoc syntax used in ts/tsx code.
             "tagNamePreference": {
                 "arg": {
                     "message": "Please use @param instead of @arg.",

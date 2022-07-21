@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { execAsync } from "../common/utils";
 import * as semver from "semver";
-import { isVersionBumpType, VersionBumpType, VersionChangeType, VersionChangeTypeExtended } from "./context";
+import {
+    VersionScheme,
+    isVersionBumpType,
+    VersionBumpType,
+    VersionChangeType,
+    VersionChangeTypeExtended,
+} from "./versionSchemes";
 
 export function fatal(error: string): never {
     const e = new Error(error);
@@ -88,6 +94,8 @@ function translateVirtualVersion(
         }
         case "minor": {
             virtualVersion.patch += 1000;
+            // adjust down to the nearest thousand
+            virtualVersion.patch = virtualVersion.patch - (virtualVersion.patch % 1000);
             break;
         }
         case "patch": {
@@ -101,24 +109,15 @@ function translateVirtualVersion(
 }
 
 /**
- * A type defining the version schemes that can be used for packages.
- *
- * "semver" is the standard semver scheme.
- *
- * "internal" is the 2.0.0-internal.1.0.0 scheme.
- *
- * "virtualPatch" is the 0.36.1002 scheme.
- */
-export type VersionScheme = "semver" | "internal" | "virtualPatch";
-
-/**
  * Adjusts the provided version according to the bump type and version scheme. Returns the adjusted version.
  *
- * @param version The input version.
- * @param bumpType The type of bump,
- * @param scheme The version scheme to use.
+ * @param version - The input version.
+ * @param bumpType - The type of bump.
+ * @param scheme - The version scheme to use.
  * @returns An adjusted version as a semver.SemVer.
  */
+// TODO: move this function to version-tools once the dependency direction is reversed and build-tools can depend on
+// version-tools.
 export function adjustVersion(
     version: string | semver.SemVer | undefined,
     bumpType: VersionChangeTypeExtended,
@@ -152,7 +151,7 @@ export function adjustVersion(
                     fatal(`Applying virtual patch failed. The version returned was: ${translatedVersion}`);
                 }
             } else {
-                fatal("Can only use virtual patches when doing major/minor/patch bumps");
+                return sv;
             }
         }
     }

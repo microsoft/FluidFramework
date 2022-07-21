@@ -55,8 +55,9 @@ export function generateToken(
     documentId?: string,
     user?: IUser,
     lifetime: number = 60 * 60,
-    ver: string = "1.0"): string {
-    let userClaim = (user) ? user : generateUser();
+    ver: string = "1.0",
+): string {
+    let userClaim = user ? user : generateUser();
     if (userClaim.id === "" || userClaim.id === undefined) {
         userClaim = generateUser();
     }
@@ -65,7 +66,7 @@ export function generateToken(
     const now = Math.round(Date.now() / 1000);
     const docId = documentId ?? "";
 
-    const claims: ITokenClaims & { jti: string; } = {
+    const claims: ITokenClaims & { jti: string } = {
         documentId: docId,
         scopes,
         tenantId,
@@ -78,9 +79,14 @@ export function generateToken(
 
     const utf8Key = { utf8: key };
 
-    // External API uses null
-    // eslint-disable-next-line unicorn/no-null
-    return jsrsasign.jws.JWS.sign(null, JSON.stringify({ alg: "HS256", typ: "JWT" }), claims, utf8Key);
+    return jsrsasign.jws.JWS.sign(
+        // External API uses null
+        // eslint-disable-next-line unicorn/no-null
+        null,
+        JSON.stringify({ alg: "HS256", typ: "JWT" }),
+        claims,
+        utf8Key,
+    );
 }
 
 /**

@@ -4,7 +4,7 @@
  */
 
 import { brand, Brand, Contravariant, Covariant, Invariant } from "../util";
-import { UpPath } from "./pathTree";
+import { AnchorSet } from "../tree";
 
 /**
  * A way to refer to a particular revision within a given {@link Rebaser} instance.
@@ -50,10 +50,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
     ): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>] {
         const initalChangeset: ChangeSetFromChangeRebaser<TChangeRebaser> =
             this.rebaser.import(changes);
-        if (from !== to) {
-            throw Error("Not implemented"); // TODO: rebase
-        }
-        const over = this.rebaser.compose([]);
+        const over = this.getResolutionPath(from, to);
         const finalChangeset: ChangeSetFromChangeRebaser<TChangeRebaser> =
             this.rebaser.rebase(initalChangeset, over);
         const newRevision = this.makeRevision();
@@ -64,6 +61,38 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
         const output: FinalFromChangeRebaser<TChangeRebaser> =
             this.rebaser.export(finalChangeset);
         return [newRevision, output];
+    }
+
+    /**
+     * Modifies `anchors` to be valid at the destination.
+     */
+    public rebaseAnchors(
+        anchors: AnchorSet,
+        from: RevisionTag,
+        to: RevisionTag,
+    ): void {
+        const over = this.getResolutionPath(from, to);
+        this.rebaser.rebaseAnchors(anchors, over);
+    }
+
+    // Separated out for easier testing
+    private getRawResolutionPath(
+        from: RevisionTag,
+        to: RevisionTag,
+    ): ChangeSetFromChangeRebaser<TChangeRebaser>[] {
+        if (from !== to) {
+            throw Error("Not implemented"); // TODO: rebase
+        }
+        return [];
+    }
+
+    private getResolutionPath(
+        from: RevisionTag,
+        to: RevisionTag,
+    ): ChangeSetFromChangeRebaser<TChangeRebaser> {
+        // TODO: fix typing
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return this.rebaser.compose(...this.getRawResolutionPath(from, to));
     }
 
     /**
@@ -129,6 +158,11 @@ export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
 
     rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
 
+    // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
+    // This isn't ideal, but it might be fine?
+    // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
+    rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
+
     import(change: TChange): TChangeSet;
 
     export(change: TChangeSet): TFinalChange;
@@ -142,20 +176,4 @@ export enum FinalChangeStatus {
     conflicted,
     rebased,
     commuted,
-}
-
-export interface AnchorLocator<TAnchor> {
-    /**
-     * TODO: support extra/custom return types for specific anchor types:
-     * for now caller must rely on dat in anchor + returned node location
-     * (not ideal for anchors for places or ranges instead of nodes).
-     */
-    locate(anchor: TAnchor): UpPath;
-
-    forget(anchor: TAnchor): void;
-
-    /**
-     * TODO: add API to UpPath (maybe extend as AnchorPath to allow building without having to copy here?)
-     */
-    track(path: UpPath): TAnchor;
 }

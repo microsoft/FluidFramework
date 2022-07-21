@@ -7,7 +7,7 @@ maintainable CLI using [oclif](https://oclif.io).
 flub is not built in CI. You need to build it locally.
 
 <!-- toc -->
-* [@fluid-internal/flub](#fluid-internalflub)
+* [@fluid-internal/build-cli](#fluid-internalbuild-cli)
 * [Usage](#usage)
 * [Commands](#commands)
 <!-- tocstop -->
@@ -19,7 +19,7 @@ $ npm install -g @fluid-internal/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-internal/build-cli/0.1.0 linux-x64 node-v14.19.3
+@fluid-internal/build-cli/0.3.0 linux-x64 node-v14.19.2
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -30,8 +30,10 @@ USAGE
 <!-- commands -->
 * [`flub bump`](#flub-bump)
 * [`flub bump deps`](#flub-bump-deps)
+* [`flub commands`](#flub-commands)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
+* [`flub version VERSION`](#flub-version-version)
 
 ## `flub bump`
 
@@ -39,15 +41,17 @@ Bump versions of packages and dependencies.
 
 ```
 USAGE
-  $ flub bump -t major|minor|patch|current [-r <value>] [-g Azure|Client|Server | ] [-p <value> | ]
+  $ flub bump [-r <value>] [-v] [-g client|server|azure|build-tools | ] [-p <value> | ] [-t
+    major|minor|patch|current]
 
 FLAGS
   -g, --releaseGroup=<option>  release group
-                               <options: Azure|Client|Server>
+                               <options: client|server|azure|build-tools>
   -p, --package=<value>        package
   -r, --root=<value>           Root directory of the Fluid repo (default: env _FLUID_ROOT_).
-  -t, --type=<option>          (required) [default: current] bump type
+  -t, --type=<option>          Version bump type.
                                <options: major|minor|patch|current>
+  -v, --verbose                Verbose logging.
 
 DESCRIPTION
   Bump versions of packages and dependencies.
@@ -56,7 +60,7 @@ EXAMPLES
   $ flub bump
 ```
 
-_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.1.0/dist/commands/bump.ts)_
+_See code: [dist/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/bump.ts)_
 
 ## `flub bump deps`
 
@@ -64,13 +68,14 @@ Bump the dependencies version of specified package or release group
 
 ```
 USAGE
-  $ flub bump deps [-r <value>] [-g Azure|Client|Server | ] [-p <value> | ]
+  $ flub bump deps [-r <value>] [-v] [-g client|server|azure|build-tools | ] [-p <value> | ]
 
 FLAGS
   -g, --releaseGroup=<option>  release group
-                               <options: Azure|Client|Server>
+                               <options: client|server|azure|build-tools>
   -p, --package=<value>        package
   -r, --root=<value>           Root directory of the Fluid repo (default: env _FLUID_ROOT_).
+  -v, --verbose                Verbose logging.
 
 DESCRIPTION
   Bump the dependencies version of specified package or release group
@@ -78,6 +83,38 @@ DESCRIPTION
 EXAMPLES
   $ flub bump deps
 ```
+
+## `flub commands`
+
+list all the commands
+
+```
+USAGE
+  $ flub commands [--json] [-h] [--hidden] [--tree] [--columns <value> | -x] [--sort <value>] [--filter
+    <value>] [--output csv|json|yaml |  | [--csv | --no-truncate]] [--no-header | ]
+
+FLAGS
+  -h, --help         Show CLI help.
+  -x, --extended     show extra columns
+  --columns=<value>  only show provided columns (comma-separated)
+  --csv              output is csv format [alias: --output=csv]
+  --filter=<value>   filter property by partial string matching, ex: name=foo
+  --hidden           show hidden commands
+  --no-header        hide table header from output
+  --no-truncate      do not truncate output to fit screen
+  --output=<option>  output in a more machine friendly format
+                     <options: csv|json|yaml>
+  --sort=<value>     property to sort by (prepend '-' for descending)
+  --tree             show tree of commands
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  list all the commands
+```
+
+_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.0/src/commands/commands.ts)_
 
 ## `flub help [COMMAND]`
 
@@ -101,20 +138,66 @@ _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.1
 
 ## `flub info`
 
-Get info about the repo, release groups, and packages
+Get info about the repo, release groups, and packages.
 
 ```
 USAGE
-  $ flub info [-r <value>]
+  $ flub info [-r <value>] [-v] [-g client|server|azure|build-tools | ] [-p]
 
 FLAGS
-  -r, --root=<value>  Root directory of the Fluid repo (default: env _FLUID_ROOT_).
+  -g, --releaseGroup=<option>  release group
+                               <options: client|server|azure|build-tools>
+  -p, --[no-]private           Include private packages (default true).
+  -r, --root=<value>           Root directory of the Fluid repo (default: env _FLUID_ROOT_).
+  -v, --verbose                Verbose logging.
 
 DESCRIPTION
-  Get info about the repo, release groups, and packages
+  Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.1.0/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/info.ts)_
+
+## `flub version VERSION`
+
+Convert version strings between regular semver and the Fluid internal version scheme.
+
+```
+USAGE
+  $ flub version [VERSION] [--json] [-t major|minor|patch|current] [--publicVersion <value>]
+
+ARGUMENTS
+  VERSION  The version to convert.
+
+FLAGS
+  -t, --type=<option>      bump type
+                           <options: major|minor|patch|current>
+  --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Convert version strings between regular semver and the Fluid internal version scheme.
+
+EXAMPLES
+  The version can be a Fluid internal version.
+
+    $ flub version 2.0.0-internal.1.0.0 --type minor
+
+  The version can also be a semver with a bump type.
+
+    $ flub version 1.0.0 --type minor
+
+  If needed, you can provide a public version to override the default.
+
+    $ flub version 1.0.0 --type patch --publicVersion 3.1.0
+
+  You can use ^ and ~ as a shorthand.
+
+    $ flub version ^1.0.0
+```
+
+_See code: [@fluid-internal/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
 <!-- commandsstop -->
 
 ## Trademark

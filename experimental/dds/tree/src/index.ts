@@ -103,6 +103,7 @@ export {
 	SequencedEditAppliedEventArguments,
 	EditApplicationOutcome,
 	ISharedTreeEvents,
+	StashedLocalOpMetadata,
 } from './SharedTree';
 export * from './EventTypes';
 export {

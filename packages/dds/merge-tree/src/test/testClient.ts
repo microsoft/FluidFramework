@@ -15,12 +15,14 @@ import {
     ListMakeHead,
 } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import { ISegment, Marker, MergeTree } from "../mergeTree";
+import { ISegment, Marker } from "../mergeTreeNodes";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
-import { MergeTreeTextHelper, TextSegment } from "../textSegment";
+import { TextSegment } from "../textSegment";
+import { MergeTree } from "../mergeTree";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
