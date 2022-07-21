@@ -12,7 +12,7 @@ import { NodeId } from ".";
 /**
  * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
- export namespace Transposed {
+export namespace Transposed {
 	export interface Transaction extends Changeset {
 		/**
 		 * The reference sequence number of the transaction that this transaction was originally
