@@ -32,7 +32,7 @@ You can think of a `SharedMap` as a set of key-value pairs similar to a JavaScri
 The "Shared" in the name conveys the fact that the object is accessible to code in every client simultaneously.
 Learn more about initial objects in [Data modeling]({{< relref "data-modeling.md" >}}).
 
-Lastly, `root` specifies the HTML element that renders the dice.
+Lastly, `root` specifies the HTML element under which the dice is rendered.
 
 ```js
 import { SharedMap } from "fluid-framework";
