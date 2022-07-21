@@ -115,7 +115,7 @@ describe("Garbage Collection Tests", () => {
     });
 
     describe("Configuration", () => {
-        const createGcWithPrivateMembers = (gcMetadata?: IGCMetadata, gcOptions?: IGCRuntimeOptions) => {
+        const createGcWithPrivateMembers = (gcMetadata?: IGCMetadata, gcOptions?: IGCRuntimeOptions, snapshotCacheExpiryMs?: number) => {
             const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && { summaryFormatVersion: 1, message: undefined, ...gcMetadata };
             const gcWithPrivates: IGarbageCollector & {
                 readonly gcEnabled: boolean;
@@ -128,7 +128,7 @@ describe("Garbage Collection Tests", () => {
                 readonly sessionExpiryTimeoutMs: number | undefined;
                 readonly inactiveTimeoutMs: number;
                 readonly sweepTimeoutMs: number | undefined;
-            } = createGarbageCollector({ metadata, gcOptions }) as any;
+            } = createGarbageCollector({ metadata, gcOptions, snapshotCacheExpiryMs }) as any;
             return gcWithPrivates;
         };
         describe("Existing container", () => {
@@ -195,8 +195,14 @@ describe("Garbage Collection Tests", () => {
                     (e) => e.errorType === "usageError",
                     "Should be unsupported");
             });
-            it("sweepAllowed true, gcAllowed true", () => {
-                const gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true, sweepAllowed: true });
+            it("sweepAllowed true, gcAllowed true, no snapshotCacheExpiryMs", () => {
+                assert.throws(
+                    () => createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true, sweepAllowed: true }),
+                    /If Sweep is allowed for this new container, snapshotCacheExpiryMs is required/,
+                    "Should be unsupported");
+            });
+            it("sweepAllowed true, gcAllowed true, with snapshotCacheExpiryMs", () => {
+                const gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true, sweepAllowed: true }, 123 /* snapshotCacheExpiryMs */);
                 assert(gc.gcEnabled, "gcEnabled incorrect");
                 assert(gc.sweepEnabled, "sweepEnabled incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
@@ -213,8 +219,7 @@ describe("Garbage Collection Tests", () => {
                 const gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
                 assert(gc.gcEnabled, "gcEnabled incorrect");
                 assert(!gc.sweepEnabled, "sweepEnabled incorrect");
-                //* Changed Behavior
-                assert(gc.sessionExpiryTimeoutMs === undefined, "sessionExpiryTimeoutMs incorrect");
+                assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
             });
             it("sweepAllowed false, sessionExpiry disabled", () => {
                 injectedSettings[runSessionExpiryKey] = false;
@@ -225,7 +230,7 @@ describe("Garbage Collection Tests", () => {
             });
             it("Metadata Roundtrip", () => {
                 injectedSettings["Fluid.GarbageCollection.TestConfig"] = JSON.stringify({ SweepV0: { sessionExpiryTimeoutMs: 1000 } });
-                const expectedMetadata: IGCMetadata = { sweepEnabled: true, gcFeature: 1, gcTestMode: "SweepV0", sessionExpiryTimeoutMs: 1000, sweepTimeoutBufferMs: 500 };
+                const expectedMetadata: IGCMetadata = { sweepEnabled: true, gcFeature: 1, gcTestMode: "SweepV0", sessionExpiryTimeoutMs: 1000, sweepTimeoutBufferMs: 500, expectedSnapshotCacheExpiryMs: 0 };
                 const gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
