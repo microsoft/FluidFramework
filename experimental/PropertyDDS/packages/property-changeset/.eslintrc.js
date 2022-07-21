@@ -17,6 +17,7 @@ module.exports = {
         "@typescript-eslint/consistent-type-definitions": "off",
         "@typescript-eslint/dot-notation": "off",
         "@typescript-eslint/no-dynamic-delete": "off",
+        "@typescript-eslint/no-invalid-this": "off",
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-require-imports": "off",

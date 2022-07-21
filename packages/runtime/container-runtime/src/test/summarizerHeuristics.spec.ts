@@ -47,7 +47,7 @@ describe.only("Runtime", () => {
             };
             const getLastAttempt = () => attempts.length > 0 ? attempts[attempts.length - 1] : undefined;
             function assertAttemptCount(count: number, message?: string) {
-                const fullMessage = `${attempts.length} !== ${count}; ${message || "unexpected attempt count"}`;
+                const fullMessage = `${attempts.length} !== ${count}; ${message ?? "unexpected attempt count"}`;
                 assert(attempts.length === count, fullMessage);
             }
 

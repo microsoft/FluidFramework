@@ -9,8 +9,8 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryContext, ISummaryTreeWithStats, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
+import { Delta } from "../changeset";
 import { ChangeRebaser, FinalFromChangeRebaser, Rebaser } from "../rebase";
-import { Invariant } from "../util";
 import { LazyPageTree } from "./lazyPageTree";
 
 /**
@@ -70,8 +70,6 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
  * Observes Changesets (after rebase), after writes data into summaries when requested.
  */
 export interface Index<TChangeset> {
-    _typeCheck: Invariant<TChangeset>;
-
     /**
      * @param change - change that was just sequenced.
      * @param derivedFromLocal - iff provided, change was a local change (from this session)
@@ -87,7 +85,7 @@ export interface Index<TChangeset> {
      * May involve effects of a new sequenced change (including rebasing of local changes onto it),
      * or a new local change. Called after either sequencedChange or newLocalChange.
      */
-    newLocalState?(changeDelta: TChangeset): void;
+    newLocalStateVisitor?(changeDelta: Delta.Root): void;
 
     /**
      * If provided, records data into summaries.

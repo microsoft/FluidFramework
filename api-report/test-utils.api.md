@@ -4,6 +4,7 @@
 
 ```ts
 
+import { Container } from '@fluidframework/container-loader';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { FluidDataStoreRuntime } from '@fluidframework/datastore';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -82,6 +83,9 @@ export enum DataObjectFactoryType {
 
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
+
+// @public (undocumented)
+export function ensureContainerConnected(container: Container): Promise<void>;
 
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {

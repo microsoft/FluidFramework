@@ -161,14 +161,14 @@ const updateHandler = (callback: IInspectorSearchCallback, searchState: IInspect
  * @param toTableRowsProps - A subset of the inspector table props that is passed on to the toTableRows method.
  * @param toTableRowsOptions - Options that influence the behaviour of the toTableRows method.
  * @param searchState - An object storing the (intermediate) search results and information on how to proceed in
- *  subsequent calls. Users don't need to mind this.
+ * subsequent calls. Users don't need to mind this.
  * @param chunkSize - The size of the chunk (number of rows) to search in each pass.
  * @param recursive - A flag indicating whether the search function has been called recursively by itself.
  * Users don't need to mind this.
  * @param entryPoint - A flag indicating whether this functions was the entry point of a recursive traversal.
  * Users don't need to mind this.
  * @return An object that gives access to the search state and abort handler. While the state object needs to be passed
- *  to future search calls, the abort handler is a function that can be used to abort the search process at any time.
+ * to future search calls, the abort handler is a function that can be used to abort the search process at any time.
  */
 export const search = (
   searchExpression: string, data: IInspectorRow[], dataGetter, columns: IColumns[],

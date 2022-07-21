@@ -379,7 +379,7 @@ export class DocumentStorage implements IDocumentStorage {
             const opsCollection = await this.databaseManager.getDeltaCollection(tenantId, documentId);
             await opsCollection
                 .insertMany(dbOps, false)
-                .catch((error) => {
+                .catch(async (error) => {
                     // Duplicate key errors are ignored
                     if (error.code !== 11000) {
                         // Needs to be a full rejection here

@@ -42,7 +42,8 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
 
         case "r11s":
             assert(options.tenantId !== undefined, 0x320 /* options.tenantId is undefined */);
-            assert(options.fluidHost !== undefined, 0x322 /* options.fluidHost is undefined */);
+            assert(options.fluidHost !== undefined || options.discoveryEndpoint !== undefined
+                , 0x322 /* options.fluidHost and options.discoveryEndpoint are undefined */);
             if (options.discoveryEndpoint !== undefined) {
                 return new InsecureUrlResolver(
                     "",
@@ -51,10 +52,12 @@ function getUrlResolver(options: RouteOptions): IUrlResolver {
                     options.tenantId,
                     options.bearerSecret ?? "");
             }
+
+            const fluidHost = options.fluidHost ?? "";
             return new InsecureUrlResolver(
-                options.fluidHost,
-                options.fluidHost.replace("www", "alfred"),
-                options.fluidHost.replace("www", "historian"),
+                fluidHost,
+                fluidHost.replace("www", "alfred"),
+                fluidHost.replace("www", "historian"),
                 options.tenantId,
                 options.bearerSecret ?? "");
         case "tinylicious": {

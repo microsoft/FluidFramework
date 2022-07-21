@@ -14,7 +14,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
-import { RedBlackTree } from "./collections";
+import { ListRemoveEntry, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition } from "./localReference";
 import {
@@ -24,9 +24,8 @@ import {
     ISegment,
     ISegmentAction,
     Marker,
-    MergeTree,
     SegmentGroup,
-} from "./mergeTree";
+} from "./mergeTreeNodes";
 import { MergeTreeDeltaCallback } from "./mergeTreeDeltaCallback";
 import {
     createAnnotateMarkerOp,
@@ -51,9 +50,11 @@ import {
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
-import { MergeTreeTextHelper } from "./textSegment";
+import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
+import { MergeTree } from "./mergeTree";
+import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -88,6 +89,10 @@ export class Client {
         this.mergeTree.mergeTreeMaintenanceCallback = callback;
     }
 
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     protected readonly mergeTree: MergeTree;
 
     private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
@@ -344,6 +349,63 @@ export class Client {
 
     public getMarkerFromId(id: string) {
         return this.mergeTree.getMarkerFromId(id);
+    }
+
+    /**
+     * Revert an op
+     */
+    public rollback?(op: any, localOpMetadata: unknown) {
+        if (op.type !== MergeTreeDeltaType.INSERT) {
+            throw new Error("Unsupported op type for rollback");
+        }
+
+        const lastList = this.mergeTree.pendingSegments?.prev;
+        if (!lastList) {
+            throw new Error("No pending segments");
+        }
+        ListRemoveEntry(lastList);
+        const pendingSegmentGroup = lastList.data;
+        if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
+            throw new Error("Rollback op doesn't match last edit");
+        }
+        for (const segment of pendingSegmentGroup.segments) {
+            const segmentSegmentGroup = segment.segmentGroups.dequeue();
+            assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+
+            const start = this.findRollbackPosition(segment);
+            const segWindow = this.getCollabWindow();
+            const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
+            this.mergeTree.markRangeRemoved(
+                start,
+                start + segment.cachedLength,
+                UniversalSequenceNumber,
+                segWindow.clientId,
+                UniversalSequenceNumber,
+                false,
+                { op: removeOp });
+        }
+    }
+
+    /**
+     *  Walk the segments up to the current segment and calculate its position
+     */
+    private findRollbackPosition(segment: ISegment) {
+        let segmentPosition = 0;
+        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
+            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
+            if (seg === segment) {
+                return false;
+            }
+
+            // If not removed, increase position
+            if (seg.removedSeq === undefined) {
+                segmentPosition += seg.cachedLength;
+            }
+
+            return true;
+        });
+
+        return segmentPosition;
     }
 
     /**
@@ -666,7 +728,7 @@ export class Client {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         let segmentPosition = 0;
         /*
-            Walk the segments up to the current segment, and calculate it's
+            Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
             after the current segment.
 
@@ -966,7 +1028,7 @@ export class Client {
         return opList.length === 1 ? opList[0] : createGroupOp(...opList);
     }
 
-    public createTextHelper() {
+    public createTextHelper(): IMergeTreeTextHelper {
         return new MergeTreeTextHelper(this.mergeTree);
     }
 
@@ -1015,7 +1077,10 @@ export class Client {
 
         return loader.initialize(storage);
     }
-
+    /**
+     * @deprecated  for internal use only. public export will be removed.
+     * @internal
+     */
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
         return this.mergeTree.getStackContext(startPos, this.getCollabWindow().clientId, rangeLabels);
     }
@@ -1084,7 +1149,19 @@ export class Client {
      * @returns - segment and offset to slide the reference to
      */
     getSlideToSegment(segoff: { segment: ISegment | undefined; offset: number | undefined; }) {
-        return this.mergeTree._getSlideToSegment(segoff);
+        if (segoff.segment === undefined) {
+            return segoff;
+        }
+        const segment = this.mergeTree._getSlideToSegment(segoff.segment);
+        if (segment === segoff.segment) {
+            return segoff;
+        }
+        const offset =
+            segment && segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
+        return {
+            segment,
+            offset,
+        };
     }
 
     getPropertiesAtPosition(pos: number) {

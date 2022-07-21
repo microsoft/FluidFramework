@@ -11,7 +11,10 @@ export {
     DetachedRange,
     ChildCollection,
     RootRange,
+    Value,
+    TreeValue,
 } from "./types";
 
 export * from "./pathTree";
 export * from "./anchorSet";
+export * from "./treeTextFormat";

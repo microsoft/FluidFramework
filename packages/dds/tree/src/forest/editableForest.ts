@@ -4,9 +4,14 @@
  */
 
 import { StoredSchemaRepository } from "../schema";
-import { AnchorSet, FieldKey, DetachedRange } from "../tree";
-import { Value, ITreeCursor } from "./cursor";
-import { IForestSubscription, NodeId } from "./forest";
+import { AnchorSet, FieldKey, DetachedRange, Value } from "../tree";
+import { ITreeCursor } from "./cursor";
+import { IForestSubscription, ITreeSubscriptionCursor, ForestAnchor } from "./forest";
+
+/**
+ * Ways to refer to a node in an IEditableForest.
+ */
+ export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
 
 /**
  * Editing APIs.
@@ -30,14 +35,13 @@ export interface IEditableForest extends IForestSubscription {
      * The caller performs these updates because it has more semantic knowledge about the edits, which can be needed to
      * update the anchors in a semantically optimal way.
      */
-     readonly anchors: AnchorSet;
+    readonly anchors: AnchorSet;
 
     /**
-     * Adds the supplied nodes to the forest.
+     * Adds the supplied subtrees to the forest.
      * @param nodes - the sequence of nodes to add to the forest.
-     * If any of them have children which exist in the forest already, those children will be parented.
-     * Any trait arrays present in a node must be non-empty.
-     * The nodes may be provided in any order.
+     *
+     * TODO: there should be a way to include existing detached ranges in the inserted trees.
      */
     add(nodes: Iterable<ITreeCursor>): DetachedRange;
 
@@ -66,7 +70,7 @@ export interface IEditableForest extends IForestSubscription {
      * @param nodeId - the id of the node
      * @param value - the new value
      */
-    setValue(nodeId: NodeId, value: Value): void;
+    setValue(nodeId: ForestLocation, value: Value): void;
 
     /**
      * Recursively deletes a range and its children.
@@ -79,10 +83,14 @@ export interface TreeLocation {
     readonly index: number;
 }
 
+export function isFieldLocation(range: FieldLocation | DetachedRange): range is FieldLocation {
+    return typeof range === "object";
+}
+
 /**
  * Wrapper around DetachedRange that can be detected at runtime.
  */
 export interface FieldLocation {
 	readonly key: FieldKey;
-    readonly parent: NodeId;
+    readonly parent: ForestLocation;
 }

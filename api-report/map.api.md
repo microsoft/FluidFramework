@@ -23,7 +23,7 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public @sealed
-export class DirectoryFactory {
+export class DirectoryFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
@@ -67,11 +67,9 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 // @public
 export interface IDirectoryDataObject {
-    // (undocumented)
     storage?: {
         [key: string]: ISerializableValue;
     };
-    // (undocumented)
     subdirectories?: {
         [subdirName: string]: IDirectoryDataObject;
     };
@@ -93,24 +91,18 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 
 // @public
 export interface IDirectoryEvents extends IEvent {
-    // (undocumented)
     (event: "containedValueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "disposed", listener: (target: IEventThisPlaceHolder) => void): any;
 }
 
 // @public
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
-// @public (undocumented)
+// @internal
 export interface IDirectoryNewStorageFormat {
-    // (undocumented)
     blobs: string[];
-    // (undocumented)
     content: IDirectoryDataObject;
 }
 
@@ -143,13 +135,13 @@ export interface ILocalValue {
     readonly value: any;
 }
 
-// @public
+// @public @deprecated
 export interface ISerializableValue {
     type: string;
     value: any;
 }
 
-// @public (undocumented)
+// @public
 export interface ISerializedValue {
     type: string;
     value: string | undefined;
@@ -165,13 +157,9 @@ export interface ISharedDirectory extends ISharedObject<ISharedDirectoryEvents &
 
 // @public
 export interface ISharedDirectoryEvents extends ISharedObjectEvents {
-    // (undocumented)
     (event: "valueChanged", listener: (changed: IDirectoryValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "subDirectoryCreated", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "subDirectoryDeleted", listener: (path: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
@@ -183,9 +171,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 
 // @public
 export interface ISharedMapEvents extends ISharedObjectEvents {
-    // (undocumented)
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
-    // (undocumented)
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
 }
 
