@@ -186,8 +186,6 @@ export interface IGarbageCollectorCreateParams {
     readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
-    /** NOTE: This is currently unused. See PR #11168 for challenges */
-    //* Make sure this is an ok state to leave things... it's a change
     readonly snapshotCacheExpiryMs?: number;
 }
 
@@ -439,8 +437,26 @@ export class GarbageCollector implements IGarbageCollector {
     /** Configuration that applies to this container (not just this session) */
     private readonly containerConfig: GcContainerConfig;
 
-    /** The time in ms to expire a session for a client for gc. */
-    private get sessionExpiryTimeoutMs(): number | undefined { return this.containerConfig.sessionExpiryTimeoutMs; }
+    /** The time in ms to expire a session for a client for gc. The value stored in the container */
+    private get containerSessionExpiryTimeoutMs(): number | undefined {
+        return this.containerConfig.sessionExpiryTimeoutMs;
+    }
+    /** The time in ms to expire a session for a client for gc. The value effective for this session */
+    private get effectiveSessionExpiryTimeoutMs(): number | undefined {
+        // For SweepV0 containers, ignore the setting overrides below
+        if (this.sweepV0) {
+            return this.containerSessionExpiryTimeoutMs;
+        }
+
+        // Use Test Override config if present
+        const effectiveSessionExpiryTimeoutMs =
+            this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs") ??
+            this.containerSessionExpiryTimeoutMs;
+
+        return this.mc.config.getBoolean(disableSessionExpiryKey) === true
+            ? undefined
+            : effectiveSessionExpiryTimeoutMs;
+    }
     /** Additional buffer time to wait, on top of required durations such as snapshot and session expiry */
     private get sweepTimeoutBufferMs(): number | undefined {
         return this.containerConfig.sweepAllowed ? this.containerConfig.sweepTimeoutBufferMs : undefined;
@@ -453,12 +469,12 @@ export class GarbageCollector implements IGarbageCollector {
      * The buffer is added to account for any clock skew, especially for snapshot expiry which is based on client time.
      */
     private get sweepTimeoutMs(): number | undefined {
-        const config = this.containerConfig;
-        //* Double check
-        if (config.snapshotCacheExpiryMs === undefined || config.sessionExpiryTimeoutMs === undefined) {
+        const sessionExpiryTimeoutMs = this.effectiveSessionExpiryTimeoutMs;
+        const { snapshotCacheExpiryMs, sweepTimeoutBufferMs } = this.containerConfig;
+        if (sessionExpiryTimeoutMs === undefined || snapshotCacheExpiryMs === undefined) {
             return undefined;
         }
-        return config.snapshotCacheExpiryMs + config.sessionExpiryTimeoutMs + config.sweepTimeoutBufferMs;
+        return snapshotCacheExpiryMs + sessionExpiryTimeoutMs + sweepTimeoutBufferMs;
     }
 
     /** For a given node path, returns the node's package path. */
@@ -487,14 +503,8 @@ export class GarbageCollector implements IGarbageCollector {
             : configForNewContainer(this.gcOptions, this.mc.config, createParams.snapshotCacheExpiryMs);
 
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
-        // This allows us to safely set Sweep Timeout
-        //* factor in disableSessionExpiryKey when considering Sweep elsewhere. Also reconsider TestOverride behavior
-        if (this.sessionExpiryTimeoutMs !== undefined && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
-            // If Test Override config is set, override Session Expiry timeout.
-            const overrideSessionExpiryTimeoutMs =
-                this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
-            const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
-
+        if (this.effectiveSessionExpiryTimeoutMs !== undefined) {
+            const timeoutMs = this.effectiveSessionExpiryTimeoutMs;
             setLongTimeout(
                 timeoutMs,
                 () => { this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs)); },
@@ -539,9 +549,9 @@ export class GarbageCollector implements IGarbageCollector {
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
-        // For SweepV0, use half sessionExpiry for inactive timeout
-        const sweepV0InactiveTimeoutMs = this.sweepV0 && this.sessionExpiryTimeoutMs !== undefined
-            ? this.sessionExpiryTimeoutMs / 2
+        // For SweepV0, use half sessionExpiry for inactive timeout (effectiveSessionExpiryTimeoutMs should be set)
+        const sweepV0InactiveTimeoutMs = this.sweepV0 && this.effectiveSessionExpiryTimeoutMs !== undefined
+            ? this.effectiveSessionExpiryTimeoutMs / 2
             : undefined;
         this.inactiveTimeoutMs =
             sweepV0InactiveTimeoutMs ??
@@ -706,7 +716,8 @@ export class GarbageCollector implements IGarbageCollector {
             runSweep: this.shouldRunSweep,
             writeAtRoot: this._writeDataAtRoot,
             instantDeleteTestMode: this.instantDeleteTestMode,
-            sessionExpiry: this.sessionExpiryTimeoutMs,
+            containerSessionExpiryTimeoutMs: this.containerSessionExpiryTimeoutMs,
+            effectiveSessionExpiryTimeoutMs: this.effectiveSessionExpiryTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
             existing: createParams.existing,
             trackGCState: this.trackGCState,
@@ -868,7 +879,7 @@ export class GarbageCollector implements IGarbageCollector {
              * into the metadata blob. If GC is disabled, the gcFeature is 0.
              */
             gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
-            sessionExpiryTimeoutMs: this.sessionExpiryTimeoutMs,
+            sessionExpiryTimeoutMs: this.containerSessionExpiryTimeoutMs,
             sweepEnabled: this.sweepEnabled,
             expectedSnapshotCacheExpiryMs: this.containerConfig.snapshotCacheExpiryMs,
             sweepTimeoutBufferMs: this.sweepTimeoutBufferMs,

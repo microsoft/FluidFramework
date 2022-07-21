@@ -82,11 +82,6 @@ export function configForExistingContainer(
         unreachableCase(testMode, `Cannot open container created under unknown GC Test Mode [${testMode}]`);
     }
 
-    //* Think about undefined cases
-    // const mismatchedSnapshotCacheExpiryMs =
-    //     metadata?.expectedSnapshotCacheExpiryMs !== undefined &&
-    //     providedSnapshotCacheExpiryMs !== metadata?.expectedSnapshotCacheExpiryMs;
-
     // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
     // other existing documents, GC is enabled.
     const prevSummaryGCVersion = getGCVersion(metadata);
@@ -96,7 +91,6 @@ export function configForExistingContainer(
     if (!gcAllowed
         || metadata?.sweepEnabled !== true
         || sessionExpiryTimeoutMs === undefined
-        // || mismatchedSnapshotCacheExpiryMs  //*
     ) {
         return {
             sweepAllowed: false,
