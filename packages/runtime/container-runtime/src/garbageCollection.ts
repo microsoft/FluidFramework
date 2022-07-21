@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
-import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
+import { assert, LazyPromise, Timer, unreachableCase } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -465,6 +465,13 @@ export class GarbageCollector implements IGarbageCollector {
          * For existing containers, we get this information from the metadata blob of its summary.
          */
         if (createParams.existing) {
+            // Fail fast if this container was created under a persisted test mode,
+            // since we don't know how it's implemented or how it should be used
+            const testMode = metadata?.gcTestMode;
+            if (testMode !== undefined) {
+                unreachableCase(testMode, `Cannot open container created under unknown GC Test Mode [${testMode}]`);
+            }
+
             prevSummaryGCVersion = getGCVersion(metadata);
             // Existing documents which did not have metadata blob or had GC disabled have version as 0. For all
             // other existing documents, GC is enabled.

@@ -107,6 +107,12 @@ export interface IGCMetadata {
      * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
      */
     readonly sweepEnabled?: boolean;
+
+    /**
+     * gcTestMode indicates the container is configured in a non-standard way to support certain testing scenarios.
+     * There are no known supported test modes in this version, but future versions will use specific strings here.
+     */
+     readonly gcTestMode?: undefined;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
