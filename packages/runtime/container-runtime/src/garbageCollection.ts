@@ -440,9 +440,7 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly containerConfig: GcContainerConfig;
 
     /** The time in ms to expire a session for a client for gc. */
-    private get sessionExpiryTimeoutMs(): number | undefined {
-        return this.containerConfig.sweepAllowed ? this.containerConfig.sessionExpiryTimeoutMs : undefined;
-    }
+    private get sessionExpiryTimeoutMs(): number | undefined { return this.containerConfig.sessionExpiryTimeoutMs; }
     /** Additional buffer time to wait, on top of required durations such as snapshot and session expiry */
     private get sweepTimeoutBufferMs(): number | undefined {
         return this.containerConfig.sweepAllowed ? this.containerConfig.sweepTimeoutBufferMs : undefined;

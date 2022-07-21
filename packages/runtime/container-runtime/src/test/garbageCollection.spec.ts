@@ -114,8 +114,7 @@ describe("Garbage Collection Tests", () => {
         sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
     });
 
-    //* ONLY
-    describe.only("Configuration", () => {
+    describe("Configuration", () => {
         const createGcWithPrivateMembers = (gcMetadata?: IGCMetadata, gcOptions?: IGCRuntimeOptions) => {
             const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && { summaryFormatVersion: 1, message: undefined, ...gcMetadata };
             const gcWithPrivates: IGarbageCollector & {
@@ -257,7 +256,7 @@ describe("Garbage Collection Tests", () => {
 
         it("Session expires for an existing container", async () => {
             const metadata: IContainerRuntimeMetadata =
-                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
+                { summaryFormatVersion: 1, message: undefined, sweepEnabled: true, sessionExpiryTimeoutMs: 10 };
             createGCOverride(metadata);
             assert(closeCalledAfterExactTicks(10), "Close should have been called at exact expiry.");
         });
@@ -288,7 +287,7 @@ describe("Garbage Collection Tests", () => {
             assert(customExpiryMs, "setting not found!");
 
             const metadata: IContainerRuntimeMetadata =
-                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
+                { summaryFormatVersion: 1, message: undefined, sweepEnabled: true, sessionExpiryTimeoutMs: 10 };
             createGCOverride(metadata);
             assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
         });

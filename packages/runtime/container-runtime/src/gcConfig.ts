@@ -48,6 +48,7 @@ export type GcContainerConfig =
         readonly prevSummaryGCVersion?: number;
         /** Which Test Mode is this file under, if any? These tend to be incompatible with non-test environments */
         readonly testMode: GCTestMode | undefined;
+        readonly sessionExpiryTimeoutMs: number | undefined;
     }
     & (
         // Different sets of props depending on sweepAllowed
@@ -92,6 +93,7 @@ export function configForExistingContainer(
             gcAllowed,
             testMode,
             prevSummaryGCVersion,
+            sessionExpiryTimeoutMs,
         };
     }
 
@@ -134,6 +136,10 @@ export function configForNewContainer(
     // Note: If SessionExpiry is not enabled for the session when a container is created,
     // it (and sweep) will always be disabled for that container.
     const sessionExpiryEnabled = settings.getBoolean(runSessionExpiryKey);
+    //* Test case:  Adding in reading from settings and options here
+    let sessionExpiryTimeoutMs = sessionExpiryEnabled
+        ? (options.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs)
+        : undefined;
     const sweepAllowed = options.sweepAllowed === true && sessionExpiryEnabled;
     const gcAllowed = options.gcAllowed !== false; // default is true
 
@@ -142,6 +148,7 @@ export function configForNewContainer(
             sweepAllowed: false,
             gcAllowed,
             testMode: undefined,
+            sessionExpiryTimeoutMs,
         };
     }
 
@@ -155,11 +162,9 @@ export function configForNewContainer(
     const sweepV0: boolean = sweepV0Config !== undefined;
 
     const snapshotCacheExpiryMs = sweepV0 ? 0 : defaultCacheExpiryTimeoutMs; // Ignore snapshot expiry for SweepV0
-    //* Test case:  Adding in reading from settings and options here
-    const sessionExpiryTimeoutMs =
-        sweepV0Config?.sessionExpiryTimeoutMs
-        ?? options.sessionExpiryTimeoutMs
-        ?? defaultSessionExpiryDurationMs;
+    if (sweepV0Config !== undefined) {
+        sessionExpiryTimeoutMs = sweepV0Config.sessionExpiryTimeoutMs;
+    }
     // For SweepV0, use half sessionExpiry for both inactiveObject and buffer (and snapshot expiry is 0)
     // This will give even spacing between unreferenced, inactive, session expiring, and swept.
     const sweepTimeoutBufferMs = sweepV0 ? sessionExpiryTimeoutMs / 2 : defaultBufferMs;
