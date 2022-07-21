@@ -9,7 +9,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /** @see ICatchUpMonitor for usage */
-type CaughtUpListener = (hasCheckpointSequenceNumber: boolean) => void;
+type CaughtUpListener = () => void;
 
 /** @see ICatchUpMonitor for usage */
 export interface ICatchUpMonitorEvents extends IEvent {
@@ -24,14 +24,13 @@ export interface ICatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents
  * that were known at the time the monitor was created.
  */
 export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> implements ICatchUpMonitor {
-    private readonly hasCheckpointSequenceNumber: boolean;
     private readonly targetSeqNumber: number;
     private caughtUp: boolean = false;
 
     private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
         if (!this.caughtUp && message.sequenceNumber >= this.targetSeqNumber) {
             this.caughtUp = true;
-            this.emit("caughtUp", this.hasCheckpointSequenceNumber);
+            this.emit("caughtUp");
         }
     };
 
@@ -43,7 +42,6 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
     ) {
         super();
 
-        this.hasCheckpointSequenceNumber = this.deltaManager.hasCheckpointSequenceNumber;
         this.targetSeqNumber = this.deltaManager.lastKnownSeqNumber;
 
         assert(this.targetSeqNumber >= this.deltaManager.lastSequenceNumber,
@@ -59,7 +57,7 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
             if (event === "caughtUp") {
                 const caughtUpListener = listener as CaughtUpListener;
                 if (this.caughtUp) {
-                    caughtUpListener(this.hasCheckpointSequenceNumber);
+                    caughtUpListener();
                 }
             }
         });
@@ -77,14 +75,14 @@ export class CatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> imp
     }
 }
 
-/** Monitor that always notifies listeners immediately, passing false for hasCheckpointSequenceNumber arg */
+/** Monitor that always notifies listeners immediately */
 export class ImmediateCatchUpMonitor extends TypedEventEmitter<ICatchUpMonitorEvents> implements ICatchUpMonitor {
     constructor() {
         super();
         this.on("newListener", (event: string, listener) => {
             if (event === "caughtUp") {
                 const caughtUpListener = listener as CaughtUpListener;
-                caughtUpListener(false /* hasCheckpointSequenceNumber */);
+                caughtUpListener();
             }
         });
     }

@@ -111,20 +111,6 @@ describe("ConnectionStateHandler Tests", () => {
         deltaManagerForCatchingUp = new MockDeltaManagerForCatchingUp();
     });
 
-    /** Test plan:
-     * NEW BEHAVIOR
-     * (1) applyForConnectedState should wait for "caughtUp"
-     * (1) receivedConnectEvent should wait for "caughtUp"
-     *
-     * PRESERVED BEHAVIOR
-     * (1) [Immediate mode] Write client in quorum upon "connect" transitions directly to "connected"
-     * (1) [Immediate mode] Write client not yet in quorum transitions to "connected" upon addMember event
-     * (1) [Immediate mode] Read client transitions directly to "connected"
-     *
-     * OTHER
-     * (2) cannotTransitionToConnectedState event should never fire
-     */
-
     it("Should move to connected state on normal flow for read client", async () => {
         assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Disconnected,
             "Client should be in disconnected state");

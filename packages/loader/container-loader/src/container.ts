@@ -547,7 +547,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Returns true if container is dirty.
      * Which means data loss if container is closed at that same moment
-     * Most likely that happens when there is no network connection to ordering service
+     * Most likely that happens when there is no network connection to Relay Service
      */
     public get isDirty() {
         return this._dirtyContainer;
