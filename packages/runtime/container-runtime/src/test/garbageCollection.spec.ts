@@ -115,7 +115,7 @@ describe("Garbage Collection Tests", () => {
         sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
     });
 
-    describe.only("Configuration", () => {
+    describe("Configuration", () => {
         const createGcWithPrivateMembers = (gcMetadata?: IGCMetadata, gcOptions?: IGCRuntimeOptions, snapshotCacheExpiryMs?: number) => {
             const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && { summaryFormatVersion: 1, message: undefined, ...gcMetadata };
             const gcWithPrivates: IGarbageCollector & {
