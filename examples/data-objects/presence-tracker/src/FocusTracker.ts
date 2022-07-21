@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Signaler } from "@fluid-experimental/data-objects";
+import { SignalManager as Signaler } from "@fluid-experimental/data-objects";
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -80,7 +80,6 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         container.on("connected", () => {
             this.signaler.submitSignal(FocusTracker.focusRequestType);
         });
-        this.signaler.submitSignal(FocusTracker.focusRequestType);
     }
 
     /**
