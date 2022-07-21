@@ -6,7 +6,8 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { brand, fail } from "../util";
 import { FieldKey, Value } from "../tree";
-import { Delta, ProtoNode, Transposed as T } from ".";
+import * as Delta from "./delta";
+import { ProtoNode, Transposed as T } from "./format";
 
 /**
  * Converts a Changeset into a Delta.

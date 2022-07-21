@@ -5,7 +5,7 @@
 
 import { FieldKey, Value } from "../tree";
 import { Brand, Opaque } from "../util";
-import { NodeId as TreeNodeId } from ".";
+import { NodeId as TreeNodeId } from "./common";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.

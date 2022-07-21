@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NodeId } from ".";
+import { NodeId } from "./common";
 
 // TODOs:
 // Clipboard
