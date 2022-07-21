@@ -56,7 +56,7 @@ import {
  * @public
  */
 export interface FieldMap<TChild> {
-    [key: string]: readonly TChild[];
+    [key: string]: TChild[];
 }
 
 /**
@@ -83,13 +83,19 @@ export interface NodeData {
  * @public
  */
 export interface GenericTreeNode<TChild> extends NodeData {
-    fields?: Readonly<FieldMap<TChild>>;
+    fields?: FieldMap<TChild>;
 }
 
 /**
  * A tree whose nodes are either tree nodes or placeholders.
  */
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+
+/**
+ * A tree represented using plain JavaScript objects.
+ * Can be passed to `JSON.stringify()` to produce a human-readable/editable JSON tree.
+ */
+export interface JsonableTree extends PlaceholderTree {}
 
 /**
  * An ITreeCursor implementation for PlaceholderTree.
