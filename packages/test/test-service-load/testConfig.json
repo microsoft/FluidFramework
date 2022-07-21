@@ -31,20 +31,7 @@
             "totalSendCount": 10000,
             "readWriteCycleMs": 30000,
             "faultInjectionMinMs": 0,
-            "faultInjectionMaxMs": 150000,
-            "optionOverrides":{
-                "odsp":{
-                    "configurations":{
-                        "Fluid.Container.summarizeProtocolTree": [true, false]
-                    }
-                },
-                "odsp-odsp-df":{
-                    "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1],
-                        "Fluid.Container.summarizeProtocolTree": [true, false]
-                    }
-                }
-            }
+            "faultInjectionMaxMs": 150000
         },
         "full": {
             "opRatePerMin": 1920,
