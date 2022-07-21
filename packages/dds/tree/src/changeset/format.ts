@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
-import { JsonableTree } from "../feature-libraries/treeTextFormat";
+import { JsonableTree } from "../tree";
 
 // TODOs:
 // Clipboard

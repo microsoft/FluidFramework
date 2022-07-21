@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { jsonArray, jsonNumber, jsonObject, jsonString } from "../..";
+import { jsonArray, jsonNumber, jsonObject, jsonString } from "../../domains";
 import { Effects, Transposed as T, Sequenced as S } from "../../changeset";
 
 /**

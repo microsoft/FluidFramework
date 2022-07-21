@@ -4,10 +4,8 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { FieldKey, Value } from "../tree";
+import { FieldKey, JsonableTree, Value } from "../tree";
 import { Brand, Opaque } from "../util";
-// eslint-disable-next-line import/no-internal-modules
-import { JsonableTree } from "../feature-libraries/treeTextFormat";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
