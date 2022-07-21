@@ -77,7 +77,8 @@
     "@fluidframework/runtime-utils": "^2.0.0",
     "@fluidframework/telemetry-utils": "^2.0.0",
     "double-ended-queue": "^2.1.0-0",
-    "uuid": "^8.3.1"
+    "uuid": "^8.3.1",
+    "lz4js": "^0.2.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
