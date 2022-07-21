@@ -334,8 +334,6 @@ export interface ProtoFields {
 	[key: string]: ProtoField;
 }
 
-export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (TOffset | TContent)[];
-
 export type ProtoField = ProtoNode[];
 export type NodeCount = number;
 export type GapCount = number;
