@@ -83,7 +83,7 @@ export interface NodeData {
  * @public
  */
 export interface GenericTreeNode<TChild> extends NodeData {
-    fields?: Readonly<FieldMap<TChild>>;
+    fields?: FieldMap<TChild>;
 }
 
 /**
