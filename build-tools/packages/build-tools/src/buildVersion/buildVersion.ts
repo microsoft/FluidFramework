@@ -94,9 +94,9 @@ export function getSimpleVersion(file_version: string, arg_build_num: string, ar
 type TagPrefix = string | "client" | "server" | "azure";
 
 /**
- * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
- * @param tags - an array of tags as strings.
- * @returns an array of tags that match the prefix.
+ * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
+ * @param tags - An array of tags as strings.
+ * @returns An array of tags that match the prefix.
  */
 const filterTags = (prefix: TagPrefix, tags: string[]): string[] => tags.filter(v => v.startsWith(`${prefix}_v`));
 
@@ -104,8 +104,8 @@ const filterTags = (prefix: TagPrefix, tags: string[]): string[] => tags.filter(
  * Extracts versions from the output of `git tag -l` in the working directory. The returned array will be sorted
  * ascending by semver version rules.
  *
- * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
- * @returns an array of versions extracted from the output of `git tag -l`.
+ * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
+ * @returns An array of versions extracted from the output of `git tag -l`.
  */
 function getVersions(prefix: TagPrefix) {
     const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
@@ -116,9 +116,9 @@ function getVersions(prefix: TagPrefix) {
 /**
  * Extracts versions from an array of strings, sorts them according to semver rules, and returns the sorted array.
  *
- * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
- * @param tags - an array of tags as strings.
- * @returns an array of versions extracted from the provided tags.
+ * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
+ * @param tags - An array of tags as strings.
+ * @returns An array of versions extracted from the provided tags.
  */
 export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
     const filtered = filterTags(prefix, tags);
@@ -128,8 +128,8 @@ export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
 }
 
 /**
- * @param prefix - the tag prefix to filter the tags by (client, server, etc.).
- * @param current_version  - the version to test; that is, the version to check for being the latest build.
+ * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
+ * @param current_version  - The version to test; that is, the version to check for being the latest build.
  * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
  * pre-release version).
  */

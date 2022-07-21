@@ -13,7 +13,7 @@ import { JsonableTree } from "../feature-libraries/treeTextFormat";
 /**
  * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
- export namespace Transposed {
+export namespace Transposed {
 	export interface Transaction extends Changeset {
 		/**
 		 * The reference sequence number of the transaction that this transaction was originally
@@ -29,7 +29,7 @@ import { JsonableTree } from "../feature-libraries/treeTextFormat";
 	}
 
 	export interface Changeset {
-		marks: PositionedMarks;
+		marks: MarkList;
 		moves?: MoveEntry[];
 	}
 
@@ -40,20 +40,10 @@ import { JsonableTree } from "../feature-libraries/treeTextFormat";
 		hops?: TreePath[];
 	}
 
-	export type PositionedMarks<TMark = Mark> = MarkWithOffset<TMark>[];
-
-	/**
-	 * See PositionedMarks.
-	 */
-	export interface MarkWithOffset<TMark = Mark> {
-		/**
-		 * Interpreted as zero when omitted.
-		 */
-		offset?: Offset;
-		mark: TMark;
-	}
+	export type MarkList<TMark = Mark> = TMark[];
 
 	type Mark =
+		| Skip
 		| Tomb
 		| Modify
 		| Detach
@@ -91,7 +81,7 @@ import { JsonableTree } from "../feature-libraries/treeTextFormat";
 	}
 
 	export interface FieldMarks {
-		[key: string]: PositionedMarks;
+		[key: string]: MarkList;
 	}
 
 	export interface HasPlaceFields {
@@ -333,11 +323,9 @@ export interface HasOpId {
  */
 export type ProtoNode = JsonableTree;
 
-export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (TOffset | TContent)[];
-
 export type NodeCount = number;
 export type GapCount = number;
-export type Offset = number;
+export type Skip = number;
 export type SeqNumber = number;
 export type Value = number | string | boolean;
 export type ClientId = number;

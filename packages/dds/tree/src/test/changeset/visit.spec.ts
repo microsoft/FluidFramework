@@ -69,7 +69,7 @@ describe("visit", () => {
             ["onSetValue", 1],
             ["exitNode", 0],
         ];
-        testVisit([{ offset: 0, mark }], expected);
+        testVisit([mark], expected);
     });
 
     it("set child value", () => {
@@ -78,11 +78,8 @@ describe("visit", () => {
             setValue: 1,
         };
         const delta: Delta.Root = [{
-            offset: 0,
-            mark: {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [{ offset: 42, mark }]]]),
-            },
+            type: Delta.MarkType.Modify,
+            fields: new Map([[fooKey, [42, mark]]]),
         }];
         const expected: VisitScript = [
             ["enterNode", 0],
@@ -101,7 +98,7 @@ describe("visit", () => {
             type: Delta.MarkType.Insert,
             content,
         };
-        testVisit([{ offset: 0, mark }], [["onInsert", 0, content]]);
+        testVisit([mark], [["onInsert", 0, content]]);
     });
 
     it("insert child", () => {
@@ -110,11 +107,8 @@ describe("visit", () => {
             content,
         };
         const delta: Delta.Root = [{
-            offset: 0,
-            mark: {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [{ offset: 42, mark }]]]),
-            },
+            type: Delta.MarkType.Modify,
+            fields: new Map([[fooKey, [42, mark]]]),
         }];
         const expected: VisitScript = [
             ["enterNode", 0],
@@ -131,7 +125,7 @@ describe("visit", () => {
             type: Delta.MarkType.Delete,
             count: 10,
         };
-        testVisit([{ offset: 0, mark }], [["onDelete", 0, 10]]);
+        testVisit([mark], [["onDelete", 0, 10]]);
     });
 
     it("delete child", () => {
@@ -140,11 +134,8 @@ describe("visit", () => {
             count: 10,
         };
         const delta: Delta.Root = [{
-            offset: 0,
-            mark: {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[fooKey, [{ offset: 42, mark }]]]),
-            },
+            type: Delta.MarkType.Modify,
+            fields: new Map([[fooKey, [42, mark]]]),
         }];
         const expected: VisitScript = [
             ["enterNode", 0],
@@ -170,18 +161,11 @@ describe("visit", () => {
             setValue: 1,
         };
         const delta: Delta.Root = [{
-            offset: 0,
-            mark: {
-                type: Delta.MarkType.Modify,
-                fields: new Map([[
-                    fooKey,
-                    [
-                        { offset: 0, mark: del },
-                        { offset: 3, mark: ins },
-                        { offset: 1, mark: set },
-                    ],
-                ]]),
-            },
+            type: Delta.MarkType.Modify,
+            fields: new Map([[
+                fooKey,
+                [del, 3, ins, 1, set],
+            ]]),
         }];
         const expected: VisitScript = [
             ["enterNode", 0],
