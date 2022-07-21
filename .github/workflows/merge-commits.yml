@@ -25,15 +25,15 @@ jobs:
             const { Octokit } = require("@octokit/core");
             const token = `${{ secrets.GITHUB_TOKEN }}`;
             const octokit = new Octokit({ auth: token });
-            const data = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
+            const response = await octokit.request('GET /repos/{owner}/{repo}/pulls', {
               owner: 'microsoft',
               repo: 'FluidFramework'
             });
-            console.log("data----", data);
-            console.log("items----", data.items);
-            console.log("length---", data.items.length);
-            for(let i=0; i<data.items.length; i++) {
-              if(data.items[i].title.startsWith('Automation: Main Next Integrate')) {
+            console.log("data----", response);
+            console.log("items----", response.data);
+            console.log("length---", response.data.length);
+            for(let i=0; i<response.data.length; i++) {
+              if(response.data[i].title === 'Automation: Main Next Integrate') {
                 return true;
               }
             }
