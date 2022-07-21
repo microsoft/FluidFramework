@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    Anchor,
+    ForestAnchor,
     ITreeSubscriptionCursorState,
 } from "../../forest";
 import { PathShared } from "../../tree";
@@ -31,7 +31,7 @@ import { PathShared } from "../../tree";
  * Since anchors need to work even for unloaded/pending parts of the tree,
  * these are kept separate from the actual tree data.
  */
-export class ObjectAnchor implements Anchor {
+export class ObjectAnchor implements ForestAnchor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
     public constructor(public readonly path: PathShared) { }
     free(): void {
