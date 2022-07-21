@@ -4,7 +4,7 @@ menuPosition: 5
 draft: true
 ---
 
-In this recipe, you'll learn how the `Signaler` DataObject is used in a Fluid application to deal with a couple user presence scenarios. The two forms of presence that are covered in this example are focus tracking and mouse tracking. This article will go over how the `Signaler` DataObject is used in both the `MouseTracker` and `FocusTracker` classes to achieve user presence in a FLuid application.
+In this recipe, we will go over the `PresenceTracker` example to learn how the `Signaler` DataObject is used in a Fluid application to deal with a couple user presence scenarios. The two forms of presence covered in this example are focus tracking and mouse tracking. This article will go over how the `Signaler` DataObject is used in both the `MouseTracker` and `FocusTracker` classes to achieve user presence in a Fluid application. You can find the completed code for this example in the Fluid Repo [here](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker).
 
 ## Creation
 
@@ -19,11 +19,11 @@ const containerSchema: ContainerSchema = {
 };
 ```
 
-The `FluidContainer` is then created (or fetched if it already exists) alongside the `services` object, since audience will be required in this application. To learn more about how to create a new Fluid container and load an exisiting container, see our [DiceRoller Tutorial](https://fluidframework.com/docs/start/tutorial/).
+The `FluidContainer` is then created (or fetched if it already exists) alongside the `services` object, since audience will be required in this application. To learn more about how to create a new Fluid container and load an existing container, see our [DiceRoller Tutorial](https://fluidframework.com/docs/start/tutorial/).
 
 ## MouseTracker
 
-Let's now take a look at how the `MouseTracker` class uses the `Signaler` DataObject to achieve the first form of user presence within the application.
+Let's look at how the `MouseTracker` class uses the `Signaler` DataObject to achieve the first form of user presence within the application.
 
 The class defines the `mouseSignalType` that will be sent and listened to the connected clients when there is a presence change:
 
@@ -38,7 +38,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     /*...*/
 }
 ```
-The class also initializes a local map of `IMousePosition` values for all of the connected clients. Each userID can have multiple clientIDs (e.g. same user on seperate devices), which explains the nested `Map`. This local map is what populates the view and what will be updated on `mouseSignalType` signals:
+The class also initializes a local map of `IMousePosition` values for all of the connected clients. Each userID can have multiple clientIDs (e.g. same user on separate devices), which explains the nested `Map`. This local map is what populates the view and what will be updated on `mouseSignalType` signals:
 
 ```typescript
 export interface IMouseTrackerEvents extends IEvent {
@@ -89,7 +89,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     /*...*/
 }
 ```
-Whenever a member leaves the audience (e.g. a client disconnects from the container), we would want to remove their presence from our local data. After this is done, we would have to let the view know that the local presence data has changed. To do this, we emit our `mousePositionChanged` `IMouseTrackerEvent` so the view knows to re-render:
+Whenever a member leaves the audience (e.g., a client disconnects from the container), we would want to remove their presence from our local data. After this is done, we would have to let the view know that the local presence data has changed. To do this, we emit our `mousePositionChanged` event so the view knows to re-render:
 
 ```typescript
 export interface IMouseTrackerEvents extends IEvent {
@@ -164,7 +164,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     /*...*/
 }
 ```
-But, what point is there of sending a signal if nobody is listening to it? To listen to the `mouseSignalType`, we use `Signaler`'s `onSignal` function. We then update the local data using the payload information from the signal. To display the new presence data, we then emit `mousePositionChanged` to let the view know to re-render:
+But what is the point of sending a signal if nobody is listening to it? To listen to the `mouseSignalType`, we use `Signaler`'s `onSignal` function. We then update the local data using the payload information from the signal. To display the new presence data, we then emit `mousePositionChanged` to let the view know to re-render:
 
 ```typescript
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
@@ -226,7 +226,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 
 ## FocusTracker
 
-Let's now take a look at how the `FocusTracker` class uses the `Signaler` DataObject to achieve the second form of user presence within the application.
+Let's now look at how the `FocusTracker` class uses the `Signaler` DataObject to achieve the second form of user presence within the application.
 
 The class defines the `focusSignalType` that will be sent and listened to the connected clients when there is a presence change:
 
@@ -241,7 +241,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     /*...*/
 }
 ```
-The class then initializes a local map of boolean values for all of the connected clients. The boolean denotes wheter or not the client has has focus or not:
+The class then initializes a local map of boolean values for all of the connected clients. The boolean denotes whether or not the client has focus or not:
 
 ```typescript
 export interface IFocusTrackerEvents extends IEvent {
@@ -360,7 +360,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     /*...*/
 }
 ```
-To make sure all conected clients are notified of this focus change, we use the `onSignal` function to listen to the `focusSignalType`. We then update the local data using the payload information from the signal and emit a `focusChanged` event to re-render:
+To make sure all connected clients are notified of this focus change, we use the `onSignal` function to listen to the `focusSignalType`. We then update the local data using the payload information from the signal and emit a `focusChanged` event to re-render:
 
 ```typescript
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
@@ -417,7 +417,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     /*...*/
 }
 ```
-`FocusTracker` differs from `MouseTracker` as it uses the `Signal Request` pattern. This is when a newly joining client requests a specific sigal to be sent from other connected clients, so that the new client can recieve pertinent information immediately after connecting to the container.
+`FocusTracker` differs from `MouseTracker` as it uses the `Signal Request` pattern. This is when a newly joining client requests a specific signal to be sent from other connected clients, so that the new client can receive pertinent information immediately after connecting to the container.
 
 To achieve this pattern, `FocusTracker` defines the `focusRequestType` that will be sent to request the focus status of all the connected clients:
 
@@ -485,7 +485,7 @@ async function start(): Promise<void> {
 start().catch(console.error);
 ```
 
-The view then renders the focus data by using `renderFocusPresence`, which uses the local focus status map to display which users are in focus and which users aren't. It also renders the mouse position data by using `renderMousePresence`, which uses the local position map to display the name of each user where they currently are in the window:
+The view then renders the focus data by using `renderFocusPresence`, which uses the local focus status map to display which users are in focus and which users are not. It also renders the mouse position data by using `renderMousePresence`, which uses the local position map to display the name of each user where they currently are in the window:
 
 ```typescript
 async function start(): Promise<void> {
@@ -510,6 +510,7 @@ async function start(): Promise<void> {
 start().catch(console.error);
 ```
 
-
-
+## Next Steps
+- You can find the completed code for this example in the Fluid GitHub repository [here]((https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker).
+- Try extending the `PresenceTracker` to track some other form of presence using signals!
 
