@@ -42,7 +42,12 @@ import {
 
 import { IGCRuntimeOptions, RuntimeHeaders } from "./containerRuntime";
 import { getSummaryForDatastores } from "./dataStores";
-import { configForExistingContainer, configForNewContainer, GcContainerConfig } from "./gcConfig";
+import {
+    configForExistingContainer,
+    configForNewContainer,
+    defaultInactiveTimeoutMs,
+    GcContainerConfig,
+} from "./gcConfig";
 import {
     getGCVersion,
     GCVersion,
@@ -77,12 +82,6 @@ export const disableSessionExpiryKey = "Fluid.GarbageCollection.DisableSessionEx
 export const trackGCStateKey = "Fluid.GarbageCollection.TrackGCState";
 // Feature gate key to turn GC sweep log off.
 const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-
-// One day in milliseconds.
-export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
-
-const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
-export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */
 export interface IGCStats {
@@ -187,7 +186,7 @@ export interface IGarbageCollectorCreateParams {
     readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
     readonly getLastSummaryTimestampMs: () => number | undefined;
     readonly readAndParseBlob: ReadAndParseBlob;
-    readonly snapshotCacheExpiryMs?: number;
+    readonly snapshotCacheExpiryMs?: number;  //* BUG: This is unused (and hard to use)
 }
 
 /** The state of node that is unreferenced. */
@@ -365,9 +364,10 @@ export class GarbageCollector implements IGarbageCollector {
 
     public readonly trackGCState: boolean;
 
-    private readonly testMode: boolean;
-    private readonly sweepV0TimeoutMs: number | undefined;
-    private get sweepV0(): boolean { return this.sweepV0TimeoutMs !== undefined; }
+    private readonly instantDeleteTestMode: boolean;
+    private get sweepV0(): boolean {
+        return this.containerConfig.sweepAllowed && this.containerConfig.testMode === "SweepV0";
+    }
     private readonly mc: MonitoringContext;
 
     /**
@@ -438,8 +438,18 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly sessionExpiryTimeoutMs: number | undefined;
     /** The time after which an unreferenced node is inactive. */
     private readonly inactiveTimeoutMs: number;
-    /** The time after which an unreferenced node is ready to be swept. */
-    private readonly sweepTimeoutMs: number | undefined;
+    /**
+     * Sweep timeout is the time after which unreferenced content can be swept.
+     * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
+     * The buffer is added to account for any clock skew, especially for snapshot expiry which is based on client time.
+     */
+    private get sweepTimeoutMs(): number | undefined {
+        const config = this.containerConfig;
+        if (!config.sweepAllowed) {
+            return undefined;
+        }
+        return config.snapshotCacheExpiryMs + config.sessionExpiryTimeoutMs + config.sweepTimeoutBufferMs;
+    }
 
     /** For a given node path, returns the node's package path. */
     private readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
@@ -478,10 +488,6 @@ export class GarbageCollector implements IGarbageCollector {
         this.sessionExpiryTimeoutMs =
             this.containerConfig.sweepAllowed ? this.containerConfig.sessionExpiryTimeoutMs : undefined;
 
-        // Sweep V0 is a test mode for using a very short timeout in order to enable testing of real sweep behavior.
-        // It's similar to testMode but rather than deleting immediately, it exercises the Sweep timers and codepaths
-        this.sweepV0TimeoutMs = this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SweepV0TimeoutMs");
-
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
         // This allows us to safely set Sweep Timeout
         if (this.sessionExpiryTimeoutMs !== undefined && this.mc.config.getBoolean(disableSessionExpiryKey) !== true) {
@@ -495,21 +501,6 @@ export class GarbageCollector implements IGarbageCollector {
                 () => { this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs)); },
                 (timer) => { this.sessionExpiryTimer = timer; },
             );
-
-            /**
-             * Sweep timeout is the time after which unreferenced content can be swept.
-             * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer. The buffer is
-             * added to account for any clock skew. We use server timestamps throughout so the skew should be minimal
-             * but make it one day to be safe.
-             */
-            if (createParams.snapshotCacheExpiryMs !== undefined) {
-                this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + createParams.snapshotCacheExpiryMs + oneDayMs;
-            }
-        }
-
-        // Sweep V0 overrides Sweep Timeout, even setting it if SessionExpiry is disabled
-        if (this.sweepV0TimeoutMs !== undefined) {
-            this.sweepTimeoutMs = this.sweepV0TimeoutMs;
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -542,8 +533,12 @@ export class GarbageCollector implements IGarbageCollector {
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
+        // For SweepV0, use half sessionExpiry for inactive timeout
+        const sweepV0InactiveTimeoutMs = this.sweepV0 && this.sessionExpiryTimeoutMs !== undefined
+            ? this.sessionExpiryTimeoutMs / 2
+            : undefined;
         this.inactiveTimeoutMs =
-            this.sweepV0 ? 0 : // For SweepV0 consider unreferenced objects immediately inactive
+            sweepV0InactiveTimeoutMs ??
             this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
             this.gcOptions.inactiveTimeoutMs ??
             defaultInactiveTimeoutMs;
@@ -553,9 +548,8 @@ export class GarbageCollector implements IGarbageCollector {
             throw new UsageError("inactive timeout should not be greated than the sweep timeout");
         }
 
-        // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
-        this.testMode =
-            !this.sweepV0 && // Disable testMode if we're doing Sweep V0
+        // Whether we are running in "Instant Delete" test mode, where unreferenced nodes are immediately deleted.
+        this.instantDeleteTestMode =
             (this.mc.config.getBoolean(gcTestModeKey) ?? this.gcOptions.runGCInTestMode === true);
 
         // GC state is written into root of the summary tree by default. Can be overridden via feature flag for now.
@@ -704,7 +698,7 @@ export class GarbageCollector implements IGarbageCollector {
             runGC: this.shouldRunGC,
             runSweep: this.shouldRunSweep,
             writeAtRoot: this._writeDataAtRoot,
-            testMode: this.testMode,
+            testMode: this.instantDeleteTestMode,
             sessionExpiry: this.sessionExpiryTimeoutMs,
             inactiveTimeout: this.inactiveTimeoutMs,
             existing: createParams.existing,
@@ -794,7 +788,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // If we are running in GC test mode, delete objects for unused routes. This enables testing scenarios
         // involving access to deleted data.
-        if (this.testMode) {
+        if (this.instantDeleteTestMode) {
             this.runtime.deleteUnusedRoutes(gcResult.deletedNodeIds);
         }
 
@@ -1283,6 +1277,8 @@ export class GarbageCollector implements IGarbageCollector {
             });
         });
 
+        // Only delete when in SweepV0 test mode (as opposed to checking this.shouldRunSweep)
+        // Proper sweep may need to meet additional considerations so we don't want to accidentally expose real users
         if (this.sweepV0) {
             this.runtime.deleteUnusedRoutes(Array.from(idsToSweep));
         }

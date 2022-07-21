@@ -8,9 +8,14 @@ import { UsageError } from "@fluidframework/driver-utils";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { getGCVersion, IGCMetadata } from "./summaryFormat";
 import { IGCRuntimeOptions } from "./containerRuntime";
+import { runSessionExpiryKey } from "./garbageCollection";
 
 /** All known test mode configurations */
 export interface IGCTestConfig {
+    /**
+     Sweep V0 is a test mode for using a very short timeout in order to enable testing of real sweep behavior.
+     It's similar to testMode but rather than deleting immediately, it exercises the Sweep timers and codepaths
+    */
     SweepV0?: {
         sessionExpiryTimeoutMs: number;
     };
@@ -19,23 +24,12 @@ export interface IGCTestConfig {
 /** All known test mode names */
 export type GCTestMode = keyof IGCTestConfig;
 
-// Feature gate key to expire a session after a set period of time.
-export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
 const defaultCacheExpiryTimeoutMs = 2 * oneDayMs; // 2 days, matches the same variable in odsp-driver
-const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
+export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 const defaultBufferMs = oneDayMs; // 1 day
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type GcSessionConfig = {
-    containerConfig: GcContainerConfig;
-    gcEnabled: boolean;
-    sweepEnabled: boolean;
-    sessionExpiryTimeoutMs?: number;
-};
 
 export type GcContainerConfig =
     // Common props regardless of sweepAllowed
@@ -56,7 +50,6 @@ export type GcContainerConfig =
             snapshotCacheExpiryMs: number;
             sessionExpiryTimeoutMs: number;
             sweepTimeoutBufferMs: number;
-            inactiveTimeoutMs: number;
         }
     );
 
@@ -90,7 +83,6 @@ export function configForExistingContainer(
     const sweepV0: boolean = testMode === "SweepV0";
     const snapshotCacheExpiryMs = sweepV0 ? 0 : defaultCacheExpiryTimeoutMs; // Ignore snapshot expiry for SweepV0
     const sweepTimeoutBufferMs = metadata.sweepTimeoutBufferMs ?? defaultBufferMs; // For SweepV0 we expect it to be set
-    const inactiveTimeoutMs = sweepV0 ? sessionExpiryTimeoutMs / 2 : defaultInactiveTimeoutMs;
     const configData: GcContainerConfig = {
         sweepAllowed: true,
         gcAllowed: true,
@@ -98,7 +90,6 @@ export function configForExistingContainer(
         snapshotCacheExpiryMs,
         sessionExpiryTimeoutMs,
         sweepTimeoutBufferMs,
-        inactiveTimeoutMs,
         prevSummaryGCVersion,
     };
     return configData;
@@ -148,7 +139,6 @@ export function configForNewContainer(
         ?? defaultSessionExpiryDurationMs;
     // For SweepV0, use half sessionExpiry for both inactiveObject and buffer (and snapshot expiry is 0)
     // This will give even spacing between unreferenced, inactive, session expiring, and swept.
-    const inactiveTimeoutMs = sweepV0 ? sessionExpiryTimeoutMs / 2 : defaultInactiveTimeoutMs;
     const sweepTimeoutBufferMs = sweepV0 ? sessionExpiryTimeoutMs / 2 : defaultBufferMs;
     const containerConfig: GcContainerConfig = {
         gcAllowed: true,
@@ -157,22 +147,6 @@ export function configForNewContainer(
         snapshotCacheExpiryMs,
         sessionExpiryTimeoutMs,
         sweepTimeoutBufferMs,
-        inactiveTimeoutMs,
     };
     return containerConfig;
-}
-
-export function configForSession(
-    containerConfig: GcContainerConfig,
-    options: IGCRuntimeOptions,
-    settings: IConfigProvider,
-): GcSessionConfig {
-    //* TODO: Double-check this (I'm sure it's wrong)
-    const sessionConfig: GcSessionConfig = {
-        containerConfig,
-        gcEnabled: options.disableGC !== true,
-        sweepEnabled: containerConfig.sweepAllowed && options.disableGC !== true,
-        sessionExpiryTimeoutMs: undefined, //* Put TestOverride answer here, if still supported
-    };
-    return sessionConfig;
 }

@@ -22,7 +22,6 @@ import {
 import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
-    defaultSessionExpiryDurationMs,
     GarbageCollector,
     gcBlobPrefix,
     GCNodeType,
@@ -32,10 +31,10 @@ import {
     runSessionExpiryKey,
     disableSessionExpiryKey,
     IGarbageCollectorCreateParams,
-    oneDayMs,
 } from "../garbageCollection";
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "..";
+import { defaultSessionExpiryDurationMs, oneDayMs } from "../gcConfig";
 
 describe("Garbage Collection Tests", () => {
     // Nodes in the reference graph.
