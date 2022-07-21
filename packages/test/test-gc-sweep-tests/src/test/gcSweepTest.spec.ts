@@ -19,8 +19,8 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ITelemetryBaseEvent, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
-import { TestDataObject } from "./mockSummarizerClient";
-import { mockConfigProvider } from "./mockConfigProvider";
+import { TestDataObject } from "../testDataObjects";
+import { mockConfigProvider } from "../mockConfigProvider";
 
 enum ReferenceState {
     Unreferenced,
@@ -307,7 +307,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
             await sleep(sleepTime);
         }
         assert(errorList.length === 0, `${errorList}`);
-    });
+    }).timeout(100 * 1000); // Add 40s of leeway
 
     // pick random runtime options (maybe a certain distribution as well)
     // pick random feature flags (maybe a certain distribution as well)
