@@ -457,12 +457,9 @@ export class GarbageCollector implements IGarbageCollector {
             ? undefined
             : effectiveSessionExpiryTimeoutMs;
     }
-    /** Additional buffer time to wait, on top of required durations such as snapshot and session expiry */
-    private get sweepTimeoutBufferMs(): number | undefined {
-        return this.containerConfig.sweepAllowed ? this.containerConfig.sweepTimeoutBufferMs : undefined;
-    }
     /** The time after which an unreferenced node is inactive. */
     private readonly inactiveTimeoutMs: number;
+    private readonly snapshotCacheExpiryMs: number | undefined;
     /**
      * Sweep timeout is the time after which unreferenced content can be swept.
      * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + a buffer.
@@ -470,11 +467,10 @@ export class GarbageCollector implements IGarbageCollector {
      */
     private get sweepTimeoutMs(): number | undefined {
         const sessionExpiryTimeoutMs = this.effectiveSessionExpiryTimeoutMs;
-        const { snapshotCacheExpiryMs, sweepTimeoutBufferMs } = this.containerConfig;
-        if (sessionExpiryTimeoutMs === undefined || snapshotCacheExpiryMs === undefined) {
+        if (sessionExpiryTimeoutMs === undefined || this.snapshotCacheExpiryMs === undefined) {
             return undefined;
         }
-        return snapshotCacheExpiryMs + sessionExpiryTimeoutMs + sweepTimeoutBufferMs;
+        return this.snapshotCacheExpiryMs + sessionExpiryTimeoutMs + this.containerConfig.sweepTimeoutBufferMs;
     }
 
     /** For a given node path, returns the node's package path. */
@@ -499,8 +495,12 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Set this ASAP since many getters on this class assume it is set
         this.containerConfig = createParams.existing
-            ? configForExistingContainer(metadata, createParams.snapshotCacheExpiryMs)
-            : configForNewContainer(this.gcOptions, this.mc.config, createParams.snapshotCacheExpiryMs);
+            ? configForExistingContainer(metadata)
+            : configForNewContainer(this.gcOptions, this.mc.config);
+
+        this.snapshotCacheExpiryMs = this.sweepV0
+            ? 0 // Ignore snapshot expiry for SweepV0
+            : createParams.snapshotCacheExpiryMs;
 
         // If session expiry is enabled, we need to close the container when the session expiry timeout expires.
         if (this.effectiveSessionExpiryTimeoutMs !== undefined) {
@@ -532,7 +532,7 @@ export class GarbageCollector implements IGarbageCollector {
         // If we had snapshotCacheExpiryMs in a previous session but now they don't match, this is a problem
         const mismatchedSnapshotCacheExpiryMs =
             metadata?.expectedSnapshotCacheExpiryMs !== undefined &&
-            createParams.snapshotCacheExpiryMs !== metadata?.expectedSnapshotCacheExpiryMs;
+            this.snapshotCacheExpiryMs !== metadata?.expectedSnapshotCacheExpiryMs;
 
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -881,8 +881,8 @@ export class GarbageCollector implements IGarbageCollector {
             gcFeature: this.gcEnabled ? this.currentGCVersion : 0,
             sessionExpiryTimeoutMs: this.containerSessionExpiryTimeoutMs,
             sweepEnabled: this.sweepEnabled,
-            expectedSnapshotCacheExpiryMs: this.containerConfig.snapshotCacheExpiryMs,
-            sweepTimeoutBufferMs: this.sweepTimeoutBufferMs,
+            expectedSnapshotCacheExpiryMs: this.snapshotCacheExpiryMs,
+            sweepTimeoutBufferMs: this.containerConfig.sweepTimeoutBufferMs,
             gcTestMode: this.containerConfig.testMode,
         };
     }
