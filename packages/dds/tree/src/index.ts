@@ -51,6 +51,7 @@ export {
     RevisionTag,
     ChangeFromChangeRebaser,
     FinalFromChangeRebaser,
+    ChangeSetFromChangeRebaser,
 } from "./rebase";
 
 export {

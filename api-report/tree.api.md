@@ -55,6 +55,9 @@ export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
     _typeCheck?: Covariant<TChange> & Contravariant<TFinalChange> & Invariant<TChangeSet>;
 }
 
+// @public (undocumented)
+export type ChangeSetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, any, infer TChangeSet> ? TChangeSet : never;
+
 // @public
 export type ChildCollection = FieldKey | RootRange;
 
@@ -570,11 +573,11 @@ interface ProtoNode {
 // @public
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
     constructor(rebaser: TChangeRebaser);
-    // (undocumented)
-    delta(from: RevisionTag, to: RevisionTag): Delta.Root;
     discardRevision(revision: RevisionTag): void;
     // (undocumented)
     readonly empty: RevisionTag;
+    // (undocumented)
+    getResolutionPath(from: RevisionTag, to: RevisionTag): ChangeSetFromChangeRebaser<TChangeRebaser>;
     rebase(changes: ChangeFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>];
     rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void;
     // (undocumented)

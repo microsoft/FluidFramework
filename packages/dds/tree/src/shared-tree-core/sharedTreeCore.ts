@@ -9,7 +9,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryContext, ISummaryTreeWithStats, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { Delta } from "../changeset";
+import { Delta, toDelta } from "../changeset";
 import { ChangeRebaser, FinalFromChangeRebaser, Rebaser, RevisionTag } from "../rebase";
 import { AnchorSet } from "../tree";
 import { fail } from "../util";
@@ -89,9 +89,9 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
 
     // TODO: call this after local or remote edits.
     private updateLocalState(revision: RevisionTag): void {
-        // TODO: maybe unify these two calls as an optimziation.
+        // TODO: maybe unify these two calls into rebaser as an optimziation.
         this.rebaser.rebaseAnchors(this.anchors, this.localState, revision);
-        const delta = this.rebaser.delta(this.localState, revision);
+        const delta = toDelta(this.rebaser.getResolutionPath(this.localState, revision));
         for (const index of this.indexes) {
             index.newLocalState?.(delta);
         }
