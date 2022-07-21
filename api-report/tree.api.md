@@ -8,6 +8,22 @@ import { Jsonable } from '@fluidframework/datastore-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @public
+export type Anchor = Brand<number, "rebaser.Anchor">;
+
+// @public
+export class AnchorSet {
+    constructor();
+    // (undocumented)
+    readonly anchorsToPath: Map<Anchor, PathShared>;
+    // (undocumented)
+    forget(anchor: Anchor): void;
+    locate(anchor: Anchor): UpPath | undefined;
+    // (undocumented)
+    readonly paths: PathCollection;
+    track(path: UpPath): Anchor;
+}
+
+// @public
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @public
@@ -15,6 +31,39 @@ export abstract class BrandedType<ValueType, Name extends string> {
     protected readonly _type_brand: Name;
     // (undocumented)
     protected _typeCheck?: Invariant<ValueType>;
+}
+
+// @public (undocumented)
+export function buildForest(): IEditableForest;
+
+// @public (undocumented)
+export type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<infer TChange, any, any> ? TChange : never;
+
+// @public
+export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
+    compose(...changes: TChangeSet[]): TChangeSet;
+    // (undocumented)
+    export(change: TChangeSet): TFinalChange;
+    // (undocumented)
+    import(change: TChange): TChangeSet;
+    invert(changes: TChangeSet): TChangeSet;
+    // (undocumented)
+    rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
+    // (undocumented)
+    rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
+    // (undocumented)
+    _typeCheck?: Covariant<TChange> & Contravariant<TFinalChange> & Invariant<TChangeSet>;
+}
+
+// @public
+export type ChildCollection = FieldKey | RootRange;
+
+// @public
+export interface ChildLocation {
+    // (undocumented)
+    readonly container: ChildCollection;
+    // (undocumented)
+    readonly index: number;
 }
 
 // @public
@@ -31,6 +80,21 @@ export interface Covariant<T> {
 
 // @public
 export function cursorToJsonObject(reader: ITreeCursor): unknown;
+
+// @public
+export interface Dependee extends NamedComputation {
+    registerDependent(dependent: Dependent): boolean;
+    removeDependent(dependent: Dependent): void;
+}
+
+// @public
+export interface Dependent extends NamedComputation {
+    markInvalid(token?: InvalidationToken): void;
+}
+
+// @public
+export interface DetachedRange extends Opaque<Brand<number, "tree.DetachedRange">> {
+}
 
 // @public
 export const emptyField: FieldSchema;
@@ -55,6 +119,20 @@ export enum FieldKind {
     Value = 0
 }
 
+// @public
+export interface FieldLocation {
+    // (undocumented)
+    readonly key: FieldKey;
+    // (undocumented)
+    readonly parent: ForestLocation;
+}
+
+// @public
+export interface FieldMap<TChild> {
+    // (undocumented)
+    [key: string]: readonly TChild[];
+}
+
 // @public (undocumented)
 export interface FieldSchema {
     // (undocumented)
@@ -62,8 +140,59 @@ export interface FieldSchema {
     readonly types?: ReadonlySet<TreeSchemaIdentifier>;
 }
 
+// @public (undocumented)
+export type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, infer TFinal, any> ? TFinal : never;
+
+// @public
+export interface ForestAnchor {
+    free(): void;
+    readonly state: ITreeSubscriptionCursorState;
+}
+
+// @public
+export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
+
+// @public
+export interface GenericTreeNode<TChild> extends NodeData {
+    // (undocumented)
+    fields?: Readonly<FieldMap<TChild>>;
+}
+
 // @public
 export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">> {
+}
+
+// @public
+export interface IEditableForest extends IForestSubscription {
+    add(nodes: Iterable<ITreeCursor>): DetachedRange;
+    readonly anchors: AnchorSet;
+    attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void;
+    delete(ids: DetachedRange): void;
+    detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange;
+    // (undocumented)
+    readonly schema: StoredSchemaRepository;
+    setValue(nodeId: ForestLocation, value: Value): void;
+}
+
+// @public
+export interface IForestSubscription extends Dependee {
+    allocateCursor(): ITreeSubscriptionCursor;
+    root(range: DetachedRange): ForestAnchor;
+    // (undocumented)
+    readonly rootField: DetachedRange;
+    readonly schema: SchemaRepository & Dependee;
+    tryGet(destination: ForestAnchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
+}
+
+// @public
+export class InvalidationToken {
+    constructor(description: string, isSecondaryInvalidation?: boolean);
+    // (undocumented)
+    readonly description: string;
+    // (undocumented)
+    readonly isSecondaryInvalidation: boolean;
+    // (undocumented)
+    protected readonly _typeCheck: MakeNominal;
 }
 
 // @public
@@ -87,6 +216,24 @@ export interface ITreeCursor {
     readonly type: TreeType;
     up(): TreeNavigationResult;
     readonly value: Value;
+}
+
+// @public
+export interface ITreeSubscriptionCursor extends ITreeCursor {
+    buildAnchor(): ForestAnchor;
+    clear(): void;
+    // (undocumented)
+    fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
+    free(): void;
+    observer?: ObservingDependent;
+    readonly state: ITreeSubscriptionCursorState;
+}
+
+// @public (undocumented)
+export enum ITreeSubscriptionCursorState {
+    Cleared = 1,
+    Current = 0,
+    Freed = 2
 }
 
 // @public (undocumented)
@@ -145,6 +292,13 @@ export interface Named<TName> {
     readonly name: TName;
 }
 
+// @public
+export interface NamedComputation {
+    readonly computationName: string;
+    listDependees?(): Iterable<Dependee>;
+    listDependents?(): Iterable<Dependent>;
+}
+
 // @public (undocumented)
 export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 
@@ -152,7 +306,166 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 export const neverTree: TreeSchema;
 
 // @public
+export interface NodeData {
+    readonly type: TreeSchemaIdentifier;
+    value?: TreeValue;
+}
+
+// @public
+export interface ObservingDependent extends Dependent {
+    // @override
+    listDependees(): Iterable<Dependee>;
+    registerDependee(dependee: Dependee): void;
+}
+
+// @public
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
+
+// @public
+export class PathCollection extends PathShared<RootRange> {
+    constructor();
+    // (undocumented)
+    delete(range: DetachedRange): void;
+}
+
+// @public (undocumented)
+export class PathNode extends PathShared<FieldKey> {
+    constructor(parentPath: PathShared<FieldKey>, location: ChildLocation);
+    // (undocumented)
+    parentPath: PathShared<FieldKey>;
+}
+
+// @public
+export class PathShared<TParent extends ChildCollection = ChildCollection> implements UpPath {
+    // (undocumented)
+    protected readonly children: Map<TParent, PathNode[]>;
+    // (undocumented)
+    detach(start: number, length: number, destination: DetachedRange): void;
+    // (undocumented)
+    insert(start: number, paths: PathNode, length: number): void;
+    // (undocumented)
+    parent(): UpPath | DetachedRange;
+    // (undocumented)
+    parentField(): FieldKey;
+    // (undocumented)
+    parentIndex(): number;
+}
+
+// @public
+export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+
+// @public
+export function placeholderTreeFromCursor(cursor: ITreeCursor): PlaceholderTree;
+
+// @public
+export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
+    constructor(rebaser: TChangeRebaser);
+    discardRevision(revision: RevisionTag): void;
+    // (undocumented)
+    readonly empty: RevisionTag;
+    rebase(changes: ChangeFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>];
+    rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void;
+    // (undocumented)
+    readonly rebaser: TChangeRebaser;
+}
+
+// @public
+export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
+
+// @public
+export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
+
+// @public
+export const rootFieldKey: BrandedType<string, "tree.GlobalFieldKey">;
+
+// @public
+export interface RootRange {
+    // (undocumented)
+    readonly key: DetachedRange;
+}
+
+// @public (undocumented)
+export interface SchemaRepository {
+    // (undocumented)
+    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
+    lookupGlobalFieldSchema(key: GlobalFieldKey): FieldSchema;
+    lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema;
+    // (undocumented)
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+}
+
+// @public
+export class SimpleDependee implements Dependee {
+    constructor(computationName?: string);
+    // (undocumented)
+    readonly computationName: string;
+    invalidateDependents(): void;
+    // (undocumented)
+    listDependents(): Set<Dependent>;
+    // (undocumented)
+    registerDependent(dependent: Dependent): boolean;
+    // (undocumented)
+    removeDependent(dependent: Dependent): void;
+}
+
+// @public
+export class StoredSchemaRepository extends SimpleDependee implements SchemaRepository, Dependee {
+    constructor(fields?: Map<GlobalFieldKey, FieldSchema>, trees?: Map<TreeSchemaIdentifier, TreeSchema>);
+    // (undocumented)
+    clone(): StoredSchemaRepository;
+    // (undocumented)
+    readonly computationName: string;
+    // (undocumented)
+    protected readonly fields: Map<GlobalFieldKey, FieldSchema>;
+    // (undocumented)
+    get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema>;
+    // (undocumented)
+    lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema;
+    // (undocumented)
+    lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema;
+    // (undocumented)
+    protected readonly trees: Map<TreeSchemaIdentifier, TreeSchema>;
+    // (undocumented)
+    get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+    tryUpdateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): boolean;
+    tryUpdateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): boolean;
+}
+
+// @public
+export class TextCursor implements ITreeCursor {
+    constructor(root: PlaceholderTree);
+    // (undocumented)
+    down(key: FieldKey, index: number): TreeNavigationResult;
+    // (undocumented)
+    getField(key: FieldKey): readonly PlaceholderTree[];
+    // (undocumented)
+    getFields(): Readonly<FieldMap<PlaceholderTree>>;
+    // (undocumented)
+    getNode(): PlaceholderTree;
+    // (undocumented)
+    get keys(): Iterable<FieldKey>;
+    // (undocumented)
+    length(key: FieldKey): number;
+    // (undocumented)
+    seek(offset: number): {
+        result: TreeNavigationResult;
+        moved: number;
+    };
+    // (undocumented)
+    get type(): TreeType;
+    // (undocumented)
+    up(): TreeNavigationResult;
+    // (undocumented)
+    get value(): Value;
+}
+
+// @public (undocumented)
+export interface TreeLocation {
+    // (undocumented)
+    readonly index: number;
+    // (undocumented)
+    readonly range: FieldLocation | DetachedRange;
+}
 
 // @public (undocumented)
 export const enum TreeNavigationResult {
@@ -178,6 +491,16 @@ export type TreeType = TreeSchemaIdentifier;
 
 // @public
 export interface TreeValue extends Serializable {
+}
+
+// @public
+export interface UpPath {
+    // (undocumented)
+    parent(): UpPath | DetachedRange;
+    // (undocumented)
+    parentField(): FieldKey;
+    // (undocumented)
+    parentIndex(): number;
 }
 
 // @public

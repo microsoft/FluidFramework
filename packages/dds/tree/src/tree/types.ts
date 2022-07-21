@@ -21,7 +21,7 @@ export const EmptyKey = "" as const as FieldKey;
  *
  * @public
  */
- export interface ChildLocation {
+export interface ChildLocation {
     readonly container: ChildCollection;
     readonly index: number;
 }
