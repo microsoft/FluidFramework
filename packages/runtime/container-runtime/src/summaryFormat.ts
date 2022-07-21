@@ -9,6 +9,7 @@ import { readAndParse } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { gcTreeKey } from "./garbageCollection";
+import { GCTestMode } from "./gcConfig";
 
 type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
 interface IFluidDataStoreAttributes0 {
@@ -119,7 +120,11 @@ export interface IGCMetadata {
      */
     readonly sweepEnabled?: boolean;
 
-    readonly sweepTestMode?: string;
+    /**
+     * gcTestMode indicates the container is configured in a non-standard way to support certain testing scenarios.
+     * Only known values are supported in this version of the runtime code.
+     */
+    readonly gcTestMode?: GCTestMode;
 }
 
 /** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
