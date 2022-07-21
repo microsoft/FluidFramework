@@ -19,6 +19,7 @@ export {
     isRuntimeMessage,
     RuntimeMessage,
     unpackRuntimeMessage,
+    ScheduleManager,
     agentSchedulerId,
     ContainerRuntime,
     RuntimeHeaders,
