@@ -23,8 +23,6 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
     public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
-    public readonly anchors: AnchorSet = new AnchorSet();
-
     public root(range: DetachedRange): ForestAnchor { return new RootAnchor(range); }
     public readonly rootField: DetachedRange = this.newRange();
 
@@ -35,7 +33,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
 
-    public constructor() {
+    public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
         super("object-forest.ObjectForest");
         this.roots.set(this.rootField, []);
         // Invalidate forest if schema change.
