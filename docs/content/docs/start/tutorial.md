@@ -154,7 +154,7 @@ function renderDiceRoller(elem) {
 
 ### Modifying Fluid data
 
-To begin using Fluid in the application, the first thing to change is what happens when the user clicks the `rollButton`. Instead of updating the local state directly, the button updates the number stored in the `value` key of the Fluid `diceMap` object that we created earlier. So, we added the `diceMap` as an additional parameter to the `rollButton` method.
+To begin using Fluid in the application, the first thing we needed to change was what happens when the user clicks the `rollButton`. Instead of updating the local state directly, the button updates the number stored in the `value` key of the Fluid `diceMap` object that we created earlier. So, we added the `diceMap` as an additional parameter to the `rollButton` method.
 
 ```js
 const renderDiceRoller = (diceMap, elem) => {
