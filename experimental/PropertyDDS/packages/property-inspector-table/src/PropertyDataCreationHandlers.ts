@@ -47,9 +47,9 @@ export const handlePropertyDataCreationOptionGeneration =
  * @param name - Will be the name of the new property .
  * @param typeid - The type unique identifier, indicating which type the created property shall be.
  * @param context - Will be the type of collection of values that the property contains.
- *                Possible values are "single", "array", "map" and "set".
+ * Possible values are "single", "array", "map" and "set".
  * @param parent - The property parent of the new property to create. It can be of type Array, Map, Set.
- *               If it not any of those types (TODO: What happens then?).
+ * If it not any of those types (TODO: What happens then?).
  */
 const createProperty = (name: string, typeid: string, context: string, parent: any) => {
   if (!(["set", "array"].includes(parent.getProperty().getContext()))) {

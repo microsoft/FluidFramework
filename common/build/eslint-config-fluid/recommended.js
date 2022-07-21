@@ -88,6 +88,22 @@ module.exports = {
          * hole, and source of bugs in your codebase.
          */
         "@typescript-eslint/no-unsafe-return": "error",
+
+        // #region eslint-plugin-jsdoc rules
+
+        /**
+         * Ensures all JSDoc/TSDoc comments use the multi-line format for consistency.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-multiline-blocks>
+         */
+        "jsdoc/multiline-blocks": ["error", {"noSingleLineBlocks" : true}],
+
+        /**
+         * Require the description (summary) component in JSDoc/TSDoc comments
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
+         */
+        "jsdoc/require-description": "error",
+
+        // #endregion
     },
     "overrides": [
         {
