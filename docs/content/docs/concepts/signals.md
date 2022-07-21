@@ -9,12 +9,12 @@ aliases:
 draft: true
 ---
 
-Signals are similar to ops, but are not stored; they're useful to implement features like user presence. They provide a simple way to communicate transient data to connected clients within a Fluid application.
+When using DDSes, data is sequenced and stored within the Fluid container to achieve synchronized shared state. For scenarios that involve shared persisted data, DDSes provide an effective way to communicate data so that it is retained in the container. However, there are many scenarios where we need to data communicate that is short-lived, in which the ordering and storage of said information would be wasteful and unnecessary.
 
-They are lossy and not guaranteed to be ordered on delivery relative to other signals and ops. A good analogy to help conceptualize signals is that they can be interpreted as UDP protocol, whereas standard ops can be thought of as TCP protocol.
+In contrast, the data that is communicated via signals is not retained in the container, which makes it an appropriate channel for transmitting transient data. A good analogy to help conceptualize signals is that they can be interpreted as UDP protocol, whereas standard ops can be thought of as TCP protocol. Signals are not guaranteed to be ordered on delivery relative to other signals and ops, but they still provide a useful communication channel for impermanent and short-lived data.
 
 ## Why are signals useful?
-Signals provide a transient data channel for sharing short-lived information that does not need to be persisted in the Fluid op stream.
+Signals provide a communication channel for sharing short-lived information that does not need to be persisted in the Fluid op stream.
 
 By sending signals, you avoid the storage and sequencing of data that will not be relevant or useful in the long-term.
 
