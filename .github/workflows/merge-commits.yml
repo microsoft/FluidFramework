@@ -42,8 +42,8 @@ jobs:
       EXISTS: ${{ steps.check-pr-exists.outputs.result }}
   dequeue:
     runs-on: ubuntu-latest
-    needs: [ check-pr-exists ]
-    if: needs.check-pr-exists.outputs.EXISTS == 'false'
+    needs: [ check-pr ]
+    if: needs.check-pr.outputs.EXISTS == 'false'
     steps:
       - run: npm install @azure/storage-queue
       - uses: actions/github-script@7a5c598405937d486b0331594b5da2b14db670da # pin@v6
