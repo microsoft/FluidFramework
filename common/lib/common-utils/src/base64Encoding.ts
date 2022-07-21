@@ -9,13 +9,15 @@ import { IsoBuffer } from "./indexNode";
  * Converts the provided {@link https://en.wikipedia.org/wiki/Base64 | base64}-encoded string
  * to {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}.
  */
-export const fromBase64ToUtf8 = (input: string): string => IsoBuffer.from(input, "base64").toString("utf-8");
+export const fromBase64ToUtf8 = (input: string): string =>
+    IsoBuffer.from(input, "base64").toString("utf-8");
 
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}-encoded string
  * to {@link https://en.wikipedia.org/wiki/Base64 | base64}.
  */
-export const fromUtf8ToBase64 = (input: string): string => IsoBuffer.from(input, "utf8").toString("base64");
+export const fromUtf8ToBase64 = (input: string): string =>
+    IsoBuffer.from(input, "utf8").toString("base64");
 
 /**
  * Convenience function to convert unknown encoding to utf8 that avoids

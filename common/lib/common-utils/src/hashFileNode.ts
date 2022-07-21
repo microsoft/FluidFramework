@@ -20,7 +20,7 @@ import { IsoBuffer } from "./bufferNode";
  * @param hashEncoding - The encoding of the returned hash, also artificially constrained.
  * @returns The hash of the content of the buffer.
  */
- export async function hashFile(
+export async function hashFile(
     file: IsoBuffer,
     algorithm: "SHA-1" | "SHA-256" = "SHA-1",
     hashEncoding: "hex" | "base64" = "hex",
@@ -51,7 +51,5 @@ export async function gitHashFile(file: IsoBuffer): Promise<string> {
     const size = file.byteLength;
     const filePrefix = `blob ${size.toString()}${String.fromCharCode(0)}`;
     const engine = new sha1();
-    return engine.update(filePrefix)
-        .update(file)
-        .digest("hex") as string;
+    return engine.update(filePrefix).update(file).digest("hex") as string;
 }

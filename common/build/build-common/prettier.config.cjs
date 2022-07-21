@@ -1,10 +1,14 @@
-// TODO: Use shared config in build-common once version with config has been published.
+// Shared prettier configuration for use in across the fluid-framework repository.
+// Individual packages may extend this and override rules as needed, though for consistent formatting, package-local
+// overrides should be avoided unless absolutely necessary.
 module.exports = {
     printWidth: 100,
     quoteProps: "consistent",
     semi: true,
     singleQuote: false,
+    tabWidth: 4,
     trailingComma: "all",
+    useTabs: false, // TODO: reconsider in the future for accessibility
     overrides: [
         {
             files: "lerna.json",
