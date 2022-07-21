@@ -196,7 +196,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
 
     const trackDataStoreAsReferenced = (id: string) => {
         const testNode = getTestNode(id);
-        if (testNode.referenceState === ReferenceState.Referenced) {
+        if (testNode.referenceState === ReferenceState.Unreferenced) {
             testNode.referenceState = ReferenceState.Referenced;
             for (const childId of testNode.children) {
                 trackDataStoreAsReferenced(childId);
@@ -291,7 +291,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     ];
     const testTime = 60 * 1000; // 1 minute
 
-    it(`Create and reference and unreference datastores with multiple containers. Seed: ${seed}`, async () => {
+    it.skip(`Create and reference and unreference datastores with multiple containers. Seed: ${seed}`, async () => {
         overrideLogger.ignoreExpectedEventTypes({
             eventName: "fluid:telemetry:Container:ContainerClose",
             errorType: ContainerErrorType.clientSessionExpiredError,
