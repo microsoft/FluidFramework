@@ -63,11 +63,11 @@ const maxSetTimeoutMs = 0x7FFFFFFF; // setTimeout limit is MAX_INT32=(2^31-1).
  * Sets timeouts like the setTimeout function allowing timeouts to exceed the setTimeout's max timeout limit.
  * Timeouts may not be exactly accurate due to browser implementations and the OS.
  * https://stackoverflow.com/questions/21097421/what-is-the-reason-javascript-settimeout-is-so-inaccurate
- * @param timeoutFn - executed when the timeout expires
- * @param timeoutMs - duration of the timeout in milliseconds
- * @param setTimeoutIdFn - executed to update the timeout if multiple timeouts are required when
- *  timeoutMs greater than maxTimeout
- * @returns the initial timeout
+ * @param timeoutFn - Executed when the timeout expires
+ * @param timeoutMs - Duration of the timeout in milliseconds
+ * @param setTimeoutIdFn - Executed to update the timeout if multiple timeouts are required when
+ * timeoutMs greater than maxTimeout
+ * @returns The initial timeout
  */
 export function setLongTimeout(
     timeoutFn: () => void,

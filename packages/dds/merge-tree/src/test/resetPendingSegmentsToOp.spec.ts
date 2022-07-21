@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
-import { Marker, reservedMarkerIdKey } from "../mergeTree";
+import { Marker, reservedMarkerIdKey } from "../mergeTreeNodes";
 import { IMergeTreeOp, ReferenceType } from "../ops";
 import { clone } from "../properties";
 import { TextSegment } from "../textSegment";

@@ -31,9 +31,8 @@ import {
     IMergeNode,
     ISegment,
     Marker,
-    MergeTree,
     reservedMarkerIdKey,
-} from "../mergeTree";
+} from "../mergeTreeNodes";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { createRemoveRangeOp } from "../opBuilder";
 import {
@@ -44,10 +43,11 @@ import {
 import { SnapshotLegacy } from "../snapshotlegacy";
 import {
     IJSONTextSegment,
-    MergeTreeTextHelper,
     TextSegment,
 } from "../textSegment";
 import { reservedRangeLabelsKey, reservedTileLabelsKey } from "../referencePositions";
+import { MergeTree } from "../mergeTree";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";

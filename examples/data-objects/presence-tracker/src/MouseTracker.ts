@@ -7,7 +7,6 @@ import { Signaler } from "@fluid-experimental/data-objects";
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-    IFluidContainer,
     IMember,
     IServiceAudience,
 } from "fluid-framework";
@@ -47,7 +46,6 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     };
 
     public constructor(
-        container: IFluidContainer,
         public readonly audience: IServiceAudience<IMember>,
         private readonly signaler: Signaler,
     ) {
