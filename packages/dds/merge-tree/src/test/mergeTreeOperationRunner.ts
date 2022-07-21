@@ -12,7 +12,7 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 import random from "random-js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
-import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTree";
+import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 

@@ -4,7 +4,7 @@
  */
 
 import { Stack } from "./collections";
-import { ISegment } from "./mergeTree";
+import { ISegment } from "./mergeTreeNodes";
 import { ReferenceType, ICombiningOp } from "./ops";
 import { PropertySet, MapLike } from "./properties";
 

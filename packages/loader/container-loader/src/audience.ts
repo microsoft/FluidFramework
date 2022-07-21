@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { IAudience } from "@fluidframework/container-definitions";
+import { IAudienceOwner } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Audience represents all clients connected to the op stream.
  */
-export class Audience extends EventEmitter implements IAudience {
+export class Audience extends EventEmitter implements IAudienceOwner {
     private readonly members = new Map<string, IClient>();
 
     public on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
