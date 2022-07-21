@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { isVersionBumpTypeExtended } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
 import * as semver from "semver";
 import { table } from "table";
+import { isVersionBumpTypeExtended } from "../bumpTypes";
 import {
     bumpInternalVersion,
     DEFAULT_PUBLIC_VERSION,

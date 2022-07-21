@@ -197,7 +197,7 @@ EXAMPLES
     $ flub version ^1.0.0
 ```
 
-_See code: [@fluid-internal/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
 <!-- commandsstop -->
 
 ## Trademark

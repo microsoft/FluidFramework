@@ -1,7 +1,6 @@
 {
-  "name": "@fluid-internal/version-tools",
+  "name": "@fluid-tools/version-tools",
   "version": "0.3.0",
-  "private": true,
   "description": "Versioning tools for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -20,16 +19,15 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:commonjs": "npm run tsc && npm run build:test",
+    "build": "npm run build:genver && npm run build:compile && npm run lint",
+    "build:commonjs": "rimraf dist oclif.manifest.json && npm run tsc",
     "build:compile": "npm run build:commonjs",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
     "build:readme": "oclif readme",
-    "build:test": "tsc --project ./test/tsconfig.json",
-    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log oclif.manifest.json",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
@@ -62,7 +60,6 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/build-tools": "^0.3.0",
     "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
