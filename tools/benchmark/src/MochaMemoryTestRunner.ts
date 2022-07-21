@@ -2,33 +2,77 @@ import * as v8 from "v8";
 import { performance } from "perf_hooks";
 import { assert } from "chai";
 import { Test } from "mocha";
+import Benchmark from "benchmark";
 import {
-    BenchmarkType,
-    BenchmarkArguments,
-    BenchmarkOptions,
-    validateBenchmarkArguments,
     isParentProcess,
     isInPerformanceTestingMode,
     performanceTestSuiteTag,
+    MochaExclusiveOptions,
+    HookArguments,
+    BenchmarkType,
 } from "./Configuration";
 import { MemoryBenchmarkStats } from "./MochaMemoryTestReporter";
+import { getArrayStatistics } from "./ReporterUtilities";
 
-export function benchmarkMemory(args: BenchmarkArguments): Test {
-    const options: Required<BenchmarkOptions> = {
-        maxBenchmarkDurationSeconds: args.maxBenchmarkDurationSeconds ?? 5,
+export interface MemoryTestArguments extends MochaExclusiveOptions, HookArguments{
+    /**
+	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+	 */
+	title: string;
+
+	/**
+	 * The function to benchmark. Expects an async function for maximum compatibility. Wrap synchronous
+     * code in a Promise/async-function if necessary.
+	 */
+	benchmarkFn: () => Promise<unknown>;
+
+    /**
+	 * The max time in seconds to run the benchmark. This is not a guaranteed immediate stop time.
+     * Elapsed time gets checked between iterations of the test that is being benchmarked. Defaults
+     * to 10 seconds.
+	 */
+	maxBenchmarkDurationSeconds?: number;
+
+	/**
+	 * The min sample count to reach. Defaults to 5.
+	 *
+     * @remarks This takes precedence over {@link MemoryTestArguments.maxBenchmarkDurationSeconds}.
+	 */
+	minSampleCount?: number;
+
+    /**
+     * The benchmark will iterate the test as many times as necessary to try to get the absolute value of
+     * the root mean error below this number. Specify as an integer (e.g. 5 means RME below 5%). Defaults
+     * to 2.5.
+     *
+     * @remarks {@link MemoryTestArguments.maxBenchmarkDurationSeconds} takes precedence over this, since a
+     * benchmark with a very high measurement variance might never get a low enough RME.
+     */
+    maxRootMeanError?: number;
+
+    /**
+	 * The kind of benchmark.
+	 */
+	type?: BenchmarkType;
+}
+
+export function benchmarkMemory(args: MemoryTestArguments): Test {
+    const options: Required<MemoryTestArguments> = {
+        maxBenchmarkDurationSeconds: args.maxBenchmarkDurationSeconds ?? 10,
         minSampleCount: args.minSampleCount ?? 5,
-        minSampleDurationSeconds: args.minSampleDurationSeconds ?? 0,
-        type: args.type ?? BenchmarkType.Measurement,
+        maxRootMeanError: args.maxRootMeanError ?? 2.5,
         only: args.only ?? false,
         before: args.before ?? (() => {}),
         after: args.after ?? (() => {}),
+        title: args.title,
+        benchmarkFn: args.benchmarkFn,
+        type: args.type ?? BenchmarkType.Measurement,
     };
-    const { benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
-    const typeTag = BenchmarkType[options.type];
-    const qualifiedTitle = `${performanceTestSuiteTag} @${typeTag} ${args.title}`;
+
+    options.title = `${performanceTestSuiteTag} @${BenchmarkType[options.type]} ${options.title}`;
 
     const itFunction = options.only ? it.only : it;
-    const test = itFunction(qualifiedTitle, async () => {
+    const test = itFunction(options.title, async () => {
         if (isParentProcess) {
             // Instead of running the benchmark in this process, create a new process.
             // See {@link isParentProcess} for why.
@@ -90,7 +134,7 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
         // If not in perfMode, just run the test normally
         if (!isInPerformanceTestingMode) {
             await options.before();
-            await argsBenchmarkFn();
+            await options.benchmarkFn();
             await options.after();
             return Promise.resolve();
         }
@@ -115,6 +159,7 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
 
         try {
             const startTime = performance.now();
+            let heapUsedStats: Benchmark.Stats;
             do {
                 global.gc();
                 benchmarkStats.samples.before.memoryUsage.push(process.memoryUsage());
@@ -122,17 +167,27 @@ export function benchmarkMemory(args: BenchmarkArguments): Test {
                 benchmarkStats.samples.before.heapSpace.push(v8.getHeapSpaceStatistics());
 
                 global.gc();
-                await argsBenchmarkFn();
+                await options.benchmarkFn();
 
                 benchmarkStats.samples.after.memoryUsage.push(process.memoryUsage());
                 benchmarkStats.samples.after.heap.push(v8.getHeapStatistics());
                 benchmarkStats.samples.after.heapSpace.push(v8.getHeapSpaceStatistics());
 
                 benchmarkStats.runs++;
-                if ((performance.now() - startTime) / 1000 > (args.maxBenchmarkDurationSeconds ?? 60)) {
+
+                // Break if max elapsed time passed, only if we've reached the min sample count
+                if (benchmarkStats.runs >= options.minSampleCount &&
+                    (performance.now() - startTime) / 1000 > options.maxBenchmarkDurationSeconds) {
                     break;
                 }
-            } while (benchmarkStats.runs < (args.minSampleCount ?? 5));
+
+                const heapUsedArray: number[] = [];
+                for (let i = 0; i < benchmarkStats.samples.before.memoryUsage.length; i++) {
+                    heapUsedArray.push(benchmarkStats.samples.after.memoryUsage[i].heapUsed
+                                        - benchmarkStats.samples.before.memoryUsage[i].heapUsed);
+                }
+                heapUsedStats = getArrayStatistics(heapUsedArray);
+            } while (benchmarkStats.runs < options.minSampleCount || heapUsedStats.rme > options.maxRootMeanError);
         } catch (error) {
             benchmarkStats.aborted = true;
             benchmarkStats.error = error as Error;

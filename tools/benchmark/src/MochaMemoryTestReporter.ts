@@ -6,11 +6,10 @@
 import * as v8 from "v8";
 import * as path from "path";
 import * as fs from "fs";
-import Benchmark from "benchmark";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 import { benchmarkTypes, isChildProcess, performanceTestSuiteTag } from "./Configuration";
-import { bold, green, italicize, pad, prettyNumber, red } from "./ReporterUtilities";
+import { bold, getArrayStatistics, green, italicize, pad, prettyNumber, red } from "./ReporterUtilities";
 
 /**
  * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was
@@ -222,44 +221,6 @@ class MochaMemoryTestReporter {
         fs.writeFileSync(fullPath, outputContentString);
         return fullPath;
     }
-}
-
-/**
- * T-Distribution two-tailed critical values for 95% confidence.
- * For more info see http://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm.
- */
-/* eslint-disable quote-props,key-spacing,no-multi-spaces */
-const tTable = {
-    "1":  12.706, "2":  4.303, "3":  3.182, "4":  2.776, "5":  2.571, "6":  2.447,
-    "7":  2.365,  "8":  2.306, "9":  2.262, "10": 2.228, "11": 2.201, "12": 2.179,
-    "13": 2.16,   "14": 2.145, "15": 2.131, "16": 2.12,  "17": 2.11,  "18": 2.101,
-    "19": 2.093,  "20": 2.086, "21": 2.08,  "22": 2.074, "23": 2.069, "24": 2.064,
-    "25": 2.06,   "26": 2.056, "27": 2.052, "28": 2.048, "29": 2.045, "30": 2.042,
-    "infinity": 1.96,
-};
-/* eslint-enable */
-
-function getArrayStatistics(array: number[]): Benchmark.Stats {
-    const n = array.length;
-    let max = -Infinity;
-    let min = Infinity;
-    let mean = 0;
-    array.forEach((x) => {
-        mean += x;
-        if (x > max) { max = x; }
-        if (x < min) { min = x; }
-    });
-    mean /= n;
-
-    const variance = array.map((x) => (x - mean) ** 2).reduce((a, b) => a + b) / n;
-    const deviation = Math.sqrt(variance);
-    const sem = deviation / Math.sqrt(n);
-    const df = n - 1;
-    const critical = tTable[Math.round(df) || "1"] ?? tTable.infinity;
-    const moe = sem * critical;
-    const rme = (moe / mean) * 100 || 0;
-
-    return { mean, variance, deviation, moe, sem, sample: array, rme };
 }
 
 module.exports = MochaMemoryTestReporter;
