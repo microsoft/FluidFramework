@@ -132,6 +132,8 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     };
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const seed = Math.random();
+    const random = makeRandom(seed);
 
     beforeEach(async () => {
         provider = getTestObjectProvider({
@@ -150,7 +152,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     });
 
     const randomInteger = (min: number, max: number): number => {
-        return makeRandom().integer(min, max);
+        return random.integer(min, max);
     };
 
     const loadNewContainer = async () => {
@@ -168,7 +170,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
         if (connectedContainers.length <= 0) {
             return;
         }
-        makeRandom().pick(connectedContainers).close();
+        random.pick(connectedContainers).close();
     };
 
     const createDataStoreForContainer = async (container: IContainer, dataStoreType: string = "TestDataObject") => {
@@ -240,11 +242,11 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     };
 
     const getRandomContainer = (): IContainer => {
-        return makeRandom().pick(connectedContainers);
+        return random.pick(connectedContainers);
     };
 
     const getRandomDataStoreFromContainer = async (container: IContainer) => {
-        const dataStoreId = makeRandom().pick(Array.from(testNodes.values())).id;
+        const dataStoreId = random.pick(Array.from(testNodes.values())).id;
         return requestFluidObject<TestDataObject>(container, dataStoreId);
     };
 
@@ -253,7 +255,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
         if (parents.size <= 0) {
             return undefined;
         }
-        const parentId = makeRandom().pick(Array.from(parents.values()));
+        const parentId = random.pick(Array.from(parents.values()));
         return requestFluidObject<TestDataObject>(container, parentId);
     };
 
@@ -289,7 +291,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     ];
     const testTime = 60 * 1000; // 1 minute
 
-    it("Create and reference and unreference datastores with multiple containers", async () => {
+    it(`Create and reference and unreference datastores with multiple containers. Seed: ${seed}`, async () => {
         overrideLogger.ignoreExpectedEventTypes({
             eventName: "fluid:telemetry:Container:ContainerClose",
             errorType: ContainerErrorType.clientSessionExpiredError,
@@ -299,7 +301,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
         const errorList: any[] = [];
         while (Date.now() < testEnd) {
             const sleepTime: number = randomInteger(0, defaultSessionExpiryDurationMs + 1000);
-            const action = makeRandom().pick(actionsList);
+            const action = random.pick(actionsList);
 
             action().catch((error) => {
                 errorList.push(error);
