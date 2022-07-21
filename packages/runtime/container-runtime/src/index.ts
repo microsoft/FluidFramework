@@ -82,4 +82,3 @@ export {
     SummaryCollection,
 } from "./summaryCollection";
 export { ICancellableSummarizerController, neverCancelledSummaryToken } from "./runWhileConnectedCoordinator";
-export { ScheduleManager } from "./scheduleManager";
