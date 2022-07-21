@@ -49,19 +49,22 @@ export interface INotificationContext {
    * The array of notifications available in the NotificationContext
    */
   notificationList: INotification[];
+
   /**
    * A method that removes a notification with a specific id from the notificationList
    * @param notificationId - The id pointing to the notification to be removed
    */
   removeNotification: (notificationId: string) => void;
+
   /**
    * A method that removes a notification with a specific index from the notificationList
    * @param notificationIndex - The id pointing to the notification to be removed
    */
   removeNotificationByIndex: (notificationIndex: number) => void;
+
   /**
    * A method that pushes the passed notification object to the notificationList
-   * @param  notificationObject- -  The notification to be pushed
+   * @param notificationObject - The notification to be pushed
    */
   pushNotification: (notificationObject: Pick<INotification, "message">) => void;
 }

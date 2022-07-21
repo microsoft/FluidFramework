@@ -56,21 +56,7 @@ import {
  * @public
  */
 export interface FieldMap<TChild> {
-    [key: string]: TreeNodeSequence<TChild>;
-}
-
-/**
- * A sequence of Nodes that make up a trait under a Node
- * @public
- */
-export type TreeNodeSequence<TChild> = TChild[];
-
-/**
- * An object which may have traits with children of the given type underneath it
- * @public
- */
-export interface WithFields<TChild> {
-    fields?: FieldMap<TChild>;
+    [key: string]: TChild[];
 }
 
 /**
@@ -92,15 +78,18 @@ export interface NodeData {
 }
 
 /**
- * Satisfies `NodeData` and may contain children under traits (which may or may not be `TreeNodes`)
+ * Json comparable tree node, generic over child type.
+ * Json compatibility assumes `TChild` is also json compatible.
  * @public
  */
-export interface TreeNode<TChild> extends NodeData, WithFields<TChild> {}
+export interface GenericTreeNode<TChild> extends NodeData {
+    fields?: Readonly<FieldMap<TChild>>;
+}
 
 /**
- * A tree whose nodes are either TreeNodes or a placeholder
+ * A tree whose nodes are either tree nodes or placeholders.
  */
-export type PlaceholderTree<TPlaceholder = never> = TreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 /**
  * A tree represented using plain JavaScript objects.
