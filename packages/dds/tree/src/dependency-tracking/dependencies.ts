@@ -18,10 +18,26 @@ export interface NamedComputation {
 	/**
 	 * A developer-friendly description of the computation this Cell represents.
 	 * Typically a function name: should be a constant which can be located by searching the source.
-	 * This name should not be relied on for semantic purposes, and should must be safe to log.
+	 * This name should not be relied on for semantic purposes, and must be safe to log.
 	 * Use when measuring / debugging / logging computation costs, invalidation etc.
 	 */
 	readonly computationName: string;
+
+    /**
+     * Lists the currently subscribed set of Dependees.
+     * This is exposed to allow tooling to inspect the dependency graph,
+     * and should not be needed for regular functionality.
+	 * Implementing this is not required: absence of an implementation does not mean there are no dependees.
+     */
+    listDependees?(): Iterable<Dependee>;
+
+    /**
+     * Lists the currently subscribed set of Dependent.
+     * This is exposed to allow tooling to inspect the dependency graph,
+     * and should not be needed for regular functionality.
+	 * Implementing this is not required: absence of an implementation does not mean there are no dependents.
+     */
+    listDependents?(): Iterable<Dependent>;
 }
 
 /**
@@ -46,13 +62,6 @@ export interface Dependent extends NamedComputation {
      * there will be a token specific invalidation protocol that must be obeyed.
 	 */
 	markInvalid(token?: InvalidationToken): void;
-
-    /**
-	 * Lists the currently subscribed set of Dependees.
-	 * This is exposed to allow tooling to inspect the dependency graph,
-     * and should not be needed for regular functionality.
-	 */
-	listDependees?(): Iterable<Dependee>;
 }
 
 /**

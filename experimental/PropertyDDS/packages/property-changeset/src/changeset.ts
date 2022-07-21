@@ -178,12 +178,12 @@ export class ChangeSet {
     /**
      * Applies a changeset to a given property (recursively). The ChangeSet is assumed to be relative to the same
      * property root and it will be applied behind the base ChangeSet (assuming that the changes are relative to the
-     * state after the base ChangeSet has been applied. It will change the base ChangeSet.)
+     * state after the base ChangeSet has been applied. It will change the base ChangeSet).
      *
-     * @param io_basePropertyChanges    - The ChangeSet describing the initial state
-     * @param in_appliedPropertyChanges - The ChangeSet to apply to this state
-     * @param in_removeEmpty            - Should empty ChangeSets be removed?
-     * @param in_options - Optional additional parameters
+     * @param io_basePropertyChanges - The ChangeSet describing the initial state.
+     * @param in_appliedPropertyChanges - The ChangeSet to apply to this state.
+     * @param in_removeEmpty - Should empty ChangeSets be removed?
+     * @param in_options - Optional additional parameters.
      */
     private _performApplyAfterOnProperty(
         io_basePropertyChanges: SerializedChangeSet,
@@ -262,14 +262,14 @@ export class ChangeSet {
     /**
      * Decides based on the given Typeid which applyAfter operation to perform.
      * Note: This function is not directly called on the ChangeSet but on the object containing it together with a key
-     *       since it needs to be able to overwrite this entry
+     * since it needs to be able to overwrite this entry
      *
-     * @param in_changedKey             - The key of the entry in the object
-     * @param in_baseChanges            - The object containing the state before the applyAfter
-     * @param in_appliedPropertyChanges - The object containing the ChangeSet with the modification
-     * @param in_typeid                 - The typeid of the property to modify
-     * @param in_removeEmpty            - Should empty ChangeSets be removed?
-     * @param in_options - Optional additional parameters
+     * @param in_changedKey - The key of the entry in the object.
+     * @param in_baseChanges - The object containing the state before the applyAfter.
+     * @param in_appliedPropertyChanges - The object containing the ChangeSet with the modification.
+     * @param in_typeid - The typeid of the property to modify.
+     * @param in_removeEmpty - Should empty ChangeSets be removed?
+     * @param in_options - Optional additional parameters.
      */
     public performApplyAfterOnPropertyWithTypeid(
         in_changedKey: string,
@@ -401,12 +401,11 @@ export class ChangeSet {
      * this class and transforms it in such a way that it can be applied after this ChangeSet. The function will modify
      * the supplied ChangeSet
      *
-     * @param io_changeSet   -
-     *     The ChangeSet that is rebased behind the state obtained by application of this ChangeSet
-     * @param out_conflicts A list of paths that resulted in conflicts together with the type of the conflict
-     * @param in_options - Optional additional parameters
+     * @param io_changeSet - The ChangeSet that is rebased behind the state obtained by application of this ChangeSet.
+     * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict.
+     * @param in_options - Optional additional parameters.
      * @returns The rebased ChangeSet (the same object as io_changeSet, it will be
-     *     modified in place)
+     * modified in place).
      */
     public _rebaseChangeSet(io_changeSet: SerializedChangeSet, out_conflicts: ConflictInfo[],
         in_options?: RebaseChangeSetOptions): SerializedChangeSet {
@@ -417,14 +416,10 @@ export class ChangeSet {
     /**
      * Internal helper function that performs a rebase on a single property
      *
-     * @param in_ownPropertyChangeSet -
-     *     The ChangeSet for the property stored in this class
-     * @param io_rebasePropertyChangeSet -
-     *     The ChangeSet for the property to be rebased
-     * @param in_basePath -
-     *     Base path to get to the property processed by this function
-     * @param out_conflicts -
-     *     A list of paths that resulted in conflicts together with the type of the conflict
+     * @param in_ownPropertyChangeSet - The ChangeSet for the property stored in this class
+     * @param io_rebasePropertyChangeSet - The ChangeSet for the property to be rebased
+     * @param in_basePath - Base path to get to the property processed by this function
+     * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict
      * @param in_options - Optional additional parameters
      * @returns The rebased ChangeSet for this property
      */
@@ -596,23 +591,22 @@ export class ChangeSet {
     }
 
     /**
-     * Decides based on the given Typeid which rebase operation to perform
-     * Note: This function is not directly called on the ChangeSet but on the object containing it together with a key
-     *       since it needs to be able to overwrite this entry
+     * Decides based on the given Typeid which rebase operation to perform.
      *
-     * @param in_key                          - The key of the entry in the object
-     * @param in_ownPropertyChangeSet         - The object containing the ChangeSet for the property
-     *                                                   stored in this class
-     * @param io_rebasePropertyChangeSet      - The object containing the ChangeSet for the property to
-     *                                                   be rebased
-     * @param in_typeid                       - The typeid of the property to rebase
-     * @param in_basePath                     - Base path to get to the property processed by this function
-     * @param in_removeEmpty                 - Should empty ChangeSets be removed?
-     * @param out_conflicts - A list of paths that resulted in
-     *                                                   conflicts together with the type of the conflict
+     * @remarks Note: This function is not directly called on the ChangeSet but on the object containing it together
+     * with a key since it needs to be able to overwrite this entry
+     *
+     * @param in_key - The key of the entry in the object
+     * @param in_ownPropertyChangeSet - The object containing the ChangeSet for the property stored in this class.
+     * @param io_rebasePropertyChangeSet - The object containing the ChangeSet for the property to be rebased.
+     * @param in_typeid - The typeid of the property to rebase.
+     * @param in_basePath - Base path to get to the property processed by this function.
+     * @param in_removeEmpty - Should empty ChangeSets be removed?
+     * @param out_conflicts - A list of paths that resulted in conflicts together with the type of the conflict.
      *
      * @returns Has there been a simple set collision? Those have to be handled separately
-     *                   TODO: We should unify the handling of set collisions
+     *
+     * @privateRemarks TODO: We should unify the handling of set collisions
      * @private
      */
     private rebaseChangeSetForPropertyEntryWithTypeid(
@@ -688,10 +682,10 @@ export class ChangeSet {
     }
 
     /**
-     * recursive helper function for ChangeSet.prototype._toReversibleChangeSet
+     * Recursive helper function for ChangeSet.prototype._toReversibleChangeSet
      * which converts a irreversible changeset to a reversible changeset
      * or updates the former state of a reversible changeset
-     * @param in_context the traversal context
+     * @param in_context - The traversal context.
      */
     private _recursivelyBuildReversibleChangeSet(in_context: Utils.TraversalContext) {
         const opType = in_context.getOperationType();
@@ -893,7 +887,7 @@ export class ChangeSet {
      * WARNING: This function is still experimental and needs more testing
      * and it's set to private for now. It will be converted to a public API function
      * in a later release.
-     * @param in_oldSerializedState the old state
+     * @param in_oldSerializedState - The old state.
      */
     public _toReversibleChangeSet(in_oldSerializedState: SerializedChangeSet) {
         ConsoleUtils.assert(in_oldSerializedState !== undefined,
@@ -1042,8 +1036,8 @@ export class ChangeSet {
 
     /**
      * Helper function to extract the first level paths from a given change set
-     * @param in_changeSet The ChangeSet to extract paths from
-     * @param isPrimitiveCollection Is this a primitive type collection?
+     * @param in_changeSet - The ChangeSet to extract paths from.
+     * @param isPrimitiveCollection - Is this a primitive type collection?
      *
      * @returns List of paths found at the first level of the change set
      */
@@ -1065,7 +1059,7 @@ export class ChangeSet {
 
     /**
      * recursive helper function for ChangeSet.prototype._toInverseChangeSet
-     * @param in_context the traversal context
+     * @param in_context - The traversal context.
      */
     private _recursivelyInvertReversibleChangeset(in_context: Utils.TraversalContext) {
         in_context.setUserData(in_context.getUserData() || {});

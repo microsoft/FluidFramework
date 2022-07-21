@@ -5,3 +5,5 @@
 
 export * from "./propertyTree";
 export * from "./propertyTreeFactory";
+export * from "./propertyTreeExt";
+export * from "./propertyTreeExtFactories";

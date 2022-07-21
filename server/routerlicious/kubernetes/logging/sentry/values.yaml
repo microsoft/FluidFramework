@@ -25,7 +25,7 @@ web:
       value: "true"
     - name: USE_X_FORWARDED_HOST
       value: "true"
-    
+
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -118,8 +118,9 @@ ingress:
   ## Ingress annotations
   ##
   annotations:
-    kubernetes.io/ingress.class: nginx-prod
-    ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+  ingressClassName: nginx-prod
 
   ## Ingress TLS configuration
   ## Secrets must be manually created in the namespace

@@ -8,7 +8,6 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { ISheetlet, createSheetletProducer } from "@tiny-calc/micro";
 import { BorderRect } from "./borderstyle";
 import * as styles from "./index.css";
-import { TableView } from "./tableview";
 
 // eslint-disable-next-line unicorn/no-unsafe-regex
 const numberExp = /^[+-]?\d*\.?\d+(?:[Ee][+-]?\d+)?$/;
@@ -69,7 +68,9 @@ export class GridView {
 
     constructor(
         private readonly matrix: SharedMatrix,
-        private readonly tableView: TableView,
+        private readonly getFormula: () => string,
+        private readonly setFormula: (val: string) => void,
+        private readonly setSelectionSummary: (val: string) => void,
     ) {
         this.root = this.generateDom();
         this.root.addEventListener("click", this.onGridClick as EventListener);
@@ -358,7 +359,6 @@ export class GridView {
     };
 
     private readonly cellKeyDown = (e: KeyboardEvent) => {
-        /* eslint-disable no-fallthrough */
         switch (e.code) {
             case KeyCode.escape: { this.cancelInput(); break; }
             case KeyCode.arrowUp: { this.moveInputByOffset(e, /* rowOffset: */ -1, /* colOffset */ 0); break; }
@@ -369,7 +369,6 @@ export class GridView {
             case KeyCode.arrowRight: { this.moveInputByOffset(e, /* rowOffset: */ 0, /* colOffset */ 1); }
             default: break;
         }
-        /* eslint-enable no-fallthrough */
     };
 
     public readonly formulaKeypress = (e: KeyboardEvent) => {
@@ -425,9 +424,9 @@ export class GridView {
             // The formula bar should always show raw values, but when a cell is
             // selected for edit it will be showing the raw value
             const cellValue = this.matrix.getCell(row, col);
-            this.tableView.formulaInput = `${cellValue ?? ""}`;
+            this.setFormula(`${cellValue ?? ""}`);
         } else {
-            this.tableView.formulaInput = "<multiple selection>";
+            this.setFormula("<multiple selection>");
         }
     }
 
@@ -438,7 +437,7 @@ export class GridView {
             const selectedCell = this.getTdFromRowCol(row, col) as HTMLTableDataCellElement;
             if (selectedCell) {
                 const previous = this.matrix.getCell(row, col);
-                const current = this.parseInput(this.tableView.formulaInput);
+                const current = this.parseInput(this.getFormula());
                 if (previous !== current) {
                     selectedCell.textContent = `\u200B${current}`;
                     this.matrix.setCell(row, col, current);
@@ -464,9 +463,9 @@ export class GridView {
         const sum = this.sheetlet.evaluateFormula(sumFormula);
 
         if (count as number > 1) {
-            this.tableView.selectionSummary = `Average:${avg} Count:${count} Sum:${sum}`;
+            this.setSelectionSummary(`Average:${avg} Count:${count} Sum:${sum}`);
         } else {
-            this.tableView.selectionSummary = "\u200B";
+            this.setSelectionSummary("\u200B");
         }
     }
 

@@ -12,5 +12,15 @@ module.exports = {
     },
     "rules": {
         "@typescript-eslint/strict-boolean-expressions": "off",
-    }
+    },
+    "overrides": [
+        {
+            // The assertion shortcode map file is auto-generated, so disable some rules.
+            "files": ["src/assertionShortCodesMap.ts"],
+            "rules": {
+                "@typescript-eslint/comma-dangle": "off",
+            }
+        }
+    ],
+
 }

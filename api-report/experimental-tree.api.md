@@ -822,7 +822,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     applyEdit(changes: Change[]): Edit<InternalizedChange>;
     // @internal
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
-    protected applyStashedOp(op: unknown): void;
+    protected applyStashedOp(op: unknown): StashedLocalOpMetadata;
     attributeNodeId(id: NodeId): AttributionId;
     get attributionId(): AttributionId;
     convertToNodeId(id: StableNodeId): NodeId;
@@ -849,8 +849,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     loadSerializedSummary(blobData: string): ITelemetryProperties;
     // @internal
     loadSummary(summary: SharedTreeSummaryBase): void;
-    // (undocumented)
-    protected readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLogger;
     get logViewer(): LogViewer;
     mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     // (undocumented)
@@ -859,6 +858,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     protected processCore(message: unknown, local: boolean): void;
     // (undocumented)
     protected registerCore(): void;
+    // (undocumented)
+    protected reSubmitCore(op: unknown, localOpMetadata?: StashedLocalOpMetadata): void;
     revert(editId: EditId): EditId | undefined;
     // @internal
     revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined;
@@ -1037,6 +1038,11 @@ export interface StableRangeInternal_0_0_2 {
     readonly end: StablePlaceInternal_0_0_2;
     // (undocumented)
     readonly start: StablePlaceInternal_0_0_2;
+}
+
+// @public
+export interface StashedLocalOpMetadata {
+    transformedEdit?: Edit<ChangeInternal>;
 }
 
 // @public

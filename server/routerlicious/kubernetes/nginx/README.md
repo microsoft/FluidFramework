@@ -1,5 +1,9 @@
+# Deploying the NGINX ingress controller
+
+## Pre-requisites: deploy an SSL certificate to the cluster
+
 Get a cert from //ssladmin for the uri you want.
-Turn your pfx into a pem. Turn your cert into a .key (private key) and .crt (public key) file.
+Turn your `.pfx` file into a `.pem` one, and that one into a pair of `.key` (private key) and `.crt` (public key) files.
 
 ```bash
 openssl pkcs12 -in eu2_cert.pfx -out eu2-cert.pem -nodes
@@ -7,44 +11,73 @@ openssl rsa -in eu2-cert.pem -out tls.key
 openssl x509 -in eu2-cert.pem -out tls.crt
 ```
 
-If the .crt file does not include full certificate chain, run the following command to generate intermediate certificates.
+If the .crt file does not include the full certificate chain, run the following command to generate intermediate certificates.
+
 ```bash
-openssl crl2pkcs7 -nocrl -certfile eu2-cert.pem.pem | openssl pkcs7 -print_certs -out tls.crt
+openssl crl2pkcs7 -nocrl -certfile eu2-cert.pem | openssl pkcs7 -print_certs -out tls.crt
 ```
 
-Optionally generate dhparams. Or, much quicker, just take already generated ones from another of our servers
+Install certificates from files.
+
 ```bash
-openssl dhparam -out dhparam.pem 4096
+kubectl create secret tls <name> --key tls.key --cert tls.crt
 ```
 
-Choose your desired kube cluster and install certificates and encryption form files.
+The deployed certificates for the CI environments are (`<namespace>/<name>`):
+
+- `default/wu2-ppe-tls-certificate`
+- `default/wu2-tls-certificate`
+
+## Deploy Helm chart for the ingress controller
+
+**NOTE**: This will work for an rbac-enabled cluster. A non-rbac cluster will require non-trivial changes to these steps.
+
+First, define variables that depend on the environment.
+
+For the PPE environment:
 
 ```bash
-$ kubectl create secret tls <name> --key tls.key --cert tls.crt
-$ kubectl create secret generic <name> --from-file=dhparam.pem
+K8S_NAMESPACE=ppe
+HELM_RELEASE_NAME=ingress-controller-ppe
+VALUES_FILE=values-ppe.yaml
 ```
 
-Create and expose a default backend.
+For the PROD environment:
+
 ```bash
-$ kubectl create -f https://raw.githubusercontent.com/kubernetes/contrib/master/ingress/controllers/nginx/examples/default-backend.yaml
-$ kubectl expose rc default-http-backend --port=80 --target-port=8080 --name=default-http-backend
+K8S_NAMESPACE=prod
+HELM_RELEASE_NAME=ingress-controller-prod
+VALUES_FILE=values-prod.yaml
 ```
 
-Deploy a custom template file.
+Then define some common variables and deploy the Helm chart:
+
 ```bash
-$ kubectl create configmap nginx-template --from-file=nginx.tmpl=./nginx.tmpl
+HELM_CHART_NAME=ingress-nginx
+HELM_CHART_REPO=https://kubernetes.github.io/ingress-nginx
+HELM_CHART_VERSION=4.1.4
+
+helm upgrade --install $HELM_RELEASE_NAME $HELM_CHART_NAME --version $HELM_CHART_VERSION --repo $HELM_CHART_REPO -f $VALUES_FILE --namespace $K8S_NAMESPACE --create-namespace
 ```
 
-If your kube cluster uses rbac, deploy the roles and bindings from the rbac folder. 
-
-Deploy the controller now. This assumes a rbac enabled cluster, so remove <em>serviceAccountName: nginx-serviceaccount</em> line from the deployment files if your cluster is not rbac enabled.
-For security reasons, TLS 1.0 and 1.1 are disabled. Only TLS 1.2 is supported.
+The output will include a command that you can use to check the status of the `Service` object, something similar to this:
 
 ```bash
-$ kubectl create -f ./nginx-ingress-controller.yml
+kubectl --namespace <namespace> get services -o wide -w <generated-service-name>
 ```
 
-Check the service stat
+### Uninstalling a release
+
+To uninstall a release, run the following:
+
 ```bash
-$ kubectl get services -o wide | grep nginx
+helm uninstall <release-name> --namespace <namespace>
+```
+
+Note the `--namespace` parameter, which is required if the release was originall deployed to a namespace.
+
+You can list existing releases and their namespaces like this:
+
+```bash
+helm ls --all-namespaces
 ```

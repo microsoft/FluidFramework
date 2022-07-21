@@ -50,13 +50,6 @@ export enum AttachState {
     Attached = "Attached",
 }
 
-// Represents the bind state of the entity.
-export enum BindState {
-    NotBound = "NotBound",
-    Binding = "Binding",
-    Bound = "Bound",
-}
-
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.

@@ -7,11 +7,9 @@
 // @public
 export type ExtendEventProvider<TBaseEvent extends IEvent, TBase extends IEventProvider<TBaseEvent>, TEvent extends TBaseEvent> = Omit<Omit<Omit<TBase, "on">, "once">, "off"> & IEventProvider<TBaseEvent> & IEventProvider<TEvent>;
 
-// @public (undocumented)
+// @public
 export interface IDisposable {
-    // (undocumented)
     dispose(error?: Error): void;
-    // (undocumented)
     readonly disposed: boolean;
 }
 
@@ -29,20 +27,17 @@ export interface IEvent {
 
 // @public (undocumented)
 export interface IEventProvider<TEvent extends IEvent> {
-    // (undocumented)
     readonly off: IEventTransformer<this, TEvent>;
-    // (undocumented)
     readonly on: IEventTransformer<this, TEvent>;
-    // (undocumented)
     readonly once: IEventTransformer<this, TEvent>;
 }
 
-// @public (undocumented)
+// @public
 export type IEventThisPlaceHolder = {
     thisPlaceHolder: "thisPlaceHolder";
 };
 
-// @public (undocumented)
+// @public
 export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
     (event: infer E0, listener: (...args: infer A0) => void): any;
     (event: infer E1, listener: (...args: infer A1) => void): any;
@@ -250,27 +245,24 @@ export interface ITelemetryPerformanceEvent extends ITelemetryGenericEvent {
     duration?: number;
 }
 
-// @public (undocumented)
+// @public
 export interface ITelemetryProperties {
     // (undocumented)
     [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType;
 }
 
-// @public (undocumented)
+// @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {
     [K in keyof L]: L[K] extends IEventThisPlaceHolder ? TThis : L[K];
 } : L;
 
-// @public (undocumented)
+// @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
-// @public (undocumented)
+// @public
 export type TelemetryEventPropertyType = string | number | boolean | undefined;
 
-// @public (undocumented)
+// @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
-
-
-// (No @packageDocumentation comment for this package)
 
 ```
