@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line max-len
 import { getUnexpectedLogErrorException, ITestObjectProvider, TestObjectProvider } from "@fluidframework/test-utils";
 import { configList } from "./compatConfig";
 import { CompatKind, baseVersion, driver, r11sEndpointName, tenantIndex } from "./compatOptions";
