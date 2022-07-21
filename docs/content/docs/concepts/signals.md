@@ -25,10 +25,7 @@ The `Signaler` DataObject can be used to send communications via signals in a Fl
 
 # Signaler
 
-## Usage
-User presence scenarios are well-suited for `Signaler`, as users are required to tell other users their own information and their past data is mostly irrelavant. Using `Signaler` over other distributed data structures in these scenarios is beneficial, as its usage does not result in the storage of data that is not useful in the long-term.
-
-### Creation
+## Creation
 Just like with DDSes, you can include `Signaler` as a shared object you would like to load in your `FluidContainer` schema.
 
 Here is a look at how you would go about loading `Signaler` as part of the initial objects of the container:
