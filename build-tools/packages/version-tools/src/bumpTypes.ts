@@ -35,8 +35,10 @@ export type VersionChangeTypeExtended = VersionBumpTypeExtended | SemVer;
 /**
  * A typeguard to check if a version is a {@link VersionBumpType}.
  */
-export function isVersionBumpType(type: VersionChangeType | string): type is VersionBumpType {
-    return type === "major" || type === "minor" || type === "patch";
+export function isVersionBumpType(type: VersionChangeType | string | undefined): type is VersionBumpType {
+    return type === undefined
+        ? false
+        : (type === "major" || type === "minor" || type === "patch");
 }
 
 /**
