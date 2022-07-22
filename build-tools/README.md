@@ -1,6 +1,7 @@
 # @fluid-tools/build-tools
 
-This folder contains packages used for building and managing the contents of Fluid Framework repositories.
+This folder contains packages used for building and managing the contents of Fluid Framework repositories and
+implementing the Fluid Framework release process.
 
 ## @fluid-tools/build-cli (aka flub)
 
@@ -15,6 +16,11 @@ policy-check, fluid-bump-version, etc.
 
 Note: Don't add new CLI commands to this package. Instead, add a new command to the `build-cli` package and import the
 functionality you need from this package.
+
+## @fluid-tools/version-tools
+
+This package contains APIs and a CLI for working with semantic versioning version strings and ranges, especially those
+using [Fluid-specific version schemes.](./packages/version-tools/README.md#version-schemes)
 
 ## Trademark
 

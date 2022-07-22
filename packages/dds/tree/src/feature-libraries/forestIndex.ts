@@ -17,10 +17,8 @@ import {
 } from "../forest";
 import { Index, SummaryElement } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
-import { Delta } from "../changeset";
-import { PlaceholderTree } from "../tree";
-import { applyDeltaToForest } from "../transaction";
-import { placeholderTreeFromCursor, TextCursor } from "./treeTextCursor";
+import { PlaceholderTree, Delta } from "../tree";
+import { jsonableTreeFromCursor } from "./treeTextCursor";
 
 /**
  * Index which provides an editable forest for the current state for the document.
@@ -66,7 +64,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     }
 
     newLocalState(changeDelta: Delta.Root): void {
-        applyDeltaToForest(this.forest, changeDelta);
+        this.forest.applyDelta(changeDelta);
     }
 
     /**
@@ -83,7 +81,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         const roots: PlaceholderTree[] = [];
         let result = this.forest.tryGet(rootAnchor, this.cursor);
         while (result === TreeNavigationResult.Ok) {
-            roots.push(placeholderTreeFromCursor(this.cursor));
+            roots.push(jsonableTreeFromCursor(this.cursor));
             result = this.cursor.seek(1).result;
         }
         this.cursor.clear();
@@ -166,9 +164,8 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         const placeholderTree = JSON.parse(decodedtree) as PlaceholderTree[];
 
         // TODO: maybe assert forest is empty?
-        const range = this.forest.add(placeholderTree.map((t) => new TextCursor(t)));
-        const dst = { index: 0, range: this.forest.rootField };
-        this.forest.attachRangeOfChildren(dst, range);
+        const insert: Delta.Insert = { type: Delta.MarkType.Insert, content: placeholderTree };
+        this.forest.applyDelta([insert]);
 
         // TODO: use decodedSchema to initialize forest.schema
         throw new Error("Method not implemented.");

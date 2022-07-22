@@ -9,9 +9,9 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryContext, ISummaryTreeWithStats, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { Delta, toDelta } from "../changeset";
+import { toDelta } from "../changeset";
 import { ChangeRebaser, FinalFromChangeRebaser, Rebaser, RevisionTag } from "../rebase";
-import { AnchorSet } from "../tree";
+import { AnchorSet, Delta } from "../tree";
 import { fail } from "../util";
 import { LazyPageTree } from "./lazyPageTree";
 

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta } from "../changeset";
-import { AnchorSet } from "../tree";
+import { AnchorSet, Delta } from "../tree";
 import { ChangeFamily } from "./changeFamily";
 
 export abstract class ProgressiveEditBuilder<TChange> {
