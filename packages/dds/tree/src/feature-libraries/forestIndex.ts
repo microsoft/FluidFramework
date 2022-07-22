@@ -164,7 +164,6 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         const placeholderTree = JSON.parse(decodedtree) as PlaceholderTree[];
 
         // TODO: maybe assert forest is empty?
-        // TODO: is this the correct delta?
         const insert: Delta.Insert = { type: Delta.MarkType.Insert, content: placeholderTree };
         this.forest.applyDelta([insert]);
 
