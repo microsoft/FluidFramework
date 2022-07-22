@@ -22,41 +22,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
 - [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
-- [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
-
-### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
-
-Strict null checks have been enabled in `@fluidframework/sequence`. As part of this, the return types of several functions have been modified to include `| undefined`. This does not represent a behavioral change.
-
-The functions affected are:
- - `Interval.getAdditionalPropertySets`
- - `Interval.modify`
- - `IntervalCollection.getIntervalById`
- - `IntervalCollection.nextInterval`
- - `IntervalCollection.previousInterval`
- - `IntervalCollection.removeIntervalById`
- - `ISharedString.insertMarker`
- - `PaddingSegment.fromJSONObject`
- - `RunSegment.createSplitSegmentAt`
- - `RunSegment.fromJSONObject`
- - `SequenceEvent.clientId`
- - `SharedSegmentSequence.getPropertiesAtPosition`
- - `SharedSegmentSequence.removeLocalReferencePosition`
- - `SharedSegmentSequence.resolveRemoteClientPosition`
- - `SharedString.findTile`
- - `SharedString.getMarkerFromId`
- - `SharedString.insertMarker`
- - `SparseMatrix.getItem`
- - `SparseMatrix.getPositionProperties`
- - `SubSequence.createSplitSegmentAt`
- - `SubSequence.fromJSONObject`
-
-### Remove `documentId` field from `MockFluidDataStoreContext`
-This field has been deprecated and will be removed in a future breaking change.
-
-### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
-`clientId` can only ever be of type `string`, so it is superfluous for the type
-to be `string | undefined`.
 
 ### Remove `ConnectionState.Connecting`
 `ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
@@ -99,21 +64,23 @@ The functions affected are:
  - `RunSegment.createSplitSegmentAt`
  - `RunSegment.fromJSONObject`
  - `SequenceEvent.clientId`
- - `SharedNumberSequenceFactory.segmentFromSpec`
- - `SharedObjectSequenceFactory.segmentFromSpec`
  - `SharedSegmentSequence.getPropertiesAtPosition`
  - `SharedSegmentSequence.removeLocalReferencePosition`
- - `SharedSegmentSequence.removeRange`
  - `SharedSegmentSequence.resolveRemoteClientPosition`
  - `SharedString.findTile`
  - `SharedString.getMarkerFromId`
  - `SharedString.insertMarker`
- - `SharedString.removeText`
- - `SharedStringFactory.segmentFromSpec`
  - `SparseMatrix.getItem`
  - `SparseMatrix.getPositionProperties`
  - `SubSequence.createSplitSegmentAt`
  - `SubSequence.fromJSONObject`
+
+### Remove `documentId` field from `MockFluidDataStoreContext`
+This field has been deprecated and will be removed in a future breaking change.
+
+### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
