@@ -13,8 +13,9 @@ It operates on communicated deltas, rather than direct changes to the shared val
 In this way, it avoids the pitfalls of DDSes with simpler merge strategies, in which one user's edit may clobber another's.
 
 Note that the `SharedCounter` only operates on integer values.
-Floating point arithmatic is order dependent.
-Since DDSes are required to be eventually consistent, `SharedCounter` is an Optimistic DDS, it cannot support floating point values.
+Floating point arithmatic is order-dependent.
+DDSes are required to be eventually consistent.
+Because `SharedCounter` is an Optimistic DDS, it cannot support floating point values.
 
 ## Creation
 
