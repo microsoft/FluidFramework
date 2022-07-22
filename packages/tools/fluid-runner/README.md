@@ -1,15 +1,16 @@
-# @fluidframework/local-snapshot-runner-app
+# @fluidframework/fluid-runner
+This package contains utility for running various functionality inside a Fluid Framework environment.
 
-# Local Snapshot Utility
+## Export File
+Allows some execution to be made on a container given a provided ODSP snapshot.
 
-This package contains utility for generating output files based on a local snapshot.
+### Sample command
+`node fluidRunner exportFile --codeLoader=compiledBundle.js --inputFile=inputFileName.fluid --outputFolder=outputFolderName --scenario=test --telemetryFile=telemetryFile.txt`
 
-## Limitations
+### Code Loader bundle format
+The Code Loader bundle should provide defined exports required for this functionality.
+For more details on what exports are needed, see [codeLoaderBundle.ts](./src/codeLoaderBundle.ts).
 
-## How Local Snapshot Utility works
-
-This section is meant to highlight some of the assumptions that Local Snapshot Utility makes.
-
-## Sample command
-
-node localSnapshotRunnerApp exportFile --codeLoader=compiledBundle.js --inputFile=inputFileName.fluid --outputFolder=outputFolderName --scenario=test --telemetryFile=telemetryFile.txt --props="correlationId=guid"
+### Input file format
+The input file is expected to be an ODSP snapshot.
+For some examples, see the files in the [localOdspSnapshots folder](./src/test/localOdspSnapshots).
