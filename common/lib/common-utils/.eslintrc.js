@@ -4,14 +4,17 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid")
-    ],
-    "parserOptions": {
-        "project": [ "./tsconfig.json", "./src/test/mocha/tsconfig.json", "./src/test/jest/tsconfig.json", "./src/test/types/tsconfig.json" ]
+    extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
+    parserOptions: {
+        project: [
+            "./tsconfig.json",
+            "./src/test/mocha/tsconfig.json",
+            "./src/test/jest/tsconfig.json",
+            "./src/test/types/tsconfig.json",
+        ],
     },
-    "rules": {
+    rules: {
         // TODO: Remove once this config extends `recommended` or `strict` above.
-        "@typescript-eslint/explicit-function-return-type": "error"
-    }
-}
+        "@typescript-eslint/explicit-function-return-type": "error",
+    },
+};
