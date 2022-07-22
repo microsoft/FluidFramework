@@ -142,7 +142,7 @@ import { JsonableTree } from "./treeTextFormat";
 /**
  * Represents the change made to a document.
  */
-export type Root = MarkList<OuterMark>;
+export type Root = FieldMarks<OuterMark>;
 
 /**
  * Represents a change being made to a part of the tree.
@@ -326,7 +326,7 @@ export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 export type Offset = number;
 
 export type FieldMap<T> = Map<FieldKey, T>;
-export type FieldMarks<TMark> = FieldMap<MarkList<TMark>>;
+export type FieldMarks<TMark = Mark> = FieldMap<MarkList<TMark>>;
 
 export const MarkType = {
     Modify: 0,

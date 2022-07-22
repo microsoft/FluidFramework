@@ -14,7 +14,8 @@ import { ProtoNode, Transposed as T } from "./format";
  * @returns A Delta for applying the changes described in the given Changeset.
  */
 export function toDelta(changeset: T.Changeset): Delta.Root {
-    return convertMarkList<Delta.OuterMark>(changeset.marks);
+    const out: Delta.FieldMarks<Delta.OuterMark> = convertFieldMarks<Delta.OuterMark>(changeset.marks);
+    return out;
 }
 
 function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
@@ -350,13 +351,17 @@ function convertModify<TMarks>(modify: ChangesetMods): DeltaMods<TMarks> {
     }
     const fields = modify.fields;
     if (fields !== undefined) {
-        const outFields: Delta.FieldMarks<TMarks> = new Map();
-        for (const key of Object.keys(fields)) {
-            const marks = convertMarkList<TMarks>(fields[key]);
-            const brandedKey = brand<FieldKey>(key);
-            outFields.set(brandedKey, marks);
-        }
-        out.fields = outFields;
+        out.fields = convertFieldMarks<TMarks>(fields);
     }
     return out;
+}
+
+function convertFieldMarks<TMarks>(fields: T.FieldMarks): Delta.FieldMarks<TMarks> {
+    const outFields: Delta.FieldMarks<TMarks> = new Map();
+    for (const key of Object.keys(fields)) {
+        const marks = convertMarkList<TMarks>(fields[key]);
+        const brandedKey = brand<FieldKey>(key);
+        outFields.set(brandedKey, marks);
+    }
+    return outFields;
 }

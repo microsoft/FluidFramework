@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { jsonString } from "../..";
 import { DeltaVisitor, visitDelta } from "../../changeset";
 import { FieldKey, Delta } from "../../tree";
-import { brandOpaque } from "../../util";
+import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
 function visit(delta: Delta.Root, visitor: DeltaVisitor): void {
@@ -50,13 +50,18 @@ function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
     assert.strictEqual(callIndex, expected.length);
 }
 
-const fooKey = "foo" as FieldKey;
+function testTreeVisit(marks: Delta.MarkList, expected: Readonly<VisitScript>): void {
+    testVisit(new Map([[rootKey, marks]]), [["enterField", rootKey], ...expected, ["exitField", rootKey]]);
+}
+
+const rootKey = brand<FieldKey>("root");
+const fooKey = brand<FieldKey>("foo");
 const nodeX = { type: jsonString.name, value: "X" };
 const content = [nodeX];
 
 describe("visit", () => {
     it("empty delta", () => {
-        testVisit([], []);
+        testTreeVisit([], []);
     });
 
     it("set root value", () => {
@@ -69,7 +74,7 @@ describe("visit", () => {
             ["onSetValue", 1],
             ["exitNode", 0],
         ];
-        testVisit([mark], expected);
+        testTreeVisit([mark], expected);
     });
 
     it("set child value", () => {
@@ -77,7 +82,7 @@ describe("visit", () => {
             type: Delta.MarkType.Modify,
             setValue: 1,
         };
-        const delta: Delta.Root = [{
+        const delta: Delta.MarkList = [{
             type: Delta.MarkType.Modify,
             fields: new Map([[fooKey, [42, mark]]]),
         }];
@@ -90,7 +95,7 @@ describe("visit", () => {
             ["exitField", fooKey],
             ["exitNode", 0],
         ];
-        testVisit(delta, expected);
+        testTreeVisit(delta, expected);
     });
 
     it("insert root", () => {
@@ -98,7 +103,7 @@ describe("visit", () => {
             type: Delta.MarkType.Insert,
             content,
         };
-        testVisit([mark], [["onInsert", 0, content]]);
+        testTreeVisit([mark], [["onInsert", 0, content]]);
     });
 
     it("insert child", () => {
@@ -106,7 +111,7 @@ describe("visit", () => {
             type: Delta.MarkType.Insert,
             content,
         };
-        const delta: Delta.Root = [{
+        const delta: Delta.MarkList = [{
             type: Delta.MarkType.Modify,
             fields: new Map([[fooKey, [42, mark]]]),
         }];
@@ -117,7 +122,7 @@ describe("visit", () => {
             ["exitField", fooKey],
             ["exitNode", 0],
         ];
-        testVisit(delta, expected);
+        testTreeVisit(delta, expected);
     });
 
     it("delete root", () => {
@@ -125,7 +130,7 @@ describe("visit", () => {
             type: Delta.MarkType.Delete,
             count: 10,
         };
-        testVisit([mark], [["onDelete", 0, 10]]);
+        testTreeVisit([mark], [["onDelete", 0, 10]]);
     });
 
     it("delete child", () => {
@@ -133,7 +138,7 @@ describe("visit", () => {
             type: Delta.MarkType.Delete,
             count: 10,
         };
-        const delta: Delta.Root = [{
+        const delta: Delta.MarkList = [{
             type: Delta.MarkType.Modify,
             fields: new Map([[fooKey, [42, mark]]]),
         }];
@@ -144,7 +149,7 @@ describe("visit", () => {
             ["exitField", fooKey],
             ["exitNode", 0],
         ];
-        testVisit(delta, expected);
+        testTreeVisit(delta, expected);
     });
 
     it("the lot on a field", () => {
@@ -160,7 +165,7 @@ describe("visit", () => {
             type: Delta.MarkType.Modify,
             setValue: 1,
         };
-        const delta: Delta.Root = [{
+        const delta: Delta.MarkList = [{
             type: Delta.MarkType.Modify,
             fields: new Map([[
                 fooKey,
@@ -178,6 +183,6 @@ describe("visit", () => {
             ["exitField", fooKey],
             ["exitNode", 0],
         ];
-        testVisit(delta, expected);
+        testTreeVisit(delta, expected);
     });
 });
