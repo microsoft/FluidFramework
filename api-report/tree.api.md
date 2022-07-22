@@ -309,6 +309,9 @@ export enum ITreeSubscriptionCursorState {
 export interface JsonableTree extends PlaceholderTree {
 }
 
+// @public
+export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
+
 // @public (undocumented)
 export const jsonArray: NamedTreeSchema;
 
@@ -545,9 +548,6 @@ export class PathShared<TParent extends ChildCollection = ChildCollection> imple
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 // @public
-export function placeholderTreeFromCursor(cursor: ITreeCursor): PlaceholderTree;
-
-// @public
 type ProtoNode = JsonableTree;
 
 // @public
@@ -634,15 +634,15 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaRepo
 
 // @public
 export class TextCursor implements ITreeCursor {
-    constructor(root: PlaceholderTree);
+    constructor(root: JsonableTree);
     // (undocumented)
     down(key: FieldKey, index: number): TreeNavigationResult;
     // (undocumented)
-    getField(key: FieldKey): readonly PlaceholderTree[];
+    getField(key: FieldKey): readonly JsonableTree[];
     // (undocumented)
-    getFields(): Readonly<FieldMap<PlaceholderTree>>;
+    getFields(): Readonly<FieldMap<JsonableTree>>;
     // (undocumented)
-    getNode(): PlaceholderTree;
+    getNode(): JsonableTree;
     // (undocumented)
     get keys(): Iterable<FieldKey>;
     // (undocumented)
