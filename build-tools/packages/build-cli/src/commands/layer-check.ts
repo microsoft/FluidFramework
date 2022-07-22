@@ -18,6 +18,7 @@ export class LayerCheck extends BaseCommand {
   static flags = {
     md: Flags.boolean({ required: true }),
     dot: Flags.boolean({ required: true }),
+    info: Flags.boolean({ required: true });
     ...super.flags,
   };
 
@@ -25,7 +26,7 @@ export class LayerCheck extends BaseCommand {
     const { flags } = await this.parse(LayerCheck);
     const timer = new Timer(flags.timer);
 
-    const context = await this.getContext();
+    const context = await this.getContext(true);
     const resolvedRoot = context.repo.resolvedRoot;
 
     // Load the package
@@ -34,11 +35,12 @@ export class LayerCheck extends BaseCommand {
     timer.time("Package scan completed");
 
     try {
-        const layerGraph = LayerGraph.load(resolvedRoot, packages, layerInfoPath);
+
+        const layerGraph = LayerGraph.load(resolvedRoot, packages);
 
         // Write human-readable package list organized by layer
         if (flags.md) {
-            const packagesMdFilePath: string = path.join(resolvedRoot, flags.md, packagesMdFileName);
+            const packagesMdFilePath: string = path.join(resolvedRoot, String(flags.md), packagesMdFileName);
             await writeFileAsync(packagesMdFilePath, layerGraph.generatePackageLayersMarkdown(resolvedRoot));
         }
 
@@ -51,12 +53,12 @@ export class LayerCheck extends BaseCommand {
         timer.time("Layer check completed");
 
         if (!success) {
-            throw new Error("Not succesful");
+            throw new Error("Layer check not succesful");
         }
 
         console.log(`Layer check passed (${packages.packages.length} packages)`)
     } catch (error_: unknown) {
-        console.error(error_);
+        throw new Error(error_ as string);
     }
   }
 }
