@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import * as semver from "semver";
-import { VersionBumpTypeExtended } from "@fluidframework/build-tools";
+import { VersionBumpTypeExtended } from "./bumpTypes";
 
 export const DEFAULT_PUBLIC_VERSION = "2.0.0";
 

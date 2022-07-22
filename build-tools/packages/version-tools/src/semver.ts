@@ -4,9 +4,9 @@
  */
 
 import * as semver from "semver";
-import { adjustVersion, VersionBumpTypeExtended } from "@fluidframework/build-tools";
+import { VersionBumpTypeExtended } from "./bumpTypes";
 import { bumpInternalVersion, getVersionRange } from "./internalVersionScheme";
-import { detectVersionScheme } from "./schemes";
+import { adjustVersion, detectVersionScheme } from "./schemes";
 
 /**
  * Return the version RANGE incremented by the bump type (major, minor, or patch).

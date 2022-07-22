@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { VersionScheme, VersionChangeType, VersionChangeTypeExtended } from "./versionSchemes";
+import { VersionScheme, VersionChangeType, VersionChangeTypeExtended, adjustVersion } from "@fluid-tools/version-tools";
 import { Context } from "./context";
 import { getRepoStateChange, VersionBag } from "./versionBag";
-import { fatal, exec, adjustVersion } from "./utils";
+import { fatal, exec } from "./utils";
 import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getPackageShortName } from "./releaseVersion";

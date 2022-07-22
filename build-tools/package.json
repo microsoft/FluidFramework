@@ -16,7 +16,7 @@
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel",
     "build:fast": "fluid-build --root ..",
-    "build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
+    "build:full": "npm run build:genver && npm run build:full:compile",
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root ..",
