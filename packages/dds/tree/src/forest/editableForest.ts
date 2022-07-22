@@ -4,7 +4,7 @@
  */
 
 import { StoredSchemaRepository } from "../schema";
-import { AnchorSet, FieldKey, DetachedRange, Delta } from "../tree";
+import { AnchorSet, FieldKey, DetachedField, Delta } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor, ForestAnchor } from "./forest";
 
 /**
@@ -39,16 +39,16 @@ export interface IEditableForest extends IForestSubscription {
  export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
 
 export interface TreeLocation {
-    readonly range: FieldLocation | DetachedRange;
+    readonly range: FieldLocation | DetachedField;
     readonly index: number;
 }
 
-export function isFieldLocation(range: FieldLocation | DetachedRange): range is FieldLocation {
+export function isFieldLocation(range: FieldLocation | DetachedField): range is FieldLocation {
     return typeof range === "object";
 }
 
 /**
- * Wrapper around DetachedRange that can be detected at runtime.
+ * Wrapper around DetachedField that can be detected at runtime.
  */
 export interface FieldLocation {
 	readonly key: FieldKey;

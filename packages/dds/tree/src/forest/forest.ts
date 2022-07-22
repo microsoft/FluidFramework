@@ -5,7 +5,7 @@
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { SchemaRepository } from "../schema";
-import { DetachedRange } from "../tree";
+import { DetachedField } from "../tree";
 import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
 /**
@@ -37,7 +37,7 @@ export interface IForestSubscription extends Dependee {
      */
     readonly schema: SchemaRepository & Dependee;
 
-    readonly rootField: DetachedRange;
+    readonly rootField: DetachedField;
 
     /**
      * Allocates a cursor in the "cleared" state.
@@ -47,7 +47,7 @@ export interface IForestSubscription extends Dependee {
     /**
      * Anchor at the beginning of a root field.
      */
-    root(range: DetachedRange): ForestAnchor;
+    root(range: DetachedField): ForestAnchor;
 
     /**
      * If observer is provided, it will be invalidated if the value returned from this changes
