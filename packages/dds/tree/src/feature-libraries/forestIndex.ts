@@ -18,8 +18,9 @@ import {
 import { Index, SummaryElement } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
 import { Delta } from "../changeset";
+import { PlaceholderTree } from "../tree";
 import { ObjectForest } from "./object-forest";
-import { PlaceholderTree, placeholderTreeFromCursor, TextCursor } from "./treeTextFormat";
+import { placeholderTreeFromCursor, TextCursor } from "./treeTextCursor";
 
 /**
  * Index which provides an editable forest for the current state for the document.

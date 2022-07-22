@@ -11,7 +11,7 @@ export {
 export {
     EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedRange,
     PathShared, UpPath, Anchor, RootRange, PathCollection, PathNode, ChildCollection,
-    ChildLocation,
+    ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree,
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -64,8 +64,4 @@ export {
     buildForest,
     TextCursor,
     placeholderTreeFromCursor,
-    FieldMap,
-    NodeData,
-    GenericTreeNode,
-    PlaceholderTree,
 } from "./feature-libraries";
