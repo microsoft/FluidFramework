@@ -2,7 +2,7 @@
 
 This folder contains packages used for building and managing the contents of Fluid Framework repositories.
 
-## @fluid-internal/build-cli (aka flub)
+## @fluid-tools/build-cli (aka flub)
 
 A build and release tool for the Fluid Framework GitHub repositories. flub is intended to replace the existing
 fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,

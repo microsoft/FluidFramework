@@ -1,4 +1,4 @@
-# @fluid-internal/build-cli
+# @fluid-tools/build-cli
 
 flub is a build and release tool for the Fluid Framework GitHub repositories. flub is intended to replace the existing
 fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,
@@ -7,7 +7,7 @@ maintainable CLI using [oclif](https://oclif.io).
 flub is not built in CI. You need to build it locally.
 
 <!-- toc -->
-* [@fluid-internal/build-cli](#fluid-internalbuild-cli)
+* [@fluid-tools/build-cli](#fluid-internalbuild-cli)
 * [Usage](#usage)
 * [Commands](#commands)
 <!-- tocstop -->
@@ -15,11 +15,11 @@ flub is not built in CI. You need to build it locally.
 # Usage
 <!-- usage -->
 ```sh-session
-$ npm install -g @fluid-internal/build-cli
+$ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-internal/build-cli/0.3.0 linux-x64 node-v14.19.2
+@fluid-tools/build-cli/0.3.0 linux-x64 node-v14.19.2
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
