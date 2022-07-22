@@ -26,13 +26,15 @@ describe("exportFile", () => {
             });
 
             it("Output file is correct", async () => {
-                await exportFile(
+                const exportFileResult = await exportFile(
                     path.join(__dirname, "sampleCodeLoader.js"),
                     path.join(snapshotFolder, snapshotFileName),
                     outputFolder,
                     "sampleScenario",
                     path.join(outputFolder, "telemetry.txt"),
                 );
+
+                assert(exportFileResult.success, "exportFile call was not successful");
 
                 const resultFilePath = path.join(outputFolder, "result.txt");
                 assert(fs.existsSync(resultFilePath), "result file does not exist");
