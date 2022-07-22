@@ -59,7 +59,7 @@ export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
 export type ChangeSetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, any, infer TChangeSet> ? TChangeSet : never;
 
 // @public
-export type ChildCollection = FieldKey | RootRange;
+export type ChildCollection = FieldKey | RootField;
 
 // @public
 export interface ChildLocation {
@@ -136,7 +136,7 @@ export interface Dependent extends NamedComputation {
 }
 
 // @public
-export interface DetachedRange extends Opaque<Brand<number, "tree.DetachedRange">> {
+export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
 
 // @public
@@ -177,10 +177,10 @@ export interface FieldMap<TChild> {
 }
 
 // @public (undocumented)
-type FieldMap_2<T> = Map<FieldKey, T>;
+type FieldMap_2<TContent> = Map<FieldKey, TContent>;
 
 // @public (undocumented)
-type FieldMarks<TMark> = FieldMap_2<MarkList<TMark>>;
+type FieldMarks<TMark = Mark> = FieldMap_2<MarkList<TMark>>;
 
 // @public (undocumented)
 export interface FieldSchema {
@@ -213,22 +213,18 @@ export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKe
 
 // @public
 export interface IEditableForest extends IForestSubscription {
-    add(nodes: Iterable<ITreeCursor>): DetachedRange;
     readonly anchors: AnchorSet;
-    attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void;
-    delete(ids: DetachedRange): void;
-    detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange;
+    applyDelta(delta: Delta.Root): void;
     // (undocumented)
     readonly schema: StoredSchemaRepository;
-    setValue(nodeId: ForestLocation, value: Value): void;
 }
 
 // @public
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
-    root(range: DetachedRange): ForestAnchor;
+    root(range: DetachedField): ForestAnchor;
     // (undocumented)
-    readonly rootField: DetachedRange;
+    readonly rootField: DetachedField;
     readonly schema: SchemaRepository & Dependee;
     tryGet(destination: ForestAnchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
 }
@@ -516,10 +512,10 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueTy
 type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
 
 // @public
-export class PathCollection extends PathShared<RootRange> {
+export class PathCollection extends PathShared<RootField> {
     constructor();
     // (undocumented)
-    delete(range: DetachedRange): void;
+    delete(range: DetachedField): void;
 }
 
 // @public (undocumented)
@@ -534,11 +530,11 @@ export class PathShared<TParent extends ChildCollection = ChildCollection> imple
     // (undocumented)
     protected readonly children: Map<TParent, PathNode[]>;
     // (undocumented)
-    detach(start: number, length: number, destination: DetachedRange): void;
+    detach(start: number, length: number, destination: DetachedField): void;
     // (undocumented)
     insert(start: number, paths: PathNode, length: number): void;
     // (undocumented)
-    parent(): UpPath | DetachedRange;
+    parent(): UpPath | undefined;
     // (undocumented)
     parentField(): FieldKey;
     // (undocumented)
@@ -575,16 +571,16 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public
-type Root = MarkList<OuterMark>;
+type Root = FieldMarks<OuterMark>;
+
+// @public
+export interface RootField {
+    // (undocumented)
+    readonly key: DetachedField;
+}
 
 // @public
 export const rootFieldKey: BrandedType<string, "tree.GlobalFieldKey">;
-
-// @public
-export interface RootRange {
-    // (undocumented)
-    readonly key: DetachedRange;
-}
 
 // @public (undocumented)
 export interface SchemaRepository {
@@ -669,7 +665,7 @@ export interface TreeLocation {
     // (undocumented)
     readonly index: number;
     // (undocumented)
-    readonly range: FieldLocation | DetachedRange;
+    readonly range: FieldLocation | DetachedField;
 }
 
 // @public (undocumented)
@@ -701,10 +697,8 @@ export interface TreeValue extends Serializable {
 // @public
 export interface UpPath {
     // (undocumented)
-    parent(): UpPath | DetachedRange;
-    // (undocumented)
+    parent(): UpPath | undefined;
     parentField(): FieldKey;
-    // (undocumented)
     parentIndex(): number;
 }
 

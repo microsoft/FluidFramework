@@ -325,7 +325,7 @@ export interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {}
 
 export type Offset = number;
 
-export type FieldMap<T> = Map<FieldKey, T>;
+export type FieldMap<TContent> = Map<FieldKey, TContent>;
 export type FieldMarks<TMark = Mark> = FieldMap<MarkList<TMark>>;
 
 export const MarkType = {
