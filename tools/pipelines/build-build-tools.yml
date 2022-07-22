@@ -65,7 +65,6 @@ extends:
     taskBuildDocs: false
     taskLint: true
     taskTest: test
-    buildNumberInPatch: true
     poolBuild: Large
     cgSubDirectory: packages
     checkoutSubmodules: true
