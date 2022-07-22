@@ -14,5 +14,14 @@
   "bin": {
     "gen-version": "bin/gen-version"
   },
-  "scripts": {}
+  "scripts": {
+    "format": "npm run prettier:fix",
+    "lint": "npm run prettier",
+    "lint:fix": "npm run prettier:fix",
+    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore"
+  },
+  "devDependencies": {
+    "prettier": "~2.6.2"
+  }
 }

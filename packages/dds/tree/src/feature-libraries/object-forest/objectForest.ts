@@ -8,8 +8,8 @@ import {
     DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
 } from "../../dependency-tracking";
 import {
-    ITreeCursor, ITreeSubscriptionCursor, NodeId,
-    Anchor, IEditableForest,
+    ITreeCursor, ITreeSubscriptionCursor, ForestLocation,
+    ForestAnchor, IEditableForest,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
     FieldLocation, TreeLocation, isFieldLocation,
@@ -23,9 +23,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
     public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
-    public readonly anchors: AnchorSet = new AnchorSet();
-
-    public root(range: DetachedRange): Anchor { return new RootAnchor(range); }
+    public root(range: DetachedRange): ForestAnchor { return new RootAnchor(range); }
     public readonly rootField: DetachedRange = this.newRange();
 
     private readonly roots: Map<DetachedRange, ObjectField> = new Map();
@@ -35,7 +33,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
 
-    public constructor() {
+    public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
         super("object-forest.ObjectForest");
         this.roots.set(this.rootField, []);
         // Invalidate forest if schema change.
@@ -121,7 +119,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         this.roots.set(newRange, newField);
         return newRange;
     }
-    setValue(nodeId: NodeId, value: Value): void {
+    setValue(nodeId: ForestLocation, value: Value): void {
         this.beforeChange();
         const node = this.lookupNodeId(nodeId);
         node.value = value;
@@ -143,7 +141,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     tryGet(
-        destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent | undefined,
+        destination: ForestAnchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent | undefined,
     ): TreeNavigationResult {
         assert(destination instanceof ObjectAnchor, 0x336 /* ObjectForest must only be given its own Anchors */);
         assert(cursorToMove instanceof Cursor, 0x337 /* ObjectForest must only be given its own Cursor type */);
@@ -170,7 +168,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return TreeNavigationResult.NotFound;
     }
 
-    private lookupNodeId(id: NodeId): ObjectNode {
+    private lookupNodeId(id: ForestLocation): ObjectNode {
         if (id instanceof ObjectNode) {
             return id;
         }
@@ -233,7 +231,7 @@ export function nodeFromCursor(cursor: ITreeCursor): ObjectNode {
  * Simple anchor that just points to a node object.
  * This results in pretty basic anchor rebase policy.
  */
-abstract class ObjectAnchor implements Anchor {
+abstract class ObjectAnchor implements ForestAnchor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
     free(): void {
         assert(this.state === ITreeSubscriptionCursorState.Current, 0x339 /* Anchor must not be double freed */);
@@ -351,7 +349,7 @@ class Cursor implements ITreeSubscriptionCursor {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
-    buildAnchor(): Anchor {
+    buildAnchor(): ForestAnchor {
         return new NodeAnchor(this.getNode());
     }
     down(key: FieldKey, index: number): TreeNavigationResult {
@@ -398,4 +396,14 @@ class Cursor implements ITreeSubscriptionCursor {
     length(key: FieldKey): number {
         return (this.getNode().fields.get(key) ?? []).length;
     }
+}
+
+// This function is the only package level export for objectForest, and hides all the implementation types.
+// When other forest implementations are created (ex: optimized ones),
+// this function should likely be moved and updated to (at least conditionally) use them.
+/**
+ * @returns an implementation of {@link IEditableForest} with no data or schema.
+ */
+export function buildForest(): IEditableForest {
+    return new ObjectForest();
 }

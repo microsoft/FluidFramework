@@ -260,4 +260,15 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     public getMarkerFromId(id: string): ISegment | undefined {
         return this.client.getMarkerFromId(id);
     }
+
+    /**
+     * Revert an op
+     */
+    protected rollback(content: any, localOpMetadata: unknown): void {
+        if (this.client.rollback !== undefined) {
+            this.client.rollback(content, localOpMetadata);
+        } else {
+            super.rollback(content, localOpMetadata);
+        }
+    }
 }
