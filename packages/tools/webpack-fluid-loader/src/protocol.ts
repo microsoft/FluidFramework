@@ -41,7 +41,7 @@ class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
     private static readonly noClientId = "local";
 
     private readonly proposals = new Map<string, any>();
-    private clientId: string = LocalQuorum.noClientId;
+    private readonly members: Map<string, ISequencedClient> = new Map<string, ISequencedClient>();
 
     constructor(quorumSnapshot: IQuorumSnapshot) {
         super();
@@ -53,22 +53,38 @@ class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
     }
 
     connectLocalClient(clientId: string | undefined, sequenceNumber: number) {
-        this.clientId = clientId ?? LocalQuorum.noClientId;
-        this.emit(
-            "addMember",
-            clientId,
-            { sequenceNumber, client: { details: { type: "local" } } },
-        );
+        const actualClientId = clientId ?? LocalQuorum.noClientId;
+        const sequencedClient: ISequencedClient = {
+            sequenceNumber,
+            client: {
+                mode: "write",
+                permission: [],
+                user: {
+                    id: actualClientId,
+                },
+                scopes: [],
+                details: {
+                    type: "local",
+                    capabilities: {
+                        interactive: true,
+                    },
+                },
+            },
+        };
+        this.members.set(actualClientId, sequencedClient);
+        this.emit("addMember", actualClientId, sequencedClient);
     }
 
     disconnectLocalClient(clientId: string | undefined) {
-        if (this.clientId === clientId) {
+        const actualClientId = clientId ?? LocalQuorum.noClientId;
+        if (this.members.get(actualClientId) !== undefined) {
             this.emit("removeMember", clientId);
+            this.members.delete(actualClientId);
         }
     }
 
     getMembers(): Map<string, ISequencedClient> {
-        return new Map<string, ISequencedClient>();
+        return new Map<string, ISequencedClient>(this.members);
     }
 
     getMember(_clientId: string): ISequencedClient | undefined {
