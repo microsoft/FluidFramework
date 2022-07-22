@@ -94,11 +94,47 @@ sharedMap.increment(3); // Adds 3 to the current value
 sharedMap.increment(-5); // Subtracts 5 from the current value
 ```
 
-### `incremented` event
+### [incremented]({{< relref "isharedcounterevents.md#_call_-CallSignature" >}}) event
 
-Signature: `TODO`
+The `incremented` event is sent when a client in the collaborative session changes the counter value via `increment`.
 
-TODO
+> Signature: `(event: "incremented", listener: (incrementAmount: number, newValue: number) => void)`
+
+By registering with this event, you can receive and apply the necessary deltas coming from other collaborators.
+Consider the following code example for configuring a Counter widget:
+
+```javascript
+const sharedCounter = container.initialObjects.sharedCounter;
+let counterValue = sharedCounter.value;
+
+const incrementButton = document.createElement('button');
+button.textContent = "Increment";
+const decrementButton = document.createElement('button');
+button.textContent = "Decrement";
+
+// Increment / decrement shared counter value when the corresponding button is clicked
+incrementButton.addEventListener('click', () => sharedCounter.increment(1));
+decrementButton.addEventListener('click', () => sharedCounter.increment(-1));
+
+const counterValueLabel = document.createElement('label');
+counterValueLabel.textContent = `${counterValue}`;
+
+// This function will be called each time the shared counter value is incremented
+// (including increments from this client).
+// Update the local counter value and the corresponding label being displayed in the widget.
+const updateCounterValueLabel = (delta) => {
+    counterValue += delta;
+    counterValueLabel.textContent = `${counterValue}`;
+};
+
+// Register to be notified when the counter is incremented
+sharedCounter.on("incremented", updateCounterValueLabel);
+```
+
+In the code above, whenever a user presses either the `Increment` or `Decrement` button, the shared `sharedCounter.increment` is called with +/- 1.
+This causes the `incremented` event to be sent to all of the clients who have this container open.
+
+Since `updateCounterValueLabel` is registered for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
 
 ## API Documentation
 
