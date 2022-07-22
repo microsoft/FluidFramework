@@ -111,7 +111,7 @@ describe("Ops on Reconnect", () => {
             container1,
             "default");
 
-        container1Object1Map1 = await container1Object1.getSharedObject<SharedMap>(map1Id); // asd
+        container1Object1Map1 = await container1Object1.getSharedObject<SharedMap>(map1Id);
         container1Object1Map2 = await container1Object1.getSharedObject<SharedMap>(map2Id);
         container1Object1Directory = await container1Object1.getSharedObject<SharedDirectory>(directoryId);
         container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);

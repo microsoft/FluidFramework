@@ -2022,7 +2022,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     /**
      * Flush the pending ops manually.
      * This method is expected to be called at the end of a batch.
-     * @param isImmediateBatch - is this "flush" being called at the end of a "FlushMode.Immedite" batch?
+     * @param isImmediateBatch - is this "flush" being called at the end of a "FlushMode.Immediate" batch?
      */
     public flush(isImmediateBatch: boolean = false): void {
         assert(this._orderSequentiallyCalls === 0,
@@ -2882,11 +2882,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                if (this.flushMode === FlushMode.TurnBased && !this.flushTrigger) {
-                    this.flushTrigger = true;
+                if (this.flushMode === FlushMode.TurnBased) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     Promise.resolve().then(() => {
-                        this.flushTrigger = false;
                         this.flush();
                     });
                 }

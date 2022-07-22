@@ -135,7 +135,7 @@ The `aliasing` return value from `AliasResult` has been removed from `@fluidfram
     The MergeTree class was deprecated and is no longer be exported. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
 ### Remove `IContainerRuntimeBase.setFlushMode`
-The `setFlushMode` has been removed from `IContainerRuntimeBase`. Please remove all usage of this method as FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
+The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
 
 # 1.2.0
 
