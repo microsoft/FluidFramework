@@ -40,6 +40,7 @@ import { Port } from "webpack-dev-server";
 import { MultiUrlResolver } from "./multiResolver";
 import { deltaConns, getDocumentServiceFactory } from "./multiDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
+import { emptyProtocolHandlerBuilder } from "./protocol";
 
 export interface IDevServerUser extends IUser {
     name: string;
@@ -221,6 +222,7 @@ async function createWebLoader(
             new MultiUrlResolver(documentId, window.location.origin, options, true) : urlResolver,
         documentServiceFactory,
         codeLoader,
+        protocolHandlerBuilder: emptyProtocolHandlerBuilder,
     });
 }
 
