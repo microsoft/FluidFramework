@@ -3131,9 +3131,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async refreshLatestSummaryAckFromServer(summaryLogger: ITelemetryLogger): Promise<number> {
         const snapshot = await this.fetchSnapshotFromStorage(null, summaryLogger, {
-            eventName: "RefreshLatestSummaryGetSnapshot",
-            fetchLatest: true,
-        });
+                eventName: "RefreshLatestSummaryGetSnapshot",
+                fetchLatest: true,
+            },
+            true,
+        );
 
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const snapshotRefSeq = await seqFromTree(snapshot, readAndParseBlob);
@@ -3153,7 +3155,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async fetchSnapshotFromStorage(
-        versionId: string | null, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
+        versionId: string | null, logger: ITelemetryLogger, event: ITelemetryGenericEvent, bypassCache?: boolean) {
         return PerformanceEvent.timedExecAsync(
             logger, event, async (perfEvent: {
                 end: (arg0: {
@@ -3164,7 +3166,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
             const trace = Trace.start();
 
-            const versions = await this.storage.getVersions(versionId, 1);
+            const versions = await this.storage.getVersions(
+                versionId, 1, "refreshLatestSummaryAckFromServer", bypassCache);
             assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
             stats.getVersionDuration = trace.trace().duration;
 

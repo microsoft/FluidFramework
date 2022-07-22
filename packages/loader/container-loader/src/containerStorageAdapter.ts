@@ -65,8 +65,13 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         return this.storageGetter().readBlob(id);
     }
 
-    public async getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]> {
-        return this.storageGetter().getVersions(versionId, count, scenarioName);
+    public async getVersions(
+        versionId: string | null,
+        count: number,
+        scenarioName?: string,
+        bypassCache?: boolean,
+    ): Promise<IVersion[]> {
+        return this.storageGetter().getVersions(versionId, count, scenarioName, bypassCache);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {

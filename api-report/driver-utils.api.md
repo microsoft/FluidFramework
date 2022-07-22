@@ -151,7 +151,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     // (undocumented)
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, bypassCache?: boolean): Promise<IVersion[]>;
     // (undocumented)
     protected readonly internalStorageService: IDocumentStorageService;
     set policies(policies: IDocumentStorageServicePolicies | undefined);

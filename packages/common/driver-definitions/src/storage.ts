@@ -128,9 +128,15 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * @param versionId - Version id of the requested version.
      * @param count - Number of the versions to be fetched.
      * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
-     *  in debugging purposes to see why this call was made.
+     * @param bypassCache - True to bypass cache for getting versions and get it from the server.
+    *  in debugging purposes to see why this call was made.
      */
-    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
+    getVersions(
+        versionId: string | null,
+        count: number,
+        scenarioName?: string,
+        bypassCache?: boolean,
+    ): Promise<IVersion[]>;
 
     /**
      * Creates a blob out of the given buffer
