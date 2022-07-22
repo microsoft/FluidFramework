@@ -6,4 +6,4 @@
 export * from "./object-forest";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
-export * from "./treeTextFormat";
+export * from "./treeTextCursor";

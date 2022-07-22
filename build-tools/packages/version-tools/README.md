@@ -1,4 +1,4 @@
-# @fluid-internal/version-tools
+# @fluid-tools/version-tools
 
 version-tools provides tools to parse and transform version schemes that are used by the Fluid Framework.
 
@@ -22,7 +22,7 @@ In the following example, the public version is `a.b.c`, while the internal vers
 `a.b.c-internal.x.y.z`
 
 <!-- toc -->
-* [@fluid-internal/version-tools](#fluid-internalversion-tools)
+* [@fluid-tools/version-tools](#fluid-toolsversion-tools)
 * [Version schemes](#version-schemes)
 * [Usage](#usage)
 * [Commands](#commands)
@@ -36,11 +36,11 @@ also available in the Fluid build and release tool (`flub`). This is accomplishe
 
 <!-- usage -->
 ```sh-session
-$ npm install -g @fluid-internal/version-tools
+$ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version)
-@fluid-internal/version-tools/0.3.0 linux-x64 node-v14.19.2
+@fluid-tools/version-tools/0.3.0 win32-x64 node-v14.19.1
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND

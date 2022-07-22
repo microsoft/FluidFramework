@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { jsonString } from "../..";
 import { Delta, DeltaVisitor, visitDelta } from "../../changeset";
 import { FieldKey } from "../../tree";
 import { brandOpaque } from "../../util";
@@ -50,8 +51,8 @@ function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
 }
 
 const fooKey = "foo" as FieldKey;
-const id = brandOpaque<Delta.NodeId>("X");
-const content = [{ id }];
+const nodeX = { type: jsonString.name, value: "X" };
+const content = [nodeX];
 
 describe("visit", () => {
     it("empty delta", () => {
@@ -112,7 +113,7 @@ describe("visit", () => {
         const expected: VisitScript = [
             ["enterNode", 0],
             ["enterField", fooKey],
-            ["onInsert", 42, [{ id }]],
+            ["onInsert", 42, content],
             ["exitField", fooKey],
             ["exitNode", 0],
         ];
