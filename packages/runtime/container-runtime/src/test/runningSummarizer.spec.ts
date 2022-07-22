@@ -32,8 +32,7 @@ class MockRuntime {
     ) { }
 }
 
-// These tests don't pass, due to .only accidentally checked into summarizerHeuristic.spec.ts for a few weeks
-describe.skip("Runtime", () => {
+describe("Runtime", () => {
     describe("Summarization", () => {
         describe("RunningSummarizer", () => {
             let stopCall: number;

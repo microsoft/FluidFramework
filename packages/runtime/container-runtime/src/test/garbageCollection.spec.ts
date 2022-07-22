@@ -298,7 +298,7 @@ describe("Garbage Collection Tests", () => {
             assert(customExpiryMs, "setting not found!");
 
             const metadata: IContainerRuntimeMetadata =
-                { summaryFormatVersion: 1, message: undefined, sweepEnabled: true, sessionExpiryTimeoutMs: 10 };
+                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
             createGCOverride(metadata);
             assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
         });
