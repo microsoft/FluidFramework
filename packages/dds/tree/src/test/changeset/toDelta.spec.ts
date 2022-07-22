@@ -6,12 +6,11 @@
 import { strict as assert } from "assert";
 import { TreeSchemaIdentifier } from "../..";
 import {
-    Delta,
     ProtoNode,
     toDelta as toDeltaImpl,
     Transposed as T,
 } from "../../changeset";
-import { FieldKey } from "../../tree";
+import { FieldKey, Delta } from "../../tree";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 

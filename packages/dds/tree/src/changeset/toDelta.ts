@@ -5,8 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { brand, clone, fail, OffsetListFactory } from "../util";
-import { FieldKey, Value } from "../tree";
-import * as Delta from "./delta";
+import { FieldKey, Value, Delta } from "../tree";
 import { ProtoNode, Transposed as T } from "./format";
 
 /**

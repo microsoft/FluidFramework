@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Delta } from "../changeset";
+import { Delta } from "../tree";
 import { IEditableForest, IForestSubscription } from "../forest";
 import { ChangeFamily, ProgressiveEditBuilder } from "../change-family";
 
