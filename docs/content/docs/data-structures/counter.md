@@ -136,7 +136,7 @@ const updateCounterValueLabel = (delta) => {
 sharedCounter.on("incremented", updateCounterValueLabel);
 ```
 
-In the code above, whenever a user presses either the `Increment` or `Decrement` button, the shared `sharedCounter.increment` is called with +/- 1.
+In the code above, whenever a user presses either the `Increment` or `Decrement` button, the `sharedCounter.increment` is called with +/- 1.
 This causes the `incremented` event to be sent to all of the clients who have this container open.
 
 Since `updateCounterValueLabel` is registered for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
