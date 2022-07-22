@@ -130,7 +130,7 @@ export interface FieldLocation {
 // @public
 export interface FieldMap<TChild> {
     // (undocumented)
-    [key: string]: readonly TChild[];
+    [key: string]: TChild[];
 }
 
 // @public (undocumented)
@@ -155,7 +155,7 @@ export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
 // @public
 export interface GenericTreeNode<TChild> extends NodeData {
     // (undocumented)
-    fields?: Readonly<FieldMap<TChild>>;
+    fields?: FieldMap<TChild>;
 }
 
 // @public
