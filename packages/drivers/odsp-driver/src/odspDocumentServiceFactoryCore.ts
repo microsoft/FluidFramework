@@ -88,7 +88,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             }
         }
 
-        // extract request parameters for creation of sharing link (if provided) for the new file if the feature is enabled
+        // extract request parameters for creation of sharing link (if provided) if the feature is enabled
         let createShareLinkParam: ShareLinkTypes | SharingLinkKind | undefined;
         if (this.hostPolicy.enableSingleRoundTripForShareLinkWithCreate) {
             const createLinkScope = searchParams.get("createLinkScope");

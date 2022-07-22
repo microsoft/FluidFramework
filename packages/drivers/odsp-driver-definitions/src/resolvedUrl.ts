@@ -51,7 +51,7 @@ export interface SharingLinkKind {
 }
 
 /**
- * Sharing link data received from the /snapshot api response. 
+ * Sharing link data received from the /snapshot api response.
  */
 export interface SharingLink {
     webUrl: string;
@@ -70,15 +70,15 @@ export interface ShareLinkInfoType {
      * We create a new file in ODSP with the /snapshot api call. Applications then need to make a separate apis call to
      * create a sharing link for that file. To reduce the number of network calls, ODSP now provides a feature
      * where we can create a share link along with creating a file by passing a query parameter called
-     * createShareLink (deprecated) or createLinkScope and createLinkRole. createLink object below saves the information from the /snapshot api response.
+     * createShareLink (deprecated) or createLinkScope and createLinkRole. createLink object below saves the information
+     * from the /snapshot api response.
      */
     createLink?: {
         /**
          * @deprecated
-         * Type of shareLink requested/created when creating the file for the first time. The 'type' property here represents the type of sharing link requested.
-         * Earlier ODSP only supported creation of CSL-type links when provided as a request parameter with the /snapshot api.
+         * Type of shareLink requested/created when creating the file for the first time. The 'type' property here
+         * represents the type of sharing link requested.
          * Will be deprecated soon. Type of sharing link will be present in the link:SharingLink property below.
-         * 
         */
         type?: ShareLinkTypes | SharingLinkKind;
 
