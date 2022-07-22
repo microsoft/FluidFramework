@@ -87,8 +87,8 @@ class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
         return new Map<string, ISequencedClient>(this.members);
     }
 
-    getMember(_clientId: string): ISequencedClient | undefined {
-        return undefined;
+    getMember(clientId: string): ISequencedClient | undefined {
+        return this.members.get(clientId);
     }
 
     dispose(_error?: Error | undefined): void {
