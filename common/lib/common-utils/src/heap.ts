@@ -144,16 +144,16 @@ export class Heap<T> {
 
     private isGreaterThanParent(k: number): boolean {
         // eslint-disable-next-line no-bitwise
-        return k > 1 && (this.comp.compare(this.L[k >> 1].value, this.L[k].value) > 0);
+        return k > 1 && this.comp.compare(this.L[k >> 1].value, this.L[k].value) > 0;
     }
 
     private fixdown(pos: number): void {
         let k = pos;
         // eslint-disable-next-line no-bitwise
-        while ((k << 1) <= this.count()) {
+        while (k << 1 <= this.count()) {
             // eslint-disable-next-line no-bitwise
             let j = k << 1;
-            if ((j < this.count()) && (this.comp.compare(this.L[j].value, this.L[j + 1].value) > 0)) {
+            if (j < this.count() && this.comp.compare(this.L[j].value, this.L[j + 1].value) > 0) {
                 j++;
             }
             if (this.comp.compare(this.L[k].value, this.L[j].value) <= 0) {
