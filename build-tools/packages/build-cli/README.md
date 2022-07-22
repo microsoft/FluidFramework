@@ -109,7 +109,7 @@ USAGE
 
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
 
-Update the dependency version of a specified package or release group. That is, if package B depends on package A, then this command will update the dependency range on package A across the release groups specified.
+Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.
 
 ```
 USAGE
@@ -133,8 +133,9 @@ FLAGS
   --onlyBumpPrerelease         Only bump dependencies that are on pre-release versions.
 
 DESCRIPTION
-  Update the dependency version of a specified package or release group. That is, if package B depends on package A,
-  then this command will update the dependency range on package A across the release groups specified.
+  Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
+  depend on package A, then this command will update the dependency range on package A. The dependencies and the
+  packages updated can be filtered using various flags.
 
 EXAMPLES
   Bump dependencies on @fluidframework/build-common to range ~1.2.0 across all release groups.
