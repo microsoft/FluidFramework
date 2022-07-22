@@ -503,7 +503,7 @@ export class GarbageCollector implements IGarbageCollector {
                 (timer) => { this.sessionExpiryTimer = timer; },
             );
 
-            // TEMPORARY: Default to 2 days which is the value used in the ODSP driver.
+            // TEMPORARY: Hardcode a default of 2 days which is the value used in the ODSP driver.
             // This unblocks the Sweep Log (see logSweepEvents function).
             // This will be removed before sweep is fully implemented.
             const snapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? 2 * 24 * 60 * 60 * 1000;
@@ -543,7 +543,7 @@ export class GarbageCollector implements IGarbageCollector {
          * 3. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
          *    feature flag.
          */
-        this.shouldRunSweep = false; // Until TEMPORARY measure above hardcoding snapshotCacheExpiryMs is removed, disable
+        this.shouldRunSweep = false; // disable while TEMPORARY measure hardcoding snapshotCacheExpiryMs is here
             // this.shouldRunGC
             // && this.sweepTimeoutMs !== undefined
             // && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
