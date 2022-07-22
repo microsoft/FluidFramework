@@ -30,5 +30,11 @@ module.exports = {
                 quoteProps: "preserve",
             },
         },
+        {
+            files: "*.{js,ts}",
+            options: {
+                useTabs: true,
+            },
+        },
     ],
 };
