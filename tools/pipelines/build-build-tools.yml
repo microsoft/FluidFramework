@@ -60,7 +60,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: build-tools
-    tagName:
+    tagName: build-tools
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
