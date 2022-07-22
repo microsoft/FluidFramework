@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import * as semver from "semver";
-import chalk from "chalk";
-import { Flags } from "@oclif/core";
+import { incRange, isVersionBumpTypeExtended } from "@fluid-tools/version-tools";
 import {
-    MonoRepo,
+    FluidRepo,
     isMonoRepoKind,
+    MonoRepo,
     Package,
     VersionBag,
-    isVersionBumpTypeExtended,
-    FluidRepo,
 } from "@fluidframework/build-tools";
-import { incRange } from "@fluid-internal/version-tools";
-import { bumpTypeFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
+import { Flags } from "@oclif/core";
+import chalk from "chalk";
+import * as semver from "semver";
 import { BaseCommand } from "../../base";
+import { bumpTypeFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if package B depends on package A,

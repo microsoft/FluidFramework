@@ -7,7 +7,7 @@ maintainable CLI using [oclif](https://oclif.io).
 flub is not built in CI. You need to build it locally.
 
 <!-- toc -->
-* [@fluid-internal/build-cli](#fluid-internalbuild-cli)
+* [@fluid-tools/build-cli](#fluid-toolsbuild-cli)
 * [Commands](#commands)
 * [Usage](#usage)
 * [Command reference](#command-reference)
@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-internal/build-cli/0.3.0 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.3.0 win32-x64 node-v14.19.1
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
