@@ -1,6 +1,6 @@
 ---
 title: Sequences
-menuPosition: 7
+menuPosition: 3
 aliases:
   - "/docs/data-structures/sequence"
 ---

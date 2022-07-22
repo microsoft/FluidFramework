@@ -1,6 +1,6 @@
 ---
 title: SharedMap
-menuPosition: 4
+menuPosition: 2
 ---
 
 ## Introduction

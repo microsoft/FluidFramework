@@ -1,6 +1,5 @@
 ---
 title: SharedCell
-menuPosition: 2
 status: unwritten
 draft: true
 ---
