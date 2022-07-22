@@ -514,7 +514,9 @@ export class GarbageCollector implements IGarbageCollector {
              * added to account for any clock skew. We use server timestamps throughout so the skew should be minimal
              * but make it one day to be safe.
              */
-            this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs;
+            if (snapshotCacheExpiryMs !== undefined) {
+                this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs;
+            }
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -527,11 +529,12 @@ export class GarbageCollector implements IGarbageCollector {
          * 2. GC should not be disabled via disableGC GC option.
          * These conditions can be overridden via runGCKey feature flag.
          */
-        this.shouldRunGC = false; // Until TEMPORARY measure above hardcoding snapshotCacheExpiryMs is removed, disable
-        //     this.mc.config.getBoolean(runGCKey) ?? (
-        //         this.gcEnabled // GC must be enabled for the document.
-        //         && !this.gcOptions.disableGC // GC must not be disabled via GC options.
-        // );
+        this.shouldRunGC = this.mc.config.getBoolean(runGCKey) ?? (
+            // GC must be enabled for the document.
+            this.gcEnabled
+            // GC must not be disabled via GC options.
+            && !this.gcOptions.disableGC
+        );
 
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -540,9 +543,10 @@ export class GarbageCollector implements IGarbageCollector {
          * 3. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
          *    feature flag.
          */
-        this.shouldRunSweep = this.shouldRunGC
-            && this.sweepTimeoutMs !== undefined
-            && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
+        this.shouldRunSweep = false; // Until TEMPORARY measure above hardcoding snapshotCacheExpiryMs is removed, disable
+            // this.shouldRunGC
+            // && this.sweepTimeoutMs !== undefined
+            // && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 
