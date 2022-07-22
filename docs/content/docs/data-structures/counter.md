@@ -91,8 +91,8 @@ This method accepts a positive or negative *integer* delta to be applied to the 
 - Note:
 
 ```javascript
-sharedMap.increment(3); // Adds 3 to the current value
-sharedMap.increment(-5); // Subtracts 5 from the current value
+sharedCounter.increment(3); // Adds 3 to the current value
+sharedCounter.increment(-5); // Subtracts 5 from the current value
 ```
 
 ### `incremented` event
