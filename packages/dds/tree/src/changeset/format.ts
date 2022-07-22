@@ -30,7 +30,7 @@ export namespace Transposed {
 	/**
 	 * Represents changes to a document forest.
 	 */
-	export interface Changeset {
+	export interface LocalChangeset {
 		marks: FieldMarks;
 		moves?: MoveEntry<TreeForestPath>[];
 	}

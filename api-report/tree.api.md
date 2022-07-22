@@ -177,10 +177,10 @@ export interface FieldMap<TChild> {
 }
 
 // @public (undocumented)
-type FieldMap_2<TContent> = Map<FieldKey, TContent>;
+type FieldMap_2<T> = Map<FieldKey, T>;
 
 // @public (undocumented)
-type FieldMarks<TMark = Mark> = FieldMap_2<MarkList<TMark>>;
+type FieldMarks<TMark> = FieldMap_2<MarkList<TMark>>;
 
 // @public (undocumented)
 export interface FieldSchema {

@@ -14,7 +14,7 @@ import { FieldKey, Delta } from "../../tree";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
-function toDelta(changeset: T.Changeset): Delta.Root {
+function toDelta(changeset: T.LocalChangeset): Delta.Root {
     deepFreeze(changeset);
     const delta: Delta.Root = toDeltaImpl(changeset);
     return delta;

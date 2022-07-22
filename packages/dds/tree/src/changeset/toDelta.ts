@@ -13,7 +13,7 @@ import { ProtoNode, Transposed as T } from "./format";
  * @param changeset - The Changeset to convert
  * @returns A Delta for applying the changes described in the given Changeset.
  */
-export function toDelta(changeset: T.Changeset): Delta.Root {
+export function toDelta(changeset: T.LocalChangeset): Delta.Root {
     // Save result to a constant to work around linter bug:
     // https://github.com/typescript-eslint/typescript-eslint/issues/5014
     const out: Delta.Root = convertFieldMarks<Delta.OuterMark>(changeset.marks);
