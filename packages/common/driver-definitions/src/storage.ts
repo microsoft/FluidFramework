@@ -128,8 +128,10 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * @param versionId - Version id of the requested version.
      * @param count - Number of the versions to be fetched.
      * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
-     * @param bypassCache - True to bypass cache for getting versions and get it from the server.
-    *  in debugging purposes to see why this call was made.
+     *  in debugging purposes to see why this call was made.
+     * @param bypassCache - Driver may choose to cache requests and serve data from cache. That will result in
+     *  stale info returned. Callers can disable this functionality by passing bypassCache = true and ensuring
+     *  that driver will return latest information from storage.
      */
     getVersions(
         versionId: string | null,
