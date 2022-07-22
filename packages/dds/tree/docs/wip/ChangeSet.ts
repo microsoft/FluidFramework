@@ -9,7 +9,7 @@
  * The current goal is to be able to rebase all expressible edits (see AnchorInterfaces.ts) except for cases where the
  * merge requires re-running a hierarchical command that is domain-specific (i.e., not built-in at the SharedTree
  * layer).
- * 
+ *
  * DISCLAIMER:
  * Some of the information needed to capture the intent of rebasable edits is not yet reflected in this format.
  * The missing pieces are:
@@ -17,7 +17,7 @@
  * - Constraints
  *   - Explicit constraints
  *   - Observations made by hierarchical edits
- * 
+ *
  * Remaining issues:
  *  - The active server (until then, each client locally) needs to store reversal info in the edit.
  *  - How do we update local edit in the face of peer edits and still represent them without losing intent?
@@ -55,7 +55,7 @@ interface ChangeSet {
 /**
  * A set of rebasable changes made to a document.
  */
- interface RebasableChangeSet {
+interface RebasableChangeSet {
 	changes?: Modify | RebasableChangeSegment[];
 	revivals?: Map<NodeId, Revival[]>;
 	clipboard?: Map<NodeId, ClipboardEntry>;
@@ -71,7 +71,12 @@ type RebasableSegment = UnchangedSegment | RebasableChangeSegment | RebasableCon
  * A segment describing the changes made to a trait or its descendants.
  */
 type ChangeSegment = Modify | Insert | MoveIn | MoveOut | Delete;
-type RebasableChangeSegment = RebasableModify | RebasableInsert | RebasableMoveIn | RebasableMoveOut | RebasableDelete;
+type RebasableChangeSegment =
+	| RebasableModify
+	| RebasableInsert
+	| RebasableMoveIn
+	| RebasableMoveOut
+	| RebasableDelete;
 
 /**
  * A segment describing the absence of change being made to a sequence of nodes in a trait (and their descendants).
@@ -116,13 +121,20 @@ interface RebasableDeletedModify {
 	/**
 	 * Changes performed on traits of the subtree root, and below.
 	 */
-	[key: TraitLabel]: (UnchangedSegment | RebasableDeletedModify | RebasableInsert | RebasableMoveIn | RebasableMoveOut | RebasableDelete)[];
+	[key: TraitLabel]: (
+		| UnchangedSegment
+		| RebasableDeletedModify
+		| RebasableInsert
+		| RebasableMoveIn
+		| RebasableMoveOut
+		| RebasableDelete
+	)[];
 }
 
 interface SequencedSegment {
 	/**
 	 * The sequence number assigned to the edit that this change was part of.
-	 * 
+	 *
 	 * Used to differentiate edits that were applied concurrently to the edit being rebased from those that were known
 	 * to the edit being rebased.
 	 */
@@ -134,20 +146,19 @@ type SeqNumber = number;
 /**
  * Fields that are common to Insert and MoveIn
  */
-interface PlaceOp extends SequencedSegment {
-}
+interface PlaceOp extends SequencedSegment {}
 interface RebasablePlaceOp {
 	/**
 	 * Whether the attach was performed:
 	 * - after the preceding sibling or (if there are no siblings before) after the start of the trait
 	 * - before the successor sibling or (if there are no siblings after) before the end of the trait
-	 * 
+	 *
 	 * Treated as Sibling.Previous when omitted.
 	 */
 	side?: Sibling.Next;
-	 /**
+	/**
 	 * Used to control the relative ordering of anchors that concurrently target the same place.
-	 * 
+	 *
 	 * Interpreted as Tiebreak.LastToFirst when omitted.
 	 */
 	tiebreak?: Tiebreak.FirstToLast;
@@ -167,8 +178,12 @@ interface RebasablePlaceOp {
 }
 
 type TreePath = string;
-type MovementRules = SimpleMovementRules | CustomMovementRules
-enum SimpleMovementRules { NeverMove, CommutativeMove, AlwaysMove }
+type MovementRules = SimpleMovementRules | CustomMovementRules;
+enum SimpleMovementRules {
+	NeverMove,
+	CommutativeMove,
+	AlwaysMove,
+}
 interface CustomMovementRules {
 	traitLabel: TraitLabels;
 	traitParent: TraitParents;
@@ -176,16 +191,30 @@ interface CustomMovementRules {
 	granularity: MoveGranularity;
 	commutative: boolean;
 }
-enum TraitLabels { Initial, Any }
-enum TraitParents { Initial, Any }
-enum NodeStatuses { Alive, Deleted, Any }
-enum MoveGranularity { IntraEdit, InterEdit, Any }
+enum TraitLabels {
+	Initial,
+	Any,
+}
+enum TraitParents {
+	Initial,
+	Any,
+}
+enum NodeStatuses {
+	Alive,
+	Deleted,
+	Any,
+}
+enum MoveGranularity {
+	IntraEdit,
+	InterEdit,
+	Any,
+}
 
 /**
  * An insertion of new nodes within a trait.
  */
 interface Insert extends PlaceOp {
-	type?: 'Insert';
+	type?: "Insert";
 	/**
 	 * The contents being inserted, mixed in with the segments that affect them if any.
 	 *
@@ -227,7 +256,7 @@ interface Insert extends PlaceOp {
 	contents: Exclude<Segment | ProtoNode, Modify>[];
 }
 interface RebasableInsert extends RebasablePlaceOp {
-	type?: 'Insert';
+	type?: "Insert";
 	/**
 	 * The contents being inserted, mixed in with the segments that affect them if any.
 	 *
@@ -273,7 +302,7 @@ interface RebasableInsert extends RebasablePlaceOp {
  * Content being moved into the trait.
  */
 interface MoveIn extends PlaceOp {
-	type?: 'MoveIn';
+	type?: "MoveIn";
 	/**
 	 * Path to the corresponding MoveOut segment within this ChangeSet.
 	 */
@@ -285,7 +314,7 @@ interface MoveIn extends PlaceOp {
 	count?: number;
 	/**
 	 * Further changes made to the moved content.
-	 * 
+	 *
 	 * When inserted content gets moved, the ProtoNode data ends up here. Note that since there is one MoveOut per MoveIn we can
 	 * unambiguously trace back the source of a ProtoNode.
 	 * Having the ProtoNode here allows updating the destination trait without having to figure out the original location of the
@@ -294,7 +323,7 @@ interface MoveIn extends PlaceOp {
 	changes?: (ProtoNode | Segment)[];
 }
 interface RebasableMoveIn extends RebasablePlaceOp {
-	type?: 'MoveIn';
+	type?: "MoveIn";
 	/**
 	 * Path to the corresponding MoveOut segment within this ChangeSet.
 	 */
@@ -306,7 +335,7 @@ interface RebasableMoveIn extends RebasablePlaceOp {
 	count?: number;
 	/**
 	 * Further changes made to the moved content.
-	 * 
+	 *
 	 * When inserted content gets moved, the ProtoNode data ends up here. Note that since there is one MoveOut per MoveIn we can
 	 * unambiguously trace back the source of a ProtoNode.
 	 * Having the ProtoNode here allows updating the destination trait without having to figure out the original location of the
@@ -318,7 +347,7 @@ interface RebasableMoveIn extends RebasablePlaceOp {
 /**
  * Fields that are common to Delete and MoveOut
  */
- interface RangeOp extends SequencedSegment {
+interface RangeOp extends SequencedSegment {
 	/**
 	 * When present, indicates that the detach was performed with a slice-like range.
 	 */
@@ -329,7 +358,7 @@ interface RebasableMoveIn extends RebasablePlaceOp {
 	 */
 	count?: number;
 }
- interface RebasableRangeOp {
+interface RebasableRangeOp {
 	bounds?: RebasableSliceBounds;
 	count?: number;
 }
@@ -338,7 +367,7 @@ interface RebasableMoveIn extends RebasablePlaceOp {
  * Content being moved out of the trait.
  */
 interface MoveOut extends RangeOp {
-	type?: 'MoveOut';
+	type?: "MoveOut";
 	/**
 	 * Path to the corresponding MoveIn segment within this ChangeSet.
 	 */
@@ -347,7 +376,7 @@ interface MoveOut extends RangeOp {
 	 * Further changes made to the region affected by this MoveOut.
 	 * Insert and MoveIn are tracked here instead of higher up in the temporal hierarchy because they may be
 	 * targeting a place relative to a where a moved node used to be.
-	 * 
+	 *
 	 * Nested MoveOut is used to preserve information about the multiple destinations. A stowaway being attached
 	 * relative to one of the nodes being moved by the first/outer MoveOut may indeed adopt one destination but
 	 * not the other.
@@ -355,14 +384,14 @@ interface MoveOut extends RangeOp {
 	 * Nested Delete is included here because even though there's nothing left to delete, an attach operation targeting
 	 * one of the moved out nodes might not follow the move but might care that the region of the trait is then deleted.
 	 * Note: we currently have no way to allow the author of the attach operation to convey that they do care.
-	 * 
+	 *
 	 * Nested Modify is not included here because modifications made either prior to the MoveOut or between the MoveOut and
 	 * MoveIn are always on the corresponding MoveIn.
 	 */
 	changes?: Exclude<Segment, Modify>[];
 }
 interface RebasableMoveOut extends RebasableRangeOp {
-	type?: 'MoveOut';
+	type?: "MoveOut";
 	/**
 	 * Path to the corresponding MoveIn segment within this ChangeSet.
 	 */
@@ -371,7 +400,7 @@ interface RebasableMoveOut extends RebasableRangeOp {
 	 * Further changes made to the region affected by this MoveOut.
 	 * Insert and MoveIn are tracked here instead of higher up in the temporal hierarchy because they may be
 	 * targeting a place relative to a where a moved node used to be.
-	 * 
+	 *
 	 * Nested MoveOut is used to preserve information about the multiple destinations. A stowaway being attached
 	 * relative to one of the nodes being moved by the first/outer MoveOut may indeed adopt one destination but
 	 * not the other.
@@ -379,7 +408,7 @@ interface RebasableMoveOut extends RebasableRangeOp {
 	 * Nested Delete is included here because even though there's nothing left to delete, an attach operation targeting
 	 * one of the moved out nodes might not follow the move but might care that the region of the trait is then deleted.
 	 * Note: we currently have no way to allow the author of the attach operation to convey that they do care.
-	 * 
+	 *
 	 * Nested Modify is not included here because modifications made either prior to the MoveOut or between the MoveOut and
 	 * MoveIn are always on the corresponding MoveIn.
 	 */
@@ -390,18 +419,18 @@ interface RebasableMoveOut extends RebasableRangeOp {
  * Content being deleted from a trait.
  */
 interface Delete extends RangeOp {
-	type?: 'Delete';
+	type?: "Delete";
 	/**
 	 * Further changes made to the deleted content.
-	 * 
+	 *
 	 * Insert and MoveIn segments are included here (instead of higher up in the temporal hierarchy)
 	 * because they may be targeting a place relative to a deleted node, which someone may concurrently move.
 	 *
 	 * DeletedModify is used to preserve information about changes made below the deleted nodes.
-	 * 
+	 *
 	 * MoveOut is used to preserve information about slice-like moves that were applied after this delete.
 	 * This is needed for cases where a stowaway would adopt the inner move.
-	 * 
+	 *
 	 * Delete segments are not included because while a slice-like range might delete a portion of a trait
 	 * that had already been deleted, there is no scenario under which we care. A concurrent attach that
 	 * targets this portion may care that the node relative to which the insertion is made has been deleted
@@ -413,18 +442,18 @@ interface Delete extends RangeOp {
 	changes?: (UnchangedSegment | Insert | MoveIn | MoveOut | DeletedModify)[];
 }
 interface RebasableDelete extends RebasableRangeOp {
-	type?: 'Delete';
+	type?: "Delete";
 	/**
 	 * Further changes made to the deleted content.
-	 * 
+	 *
 	 * Insert and MoveIn segments are included here (instead of higher up in the temporal hierarchy)
 	 * because they may be targeting a place relative to a deleted node, which someone may concurrently move.
 	 *
 	 * DeletedModify is used to preserve information about changes made below the deleted nodes.
-	 * 
+	 *
 	 * MoveOut is used to preserve information about slice-like moves that were applied after this delete.
 	 * This is needed for cases where a stowaway would adopt the inner move.
-	 * 
+	 *
 	 * Delete segments are not included because while a slice-like range might delete a portion of a trait
 	 * that had already been deleted, there is no scenario under which we care. A concurrent attach that
 	 * targets this portion may care that the node relative to which the insertion is made has been deleted
@@ -433,7 +462,13 @@ interface RebasableDelete extends RebasableRangeOp {
 	 * removing this segment from the layering hierarchy (but preserving the nested segments under the parent
 	 * of this segment). It's not clear whether we'll ever want to implement undo this way.
 	 */
-	changes?: (UnchangedSegment | RebasableInsert | RebasableMoveIn | RebasableMoveOut | RebasableDeletedModify)[];
+	changes?: (
+		| UnchangedSegment
+		| RebasableInsert
+		| RebasableMoveIn
+		| RebasableMoveOut
+		| RebasableDeletedModify
+	)[];
 }
 
 interface RebasableConstraint extends RebasableRangeOp {
@@ -457,7 +492,7 @@ interface RebasableConstraint extends RebasableRangeOp {
 	 * even out.
 	 * For set-like ranges, each of the nodes in the original range must still exist. Note that those nodes may have
 	 * been deleted then re-inserted (as in cut & paste).
-	 * 
+	 *
 	 * NOT GOOD: if a constraint segment needs to be broken up in order to be layered on top of disjoint segments then
 	 * the reported length can only be understood when piecing together the fragments of this constraint segment. This
 	 * is not so bad for set-like range since we could update the length per fragment, but for slice-like ranges we
@@ -471,7 +506,7 @@ interface RebasableConstraint extends RebasableRangeOp {
 	 * Set when the range is constrained to contain a specific sequence of nodes (captured by a hash of their IDs).
 	 * For slice-like ranges the range must contain the same set of nodes in the same order.
 	 * For set-like ranges the nodes must still exist. This is equivalent to the `length` constraint.
-	 * 
+	 *
 	 * NOT GOOD: fragmentation makes this awkward. See `length`.
 	 */
 	identityHash?: string;
@@ -479,7 +514,7 @@ interface RebasableConstraint extends RebasableRangeOp {
 	 * Same as `identityHash` but using a deep traversal when hashing. Note that this includes scalar values.
 	 * For slice-like ranges the range must contain the same set of nodes in the same order and their contents must be the same recursively.
 	 * For set-like ranges the nodes must still exist and their contents must be the same recursively.
-	 * 
+	 *
 	 * NOT GOOD: fragmentation makes this awkward. See `length`.
 	 */
 	contentHash?: string;
@@ -528,7 +563,7 @@ interface RebasableProtoTraits {
 /**
  * A trait of a node to be created.
  * May include change segments if the trait was edited after creation.
- * 
+ *
  * Modify segments are now allowed here. Instead, modifications are reflected as follows:
  * - values are updated in place
  * - deleted nodes are replaced by a Delete segment in the relevant ProtoTrait
@@ -560,14 +595,14 @@ interface RebasableSliceBounds extends SliceBounds {
 	/**
 	 * Used to control the relative ordering of anchors that concurrently target the same place.
 	 * (For rebase only)
-	 * 
+	 *
 	 * Interpreted as Tiebreak.LastToFirst when omitted.
 	 */
 	startTiebreak?: Tiebreak.FirstToLast;
 	/**
 	 * Used to control the relative ordering of anchors that concurrently target the same place.
 	 * (For rebase only)
-	 * 
+	 *
 	 * Interpreted as Tiebreak.LastToFirst when omitted.
 	 */
 	endTiebreak?: Tiebreak.FirstToLast;
@@ -583,7 +618,7 @@ interface RebasableSliceBounds extends SliceBounds {
 
 /**
  * Represents an occurrence of a node being deleted then re-created with possibly different data (e.g., as a result of reencoding).
- * 
+ *
  * This data is used to allow stowaways to adopt the revived node as their target.
  */
 interface Revival {
@@ -611,7 +646,7 @@ interface Revival {
 
 /**
  * Describes a subtree which has been deleted but may be inserted again verbatim.
- * 
+ *
  * This structure is only used to track subtrees that have not been inserted again.
  * Had the subtree been inserted again, its deletion would be represented as a MoveOut, and its insertion as a MoveIn.
  */
@@ -629,15 +664,15 @@ interface ClipboardEntry {
 
 /**
  * A string that describes the location of a Segment in terms of its path from the root-level Modify Segment.
- * 
+ *
  * The string is represented as a concatenation of trait names and indices separated by dots ('.').
  * Note that the indices represent segments, not nodes.
- * 
+ *
  * If the root changes of the ChangeSet is a Modify segment then the path match the following JS regular expression:
  * /^(\.(\w+\.)?\d+)*$/
  * If the root changes of the ChangeSet is an array then the path must match following JS regular expression:
  * /^\d+(\.(\w+\.)?\d+)*$/
- * 
+ *
  * Addressing a segment within another segment is done as follows:
  *  - When the parent segment is a Modify segment, the path to the child segment is composed of the name of
  *    trait under which the child segment resides, followed by a dot ('.'), followed by the index of the
@@ -651,21 +686,24 @@ const value = Symbol();
 type Value = number | string | boolean;
 type NodeId = string;
 type TraitLabel = string;
-enum Tiebreak { LastToFirst, FirstToLast }
+enum Tiebreak {
+	LastToFirst,
+	FirstToLast,
+}
 
 namespace Swaps {
 	// Swap foo and bar nodes
 	const swap: ChangeSet = {
 		changes: {
 			foo: [
-				{ type: 'MoveOut', seq: 1, count: 1, dst: { bar: 1 } },
-				{ type: 'MoveIn', seq: 1, count: 1, src: { bar: 0 } },
+				{ type: "MoveOut", seq: 1, count: 1, dst: { bar: 1 } },
+				{ type: "MoveIn", seq: 1, count: 1, src: { bar: 0 } },
 			],
 			bar: [
-				{ type: 'MoveOut', seq: 1, count: 1, dst: { foo: 1 } },
-				{ type: 'MoveIn', seq: 1, count: 1, src: { foo: 0 } },
+				{ type: "MoveOut", seq: 1, count: 1, dst: { foo: 1 } },
+				{ type: "MoveIn", seq: 1, count: 1, src: { foo: 0 } },
 			],
-		}
+		},
 	};
 
 	// Swap foo and bar nodes (without the optional `type` and `count` fields)
@@ -679,37 +717,33 @@ namespace Swaps {
 				{ seq: 1, dst: { foo: 1 } },
 				{ seq: 1, src: { foo: 0 } },
 			],
-		}
+		},
 	};
 
 	// Swap foo and bar nodes and back again
 	const swapAndBack: ChangeSet = {
 		changes: {
 			foo: [
-				{ type: 'MoveOut', seq: 1, dst: { bar: 1 } },
+				{ type: "MoveOut", seq: 1, dst: { bar: 1 } },
 				{
-					type: 'MoveIn',
+					type: "MoveIn",
 					seq: 1,
 					src: { bar: 0 },
-					changes: [
-						{ type: 'MoveOut', seq: 2, dst: { bar: 2 } },
-					],
+					changes: [{ type: "MoveOut", seq: 2, dst: { bar: 2 } }],
 				},
-				{ type: 'MoveIn', seq: 2, src: "bar.1.0" },
+				{ type: "MoveIn", seq: 2, src: "bar.1.0" },
 			],
 			bar: [
-				{ type: 'MoveOut', seq: 1, dst: { foo: 1 } },
+				{ type: "MoveOut", seq: 1, dst: { foo: 1 } },
 				{
-					type: 'MoveIn',
+					type: "MoveIn",
 					seq: 1,
 					src: { foo: 0 },
-					changes: [
-						{ type: 'MoveOut', seq: 2, dst: { foo: 2 } },
-					],
+					changes: [{ type: "MoveOut", seq: 2, dst: { foo: 2 } }],
 				},
-				{ type: 'MoveIn', seq: 2, src: "foo.1.0" },
+				{ type: "MoveIn", seq: 2, src: "foo.1.0" },
 			],
-		}
+		},
 	};
 
 	// Swap parent/child:
@@ -719,26 +753,26 @@ namespace Swaps {
 		changes: {
 			foo: [
 				{
-					type: 'MoveOut',
+					type: "MoveOut",
 					seq: 1,
 					dst: "foo.1.0.bar.0",
 				},
 				{
-					type: 'MoveIn',
+					type: "MoveIn",
 					seq: 1,
 					src: "foo.1.0.bar.0.0.bar.0",
 					changes: [
 						{
 							bar: [
 								{
-									type: 'MoveIn',
+									type: "MoveIn",
 									seq: 1,
 									src: { foo: 0 },
 									changes: [
 										{
 											bar: [
 												{
-													type: 'MoveOut',
+													type: "MoveOut",
 													seq: 1,
 													dst: { foo: 1 },
 												},
@@ -751,7 +785,7 @@ namespace Swaps {
 					],
 				},
 			],
-		}
+		},
 	};
 
 	// Swap parent/child:
@@ -761,33 +795,33 @@ namespace Swaps {
 		changes: {
 			foo: [
 				{
-					type: 'MoveOut', // B
+					type: "MoveOut", // B
 					seq: 1,
 					dst: "foo.1.0.bar.0",
 				},
 				{
-					type: 'MoveIn', // C
+					type: "MoveIn", // C
 					seq: 1,
 					src: "foo.1.0.bar.0.0.bar.0",
 					changes: [
 						{
 							bar: [
 								{
-									type: 'MoveIn', // B
+									type: "MoveIn", // B
 									seq: 1,
 									src: { foo: 0 },
 									changes: [
 										{
 											bar: [
 												{
-													type: 'MoveOut', // C
+													type: "MoveOut", // C
 													seq: 1,
 													dst: { foo: 1 },
 												},
 											],
 											baz: [
 												{
-													type: 'MoveIn', // D
+													type: "MoveIn", // D
 													seq: 1,
 													src: "foo.1.0.baz.0",
 												},
@@ -798,28 +832,28 @@ namespace Swaps {
 							],
 							baz: [
 								{
-									type: 'MoveOut', // D
+									type: "MoveOut", // D
 									seq: 1,
 									dst: "foo.1.0.bar.0.0.baz.0",
 								},
-							]
+							],
 						},
 					],
 				},
 			],
-		}
+		},
 	};
 	const swapParentChild2Verbose: ChangeSet = {
 		changes: {
 			foo: [
 				{
-					type: 'MoveOut', // B
+					type: "MoveOut", // B
 					seq: 1,
 					dst: "foo.1.0.bar.0",
 					// count: 1,
 				},
 				{
-					type: 'MoveIn', // C
+					type: "MoveIn", // C
 					seq: 1,
 					src: "foo.1.0.bar.0.0.bar.0",
 					// count: 1,
@@ -829,7 +863,7 @@ namespace Swaps {
 						{
 							bar: [
 								{
-									type: 'MoveIn', // B
+									type: "MoveIn", // B
 									seq: 1,
 									src: { foo: 0 },
 									// count: 1,
@@ -839,7 +873,7 @@ namespace Swaps {
 										{
 											bar: [
 												{
-													type: 'MoveOut', // C
+													type: "MoveOut", // C
 													seq: 1,
 													dst: { foo: 1 },
 													// count: 1,
@@ -847,7 +881,7 @@ namespace Swaps {
 											],
 											baz: [
 												{
-													type: 'MoveIn', // D
+													type: "MoveIn", // D
 													seq: 1,
 													src: "foo.1.0.baz.0",
 													// count: 1,
@@ -861,17 +895,17 @@ namespace Swaps {
 							],
 							baz: [
 								{
-									type: 'MoveOut', // D
+									type: "MoveOut", // D
 									seq: 1,
 									dst: "foo.1.0.bar.0.0.baz.0",
 									// count: 1,
 								},
-							]
+							],
 						},
 					],
 				},
 			],
-		}
+		},
 	};
 
 	// Swap parent/child:
@@ -893,8 +927,8 @@ namespace Swaps {
 									dst: { foo: 1 },
 								},
 								baz: {
-										src: "foo.1.0.baz.0",
-									},
+									src: "foo.1.0.baz.0",
+								},
 							},
 						},
 						baz: {
@@ -903,7 +937,7 @@ namespace Swaps {
 					},
 				},
 			],
-		}
+		},
 	};
 }
 
@@ -914,10 +948,8 @@ namespace CumulativeInsert {
 	// yields state [F A B]
 	const e1: ChangeSet = {
 		changes: {
-			foo: [
-				{ type: 'Insert', seq: 1, contents: [{id: 'F'}]},
-			],
-		}
+			foo: [{ type: "Insert", seq: 1, contents: [{ id: "F" }] }],
+		},
 	};
 
 	// Second sequenced edit (Client 2)
@@ -926,9 +958,9 @@ namespace CumulativeInsert {
 		changes: {
 			foo: [
 				1, // Skip over A
-				{ type: 'Insert', seq: 2, contents: [{id: 'U'}, {id: 'V'}]},
+				{ type: "Insert", seq: 2, contents: [{ id: "U" }, { id: "V" }] },
 			],
-		}
+		},
 	};
 
 	// Third sequenced edit (Client 2)
@@ -937,9 +969,9 @@ namespace CumulativeInsert {
 		changes: {
 			foo: [
 				2, // Skip over A U
-				{ type: 'Insert', seq: 2, contents: [{id: 'X'}]},
+				{ type: "Insert", seq: 2, contents: [{ id: "X" }] },
 			],
-		}
+		},
 	};
 
 	// Collaboration ChangeSet after e1 and e2a
@@ -947,11 +979,11 @@ namespace CumulativeInsert {
 	const wcs2a: ChangeSet = {
 		changes: {
 			foo: [
-				{ type: 'Insert', seq: 1, contents: [{id: 'F'}]},
+				{ type: "Insert", seq: 1, contents: [{ id: "F" }] },
 				1, // Skip over A
-				{ type: 'Insert', seq: 2, contents: [{id: 'U'}, {id: 'V'}]},
+				{ type: "Insert", seq: 2, contents: [{ id: "U" }, { id: "V" }] },
 			],
-		}
+		},
 	};
 
 	// Collaboration ChangeSet after e1, e2a, e2b
@@ -959,19 +991,19 @@ namespace CumulativeInsert {
 	const wcs2b: ChangeSet = {
 		changes: {
 			foo: [
-				{ type: 'Insert', seq: 1, contents: [{id: 'F'}]},
+				{ type: "Insert", seq: 1, contents: [{ id: "F" }] },
 				1, // Skip over A
 				{
-					type: 'Insert',
+					type: "Insert",
 					seq: 2,
 					contents: [
-						{ id: 'U' },
-						{ type: 'Insert', seq: 2, contents: [{id: 'X'}] },
-						{ id: 'V' }
+						{ id: "U" },
+						{ type: "Insert", seq: 2, contents: [{ id: "X" }] },
+						{ id: "V" },
 					],
 				},
 			],
-		}
+		},
 	};
 }
 
@@ -987,13 +1019,9 @@ namespace MoveToMovedLocation {
 	//   baz: [U]
 	const e1: ChangeSet = {
 		changes: {
-			bar: [
-				{ type: 'MoveOut', seq: 0, dst: { baz: 0 } },
-			],
-			baz: [
-				{ type: 'MoveIn', seq: 0, src: { bar: 0 } },
-			],
-		}
+			bar: [{ type: "MoveOut", seq: 0, dst: { baz: 0 } }],
+			baz: [{ type: "MoveIn", seq: 0, src: { bar: 0 } }],
+		},
 	};
 
 	// Second sequenced edit (Client 2)
@@ -1006,14 +1034,9 @@ namespace MoveToMovedLocation {
 	//   baz: [U A B]
 	const e2a: ChangeSet = {
 		changes: {
-			foo: [
-				{ type: 'MoveOut', seq: 1, dst: { bar: 1 }, count: 2, bounds: {}},
-			],
-			bar: [
-				1,
-				{ type: 'MoveIn', seq: 1, src: { foo: 0 }, count: 2 },
-			],
-		}
+			foo: [{ type: "MoveOut", seq: 1, dst: { bar: 1 }, count: 2, bounds: {} }],
+			bar: [1, { type: "MoveIn", seq: 1, src: { foo: 0 }, count: 2 }],
+		},
 	};
 
 	// Third sequenced edit (Client 2)
@@ -1027,145 +1050,120 @@ namespace MoveToMovedLocation {
 
 	const e2b: ChangeSet = {
 		changes: {
-			bar: [
-				2,
-				{ type: 'Insert', seq: 2, contents: [{id: 'X'}]},
-			],
-		}
+			bar: [2, { type: "Insert", seq: 2, contents: [{ id: "X" }] }],
+		},
 	};
 
 	// Squashed e2a and e2b
 	const e2ae2b: ChangeSet = {
 		changes: {
-			foo: [
-				{ type: 'MoveOut', seq: 1, dst: { bar: 1 }, count: 2, bounds: {}},
-			],
+			foo: [{ type: "MoveOut", seq: 1, dst: { bar: 1 }, count: 2, bounds: {} }],
 			bar: [
 				1,
 				{
-					type: 'MoveIn',
+					type: "MoveIn",
 					seq: 1,
 					src: { foo: 0 },
 					count: 2,
-					changes: [
-						1,
-						{ type: 'Insert', seq: 2, contents: [{id: 'X'}]},
-					],
+					changes: [1, { type: "Insert", seq: 2, contents: [{ id: "X" }] }],
 				},
 			],
-		}
+		},
 	};
 
 	// Rebased version of e2a
 	const e2aPrime: ChangeSet = {
 		changes: {
-			foo: [
-				{ type: 'MoveOut', seq: 1, dst: { baz: 1 }, count: 2, bounds: {}},
-			],
-			baz: [
-				1,
-				{ type: 'MoveIn', seq: 1, src: { foo: 0 }, count: 2 },
-			],
-		}
+			foo: [{ type: "MoveOut", seq: 1, dst: { baz: 1 }, count: 2, bounds: {} }],
+			baz: [1, { type: "MoveIn", seq: 1, src: { foo: 0 }, count: 2 }],
+		},
 	};
 
 	// Rebased version of e2b if following A B
 	const e2bPrimeFollow: ChangeSet = {
 		changes: {
-			baz: [
-				2,
-				{ type: 'Insert', seq: 2, contents: [{id: 'X'}] },
-			],
-		}
+			baz: [2, { type: "Insert", seq: 2, contents: [{ id: "X" }] }],
+		},
 	};
 
 	// Squash of e1 and e2a'
 	const e1e2ap: ChangeSet = {
 		changes: {
-			foo: [
-				{ type: 'MoveOut', seq: 1, dst: { baz: 1 }, count: 2, bounds: {}},
-			],
-			bar: [
-				{ type: 'MoveOut', seq: 0, dst: { baz: 0 } },
-			],
+			foo: [{ type: "MoveOut", seq: 1, dst: { baz: 1 }, count: 2, bounds: {} }],
+			bar: [{ type: "MoveOut", seq: 0, dst: { baz: 0 } }],
 			baz: [
-				{ type: 'MoveIn', seq: 0, src: { bar: 0 } },
-				{ type: 'MoveIn', seq: 1, src: { foo: 0 }, count: 2 },
+				{ type: "MoveIn", seq: 0, src: { bar: 0 } },
+				{ type: "MoveIn", seq: 1, src: { foo: 0 }, count: 2 },
 			],
-		}
+		},
 	};
-	
 
 	// Squash of e1, e2a', e2b' for the case where the insertion of X follows AB
 	const e1e2ape2bp_follow: ChangeSet = {
 		changes: {
 			foo: [
-				{ type: 'MoveOut', seq: 1, dst: { baz: 1 }, count: 2, bounds: {}}, // AB
+				{ type: "MoveOut", seq: 1, dst: { baz: 1 }, count: 2, bounds: {} }, // AB
 			],
 			bar: [
 				{
-					type: 'MoveOut', // Move U
+					type: "MoveOut", // Move U
 					seq: 0,
 					dst: { baz: 0 },
 					changes: [
 						1, // Skip U
 						{
-							type: 'MoveIn', // AB
+							type: "MoveIn", // AB
 							seq: 1, // ??
 							src: { foo: 0 },
 							count: 2,
 							changes: [
 								{
-									type: 'MoveOut', // AB
+									type: "MoveOut", // AB
 									seq: 1, // ??
 									dst: { baz: 1 },
 									count: 2,
 									bounds: {},
 									changes: [
 										1, // Skip A
-										{ type: 'Insert', seq: 2, contents: [{id: 'X'}]},
+										{ type: "Insert", seq: 2, contents: [{ id: "X" }] },
 									],
-								}
+								},
 							],
 						},
 					],
 				},
 			],
 			baz: [
-				{ type: 'MoveIn', seq: 0, src: { bar: 0 } }, // U
+				{ type: "MoveIn", seq: 0, src: { bar: 0 } }, // U
 				{
-					type: 'MoveIn', // AB
+					type: "MoveIn", // AB
 					seq: 1, // ??
 					src: "bar.0.1.0",
 					count: 2,
 				},
 			],
-		}
+		},
 	};
 
 	// Squash of e1, e2a', e2b' for the case where the insertion of X does not follow AB
 	const e1e2ape2bp_stay: ChangeSet = {
 		changes: {
-			foo: [
-				{ type: 'MoveOut', seq: 1, dst: { baz: 1 }, count: 2, bounds: {}},
-			],
-			bar: [
-				{ type: 'MoveOut', seq: 0, dst: { baz: 0 } },
-			],
+			foo: [{ type: "MoveOut", seq: 1, dst: { baz: 1 }, count: 2, bounds: {} }],
+			bar: [{ type: "MoveOut", seq: 0, dst: { baz: 0 } }],
 			baz: [
-				{ type: 'MoveIn', seq: 0, src: { bar: 0 } },
+				{ type: "MoveIn", seq: 0, src: { bar: 0 } },
 				{
-					type: 'MoveIn',
+					type: "MoveIn",
 					seq: 1,
 					src: { foo: 0 },
 					count: 2,
 					changes: [
 						1, // Skip A
-						{ type: 'Insert', seq: 2, contents: [{id: 'X'}]},
+						{ type: "Insert", seq: 2, contents: [{ id: "X" }] },
 					],
 				},
 			],
-		}
+		},
 	};
 }
 
@@ -1188,11 +1186,11 @@ namespace DeleteAndInsertMix {
 		changes: {
 			foo: [
 				1,
-				{ type: 'Delete', seq: 1 },
-				{ type: 'Insert', seq: 1, contents: [{id: 'X'}]},
-				{ type: 'Delete', seq: 1 },
+				{ type: "Delete", seq: 1 },
+				{ type: "Insert", seq: 1, contents: [{ id: "X" }] },
+				{ type: "Delete", seq: 1 },
 			],
-		}
+		},
 	};
 
 	/**
@@ -1204,16 +1202,13 @@ namespace DeleteAndInsertMix {
 			foo: [
 				1,
 				{
-					type: 'Delete',
+					type: "Delete",
 					seq: 1,
 					count: 2,
-					changes: [
-						1,
-						{ type: 'Insert', seq: 1, contents: [{id: 'X'}]},
-					]
+					changes: [1, { type: "Insert", seq: 1, contents: [{ id: "X" }] }],
 				},
 			],
-		}
+		},
 	};
 
 	/**
@@ -1228,10 +1223,10 @@ namespace DeleteAndInsertMix {
 		changes: {
 			foo: [
 				1,
-				{ type: 'Insert', seq: 1, contents: [{id: 'X'}]},
-				{ type: 'Delete', seq: 1, count: 2 },
+				{ type: "Insert", seq: 1, contents: [{ id: "X" }] },
+				{ type: "Delete", seq: 1, count: 2 },
 			],
-		}
+		},
 	};
 }
 

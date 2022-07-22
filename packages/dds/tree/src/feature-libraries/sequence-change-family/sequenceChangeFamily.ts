@@ -10,18 +10,21 @@ import { sequenceChangeRebaser } from "./sequenceChangeRebaser";
 import { SequenceChangeset } from "./sequenceChangeset";
 import { SequenceEditBuilder } from "./sequenceEditBuilder";
 
-function buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): SequenceEditBuilder {
-    return new SequenceEditBuilder(deltaReceiver, anchorSet);
+function buildEditor(
+	deltaReceiver: (delta: Delta.Root) => void,
+	anchorSet: AnchorSet,
+): SequenceEditBuilder {
+	return new SequenceEditBuilder(deltaReceiver, anchorSet);
 }
 
 function intoDelta(change: SequenceChangeset): Delta.Root {
-    throw Error("Not implemented"); // TODO
+	throw Error("Not implemented"); // TODO
 }
 
 export type SequenceChangeFamily = ChangeFamily<SequenceEditBuilder, SequenceChangeset>;
 
 export const sequenceChangeFamily: SequenceChangeFamily = {
-    rebaser: sequenceChangeRebaser,
-    buildEditor,
-    intoDelta,
+	rebaser: sequenceChangeRebaser,
+	buildEditor,
+	intoDelta,
 };

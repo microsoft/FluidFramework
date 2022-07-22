@@ -1,5 +1,14 @@
 {
-    "tags": [ "shared-tree" ],
-    "exports": [ "index"],
-    "imports": ["schema","tree","dependency-tracking","util","rebase","forest","shared-tree-core","feature-libraries"]
+  "tags": ["shared-tree"],
+  "exports": ["index"],
+  "imports": [
+    "schema",
+    "tree",
+    "dependency-tracking",
+    "util",
+    "rebase",
+    "forest",
+    "shared-tree-core",
+    "feature-libraries"
+  ]
 }

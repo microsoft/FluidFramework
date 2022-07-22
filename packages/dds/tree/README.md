@@ -9,24 +9,24 @@ A wide variety of possible consumers (across several companies) have overlapping
 which seem like they can best be met by collaborating on a single feature rich tree implementation powered by Fluid.
 The current feature focus is on:
 
-- Semantics:
+-   Semantics:
     -   High quality semantic merges, including "slice" moves of parts of sequences.
     -   Transactionality.
     -   Support schema in a semantically robust way.
-- Scalability:
+-   Scalability:
     -   Support for partial checkouts: allow efficiently viewing and editing parts of larger datasets without downloading the whole thing.
     -   Ability to easily (sharing code with client) spin up optional services to improve scalability further (ex: server side summaries, indexing, permissions etc.)
     -   Efficient data encodings.
-- Expressiveness:
+-   Expressiveness:
     -   Efficient support for moves, including moves or large sections of large sequences, and large subtrees.
     -   Support history operations (ex: undo and redo).
     -   Flexible schema system that has design patterns for making schema changes over time.
-- Workflows:
-    - Good support for offline.
-    - Optional support for branching and history.
-- Extensibility: future users will have needs beyond what we can afford to support in an initial version and must be practical to accommodate. This includes things like:
-    - New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
-    - New services (ex: to support permissions, server side indexing etc.)
+-   Workflows:
+    -   Good support for offline.
+    -   Optional support for branching and history.
+-   Extensibility: future users will have needs beyond what we can afford to support in an initial version and must be practical to accommodate. This includes things like:
+    -   New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
+    -   New services (ex: to support permissions, server side indexing etc.)
 
 ## Whats missing from existing DDSes?
 

@@ -15,7 +15,13 @@ import { brand } from "../util";
 const testCases: [string, PlaceholderTree][] = [
 	["minimal", { type: brand("Foo") }],
 	["value", { type: brand("Foo"), value: "test" }],
-	["nested", { type: brand("Foo"), fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] } }],
+	[
+		"nested",
+		{
+			type: brand("Foo"),
+			fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] },
+		},
+	],
 ];
 
 describe("textTreeFormat", () => {

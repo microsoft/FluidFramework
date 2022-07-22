@@ -12,9 +12,9 @@ import { ISharedObjectEvents, SharedObject } from "@fluidframework/shared-object
  * Abstract DDS providing incremental summarization and partial checkouts of pages of data.
  */
 export abstract class LazyPageTree extends SharedObject<ILazyPageTreeEvents> {
- // TODO
+	// TODO
 }
 
 export interface ILazyPageTreeEvents extends ISharedObjectEvents {
-    (event: "updated", listener: () => void): unknown;
+	(event: "updated", listener: () => void): unknown;
 }

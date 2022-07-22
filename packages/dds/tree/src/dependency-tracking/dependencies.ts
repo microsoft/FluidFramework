@@ -23,21 +23,21 @@ export interface NamedComputation {
 	 */
 	readonly computationName: string;
 
-    /**
-     * Lists the currently subscribed set of Dependees.
-     * This is exposed to allow tooling to inspect the dependency graph,
-     * and should not be needed for regular functionality.
+	/**
+	 * Lists the currently subscribed set of Dependees.
+	 * This is exposed to allow tooling to inspect the dependency graph,
+	 * and should not be needed for regular functionality.
 	 * Implementing this is not required: absence of an implementation does not mean there are no dependees.
-     */
-    listDependees?(): Iterable<Dependee>;
+	 */
+	listDependees?(): Iterable<Dependee>;
 
-    /**
-     * Lists the currently subscribed set of Dependent.
-     * This is exposed to allow tooling to inspect the dependency graph,
-     * and should not be needed for regular functionality.
+	/**
+	 * Lists the currently subscribed set of Dependent.
+	 * This is exposed to allow tooling to inspect the dependency graph,
+	 * and should not be needed for regular functionality.
 	 * Implementing this is not required: absence of an implementation does not mean there are no dependents.
-     */
-    listDependents?(): Iterable<Dependent>;
+	 */
+	listDependents?(): Iterable<Dependent>;
 }
 
 /**
@@ -57,9 +57,9 @@ export interface Dependent extends NamedComputation {
 	 *
 	 * @param token - Optional extra information about the invalidation.
 	 * Can be used to support less conservative invalidation as an optimization.
-     * A Dependent may ignore this and have correct invalidation.
+	 * A Dependent may ignore this and have correct invalidation.
 	 * If reducing invalidation based on the token,
-     * there will be a token specific invalidation protocol that must be obeyed.
+	 * there will be a token specific invalidation protocol that must be obeyed.
 	 */
 	markInvalid(token?: InvalidationToken): void;
 }
@@ -77,10 +77,13 @@ export class InvalidationToken {
 	/**
 	 * @param description - Shows in debugger to help identify tokens.
 	 * @param isSecondaryInvalidation - True iff the invalidation with this token only provides information
-     * about other invalidation,
+	 * about other invalidation,
 	 * and thus, if otherwise ignoring tokens, this invalidation can be ignored.
 	 */
-	public constructor(public readonly description: string, public readonly isSecondaryInvalidation = false) {}
+	public constructor(
+		public readonly description: string,
+		public readonly isSecondaryInvalidation = false,
+	) {}
 }
 
 /**

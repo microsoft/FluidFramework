@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    DetachedRange,
-    FieldKey,
- } from "../tree";
+import { DetachedRange, FieldKey } from "../tree";
 
 /**
  * Path from a location in the tree upward.
@@ -15,7 +12,7 @@ import {
  * costs related to the depth of the local subtree.
  */
 export interface UpPath {
-    parent(): UpPath | DetachedRange;
-    parentField(): FieldKey; // TODO: Type information, including when in DetachedRange.
-    parentIndex(): number; // TODO: field index branded type?
+	parent(): UpPath | DetachedRange;
+	parentField(): FieldKey; // TODO: Type information, including when in DetachedRange.
+	parentIndex(): number; // TODO: field index branded type?
 }

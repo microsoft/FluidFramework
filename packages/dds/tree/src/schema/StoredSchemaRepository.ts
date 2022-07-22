@@ -6,16 +6,13 @@
 import { Dependee, SimpleDependee } from "../dependency-tracking";
 import { allowsFieldSuperset, allowsTreeSuperset } from "./Comparison";
 import {
-    SchemaRepository,
-    GlobalFieldKey,
-    FieldSchema,
-    TreeSchemaIdentifier,
-    TreeSchema,
+	SchemaRepository,
+	GlobalFieldKey,
+	FieldSchema,
+	TreeSchemaIdentifier,
+	TreeSchema,
 } from "./Schema";
-import {
-    neverField,
-    neverTree,
-} from "./SpecialSchema";
+import { neverField, neverTree } from "./SpecialSchema";
 
 /**
  * Example in memory SchemaRepository showing how stored schema could work.
@@ -55,83 +52,71 @@ import {
  * TODO: could implement more fine grained dependency tracking.
  */
 export class StoredSchemaRepository extends SimpleDependee implements SchemaRepository, Dependee {
-    readonly computationName: string = "StoredSchemaRepository";
+	readonly computationName: string = "StoredSchemaRepository";
 
-    /**
-     * For now, the schema are just scored in maps.
-     * There are a couple reasons we might not want this simple solution long term:
-     * 1. We might want an easy/fast copy.
-     * 2. We might want a way to reserve a large namespace of schema with the same schema.
-     * The way extraFields has been structured mitigates the need for this, but it still might be useful.
-     *
-     * (ex: someone using data as field identifiers might want to
-     * reserve all fields identifiers starting with "foo." to have a specific schema).
-     * Combined with support for such namespaces in the allowed sets in the schema objects,
-     * that might provide a decent alternative to extraFields (which is a bit odd).
-     */
-    public constructor(
-        protected readonly fields: Map<GlobalFieldKey, FieldSchema> = new Map(),
-        protected readonly trees: Map<TreeSchemaIdentifier, TreeSchema> = new Map(),
-    ) {
-        super();
-    }
+	/**
+	 * For now, the schema are just scored in maps.
+	 * There are a couple reasons we might not want this simple solution long term:
+	 * 1. We might want an easy/fast copy.
+	 * 2. We might want a way to reserve a large namespace of schema with the same schema.
+	 * The way extraFields has been structured mitigates the need for this, but it still might be useful.
+	 *
+	 * (ex: someone using data as field identifiers might want to
+	 * reserve all fields identifiers starting with "foo." to have a specific schema).
+	 * Combined with support for such namespaces in the allowed sets in the schema objects,
+	 * that might provide a decent alternative to extraFields (which is a bit odd).
+	 */
+	public constructor(
+		protected readonly fields: Map<GlobalFieldKey, FieldSchema> = new Map(),
+		protected readonly trees: Map<TreeSchemaIdentifier, TreeSchema> = new Map(),
+	) {
+		super();
+	}
 
-    public clone(): StoredSchemaRepository {
-        return new StoredSchemaRepository(new Map(this.fields), new Map(this.trees));
-    }
+	public clone(): StoredSchemaRepository {
+		return new StoredSchemaRepository(new Map(this.fields), new Map(this.trees));
+	}
 
-    public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
-        return this.fields;
-    }
+	public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
+		return this.fields;
+	}
 
-    public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
-        return this.trees;
-    }
+	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
+		return this.trees;
+	}
 
-    public lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema {
-        return this.fields.get(identifier) ?? neverField;
-    }
+	public lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema {
+		return this.fields.get(identifier) ?? neverField;
+	}
 
-    public lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema {
-        return this.trees.get(identifier) ?? neverTree;
-    }
+	public lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema {
+		return this.trees.get(identifier) ?? neverTree;
+	}
 
-    /**
-     * Updates the specified schema iff all possible in schema data would remain in schema after the change.
-     * @returns true iff update was performed.
-     */
-    public tryUpdateFieldSchema(
-        identifier: GlobalFieldKey,
-        schema: FieldSchema,
-    ): boolean {
-        if (
-            allowsFieldSuperset(
-                this,
-                this.lookupGlobalFieldSchema(identifier),
-                schema,
-            )
-        ) {
-            this.fields.set(identifier, schema);
-            this.invalidateDependents();
-            return true;
-        }
-        return false;
-    }
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): boolean {
+		if (allowsFieldSuperset(this, this.lookupGlobalFieldSchema(identifier), schema)) {
+			this.fields.set(identifier, schema);
+			this.invalidateDependents();
+			return true;
+		}
+		return false;
+	}
 
-    /**
-     * Updates the specified schema iff all possible in schema data would remain in schema after the change.
-     * @returns true iff update was performed.
-     */
-    public tryUpdateTreeSchema(
-        identifier: TreeSchemaIdentifier,
-        schema: TreeSchema,
-    ): boolean {
-        const original = this.lookupTreeSchema(identifier);
-        if (allowsTreeSuperset(this, original, schema)) {
-            this.trees.set(identifier, schema);
-            this.invalidateDependents();
-            return true;
-        }
-        return false;
-    }
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): boolean {
+		const original = this.lookupTreeSchema(identifier);
+		if (allowsTreeSuperset(this, original, schema)) {
+			this.trees.set(identifier, schema);
+			this.invalidateDependents();
+			return true;
+		}
+		return false;
+	}
 }

@@ -1,5 +1,14 @@
 {
-    "tags": [ "forest" ],
-    "exports": [ "index"],
-    "imports": ["schema","tree","dependency-tracking","util","forest","rebase","changeset","change-family"]
+  "tags": ["forest"],
+  "exports": ["index"],
+  "imports": [
+    "schema",
+    "tree",
+    "dependency-tracking",
+    "util",
+    "forest",
+    "rebase",
+    "changeset",
+    "change-family"
+  ]
 }

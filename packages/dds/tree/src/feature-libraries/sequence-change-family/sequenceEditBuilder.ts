@@ -11,20 +11,17 @@ import { sequenceChangeFamily } from "./sequenceChangeFamily";
 import { SequenceChangeset } from "./sequenceChangeset";
 
 export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangeset> {
-    constructor(
-        deltaReceiver: (delta: Delta.Root) => void,
-        anchorSet: AnchorSet,
-    ) {
-        super(sequenceChangeFamily, deltaReceiver, anchorSet);
-    }
+	constructor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet) {
+		super(sequenceChangeFamily, deltaReceiver, anchorSet);
+	}
 
-    public setValue(node: NodePath, value: Value) { }
+	public setValue(node: NodePath, value: Value) {}
 
-    public insert(place: PlacePath, content: ITreeCursor) { }
+	public insert(place: PlacePath, content: ITreeCursor) {}
 
-    public delete(place: PlacePath, count: number) { }
+	public delete(place: PlacePath, count: number) {}
 
-    public move(source: PlacePath, count: number, destination: PlacePath) { }
+	public move(source: PlacePath, count: number, destination: PlacePath) {}
 }
 
 type NodePath = UpPath;

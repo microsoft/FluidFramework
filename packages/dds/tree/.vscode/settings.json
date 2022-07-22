@@ -1,6 +1,8 @@
 {
-	"mochaExplorer.files": ["dist/**/*.spec.js"],
-	"mochaExplorer.pruneFiles": true,
-	"mochaExplorer.require": "node_modules/@fluidframework/mocha-test-setup",
-	"mochaExplorer.timeout": 999999
+  "mochaExplorer.files": ["dist/**/*.spec.js"],
+  "mochaExplorer.pruneFiles": true,
+  "mochaExplorer.require": "node_modules/@fluidframework/mocha-test-setup",
+  "mochaExplorer.timeout": 999999,
+  "editor.detectIndentation": true,
+  "editor.insertSpaces": false, // Use detectIndentation instead
 }

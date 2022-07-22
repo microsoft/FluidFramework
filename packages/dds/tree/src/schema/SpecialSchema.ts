@@ -16,19 +16,19 @@ import { emptySet, emptyMap } from "./Builders";
  * FieldSchema which is impossible for any data to be in schema with.
  */
 export const neverField: FieldSchema = {
-    kind: FieldKind.Value,
-    types: emptySet,
+	kind: FieldKind.Value,
+	types: emptySet,
 };
 
 /**
  * TreeSchema which is impossible for any data to be in schema with.
  */
 export const neverTree: TreeSchema = {
-    localFields: emptyMap,
-    globalFields: emptySet,
-    extraLocalFields: neverField,
-    extraGlobalFields: false,
-    value: ValueSchema.Nothing,
+	localFields: emptyMap,
+	globalFields: emptySet,
+	extraLocalFields: neverField,
+	extraGlobalFields: false,
+	value: ValueSchema.Nothing,
 };
 
 /**
@@ -36,7 +36,7 @@ export const neverTree: TreeSchema = {
  * Note that children inside the field still have to be in schema.
  */
 export const anyField: FieldSchema = {
-    kind: FieldKind.Sequence,
+	kind: FieldKind.Sequence,
 };
 
 /**
@@ -44,9 +44,9 @@ export const anyField: FieldSchema = {
  * Note that children under the fields (and global fields) still have to be in schema.
  */
 export const anyTree: TreeSchema = {
-    localFields: emptyMap,
-    globalFields: emptySet,
-    extraLocalFields: anyField,
-    extraGlobalFields: true,
-    value: ValueSchema.Serializable,
+	localFields: emptyMap,
+	globalFields: emptySet,
+	extraLocalFields: anyField,
+	extraGlobalFields: true,
+	value: ValueSchema.Serializable,
 };

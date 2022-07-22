@@ -6,11 +6,11 @@
 import structuredClone from "@ungap/structured-clone";
 
 export function clone<T>(original: T): T {
-    return structuredClone(original);
+	return structuredClone(original);
 }
 
 export function fail(message: string): never {
-    throw new Error(message);
+	throw new Error(message);
 }
 
 /**
@@ -31,5 +31,5 @@ export function fail(message: string): never {
  * @param never - The switch value
  */
 export function unreachableCase(never: never): never {
-    fail("unreachableCase was called");
+	fail("unreachableCase was called");
 }

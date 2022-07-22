@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export interface SequenceChangeset { }
+export interface SequenceChangeset {}

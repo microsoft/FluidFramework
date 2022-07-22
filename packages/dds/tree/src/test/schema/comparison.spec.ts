@@ -6,9 +6,13 @@
 import { strict as assert } from "assert";
 
 import {
-	allowsFieldSuperset, allowsTreeSuperset, allowsValueSuperset, isNeverField, isNeverTree,
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	allowsValueSuperset,
+	isNeverField,
+	isNeverTree,
+	// Allow importing from this specific file which is being tested:
+	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../schema/Comparison";
 import {
 	FieldSchema,
@@ -19,7 +23,15 @@ import {
 	TreeSchema,
 	TreeSchemaIdentifier,
 	ValueSchema,
-	emptyField, emptyMap, emptySet, fieldSchema, anyField, anyTree, neverField, neverTree, StoredSchemaRepository,
+	emptyField,
+	emptyMap,
+	emptySet,
+	fieldSchema,
+	anyField,
+	anyTree,
+	neverField,
+	neverTree,
+	StoredSchemaRepository,
 } from "../../schema";
 import { brandOpaque } from "../../util";
 
@@ -52,7 +64,9 @@ describe("Schema Comparison", () => {
 
 	const optionalLocalFieldTree: NamedTreeSchema = {
 		name: "optionalLocalFieldTree" as TreeSchemaIdentifier,
-		localFields: new Map([["x" as LocalFieldKey, fieldSchema(FieldKind.Optional, [emptyTree.name])]]),
+		localFields: new Map([
+			["x" as LocalFieldKey, fieldSchema(FieldKind.Optional, [emptyTree.name])],
+		]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
@@ -61,7 +75,9 @@ describe("Schema Comparison", () => {
 
 	const valueLocalFieldTree: NamedTreeSchema = {
 		name: "valueLocalFieldTree" as TreeSchemaIdentifier,
-		localFields: new Map([["x" as LocalFieldKey, fieldSchema(FieldKind.Value, [emptyTree.name])]]),
+		localFields: new Map([
+			["x" as LocalFieldKey, fieldSchema(FieldKind.Value, [emptyTree.name])],
+		]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
@@ -80,38 +96,48 @@ describe("Schema Comparison", () => {
 		assert.equal(isNeverField(repo, emptyField), false);
 		assert.equal(isNeverField(repo, anyField), false);
 		repo.tryUpdateTreeSchema("empty" as TreeSchemaIdentifier, emptyTree);
-		assert.equal(isNeverField(repo, {
-			kind: FieldKind.Value,
-			types: new Set(["empty" as TreeSchemaIdentifier]),
-		}), false);
+		assert.equal(
+			isNeverField(repo, {
+				kind: FieldKind.Value,
+				types: new Set(["empty" as TreeSchemaIdentifier]),
+			}),
+			false,
+		);
 	});
 
 	it("isNeverTree", () => {
 		const repo = new StoredSchemaRepository();
 		assert(isNeverTree(repo, neverTree));
-		assert(isNeverTree(repo, {
-			localFields: emptyMap,
-			globalFields: emptySet,
-			extraLocalFields: neverField,
-			extraGlobalFields: false,
-			value: ValueSchema.Nothing,
-		}));
+		assert(
+			isNeverTree(repo, {
+				localFields: emptyMap,
+				globalFields: emptySet,
+				extraLocalFields: neverField,
+				extraGlobalFields: false,
+				value: ValueSchema.Nothing,
+			}),
+		);
 		assert(isNeverTree(repo, neverTree2));
 		repo.tryUpdateFieldSchema(brandOpaque<GlobalFieldKey>("never"), neverField);
-		assert(isNeverTree(repo, {
-			localFields: emptyMap,
-			globalFields: new Set([brandOpaque<GlobalFieldKey>("never")]),
-			extraLocalFields: emptyField,
-			extraGlobalFields: true,
-			value: ValueSchema.Serializable,
-		}));
-		assert.equal(isNeverTree(repo, {
-			localFields: emptyMap,
-			globalFields: emptySet,
-			extraLocalFields: emptyField,
-			extraGlobalFields: false,
-			value: ValueSchema.Nothing,
-		}), false);
+		assert(
+			isNeverTree(repo, {
+				localFields: emptyMap,
+				globalFields: new Set([brandOpaque<GlobalFieldKey>("never")]),
+				extraLocalFields: emptyField,
+				extraGlobalFields: true,
+				value: ValueSchema.Serializable,
+			}),
+		);
+		assert.equal(
+			isNeverTree(repo, {
+				localFields: emptyMap,
+				globalFields: emptySet,
+				extraLocalFields: emptyField,
+				extraGlobalFields: false,
+				value: ValueSchema.Nothing,
+			}),
+			false,
+		);
 		assert.equal(isNeverTree(repo, anyTree), false);
 
 		assert(repo.tryUpdateTreeSchema(emptyTree.name, emptyTree));
@@ -126,11 +152,13 @@ describe("Schema Comparison", () => {
 		testOrder(allowsValueSuperset, [ValueSchema.Number, ValueSchema.Serializable]);
 		testOrder(allowsValueSuperset, [ValueSchema.String, ValueSchema.Serializable]);
 		testOrder(allowsValueSuperset, [ValueSchema.Nothing, ValueSchema.Serializable]);
-		testPartialOrder<ValueSchema>(
-			allowsValueSuperset,
-			[ValueSchema.Boolean, ValueSchema.Number, ValueSchema.String,
-				ValueSchema.Nothing, ValueSchema.Serializable],
-		);
+		testPartialOrder<ValueSchema>(allowsValueSuperset, [
+			ValueSchema.Boolean,
+			ValueSchema.Number,
+			ValueSchema.String,
+			ValueSchema.Nothing,
+			ValueSchema.Serializable,
+		]);
 	});
 
 	it("allowsFieldSuperset", () => {
@@ -140,9 +168,14 @@ describe("Schema Comparison", () => {
 			kind: FieldKind.Value,
 			types: new Set(["never" as TreeSchemaIdentifier]),
 		};
-		const compare = (a: FieldSchema, b: FieldSchema): boolean => allowsFieldSuperset(repo, a, b);
+		const compare = (a: FieldSchema, b: FieldSchema): boolean =>
+			allowsFieldSuperset(repo, a, b);
 		testOrder(compare, [neverField, emptyField, anyField]);
-		testPartialOrder(compare, [neverField, neverField2, emptyField, anyField], [[neverField, neverField2]]);
+		testPartialOrder(
+			compare,
+			[neverField, neverField2, emptyField, anyField],
+			[[neverField, neverField2]],
+		);
 	});
 
 	it("allowsTreeSuperset", () => {
@@ -152,9 +185,19 @@ describe("Schema Comparison", () => {
 		testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTree]);
 		testPartialOrder(
 			compare,
-			[neverTree, neverTree2, anyTree, emptyTree,
-				emptyLocalFieldTree, optionalLocalFieldTree, valueLocalFieldTree],
-			[[neverTree, neverTree2], [emptyTree, emptyLocalFieldTree]],
+			[
+				neverTree,
+				neverTree2,
+				anyTree,
+				emptyTree,
+				emptyLocalFieldTree,
+				optionalLocalFieldTree,
+				valueLocalFieldTree,
+			],
+			[
+				[neverTree, neverTree2],
+				[emptyTree, emptyLocalFieldTree],
+			],
 		);
 	});
 });
@@ -166,7 +209,11 @@ enum Ordering {
 	Superset,
 }
 
-function getOrdering<T>(original: T, superset: T, allowsSuperset: (a: T, b: T) => boolean): Ordering {
+function getOrdering<T>(
+	original: T,
+	superset: T,
+	allowsSuperset: (a: T, b: T) => boolean,
+): Ordering {
 	assert(allowsSuperset(original, original));
 	assert(allowsSuperset(superset, superset));
 	const a = allowsSuperset(original, superset);
@@ -194,7 +241,10 @@ function testOrder<T>(compare: (a: T, b: T) => boolean, inOrder: T[]): void {
  * https://en.wikipedia.org/wiki/Partially_ordered_set#Non-strict_partial_order
  */
 function testPartialOrder<T>(
-	compare: (a: T, b: T) => boolean, values: T[], expectedEqual: T[][] = []): void {
+	compare: (a: T, b: T) => boolean,
+	values: T[],
+	expectedEqual: T[][] = [],
+): void {
 	// To be a strict partial order, the function must be:
 	// Reflexivity: a ≤ a
 	// Antisymmetry: if a ≤ b and b ≤ a then a = b
@@ -220,7 +270,7 @@ function testPartialOrder<T>(
 		}
 
 		for (const b of values) {
-			const expectEqual = (a === b) || (expectedEqualMap.get(a)?.has(b) ?? false);
+			const expectEqual = a === b || (expectedEqualMap.get(a)?.has(b) ?? false);
 			if ((compare(a, b) && compare(b, a)) !== expectEqual) {
 				antisymmetry.push([expectEqual, a, b] as [boolean, T, T]);
 			}
@@ -250,9 +300,10 @@ function intoSimpleObject(obj: unknown): unknown {
 		return Array.from(obj, intoSimpleObject);
 	}
 	if (obj instanceof Map) {
-		return Array.from(
-			obj,
-			([key, value]): [unknown, unknown] => [key, intoSimpleObject(value)]);
+		return Array.from(obj, ([key, value]): [unknown, unknown] => [
+			key,
+			intoSimpleObject(value),
+		]);
 	}
 	if (obj instanceof Set) {
 		return Array.from(obj as ReadonlySet<string>);

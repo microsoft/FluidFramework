@@ -3,18 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-    ITreeCursor,
-    TreeNavigationResult,
-    mapCursorField,
-} from "../forest";
-import {
-    FieldKey,
-    FieldMap,
-    PlaceholderTree,
-    TreeType,
-    Value,
-} from "../tree";
+import { ITreeCursor, TreeNavigationResult, mapCursorField } from "../forest";
+import { FieldKey, FieldMap, PlaceholderTree, TreeType, Value } from "../tree";
 
 /**
  * This modules provides support for reading and writing a human readable (and editable) tree format.
@@ -46,117 +36,119 @@ import {
  * Maybe do a refactoring to deduplicate this.
  */
 export class TextCursor implements ITreeCursor {
-    // Ancestors traversed to visit this node (including this node).
-    private readonly parentStack: PlaceholderTree[] = [];
-    // Keys traversed to visit this node
-    private readonly keyStack: FieldKey[] = [];
-    // Indices traversed to visit this node
-    private readonly indexStack: number[] = [];
+	// Ancestors traversed to visit this node (including this node).
+	private readonly parentStack: PlaceholderTree[] = [];
+	// Keys traversed to visit this node
+	private readonly keyStack: FieldKey[] = [];
+	// Indices traversed to visit this node
+	private readonly indexStack: number[] = [];
 
-    private siblings: readonly PlaceholderTree[];
-    private readonly root: readonly PlaceholderTree[];
+	private siblings: readonly PlaceholderTree[];
+	private readonly root: readonly PlaceholderTree[];
 
-    public constructor(root: PlaceholderTree) {
-        this.root = [root];
-        this.indexStack.push(0);
-        this.siblings = this.root;
-        this.parentStack.push(root);
-    }
+	public constructor(root: PlaceholderTree) {
+		this.root = [root];
+		this.indexStack.push(0);
+		this.siblings = this.root;
+		this.parentStack.push(root);
+	}
 
-    getNode(): PlaceholderTree {
-        return this.parentStack[this.parentStack.length - 1];
-    }
+	getNode(): PlaceholderTree {
+		return this.parentStack[this.parentStack.length - 1];
+	}
 
-    getFields(): Readonly<FieldMap<PlaceholderTree>> {
-        return this.getNode().fields ?? {};
-    }
+	getFields(): Readonly<FieldMap<PlaceholderTree>> {
+		return this.getNode().fields ?? {};
+	}
 
-    getField(key: FieldKey): readonly PlaceholderTree[] {
-        // Save result to a constant to work around linter bug:
-        // https://github.com/typescript-eslint/typescript-eslint/issues/5014
-        const field: readonly PlaceholderTree[] = this.getFields()[key as string] ?? [];
-        return field;
-    }
+	getField(key: FieldKey): readonly PlaceholderTree[] {
+		// Save result to a constant to work around linter bug:
+		// https://github.com/typescript-eslint/typescript-eslint/issues/5014
+		const field: readonly PlaceholderTree[] = this.getFields()[key as string] ?? [];
+		return field;
+	}
 
-    get value(): Value {
-        return this.getNode().value;
-    }
+	get value(): Value {
+		return this.getNode().value;
+	}
 
-    get type(): TreeType {
-        return this.getNode().type;
-    }
+	get type(): TreeType {
+		return this.getNode().type;
+	}
 
-    get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(this.getFields()) as Iterable<FieldKey>;
-    }
+	get keys(): Iterable<FieldKey> {
+		return Object.getOwnPropertyNames(this.getFields()) as Iterable<FieldKey>;
+	}
 
-    down(key: FieldKey, index: number): TreeNavigationResult {
-        const siblings = this.getField(key);
-        const child = siblings[index];
-        if (child !== undefined) {
-            this.parentStack.push(child);
-            this.indexStack.push(index);
-            this.keyStack.push(key);
-            this.siblings = siblings;
-            return TreeNavigationResult.Ok;
-        }
-        return TreeNavigationResult.NotFound;
-    }
+	down(key: FieldKey, index: number): TreeNavigationResult {
+		const siblings = this.getField(key);
+		const child = siblings[index];
+		if (child !== undefined) {
+			this.parentStack.push(child);
+			this.indexStack.push(index);
+			this.keyStack.push(key);
+			this.siblings = siblings;
+			return TreeNavigationResult.Ok;
+		}
+		return TreeNavigationResult.NotFound;
+	}
 
-    seek(offset: number): { result: TreeNavigationResult; moved: number; } {
-        const index = offset + this.indexStack[this.indexStack.length - 1];
-        const child = this.siblings[index];
-        if (child !== undefined) {
-            this.indexStack[this.indexStack.length - 1] = index;
-            this.parentStack[this.parentStack.length - 1] = child;
-            return { result: TreeNavigationResult.Ok, moved: offset };
-        }
-        // TODO: Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: 0 };
-    }
+	seek(offset: number): { result: TreeNavigationResult; moved: number } {
+		const index = offset + this.indexStack[this.indexStack.length - 1];
+		const child = this.siblings[index];
+		if (child !== undefined) {
+			this.indexStack[this.indexStack.length - 1] = index;
+			this.parentStack[this.parentStack.length - 1] = child;
+			return { result: TreeNavigationResult.Ok, moved: offset };
+		}
+		// TODO: Maybe truncate move, and move to end?
+		return { result: TreeNavigationResult.NotFound, moved: 0 };
+	}
 
-    up(): TreeNavigationResult {
-        if (this.parentStack.length === 0) {
-            return TreeNavigationResult.NotFound;
-        }
-        this.parentStack.pop();
-        this.indexStack.pop();
-        this.keyStack.pop();
-        // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        this.siblings = this.parentStack.length === 0 ?
-            this.root :
-            (this.parentStack[this.parentStack.length - 1].fields ?? {}
-                )[this.keyStack[this.keyStack.length - 1] as string];
-        return TreeNavigationResult.Ok;
-    }
+	up(): TreeNavigationResult {
+		if (this.parentStack.length === 0) {
+			return TreeNavigationResult.NotFound;
+		}
+		this.parentStack.pop();
+		this.indexStack.pop();
+		this.keyStack.pop();
+		// TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
+		this.siblings =
+			this.parentStack.length === 0
+				? this.root
+				: (this.parentStack[this.parentStack.length - 1].fields ?? {})[
+						this.keyStack[this.keyStack.length - 1] as string
+				  ];
+		return TreeNavigationResult.Ok;
+	}
 
-    length(key: FieldKey): number {
-        return this.getField(key).length;
-    }
+	length(key: FieldKey): number {
+		return this.getField(key).length;
+	}
 }
 
 /**
  * Extract a PlaceholderTree from the contents of the given ITreeCursor's current node.
  */
 export function placeholderTreeFromCursor(cursor: ITreeCursor): PlaceholderTree {
-    let fields: FieldMap<PlaceholderTree> | undefined;
-    for (const key of cursor.keys) {
-        fields ??= {};
-        const field: PlaceholderTree[] = mapCursorField(cursor, key, placeholderTreeFromCursor);
-        fields[key as string] = field;
-    }
+	let fields: FieldMap<PlaceholderTree> | undefined;
+	for (const key of cursor.keys) {
+		fields ??= {};
+		const field: PlaceholderTree[] = mapCursorField(cursor, key, placeholderTreeFromCursor);
+		fields[key as string] = field;
+	}
 
-    const node: PlaceholderTree = {
-        type: cursor.type,
-        value: cursor.value,
-        fields,
-    };
-    // Normalize object by only including fields that are required.
-    if (fields === undefined) {
-        delete node.fields;
-    }
-    if (node.value === undefined) {
-        delete node.value;
-    }
-    return node;
+	const node: PlaceholderTree = {
+		type: cursor.type,
+		value: cursor.value,
+		fields,
+	};
+	// Normalize object by only including fields that are required.
+	if (fields === undefined) {
+		delete node.fields;
+	}
+	if (node.value === undefined) {
+		delete node.value;
+	}
+	return node;
 }

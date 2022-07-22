@@ -10,11 +10,24 @@ import { strict as assert } from "assert";
 import { StoredSchemaRepository } from "../../schema/StoredSchemaRepository";
 
 import {
-	treeSchema, fieldSchema, emptyField, rootFieldKey,
-	Adapters, adaptRepo, checkCompatibility, Compatibility, MissingFieldAdapter, TreeAdapter,
-	isNeverField, isNeverTree,
+	treeSchema,
+	fieldSchema,
+	emptyField,
+	rootFieldKey,
+	Adapters,
+	adaptRepo,
+	checkCompatibility,
+	Compatibility,
+	MissingFieldAdapter,
+	TreeAdapter,
+	isNeverField,
+	isNeverTree,
 	FieldSchema,
-	GlobalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+	GlobalFieldKey,
+	FieldKind,
+	TreeSchema,
+	TreeSchemaIdentifier,
+	ValueSchema,
 } from "../../schema";
 
 // Allow importing specific example files:
@@ -26,17 +39,11 @@ class ViewSchemaRepository extends StoredSchemaRepository {
 		return new ViewSchemaRepository(new Map(this.fields), new Map(this.trees));
 	}
 
-	public overwriteFieldSchema(
-		identifier: GlobalFieldKey,
-		schema: FieldSchema,
-	): void {
+	public overwriteFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): void {
 		this.fields.set(identifier, schema);
 	}
 
-	public overwriteTreeSchema(
-		identifier: TreeSchemaIdentifier,
-		schema: TreeSchema,
-	): void {
+	public overwriteTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): void {
 		this.trees.set(identifier, schema);
 	}
 }
@@ -45,11 +52,14 @@ describe("StoredSchemaRepository", () => {
 	// Define some schema and identifiers for them for use in these examples:
 	const canvasIdentifier = "86432448-8454-4c86-a39c-699afbbdb753" as TreeSchemaIdentifier;
 	const textIdentifier = "3034e643-0ff3-44a9-8b7e-aea31fe635c8" as TreeSchemaIdentifier;
-	const positionedCanvasItemIdentifier = "d1810094-0990-410e-9704-b17a94b1ad85" as TreeSchemaIdentifier;
+	const positionedCanvasItemIdentifier =
+		"d1810094-0990-410e-9704-b17a94b1ad85" as TreeSchemaIdentifier;
 	const pointIdentifier = "a68c1750-9fba-4b6e-8643-9d830e271c05" as TreeSchemaIdentifier;
 	const numberIdentifier = "08b4087a-da53-45d1-86cd-15a2948077bf" as TreeSchemaIdentifier;
 
-	const canvas = treeSchema({ localFields: { items: fieldSchema(FieldKind.Sequence, [numberIdentifier]) } });
+	const canvas = treeSchema({
+		localFields: { items: fieldSchema(FieldKind.Sequence, [numberIdentifier]) },
+	});
 	const number = treeSchema({ value: ValueSchema.Number });
 
 	const point = treeSchema({
@@ -171,7 +181,9 @@ describe("StoredSchemaRepository", () => {
 			assert(stored.tryUpdateTreeSchema(canvasIdentifier, canvas));
 			assert(stored.tryUpdateTreeSchema(numberIdentifier, number));
 			assert(stored.tryUpdateTreeSchema(pointIdentifier, point));
-			assert(stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem));
+			assert(
+				stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem),
+			);
 			assert(stored.tryUpdateTreeSchema(textIdentifier, string));
 			assert(stored.tryUpdateFieldSchema(rootFieldKey, tolerantRoot));
 
@@ -184,7 +196,8 @@ describe("StoredSchemaRepository", () => {
 			assert(compatNew.write === Compatibility.Compatible);
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
-			const counterIdentifier = "0d8da0ca-b3ba-4025-93a3-b8f181379e3b" as TreeSchemaIdentifier;
+			const counterIdentifier =
+				"0d8da0ca-b3ba-4025-93a3-b8f181379e3b" as TreeSchemaIdentifier;
 			const counter = treeSchema({
 				localFields: {
 					count: fieldSchema(FieldKind.Value, [numberIdentifier]),
@@ -208,7 +221,9 @@ describe("StoredSchemaRepository", () => {
 			assert(compat2.writeAllowingStoredSchemaUpdates === Compatibility.Compatible);
 
 			// This is the same case as above where we can choose to do a schema update if we want:
-			assert(stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem2));
+			assert(
+				stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem2),
+			);
 			assert(stored.tryUpdateTreeSchema(counterIdentifier, counter));
 
 			// And recheck compat:
@@ -240,7 +255,9 @@ describe("StoredSchemaRepository", () => {
 		// Register an adapter that handles a missing root.
 		// Currently we are just declaring that such a handler exits:
 		// the API for saying what to do in this case are not done.
-		const adapters: Adapters = { missingField: new Map([[rootFieldKey, { field: rootFieldKey }]]) };
+		const adapters: Adapters = {
+			missingField: new Map([[rootFieldKey, { field: rootFieldKey }]]),
+		};
 
 		// Like the "basic" example, start with an empty document:
 		const stored = new StoredSchemaRepository();
@@ -294,7 +311,8 @@ describe("StoredSchemaRepository", () => {
 		// In this version of the app,
 		// we decided that text should be organized into a hierarchy of formatting ranges.
 		// We are doing this schema change in an incompatible way, and thus introducing a new identifier:
-		const formattedTextIdentifier = "2cbc277e-8820-41ef-a3f4-0a00de8ef934" as TreeSchemaIdentifier;
+		const formattedTextIdentifier =
+			"2cbc277e-8820-41ef-a3f4-0a00de8ef934" as TreeSchemaIdentifier;
 		const formattedText = treeSchema({
 			localFields: {
 				content: fieldSchema(FieldKind.Sequence, [formattedTextIdentifier, codePoint.name]),
@@ -330,7 +348,10 @@ describe("StoredSchemaRepository", () => {
 
 		// Include adapters for all compatibility cases: empty root and old text.
 		const rootAdapter: MissingFieldAdapter = { field: rootFieldKey };
-		const adapters: Adapters = { missingField: new Map([[rootFieldKey, rootAdapter]]), tree: [textAdapter] };
+		const adapters: Adapters = {
+			missingField: new Map([[rootFieldKey, rootAdapter]]),
+			tree: [textAdapter],
+		};
 
 		// Check this works for empty documents:
 		{
@@ -349,7 +370,9 @@ describe("StoredSchemaRepository", () => {
 			assert(stored.tryUpdateTreeSchema(canvasIdentifier, canvas));
 			assert(stored.tryUpdateTreeSchema(numberIdentifier, number));
 			assert(stored.tryUpdateTreeSchema(pointIdentifier, point));
-			assert(stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem));
+			assert(
+				stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem),
+			);
 			assert(stored.tryUpdateTreeSchema(textIdentifier, string));
 			assert(stored.tryUpdateFieldSchema(rootFieldKey, tolerantRoot));
 

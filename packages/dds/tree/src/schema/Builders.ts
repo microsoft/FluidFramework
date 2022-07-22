@@ -5,7 +5,13 @@
 
 import { brandOpaque } from "../util";
 import {
-    FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+	FieldSchema,
+	GlobalFieldKey,
+	LocalFieldKey,
+	FieldKind,
+	TreeSchema,
+	TreeSchemaIdentifier,
+	ValueSchema,
 } from "./Schema";
 
 /**
@@ -42,14 +48,14 @@ export const rootFieldKey = brandOpaque<GlobalFieldKey>("rootFieldKey");
  * Default field which only permits emptiness.
  */
 export const emptyField: FieldSchema = {
-    kind: FieldKind.Forbidden,
+	kind: FieldKind.Forbidden,
 };
 
 export function fieldSchema(kind: FieldKind, types: readonly TreeSchemaIdentifier[]): FieldSchema {
-    return {
-        kind,
-        types: new Set(types),
-    };
+	return {
+		kind,
+		types: new Set(types),
+	};
 }
 
 const defaultExtraGlobalFields = false;
@@ -58,28 +64,28 @@ const defaultExtraGlobalFields = false;
  * See {@link TreeSchema} for details.
  */
 export interface TreeSchemaBuilder {
-    readonly localFields?: { [key: string]: FieldSchema; };
-    readonly globalFields?: Iterable<GlobalFieldKey>;
-    readonly extraLocalFields?: FieldSchema;
-    readonly extraGlobalFields?: boolean;
-    readonly value?: ValueSchema;
+	readonly localFields?: { [key: string]: FieldSchema };
+	readonly globalFields?: Iterable<GlobalFieldKey>;
+	readonly extraLocalFields?: FieldSchema;
+	readonly extraGlobalFields?: boolean;
+	readonly value?: ValueSchema;
 }
 
 export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
-    const localFields = new Map();
-    const local = data.localFields ?? {};
-    // eslint-disable-next-line no-restricted-syntax
-    for (const key in local) {
-        if (Object.prototype.hasOwnProperty.call(local, key)) {
-            localFields.set(key as LocalFieldKey, local[key]);
-        }
-    }
+	const localFields = new Map();
+	const local = data.localFields ?? {};
+	// eslint-disable-next-line no-restricted-syntax
+	for (const key in local) {
+		if (Object.prototype.hasOwnProperty.call(local, key)) {
+			localFields.set(key as LocalFieldKey, local[key]);
+		}
+	}
 
-    return {
-        localFields,
-        globalFields: new Set(data.globalFields ?? []),
-        extraLocalFields: data.extraLocalFields ?? emptyField,
-        extraGlobalFields: data.extraGlobalFields ?? defaultExtraGlobalFields,
-        value: data.value ?? ValueSchema.Nothing,
-    };
+	return {
+		localFields,
+		globalFields: new Set(data.globalFields ?? []),
+		extraLocalFields: data.extraLocalFields ?? emptyField,
+		extraGlobalFields: data.extraGlobalFields ?? defaultExtraGlobalFields,
+		value: data.value ?? ValueSchema.Nothing,
+	};
 }

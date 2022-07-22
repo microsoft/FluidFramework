@@ -15,20 +15,26 @@ import { AnchorSet } from "../tree";
  * TODO: detail compatibility requirements.
  */
 export class SharedTree extends SharedTreeCore<DefaultRebaser> {
-    public constructor(
-        id: string,
-        runtime: IFluidDataStoreRuntime,
-        attributes: IChannelAttributes,
-        telemetryContextPrefix: string) {
-            const anchors = new AnchorSet();
-            const forest = new ObjectForest(anchors);
-            const index: Index<DefaultChangeSet> = new ForestIndex(runtime, forest);
-            super(
-                [index],
-                new DefaultRebaser(), anchors, id, runtime, attributes, telemetryContextPrefix,
-                );
+	public constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+		telemetryContextPrefix: string,
+	) {
+		const anchors = new AnchorSet();
+		const forest = new ObjectForest(anchors);
+		const index: Index<DefaultChangeSet> = new ForestIndex(runtime, forest);
+		super(
+			[index],
+			new DefaultRebaser(),
+			anchors,
+			id,
+			runtime,
+			attributes,
+			telemetryContextPrefix,
+		);
 
-            // Could save a reference to this to allow use as part of a default checkout.
-            // this.forest = forest;
-    }
+		// Could save a reference to this to allow use as part of a default checkout.
+		// this.forest = forest;
+	}
 }

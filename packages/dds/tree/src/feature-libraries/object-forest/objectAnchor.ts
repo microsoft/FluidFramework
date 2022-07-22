@@ -4,10 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import {
-    ForestAnchor,
-    ITreeSubscriptionCursorState,
-} from "../../forest";
+import { ForestAnchor, ITreeSubscriptionCursorState } from "../../forest";
 import { PathShared } from "../../tree";
 
 // Currently unused,
@@ -32,10 +29,13 @@ import { PathShared } from "../../tree";
  * these are kept separate from the actual tree data.
  */
 export class ObjectAnchor implements ForestAnchor {
-    state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
-    public constructor(public readonly path: PathShared) { }
-    free(): void {
-        assert(this.state === ITreeSubscriptionCursorState.Current, 0x334 /* Anchor must not be double freed */);
-        this.state = ITreeSubscriptionCursorState.Freed;
-    }
+	state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
+	public constructor(public readonly path: PathShared) {}
+	free(): void {
+		assert(
+			this.state === ITreeSubscriptionCursorState.Current,
+			0x334 /* Anchor must not be double freed */,
+		);
+		this.state = ITreeSubscriptionCursorState.Freed;
+	}
 }

@@ -283,7 +283,7 @@ export interface TreeChildPath {
 	[label: string]: TreeRootPath;
 }
 
-export type TreeRootPath = number | { [label: number]: TreeChildPath; };
+export type TreeRootPath = number | { [label: number]: TreeChildPath };
 
 /** A structure that represents a path from the root to a particular node. */
 export type TreePath = TreeChildPath | TreeRootPath;
@@ -328,7 +328,10 @@ export type Skip = number;
 export type SeqNumber = number;
 export type Value = number | string | boolean;
 export type ClientId = number;
-export enum Tiebreak { Left, Right }
+export enum Tiebreak {
+	Left,
+	Right,
+}
 export enum Effects {
 	All = "All",
 	Move = "Move",

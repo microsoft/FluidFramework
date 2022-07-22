@@ -33,7 +33,7 @@ import { TreeValue } from "./types";
  * @public
  */
 export interface FieldMap<TChild> {
-    [key: string]: TChild[];
+	[key: string]: TChild[];
 }
 
 /**
@@ -41,17 +41,17 @@ export interface FieldMap<TChild> {
  * @public
  */
 export interface NodeData {
-    /**
-     * A payload of arbitrary serializable data
-     */
-    value?: TreeValue;
+	/**
+	 * A payload of arbitrary serializable data
+	 */
+	value?: TreeValue;
 
-    /**
-     * The meaning of this node.
-     * Provides contexts/semantics for this node and its content.
-     * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
-     */
-    readonly type: TreeSchemaIdentifier;
+	/**
+	 * The meaning of this node.
+	 * Provides contexts/semantics for this node and its content.
+	 * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+	 */
+	readonly type: TreeSchemaIdentifier;
 }
 
 /**
@@ -60,13 +60,15 @@ export interface NodeData {
  * @public
  */
 export interface GenericTreeNode<TChild> extends NodeData {
-    fields?: FieldMap<TChild>;
+	fields?: FieldMap<TChild>;
 }
 
 /**
  * A tree whose nodes are either tree nodes or placeholders.
  */
-export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+export type PlaceholderTree<TPlaceholder = never> =
+	| GenericTreeNode<PlaceholderTree<TPlaceholder>>
+	| TPlaceholder;
 
 /**
  * A tree represented using plain JavaScript objects.

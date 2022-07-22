@@ -5,13 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Brand } from "../util";
-import {
-    ChildLocation,
-    DetachedRange,
-    ChildCollection,
-    RootRange,
-    FieldKey,
- } from "../tree";
+import { ChildLocation, DetachedRange, ChildCollection, RootRange, FieldKey } from "../tree";
 import { UpPath } from "./pathTree";
 
 /**
@@ -26,32 +20,31 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
  */
 
 export class AnchorSet {
-    public readonly paths = new PathCollection();
-    public readonly anchorsToPath: Map<Anchor, PathShared> = new Map();
-    public constructor() {
-    }
+	public readonly paths = new PathCollection();
+	public readonly anchorsToPath: Map<Anchor, PathShared> = new Map();
+	public constructor() {}
 
-    /**
-     * TODO: support extra/custom return types for specific anchor types:
-     * for now caller must rely on data in anchor + returned node location
-     * (not ideal for anchors for places or ranges instead of nodes).
-     */
-    public locate(anchor: Anchor): UpPath | undefined {
-        // TODO: this should error for anchors that do not exist,
-        // and return undefined only if anchor does exist, but points nowhere in current revision.
-        return this.anchorsToPath.get(anchor);
-    }
+	/**
+	 * TODO: support extra/custom return types for specific anchor types:
+	 * for now caller must rely on data in anchor + returned node location
+	 * (not ideal for anchors for places or ranges instead of nodes).
+	 */
+	public locate(anchor: Anchor): UpPath | undefined {
+		// TODO: this should error for anchors that do not exist,
+		// and return undefined only if anchor does exist, but points nowhere in current revision.
+		return this.anchorsToPath.get(anchor);
+	}
 
-    public forget(anchor: Anchor): void {
-        throw Error("Not implemented"); // TODO
-    }
+	public forget(anchor: Anchor): void {
+		throw Error("Not implemented"); // TODO
+	}
 
-    /**
-     * TODO: add API to UpPath (maybe extend as AnchorPath to allow building without having to copy here?)
-     */
-    public track(path: UpPath): Anchor {
-        throw Error("Not implemented"); // TODO
-    }
+	/**
+	 * TODO: add API to UpPath (maybe extend as AnchorPath to allow building without having to copy here?)
+	 */
+	public track(path: UpPath): Anchor {
+		throw Error("Not implemented"); // TODO
+	}
 }
 
 /**
@@ -66,34 +59,37 @@ export class AnchorSet {
  * Base type for nodes in a path tree.
  */
 export class PathShared<TParent extends ChildCollection = ChildCollection> implements UpPath {
-    // PathNode arrays are kept sorted by index for efficient search.
-    protected readonly children: Map<TParent, PathNode[]> = new Map();
-    // public constructor() {}
+	// PathNode arrays are kept sorted by index for efficient search.
+	protected readonly children: Map<TParent, PathNode[]> = new Map();
+	// public constructor() {}
 
-    public detach(start: number, length: number, destination: DetachedRange): void {
-        // TODO: implement.
-    }
+	public detach(start: number, length: number, destination: DetachedRange): void {
+		// TODO: implement.
+	}
 
-    public insert(start: number, paths: PathNode, length: number) {
-        assert(paths.parent instanceof PathCollection, 0x333 /* PathShared.splice can only insert detached ranges */);
-        // TODO: implement.
-    }
+	public insert(start: number, paths: PathNode, length: number) {
+		assert(
+			paths.parent instanceof PathCollection,
+			0x333 /* PathShared.splice can only insert detached ranges */,
+		);
+		// TODO: implement.
+	}
 
-    parent(): UpPath | DetachedRange {
-        throw new Error("Method not implemented.");
-    }
-    parentField(): FieldKey {
-        throw new Error("Method not implemented.");
-    }
-    parentIndex(): number {
-        throw new Error("Method not implemented.");
-    }
+	parent(): UpPath | DetachedRange {
+		throw new Error("Method not implemented.");
+	}
+	parentField(): FieldKey {
+		throw new Error("Method not implemented.");
+	}
+	parentIndex(): number {
+		throw new Error("Method not implemented.");
+	}
 }
 
 export class PathNode extends PathShared<FieldKey> {
-    public constructor(public parentPath: PathShared<FieldKey>, location: ChildLocation) {
-        super();
-    }
+	public constructor(public parentPath: PathShared<FieldKey>, location: ChildLocation) {
+		super();
+	}
 }
 
 /**
@@ -112,11 +108,11 @@ export class PathNode extends PathShared<FieldKey> {
  * (and thus need parent paths).
  */
 export class PathCollection extends PathShared<RootRange> {
-    public constructor() {
-        super();
-    }
+	public constructor() {
+		super();
+	}
 
-    public delete(range: DetachedRange): void {
-        throw new Error("Method not implemented.");
-    }
+	public delete(range: DetachedRange): void {
+		throw new Error("Method not implemented.");
+	}
 }

@@ -18,7 +18,7 @@ export interface ObservingContext {
 	 * When this computation observes a {@link Dependee}, it should be recorded here via {@link recordDependency}.
 	 *
 	 * This dependency tracking allows these dependees to invalidate this dependent in the future via
-     * {@link Dependant.markInvalid}.
+	 * {@link Dependant.markInvalid}.
 	 *
 	 * It not provided, this observer does not need dependency tracking.
 	 */
@@ -29,7 +29,10 @@ export interface ObservingContext {
  * Ensures this context's computation is a dependant to dependee (adding it if needed).
  * Ensures this context's computation has dependee as a dependee (adding it if needed).
  */
-export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void {
+export function recordDependency(
+	dependent: ObservingDependent | undefined,
+	dependee: Dependee,
+): void {
 	if (dependent) {
 		if (dependee.registerDependent(dependent)) {
 			dependent.registerDependee(dependee);
@@ -49,10 +52,10 @@ export interface ObservingDependent extends Dependent {
 
 	/**
 	 * {@inheritdoc NamedComputation.listDependees}
-     *
-     * @override
+	 *
+	 * @override
 	 */
-    // Since it is almost to implement registerDependee correctly without being able to list dependees
-    // (so they can be unregistered), make this required instead of optional.
+	// Since it is almost to implement registerDependee correctly without being able to list dependees
+	// (so they can be unregistered), make this required instead of optional.
 	listDependees(): Iterable<Dependee>;
 }
