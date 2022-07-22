@@ -6,7 +6,8 @@
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
- * Events sent by SharedCounters.
+ * Events sent by {@link SharedCounter}.
+ *
  * @public
  */
 export interface ISharedCounterEvents extends ISharedObjectEvents {
@@ -22,7 +23,8 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 }
 
 /**
- * SharedCounter interface.
+ * {@link SharedCounter} interface.
+ *
  * @public
  */
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
