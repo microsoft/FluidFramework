@@ -6,8 +6,8 @@
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
 import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes, ShareLink,
-    ShareLinkScope, ShareLinkRole } from "@fluidframework/odsp-driver-definitions";
+import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes, SharingLinkKind, SharingLinkRole,
+    SharingLinkScope } from "@fluidframework/odsp-driver-definitions";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { EpochTracker } from "../epochTracker";
@@ -207,7 +207,7 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should save 'sharing' information received during createNewFluidFile", async () => {
-        const createLinkType: ShareLink = { linkScope: ShareLinkScope.users, linkRole: ShareLinkRole.edit };
+        const createLinkType: SharingLinkKind = { linkScope: SharingLinkScope.users, linkRole: SharingLinkRole.edit };
         newFileParams.createLinkType = createLinkType;
 
         // Test that sharing link is set appropriately when it is received in the response from ODSP
@@ -241,8 +241,10 @@ describe("Create New Utils Tests", () => {
             { "x-fluid-epoch": "epoch1" },
         );
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
+            type: createLinkType,
             shareId: mockSharingData.shareId,
             sharingLink: mockSharingData,
+            error: undefined,
         });
 
         // Test that error message is set appropriately when it is received in the response from ODSP
@@ -274,6 +276,9 @@ describe("Create New Utils Tests", () => {
             { "x-fluid-epoch": "epoch1" },
         );
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
+            type: undefined,
+            shareId: undefined,
+            sharingLink: undefined,
             error: mockSharingError.error,
         });
         await epochTracker.removeEntries().catch(() => { });

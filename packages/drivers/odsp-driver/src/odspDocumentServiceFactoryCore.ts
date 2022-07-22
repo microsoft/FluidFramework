@@ -26,10 +26,10 @@ import {
     HostStoragePolicy,
     IFileEntry,
     IOdspUrlParts,
-    ShareLinkScope,
-    ShareLinkRole,
+    SharingLinkScope,
+    SharingLinkRole,
     ShareLinkTypes,
-    ShareLink,
+    SharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
@@ -87,14 +87,16 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 throw new Error("Seq number in detached ODSP container should be 0");
             }
         }
-        let createShareLinkParam: ShareLinkTypes | ShareLink | undefined;
+
+        // extract request parameters for creation of sharing link (if provided) for the new file if the feature is enabled
+        let createShareLinkParam: ShareLinkTypes | SharingLinkKind | undefined;
         if (this.hostPolicy.enableSingleRoundTripForShareLinkWithCreate) {
             const createLinkScope = searchParams.get("createLinkScope");
             const createLinkRole = searchParams.get("createLinkRole");
-            if (createLinkScope && ShareLinkScope[createLinkScope]) {
-                createShareLinkParam = { linkScope: ShareLinkScope[createLinkScope],
-                    ...(createLinkRole && ShareLinkRole[createLinkRole] ?
-                        { linkRole: ShareLinkRole[createLinkRole] } : {}) };
+            if (createLinkScope && SharingLinkScope[createLinkScope]) {
+                createShareLinkParam = { linkScope: SharingLinkScope[createLinkScope],
+                    ...(createLinkRole && SharingLinkRole[createLinkRole] ?
+                        { linkRole: SharingLinkRole[createLinkRole] } : {}) };
             }
         } else if (this.hostPolicy.enableShareLinkWithCreate) {
             const createLinkType = searchParams.get("createLinkType");

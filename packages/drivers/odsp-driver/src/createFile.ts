@@ -16,6 +16,9 @@ import {
     IOdspResolvedUrl,
     OdspErrorType,
     ShareLinkInfoType,
+    SharingLinkKind,
+    SharingLinkScope,
+    ShareLinkTypes,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -87,34 +90,10 @@ export async function createNewFluidFile(
             epochTracker,
             forceAccessTokenViaAuthorizationHeader,
         );
-        debugger;
         itemId = content.itemId;
         summaryHandle = content.id;
-        const { sharingLink, sharingLinkErrorReason, sharing } = content;
-        if (sharingLink || (sharingLinkErrorReason && !sharing)) {
-            shareLinkInfo = {
-                createLink: {
-                    type: newFileInfo.createLinkType,
-                    link: sharingLink,
-                    error: sharingLinkErrorReason,
-                },
-            };
-        } else if (sharing) {
-            if (sharing.sharingLink) {
-                shareLinkInfo = {
-                    createLink: {
-                        shareId: sharing.shareId,
-                        sharingLink: sharing.sharingLink,
-                    },
-                };
-            } else if (sharing.error) {
-                shareLinkInfo = {
-                    createLink: {
-                        error: sharing.error,
-                    },
-                };
-            }
-        }
+
+        shareLinkInfo = extractShareLinkData(newFileInfo.createLinkType , content);
     }
 
     const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
@@ -133,6 +112,33 @@ export async function createNewFluidFile(
         await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
     }
     return odspResolvedUrl;
+}
+
+/**
+ * If user requested creation of a sharing link along with the creation of the file by providing either 
+ * createLinkType (now deprecated) or createLinkScope in the request parameters, extract and save 
+ * sharing link information from the response if it is available.
+ * In case there was an error in creation of the sharing link, error is provided back in the response, 
+ * and does not impact the creation of file in ODSP.
+ * @param requestedSharingLinkKind 
+ * @param content 
+ * @returns 
+ */
+function extractShareLinkData(requestedSharingLinkKind: ShareLinkTypes | SharingLinkKind | undefined, content: any = {} ): ShareLinkInfoType | undefined {
+    let shareLinkInfo: ShareLinkInfoType | undefined;
+    
+    if (requestedSharingLinkKind && (ShareLinkTypes[requestedSharingLinkKind as ShareLinkTypes] 
+        || SharingLinkScope[(requestedSharingLinkKind as SharingLinkKind).linkScope])) {
+        const { sharing, sharingLink, sharingLinkErrorReason } = content;
+        shareLinkInfo = {
+            createLink: {
+                type: requestedSharingLinkKind,
+                link: sharing || sharingLink,
+                error: sharingLinkErrorReason,
+            },
+        };
+    }
+    return shareLinkInfo
 }
 
 export async function createNewEmptyFluidFile(

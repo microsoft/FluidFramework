@@ -1,18 +1,15 @@
-import { ShareLinkTypes, ShareLink } from "@fluidframework/odsp-driver-definitions";
+import { ShareLinkTypes, SharingLinkKind } from "@fluidframework/odsp-driver-definitions";
 
-export function buildOdspShareLinkReqParams(shareLinkType: ShareLinkTypes | ShareLink | undefined) {
-    let shareLinkRequestParams = "";
-    if (shareLinkType) {
-        const linkScope = (shareLinkType as ShareLink).linkScope;
-        if (linkScope) {
-            shareLinkRequestParams = `createLinkScope=${linkScope}`;
-            const linkRole = (shareLinkType as ShareLink).linkRole;
-            if (linkRole) {
-                shareLinkRequestParams += `&createLinkRole=${linkRole}`;
-            }
-        } else {
-            shareLinkRequestParams = `createLinkType=${shareLinkType}`;
-        }
+export function buildOdspShareLinkReqParams(shareLinkType: ShareLinkTypes | SharingLinkKind | undefined) {
+    if (!shareLinkType) {
+        return;
     }
+    const linkScope = (shareLinkType as SharingLinkKind).linkScope;
+    if (!linkScope) {
+        return `createLinkType=${shareLinkType}`;
+    }
+    let shareLinkRequestParams = `createLinkScope=${linkScope}`;
+    const linkRole = (shareLinkType as SharingLinkKind).linkRole;
+    shareLinkRequestParams = linkRole ? `${shareLinkRequestParams}&createLinkRole=${linkRole}` : shareLinkRequestParams;
     return shareLinkRequestParams;
 }
