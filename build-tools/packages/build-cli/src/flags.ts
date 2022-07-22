@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { supportedMonoRepoValues, isVersionBumpTypeExtended } from "@fluidframework/build-tools";
+import { isVersionBumpTypeExtended } from "@fluid-tools/version-tools";
+import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 
 /**

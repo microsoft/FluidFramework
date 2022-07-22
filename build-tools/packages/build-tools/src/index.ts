@@ -11,9 +11,7 @@ export { Context } from "./bumpVersion/context";
 export { createReleaseBump } from "./bumpVersion/createReleaseBump";
 export { GitRepo } from "./bumpVersion/gitRepo";
 export { releaseVersion } from "./bumpVersion/releaseVersion";
-export { adjustVersion } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
-export * from "./bumpVersion/versionSchemes";
 export { getResolvedFluidRoot } from "./common/fluidUtils";
 export {
     isMonoRepoKind,
