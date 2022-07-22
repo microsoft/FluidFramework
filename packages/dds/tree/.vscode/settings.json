@@ -4,5 +4,5 @@
   "mochaExplorer.require": "node_modules/@fluidframework/mocha-test-setup",
   "mochaExplorer.timeout": 999999,
   "editor.detectIndentation": true,
-  "editor.insertSpaces": false, // Use detectIndentation instead
+  "editor.insertSpaces": false // Use detectIndentation instead
 }

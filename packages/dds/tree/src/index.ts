@@ -34,6 +34,7 @@ export {
 	GenericTreeNode,
 	PlaceholderTree,
 	JsonableTree,
+	Delta,
 } from "./tree";
 
 export {
@@ -87,8 +88,6 @@ export {
 	FinalFromChangeRebaser,
 	ChangeSetFromChangeRebaser,
 } from "./rebase";
-
-export { Delta } from "./changeset";
 
 export {
 	cursorToJsonObject,

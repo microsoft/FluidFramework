@@ -22,8 +22,7 @@ import {
 import { IEditableForest, ITreeSubscriptionCursor, TreeNavigationResult } from "../forest";
 import { Index, SummaryElement } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
-import { Delta } from "../changeset";
-import { PlaceholderTree } from "../tree";
+import { PlaceholderTree, Delta } from "../tree";
 import { applyDeltaToForest } from "../transaction";
 import { placeholderTreeFromCursor, TextCursor } from "./treeTextCursor";
 
