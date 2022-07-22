@@ -315,25 +315,30 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
 export interface IGCRuntimeOptions {
     /**
-     * Flag that if true, will enable running garbage collection (GC) in a container. GC has mark phase and sweep phase.
-     * In mark phase, unreferenced objects are identified and marked as such in the summary. This option enables the
-     * mark phase.
+     * Flag that if true, will enable running garbage collection (GC) for a new container.
+     *
+     * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
+     * and marked as such in the summary. This option enables the mark phase.
      * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
      * Sweep phase can be enabled via the "sweepAllowed" option.
-     * Note: This setting becomes part of the container's summary and cannot be changed.
+     *
+     * Note: This setting is persisted in the container's summary and cannot be changed.
      */
     gcAllowed?: boolean;
 
     /**
-     * Flag that if true, enables GC's sweep phase which will eventually delete unreferenced objects from the container.
+     * Flag that if true, enables GC's sweep phase for a new container.
+     *
+     * This will allow GC to eventually delete unreferenced objects from the container.
      * This flag should only be set to true if "gcAllowed" is true.
-     * Note: This setting becomes part of the container's summary and cannot be changed.
+     *
+     * Note: This setting is persisted in the container's summary and cannot be changed.
      */
     sweepAllowed?: boolean;
 
     /**
-     * Flag that will disable garbage collection if set to true. Can be used to disable running GC on container where
-     * is allowed via the gcAllowed option.
+     * Flag that if true, will disable garbage collection for the session.
+     * Can be used to disable running GC on container where is allowed via the gcAllowed option.
      */
     disableGC?: boolean;
 
@@ -342,6 +347,13 @@ export interface IGCRuntimeOptions {
      * changed or not.
      */
     runFullGC?: boolean;
+
+    /**
+     * Maximum session duration for a new container. If not present, a default value will be used.
+     *
+     * Note: This setting is persisted in the container's summary and cannot be changed.
+     */
+    sessionExpiryTimeoutMs?: number;
 
     /**
      * Allows additional GC options to be passed.
