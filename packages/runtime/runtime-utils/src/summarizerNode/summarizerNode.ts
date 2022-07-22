@@ -170,7 +170,6 @@ export class SummarizerNode implements IRootSummarizerNode {
             ...localPathsToUse,
             referenceSequenceNumber: this.wipReferenceSequenceNumber,
             basePath: parentPath,
-            waitingForPendingSummary: true,
         });
         const fullPathForChildren = summary.fullPathForChildren;
         for (const child of this.children.values()) {
@@ -255,41 +254,30 @@ export class SummarizerNode implements IRootSummarizerNode {
     ): void {
         const summaryNode = this.pendingSummaries.get(proposalHandle);
         if (summaryNode === undefined) {
-            if (this._latestSummary !== undefined) {
-                this.wipSummaryLogger?.sendTelemetryEvent({
-                    eventName: "SummaryNodeWithoutPendingSummary",
-                    proposalHandle,
-                    pendingSummary: this._latestSummary.waitingForPendingSummary,
-                    referenceSequenceNumber,
-                });
-
-                // A data store is probably loading other data stores asynchronously or in response
-                // to some event/trigger which will cause a few data stores to be loaded in between summaries.
-                // We will simply re-use the summary node that was just created when the DataStore
-                // was realized (parentLatestSummary.createForChild), and we can safely continue processing.
-                // The only check is to make sure the reference number from the lastSummary is smaller
-                // than the one returned by the ack.
-                // https://dev.azure.com/fluidframework/internal/_workitems/edit/645
-                assert(this._latestSummary.referenceSequenceNumber < referenceSequenceNumber,
-                    "Existing summary referencenumber needs to be less than the reference");
-            } else {
+            if (summaryNode === undefined) {
                 // This should only happen if parent skipped recursion AND no prior summary existed.
+                assert(
+                    this._latestSummary === undefined,
+                    0x1a6 /* "Not found pending summary, but this node has previously completed a summary" */,
+                );
                 return;
+            } else {
+                assert(
+                    referenceSequenceNumber === summaryNode.referenceSequenceNumber,
+                    0x1a7 /* Pending summary reference sequence number should be consistent */,
+                );
+
+                // Clear earlier pending summaries
+                this.pendingSummaries.delete(proposalHandle);
             }
-        } else {
-            assert(
-                referenceSequenceNumber === summaryNode.referenceSequenceNumber,
-                0x1a7 /* Pending summary reference sequence number should be consistent */,
-            );
 
             // Clear earlier pending summaries
             this.pendingSummaries.delete(proposalHandle);
-            summaryNode.waitingForPendingSummary = false;
-            this._latestSummary = summaryNode;
         }
 
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
+        this._latestSummary = summaryNode;
         // Propagate update to all child nodes
         for (const child of this.children.values()) {
             child.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
@@ -449,7 +437,8 @@ export class SummarizerNode implements IRootSummarizerNode {
         );
 
         // There may be additional state that has to be updated in this child. For example, if a summary is being
-        // tracked, the child's summary tracking state needs to be updated too.
+        // tracked, the child's summary tracking state needs to be updated too. Same goes for pendingSummaries we might
+        // have outstanding on the parent in case we realize nodes in between Summary Op and Summary Ack.
         this.maybeUpdateChildState(child);
 
         this.children.set(id, child);
@@ -552,6 +541,8 @@ export class SummarizerNode implements IRootSummarizerNode {
     /**
      * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
      * summary tracking state needs to be updated too.
+     * Also, in case a child node gets realized in between Summary Op and Summary Ack, let's initialize the child's
+     * pending summary as well.
      * @param child - The child node whose state is to be updated.
      */
     protected maybeUpdateChildState(child: SummarizerNode) {
@@ -560,8 +551,17 @@ export class SummarizerNode implements IRootSummarizerNode {
         if (this.isTrackingInProgress()) {
             child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
         }
+        // In case we have pending summaries on the parent, let's initialize it on the child.
+        if (child._latestSummary !== undefined && this.pendingSummaries.size > 0) {
+            for (const key of this.pendingSummaries.keys()) {
+                child.addPendingSummary(key, child._latestSummary);
+            }
+        }
     }
 
+    protected addPendingSummary(key: string, summary: SummaryNode) {
+        this.pendingSummaries.set(key, summary);
+    }
     /**
      * Tells whether summary tracking is in progress. True if "startSummary" API is called before summarize.
      */
