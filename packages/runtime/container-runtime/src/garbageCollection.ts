@@ -503,15 +503,18 @@ export class GarbageCollector implements IGarbageCollector {
                 (timer) => { this.sessionExpiryTimer = timer; },
             );
 
+            // TEMPORARY: Default to 2 days which is the value used in the ODSP driver.
+            // This unblocks the Sweep Log (see logSweepEvents function).
+            // This will be removed before sweep is fully implemented.
+            const snapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? 2 * 24 * 60 * 60 * 1000;
+
             /**
              * Sweep timeout is the time after which unreferenced content can be swept.
              * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer. The buffer is
              * added to account for any clock skew. We use server timestamps throughout so the skew should be minimal
              * but make it one day to be safe.
              */
-            if (createParams.snapshotCacheExpiryMs !== undefined) {
-                this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + createParams.snapshotCacheExpiryMs + oneDayMs;
-            }
+            this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs;
         }
 
         // For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
@@ -524,12 +527,11 @@ export class GarbageCollector implements IGarbageCollector {
          * 2. GC should not be disabled via disableGC GC option.
          * These conditions can be overridden via runGCKey feature flag.
          */
-        this.shouldRunGC = this.mc.config.getBoolean(runGCKey) ?? (
-            // GC must be enabled for the document.
-            this.gcEnabled
-            // GC must not be disabled via GC options.
-            && !this.gcOptions.disableGC
-        );
+        this.shouldRunGC = false; // Until TEMPORARY measure above hardcoding snapshotCacheExpiryMs is removed, disable
+        //     this.mc.config.getBoolean(runGCKey) ?? (
+        //         this.gcEnabled // GC must be enabled for the document.
+        //         && !this.gcOptions.disableGC // GC must not be disabled via GC options.
+        // );
 
         /**
          * Whether sweep should run or not. The following conditions have to be met to run sweep:
