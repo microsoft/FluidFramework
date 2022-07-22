@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { Brand } from "../util";
-import { ChildLocation, DetachedRange, ChildCollection, RootRange, FieldKey } from "../tree";
+import { ChildLocation, DetachedField, ChildCollection, RootField, FieldKey } from "../tree";
 import { UpPath } from "./pathTree";
 
 /**
@@ -63,7 +63,7 @@ export class PathShared<TParent extends ChildCollection = ChildCollection> imple
 	protected readonly children: Map<TParent, PathNode[]> = new Map();
 	// public constructor() {}
 
-	public detach(start: number, length: number, destination: DetachedRange): void {
+	public detach(start: number, length: number, destination: DetachedField): void {
 		// TODO: implement.
 	}
 
@@ -75,7 +75,7 @@ export class PathShared<TParent extends ChildCollection = ChildCollection> imple
 		// TODO: implement.
 	}
 
-	parent(): UpPath | DetachedRange {
+	parent(): UpPath | undefined {
 		throw new Error("Method not implemented.");
 	}
 	parentField(): FieldKey {
@@ -107,12 +107,12 @@ export class PathNode extends PathShared<FieldKey> {
  * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors
  * (and thus need parent paths).
  */
-export class PathCollection extends PathShared<RootRange> {
+export class PathCollection extends PathShared<RootField> {
 	public constructor() {
 		super();
 	}
 
-	public delete(range: DetachedRange): void {
+	public delete(range: DetachedField): void {
 		throw new Error("Method not implemented.");
 	}
 }

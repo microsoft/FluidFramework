@@ -5,9 +5,7 @@
 
 import { strict as assert } from "assert";
 import { jsonString } from "../..";
-import { DeltaVisitor, visitDelta } from "../../changeset";
-import { FieldKey, Delta } from "../../tree";
-import { brandOpaque } from "../../util";
+import { FieldKey, Delta, DeltaVisitor, visitDelta } from "../../tree";
 import { deepFreeze } from "../utils";
 
 function visit(delta: Delta.Root, visitor: DeltaVisitor): void {

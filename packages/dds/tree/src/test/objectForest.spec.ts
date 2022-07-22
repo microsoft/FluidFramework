@@ -10,15 +10,17 @@ import { strict as assert } from "assert";
 import { ObjectForest } from "../feature-libraries/object-forest";
 
 import { fieldSchema, rootFieldKey, isNeverField, FieldKind } from "../schema";
-import { IEditableForest, TreeNavigationResult } from "../forest";
+import { TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema } from "../domains";
-import { recordDependency, SimpleObservingDependent } from "../dependency-tracking";
+import { recordDependency } from "../dependency-tracking";
 import { MockDependent } from "./utils";
 
 /**
  * Generic forest test suite
  */
-function testForest(suiteName: string, factory: () => IEditableForest): void {
+// TODO: when ObjectForest can apply deltas correctly
+// update these tests to use Delta, and apply to IEditableForest instead of just ObjectForest.
+function testForest(suiteName: string, factory: () => ObjectForest): void {
 	describe(suiteName, () => {
 		// Use Json Cursor to insert and extract some Json data
 		describe("insert and extract json", () => {

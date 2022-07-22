@@ -25,19 +25,19 @@ import {
 	mapCursorField,
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
-import { FieldKey, TreeType, DetachedRange, AnchorSet, Value } from "../../tree";
+import { FieldKey, TreeType, DetachedField, AnchorSet, Value, Delta } from "../../tree";
 import { brand, fail } from "../../util";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
 	private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
 	public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
-	public root(range: DetachedRange): ForestAnchor {
+	public root(range: DetachedField): ForestAnchor {
 		return new RootAnchor(range);
 	}
-	public readonly rootField: DetachedRange = this.newRange();
+	public readonly rootField: DetachedField = this.newRange();
 
-	private readonly roots: Map<DetachedRange, ObjectField> = new Map();
+	private readonly roots: Map<DetachedField, ObjectField> = new Map();
 
 	private readonly dependees: Map<ObjectField | ObjectNode, DisposingDependee> = new Map();
 
@@ -49,6 +49,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 		this.roots.set(this.rootField, []);
 		// Invalidate forest if schema change.
 		recordDependency(this.dependent, this.schema);
+	}
+
+	applyDelta(delta: Delta.Root): void {
+		throw new Error("Method not implemented.");
 	}
 
 	public observeItem(
@@ -66,7 +70,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 		}
 	}
 
-	public getRoot(item: DetachedRange): ObjectField {
+	public getRoot(item: DetachedField): ObjectField {
 		// Currently we assume you only ever need to access a root of you know it exists.
 		// Thus we do not track observation of the existence of the root, and error if it does not exists.
 		const root = this.roots.get(item);
@@ -75,13 +79,13 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 	}
 
 	private nextRange = 0;
-	public newRange(): DetachedRange {
-		const range = brand<DetachedRange>(this.nextRange);
+	public newRange(): DetachedField {
+		const range = brand<DetachedField>(this.nextRange);
 		this.nextRange += 1;
 		return range;
 	}
 
-	add(nodes: Iterable<ITreeCursor>): DetachedRange {
+	add(nodes: Iterable<ITreeCursor>): DetachedField {
 		this.beforeChange();
 		const range = this.newRange();
 		assert(!this.roots.has(range), "new range must not already exist");
@@ -89,7 +93,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 		this.roots.set(range, field);
 		return range;
 	}
-	attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void {
+	attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedField): void {
 		this.beforeChange();
 		const children = this.roots.get(toAttach) ?? fail("Can not attach non-existent range");
 		this.roots.delete(toAttach);
@@ -103,7 +107,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 		field.splice(destination.index, 0, ...children);
 	}
 
-	private lookupField(range: FieldLocation | DetachedRange, create: boolean): ObjectField {
+	private lookupField(range: FieldLocation | DetachedField, create: boolean): ObjectField {
 		if (!isFieldLocation(range)) {
 			return this.getRoot(range);
 		} else {
@@ -123,10 +127,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 	}
 
 	detachRangeOfChildren(
-		range: FieldLocation | DetachedRange,
+		range: FieldLocation | DetachedField,
 		startIndex: number,
 		endIndex: number,
-	): DetachedRange {
+	): DetachedField {
 		this.beforeChange();
 		const field: ObjectField = this.lookupField(range, false);
 		assertValidIndex(startIndex, field, true);
@@ -142,7 +146,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 		const node = this.lookupNodeId(nodeId);
 		node.value = value;
 	}
-	delete(range: DetachedRange): void {
+	delete(range: DetachedField): void {
 		this.beforeChange();
 		// TODO: maybe define this to leave the forest with an empty root field?
 		assert(range !== this.rootField, "root field can not be deleted");
@@ -281,7 +285,7 @@ abstract class ObjectAnchor implements ForestAnchor {
 }
 
 class RootAnchor extends ObjectAnchor {
-	constructor(public readonly range: DetachedRange) {
+	constructor(public readonly range: DetachedField) {
 		super();
 	}
 	find(forest: ObjectForest, observer: ObservingDependent | undefined): ObjectNode | undefined {
@@ -330,7 +334,7 @@ class Cursor implements ITreeSubscriptionCursor {
 
 	// TODO: store stack here,
 	// then brute force on anchor restoration? (Add smarter anchor type later?)
-	private root: DetachedRange | undefined;
+	private root: DetachedField | undefined;
 
 	// Ancestors traversed to visit this node (including this node).
 	private readonly parentStack: ObjectNode[] = [];
@@ -355,7 +359,7 @@ class Cursor implements ITreeSubscriptionCursor {
 		this.forest.currentCursors.delete(this);
 	}
 
-	public set(root: DetachedRange, index: number): void {
+	public set(root: DetachedField, index: number): void {
 		assert(
 			this.state !== ITreeSubscriptionCursorState.Freed,
 			0x33c /* Cursor must not be freed */,

@@ -4,37 +4,15 @@
  */
 
 import { StoredSchemaRepository } from "../schema";
-import { AnchorSet, FieldKey, DetachedRange, Value } from "../tree";
-import { ITreeCursor } from "./cursor";
+import { AnchorSet, FieldKey, DetachedField, Delta } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor, ForestAnchor } from "./forest";
 
 /**
- * Ways to refer to a node in an IEditableForest.
- */
-export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
-
-/**
  * Editing APIs.
- *
- * These are sufficient to perform all possible edits,
- * but not particularly efficient (for large slice moves), or semantic.
- * They are also not particularly type safe (ex: you can pass a parented nodes into attach, which is invalid).
- *
- * TODO: improve these APIs, addressing the above.
  */
 export interface IEditableForest extends IForestSubscription {
 	// Overrides field from IForestSubscription adding editing support.
 	readonly schema: StoredSchemaRepository;
-
-	/**
-	 * Set of anchors this forest is tracking.
-	 *
-	 * To keep these anchors usable, this AnchorSet must be updated / rebased for any changes made to the forest.
-	 * It is the responsibility of the called of the forest editing methods to do this, not the forest itself.
-	 * The caller performs these updates because it has more semantic knowledge about the edits, which can be needed to
-	 * update the anchors in a semantically optimal way.
-	 */
-	readonly anchors: AnchorSet;
 
 	/**
 	 * Adds the supplied subtrees to the forest.
@@ -45,46 +23,30 @@ export interface IEditableForest extends IForestSubscription {
 	add(nodes: Iterable<ITreeCursor>): DetachedRange;
 
 	/**
-	 * Parents a set of nodes already in the forest at a specified location.
+	 * Applies the supplied Delta to the forest.
+	 * Does NOT update anchors.
 	 */
-	attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void;
-
-	/**
-	 * Detaches a range of nodes from their parent. The detached nodes remain in the `Forest`.
-	 * @param startIndex - the index of the first node in the range to detach
-	 * @param endIndex - the index after the last node in the range to detach
-	 * @returns a new `Forest` with the nodes detached, and a list of the ids of the nodes that were detached
-	 */
-	detachRangeOfChildren(
-		range: FieldLocation | DetachedRange,
-		startIndex: number,
-		endIndex: number,
-	): DetachedRange;
-
-	/**
-	 * Replaces a node's value. The node must exist in this `Forest`.
-	 * @param nodeId - the id of the node
-	 * @param value - the new value
-	 */
-	setValue(nodeId: ForestLocation, value: Value): void;
-
-	/**
-	 * Recursively deletes a range and its children.
-	 */
-	delete(ids: DetachedRange): void;
+	applyDelta(delta: Delta.Root): void;
 }
 
+// TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.
+
+/**
+ * Ways to refer to a node in an IEditableForest.
+ */
+export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
+
 export interface TreeLocation {
-	readonly range: FieldLocation | DetachedRange;
+	readonly range: FieldLocation | DetachedField;
 	readonly index: number;
 }
 
-export function isFieldLocation(range: FieldLocation | DetachedRange): range is FieldLocation {
+export function isFieldLocation(range: FieldLocation | DetachedField): range is FieldLocation {
 	return typeof range === "object";
 }
 
 /**
- * Wrapper around DetachedRange that can be detected at runtime.
+ * Wrapper around DetachedField that can be detected at runtime.
  */
 export interface FieldLocation {
 	readonly key: FieldKey;
