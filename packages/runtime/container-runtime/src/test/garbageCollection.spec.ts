@@ -267,7 +267,7 @@ describe("Garbage Collection Tests", () => {
 
         it("Session expires for an existing container", async () => {
             const metadata: IContainerRuntimeMetadata =
-                { summaryFormatVersion: 1, message: undefined, sweepEnabled: true, sessionExpiryTimeoutMs: 10 };
+                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
             createGCOverride(metadata);
             assert(closeCalledAfterExactTicks(10), "Close should have been called at exact expiry.");
         });
