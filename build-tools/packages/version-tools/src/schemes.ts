@@ -157,8 +157,6 @@ function translateVirtualVersion(
  * @param scheme - The version scheme to use.
  * @returns An adjusted version as a semver.SemVer.
  */
-// TODO: move this function to version-tools once the dependency direction is reversed and build-tools can depend on
-// version-tools.
 export function adjustVersion(
     version: string | semver.SemVer | undefined,
     bumpType: VersionChangeTypeExtended,
