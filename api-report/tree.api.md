@@ -213,14 +213,10 @@ export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKe
 
 // @public
 export interface IEditableForest extends IForestSubscription {
-    add(nodes: Iterable<ITreeCursor>): DetachedRange;
     readonly anchors: AnchorSet;
-    attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void;
-    delete(ids: DetachedRange): void;
-    detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange;
+    applyDelta(delta: Delta.Root): void;
     // (undocumented)
     readonly schema: StoredSchemaRepository;
-    setValue(nodeId: ForestLocation, value: Value): void;
 }
 
 // @public
