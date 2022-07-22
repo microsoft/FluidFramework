@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { runSynchronousTransaction, applyDeltaToForest } from "./transaction";
+export { runSynchronousTransaction } from "./transaction";
