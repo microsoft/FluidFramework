@@ -5,8 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { brand, clone, fail, OffsetListFactory } from "../util";
-import { FieldKey, Value } from "../tree";
-import * as Delta from "./delta";
+import { FieldKey, Value, Delta } from "../tree";
 import { ProtoNode, Transposed as T } from "./format";
 
 /**
@@ -14,8 +13,11 @@ import { ProtoNode, Transposed as T } from "./format";
  * @param changeset - The Changeset to convert
  * @returns A Delta for applying the changes described in the given Changeset.
  */
-export function toDelta(changeset: T.Changeset): Delta.Root {
-    return convertMarkList<Delta.OuterMark>(changeset.marks);
+export function toDelta(changeset: T.LocalChangeset): Delta.Root {
+    // Save result to a constant to work around linter bug:
+    // https://github.com/typescript-eslint/typescript-eslint/issues/5014
+    const out: Delta.Root = convertFieldMarks<Delta.OuterMark>(changeset.marks);
+    return out;
 }
 
 function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
@@ -351,13 +353,17 @@ function convertModify<TMarks>(modify: ChangesetMods): DeltaMods<TMarks> {
     }
     const fields = modify.fields;
     if (fields !== undefined) {
-        const outFields: Delta.FieldMarks<TMarks> = new Map();
-        for (const key of Object.keys(fields)) {
-            const marks = convertMarkList<TMarks>(fields[key]);
-            const brandedKey = brand<FieldKey>(key);
-            outFields.set(brandedKey, marks);
-        }
-        out.fields = outFields;
+        out.fields = convertFieldMarks<TMarks>(fields);
     }
     return out;
+}
+
+function convertFieldMarks<TMarks>(fields: T.FieldMarks): Delta.FieldMarks<TMarks> {
+    const outFields: Delta.FieldMarks<TMarks> = new Map();
+    for (const key of Object.keys(fields)) {
+        const marks = convertMarkList<TMarks>(fields[key]);
+        const brandedKey = brand<FieldKey>(key);
+        outFields.set(brandedKey, marks);
+    }
+    return outFields;
 }

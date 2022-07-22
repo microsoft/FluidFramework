@@ -286,6 +286,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     get logger(): EventAndErrorTrackingLogger;
+    set logger(logger: EventAndErrorTrackingLogger);
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
     // (undocumented)

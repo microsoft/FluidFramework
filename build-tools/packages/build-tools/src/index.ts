@@ -12,9 +12,11 @@ export { createReleaseBump } from "./bumpVersion/createReleaseBump";
 export { GitRepo } from "./bumpVersion/gitRepo";
 export { releaseVersion } from "./bumpVersion/releaseVersion";
 export { VersionBag } from "./bumpVersion/versionBag";
+export { FluidRepo } from "./common/fluidRepo";
 export { getResolvedFluidRoot } from "./common/fluidUtils";
 export {
     isMonoRepoKind,
+    MonoRepo,
     MonoRepoKind,
     supportedMonoRepoValues
 } from "./common/monoRepo";

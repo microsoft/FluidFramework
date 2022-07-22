@@ -9,9 +9,10 @@ export {
 } from "./dependency-tracking";
 
 export {
-    EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedRange,
-    PathShared, UpPath, Anchor, RootRange, PathCollection, PathNode, ChildCollection,
+    EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
+    PathShared, UpPath, Anchor, RootField, PathCollection, PathNode, ChildCollection,
     ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
+    Delta,
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -55,10 +56,6 @@ export {
 } from "./rebase";
 
 export {
-    Delta,
-} from "./changeset";
-
-export {
     cursorToJsonObject,
     JsonCursor,
     jsonTypeSchema,
@@ -68,5 +65,5 @@ export {
 export {
     buildForest,
     TextCursor,
-    placeholderTreeFromCursor,
+    jsonableTreeFromCursor,
 } from "./feature-libraries";

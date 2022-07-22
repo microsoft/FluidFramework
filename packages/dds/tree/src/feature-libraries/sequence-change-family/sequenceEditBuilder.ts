@@ -4,9 +4,8 @@
  */
 
 import { ProgressiveEditBuilder } from "../../change-family";
-import { Delta } from "../../changeset";
 import { ITreeCursor } from "../../forest";
-import { AnchorSet, UpPath, Value } from "../../tree";
+import { AnchorSet, UpPath, Value, Delta } from "../../tree";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
 import { SequenceChangeset } from "./sequenceChangeset";
 

@@ -13,7 +13,7 @@ import { JsonableTree } from "../tree";
  * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
 export namespace Transposed {
-	export interface Transaction extends Changeset {
+	export interface Transaction extends PeerChangeset {
 		/**
 		 * The reference sequence number of the transaction that this transaction was originally
 		 * issued after.
@@ -27,16 +27,27 @@ export namespace Transposed {
 		newRef?: SeqNumber;
 	}
 
-	export interface Changeset {
+	/**
+	 * Represents changes to a document forest.
+	 */
+	export interface LocalChangeset {
+		marks: FieldMarks;
+		moves?: MoveEntry<TreeForestPath>[];
+	}
+
+	/**
+	 * Represents changes to a document tree.
+	 */
+	export interface PeerChangeset {
 		marks: MarkList;
 		moves?: MoveEntry[];
 	}
 
-	export interface MoveEntry {
+	export interface MoveEntry<TPath = TreeRootPath> {
 		id: OpId;
-		src: TreePath;
-		dst: TreePath;
-		hops?: TreePath[];
+		src: TPath;
+		dst: TPath;
+		hops?: TPath[];
 	}
 
 	export type MarkList<TMark = Mark> = TMark[];
@@ -279,14 +290,11 @@ export interface HasLength {
 	length?: number;
 }
 
-export interface TreeChildPath {
+export interface TreeForestPath {
 	[label: string]: TreeRootPath;
 }
 
-export type TreeRootPath = number | { [label: number]: TreeChildPath; };
-
-/** A structure that represents a path from the root to a particular node. */
-export type TreePath = TreeChildPath | TreeRootPath;
+export type TreeRootPath = number | { [label: number]: TreeForestPath; };
 
 export enum RangeType {
 	Set = "Set",

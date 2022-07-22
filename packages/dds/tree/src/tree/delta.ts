@@ -4,8 +4,9 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { FieldKey, JsonableTree, Value } from "../tree";
 import { Brand, Opaque } from "../util";
+import { FieldKey, Value } from "./types";
+import { JsonableTree } from "./treeTextFormat";
 
 /**
  * This format describes changes that must be applied to a document tree in order to update it.
@@ -141,7 +142,7 @@ import { Brand, Opaque } from "../util";
 /**
  * Represents the change made to a document.
  */
-export type Root = MarkList<OuterMark>;
+export type Root = FieldMarks<OuterMark>;
 
 /**
  * Represents a change being made to a part of the tree.
