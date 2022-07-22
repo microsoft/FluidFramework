@@ -43,7 +43,6 @@ import {
     TaggedLoggerAdapter,
     MonitoringContext,
     loggerToMonitoringContext,
-    TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import { readAndParse, isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
@@ -1238,6 +1237,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.mc = loggerToMonitoringContext(
             ChildLogger.create(this.logger, "ContainerRuntime"));
 
+        if (this.summaryConfiguration.state === "enabled") {
+            this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
+        }
+
         this.summariesDisabled = this.isSummariesDisabled();
         this.heuristicsDisabled = this.isHeuristicsDisabled();
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
@@ -1483,9 +1486,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
                 createContainerTimestamp: metadata?.createContainerTimestamp,
             };
-            // back-compat 0.59.3000 - Older document may either write summaryCount or not write it at all. If it does
-            // not write it, initialize summaryNumber to 0.
-            loadSummaryNumber = metadata?.summaryNumber ?? metadata?.summaryCount ?? 0;
+            // summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
+            // the count is reset to 0.
+            loadSummaryNumber = metadata?.summaryNumber ?? 0;
         } else {
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: pkgVersion,
@@ -1613,7 +1616,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private internalId(maybeAlias: string): string {
-        return this.dataStores.aliases().get(maybeAlias) ?? maybeAlias;
+        return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
     }
 
     private async getDataStoreFromRequest(id: string, request: IRequest): Promise<IFluidRouter> {
@@ -1621,6 +1624,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             ? request.headers?.[RuntimeHeaders.wait]
             : true;
 
+        await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const dataStoreContext = await this.dataStores.getDataStore(internalId, wait);
 
@@ -1660,8 +1664,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
         const metadata: IContainerRuntimeMetadata = {
             ...this.createContainerMetadata,
-            // back-compat 0.59.3000: This is renamed to summaryNumber. Can be removed when 0.59.3000 saturates.
-            summaryCount: this.nextSummaryNumber,
             // Increment the summary number for the next summary that will be generated.
             summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
@@ -1687,7 +1689,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             addBlobToSummary(summaryTree, chunksBlobName, content);
         }
 
-        const dataStoreAliases = this.dataStores.aliases();
+        const dataStoreAliases = this.dataStores.aliases;
         if (dataStoreAliases.size > 0) {
             addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...dataStoreAliases]));
         }
@@ -2013,6 +2015,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
+        return this.getRootDataStoreChannel(id, wait);
+    }
+
+    private async getRootDataStoreChannel(id: string, wait = true): Promise<IFluidDataStoreChannel> {
+        await this.dataStores.waitIfPendingAlias(id);
         const internalId = this.internalId(id);
         const context = await this.dataStores.getDataStore(internalId, wait);
         assert(await context.isRoot(), 0x12b /* "did not get root data store" */);
@@ -2163,27 +2170,37 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
         const internalId = uuid();
-        const dataStore = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-        const aliasedDataStore = channelToDataStore(dataStore, internalId, this, this.dataStores, this.mc.logger);
-        const result = await aliasedDataStore.trySetAlias(alias);
-        if (result !== "Success") {
-            throw new GenericError(
-                "dataStoreAliasFailure",
-                undefined /* error */,
-                {
-                    alias: {
-                        value: alias,
-                        tag: TelemetryDataTag.UserData,
-                    },
-                    internalId: {
-                        value: internalId,
-                        tag: TelemetryDataTag.CodeArtifact,
-                    },
-                    aliasResult: result,
-                });
-        }
 
-        return aliasedDataStore;
+        try {
+            // A similar call may have been initiated by the same client, so we should try to get
+            // a possible existing aliased datastore first.
+            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
+            return channelToDataStore(
+                existingDataStore,
+                internalId,
+                this,
+                this.dataStores,
+                this.mc.logger,
+                true, // AlreadyAliased. This will block further alias attempts for the datastore
+            );
+        } catch (err) {
+            const newChannel = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
+            const newDataStore = channelToDataStore(newChannel, internalId, this, this.dataStores, this.mc.logger);
+            const aliasResult = await newDataStore.trySetAlias(alias);
+            if (aliasResult === "Success") {
+                return newDataStore;
+            }
+
+            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
+            return channelToDataStore(
+                existingDataStore,
+                internalId,
+                this,
+                this.dataStores,
+                this.mc.logger,
+                true, // AlreadyAliased. This will block further alias attempts for the datastore
+            );
+        }
     }
 
     public createDetachedRootDataStore(
@@ -2624,15 +2641,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
             const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
             const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
-
-            // We should be here is we haven't processed be here. If we are of if the last message's sequence number
-            // doesn't match the last processed sequence number, log an error.
-            if (summaryRefSeqNum !== this.deltaManager.lastMessage?.sequenceNumber) {
-                summaryNumberLogger.sendErrorEvent({
-                    eventName: "LastSequenceMismatch",
-                    error: message,
-                });
-            }
+            const lastAck = this.summaryCollection.latestAck;
 
             this.summarizerNode.startSummary(summaryRefSeqNum, summaryNumberLogger);
 
@@ -2660,6 +2669,16 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         continue: false,
                         // eslint-disable-next-line max-len
                         error: `lastSequenceNumber changed before uploading to storage. ${this.deltaManager.lastSequenceNumber} !== ${summaryRefSeqNum}`,
+                    };
+                }
+                assert(summaryRefSeqNum === this.deltaManager.lastMessage?.sequenceNumber,
+                    "it's one and the same thing");
+
+                if (lastAck !== this.summaryCollection.latestAck) {
+                    return {
+                        continue: false,
+                        // eslint-disable-next-line max-len
+                        error: `Last summary changed while summarizing. ${this.summaryCollection.latestAck} !== ${lastAck}`,
                     };
                 }
                 return { continue: true };
@@ -2735,7 +2754,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "generate", ...generateSummaryData, error: continueResult.error };
             }
 
-            const lastAck = this.summaryCollection.latestAck;
             const summaryContext: ISummaryContext =
                 lastAck === undefined
                     ? {
@@ -3272,6 +3290,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // we may not have seen every sequence number (because of system ops) so apply everything once we
         // don't have any more saved ops
         await this.pendingStateManager.applyStashedOpsAt();
+    }
+
+    private validateSummaryHeuristicConfiguration(configuration: ISummaryConfigurationHeuristics) {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const prop in configuration) {
+            if (typeof configuration[prop] === "number" && configuration[prop] < 0) {
+                throw new UsageError(`Summary heuristic configuration property "${prop}" cannot be less than 0`);
+            }
+        }
     }
 }
 

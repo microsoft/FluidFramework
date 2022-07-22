@@ -8,11 +8,12 @@ import {
     DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
 } from "../../dependency-tracking";
 import {
-    ITreeCursor, ITreeSubscriptionCursor, NodeId,
-    Anchor, IEditableForest,
+    ITreeCursor, ITreeSubscriptionCursor, ForestLocation,
+    ForestAnchor, IEditableForest,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
     FieldLocation, TreeLocation, isFieldLocation,
+    mapCursorField,
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
 import { FieldKey, TreeType, DetachedRange, AnchorSet, Value } from "../../tree";
@@ -22,9 +23,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
     public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
-    public readonly anchors: AnchorSet = new AnchorSet();
-
-    public readonly root: Anchor = new RootAnchor();
+    public root(range: DetachedRange): ForestAnchor { return new RootAnchor(range); }
     public readonly rootField: DetachedRange = this.newRange();
 
     private readonly roots: Map<DetachedRange, ObjectField> = new Map();
@@ -34,7 +33,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
 
-    public constructor() {
+    public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
         super("object-forest.ObjectForest");
         this.roots.set(this.rootField, []);
         // Invalidate forest if schema change.
@@ -94,7 +93,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         if (!isFieldLocation(range)) {
             return this.getRoot(range);
         } else {
-            const children = this.lookupNodeId(range.parent).children;
+            const children = this.lookupNodeId(range.parent).fields;
             const field = children.get(range.key);
             if (field !== undefined) {
                     return field;
@@ -112,15 +111,15 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange {
         this.beforeChange();
         const field: ObjectField = this.lookupField(range, false);
-        assertValidIndex(startIndex, field, false);
-        assertValidIndex(endIndex, field, false);
+        assertValidIndex(startIndex, field, true);
+        assertValidIndex(endIndex, field, true);
         assert(startIndex <= endIndex, "detached range's end must be after it's start");
         const newRange = this.newRange();
         const newField = field.splice(startIndex, endIndex - startIndex);
         this.roots.set(newRange, newField);
         return newRange;
     }
-    setValue(nodeId: NodeId, value: Value): void {
+    setValue(nodeId: ForestLocation, value: Value): void {
         this.beforeChange();
         const node = this.lookupNodeId(nodeId);
         node.value = value;
@@ -142,7 +141,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     tryGet(
-        destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent | undefined,
+        destination: ForestAnchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent | undefined,
     ): TreeNavigationResult {
         assert(destination instanceof ObjectAnchor, 0x336 /* ObjectForest must only be given its own Anchors */);
         assert(cursorToMove instanceof Cursor, 0x337 /* ObjectForest must only be given its own Cursor type */);
@@ -169,7 +168,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return TreeNavigationResult.NotFound;
     }
 
-    private lookupNodeId(id: NodeId): ObjectNode {
+    private lookupNodeId(id: ForestLocation): ObjectNode {
         if (id instanceof ObjectNode) {
             return id;
         }
@@ -209,10 +208,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 }
 
-function assertValidIndex(index: number, array: unknown[], splice: boolean = false) {
+function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: boolean = false) {
     assert(Number.isInteger(index), "index must be an integer");
     assert(index >= 0, "index must be non-negative");
-    if (splice) {
+    if (allowOnePastEnd) {
         assert(index <= array.length, "index must be less than or equal to length");
     } else {
         assert(index < array.length, "index must be less than length");
@@ -222,20 +221,9 @@ function assertValidIndex(index: number, array: unknown[], splice: boolean = fal
 export function nodeFromCursor(cursor: ITreeCursor): ObjectNode {
     const node = new ObjectNode(cursor.type, cursor.value);
     for (const key of cursor.keys) {
-        const field: ObjectField = [];
-        let result = cursor.down(key, 0);
-        // TODO: do we want to require that the keys list only has non-empty fields? This assumes that.
-        // If this fails, the "up" call below would be wrong.
-        assert(result === TreeNavigationResult.Ok, "expected non empty field for listed key");
-        while (result === TreeNavigationResult.Ok) {
-            field.push(nodeFromCursor(cursor));
-            result = cursor.seek(1).result;
-        }
-        assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
-        cursor.up();
-        node.children.set(key, field);
+        const field: ObjectField = mapCursorField(cursor, key, nodeFromCursor);
+        node.fields.set(key, field);
     }
-
     return node;
 }
 
@@ -243,7 +231,7 @@ export function nodeFromCursor(cursor: ITreeCursor): ObjectNode {
  * Simple anchor that just points to a node object.
  * This results in pretty basic anchor rebase policy.
  */
-abstract class ObjectAnchor implements Anchor {
+abstract class ObjectAnchor implements ForestAnchor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
     free(): void {
         assert(this.state === ITreeSubscriptionCursorState.Current, 0x339 /* Anchor must not be double freed */);
@@ -258,8 +246,11 @@ abstract class ObjectAnchor implements Anchor {
 }
 
 class RootAnchor extends ObjectAnchor {
+    constructor(public readonly range: DetachedRange) {
+        super();
+    }
     find(forest: ObjectForest, observer: ObservingDependent | undefined): ObjectNode | undefined {
-        const field = forest.getRoot(forest.rootField);
+        const field = forest.getRoot(this.range);
         return field[0];
     }
 }
@@ -280,7 +271,7 @@ class NodeAnchor extends ObjectAnchor {
 
 class ObjectNode {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
-    public readonly children: Map<FieldKey, ObjectField> = new Map();
+    public readonly fields: Map<FieldKey, ObjectField> = new Map();
     public constructor(public type: TreeType, public value: Value = undefined) { }
     free(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33a /* Anchor must not be double freed */);
@@ -310,7 +301,7 @@ class Cursor implements ITreeSubscriptionCursor {
     // Indices traversed to visit this node
     private readonly indexStack: number[] = [];
 
-    private siblings?: ObjectNode[];
+    private siblings?: readonly ObjectNode[];
 
     public clear(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33b /* Cursor must not be freed */);
@@ -348,7 +339,7 @@ class Cursor implements ITreeSubscriptionCursor {
         return this.getNode().type;
     }
     get keys(): Iterable<FieldKey> {
-        return this.getNode().children.keys();
+        return this.getNode().fields.keys();
     }
 
     fork(observer?: ObservingDependent | undefined): ITreeSubscriptionCursor {
@@ -358,11 +349,11 @@ class Cursor implements ITreeSubscriptionCursor {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
-    buildAnchor(): Anchor {
+    buildAnchor(): ForestAnchor {
         return new NodeAnchor(this.getNode());
     }
     down(key: FieldKey, index: number): TreeNavigationResult {
-        const siblings = (this.getNode().children.get(key) ?? []);
+        const siblings = (this.getNode().fields.get(key) ?? []);
         const child = siblings[index];
         if (child !== undefined) {
             this.parentStack.push(child);
@@ -383,8 +374,8 @@ class Cursor implements ITreeSubscriptionCursor {
             this.parentStack[this.parentStack.length - 1] = child;
             return { result: TreeNavigationResult.Ok, moved: offset };
         }
-        // Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: offset };
+        // TODO: Maybe truncate move, and move to end?
+        return { result: TreeNavigationResult.NotFound, moved: 0 };
     }
     up(): TreeNavigationResult {
         assert(this.state === ITreeSubscriptionCursorState.Current, 0x341 /* Cursor must be current to be used */);
@@ -398,11 +389,21 @@ class Cursor implements ITreeSubscriptionCursor {
         this.siblings = this.parentStack.length === 0 ?
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.forest.getRoot(this.root!) :
-            this.parentStack[this.parentStack.length - 1].children.get(this.keyStack[this.keyStack.length - 1]);
+            this.parentStack[this.parentStack.length - 1].fields.get(this.keyStack[this.keyStack.length - 1]);
         return TreeNavigationResult.Ok;
     }
 
     length(key: FieldKey): number {
-        return (this.getNode().children.get(key) ?? []).length;
+        return (this.getNode().fields.get(key) ?? []).length;
     }
+}
+
+// This function is the only package level export for objectForest, and hides all the implementation types.
+// When other forest implementations are created (ex: optimized ones),
+// this function should likely be moved and updated to (at least conditionally) use them.
+/**
+ * @returns an implementation of {@link IEditableForest} with no data or schema.
+ */
+export function buildForest(): IEditableForest {
+    return new ObjectForest();
 }

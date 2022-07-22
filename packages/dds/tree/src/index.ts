@@ -3,10 +3,35 @@
  * Licensed under the MIT License.
  */
 
-export { EmptyKey, FieldKey, TreeType, Value, TreeValue } from "./tree";
+export {
+    Dependee, Dependent, NamedComputation, ObservingDependent, InvalidationToken, recordDependency,
+    SimpleDependee,
+} from "./dependency-tracking";
 
-export { ITreeCursor, TreeNavigationResult } from "./forest";
-export { LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier } from "./schema";
+export {
+    EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedRange,
+    PathShared, UpPath, Anchor, RootRange, PathCollection, PathNode, ChildCollection,
+    ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
+    Delta,
+} from "./tree";
+
+export { ITreeCursor, TreeNavigationResult, IEditableForest,
+    IForestSubscription,
+    TreeLocation,
+    FieldLocation,
+    ForestLocation,
+    ITreeSubscriptionCursor,
+    ForestAnchor,
+    ITreeSubscriptionCursorState,
+} from "./forest";
+
+export {
+    LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
+    FieldSchema, ValueSchema, TreeSchema, FieldKind,
+    emptyField, neverTree,
+    SchemaRepository, StoredSchemaRepository,
+    rootFieldKey,
+} from "./schema";
 
 export {
     Brand,
@@ -20,3 +45,25 @@ export {
     ExtractFromOpaque,
     isAny,
 } from "./util";
+
+export {
+    Rebaser,
+    ChangeRebaser,
+    RevisionTag,
+    ChangeFromChangeRebaser,
+    FinalFromChangeRebaser,
+    ChangeSetFromChangeRebaser,
+} from "./rebase";
+
+export {
+    cursorToJsonObject,
+    JsonCursor,
+    jsonTypeSchema,
+    jsonArray, jsonBoolean, jsonNull, jsonNumber, jsonObject, jsonString,
+} from "./domains";
+
+export {
+    buildForest,
+    TextCursor,
+    placeholderTreeFromCursor,
+} from "./feature-libraries";

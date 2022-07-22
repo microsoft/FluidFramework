@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import * as path from "path";
 import { VersionBag, ReferenceVersionBag } from "./versionBag";
 import { commonOptions } from "../common/commonOptions";
 import { Timer } from "../common/timer";
@@ -15,21 +14,6 @@ import { Package } from "../common/npmPackage";
 import { logVerbose } from "../common/logging";
 import { GitRepo } from "./gitRepo";
 import { fatal, prereleaseSatisfies } from "./utils";
-
-import * as semver from "semver";
-
-export type VersionBumpType = "major" | "minor" | "patch";
-export type VersionBumpTypeExtended = VersionBumpType | "current";
-export type VersionChangeType = VersionBumpType | semver.SemVer;
-export type VersionChangeTypeExtended = VersionBumpTypeExtended | semver.SemVer;
-
-export function isVersionBumpType(type: VersionChangeType | string): type is VersionBumpType {
-    return type === "major" || type === "minor" || type === "patch";
-}
-
-export function isVersionBumpTypeExtended(type: VersionChangeType | string): type is VersionBumpTypeExtended {
-    return type === "major" || type === "minor" || type === "patch" || type === "current";
-}
 
 /**
  * Context provides access to data about the Fluid repo, and exposes methods to interrogate the repo state.
