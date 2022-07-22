@@ -18,8 +18,9 @@ import { BaseCommand } from "../../base";
 import { bumpTypeFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
 
 /**
- * Update the dependency version of a specified package or release group. That is, if package B depends on package A,
- * then this command will update the dependency range on package A across the release groups specified.
+ * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
+ * depend on package A, then this command will update the dependency range on package A. The dependencies and the
+ * packages updated can be filtered using various flags.
  *
  * @remarks
  *
@@ -27,7 +28,7 @@ import { bumpTypeFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
  */
 export default class DepsCommand extends BaseCommand {
     static description =
-        "Update the dependency version of a specified package or release group. That is, if package B depends on package A, then this command will update the dependency range on package A across the release groups specified.";
+        "Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags."
 
     static args = [
         {
