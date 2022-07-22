@@ -49,8 +49,8 @@
     "tsc": "tsc -b"
   },
   "dependencies": {
-    "@fluidframework/bundle-size-tools": "^0.0.8505",
     "@fluid-tools/version-tools": "^0.3.0",
+    "@fluidframework/bundle-size-tools": "^0.0.8505",
     "async": "^3.2.0",
     "chalk": "^2.4.2",
     "commander": "^6.2.1",
