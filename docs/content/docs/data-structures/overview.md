@@ -56,7 +56,7 @@ Key-value data structures are the most common choice for many scenarios.
 
 ### Common issues and best practices for key-value DDSes
 
-- Storing a counter in a map will have unexpected behavior. Use the SharedCounter instead.
+- Storing a counter in a map will have unexpected behavior. Use the [SharedCounter]({{< relref "counter.md" >}}) instead.
 - Storing arrays, lists, or logs in a key-value entry may lead to unexpected behavior because users can't
   collaboratively modify parts of one entry. Try storing the array or list data in a SharedSequence or SharedInk.
 - Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
@@ -86,11 +86,12 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 ## Specialized data structures
 
-- [SharedCounter][] -- a counter.
+- [SharedCounter][{{< relref "counter.md" >}}] -- a counter.
 
-  The SharedCounter is useful to keep track of increments. While a key-value data structure appears like a good fit, two
-  clients simultaneously setting the same key can cause issues. By contrast, clients can increase or decrease the
-  SharedCounter value by a specified amount, but they can't set it to a specified value. It is optimistic.
+  The `SharedCounter` is useful to keep track of increments.
+  While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can cause issues.
+  By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.
+  It is optimistic.
 
 ## Consensus data structures
 
