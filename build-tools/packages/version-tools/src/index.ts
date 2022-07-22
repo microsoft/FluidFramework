@@ -6,4 +6,4 @@
 export * from "./bumpTypes";
 export * from "./internalVersionScheme";
 export * from "./schemes";
-export * from "./semver";
+export { incRange } from "./semver";
