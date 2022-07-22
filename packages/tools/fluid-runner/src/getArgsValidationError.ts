@@ -23,7 +23,7 @@ export function getArgsValidationError(
         return "Output folder name is missing.";
     } else if (!fs.existsSync(outputFolder)) {
         return "Output folder does not exist.";
-    } else if (fs.existsSync(outputFolder + "/index.html")) {
+    } else if (fs.existsSync(`${outputFolder}/index.html`)) {
         return "Output file already exists.";
     }
 

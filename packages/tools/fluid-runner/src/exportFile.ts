@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "fs";
+import path from "path";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import * as fs from "fs";
-import FileLogger from "./logger/FileLogger";
+// eslint-disable-next-line import/no-internal-modules
+import { FileLogger } from "./logger/FileLogger";
 import { getArgsValidationError } from "./getArgsValidationError";
 import { IFluidFileConverter, isCodeLoaderBundle } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
-import path from "path";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
@@ -39,10 +40,11 @@ export async function exportFile(
     const fileLogger = new FileLogger(telemetryFile, 50);
 
     const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp",
-        { all: { "Event_Time": () => Date.now() } });
+        { all: { Event_Time: () => Date.now() } });
 
     try {
         await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
             const codeLoaderBundle = require(codeLoader);
             if (!isCodeLoaderBundle(codeLoaderBundle)) {
                 const message = "Code loader bundle is not of type CodeLoaderBundle";
@@ -65,7 +67,12 @@ export async function exportFile(
             // TODO: read file stream
             const inputFileContent = fs.readFileSync(inputFile, { encoding: "utf-8" });
 
-            const results = await createContainerAndExecute(inputFileContent, logger, await codeLoaderBundle.fluidExport);
+            const results = await createContainerAndExecute(
+                inputFileContent,
+                logger,
+                await codeLoaderBundle.fluidExport,
+            );
+            // eslint-disable-next-line guard-for-in, no-restricted-syntax
             for (const key in results) {
                 fs.appendFileSync(path.join(outputFolder, key), results[key]);
             }
@@ -91,9 +98,9 @@ export async function createContainerAndExecute(
         codeLoader: fluidFileConverter.codeLoader,
         scope: fluidFileConverter.scope,
     });
-    
+
     const container = await loader.resolve({ url: "/fakeUrl/" });
 
-    return await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () =>
+    return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () =>
         fluidFileConverter.execute(container, logger));
 }

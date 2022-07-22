@@ -19,7 +19,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 }
 
 /**
- * Instance that holds all the details for fluid file conversion
+ * Instance that holds all the details for Fluid file conversion
  */
 export interface IFluidFileConverter {
     /**
@@ -35,17 +35,17 @@ export interface IFluidFileConverter {
     /**
      * Execute code and return the results
      * @param container - container created by this application
-     * @param logger
+     * @param logger - TODO
      * @returns - object containing file names as property keys and file content as values
      */
     execute(container: IContainer, logger: ITelemetryBaseLogger): Promise<Record<string, string>>;
-};
+}
 
 /**
  * Type cast to ensure necessary methods are present in the provided bundle
- * @param bundle 
+ * @param bundle - TODO
  */
 export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
-    return bundle
-        && bundle.fluidExport && typeof bundle.fluidExport === "function";
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return bundle?.fluidExport && typeof bundle.fluidExport === "function";
 }
