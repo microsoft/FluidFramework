@@ -12,7 +12,7 @@ export const opSize = (op: ISequencedDocumentMessage): number => {
         op.contents :
         JSON.stringify(op.contents);
     const data = opHasData(op) ? op.data : "";
-    return content.length + data.length;
+    return content?.length + data.length;
 };
 
 const opHasData = (op: ISequencedDocumentMessage): op is ISequencedDocumentSystemMessage =>
