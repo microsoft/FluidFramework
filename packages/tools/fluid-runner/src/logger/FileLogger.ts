@@ -4,13 +4,12 @@
  */
 
 import * as fs from "fs";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 /**
  * Logger that writes events into a defined file
  */
-export class FileLogger implements ITelemetryBufferedLogger {
+export class FileLogger implements ITelemetryBaseLogger {
     public supportsTags?: true | undefined;
 
     /** Hold events in memory until flushed */
