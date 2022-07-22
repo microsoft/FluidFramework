@@ -97,7 +97,7 @@ sharedCounter.increment(-5); // Subtracts 5 from the current value
 
 ### `incremented` event
 
-The [incremented]({{< relref "isharedcounterevents.md#_call_-CallSignature" >}}) event is sent when a client in the collaborative session changes the counter value via `increment`.
+The [incremented]({{< relref "isharedcounterevents.md#_call_-CallSignature" >}}) event is sent when a client in the collaborative session changes the counter value via the `increment` method.
 
 Signature:
 
