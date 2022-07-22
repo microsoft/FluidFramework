@@ -338,7 +338,7 @@ export interface IGCRuntimeOptions {
 
     /**
      * Flag that if true, will disable garbage collection for the session.
-     * Can be used to disable running GC on container where is allowed via the gcAllowed option.
+     * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
      */
     disableGC?: boolean;
 
