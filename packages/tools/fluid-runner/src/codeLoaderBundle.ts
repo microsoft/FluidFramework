@@ -47,5 +47,5 @@ export interface IFluidFileConverter {
  */
 export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return bundle?.fluidExport && typeof bundle.fluidExport === "function";
+    return bundle?.fluidExport && typeof bundle.fluidExport === "object";
 }
