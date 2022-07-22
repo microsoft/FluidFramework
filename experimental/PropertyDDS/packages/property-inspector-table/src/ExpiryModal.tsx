@@ -177,7 +177,7 @@ export const ExpiryModal: React.FunctionComponent<IExpiryModalProps> = (props) =
     /**
      * Set the expiration state of this modal.
      * @param newState - If present, it will be set as the new state of the modal. Otherwise, {{getExpiryInfo}} will be
-     *  called and its return values will be used to fill the state.
+     * called and its return values will be used to fill the state.
      */
     const setExpiryState = (newState?: IModalExpiryState) => {
         if (newState) {

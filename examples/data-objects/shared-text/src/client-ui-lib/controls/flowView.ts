@@ -75,11 +75,9 @@ interface IRangeInfo {
     offset: number;
 }
 
-type Alt = MergeTree.ProxString<number>;
 // TODO: mechanism for intelligent services to publish interfaces like this
 interface ITextErrorInfo {
     text: string;
-    alternates: Alt[];
     color?: string;
 }
 

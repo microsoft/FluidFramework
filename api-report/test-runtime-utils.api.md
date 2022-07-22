@@ -253,7 +253,10 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
     // (undocumented)
     toArray(): T[];
     // (undocumented)
-    waitTillProcessingDone(): Promise<void>;
+    waitTillProcessingDone(): Promise<{
+        count: number;
+        duration: number;
+    }>;
 }
 
 // @public

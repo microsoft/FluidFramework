@@ -3,8 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { execAsync } from "../common/utils";
 import * as semver from "semver";
+import {
+    VersionScheme,
+    isVersionBumpType,
+    VersionBumpType,
+    VersionChangeType,
+    VersionChangeTypeExtended,
+} from "@fluid-tools/version-tools";
 
 export function fatal(error: string): never {
     const e = new Error(error);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Context, VersionBumpType } from "./context";
+import { Context } from "./context";
 import { getReleasedPrereleaseDependencies } from "./bumpDependencies";
 import { bumpRepo } from "./bumpVersion";
 import { ReferenceVersionBag, getRepoStateChange } from "./versionBag";
@@ -12,13 +12,22 @@ import { fatal } from "./utils";
 import { isMonoRepoKind, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
+import { VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 
 /**
  * Create release bump branch based on the repo state for either main or next branches,bump minor version immediately
  * and push it to `main` and the new release branch to remote
  */
-export async function createReleaseBump(context: Context, bumpTypeOverride: VersionBumpType | undefined, virtualPatch: boolean) {
-    if (context.originalBranchName === "main") {
+export async function createReleaseBump(
+    whatToBump: MonoRepoKind,
+    context: Context,
+    bumpTypeOverride: VersionBumpType | undefined,
+    virtualPatch: boolean,
+    skipPolicyCheck = false,
+    skipUpToDateCheck = false,
+    skipInstall = false,
+) {
+    if (!skipPolicyCheck && context.originalBranchName === "main") {
         // run policy check before creating release branch for main.
         // right now this only does assert short codes
         // but could also apply other fixups in the future
@@ -32,7 +41,7 @@ export async function createReleaseBump(context: Context, bumpTypeOverride: Vers
 
     if (context.originalBranchName !== "main" && context.originalBranchName !== "next") {
         console.warn("WARNING: Release bumps outside of main/next branch are not normal!  Make sure you know what you are doing.")
-    } else if (!await context.gitRepo.isBranchUpToDate(context.originalBranchName, remote)) {
+    } else if (!skipUpToDateCheck && !await context.gitRepo.isBranchUpToDate(context.originalBranchName, remote)) {
         fatal(`Local main/next branch not up to date with remote. Please pull from '${remote}'.`);
     }
 
@@ -44,7 +53,7 @@ export async function createReleaseBump(context: Context, bumpTypeOverride: Vers
     }
 
     // Create release branch based on client version
-    const releaseName = MonoRepoKind[MonoRepoKind.Client];
+    const releaseName = whatToBump;
 
     const depVersions = await context.collectBumpInfo(releaseName);
     const releaseVersion = depVersions.repoVersions.get(releaseName);
@@ -66,12 +75,15 @@ export async function createReleaseBump(context: Context, bumpTypeOverride: Vers
     await context.createBranch(bumpBranch);
 
     // Make sure everything is installed (so that we can do build:genver)
-    if (!await context.repo.install()) {
+    if (!skipInstall && !await context.repo.install()) {
         fatal("Install failed");
     }
 
     // Bump the version
-    const bumpType = bumpTypeOverride ?? context.originalBranchName === "next" ? "major" : "minor";
+    const bumpType = bumpTypeOverride ?? "";
+    if(!bumpType) {
+        fatal(`No bump type provided.`);
+    }
 
     console.log(`Release bump: bumping ${bumpType} version for development`)
     console.log(await bumpCurrentBranch(context, bumpType, releaseName, depVersions, virtualPatch));

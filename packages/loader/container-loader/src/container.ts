@@ -7,7 +7,7 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-    IDisposable, ITelemetryProperties,
+    IDisposable, ITelemetryLogger, ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -53,10 +53,7 @@ import {
     isRuntimeMessage,
     isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
-import {
-    IProtocolHandler,
-    ProtocolOpHandlerWithClientValidation,
-} from "@fluidframework/protocol-base";
+import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
     IClient,
     IClientConfiguration,
@@ -109,6 +106,11 @@ import { initQuorumValuesFromCodeDetails, getCodeDetailsFromQuorumValues, Quorum
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
+import {
+    IProtocolHandler,
+    ProtocolHandler,
+    ProtocolHandlerBuilder,
+} from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -179,6 +181,10 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on("closed", closedCallback);
 
+        // Depending on config, transition to "connected" state may include the guarantee
+        // that all known ops have been processed.  If so, we may introduce additional wait here.
+        // Waiting for "connected" state in either case gets us at least to our own Join op
+        // which is a reasonable approximation of "caught up"
         const waitForOps = () => {
             assert(container.connectionState === ConnectionState.CatchingUp
                 || container.connectionState === ConnectionState.Connected,
@@ -229,6 +235,24 @@ const getCodeProposal =
     (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 /**
+ * Helper function to report to telemetry cases where operation takes longer than expected (1s)
+ * @param logger - logger to use
+ * @param eventName - event name
+ * @param action - functor to call and measure
+ */
+async function ReportIfTooLong(
+    logger: ITelemetryLogger,
+    eventName: string,
+    action: () => Promise<ITelemetryProperties>,
+) {
+    const event = PerformanceEvent.start(logger, { eventName });
+    const props = await action();
+    if (event.duration > 1000) {
+        event.end(props);
+    }
+}
+
+/**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
  */
@@ -252,6 +276,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         loader: Loader,
         loadOptions: IContainerLoadOptions,
         pendingLocalState?: IPendingContainerState,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
             loader,
@@ -260,7 +285,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 resolvedUrl: loadOptions.resolvedUrl,
                 canReconnect: loadOptions.canReconnect,
                 serializedContainerState: pendingLocalState,
-            });
+            },
+            protocolHandlerBuilder);
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -308,10 +334,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async createDetached(
         loader: Loader,
         codeDetails: IFluidCodeDetails,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
             loader,
-            {});
+            {},
+            protocolHandlerBuilder);
 
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
@@ -330,10 +358,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     public static async rehydrateDetachedFromSnapshot(
         loader: Loader,
         snapshot: string,
+        protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ): Promise<Container> {
         const container = new Container(
             loader,
-            {});
+            {},
+            protocolHandlerBuilder);
+
         return PerformanceEvent.timedExecAsync(
             container.mc.logger,
             { eventName: "RehydrateDetachedFromSnapshot" },
@@ -387,7 +418,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private readonly clientDetailsOverride: IClientDetails | undefined;
     private readonly _deltaManager: DeltaManager<ConnectionManager>;
     private service: IDocumentService | undefined;
-    private readonly _audience: Audience;
+    private _initialClients: ISignalClient[] | undefined;
 
     private _context: ContainerContext | undefined;
     private get context() {
@@ -510,13 +541,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
      * Retrieves the audience associated with the document
      */
     public get audience(): IAudience {
-        return this._audience;
+        return this.protocolHandler.audience;
     }
 
     /**
      * Returns true if container is dirty.
      * Which means data loss if container is closed at that same moment
-     * Most likely that happens when there is no network connection to ordering service
+     * Most likely that happens when there is no network connection to Relay Service
      */
     public get isDirty() {
         return this._dirtyContainer;
@@ -531,6 +562,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     constructor(
         private readonly loader: Loader,
         config: IContainerConfig,
+        private readonly protocolHandlerBuilder?: ProtocolHandlerBuilder,
     ) {
         super((name, error) => {
             this.mc.logger.sendErrorEvent(
@@ -540,7 +572,6 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 },
                 error);
         });
-        this._audience = new Audience();
 
         this.clientDetailsOverride = config.clientDetailsOverride;
         this._resolvedUrl = config.resolvedUrl;
@@ -566,6 +597,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerAttachState: () => this._attachState,
                     containerLifecycleState: () => this._lifecycleState,
                     containerConnectionState: () => ConnectionState[this.connectionState],
+                    serializedContainer: config.serializedContainerState !== undefined,
                 },
                 // we need to be judicious with our logging here to avoid generating too much data
                 // all data logged here should be broadly applicable, and not specific to a
@@ -578,6 +610,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
                     containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
                     // message information to associate errors with the specific execution state
+                    // dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
                     dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
                     dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
                     dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
@@ -1158,12 +1191,17 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // ...load in the existing quorum
         // Initialize the protocol handler
         this._protocolHandler = pendingLocalState === undefined
-            ? await this.initializeProtocolStateFromSnapshot(attributes, this.storageService, snapshot)
-            : await this.initializeProtocolState(
+            ? await this.initializeProtocolStateFromSnapshot(
                 attributes,
-                pendingLocalState.protocol.members,
-                pendingLocalState.protocol.proposals,
-                pendingLocalState.protocol.values,
+                this.storageService,
+                snapshot,
+            ) : await this.initializeProtocolState(
+                attributes,
+                {
+                    members: pendingLocalState.protocol.members,
+                    proposals: pendingLocalState.protocol.proposals,
+                    values: pendingLocalState.protocol.values,
+                }, // pending IQuorumSnapshot
             );
 
         const codeDetails = this.getCodeDetailsFromQuorum();
@@ -1174,17 +1212,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             pendingLocalState?.pendingRuntimeState,
         );
 
-        // Internal context is fully loaded at this point
-        this.setLoaded();
-
         // We might have hit some failure that did not manifest itself in exception in this flow,
         // do not start op processing in such case - static version of Container.load() will handle it correctly.
         if (!this.closed) {
             if (opsBeforeReturnP !== undefined) {
                 this._deltaManager.inbound.resume();
 
-                await opsBeforeReturnP;
-                await this._deltaManager.inbound.waitTillProcessingDone();
+                await ReportIfTooLong(
+                    this.mc.logger,
+                    "WaitOps",
+                    async () => { await opsBeforeReturnP; return {}; });
+                await ReportIfTooLong(
+                    this.mc.logger,
+                    "WaitOpProcessing",
+                    async () => this._deltaManager.inbound.waitTillProcessingDone());
 
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 this._deltaManager.inbound.pause();
@@ -1193,7 +1234,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             switch (loadMode.deltaConnection) {
                 case undefined:
                 case "delayed":
-                    assert(this.inboundQueuePausedFromInit, "inboundQueuePausedFromInit should be true");
+                    assert(this.inboundQueuePausedFromInit, 0x346 /* inboundQueuePausedFromInit should be true */);
                     this.inboundQueuePausedFromInit = false;
                     this._deltaManager.inbound.resume();
                     this._deltaManager.inboundSignal.resume();
@@ -1214,9 +1255,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             throw new Error("Container was closed while load()");
         }
 
+        // Internal context is fully loaded at this point
+        this.setLoaded();
+
         return {
             sequenceNumber: attributes.sequenceNumber,
             version: versionId,
+            dmLastProcessedSeqNumber: this._deltaManager.lastSequenceNumber,
+            dmLastKnownSeqNumber: this._deltaManager.lastKnownSeqNumber,
         };
     }
 
@@ -1233,9 +1279,11 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const qValues = initQuorumValuesFromCodeDetails(source);
         this._protocolHandler = await this.initializeProtocolState(
             attributes,
-            [], // members
-            [], // proposals
-            qValues,
+            {
+                members: [],
+                proposals: [],
+                values: qValues,
+            }, // IQuorumSnapShot
         );
 
         // The load context - given we seeded the quorum - will be great
@@ -1269,9 +1317,12 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         this._protocolHandler =
             await this.initializeProtocolState(
                 attributes,
-                [], // members
-                [], // proposals
-                codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : []);
+                {
+                    members: [],
+                    proposals: [],
+                    values: codeDetails !== undefined ? initQuorumValuesFromCodeDetails(codeDetails) : [],
+                }, // IQuorumSnapShot
+            );
 
         await this.instantiateContextDetached(
             true, // existing
@@ -1335,43 +1386,39 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         storage: IDocumentStorageService,
         snapshot: ISnapshotTree | undefined,
     ): Promise<IProtocolHandler> {
-        let members: [string, ISequencedClient][] = [];
-        let proposals: [number, ISequencedProposal, string[]][] = [];
-        let values: [string, any][] = [];
+        const quorumSnapshot: IQuorumSnapshot = {
+            members: [],
+            proposals: [],
+            values: [],
+        };
 
         if (snapshot !== undefined) {
             const baseTree = getProtocolSnapshotTree(snapshot);
-            [members, proposals, values] = await Promise.all([
+            [quorumSnapshot.members, quorumSnapshot.proposals, quorumSnapshot.values] = await Promise.all([
                 readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
                 readAndParse<[number, ISequencedProposal, string[]][]>(storage, baseTree.blobs.quorumProposals),
                 readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
             ]);
         }
 
-        const protocolHandler = await this.initializeProtocolState(
-            attributes,
-            members,
-            proposals,
-            values);
-
+        const protocolHandler = await this.initializeProtocolState(attributes, quorumSnapshot);
         return protocolHandler;
     }
 
     private async initializeProtocolState(
         attributes: IDocumentAttributes,
-        members: [string, ISequencedClient][],
-        proposals: [number, ISequencedProposal, string[]][],
-        values: [string, any][],
+        quorumSnapshot: IQuorumSnapshot,
     ): Promise<IProtocolHandler> {
-        const protocol = new ProtocolOpHandlerWithClientValidation(
-            attributes.minimumSequenceNumber,
-            attributes.sequenceNumber,
-            attributes.term,
-            members,
-            proposals,
-            values,
+        const protocolHandlerBuilder =
+            this.protocolHandlerBuilder ?? ((...args) => new ProtocolHandler(...args, new Audience()));
+        const protocol = protocolHandlerBuilder(
+            attributes,
+            quorumSnapshot,
             (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+            this._initialClients ?? [],
         );
+
+        this._initialClients = undefined;
 
         const protocolLogger = ChildLogger.create(this.subLogger, "ProtocolHandler");
 
@@ -1493,17 +1540,30 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         deltaManager.inboundSignal.pause();
 
-        deltaManager.on("connect", (details: IConnectionDetails, opsBehind?: number) => {
-            // Back-compat for new client and old server.
-            this._audience.clear();
+        deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+            if (this._protocolHandler === undefined) {
+                // Store the initial clients so that they can be submitted to the
+                // protocol handler when it is created.
+                this._initialClients = details.initialClients;
+            } else {
+                // When reconnecting, the protocol handler is already created,
+                // so we can update the audience right now.
+                this._protocolHandler.audience.clear();
 
-            for (const priorClient of details.initialClients ?? []) {
-                this._audience.addMember(priorClient.clientId, priorClient.client);
+                for (const priorClient of details.initialClients ?? []) {
+                    this._protocolHandler.audience.addMember(priorClient.clientId, priorClient.client);
+                }
             }
+
+            const deltaManagerForCatchingUp =
+                this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true ?
+                    this.deltaManager
+                    : undefined;
 
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,
+                deltaManagerForCatchingUp,
             );
         });
 
@@ -1729,14 +1789,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private processSignal(message: ISignalMessage) {
         // No clientId indicates a system signal message.
         if (message.clientId === null) {
-            const innerContent = message.content as { content: any; type: string; };
-            if (innerContent.type === MessageType.ClientJoin) {
-                const newClient = innerContent.content as ISignalClient;
-                this._audience.addMember(newClient.clientId, newClient.client);
-            } else if (innerContent.type === MessageType.ClientLeave) {
-                const leftClientId = innerContent.content as string;
-                this._audience.removeMember(leftClientId);
-            }
+            this.protocolHandler.processSignal(message);
         } else {
             const local = this.clientId === message.clientId;
             this.context.processSignal(message, local);

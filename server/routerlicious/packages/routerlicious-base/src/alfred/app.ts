@@ -5,10 +5,10 @@
 
 import path from "path";
 import {
+    IDeltaService,
     IDocumentStorage,
     IProducer,
     ITenantManager,
-    MongoManager,
     IThrottler,
     ICache,
     ICollection,
@@ -38,7 +38,7 @@ export function create(
     singleUseTokenCache: ICache,
     storage: IDocumentStorage,
     appTenants: IAlfredTenant[],
-    operationsDbMongoManager: MongoManager,
+    deltaService: IDeltaService,
     producer: IProducer,
     documentsCollection: ICollection<IDocument>) {
     // Maximum REST request size
@@ -49,7 +49,7 @@ export function create(
 
     // initialize RestLess server translation
     const restLessMiddleware: () => express.RequestHandler = () => {
-        const restLessServer = new RestLessServer();
+        const restLessServer = new RestLessServer({ requestSizeLimit: requestSize });
         return (req, res, next) => {
             restLessServer
                 .translate(req, res)
@@ -91,7 +91,7 @@ export function create(
         tenantManager,
         throttler,
         singleUseTokenCache,
-        operationsDbMongoManager,
+        deltaService,
         storage,
         producer,
         appTenants,

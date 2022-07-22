@@ -4,12 +4,13 @@
  */
 
 import * as semver from "semver";
+import { isVersionBumpType, VersionBumpType, VersionChangeType } from "@fluid-tools/version-tools";
 import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencies";
 import { bumpVersionCommand } from "./bumpVersion";
 import { commonOptionString, parseOption } from "../common/commonOptions";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { MonoRepoKind, supportedMonoRepoValues } from "../common/monoRepo";
-import { Context, isVersionBumpType, VersionBumpType, VersionChangeType } from "./context";
+import { Context } from "./context";
 import { createReleaseBump } from "./createReleaseBump";
 import { GitRepo } from "./gitRepo";
 import { releaseVersion } from "./releaseVersion";
@@ -116,13 +117,7 @@ function parseOptions(argv: string[]) {
             const dep = split[0];
             const version = split[1];
 
-            if (dep.toLowerCase() === MonoRepoKind[MonoRepoKind.Client].toLowerCase()) {
-                paramBumpDepPackages.set(MonoRepoKind[MonoRepoKind.Client], version);
-            } else if (dep.toLowerCase() === MonoRepoKind[MonoRepoKind.Server].toLowerCase()) {
-                paramBumpDepPackages.set(MonoRepoKind[MonoRepoKind.Server], version);
-            } else {
-                paramBumpDepPackages.set(dep, version);
-            }
+            paramBumpDepPackages.set(dep, version);
             continue;
         }
 
@@ -296,11 +291,17 @@ async function main() {
 
         switch (command) {
             case "releaseBump":
-                await createReleaseBump(context, paramReleaseVersion, paramVirtualPatch);
+                await createReleaseBump(MonoRepoKind.Client, context, paramReleaseVersion, paramVirtualPatch);
                 break;
             case "dep":
                 console.log("Bumping dependencies");
-                await bumpDependencies(context, "Bump dependencies version", paramBumpDepPackages, paramLocal, paramCommit);
+                await bumpDependencies(
+                    context,
+                    paramBumpDepPackages,
+                    /*updateLock*/ paramLocal,
+                    /*commit*/ paramCommit,
+                    "Bump dependencies version"
+                );
                 break;
             case "release":
                 await releaseVersion(context, paramReleaseName!, paramLocal, paramVirtualPatch, paramReleaseVersion);

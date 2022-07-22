@@ -19,6 +19,7 @@ import {
  * @param weights - Object defining either values or generators to yield from with corresponding likelihoods.
  * Each potential category can also provide an acceptance function, which restricts whether that category can be
  * chosen for a particular input state.
+ *
  * @example
  * ```typescript
  * const modifyGenerator = ({ random, list }) => {
@@ -150,6 +151,7 @@ export function chainIterables<T, TState>(generators: Generator<Generator<T, TSt
  * defined interval.
  *
  * Exhausts both input generators before terminating.
+ *
  * @example
  * ```typescript
  * // Assume gen1 produces 1, 2, 3, ... and gen2 produces "a", "b", "c", ...
@@ -227,6 +229,7 @@ export function repeat<T, TState = void>(t: T): Generator<T, TState> {
  * @param weights - Object defining either values or async generators to yield from with corresponding likelihoods.
  * Each potential category can also provide an acceptance function, which restricts whether that category can be
  * chosen for a particular input state.
+ *
  * @example
  * ```typescript
  * const modifyGenerator = async ({ random, list }) => {
@@ -356,6 +359,7 @@ export function chainAsyncIterables<T, TState>(
  * defined interval.
  *
  * Exhausts both input generators before terminating.
+ *
  * @example
  * ```typescript
  * // Assume gen1 produces 1, 2, 3, ... and gen2 produces "a", "b", "c", ...

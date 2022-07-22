@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import * as semver from "semver";
 import { Context } from "./context";
 import { VersionBag } from "./versionBag";
 import { fatal, prereleaseSatisfies } from "./utils";
@@ -11,21 +11,36 @@ import { Package } from "../common/npmPackage";
 import { FluidRepo } from "../common/fluidRepo";
 
 /**
- * Bump cross package/monorepo dependencies
+ * Bump cross-release group dependencies.
  *
- * Go all the packages in the repo and update the dependencies to the packages specified version to the one currently in the repo
+ * @remarks
  *
- * @param repo the repo to operate one
- * @param bumpDepPackages update dependencies to these set of packages to current in repo version
- * @param updateLock whether to update the lock file (by npm i) or not
- * @param release make dependencies target release version instead of pre-release versions (e.g. ^0.16.0 vs ^0.16.0-0)
+ * Update the dependencies on the packages specified to a specific version, or the latest version if not specified.
+ *
+ * @param context - The repo {@link Context}.
+ * @param commitMessage - The commit message to use when committing changes. This must be provided if `commit` is true.
+ * @param commit - If true, commit the changes to a new branch.
+ * @param bumpDepPackages - A map of package names to the version that dependencies on that package should be set to.
+ * @param updateLock - If true, update the lock file by running `npm install` automatically.
+ * @param release - If true, make dependencies target release version instead of pre-release versions (e.g. ^0.16.0 vs
+ * ^0.16.0-0)
+ * @param releaseGroup - Only update dependencies within this release group. If not specified, operates on the whole
+ * repo.
  */
-export async function bumpDependencies(context: Context, commitMessage: string, bumpDepPackages: Map<string, string | undefined>, updateLock: boolean, commit: boolean = false, release: boolean = false) {
+export async function bumpDependencies(
+    context: Context,
+    bumpDepPackages: Map<string, string | undefined>,
+    updateLock: boolean = false,
+    commit: boolean = false,
+    commitMessage?: string,
+    release: boolean = true,
+    releaseGroup?: MonoRepoKind,
+) {
     const suffix = release ? "" : "-0";
     const bumpPackages = context.repo.packages.packages.map(pkg => {
-        const matchName = pkg.monoRepo ? MonoRepoKind[pkg.monoRepo.kind] : pkg.name;
+        const matchName = pkg.monoRepo ? pkg.monoRepo.kind : pkg.name;
         const matched = bumpDepPackages.has(matchName);
-        // Only add the suffix if it is not user specified
+        // Only add the suffix if the version is not user specified
         const version = bumpDepPackages.get(matchName) ?? `${pkg.version}${suffix}`;
         return { matched, pkg, version };
     }).filter(rec => rec.matched);
@@ -33,23 +48,30 @@ export async function bumpDependencies(context: Context, commitMessage: string, 
         fatal("Unable to find dependencies to bump");
     }
 
+    if (commitMessage === undefined && commit === true) {
+        fatal("No commit message was provided.");
+    }
+
     const bumpPackageMap = new Map(bumpPackages.map(rec => [rec.pkg.name, { pkg: rec.pkg, rangeSpec: `^${rec.version}` }]));
-    return bumpDependenciesCore(context, commitMessage, bumpPackageMap, updateLock, commit, release);
+    const filteredPackages = await context.repo.packages.filterPackages(releaseGroup);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return bumpDependenciesCore(context, filteredPackages, bumpPackageMap, updateLock, commit, commitMessage!, release);
 }
 
 async function bumpDependenciesCore(
     context: Context,
-    commitMessage: string,
+    filteredPackages: Package[],
     bumpPackageMap: Map<string, { pkg: Package, rangeSpec: string }>,
     updateLock: boolean,
     commit: boolean,
+    commitMessage: string,
     release: boolean,
 ) {
     let changed = false;
     const updateLockPackage: Package[] = [];
 
     const changedVersion = new VersionBag();
-    for (const pkg of context.repo.packages.packages) {
+    for (const pkg of filteredPackages) {
         if (await bumpPackageDependencies(pkg, bumpPackageMap, release, changedVersion)) {
             updateLockPackage.push(pkg);
             changed = true;
@@ -97,8 +119,7 @@ export function getReleasedPrereleaseDependencies(context: Context) {
     const bumpPackageMap = new Map<string, { pkg: Package, rangeSpec: string }>();
     for (const pkg of context.repo.packages.packages) {
         for (const dep of pkg.combinedDependencies) {
-            // detect if the dependency include prerelease.  This doesn't work if it is range
-            if (dep.version.includes("-")) {
+            if (semver.prerelease(dep.version) !== null) {
                 const depPackage = context.fullPackageMap.get(dep.name);
                 // The prerelease dependence doesn't match the live version, assume that it is released already
                 if (depPackage && !prereleaseSatisfies(depPackage.version, dep.version)) {
@@ -119,9 +140,15 @@ export async function cleanPrereleaseDependencies(context: Context, updateLock: 
     console.log(`Updating released prerelease dependencies`
         + `\n${Array.from(releasedPrereleaseDependencies.keys()).join("\n  ")}`);
 
-    await bumpDependenciesCore(context,
+    await bumpDependenciesCore(
+        context,
+        context.repo.packages.packages,
+        releasedPrereleaseDependencies,
+        updateLock,
+        commit,
         "Remove prelease dependencies on release packages",
-        releasedPrereleaseDependencies, updateLock, commit, false);
+        false,
+    );
 }
 
 /**

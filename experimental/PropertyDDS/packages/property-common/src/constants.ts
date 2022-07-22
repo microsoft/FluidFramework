@@ -373,7 +373,7 @@ const PropertyError = {
      * methods: Workspace.get, Property.get
      * Workspace.get and Property.get take in an id (string or number) or an array of ids.
      * @example
-     * ```ts
+     * ```typescript
      *.get(‘position’).get(‘x’) or .get([‘property’, ‘x’])
      * ```
      */
@@ -1248,7 +1248,7 @@ const PropertyFactoryError = {
     /**
      * methods: PropertyFactory.initializeSchemaStore
      * Warning: The initializeSchemaStore method must be provided with an options object
-                containing a getBearerToken function and the url to the ForgeSchemaService.
+     * containing a getBearerToken function and the url to the ForgeSchemaService.
      */
     MISSING_FSS_INIT_OPTIONS: "PF-065: The initializeSchemaStore method must be provided with an options object " +
         "containing a getBearerToken function and the url to the ForgeSchemaService.",

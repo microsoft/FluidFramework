@@ -5,7 +5,7 @@
 
 import { Package } from "../common/npmPackage";
 import { fatal, exec, execNoError } from "./utils";
-import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { MonoRepo } from "../common/monoRepo";
 import * as semver from "semver";
 
 export class VersionBag {
@@ -42,8 +42,12 @@ export class VersionBag {
         return Object.entries(this.versionData)[Symbol.iterator]();
     }
 
-    protected static getEntryName(pkg: Package) {
-        return pkg.monoRepo ? MonoRepoKind[pkg.monoRepo.kind] : pkg.name;
+    protected static getEntryName(pkg: Package): string {
+        if (pkg.monoRepo !== undefined) {
+            return pkg.monoRepo.kind;
+        } else {
+            return pkg.name;
+        }
     }
 }
 
@@ -151,11 +155,11 @@ export class ReferenceVersionBag extends VersionBag {
      * That version is added to the version bag, and will error on conflict.
      * It then ask NPM for the list of dependency for the matched version, and collect the version as well.
      *
-     * @param pkg - the package to begin collection information
-     * @param versionRange - the version range to match
-     * @param repoRoot - where the repo root is
-     * @param fullPackageMap - map of all the package in the repo
-     * @param reference - reference of this dependency for error reporting in case of conflict
+     * @param pkg - The package to begin collection information
+     * @param versionRange - The version range to match
+     * @param repoRoot - Where the repo root is
+     * @param fullPackageMap - Map of all the package in the repo
+     * @param reference - Reference of this dependency for error reporting in case of conflict
      */
     public async collectPublishedPackageDependencies(
         pkg: Package,
