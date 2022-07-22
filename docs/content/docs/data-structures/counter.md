@@ -94,11 +94,15 @@ sharedMap.increment(3); // Adds 3 to the current value
 sharedMap.increment(-5); // Subtracts 5 from the current value
 ```
 
-### [incremented]({{< relref "isharedcounterevents.md#_call_-CallSignature" >}}) event
+### `incremented` event
 
-The `incremented` event is sent when a client in the collaborative session changes the counter value via `increment`.
+The [incremented]({{< relref "isharedcounterevents.md#_call_-CallSignature" >}}) event is sent when a client in the collaborative session changes the counter value via `increment`.
 
-> Signature: `(event: "incremented", listener: (incrementAmount: number, newValue: number) => void)`
+Signature:
+
+```javascript
+(event: "incremented", listener: (incrementAmount: number, newValue: number) => void)
+```
 
 By registering with this event, you can receive and apply the necessary deltas coming from other collaborators.
 Consider the following code example for configuring a Counter widget:
