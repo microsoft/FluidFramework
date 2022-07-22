@@ -16,7 +16,7 @@ import {
     mapCursorField,
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
-import { FieldKey, TreeType, DetachedRange, AnchorSet, Value } from "../../tree";
+import { FieldKey, TreeType, DetachedRange, AnchorSet, Value, Delta } from "../../tree";
 import { brand, fail } from "../../util";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
@@ -38,6 +38,10 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         this.roots.set(this.rootField, []);
         // Invalidate forest if schema change.
         recordDependency(this.dependent, this.schema);
+    }
+
+    applyDelta(delta: Delta.Root): void {
+        throw new Error("Method not implemented.");
     }
 
     public observeItem(item: ObjectField | ObjectNode, observer: ObservingDependent | undefined): void {
