@@ -142,4 +142,4 @@ Since `updateCounterValueLabel` is registered for all `incremented` events, the 
 
 ## API Documentation
 
-For a comprehensive view of the `counter` package's API documentation, see [here]({{< relref "apis/counter.md" >}}).
+For a comprehensive view of the `counter` package's API documentation, see [here]({{< ref "docs/apis/counter.md" >}}).
