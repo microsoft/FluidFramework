@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NodeId } from ".";
+import { JsonableTree } from "../tree";
 
 // TODOs:
 // Clipboard
@@ -28,7 +28,7 @@ export namespace Transposed {
 	}
 
 	export interface Changeset {
-		marks: PositionedMarks;
+		marks: MarkList;
 		moves?: MoveEntry[];
 	}
 
@@ -39,20 +39,10 @@ export namespace Transposed {
 		hops?: TreePath[];
 	}
 
-	export type PositionedMarks<TMark = Mark> = MarkWithOffset<TMark>[];
-
-	/**
-	 * See PositionedMarks.
-	 */
-	export interface MarkWithOffset<TMark = Mark> {
-		/**
-		 * Interpreted as zero when omitted.
-		 */
-		offset?: Offset;
-		mark: TMark;
-	}
+	export type MarkList<TMark = Mark> = TMark[];
 
 	type Mark =
+		| Skip
 		| Tomb
 		| Modify
 		| Detach
@@ -90,7 +80,7 @@ export namespace Transposed {
 	}
 
 	export interface FieldMarks {
-		[key: string]: PositionedMarks;
+		[key: string]: MarkList;
 	}
 
 	export interface HasPlaceFields {
@@ -330,26 +320,11 @@ export interface HasOpId {
 /**
  * The contents of a node to be created
  */
-export interface ProtoNode {
-	id?: NodeId;
-	type?: string;
-	value?: Value;
-	fields?: ProtoFields;
-}
+export type ProtoNode = JsonableTree;
 
-/**
- * The fields of a node to be created
- */
-export interface ProtoFields {
-	[key: string]: ProtoField;
-}
-
-export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (TOffset | TContent)[];
-
-export type ProtoField = ProtoNode[];
 export type NodeCount = number;
 export type GapCount = number;
-export type Offset = number;
+export type Skip = number;
 export type SeqNumber = number;
 export type Value = number | string | boolean;
 export type ClientId = number;

@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { Container } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, timeoutPromise } from "@fluidframework/test-utils";
+import { ITestObjectProvider, timeoutPromise, ensureContainerConnected } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
@@ -44,12 +44,6 @@ describeFullCompat("Audience correctness", (getTestObjectProvider) => {
 
     const createContainer = async (): Promise<Container> => await provider.createContainer(runtimeFactory) as Container;
     const loadContainer = async (): Promise<Container> => await provider.loadContainer(runtimeFactory) as Container;
-
-    async function ensureContainerConnected(container: Container): Promise<void> {
-        if (!container.connected) {
-            return new Promise((resolve) => container.once("connected", () => resolve()));
-        }
-    }
 
     /** Function to wait for a client with the given clientId to be added to the audience of the given container. */
     async function waitForClientAdd(container: Container, clientId: string, errorMsg: string) {

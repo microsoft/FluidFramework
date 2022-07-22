@@ -2,7 +2,7 @@ name: Merge commits to next branch
 
 on:
   schedule:
-    - cron: "0 15-23/2 * * 1-5" # Cron timezone is in UTC
+    - cron: "0 */2 * * 1-5" # Cron timezone is in UTC
 
 env:
   TARGET_BRANCH: next
@@ -119,15 +119,17 @@ jobs:
             const token = `${{ secrets.GITHUB_TOKEN }}`;
             const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
             const author = '${{needs.dequeue.outputs.AUTHOR}}';
+            const description = `The aim of this pull request is to sync main and next branch. The expectation from the assignee is as follows:
+                1. Acknowledge the pull request by adding a comment -- "Actively working on it"
+                2. Resolve any merge conflicts/CI failures that you see locally.
+
+                You can also find more information about how to resolve build failures and conflicts: https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation`;
             const octokit = new Octokit({ auth: token })
             const newPr = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
               owner: 'microsoft',
               repo: 'FluidFramework',
               title: 'Automation: Main Next Integrate',
-              body: 'The aim of this pull request is to sync main and next branch. The expectation from the assignee is as follows:
-                1. Acknowledge the pull request by adding a comment -- "Actively working on it"
-                2. Resolve any merge conflicts/CI failures see locally.
-                You can also find more information about how to resolve build failures and conflicts: https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation',
+              body: description,
               head: sha,
               base: 'next'
             });

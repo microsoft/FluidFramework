@@ -54,8 +54,10 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     return result;
 }
 
-// Does NOT update anchors.
-function applyDeltaToForest(forest: IEditableForest, delta: Delta.Root) {
+/**
+ * Does NOT update anchors.
+ */
+export function applyDeltaToForest(forest: IEditableForest, delta: Delta.Root) {
     // TODO
 }
 

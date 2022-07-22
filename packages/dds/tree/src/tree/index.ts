@@ -17,3 +17,4 @@ export {
 
 export * from "./pathTree";
 export * from "./anchorSet";
+export * from "./treeTextFormat";
