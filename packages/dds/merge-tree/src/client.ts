@@ -53,7 +53,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
-import { MergeTree } from "./mergeTree";
+import { hasOverlappingLocalRemove, MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import {
     IMergeTreeClientSequenceArgs,
@@ -778,6 +778,10 @@ export class Client {
         localSeq: number,
     ): number {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
+        // if (seqNumberFrom < this.mergeTree.collabWindow.minSeq) {
+        //     console.log("oh no");
+        // }
+        // assert(seqNumberFrom >= this.mergeTree.collabWindow.minSeq, "rebase attempted from outside collab window");
         let segment: ISegment | undefined;
         let posAccumulated = 0;
         let offset = pos;
@@ -785,9 +789,12 @@ export class Client {
             (seg.seq !== undefined && seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom)
             || (seg.localSeq !== undefined && seg.localSeq <= localSeq);
 
-        const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment) =>
-            (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
-            || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
+        const isRemovedFromView = (segment: ISegment) => {
+            const { removedSeq, localRemovedSeq } = segment;
+            return (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
+            || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq)
+            || hasOverlappingLocalRemove(segment, localSeq)
+        }
 
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
             assert(seg.seq !== undefined || seg.localSeq !== undefined,
@@ -804,6 +811,19 @@ export class Client {
             // Keep going while we've yet to reach the segment at the desired position
             return posAccumulated <= pos;
         });
+
+        let fastPathSegment = this.mergeTree.getContainingLocalSegment(pos, seqNumberFrom, localSeq);
+        if (fastPathSegment.segment === undefined && fastPathSegment.offset === undefined) {
+
+            // TODO: We may want some more validation for this case. Old code path did happen to do the right thing...
+            fastPathSegment = this.mergeTree.getContainingLocalSegment(pos, seqNumberFrom, localSeq);
+        } else if (fastPathSegment.segment !== segment || fastPathSegment.offset !== offset) {
+            // PartialSequenceLengths.combine((this.mergeTree.root as any).children[5], this.getCollabWindow(), false, true);
+            // (this.mergeTree.root as any).children[5].partialLengths.getPartialLength(seqNumberFrom, 0, localSeq);
+            // Problem is in building partial lengths for mergeTree's 1st child for 4.json
+            this.mergeTree.getContainingLocalSegment(pos, seqNumberFrom, localSeq);
+            assert(false, "Fast path returned different result from regular path");
+        }
 
         assert(segment !== undefined, 0x302 /* No segment found */);
         const seqNumberTo = this.getCollabWindow().currentSeq;
