@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { jsonString } from "../..";
-import { Delta, DeltaVisitor, visitDelta } from "../../changeset";
-import { FieldKey } from "../../tree";
+import { DeltaVisitor, visitDelta } from "../../changeset";
+import { FieldKey, Delta } from "../../tree";
 import { brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";
 

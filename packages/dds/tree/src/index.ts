@@ -12,6 +12,7 @@ export {
     EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedRange,
     PathShared, UpPath, Anchor, RootRange, PathCollection, PathNode, ChildCollection,
     ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
+    Delta,
 } from "./tree";
 
 export { ITreeCursor, TreeNavigationResult, IEditableForest,
@@ -53,10 +54,6 @@ export {
     FinalFromChangeRebaser,
     ChangeSetFromChangeRebaser,
 } from "./rebase";
-
-export {
-    Delta,
-} from "./changeset";
 
 export {
     cursorToJsonObject,
