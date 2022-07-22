@@ -52,6 +52,7 @@ USAGE
 
 <!-- commands -->
 * [`fluv help [COMMAND]`](#fluv-help-command)
+* [`fluv version VERSION`](#fluv-version-version)
 
 ## `fluv help [COMMAND]`
 
@@ -72,6 +73,48 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.12/src/commands/help.ts)_
+
+## `fluv version VERSION`
+
+Convert version strings between regular semver and the Fluid internal version scheme.
+
+```
+USAGE
+  $ fluv version [VERSION] [--json] [-t major|minor|patch|current] [--publicVersion <value>]
+
+ARGUMENTS
+  VERSION  The version to convert.
+
+FLAGS
+  -t, --type=<option>      bump type
+                           <options: major|minor|patch|current>
+  --publicVersion=<value>  [default: 2.0.0] The public version to use in the Fluid internal version.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Convert version strings between regular semver and the Fluid internal version scheme.
+
+EXAMPLES
+  The version can be a Fluid internal version.
+
+    $ fluv version 2.0.0-internal.1.0.0 --type minor
+
+  The version can also be a semver with a bump type.
+
+    $ fluv version 1.0.0 --type minor
+
+  If needed, you can provide a public version to override the default.
+
+    $ fluv version 1.0.0 --type patch --publicVersion 3.1.0
+
+  You can use ^ and ~ as a shorthand.
+
+    $ fluv version ^1.0.0
+```
+
+_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
 <!-- commandsstop -->
 
 ## Trademark
