@@ -48,7 +48,8 @@ const snapshotFileName = "header";
  * ```
  *
  * The initial value of a new `SharedCounter` is 0.
- * If you wish to initialize the counter to a different value, you may call {@link ISharedCounter.increment} before attaching the Container, or before inserting it into an existing shared object.
+ * If you wish to initialize the counter to a different value, you may call {@link ISharedCounter.increment} before
+ * attaching the Container, or before inserting it into an existing shared object.
  *
  * ### Usage
  *
