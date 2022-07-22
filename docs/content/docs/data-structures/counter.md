@@ -78,7 +78,7 @@ For general guidance on storing DDS references as handles, please see [Using han
 
 ## Usage
 
-The `SharedCounter` object provides a simple API surface for managing a shared counter value.
+The `SharedCounter` object provides a simple API surface for managing a shared integer whose value may be incremented and decremented by collaborators.
 A new `SharedCounter` value will be initialized with its value set to `0`.
 If you wish to initialize the counter to a different value, you may [modify the value](#incrementing--decrementing-the-value) before attaching the Container, or before inserting it into an existing shared object like a `SharedMap`.
 
