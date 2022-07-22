@@ -1061,7 +1061,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private _orderSequentiallyCalls: number = 0;
     private readonly _flushMode: FlushMode;
     private needsFlush = false;
-    private flushTrigger = false;
 
     private _connected: boolean;
 
