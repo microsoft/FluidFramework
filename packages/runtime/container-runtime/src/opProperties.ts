@@ -8,11 +8,14 @@ import { ISequencedDocumentMessage, ISequencedDocumentSystemMessage } from "@flu
 export const opSize = (op: ISequencedDocumentMessage): number => {
     // Some messages may already have string contents,
     // so stringifying them again will add inaccurate overhead.
-    const content = typeof op.contents === "string" ?
-        op.contents :
-        JSON.stringify(op.contents);
+    let content = "";
+    if (op.contents) {
+        content = typeof op.contents === "string" ?
+            op.contents :
+            JSON.stringify(op.contents);
+    }
     const data = opHasData(op) ? op.data : "";
-    return content?.length + data.length;
+    return content.length + data.length;
 };
 
 const opHasData = (op: ISequencedDocumentMessage): op is ISequencedDocumentSystemMessage =>
