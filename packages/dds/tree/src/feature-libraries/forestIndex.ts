@@ -18,7 +18,7 @@ import {
 import { Index, SummaryElement } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
 import { PlaceholderTree, Delta } from "../tree";
-import { placeholderTreeFromCursor } from "./treeTextCursor";
+import { jsonableTreeFromCursor } from "./treeTextCursor";
 
 /**
  * Index which provides an editable forest for the current state for the document.
@@ -81,7 +81,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         const roots: PlaceholderTree[] = [];
         let result = this.forest.tryGet(rootAnchor, this.cursor);
         while (result === TreeNavigationResult.Ok) {
-            roots.push(placeholderTreeFromCursor(this.cursor));
+            roots.push(jsonableTreeFromCursor(this.cursor));
             result = this.cursor.seek(1).result;
         }
         this.cursor.clear();
