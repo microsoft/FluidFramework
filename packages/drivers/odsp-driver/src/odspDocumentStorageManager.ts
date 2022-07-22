@@ -237,9 +237,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                     const props: GetVersionsTelemetryProps = {};
                     let retrievedSnapshot: ISnapshotContents | undefined;
 
-                    // Based on the concurrentSnapshotFetch policy:
-                    // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
-                    // or grab the cache value and then the network value if the cache value returns undefined.
                     let method: string;
                     if (bypassCache) {
                         retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, scenarioName);
@@ -274,6 +271,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
                                 return snapshotCachedEntry;
                             });
 
+                        // Based on the concurrentSnapshotFetch policy:
+                        // Either retrieve both the network and cache snapshots concurrently and pick the first to return,
+                        // or grab the cache value and then the network value if the cache value returns undefined.
                         if (this.hostPolicy.concurrentSnapshotFetch && !this.hostPolicy.summarizerClient) {
                             const networkSnapshotP = this.fetchSnapshot(hostSnapshotOptions, scenarioName);
 
