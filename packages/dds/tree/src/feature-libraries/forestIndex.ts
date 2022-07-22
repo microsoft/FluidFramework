@@ -18,8 +18,7 @@ import {
 import { Index, SummaryElement } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
 import { PlaceholderTree, Delta } from "../tree";
-import { applyDeltaToForest } from "../transaction";
-import { placeholderTreeFromCursor, TextCursor } from "./treeTextCursor";
+import { placeholderTreeFromCursor } from "./treeTextCursor";
 
 /**
  * Index which provides an editable forest for the current state for the document.
@@ -65,7 +64,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     }
 
     newLocalState(changeDelta: Delta.Root): void {
-        applyDeltaToForest(this.forest, changeDelta);
+        this.forest.applyDelta(changeDelta);
     }
 
     /**
@@ -165,9 +164,8 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         const placeholderTree = JSON.parse(decodedtree) as PlaceholderTree[];
 
         // TODO: maybe assert forest is empty?
-        const range = this.forest.add(placeholderTree.map((t) => new TextCursor(t)));
-        const dst = { index: 0, range: this.forest.rootField };
-        this.forest.attachRangeOfChildren(dst, range);
+        const insert: Delta.Insert = { type: Delta.MarkType.Insert, content: placeholderTree };
+        this.forest.applyDelta([insert]);
 
         // TODO: use decodedSchema to initialize forest.schema
         throw new Error("Method not implemented.");
