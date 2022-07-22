@@ -58,7 +58,7 @@ const { container, services } = await client.getContainer(id, schema);
 const counter = container.initialObjects.sharedCounter;
 ```
 
-Finally, if you'd like to dynamically create `SharedCounter` instances as part of the application lifecycle (i.e. if there are user interactions in the applications that require a new DDS to be created at runtime), you can add the `SharedCounter` type to the `dynamicObjectTypes` field in the schema and call the container's `create` function.
+Finally, if you'd like to dynamically create `SharedCounter` instances as part of the application lifecycle (i.e. if there are user interactions in the applications that require a new `SharedCounter` instance to be created at runtime), you can add the `SharedCounter` type to the `dynamicObjectTypes` field in the schema and call the container's `create` function.
 
 ```javascript
 const schema = {
