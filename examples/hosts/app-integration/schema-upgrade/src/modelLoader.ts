@@ -15,11 +15,11 @@ import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-d
 import { IMigratable, IModelLoader } from "./interfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import {
-    App as App1,
+    InventoryListContainer as InventoryListContainer1,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
 } from "./version1";
 import {
-    App as App2,
+    InventoryListContainer as InventoryListContainer2,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
 } from "./version2";
 
@@ -68,12 +68,12 @@ const getModel = async (container: IContainer): Promise<IMigratable> => {
 
     switch (version) {
         case "one": {
-            const model = new App1(container);
+            const model = new InventoryListContainer1(container);
             await model.initialize();
             return model;
         }
         case "two": {
-            const model = new App2(container);
+            const model = new InventoryListContainer2(container);
             await model.initialize();
             return model;
         }
@@ -83,16 +83,21 @@ const getModel = async (container: IContainer): Promise<IMigratable> => {
 
 // This ModelLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate model for unknown versions.
+// It has a default constructor, but a more realistic usage of the pattern might take the same parameters as
+// the Loader (urlResolver, documentServiceFactory, codeLoader) plus a modelCodeLoader that provides the getModel
+// functionality.  TODO: Determine if this demo should do that.
 export class ModelLoader implements IModelLoader {
     private readonly loader: IHostLoader = createLoader();
 
     // TODO: Make this async to support network calls (e.g. if dynamically retrieving the model code)?
+    // TODO: If I parameterize a modelCodeLoader, then the modelCodeLoader would implement this method.
     public isVersionSupported(version: string): boolean {
         return version === "one" || version === "two";
     }
 
     // Would be preferable to have a way for the customer to call service.attach(model) rather than returning an
     // attach callback here.
+    // TODO: Figure out how the attach call looks with the service parameterized
     public async createDetached(
         version: "one" | "two",
     ): Promise<{ model: IMigratable; attach: () => Promise<string>; }> {

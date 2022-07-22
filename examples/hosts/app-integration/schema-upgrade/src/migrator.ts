@@ -143,7 +143,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             const migrated = await this.modelLoader.loadExisting(migratedId);
             this._currentMigratable = migrated;
             this.emit("migrated", migrated, migratedId);
-            // Not sure I really want to do the closing here - should this be left to the caller to decide?
+            // TODO: Not sure I really want to do the closing here - should this be left to the caller to decide?
             migratable.close();
             this._migratedLoadP = undefined;
 

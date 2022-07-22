@@ -5,16 +5,18 @@
 
 import React, { useEffect, useState } from "react";
 
-import { IInventoryListApp, MigrationState } from "./interfaces";
+import { IInventoryListContainer, MigrationState } from "./interfaces";
 import { InventoryListView } from "./inventoryView";
 
-export interface IAppViewProps {
-    model: IInventoryListApp;
+export interface IInventoryListContainerViewProps {
+    model: IInventoryListContainer;
 }
 
-export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
+export const InventoryListContainerView: React.FC<IInventoryListContainerViewProps> =
+    (props: IInventoryListContainerViewProps) => {
     const { model } = props;
 
+    // TODO: Maybe move disable handling outside of the view?
     const [disableInput, setDisableInput] = useState<boolean>(
         model.getMigrationState() !== MigrationState.collaborating,
     );

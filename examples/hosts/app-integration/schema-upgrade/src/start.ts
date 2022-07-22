@@ -6,14 +6,14 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { AppView } from "./appView";
+import { InventoryListContainerView } from "./appView";
 import { ModelLoader } from "./modelLoader";
 import { DebugView } from "./debugView";
 import { externalDataSource } from "./externalData";
 import { IMigratable } from "./interfaces";
 import { Migrator } from "./migrator";
-import { App as App1 } from "./version1";
-import { App as App2 } from "./version2";
+import { InventoryListContainer as InventoryListContainer1 } from "./version1";
+import { InventoryListContainer as InventoryListContainer2 } from "./version2";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -23,26 +23,26 @@ const updateTabForId = (id: string) => {
     document.title = id;
 };
 
-const isApp1 = (model: IMigratable): model is App1 => {
+const isInventoryListContainer1 = (model: IMigratable): model is InventoryListContainer1 => {
     return model.version === "one";
 };
 
-const isApp2 = (model: IMigratable): model is App2 => {
+const isInventoryListContainer2 = (model: IMigratable): model is InventoryListContainer2 => {
     return model.version === "two";
 };
 
 const render = (model: IMigratable) => {
-    // Here, could switch on the model.version to determine different views to load (AppView1 vs. AppView2).
-    // For this demo, the view can currently render either model type.
-    if (!isApp1(model) && !isApp2(model)) {
+    // Here, could switch on the model.version to determine different views to load (InventoryListContainerView1
+    // vs. InventoryListContainerView2). For this demo, the view can currently render either model type.
+    if (!isInventoryListContainer1(model) && !isInventoryListContainer2(model)) {
         throw new Error(`Don't know how to render version ${model.version}`);
     }
 
-    // The AppView is what a normal user would see in a normal scenario...
+    // The InventoryListContainerView is what a normal user would see in a normal scenario...
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     ReactDOM.render(
-        React.createElement(AppView, { model }),
+        React.createElement(InventoryListContainerView, { model }),
         appDiv,
     );
 

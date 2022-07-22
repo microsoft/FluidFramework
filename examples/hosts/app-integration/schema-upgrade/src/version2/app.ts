@@ -7,7 +7,12 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { IInventoryListApp, IInventoryListAppEvents, IContainerKillBit, IInventoryList } from "../interfaces";
+import type {
+    IInventoryListContainer,
+    IInventoryListContainerEvents,
+    IContainerKillBit,
+    IInventoryList,
+} from "../interfaces";
 import { MigrationState } from "../interfaces";
 import { containerKillBitId } from "./containerCode";
 
@@ -56,12 +61,13 @@ const extractStringData = async (inventoryList: IInventoryList) => {
 };
 
 /**
- * The App serves the purpose of wrapping this particular Container in a friendlier interface, with stronger typing
- * and accessory functionality.  It should have the same layering restrictions as we want for the Container (e.g. no
- * direct access to the Loader).  It does not have a goal of being general-purpose like Container does -- instead it
- * is specially designed for the specific container code.
+ * The InventoryListContainer serves the purpose of wrapping this particular Container in a friendlier interface,
+ * with stronger typing and accessory functionality.  It should have the same layering restrictions as we want for
+ * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
+ * Container does -- instead it is specially designed for the specific container code.
  */
-export class App extends TypedEventEmitter<IInventoryListAppEvents> implements IInventoryListApp {
+export class InventoryListContainer extends TypedEventEmitter<IInventoryListContainerEvents>
+    implements IInventoryListContainer {
     // To be used by the consumer of the model to pair with an appropriate view.
     public readonly version = "two";
     private _migrationState = MigrationState.collaborating;
@@ -72,7 +78,7 @@ export class App extends TypedEventEmitter<IInventoryListAppEvents> implements I
     private _inventoryList: IInventoryList | undefined;
     public get inventoryList() {
         if (this._inventoryList === undefined) {
-            throw new Error("Initialize App before using");
+            throw new Error("Initialize InventoryListContainer before using");
         }
         return this._inventoryList;
     }
@@ -80,7 +86,7 @@ export class App extends TypedEventEmitter<IInventoryListAppEvents> implements I
     private _containerKillBit: IContainerKillBit | undefined;
     private get containerKillBit() {
         if (this._containerKillBit === undefined) {
-            throw new Error("Initialize App before using");
+            throw new Error("Initialize InventoryListContainer before using");
         }
         return this._containerKillBit;
     }
@@ -90,8 +96,8 @@ export class App extends TypedEventEmitter<IInventoryListAppEvents> implements I
     }
 
     /**
-     * Initialize must be called after constructing the app.  This is where we do whatever async stuff is needed
-     * to prepare a sync API surface on the app.
+     * Initialize must be called after constructing the InventoryListContainer.  This is where we do whatever async
+     * stuff is needed to prepare a sync API surface on the InventoryListContainer.
      */
     public readonly initialize = async () => {
         this._inventoryList = await getInventoryListFromContainer(this.container);
@@ -102,7 +108,7 @@ export class App extends TypedEventEmitter<IInventoryListAppEvents> implements I
     };
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
-    // importing data into a completely untouched app.
+    // importing data into a completely untouched InventoryListContainer.
     public readonly importStringData = async (initialData: string) => {
         if (this.container.attachState !== AttachState.Detached) {
             throw new Error("Cannot set initial data after attach");
