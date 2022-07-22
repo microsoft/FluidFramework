@@ -54,7 +54,7 @@ export type ChildCollection = FieldKey | RootField;
  * In some APIs DetachedFields are used as LocalFieldKeys on a special implicit root node
  * to simplify the APIs and implementation.
  */
-export interface DetachedField extends Opaque<Brand<number, "tree.DetachedField">> {}
+export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {}
 
 /**
  * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.
