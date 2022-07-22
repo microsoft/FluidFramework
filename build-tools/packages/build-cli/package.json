@@ -26,7 +26,8 @@
   ],
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:compile": "rimraf dist oclif.manifest.json && npm run tsc",
+    "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
+    "build:compile": "npm run build:clean && npm run tsc",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
@@ -41,8 +42,7 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "test": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
-    "tsc": "tsc -b",
-    "version": "npm run build:readme && git add README.md"
+    "tsc": "tsc"
   },
   "dependencies": {
     "@fluid-tools/version-tools": "^0.3.0",
@@ -53,6 +53,7 @@
     "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
+    "chalk": "^2.4.2",
     "inquirer": "^9.0.0",
     "semver": "^7.3.7",
     "table": "^6.8.0"

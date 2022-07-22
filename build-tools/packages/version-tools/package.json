@@ -20,14 +20,16 @@
   ],
   "scripts": {
     "build": "npm run build:genver && npm run build:compile && npm run lint",
-    "build:commonjs": "rimraf dist oclif.manifest.json && npm run tsc",
+    "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
+    "build:commonjs": "npm run build:clean && npm run tsc",
     "build:compile": "npm run build:commonjs",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
     "build:readme": "oclif readme",
-    "clean": "rimraf dist lib *.tsbuildinfo *.build.log oclif.manifest.json",
+    "build:test": "tsc --project ./test/tsconfig.json",
+    "clean": "rimraf dist oclif.manifest.json lib *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
@@ -37,7 +39,7 @@
     "prettier:fix": "prettier --write .",
     "test": "npm run test:mocha",
     "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
-    "tsc": "tsc -b"
+    "tsc": "tsc"
   },
   "nyc": {
     "all": true,
@@ -60,12 +62,14 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
+    "@fluidframework/build-tools": "^0.3.0",
     "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
+    "chalk": "^2.4.2",
     "semver": "^7.3.7",
     "table": "^6.8.0"
   },
