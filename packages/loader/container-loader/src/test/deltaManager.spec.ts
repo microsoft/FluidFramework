@@ -176,6 +176,7 @@ describe("Loader", () => {
                     await tickClock(1000 * 1000);
                     assert.equal(counter, 0, "No messages sent after 99 ops");
                     tracker.scheduleSequenceNumberUpdate(generateOp(), false);
+                    await tickClock(1000 * 1000);
                     assert.equal(counter, 1, "One message should be sent");
                 });
 

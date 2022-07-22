@@ -70,7 +70,8 @@ export class CollabWindowTracker {
 
         this.opsCountSinceNoop++;
         if (this.opsCountSinceNoop === this.NoopCountFrequency) {
-            void Promise.resolve().then(() => {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            Promise.resolve().then(() => {
                 this.submitNoop(false /* immediate */);
                 // reset count now that all ops are processed
                 this.opsCountSinceNoop = 0;
