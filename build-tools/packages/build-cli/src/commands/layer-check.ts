@@ -18,7 +18,7 @@ export class LayerCheck extends BaseCommand {
   static flags = {
     md: Flags.boolean({ required: true }),
     dot: Flags.boolean({ required: true }),
-    info: Flags.boolean({ required: true });
+    info: Flags.boolean({ required: true }),
     ...super.flags,
   };
 
@@ -36,7 +36,7 @@ export class LayerCheck extends BaseCommand {
 
     try {
 
-        const layerGraph = LayerGraph.load(resolvedRoot, packages);
+        const layerGraph = LayerGraph.load(resolvedRoot, packages, String(flags.info));
 
         // Write human-readable package list organized by layer
         if (flags.md) {
@@ -46,7 +46,7 @@ export class LayerCheck extends BaseCommand {
 
         // Write machine-readable dot file used to render a dependency graph
         if (flags.dot !== undefined) {
-            await writeFileAsync(flags.dot, layerGraph.generateDotGraph());
+            await writeFileAsync(Number(flags.dot), layerGraph.generateDotGraph());
         }
 
         const success: boolean = layerGraph.verify();

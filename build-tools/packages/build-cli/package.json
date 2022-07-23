@@ -100,12 +100,8 @@
     "plugins": [
       "@oclif/plugin-commands",
       "@oclif/plugin-help",
-<<<<<<< HEAD
-      "@oclif/plugin-not-found"
-=======
       "@oclif/plugin-not-found",
       "@fluid-tools/version-tools"
->>>>>>> 2433ee81f9e2445ca43961f58d574379029a10ca
     ],
     "topicSeparator": " ",
     "topics": {}
