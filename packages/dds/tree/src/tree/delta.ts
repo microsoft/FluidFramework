@@ -142,7 +142,7 @@ import { JsonableTree } from "./treeTextFormat";
 /**
  * Represents the change made to a document.
  */
-export type Root = MarkList<OuterMark>;
+export type Root = FieldMarks<OuterMark>;
 
 /**
  * Represents a change being made to a part of the tree.

@@ -136,7 +136,7 @@ export interface Dependent extends NamedComputation {
 }
 
 // @public
-export interface DetachedField extends Opaque<Brand<number, "tree.DetachedField">> {
+export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
 
 // @public
@@ -571,7 +571,7 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public
-type Root = MarkList<OuterMark>;
+type Root = FieldMarks<OuterMark>;
 
 // @public
 export interface RootField {

@@ -69,7 +69,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 
     private nextRange = 0;
     public newRange(): DetachedField {
-        const range = brand<DetachedField>(this.nextRange);
+        const range = brand<DetachedField>(String(this.nextRange));
         this.nextRange += 1;
         return range;
     }
