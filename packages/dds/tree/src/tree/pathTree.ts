@@ -18,14 +18,14 @@ export interface UpPath {
     /**
      * @returns the parent, or undefined in the case where this path is a member of a detached sequence.
      */
-    parent(): UpPath | undefined;
+    readonly parent: UpPath | undefined;
     /**
      * The Field under which this path points.
      * Note that if `parent` returns `undefined`, this key is a LocalFieldKey that corresponds to a detached sequence.
      */
-    parentField(): FieldKey; // TODO: Type information, including when in DetachedField.
+     readonly parentField: FieldKey; // TODO: Type information, including when in DetachedField.
     /**
      * The index within `parentField` this path is pointing to.
      */
-    parentIndex(): number; // TODO: field index branded type?
+     readonly parentIndex: number; // TODO: field index branded type?
 }

@@ -17,7 +17,7 @@ import {
 import { StoredSchemaRepository } from "../../schema";
 import {
     FieldKey, TreeType, DetachedField, AnchorSet,
-    Value, Delta, JsonableTree, getGenericTreeField, FieldMap,
+    Value, Delta, JsonableTree, getGenericTreeField, FieldMap, UpPath, Anchor,
 } from "../../tree";
 import { brand, fail } from "../../util";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
@@ -244,16 +244,25 @@ class RootAnchor extends ObjectAnchor {
 }
 
 /**
- * Simple anchor that just points to a node object.
- * This results in pretty basic anchor rebase policy.
+ * AnchorSet powered ForestAnchor.
  */
-class NodeAnchor extends ObjectAnchor {
-    public constructor(public readonly node: JsonableTree) {
+ export class ObjectPathAnchor extends ObjectAnchor implements ForestAnchor {
+    state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
+    public constructor(public readonly path: Anchor, private readonly anchorSet: AnchorSet) {
         super();
     }
+    free(): void {
+        super.free();
+        this.anchorSet.forget(this.path);
+    }
 
-    find(forest: ObjectForest): JsonableTree | undefined {
-        return this.node;
+    find(forest: ObjectForest, observer: ObservingDependent | undefined): JsonableTree | undefined {
+        const path = forest.anchors.locate(this.path);
+        if (path === undefined) {
+            return undefined;
+        }
+        // TODO: follow path down tree and return subtree;
+        throw new Error("Method not implemented.");
     }
 }
 
@@ -317,10 +326,7 @@ class Cursor implements ITreeSubscriptionCursor {
     }
 
     getField(key: FieldKey): readonly JsonableTree[] {
-        // Save result to a constant to work around linter bug:
-        // https://github.com/typescript-eslint/typescript-eslint/issues/5014
-        const field: readonly JsonableTree[] = this.getFields()[key as string] ?? [];
-        return field;
+        return this.getFields()[key as string] ?? [];
     }
 
     get value(): Value {
@@ -342,7 +348,29 @@ class Cursor implements ITreeSubscriptionCursor {
         this.state = ITreeSubscriptionCursorState.Freed;
     }
     buildAnchor(): ForestAnchor {
-        return new NodeAnchor(this.getNode());
+        // Perf Note:
+        // This is O(depth) in tree.
+        // If many different anchors are created, this could be optimized to amortize the costs.
+        // For example, the cursor could cache UpPaths from the anchorSet when creating an anchor,
+        // then reuse them as a starting point when making another.
+        // Could cache this at one depth, and remember the depth.
+        // When navigating up, adjust cached anchor is present.
+
+        let path: UpPath | undefined;
+        const length = this.parentStack.length;
+        assert(this.indexStack.length === length, "Unexpected indexStack.length");
+        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
+        for (let height = 0; height < length; height++) {
+            path = {
+                parent: path,
+                parentIndex: this.indexStack[height],
+                parentField: height === 0 ? this.root as unknown as FieldKey : this.keyStack[height + 1],
+            };
+        }
+        // Height must be at least one (since its greater than this.keyStack.length), so path will always be set here.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const anchor = this.forest.anchors.track(path!);
+        return new ObjectPathAnchor(anchor, this.forest.anchors);
     }
     down(key: FieldKey, index: number): TreeNavigationResult {
         const siblings = this.getField(key);
@@ -370,18 +398,20 @@ class Cursor implements ITreeSubscriptionCursor {
         return { result: TreeNavigationResult.NotFound, moved: 0 };
     }
     up(): TreeNavigationResult {
-        if (this.parentStack.length === 0) {
+        if (this.parentStack.pop() === undefined) {
+            // We are at the root, so return NotFound without making any changes to the state.
             return TreeNavigationResult.NotFound;
         }
-        this.parentStack.pop();
         this.indexStack.pop();
         this.keyStack.pop();
         // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        this.siblings = this.parentStack.length === 0 ?
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.forest.getRoot(this.root!) :
-            (this.parentStack[this.parentStack.length - 1].fields ?? {}
-                )[this.keyStack[this.keyStack.length - 1] as string];
+        if (this.parentStack.length === 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.siblings = this.forest.getRoot(this.root!);
+        } else {
+            const newParent = this.parentStack[this.parentStack.length - 1];
+            this.siblings = getGenericTreeField(newParent, this.keyStack[this.keyStack.length - 1], false);
+        }
         return TreeNavigationResult.Ok;
     }
 

@@ -4,13 +4,10 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { Brand } from "../util";
+import { brand, Brand } from "../util";
 import {
-    ChildLocation,
-    DetachedField,
-    ChildCollection,
-    RootField,
     FieldKey,
+    EmptyKey,
  } from "../tree";
 import { UpPath } from "./pathTree";
 
@@ -24,12 +21,13 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
  *
  * See {@link Rebaser} for how to update across revisions.
  */
-
 export class AnchorSet {
-    public readonly paths = new PathCollection();
-    public readonly anchorsToPath: Map<Anchor, PathShared> = new Map();
-    public constructor() {
-    }
+    private anchorCounter = 0;
+    // This keeps a ref to this, preventing the root from being deleted.
+    private readonly root = new PathNode(this, EmptyKey, 0, undefined);
+    // TODO: anchor system could be optimized a bit to avoid the maps (Anchor is ref to Path, path has ref count).
+    // For now use this more encapsulated approach with maps.
+    private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
 
     /**
      * TODO: support extra/custom return types for specific anchor types:
@@ -39,18 +37,100 @@ export class AnchorSet {
     public locate(anchor: Anchor): UpPath | undefined {
         // TODO: this should error for anchors that do not exist,
         // and return undefined only if anchor does exist, but points nowhere in current revision.
-        return this.anchorsToPath.get(anchor);
+        return this.anchorToPath.get(anchor);
     }
 
     public forget(anchor: Anchor): void {
-        throw Error("Not implemented"); // TODO
+        const path = this.anchorToPath.get(anchor);
+        assert(path !== undefined, "cannot forget unknown Anchor");
+        path.removeRef();
+        this.anchorToPath.delete(anchor);
     }
 
     /**
      * TODO: add API to UpPath (maybe extend as AnchorPath to allow building without having to copy here?)
      */
     public track(path: UpPath): Anchor {
-        throw Error("Not implemented"); // TODO
+        const foundPath = this.trackInner(path);
+        const anchor = brand<Anchor>(this.anchorCounter++);
+        this.anchorToPath.set(anchor, foundPath);
+        return anchor;
+    }
+
+    /**
+     * Finds a path node, creating if needed, and adds a ref count to it.
+     */
+    private trackInner(path: UpPath): PathNode {
+        if (path instanceof PathNode) {
+            if (path.anchorSet === this) {
+                path.addRef();
+                return path;
+            }
+        }
+        let parent = path.parent;
+        if (parent === undefined) {
+            parent = this.root;
+        }
+        const parentPath = this.trackInner(parent);
+
+        const child = parentPath.getOrCreateChild(path.parentField, path.parentIndex);
+
+        // Now that child is added (if needed), remove the extra ref that we added in the recursive call.
+        parentPath.removeRef();
+
+        return child;
+    }
+
+    /**
+     * Finds a path node if it already exists
+     */
+    private find(path: UpPath): PathNode | undefined {
+        if (path instanceof PathNode) {
+            if (path.anchorSet === this) {
+                return path;
+            }
+        }
+        let parent = path.parent;
+        if (parent === undefined) {
+            parent = this.root;
+        }
+        const parentPath = this.find(parent);
+        return parentPath?.tryGetChild(path.parentField, path.parentIndex);
+    }
+
+    /**
+     * Updates paths for a range move (including re-parenting path items and updating indexes).
+     */
+    public moveChildren(
+        src: UpPath, srcField: FieldKey, start: number, count: number,
+        dst: UpPath, dstField: FieldKey, dstIndex: number): void {
+            const srcPath = this.find(src);
+            // Sorted list of PathNodes to move from src to dst.
+            let toMove: PathNode[];
+            if (srcPath !== undefined) {
+                // TODO: set toMove
+                // Remove items from src.
+                // Fix indexes in src after moved items (subtract count).
+                toMove = [];
+            } else {
+                toMove = [];
+            }
+            let dstPath: PathNode | undefined;
+            if (toMove.length > 0) {
+                dstPath = this.trackInner(dst);
+            } else {
+                dstPath = this.find(dst);
+                if (dstPath !== undefined) {
+                    dstPath.addRef();
+                }
+            }
+
+            if (dstPath !== undefined) {
+                // TODO: Fixup indexes for items in toMove (add dstIndex - start)
+                // TODO: Fixup indexes for items in dstPath after insertion (add count)
+                // TODO: insert toMove items into dstPath
+                dstPath.removeRef();
+            }
     }
 }
 
@@ -61,40 +141,6 @@ export class AnchorSet {
  *
  * This is currently unused as object forest is focused on correctness not performance.
  */
-
-/**
- * Base type for nodes in a path tree.
- */
-export class PathShared<TParent extends ChildCollection = ChildCollection> implements UpPath {
-    // PathNode arrays are kept sorted by index for efficient search.
-    protected readonly children: Map<TParent, PathNode[]> = new Map();
-    // public constructor() {}
-
-    public detach(start: number, length: number, destination: DetachedField): void {
-        // TODO: implement.
-    }
-
-    public insert(start: number, paths: PathNode, length: number) {
-        assert(paths.parent instanceof PathCollection, 0x333 /* PathShared.splice can only insert detached ranges */);
-        // TODO: implement.
-    }
-
-    parent(): UpPath | undefined {
-        throw new Error("Method not implemented.");
-    }
-    parentField(): FieldKey {
-        throw new Error("Method not implemented.");
-    }
-    parentIndex(): number {
-        throw new Error("Method not implemented.");
-    }
-}
-
-export class PathNode extends PathShared<FieldKey> {
-    public constructor(public parentPath: PathShared<FieldKey>, location: ChildLocation) {
-        super();
-    }
-}
 
 /**
  * Tree of anchors.
@@ -111,12 +157,104 @@ export class PathNode extends PathShared<FieldKey> {
  * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors
  * (and thus need parent paths).
  */
-export class PathCollection extends PathShared<RootField> {
-    public constructor() {
-        super();
+class PathNode implements UpPath {
+    /**
+     * Number of references to this from external sources (ex: `Anchors` via `AnchorSet`.)
+     */
+    private refCount = 1;
+
+    /**
+     * Construct a PathNode with refcount 1.
+     * @param anchorSet - used to determine if this PathNode is already part a specific anchorSet
+     * to early out UpPath walking.
+     */
+    public constructor(
+        public readonly anchorSet: AnchorSet,
+        public parentField: FieldKey,
+        public parentIndex: number,
+        public parentPath: PathNode | undefined) {}
+    // PathNode arrays are kept sorted by index for efficient search.
+    protected readonly children: Map<FieldKey, PathNode[]> = new Map();
+    // public constructor() {}
+
+    public get parent(): UpPath | undefined {
+        // Root PathNode corresponds to the undefined root for UpPath.
+        if (this.parentPath?.parentPath === undefined) {
+            return undefined;
+        }
+        return this.parentPath;
     }
 
-    public delete(range: DetachedField): void {
-        throw new Error("Method not implemented.");
+    public addRef(count = 1): void {
+        this.refCount += count;
+    }
+
+    public removeRef(count = 1): void {
+        this.refCount -= count;
+        if (this.refCount < 1) {
+            assert(this.refCount === 0, "PathNode Refcount should not be negative.");
+
+            if (this.children.size === 0) {
+                this.deleteThis();
+            }
+        }
+    }
+
+    /**
+     * Gets a child, adding a ref to it.
+     * Creates child (with 1 ref) if needed.
+     */
+    public getOrCreateChild(key: FieldKey, index: number): PathNode {
+        let field = this.children.get(key);
+        if (field === undefined) {
+            field = [];
+            this.children.set(key, field);
+        }
+        // TODO: should do more optimized search (ex: binary search or better) using index;
+        // Note that this is the index in the list of child paths, not the index withing the field
+        let child = field.find((c) => c.parentIndex === index);
+        if (child === undefined) {
+            child = new PathNode(this.anchorSet, key, index, this);
+            field.push(child);
+            // Keep list sorted by index.
+            field.sort((a, b) => a.parentIndex = b.parentIndex);
+        } else {
+            child.addRef();
+        }
+        return child;
+    }
+
+    /**
+     * Gets a child if it exists.
+     * Does NOT add a ref.
+     */
+    public tryGetChild(key: FieldKey, index: number): PathNode | undefined {
+        const field = this.children.get(key);
+        if (field === undefined) {
+            return undefined;
+        }
+        // TODO: should do more optimized search (ex: binary search or better) using index;
+        // Note that this is the index in the list of child paths, not the index withing the field
+        return field.find((c) => c.parentIndex === index);
+    }
+
+    public removeChild(child: PathNode): void {
+        const key = child.parentField;
+        const field = this.children.get(key);
+        // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex();
+        // Note that this is the index in the list  of child paths, not the index withing the field
+        const childIndex = field?.indexOf(child);
+        assert(childIndex !== undefined, "child must be parented to be removed");
+        field?.splice(childIndex, 1);
+        if (field?.length === 0) {
+            this.children.delete(key);
+            if (this.refCount === 0 && this.children.size === 0) {
+                this.deleteThis();
+            }
+        }
+    }
+
+    private deleteThis(): void {
+        this.parentPath?.removeChild(this);
     }
 }
