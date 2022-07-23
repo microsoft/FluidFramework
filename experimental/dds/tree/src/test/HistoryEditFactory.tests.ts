@@ -122,7 +122,7 @@ describe('revert', () => {
 		});
 		describe('when reverting the insert/detach of an empty trait', () => {
 			it('when reverting a detach of an empty trait', () => {
-				    const insertedNodeId = 0 as DetachedSequenceId;
+				const insertedNodeId = 0 as DetachedSequenceId;
 				const insertedBuild = ChangeInternal.build([], insertedNodeId);
 				const insertChange = ChangeInternal.insert(insertedNodeId, {
 					referenceTrait: testTree.left.traitLocation,
