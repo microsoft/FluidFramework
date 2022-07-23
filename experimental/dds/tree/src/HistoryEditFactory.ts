@@ -199,6 +199,10 @@ function createInvertedDetach(
 	const { trait: referenceTrait } = start;
 	const nodes = viewBeforeChange.getTrait(referenceTrait);
 
+	if (nodes.length === 0) {
+		return undefined;
+	}
+
 	const startIndex = viewBeforeChange.findIndexWithinTrait(start);
 	const endIndex = viewBeforeChange.findIndexWithinTrait(end);
 	const detachedNodeIds: NodeId[] = nodes.slice(startIndex, endIndex);
