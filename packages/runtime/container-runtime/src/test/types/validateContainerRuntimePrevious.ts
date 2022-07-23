@@ -883,30 +883,6 @@ use_old_InterfaceDeclaration_IRootSummaryTreeWithStats(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isRuntimeMessage": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_isRuntimeMessage():
-    TypeOnly<typeof old.isRuntimeMessage>;
-declare function use_current_FunctionDeclaration_isRuntimeMessage(
-    use: TypeOnly<typeof current.isRuntimeMessage>);
-use_current_FunctionDeclaration_isRuntimeMessage(
-    get_old_FunctionDeclaration_isRuntimeMessage());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isRuntimeMessage": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_isRuntimeMessage():
-    TypeOnly<typeof current.isRuntimeMessage>;
-declare function use_old_FunctionDeclaration_isRuntimeMessage(
-    use: TypeOnly<typeof old.isRuntimeMessage>);
-use_old_FunctionDeclaration_isRuntimeMessage(
-    get_current_FunctionDeclaration_isRuntimeMessage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISubmitSummaryOpResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISubmitSummaryOpResult():
@@ -1555,30 +1531,6 @@ declare function use_old_EnumDeclaration_RuntimeHeaders(
     use: TypeOnly<old.RuntimeHeaders>);
 use_old_EnumDeclaration_RuntimeHeaders(
     get_current_EnumDeclaration_RuntimeHeaders());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_RuntimeMessage": {"forwardCompat": false}
-*/
-declare function get_old_EnumDeclaration_RuntimeMessage():
-    TypeOnly<old.RuntimeMessage>;
-declare function use_current_EnumDeclaration_RuntimeMessage(
-    use: TypeOnly<current.RuntimeMessage>);
-use_current_EnumDeclaration_RuntimeMessage(
-    get_old_EnumDeclaration_RuntimeMessage());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_RuntimeMessage": {"backCompat": false}
-*/
-declare function get_current_EnumDeclaration_RuntimeMessage():
-    TypeOnly<current.RuntimeMessage>;
-declare function use_old_EnumDeclaration_RuntimeMessage(
-    use: TypeOnly<old.RuntimeMessage>);
-use_old_EnumDeclaration_RuntimeMessage(
-    get_current_EnumDeclaration_RuntimeMessage());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -9,9 +9,9 @@ import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/cont
 import { ConnectionState, Container, Loader } from "@fluidframework/container-loader";
 import {
     ContainerMessageType,
-    isRuntimeMessage,
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";

@@ -185,9 +185,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get readOnlyInfo() { return this.connectionManager.readOnlyInfo; }
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
-    public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
+    public submit(type: MessageType, contents?: string, batch = false, metadata?: any) {
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
-            contents: JSON.stringify(contents),
+            contents,
             metadata,
             referenceSequenceNumber: this.lastProcessedSequenceNumber,
             type,
@@ -772,12 +772,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             0x0ed /* "non-system message have to have clientId" */,
         );
 
-        // TODO Remove after SPO picks up the latest build.
-        if (
-            typeof message.contents === "string"
-            && message.contents !== ""
-            && message.type !== MessageType.ClientLeave
-        ) {
+        if (typeof message.contents === "string") {
             message.contents = JSON.parse(message.contents);
         }
 

@@ -45,7 +45,7 @@ import {
     loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { readAndParse, isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
+import { readAndParse, isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
     DataProcessingError,
@@ -507,23 +507,6 @@ const defaultMaxOpSizeInBytes = 768000;
 
 const defaultFlushMode = FlushMode.TurnBased;
 
-export enum RuntimeMessage {
-    FluidDataStoreOp = "component",
-    Attach = "attach",
-    ChunkedOp = "chunkedOp",
-    BlobAttach = "blobAttach",
-    Rejoin = "rejoin",
-    Alias = "alias",
-    Operation = "op",
-}
-
-export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
-        return true;
-    }
-    return false;
-}
-
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
     if (message.type === MessageType.Operation) {
         // legacy op format?
@@ -536,7 +519,6 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
-        assert(isUnpackedRuntimeMessage(message), 0x122 /* "Message to unpack is not proper runtime message" */);
     } else {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
@@ -693,7 +675,7 @@ class ScheduleManagerCore {
         const batchMetadata = metadata?.batch;
 
         // Protocol messages are never part of a runtime batch of messages
-        if (!isUnpackedRuntimeMessage(message)) {
+        if (!isRuntimeMessage(message)) {
             // Protocol messages should never show up in the middle of the batch!
             assert(this.currentBatchClientId === undefined, 0x29a /* "System message in the middle of batch!" */);
             assert(batchMetadata === undefined, 0x29b /* "system op in a batch?" */);
@@ -1875,7 +1857,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.verifyNotClosed();
 
         // If it's not message for runtime, bail out right away.
-        if (!isUnpackedRuntimeMessage(messageArg)) {
+        if (!isRuntimeMessage(messageArg)) {
             return;
         }
 
@@ -1916,7 +1898,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.updateDocumentDirtyState(false);
             }
 
-            switch (message.type) {
+            const type = message.type as ContainerMessageType;
+            switch (type) {
                 case ContainerMessageType.Attach:
                     this.dataStores.processAttachMessage(message, local);
                     break;
@@ -1929,7 +1912,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.BlobAttach:
                     this.blobManager.processBlobAttachOp(message, local);
                     break;
+                case ContainerMessageType.ChunkedOp:
+                case ContainerMessageType.Rejoin:
+                    break;
                 default:
+                    unreachableCase(type, "unknown container message type");
             }
 
             this.emit("op", message);
@@ -3001,40 +2988,39 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return clientSequenceNumber;
     }
 
-    private submitSystemMessage(
-        type: MessageType,
-        contents: any) {
+    private submitMessageCore(type: MessageType, contents: any, batch: boolean, metaData?: any) {
         this.verifyNotClosed();
         assert(this.connected, 0x133 /* "Container disconnected when trying to submit system message" */);
 
-        // System message should not be sent in the middle of the batch.
-        // That said, we can preserve existing behavior by not flushing existing buffer.
-        // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
-        const middleOfBatch = this.flushMode === FlushMode.TurnBased && this.needsFlush;
-        if (middleOfBatch) {
-            this.mc.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
-        }
-
         return this.context.submitFn(
             type,
+            // back-compat: remove supports_OpContentsPassThrough in future and make unconditional
+            this.context.supports_OpContentsPassThrough ? JSON.stringify(contents) : contents,
+            batch,
+            metaData);
+    }
+
+    private submitSystemMessage(type: MessageType, contents: any) {
+        // System message should not be sent in the middle of the batch.
+        assert(this.flushMode !== FlushMode.TurnBased || !this.needsFlush, "System op in the middle of a batch");
+        return this.submitMessageCore(
+            type,
             contents,
-            middleOfBatch);
+            false); // batch
     }
 
     private submitRuntimeMessage(
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        appData?: any,
+        metaData?: any,
     ) {
-        this.verifyNotClosed();
-        assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
         const payload: ContainerRuntimeMessage = { type, contents };
-        return this.context.submitFn(
+        return this.submitMessageCore(
             MessageType.Operation,
             payload,
             batch,
-            appData);
+            metaData);
     }
 
     /**

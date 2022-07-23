@@ -16,8 +16,6 @@ export {
     IContainerRuntimeOptions,
     IPendingRuntimeState,
     IRootSummaryTreeWithStats,
-    isRuntimeMessage,
-    RuntimeMessage,
     unpackRuntimeMessage,
     ScheduleManager,
     agentSchedulerId,

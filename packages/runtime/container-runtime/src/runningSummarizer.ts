@@ -239,7 +239,7 @@ export class RunningSummarizer implements IDisposable {
     public handleOp(op: ISequencedDocumentMessage) {
         this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
-        if (op.type !== MessageType.Summarize && isRuntimeMessage(op)) {
+        if (isRuntimeMessage(op)) {
             this.heuristicData.numRuntimeOps++;
         } else {
             this.heuristicData.numNonRuntimeOps++;

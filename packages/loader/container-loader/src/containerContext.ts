@@ -58,7 +58,7 @@ export class ContainerContext implements IContainerContext {
         deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
         quorum: IQuorum,
         loader: ILoader,
-        submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
+        submitFn: (type: MessageType, contents: string, batch: boolean, appData: any) => number,
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
@@ -85,6 +85,9 @@ export class ContainerContext implements IContainerContext {
         await context.instantiateRuntime(existing);
         return context;
     }
+
+    // back-compat: should be removed in future.
+    public readonly supports_OpContentsPassThrough = true;
 
     public readonly taggedLogger: ITelemetryLogger;
 

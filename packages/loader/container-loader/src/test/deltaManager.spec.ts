@@ -66,8 +66,8 @@ describe("Loader", () => {
                 );
 
                 const tracker = new CollabWindowTracker(
-                    (type: MessageType, contents: any) => {
-                        deltaManager.submit(type, contents);
+                    (type: MessageType) => {
+                        deltaManager.submit(type);
                         // CollabWindowTracker expects every op submitted (including noops) to result in this call:
                         tracker.stopSequenceNumberUpdate();
                     },

@@ -124,9 +124,6 @@ export interface IScribeProtocolState {
 export const isServiceMessageType: (type: string) => boolean;
 
 // @public (undocumented)
-export function isSystemMessage(message: ISequencedDocumentMessage): boolean;
-
-// @public (undocumented)
 export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: ITree_2): ICreateTreeEntry[];
 
 // @public

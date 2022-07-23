@@ -51,7 +51,6 @@ import {
     runWithRetry,
     isFluidResolvedUrl,
     isRuntimeMessage,
-    isUnpackedRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -116,6 +115,8 @@ const detachedContainerRefSeqNumber = 0;
 
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
+
+type OpContentType = Record<string, unknown>;
 
 export interface IContainerLoadOptions {
     /**
@@ -1410,7 +1411,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const protocol = protocolHandlerBuilder(
             attributes,
             quorumSnapshot,
-            (key, value) => this.submitMessage(MessageType.Propose, { key, value }),
+            (key, value) => this.submitMessageObject(MessageType.Propose, { key, value }),
             this._initialClients ?? [],
         );
 
@@ -1682,24 +1683,23 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private submitContainerMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
+    private submitContainerMessage(type: MessageType, contents: string, batch?: boolean, metadata?: any): number {
         const outboundMessageType: string = type;
         switch (outboundMessageType) {
             case MessageType.Operation:
-            case MessageType.RemoteHelp:
-                break;
+                return this.submitMessage(type, contents, batch, metadata);
             case MessageType.Summarize: {
                 // github #6451: this is only needed for staging so the server
                 // know when the protocol tree is included
                 // this can be removed once all clients send
                 // protocol tree by default
-                const summary = contents as ISummaryContent;
+                const summary = JSON.parse(contents) as ISummaryContent;
                 if (summary.details === undefined) {
                     summary.details = {};
                 }
                 summary.details.includesProtocolTree =
                     this.options.summarizeProtocolTree === true;
-                break;
+                return this.submitMessage(type, JSON.stringify(contents), batch, metadata);
             }
             default:
                 this.close(new GenericError("invalidContainerSubmitOpType",
@@ -1707,10 +1707,18 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     { messageType: type }));
                 return -1;
         }
-        return this.submitMessage(type, contents, batch, metadata);
     }
 
-    private submitMessage(type: MessageType, contents: any, batch?: boolean, metadata?: any): number {
+    private submitMessageObject(
+        type: MessageType,
+        contents?: OpContentType,
+        batch?: boolean,
+        metadata?: any,
+    ): number {
+        return this.submitMessage(type, JSON.stringify(contents), batch, metadata);
+    }
+
+    private submitMessage(type: MessageType, contents: string, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
@@ -1733,14 +1741,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
         }
 
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (isUnpackedRuntimeMessage(message) && !isRuntimeMessage(message)) {
-            this.mc.logger.sendTelemetryEvent(
-                { eventName: "UnpackedRuntimeMessage", type: message.type });
-        }
         // Forward non system messages to the loaded runtime for processing
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        if (isRuntimeMessage(message) || isUnpackedRuntimeMessage(message)) {
+        if (isRuntimeMessage(message)) {
             this.context.process(message, local, undefined);
         }
 
@@ -1755,10 +1757,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     this.serviceConfiguration !== undefined,
                     0x2e4 /* "there should be service config for active connection" */);
                 this.collabWindowTracker = new CollabWindowTracker(
-                    (type, contents) => {
+                    (type) => {
                         assert(this.activeConnection(),
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
-                        this.submitMessage(type, contents);
+                        this.submitMessageObject(type);
                     },
                     this.serviceConfiguration.noopTimeFrequency,
                     this.serviceConfiguration.noopCountFrequency,

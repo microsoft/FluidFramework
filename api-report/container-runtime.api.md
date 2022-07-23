@@ -470,9 +470,6 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
     gcStats?: IGCStats;
 }
 
-// @public (undocumented)
-export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean;
-
 // @public
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
     readonly clientSequenceNumber: number;
@@ -671,24 +668,6 @@ export enum RuntimeHeaders {
     externalRequest = "externalRequest",
     viaHandle = "viaHandle",
     wait = "wait"
-}
-
-// @public (undocumented)
-export enum RuntimeMessage {
-    // (undocumented)
-    Alias = "alias",
-    // (undocumented)
-    Attach = "attach",
-    // (undocumented)
-    BlobAttach = "blobAttach",
-    // (undocumented)
-    ChunkedOp = "chunkedOp",
-    // (undocumented)
-    FluidDataStoreOp = "component",
-    // (undocumented)
-    Operation = "op",
-    // (undocumented)
-    Rejoin = "rejoin"
 }
 
 // @public

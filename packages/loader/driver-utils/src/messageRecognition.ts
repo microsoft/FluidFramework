@@ -4,6 +4,12 @@
  */
 import { IDocumentMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 
+// back-compat: staging code changes across layers.
+// Eventually to be replaced by MessageType.accept
+export enum MessageType2 {
+    Accept = "accept",
+}
+
 /**
  *
  * @param message-message
@@ -22,10 +28,18 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
         case MessageType.Propose:
         case MessageType.Reject:
         case MessageType.NoOp:
+        case MessageType.Summarize:
+        case MessageType2.Accept:
             return true;
         default:
             return false;
     }
+}
+
+export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
+    // This assumes that in the future rely service may implement coalescing of accept messages,
+    // same way it was doing coalescing of immediate noops in the past.
+    return message.type === MessageType.NoOp || message.type === MessageType2.Accept;
 }
 
 /**
@@ -33,37 +47,7 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
  * @param message-message
  * @returns whether or not the message type is one listed below
  * "op"
- * "summarize"
  */
-export function isRuntimeMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean {
-    return message.type === MessageType.Operation || message.type === MessageType.Summarize;
-}
-
-enum RuntimeMessage {
-    FluidDataStoreOp = "component",
-    Attach = "attach",
-    ChunkedOp = "chunkedOp",
-    BlobAttach = "blobAttach",
-    Rejoin = "rejoin",
-    Alias = "alias",
-    Operation = "op",
-}
-
-/**
- *
- * @param message-message
- * @returns whether or not the message type is one listed below (legacy)
- * "component"
- * "attach"
- * "chunkedOp"
- * "blobAttach"
- * "rejoin"
- * "alias"
- * "op"
- */
-export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
-        return true;
-    }
-    return false;
+export function isRuntimeMessage(message: { type: string; }): boolean {
+    return message.type === MessageType.Operation;
 }

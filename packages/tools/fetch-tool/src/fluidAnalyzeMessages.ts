@@ -13,11 +13,11 @@ import {
 import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions";
 import {
     IChunkedOp,
-    isRuntimeMessage,
-    RuntimeMessage,
+    ContainerMessageType,
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
 import { DataStoreMessageType } from "@fluidframework/datastore";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";
@@ -486,18 +486,18 @@ function processOp(
     let opCount = 1;
     if (isRuntimeMessage(message)) {
         let runtimeMessage = unpackRuntimeMessage(message);
-        const messageType = runtimeMessage.type as RuntimeMessage;
+        const messageType = runtimeMessage.type as ContainerMessageType;
         switch (messageType) {
-            case RuntimeMessage.Attach: {
+            case ContainerMessageType.Attach: {
                 const attachMessage = runtimeMessage.contents as IAttachMessage;
                 processDataStoreAttachOp(attachMessage, dataType);
                 break;
             }
             // skip for now because these ops do not have contents
-            case RuntimeMessage.BlobAttach: {
+            case ContainerMessageType.BlobAttach: {
                 break;
             }
-            case RuntimeMessage.ChunkedOp: {
+            case ContainerMessageType.ChunkedOp: {
                 const chunk = runtimeMessage.contents as IChunkedOp;
                 if (!chunkMap.has(runtimeMessage.clientId)) {
                     chunkMap.set(
@@ -528,10 +528,9 @@ function processOp(
                 }
                 // eslint-disable-next-line no-fallthrough
             }
-            case RuntimeMessage.FluidDataStoreOp:
-            case RuntimeMessage.Alias:
-            case RuntimeMessage.Rejoin:
-            case RuntimeMessage.Operation:
+            case ContainerMessageType.FluidDataStoreOp:
+            case ContainerMessageType.Alias:
+            case ContainerMessageType.Rejoin:
                 {
                     let envelope = runtimeMessage.contents as IEnvelope;
                     // TODO: Legacy?

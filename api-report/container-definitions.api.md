@@ -179,9 +179,11 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // (undocumented)
-    readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+    readonly submitFn: (type: MessageType, contents: string, batch: boolean, appData?: any) => number;
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
+    // (undocumented)
+    readonly supports_OpContentsPassThrough?: true;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)

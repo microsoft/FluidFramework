@@ -26,23 +26,6 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-export function isSystemMessage(message: ISequencedDocumentMessage) {
-    switch (message.type) {
-        case MessageType.ClientJoin:
-        case MessageType.ClientLeave:
-        case MessageType.Propose:
-        case MessageType.Reject:
-        case MessageType.NoOp:
-        case MessageType.NoClient:
-        case MessageType.Summarize:
-        case MessageType.SummaryAck:
-        case MessageType.SummaryNack:
-            return true;
-        default:
-            return false;
-    }
-}
-
 export interface ILocalSequencedClient extends ISequencedClient {
     /**
      * True if the client should have left the quorum, false otherwise

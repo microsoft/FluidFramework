@@ -112,6 +112,9 @@ export interface IRuntime extends IDisposable {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
+    // back-compat: should be removed and all usage replaced with true
+    readonly supports_OpContentsPassThrough?: true;
+
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
@@ -119,7 +122,7 @@ export interface IContainerContext extends IDisposable {
     readonly storage: IDocumentStorageService;
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+    readonly submitFn: (type: MessageType, contents: string, batch: boolean, appData?: any) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

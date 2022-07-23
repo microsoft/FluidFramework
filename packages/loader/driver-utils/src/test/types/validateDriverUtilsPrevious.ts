@@ -736,30 +736,6 @@ use_old_InterfaceDeclaration_ISummaryTreeAssemblerProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isUnpackedRuntimeMessage": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_isUnpackedRuntimeMessage():
-    TypeOnly<typeof old.isUnpackedRuntimeMessage>;
-declare function use_current_FunctionDeclaration_isUnpackedRuntimeMessage(
-    use: TypeOnly<typeof current.isUnpackedRuntimeMessage>);
-use_current_FunctionDeclaration_isUnpackedRuntimeMessage(
-    get_old_FunctionDeclaration_isUnpackedRuntimeMessage());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isUnpackedRuntimeMessage": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_isUnpackedRuntimeMessage():
-    TypeOnly<typeof current.isUnpackedRuntimeMessage>;
-declare function use_old_FunctionDeclaration_isUnpackedRuntimeMessage(
-    use: TypeOnly<typeof old.isUnpackedRuntimeMessage>);
-use_old_FunctionDeclaration_isUnpackedRuntimeMessage(
-    get_current_FunctionDeclaration_isUnpackedRuntimeMessage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_logNetworkFailure": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_logNetworkFailure():
