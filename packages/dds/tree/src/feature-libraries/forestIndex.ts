@@ -17,9 +17,9 @@ import {
 } from "../forest";
 import { Index, SummaryElement } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
-import { PlaceholderTree, Delta, FieldKey } from "../tree";
+import { JsonableTree, Delta, FieldKey } from "../tree";
 import { brand } from "../util";
-import { placeholderTreeFromCursor } from "./treeTextCursor";
+import { jsonableTreeFromCursor } from "./treeTextCursor";
 
 /**
  * Index which provides an editable forest for the current state for the document.
@@ -79,10 +79,10 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         // TODO: maybe assert there are no other roots
         // (since we don't save them, and they should not exist outside transactions).
         const rootAnchor = this.forest.root(this.forest.rootField);
-        const roots: PlaceholderTree[] = [];
+        const roots: JsonableTree[] = [];
         let result = this.forest.tryGet(rootAnchor, this.cursor);
         while (result === TreeNavigationResult.Ok) {
-            roots.push(placeholderTreeFromCursor(this.cursor));
+            roots.push(jsonableTreeFromCursor(this.cursor));
             result = this.cursor.seek(1).result;
         }
         this.cursor.clear();
@@ -162,7 +162,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         const decodedSchema = bufferToString(schemaBuffer, "utf8");
         const decodedtree = bufferToString(treeBuffer, "utf8");
 
-        const placeholderTree = JSON.parse(decodedtree) as PlaceholderTree[];
+        const placeholderTree = JSON.parse(decodedtree) as JsonableTree[];
 
         // TODO: maybe assert forest is empty?
         const insert: Delta.Insert = { type: Delta.MarkType.Insert, content: placeholderTree };

@@ -12,7 +12,11 @@ export class VersionBag {
     private versionData: { [key: string]: string } = {};
 
     public isEmpty(): boolean {
-        return Object.keys(this.versionData).length === 0;
+        return this.size === 0;
+    }
+
+    public get size(): number {
+        return Object.keys(this.versionData).length;
     }
     public add(pkg: Package, version: string) {
         const existing = this.internalAdd(pkg, version);

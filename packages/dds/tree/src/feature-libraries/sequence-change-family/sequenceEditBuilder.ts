@@ -8,7 +8,7 @@ import { Transposed as T } from "../../changeset";
 import { ITreeCursor } from "../../forest";
 import { AnchorSet, UpPath, Value, Delta, getDepth } from "../../tree";
 import { fail } from "../../util";
-import { placeholderTreeFromCursor } from "../treeTextCursor";
+import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { sequenceChangeFamily } from "./sequenceChangeFamily";
 import { SequenceChangeset } from "./sequenceChangeset";
 
@@ -29,7 +29,7 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
 
     public insert(place: PlacePath, cursor: ITreeCursor) {
         const id = this.opId++;
-        const content = placeholderTreeFromCursor(cursor);
+        const content = jsonableTreeFromCursor(cursor);
         const insert: T.Insert = { type: "Insert", id, content: [content] };
         this.applyAtPath([insert], place);
     }
