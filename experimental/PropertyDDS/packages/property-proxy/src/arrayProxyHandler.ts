@@ -16,8 +16,8 @@ import { ComponentArray } from "./componentArray";
  * new empty properties with the same typeid as the {@link external:ArrayProperty ArrayProperty} are appended.
  * If the the new length is smaller than the current length,
  * the appropriate amount of elements is deleted from the end of the {@link external:ArrayProperty ArrayProperty}.
- * @param target The {@link ComponentArray} the Proxy handles.
- * @param length The desired new length of the Array.
+ * @param target - The {@link ComponentArray} the Proxy handles.
+ * @param length - The desired new length of the Array.
  * @return False if the passed length is less than 0, true otherwise.
  * @hidden
  */
@@ -71,9 +71,9 @@ const setTrapSpecialCases = getTrapSpecialCases.concat(["fill", "sort"]);
 export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
     /**
      * The get trap that handles access to properties and functions.
-     * @param target The {@link ComponentArray} the Proxy handles.
-     * @param  key The name of the property/function that is to be accessed.
-     * @param  receiver The proxy
+     * @param target - The {@link ComponentArray} the Proxy handles.
+     * @param key - The name of the property/function that is to be accessed.
+     * @param receiver - The proxy
      * @return The accessed primitive, Property or function.
      */
     get(target: ComponentArray, key: string, receiver) {
@@ -129,8 +129,8 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
     /**
      * Trap for Object.getOwnPropertyDescriptor().
      * Returns writeable and enumerable descriptor except for length. Required for the ownKeys trap.
-     * @param target The {@link ComponentArray} the Proxy handles.
-     * @param key The name of the property/function that is to be accessed.
+     * @param target - The {@link ComponentArray} the Proxy handles.
+     * @param key - The name of the property/function that is to be accessed.
      * @return The Descriptor
      */
     getOwnPropertyDescriptor(target: ComponentArray, key: string | typeof proxySymbol) {
@@ -150,8 +150,8 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
 
     /**
      * The trap for the in operator.
-     * @param target The {@link ComponentArray} the Proxy handles.
-     * @param key The name of the property/function that is to be accessed.
+     * @param target - The {@link ComponentArray} the Proxy handles.
+     * @param key - The name of the property/function that is to be accessed.
      * @return if the key is part of the {@link external:ArrayProperty ArrayProperty}, otherwise false.
      */
     has: (target: ComponentArray, key: string | symbol) => {
@@ -176,7 +176,7 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
     /**
      * Trap for the Object.keys().
      * Returns the Ids of the {@link external:ArrayProperty ArrayProperty} as an array.
-     * @param target The {@link ComponentArray} the Proxy handles.
+     * @param target - The {@link ComponentArray} the Proxy handles.
      * @return The array containing the IDs of the {@link external:ArrayProperty ArrayProperty}.
      */
     ownKeys: (target: ComponentArray) => Reflect.ownKeys(Array.from(target.getProperty().getIds())),
@@ -192,9 +192,9 @@ export const arrayProxyHandler: ProxyHandler<ComponentArray> = {
      *
      * Otherwise, it just sets it on the associated {@link ComponentArray}.
      *
-     * @param target The {@link ComponentArray} the Proxy handles.
-     * @param key The name of the property/function that is to be accessed.
-     * @param value The value to be set.
+     * @param target - The {@link ComponentArray} the Proxy handles.
+     * @param key - The name of the property/function that is to be accessed.
+     * @param value - The value to be set.
      * @return Returns a boolean.
      */
     set(target: ComponentArray, key: string | symbol, value: any) {

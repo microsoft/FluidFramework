@@ -21,24 +21,24 @@ export const EmptyKey = "" as const as FieldKey;
  *
  * @public
  */
- export interface ChildLocation {
+export interface ChildLocation {
     readonly container: ChildCollection;
     readonly index: number;
 }
 
 /**
- * Wrapper around DetachedRange that can be detected at runtime.
+ * Wrapper around DetachedField that can be detected at runtime.
  */
-export interface RootRange {
-	readonly key: DetachedRange;
+export interface RootField {
+	readonly key: DetachedField;
 }
 
 /**
  * Identifier for a child collection, either on a node/tree or at the root of a forest.
  */
-export type ChildCollection = FieldKey | RootRange;
+export type ChildCollection = FieldKey | RootField;
 
-// TODO: its not clear how much DetachedRange belongs here in tree,
+// TODO: its not clear how much DetachedField belongs here in tree,
 // but for now as its needed in Rebase and Forest,
 // it makes sense to have it here for reasoning about the roots of trees.
 /**
@@ -48,10 +48,13 @@ export type ChildCollection = FieldKey | RootRange;
  * any additional content inserted before or after contents of this range will be included in the range.
  * This also means that moving the content from this range elsewhere will leave this range valid, but empty.
  *
- * DetachedRanges are not valid to use as across edits:
+ * DetachedFields are not valid to use as across edits:
  * they are only valid within the edit in which they were created.
+ *
+ * In some APIs DetachedFields are used as LocalFieldKeys on a special implicit root node
+ * to simplify the APIs and implementation.
  */
-export interface DetachedRange extends Opaque<Brand<number, "tree.DetachedRange">> {}
+export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {}
 
 /**
  * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.

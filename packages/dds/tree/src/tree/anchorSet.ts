@@ -7,9 +7,9 @@ import { assert } from "@fluidframework/common-utils";
 import { Brand } from "../util";
 import {
     ChildLocation,
-    DetachedRange,
+    DetachedField,
     ChildCollection,
-    RootRange,
+    RootField,
     FieldKey,
  } from "../tree";
 import { UpPath } from "./pathTree";
@@ -17,7 +17,7 @@ import { UpPath } from "./pathTree";
 /**
  * A way to refer to a particular tree location within a {@link Rebaser} instance's revision.
  */
- export type Anchor = Brand<number, "rebaser.Anchor">;
+export type Anchor = Brand<number, "rebaser.Anchor">;
 
 /**
  * Collection of Anchors at a specific revision.
@@ -65,12 +65,12 @@ export class AnchorSet {
 /**
  * Base type for nodes in a path tree.
  */
- export class PathShared<TParent extends ChildCollection = ChildCollection> implements UpPath {
+export class PathShared<TParent extends ChildCollection = ChildCollection> implements UpPath {
     // PathNode arrays are kept sorted by index for efficient search.
     protected readonly children: Map<TParent, PathNode[]> = new Map();
     // public constructor() {}
 
-    public detach(start: number, length: number, destination: DetachedRange): void {
+    public detach(start: number, length: number, destination: DetachedField): void {
         // TODO: implement.
     }
 
@@ -79,7 +79,7 @@ export class AnchorSet {
         // TODO: implement.
     }
 
-    parent(): UpPath | DetachedRange {
+    parent(): UpPath | undefined {
         throw new Error("Method not implemented.");
     }
     parentField(): FieldKey {
@@ -90,7 +90,7 @@ export class AnchorSet {
     }
 }
 
-class PathNode extends PathShared<FieldKey> {
+export class PathNode extends PathShared<FieldKey> {
     public constructor(public parentPath: PathShared<FieldKey>, location: ChildLocation) {
         super();
     }
@@ -111,12 +111,12 @@ class PathNode extends PathShared<FieldKey> {
  * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors
  * (and thus need parent paths).
  */
-class PathCollection extends PathShared<RootRange> {
+export class PathCollection extends PathShared<RootField> {
     public constructor() {
         super();
     }
 
-    public delete(range: DetachedRange): void {
+    public delete(range: DetachedField): void {
         throw new Error("Method not implemented.");
     }
 }

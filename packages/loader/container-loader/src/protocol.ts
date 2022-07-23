@@ -31,7 +31,6 @@ export type ProtocolHandlerBuilder = (
 
 export interface IProtocolHandler extends IBaseProtocolHandler {
     readonly audience: IAudienceOwner;
-    // To be removed after the server package dependency is upgraded. ADO:1026
     processSignal(message: ISignalMessage);
 }
 

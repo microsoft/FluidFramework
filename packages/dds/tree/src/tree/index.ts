@@ -8,12 +8,18 @@ export {
     FieldKey,
     TreeType,
     ChildLocation,
-    DetachedRange,
+    DetachedField,
     ChildCollection,
-    RootRange,
+    RootField,
     Value,
     TreeValue,
 } from "./types";
 
 export * from "./pathTree";
 export * from "./anchorSet";
+export * from "./treeTextFormat";
+export * from "./visitDelta";
+
+// Split this up into separate import and export for compatibility with API-Extractor.
+import * as Delta from "./delta";
+export { Delta };

@@ -23,6 +23,15 @@ export interface IPackageMatchedOptions {
     dirs: string[];
 }
 
+/** Packages in this list will not have their scripts checked for conformance with repo standards. */
+const uncheckedPackages = [
+    "@fluid-internal/build-cli",
+    "@fluid-internal/version-tools",
+    "@fluid-tools/build-cli",
+    "@fluid-tools/version-tools",
+    "@fluidframework/build-tools",
+]
+
 export class FluidRepoBuild extends FluidRepo {
     constructor(resolvedRoot: string, services: boolean) {
         super(resolvedRoot, services);
@@ -90,6 +99,11 @@ export class FluidRepoBuild extends FluidRepo {
 
     public async checkPackages(fix: boolean) {
         for (const pkg of this.packages.packages) {
+            // TODO: Make this configurable and/or teach fluid-build about new scripts
+            if(uncheckedPackages.includes( pkg.name)) {
+                logVerbose(`Skipping ${pkg.nameColored} because it's ignored.`);
+                continue;
+            }
             if (FluidPackageCheck.checkScripts(pkg, fix)) {
                 await pkg.savePackageJson();
             }
