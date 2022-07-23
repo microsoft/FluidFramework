@@ -486,7 +486,7 @@ export class GarbageCollector implements IGarbageCollector {
 
             // Set the Session Expiry only if the flag is enabled or the test option is set.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
-                this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
+                this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
             }
         }
 
