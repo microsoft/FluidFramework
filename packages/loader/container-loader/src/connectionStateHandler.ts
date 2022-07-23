@@ -29,6 +29,16 @@ export interface IConnectionStateHandlerInputs {
     connectionStateChanged: () => void;
 }
 
+/** A type that contains details pertaining to the connection state */
+export type ConnectionStateDetails =
+| {
+    state: ConnectionState.Connected | ConnectionState.CatchingUp;
+}
+| {
+    state: ConnectionState.Disconnected;
+    reason?: string;
+};
+
 const JoinOpTimeoutMs = 45000;
 
 /**
@@ -56,7 +66,7 @@ const JoinOpTimeoutMs = 45000;
  * For (C) this is optional behavior, controlled by the parameters of receivedConnectEvent
  */
 export class ConnectionStateHandler {
-    private _connectionState = ConnectionState.Disconnected;
+    private _connectionStateDetails: ConnectionStateDetails = { state: ConnectionState.Disconnected };
     private _pendingClientId: string | undefined;
     private catchUpMonitor: ICatchUpMonitor | undefined;
     private readonly prevClientLeftTimer: Timer;
@@ -65,7 +75,11 @@ export class ConnectionStateHandler {
     private waitEvent: PerformanceEvent | undefined;
 
     public get connectionState(): ConnectionState {
-        return this._connectionState;
+        return this._connectionStateDetails.state;
+    }
+
+    public get connectionStateDetails(): ConnectionStateDetails {
+        return this._connectionStateDetails;
     }
 
     public get connected(): boolean {
@@ -217,17 +231,17 @@ export class ConnectionStateHandler {
     }
 
     public receivedDisconnectEvent(reason: string) {
-        this.setConnectionState(ConnectionState.Disconnected, reason);
+        this.setConnectionState({ state: ConnectionState.Disconnected, reason });
     }
 
     private readonly transitionToConnectedState = () => {
         // Defensive measure, we should always be in CatchingUp state when this is called.
-        if (this._connectionState === ConnectionState.CatchingUp) {
-            this.setConnectionState(ConnectionState.Connected);
+        if (this.connectionState === ConnectionState.CatchingUp) {
+            this.setConnectionState({ state: ConnectionState.Connected });
         } else {
             this.logger.sendTelemetryEvent({
                 eventName: "cannotTransitionToConnectedState",
-                connectionState: ConnectionState[this._connectionState],
+                connectionState: ConnectionState[this.connectionState],
             });
         }
     };
@@ -246,8 +260,8 @@ export class ConnectionStateHandler {
         details: IConnectionDetails,
         deltaManager?: IDeltaManager<any, any>,
     ) {
-        const oldState = this._connectionState;
-        this._connectionState = ConnectionState.CatchingUp;
+        const oldState = this.connectionState;
+        this._connectionStateDetails = { state: ConnectionState.CatchingUp };
 
         const writeConnection = connectionMode === "write";
         assert(!this.handler.shouldClientJoinWrite() || writeConnection,
@@ -309,23 +323,21 @@ export class ConnectionStateHandler {
         }
     }
 
-    private setConnectionState(value: ConnectionState.Disconnected, reason: string): void;
-    private setConnectionState(value: ConnectionState.Connected): void;
-    private setConnectionState(value: ConnectionState, reason?: string): void {
-        if (this.connectionState === value) {
+    private setConnectionState(value: ConnectionStateDetails): void {
+        if (this.connectionState === value.state) {
             // Already in the desired state - exit early
-            this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value });
+            this.logger.sendErrorEvent({ eventName: "setConnectionStateSame", value: value.state });
             return;
         }
 
-        const oldState = this._connectionState;
-        this._connectionState = value;
+        const oldState = this.connectionState;
+        this._connectionStateDetails = value;
         const quorumClients = this.handler.quorumClients();
         let client: ILocalSequencedClient | undefined;
         if (this._clientId !== undefined) {
             client = quorumClients?.getMember(this._clientId);
         }
-        if (value === ConnectionState.Connected) {
+        if (value.state === ConnectionState.Connected) {
             assert(oldState === ConnectionState.CatchingUp,
                 0x1d8 /* "Should only transition from Connecting state" */);
             // Mark our old client should have left in the quorum if it's still there
@@ -333,7 +345,7 @@ export class ConnectionStateHandler {
                 client.shouldHaveLeft = true;
             }
             this._clientId = this.pendingClientId;
-        } else if (value === ConnectionState.Disconnected) {
+        } else if (value.state === ConnectionState.Disconnected) {
             // Clear pending state immediately to prepare for reconnect
             this.clearPendingConnectionState();
 
@@ -362,7 +374,8 @@ export class ConnectionStateHandler {
         }
 
         // Report transition before we propagate event across layers
-        this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
+        const disconnectedReason = value.state === ConnectionState.Disconnected ? value.reason : undefined;
+        this.handler.logConnectionStateChangeTelemetry(this.connectionState, oldState, disconnectedReason);
 
         // Propagate event across layers
         this.handler.connectionStateChanged();
