@@ -254,22 +254,17 @@ export class SummarizerNode implements IRootSummarizerNode {
     ): void {
         const summaryNode = this.pendingSummaries.get(proposalHandle);
         if (summaryNode === undefined) {
-            if (summaryNode === undefined) {
                 // This should only happen if parent skipped recursion AND no prior summary existed.
                 assert(
                     this._latestSummary === undefined,
                     0x1a6 /* "Not found pending summary, but this node has previously completed a summary" */,
                 );
                 return;
-            } else {
-                assert(
-                    referenceSequenceNumber === summaryNode.referenceSequenceNumber,
-                    0x1a7 /* Pending summary reference sequence number should be consistent */,
-                );
-
-                // Clear earlier pending summaries
-                this.pendingSummaries.delete(proposalHandle);
-            }
+        } else {
+            assert(
+                referenceSequenceNumber === summaryNode.referenceSequenceNumber,
+                0x1a7 /* Pending summary reference sequence number should be consistent */,
+            );
 
             // Clear earlier pending summaries
             this.pendingSummaries.delete(proposalHandle);
