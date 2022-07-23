@@ -120,5 +120,17 @@ describe('revert', () => {
 				).to.be.undefined;
 			});
 		});
+        describe('when reverting the insert/detach of an empty trait', () => {
+			it('when reverting a detach of an empty trait', () => {
+				const insertedNodeId = 0 as DetachedSequenceId;
+				const insertedBuild = ChangeInternal.build([], insertedNodeId);
+				const insertChange = ChangeInternal.insert(insertedNodeId, {
+						referenceTrait: testTree.left.traitLocation,
+						side: Side.After,
+				});
+				const result = revert([insertedBuild, insertChange], testTree.view);
+				expect(result).to.be.undefined;
+			});
+		});
 	});
 });
