@@ -229,7 +229,7 @@ export class PerformanceEvent {
 }
 
 // @public (undocumented)
-export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmitter, connected: boolean, clientId?: string): void;
+export function raiseConnectedEvent(logger: ITelemetryLogger, emitter: EventEmitter, connected: boolean, clientId?: string, disconnectedReason?: string): void;
 
 // @public (undocumented)
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLogger, event: string, ...args: any[]): void;
