@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export interface SequenceChangeset { }
+import { Transposed as T } from "../../changeset";
+
+export type SequenceChangeset = T.LocalChangeset;

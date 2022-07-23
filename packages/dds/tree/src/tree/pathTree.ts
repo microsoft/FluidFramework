@@ -29,3 +29,13 @@ export interface UpPath {
      */
     parentIndex(): number; // TODO: field index branded type?
 }
+
+export function getDepth(path: UpPath): number {
+    let depth = 0;
+    let next = path.parent();
+    while (next !== undefined) {
+        depth += 1;
+        next = next.parent();
+    }
+    return depth;
+}
