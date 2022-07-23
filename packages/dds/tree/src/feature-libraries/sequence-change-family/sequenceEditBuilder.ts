@@ -44,8 +44,6 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
         const id = this.opId++;
         const moveOut: T.Detach = { type: "MoveOut", id, count };
         const moveIn: T.AttachGroup = [{ type: "MoveIn", id, count }];
-        // const o = nest(moveOut, source);
-        // const i = nest(moveIn, destination);
         let a: NestBranch = {
             marks: toFieldMarks(moveOut, source),
             path: source,
