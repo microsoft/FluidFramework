@@ -34,6 +34,8 @@ import { ILoaderProps } from "@fluidframework/container-loader";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage, ISummaryTree, MessageType } from "@fluidframework/protocol-definitions";
+import { UndoRedoStackManager } from "@fluidframework/undo-redo";
+import { SharedCounter } from "@fluidframework/counter";
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 type ProviderPropertyKeys<T extends Object, TProp extends keyof T = keyof T> = string extends TProp
@@ -151,17 +153,14 @@ async function submitAndAckSummary(
     return { ackedSummary, summarySequenceNumber };
 }
 
-let realizeTestObject2OnNextSummary = false;
-let dataStoreTestObject2: Promise<TestDataObject2> | undefined;
-
 export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 export const TestDataObjectType2 = "@fluid-example/test-dataStore2";
-class TestDataObject2 extends DataObject implements SearchContent {
-    public async getSearchContent(): Promise<string | undefined> {
-        return Promise.resolve("TestDataObject2 Search Blob");
+class TestDataObject2 extends DataObject {
+    public get _root() {
+        return this.root;
     }
-    public get SearchContent() {
-        return this;
+    public get _context() {
+        return this.context;
     }
 }
 class TestDataObject1 extends DataObject implements SearchContent {
@@ -180,34 +179,36 @@ class TestDataObject1 extends DataObject implements SearchContent {
     }
 
     private readonly matrixKey = "SharedMatrix";
+    private readonly counterKey = "Counter";
     public matrix!: SharedMatrix;
+    public undoRedoStackManager!: UndoRedoStackManager;
+    public counter!: SharedCounter;
 
     protected async initializingFirstTime() {
-        const sharedMatrix = SharedMatrix.create(this.runtime, "SharedMatrix");
+        const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
         this.root.set(this.matrixKey, sharedMatrix.handle);
 
-        const dsFactory2 = await requestFluidObject<TestDataObject2>(
-            await this._context.containerRuntime.createDataStore(TestDataObjectType2), "");
-        this.root.set("dsFactory2", dsFactory2.handle);
-    }
+       const dsFactory2 = await requestFluidObject<TestDataObject2>(
+           await this._context.containerRuntime.createDataStore(TestDataObjectType2), "");
+       this.root.set("dsFactory2", dsFactory2.handle);
+
+       const counter = SharedCounter.create(this.runtime, this.counterKey);
+       this.root.set(this.counterKey, counter.handle);
+   }
 
     protected async hasInitialized() {
         const matrixHandle = this.root.get<IFluidHandle<SharedMatrix>>(this.matrixKey);
         assert(matrixHandle !== undefined, "SharedMatrix not found");
         this.matrix = await matrixHandle.get();
 
+        this.undoRedoStackManager = new UndoRedoStackManager();
         this.matrix.insertRows(0, 3);
         this.matrix.insertCols(0, 3);
+        this.matrix.openUndo(this.undoRedoStackManager);
 
-        if (realizeTestObject2OnNextSummary) {
-            (this.context.containerRuntime as ContainerRuntime).deltaManager.on("op", (op) => {
-                if (op.type === MessageType.Summarize) {
-                    const dataObject2Handle = this.root.get<IFluidHandle<TestDataObject2>>("dsFactory2");
-                    assert(dataObject2Handle !== undefined, "");
-                    dataStoreTestObject2 = dataObject2Handle.get();
-                 }
-            });
-         }
+        const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(this.counterKey);
+        assert(counterHandle);
+        this.counter = await counterHandle.get();
     }
 }
 
@@ -219,7 +220,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
     const dataStoreFactory1 = new DataObjectFactory(
         TestDataObjectType1,
         TestDataObject1,
-        [SharedMatrix.getFactory()], // , SharedString.getFactory()],
+        [SharedMatrix.getFactory(), SharedCounter.getFactory()],
         [],
         [],
         createDataStoreRuntime(),
@@ -342,11 +343,39 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
             await waitForContainerConnection(mainContainer);
         });
 
-        it("Test Assert 0x1a6", async () => {
+        it("Test Assert 0x1a6 should not happen - small repro", async () => {
+            const summarizerClient = await getNewSummarizer();
+            // Wait for all pending ops to be processed by all clients.
+            await provider.ensureSynchronized();
+            const summarySequenceNumber = summarizerClient.containerRuntime.deltaManager.lastSequenceNumber;
+            // Submit a summary
+            const result = await summarizerClient.containerRuntime.submitSummary({
+                fullTree: false,
+                refreshLatestAck: false,
+                summaryLogger: logger,
+                cancellationToken: neverCancelledSummaryToken,
+            });
+            assert(result.stage === "submit", "The summary was not submitted");
+            await waitForSummaryOp(summarizerClient.containerRuntime);
+            await requestFluidObject<TestDataObject2>(
+                await summarizerClient.containerRuntime.createDataStore(TestDataObjectType2), "");
+            // Wait for the above summary to be ack'd.
+            const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
+            // The assert 0x1a6 should not be hit anymore.
+            await summarizerClient.containerRuntime.refreshLatestSummaryAck(
+                ackedSummary.summaryOp.contents.handle,
+                ackedSummary.summaryAck.contents.handle,
+                ackedSummary.summaryOp.referenceSequenceNumber,
+                logger,
+            );
+        });
+
+        it("Test Assert 0x1a6 should not happen with MixinSearch", async () => {
             const summarizerClient1 = await getNewSummarizer();
 
             const DataStoreA = await dataStoreFactory1.createInstance(mainDataStore._context.containerRuntime);
             mainDataStore.matrix.setCell(0, 0, DataStoreA.handle);
+
             const summaryVersion = await waitForSummary(summarizerClient1);
             mainDataStore.matrix.setCell(0, 0, "value");
 
@@ -354,8 +383,6 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
             // Wait for all pending ops to be processed by all clients.
             await provider.ensureSynchronized();
             const summarySequenceNumber = summarizerClient2.containerRuntime.deltaManager.lastSequenceNumber;
-
-            realizeTestObject2OnNextSummary = true;
 
             // Submit a summary
             const result = await summarizerClient2.containerRuntime.submitSummary({
@@ -368,8 +395,8 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 
             await waitForSummaryOp(summarizerClient2.containerRuntime);
 
-            assert(dataStoreTestObject2 !== undefined);
-            await dataStoreTestObject2;
+            await requestFluidObject<TestDataObject2>(
+                await summarizerClient2.containerRuntime.createDataStore(TestDataObjectType2), "");
 
             // Wait for the above summary to be ack'd.
             const ackedSummary = await summarizerClient2.summaryCollection.waitSummaryAck(summarySequenceNumber);
@@ -381,7 +408,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
                 ackedSummary.summaryOp.referenceSequenceNumber,
                 logger,
             );
-    });
+        });
 
         afterEach(() => {
             latestAckedSummary = undefined;
