@@ -72,13 +72,13 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 				const { source } = change;
 				const nodesBuilt = builtNodes.get(source);
 				const nodesDetached = detachedNodes.get(source);
-                if (nodesBuilt !== undefined) {
+				if (nodesBuilt !== undefined) {
 					result.unshift(createInvertedInsert(change, nodesBuilt));
 					builtNodes.delete(source);
 				} else if (nodesDetached !== undefined) {
-                    if (nodesDetached.length === 0) {
-                        return undefined;
-                    }
+					if (nodesDetached.length === 0) {
+						return undefined;
+					}
 					result.unshift(createInvertedInsert(change, nodesDetached, true));
 					detachedNodes.delete(source);
 				} else {
