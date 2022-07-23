@@ -1676,7 +1676,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.messageCountAfterDisconnection = 0;
         }
 
-        const state = this.connectionState === ConnectionState.Connected;
+        const connectionDetails = this.connectionStateHandler.connectionStateDetails;
+        const disconnectedReason =
+            connectionDetails.state === ConnectionState.Disconnected ? connectionDetails.reason : undefined;
+        const state = connectionDetails.state === ConnectionState.Connected;
 
         // Both protocol and context should not be undefined if we got so far.
 
@@ -1684,7 +1687,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.context.setConnectionState(state, this.clientId);
         }
         this.protocolHandler.setConnectionState(state, this.clientId);
-        raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
+        raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
 
         if (logOpsOnReconnect) {
             this.mc.logger.sendTelemetryEvent(
