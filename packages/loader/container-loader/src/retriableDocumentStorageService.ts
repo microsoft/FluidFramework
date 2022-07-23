@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { GenericError } from "@fluidframework/container-utils";
 import {
+    FetchSource,
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     ISummaryContext,
@@ -58,10 +59,10 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
         versionId: string | null,
         count: number,
         scenarioName?: string,
-        bypassCache?: boolean,
+        fetchSource?: FetchSource,
     ): Promise<IVersion[]> {
         return this.runWithRetry(
-            async () => this.internalStorageService.getVersions(versionId, count, scenarioName, bypassCache),
+            async () => this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource),
             "storage_getVersions",
         );
     }

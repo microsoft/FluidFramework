@@ -16,6 +16,7 @@ import * as api from "@fluidframework/protocol-definitions";
 import {
     ISummaryContext,
     DriverErrorType,
+    FetchSource,
 } from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
@@ -206,7 +207,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
         return super.getSnapshotTree(version, scenarioName);
     }
 
-    public async getVersions(blobid: string | null, count: number, scenarioName?: string, bypassCache?: boolean): Promise<api.IVersion[]> {
+    public async getVersions(blobid: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<api.IVersion[]> {
         // Regular load workflow uses blobId === documentID to indicate "latest".
         if (blobid !== this.documentId && blobid) {
             // FluidFetch & FluidDebugger tools use empty sting to query for versions
@@ -232,15 +233,15 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
             const hostSnapshotOptions = this.hostPolicy.snapshotOptions;
             const odspSnapshotCacheValue: ISnapshotContents = await PerformanceEvent.timedExecAsync(
                 this.logger,
-                { eventName: "ObtainSnapshot", bypassCache },
+                { eventName: "ObtainSnapshot", fetchSource },
                 async (event: PerformanceEvent) => {
                     const props: GetVersionsTelemetryProps = {};
                     let retrievedSnapshot: ISnapshotContents | undefined;
 
                     let method: string;
-                    if (bypassCache) {
+                    if (fetchSource === FetchSource.noCache) {
                         retrievedSnapshot = await this.fetchSnapshot(hostSnapshotOptions, scenarioName);
-                        method = "network";
+                        method = "networkOnly";
                     } else {
                         // Here's the logic to grab the persistent cache snapshot implemented by the host
                         // Epoch tracker is responsible for communicating with the persistent cache, handling epochs and cache versions
