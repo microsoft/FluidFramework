@@ -26,7 +26,7 @@ export interface IConnectionStateHandlerInputs {
     /** Log an issue encountered while in the Connecting state. details will be logged as a JSON string */
     logConnectionIssue: (eventName: string, details?: ITelemetryProperties) => void;
     /** Callback whenever the ConnectionState changes between Disconnected and Connected */
-    connectionStateChanged: () => void;
+    connectionStateChanged: (reason?: string) => void;
 }
 
 const JoinOpTimeoutMs = 45000;
@@ -365,7 +365,7 @@ export class ConnectionStateHandler {
         this.handler.logConnectionStateChangeTelemetry(this._connectionState, oldState, reason);
 
         // Propagate event across layers
-        this.handler.connectionStateChanged();
+        this.handler.connectionStateChanged(reason);
     }
 
     public initProtocol(protocol: IProtocolHandler) {

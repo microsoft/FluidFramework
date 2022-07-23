@@ -647,10 +647,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                         ...(details === undefined ? {} : { details: JSON.stringify(details) }),
                     });
                 },
-                connectionStateChanged: () => {
+                connectionStateChanged: (reason?: string) => {
                     // Fire events only if container is fully loaded and not closed
                     if (this._lifecycleState === "loaded") {
-                        this.propagateConnectionState();
+                        this.propagateConnectionState(reason);
                     }
                 },
             },
@@ -1667,7 +1667,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private propagateConnectionState() {
+    private propagateConnectionState(reason?: string) {
         const logOpsOnReconnect: boolean =
             this.connectionState === ConnectionState.Connected &&
             !this.firstConnection &&
@@ -1684,7 +1684,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             this.context.setConnectionState(state, this.clientId);
         }
         this.protocolHandler.setConnectionState(state, this.clientId);
-        raiseConnectedEvent(this.mc.logger, this, state, this.clientId);
+        raiseConnectedEvent(this.mc.logger, this, state, this.clientId, reason);
 
         if (logOpsOnReconnect) {
             this.mc.logger.sendTelemetryEvent(
