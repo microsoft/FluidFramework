@@ -17,7 +17,6 @@ import {
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
 import { DataStoreMessageType } from "@fluidframework/datastore";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";
@@ -473,19 +472,18 @@ export async function printMessageStats(
 }
 
 function processOp(
-    message: ISequencedDocumentMessage,
+    runtimeMessage: ISequencedDocumentMessage,
     dataType: Map<string, string>,
     objectStats: Map<string, [number, number]>,
     msgSize: number,
     dataTypeStats: Map<string, [number, number]>,
     messageTypeStats: Map<string, [number, number]>,
     chunkMap: Map<string, { chunks: string[]; totalSize: number; }>) {
-    let type = message.type;
+    let type = runtimeMessage.type;
     let recorded = false;
     let totalMsgSize = msgSize;
     let opCount = 1;
-    if (isRuntimeMessage(message)) {
-        let runtimeMessage = unpackRuntimeMessage(message);
+    if (unpackRuntimeMessage(runtimeMessage)) {
         const messageType = runtimeMessage.type as ContainerMessageType;
         switch (messageType) {
             case ContainerMessageType.Attach: {
@@ -517,12 +515,12 @@ function processOp(
                 value.totalSize += msgSize;
                 if (chunk.chunkId === chunk.totalChunks) {
                     opCount = chunk.totalChunks; // 1 op for each chunk.
-                    runtimeMessage = Object.create(runtimeMessage);
-                    runtimeMessage.contents = chunks.join("");
-                    runtimeMessage.type = chunk.originalType;
+                    const patchedMessage = Object.create(runtimeMessage);
+                    patchedMessage.contents = chunks.join("");
+                    patchedMessage.type = chunk.originalType;
                     type = chunk.originalType;
                     totalMsgSize = value.totalSize;
-                    chunkMap.delete(runtimeMessage.clientId);
+                    chunkMap.delete(patchedMessage.clientId);
                 } else {
                     return;
                 }

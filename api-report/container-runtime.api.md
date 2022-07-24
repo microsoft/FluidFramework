@@ -763,7 +763,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 }
 
 // @public (undocumented)
-export function unpackRuntimeMessage(message: ISequencedDocumentMessage): ISequencedDocumentMessage;
+export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolean;
 
 // (No @packageDocumentation comment for this package)
 

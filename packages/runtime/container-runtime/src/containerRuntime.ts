@@ -536,12 +536,14 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
             message.type = innerContents.type;
             message.contents = innerContents.contents;
         }
+        return true;
     } else {
         // Legacy format, but it's already "unpacked",
         // i.e. message.type is actually ContainerMessageType.
+        // Or it's non-runtime message.
         // Nothing to do in such case.
+        return false;
     }
-    return message;
 }
 
 /**
@@ -1873,13 +1875,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
 
-        // If it's not message for runtime, bail out right away.
-        if (!isRuntimeMessage(messageArg)) {
-            // Staging for removing deltaManager's "op" event
-            this.emit("op", messageArg, false /* runtimeMessage */);
-            return;
-        }
-
         if (this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad) {
             this.savedOps.push(messageArg);
         }
@@ -1892,7 +1887,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
         // System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
-        if (typeof message.contents === "string") {
+        // Old ops may contain empty string (I assume noops).
+        if (typeof message.contents === "string" && message.contents !== "") {
             message.contents = JSON.parse(message.contents);
         }
 
@@ -1902,19 +1898,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.scheduleManager.beforeOpProcessing(message);
 
         try {
-            message = unpackRuntimeMessage(message);
+            // Caveat: This will return false for runtime message in very old format, that are used in snapshot tests
+            // This format was not shipped to production workflows.
+            // This also excludes chunked ops (all chunks except last one)
+            const runtimeMessage = unpackRuntimeMessage(message);
 
             // Chunk processing must come first given that we will transform the message to the unchunked version
             // once all pieces are available
             message = this.processRemoteChunkedMessage(message);
 
             let localOpMetadata: unknown;
-            if (local) {
-                // Call the PendingStateManager to process local messages.
-                // Do not process local chunked ops until all pieces are available.
-                if (message.type !== ContainerMessageType.ChunkedOp) {
-                    localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
-                }
+            if (local && runtimeMessage) {
+                localOpMetadata = this.pendingStateManager.processPendingLocalMessage(message);
             }
 
             // If there are no more pending messages after processing a local message,
@@ -1941,10 +1936,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 case ContainerMessageType.Rejoin:
                     break;
                 default:
-                    unreachableCase(type, "unknown container message type");
+                    assert(!runtimeMessage, "Runtime message of unknown type");
             }
 
-            this.emit("op", message, true /* runtimeMessage */);
+            this.emit("op", message, runtimeMessage);
             this.scheduleManager.afterOpProcessing(undefined, message);
 
             if (local) {

@@ -1744,7 +1744,16 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         // 2. ContainerRuntime.process() also parses content
         // 3. SummaryCollection.handleOp() parsing content for MessageType.Summarize op.
         if (typeof message.contents === "string") {
-            message.contents = JSON.parse(message.contents);
+            switch (message.type) {
+                case MessageType.Propose:
+                case MessageType.Operation:
+                case MessageType.Summarize:
+                case MessageType.SummaryAck:
+                case MessageType.SummaryNack:
+                    message.contents = JSON.parse(message.contents);
+                    break;
+                default:
+            }
         }
 
         // Allow the protocol handler to process the message

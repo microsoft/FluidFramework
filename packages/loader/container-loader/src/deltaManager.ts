@@ -788,10 +788,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         const startTime = Date.now();
         this.lastProcessedMessage = message;
 
-        // All client messages are coming from some client, and should have clientId
         // System messages do not have clientId
+        // All client messages are coming from some client, and should have clientId.
+        // That said, snapshot tests will contain runtime messages in various (old) formats, so
+        // isClientMessage() check fails for them.
+        // Plus I observe some noops (only in snapshot tests) not to have clientId.
+        // So this check is unfortunately not as powerful as it could be.
         assert(
-            (message.clientId === null) === !isClientMessage(message),
+            (message.clientId !== null) || !isClientMessage(message) || message.type === MessageType.NoOp,
             0x0ed /* "non-system message have to have clientId" */,
         );
 

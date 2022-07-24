@@ -11,7 +11,6 @@ import {
     ContainerMessageType,
     unpackRuntimeMessage,
 } from "@fluidframework/container-runtime";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidHandle, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -106,11 +105,8 @@ describe("Ops on Reconnect", () => {
         const loader = await createLoader();
         const container2 = await loader.resolve({ url: documentLoadUrl });
         await waitForContainerReconnection(container2);
-        container2.on("op", (containerMessage: ISequencedDocumentMessage) => {
-            if (!isRuntimeMessage(containerMessage)) {
-                return;
-            }
-            const message = unpackRuntimeMessage(containerMessage);
+        container2.on("op", (message: ISequencedDocumentMessage) => {
+            unpackRuntimeMessage(message);
             if (message.type === ContainerMessageType.FluidDataStoreOp) {
                 const envelope = message.contents as IEnvelope;
                 const address = envelope.contents.content.address;

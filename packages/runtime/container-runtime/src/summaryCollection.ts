@@ -297,32 +297,27 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
      * Handler for ops; only handles ops relating to summaries.
      * @param op - op message to handle
      */
-    private handleOp(op: ISequencedDocumentMessage) {
+    private handleOp(opArg: ISequencedDocumentMessage) {
+        const op = { ...opArg };
         switch (op.type) {
-            case MessageType.Summarize: {
-                const op2 = { ...op };
-                // back-compat: ADO #1385: Make this unconditional in the future, when Container.processRemoteMessage
-                // stops parsing contents. That said, we should move to listen for "op" events from ContainerRuntime,
-                // and parsing may not be required at all if ContainerRuntime.process() would parse it for all types
-                // of ops.
+            case MessageType.Summarize:
+            case MessageType.SummaryAck:
+            case MessageType.SummaryNack:
+                // back-compat: ADO #1385: Make this unconditional (for summarize op only!) in the future,
+                // when Container.processRemoteMessage stops parsing contents. That said, we should move to
+                // listen for "op" events from ContainerRuntime, and parsing may not be required at all if
+                // ContainerRuntime.process() would parse it for all types of ops.
                 if (typeof op.contents === "string") {
-                    op2.contents = JSON.parse(op.contents);
+                    op.contents = JSON.parse(op.contents);
                 }
-                this.handleSummaryOp(op2 as ISummaryOpMessage);
-                return;
-            }
-            case MessageType.SummaryAck: {
+                // Latest version of relay service should provide content in `data` property as string.
+                // (for ack/nack ops). But really old files will contain same contents (sometimes only there)
+                // as `contents`.
                 // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
-                const op2 = { ...op, contents: JSON.parse((op as any).data) };
-                this.handleSummaryAck(op2 as ISummaryAckMessage);
-                return;
-            }
-            case MessageType.SummaryNack: {
-                // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
-                const op2 = { ...op, contents: JSON.parse((op as any).data) };
-                this.handleSummaryNack(op2 as ISummaryNackMessage);
-                return;
-            }
+                if ((op as any).data !== undefined) {
+                    op.contents = JSON.parse((op as any).data);
+                }
+                break;
             default: {
                 // If the difference between timestamp of current op and last summary op is greater than
                 // the maxAckWaitTime, then we need to inform summarizer to not wait and summarize
@@ -338,6 +333,16 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
                 return;
             }
+        }
+
+        switch (op.type) {
+            case MessageType.Summarize:
+                return this.handleSummaryOp(op as ISummaryOpMessage);
+            case MessageType.SummaryAck:
+                return this.handleSummaryAck(op as ISummaryAckMessage);
+            case MessageType.SummaryNack:
+                return this.handleSummaryNack(op as ISummaryNackMessage);
+            default:
         }
     }
 
