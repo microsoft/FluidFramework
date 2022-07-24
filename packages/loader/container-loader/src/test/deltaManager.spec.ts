@@ -14,6 +14,7 @@ import {
     MessageType,
 } from "@fluidframework/protocol-definitions";
 import { MockDocumentDeltaConnection, MockDocumentService } from "@fluidframework/test-loader-utils";
+import { MessageType2 } from "@fluidframework/driver-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
 import { CollabWindowTracker } from "../collabWindowTracker";
@@ -143,10 +144,16 @@ describe("Loader", () => {
 
             describe("Update Minimum Sequence Number", () => {
                 // helper function asserting that there is exactly one well-formed no-op
-                function assertOneValidNoOp(messages: IDocumentMessage[], immediate: boolean = false) {
+                function assertOneValidNoOp(messages: IDocumentMessage[]) {
                     assert.strictEqual(1, messages.length);
                     assert.strictEqual(MessageType.NoOp, messages[0].type);
-                    assert.strictEqual(immediate ? "" : null, JSON.parse(messages[0].contents as string));
+                    assert.strictEqual(undefined, messages[0].contents);
+                }
+
+                function assertOneValidAcceptOp(messages: IDocumentMessage[]) {
+                    assert.strictEqual(1, messages.length);
+                    assert.strictEqual(MessageType2.Accept, messages[0].type);
+                    assert.strictEqual(undefined, messages[0].contents);
                 }
 
                 it("Infinite frequency parameters disables periodic noops completely", async () => {
@@ -254,7 +261,7 @@ describe("Loader", () => {
                     await startDeltaManager();
 
                     emitter.on(submitEvent, (messages: IDocumentMessage[]) => {
-                        assertOneValidNoOp(messages, true);
+                        assertOneValidAcceptOp(messages);
                         runCount++;
                     });
 
