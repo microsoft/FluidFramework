@@ -40,8 +40,10 @@ async function yieldJSTurn(): Promise<void> {
 }
 
 function setupBatchMessageListener(dataStore: ITestFluidObject, receivedMessages: ISequencedDocumentMessage[]) {
-    dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage) => {
-        receivedMessages.push(message);
+    dataStore.context.containerRuntime.on("op", (message: ISequencedDocumentMessage, runtimeMessage: boolean) => {
+        if (runtimeMessage) {
+            receivedMessages.push(message);
+        }
     });
 }
 

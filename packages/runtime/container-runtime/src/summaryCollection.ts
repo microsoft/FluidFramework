@@ -299,26 +299,20 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
      */
     private handleOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
-            case MessageType.Summarize:
-            case MessageType.SummaryAck:
-            case MessageType.SummaryNack:
-                // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
-                op.contents = JSON.parse((op as any).data);
-                break;
-            default:
-        }
-
-        switch (op.type) {
             case MessageType.Summarize: {
                 this.handleSummaryOp(op as ISummaryOpMessage);
                 return;
             }
             case MessageType.SummaryAck: {
-                this.handleSummaryAck(op as ISummaryAckMessage);
+                // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
+                const op2 = { ...op, contents: JSON.parse((op as any).data) };
+                this.handleSummaryAck(op2 as ISummaryAckMessage);
                 return;
             }
             case MessageType.SummaryNack: {
-                this.handleSummaryNack(op as ISummaryNackMessage);
+                // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
+                const op2 = { ...op, contents: JSON.parse((op as any).data) };
+                this.handleSummaryNack(op2 as ISummaryNackMessage);
                 return;
             }
             default: {

@@ -111,6 +111,10 @@
       "RemovedFunctionDeclaration_isUnpackedRuntimeMessage": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "RemovedFunctionDeclaration_isClientMessage": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }

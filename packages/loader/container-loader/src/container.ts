@@ -1681,10 +1681,14 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     }
 
     private submitContainerMessage(type: MessageType, contents: string, batch?: boolean, metadata?: any): number {
-        const outboundMessageType: string = type;
-        switch (outboundMessageType) {
+        switch (type) {
             case MessageType.Operation:
-                return this.submitMessage(type, contents, batch, metadata);
+                return this.submitMessage(
+                    type,
+                    // back-compat: ADO #1385: pass content as-is in future.
+                    typeof contents === "string" ? contents : JSON.stringify(contents),
+                    batch,
+                    metadata);
             // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
             case MessageType.Summarize:
                 return this.submitSummaryMessage(JSON.parse(contents) as ISummaryContent);

@@ -230,9 +230,6 @@ export interface IProgress {
 }
 
 // @public (undocumented)
-export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
-
-// @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)

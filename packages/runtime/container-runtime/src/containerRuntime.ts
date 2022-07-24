@@ -1858,6 +1858,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // If it's not message for runtime, bail out right away.
         if (!isRuntimeMessage(messageArg)) {
+            // Staging for removing deltaManager's "op" event
+            this.emit("op", messageArg, false /* runtimeMessage */);
             return;
         }
 
@@ -1925,7 +1927,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     unreachableCase(type, "unknown container message type");
             }
 
-            this.emit("op", message);
+            this.emit("op", message, true /* runtimeMessage */);
             this.scheduleManager.afterOpProcessing(undefined, message);
 
             if (local) {
