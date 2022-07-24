@@ -50,7 +50,6 @@ import {
     combineAppAndProtocolSummary,
     runWithRetry,
     isFluidResolvedUrl,
-    isRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -115,8 +114,6 @@ const detachedContainerRefSeqNumber = 0;
 
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
-
-type OpContentType = Record<string, unknown>;
 
 export interface IContainerLoadOptions {
     /**
@@ -1411,7 +1408,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         const protocol = protocolHandlerBuilder(
             attributes,
             quorumSnapshot,
-            (key, value) => this.submitMessageObject(MessageType.Propose, { key, value }),
+            (key, value) => this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
             this._initialClients ?? [],
         );
 
@@ -1688,19 +1685,9 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         switch (outboundMessageType) {
             case MessageType.Operation:
                 return this.submitMessage(type, contents, batch, metadata);
-            case MessageType.Summarize: {
-                // github #6451: this is only needed for staging so the server
-                // know when the protocol tree is included
-                // this can be removed once all clients send
-                // protocol tree by default
-                const summary = JSON.parse(contents) as ISummaryContent;
-                if (summary.details === undefined) {
-                    summary.details = {};
-                }
-                summary.details.includesProtocolTree =
-                    this.options.summarizeProtocolTree === true;
-                return this.submitMessage(type, JSON.stringify(contents), batch, metadata);
-            }
+            // back-compat: ADO #1385: Remove in the future, summary op should come through submitSummaryMessage()
+            case MessageType.Summarize:
+                return this.submitSummaryMessage(JSON.parse(contents) as ISummaryContent);
             default:
                 this.close(new GenericError("invalidContainerSubmitOpType",
                     undefined /* error */,
@@ -1709,16 +1696,20 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    private submitMessageObject(
-        type: MessageType,
-        contents?: OpContentType,
-        batch?: boolean,
-        metadata?: any,
-    ): number {
-        return this.submitMessage(type, JSON.stringify(contents), batch, metadata);
+    private submitSummaryMessage(summary: ISummaryContent) {
+        // github #6451: this is only needed for staging so the server
+        // know when the protocol tree is included
+        // this can be removed once all clients send
+        // protocol tree by default
+        if (summary.details === undefined) {
+            summary.details = {};
+        }
+        summary.details.includesProtocolTree =
+            this.options.summarizeProtocolTree === true;
+        return this.submitMessage(MessageType.Summarize, JSON.stringify(summary), false /* batch */);
     }
 
-    private submitMessage(type: MessageType, contents: string, batch?: boolean, metadata?: any): number {
+    private submitMessage(type: MessageType, contents?: string, batch?: boolean, metadata?: any): number {
         if (this.connectionState !== ConnectionState.Connected) {
             this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
             return -1;
@@ -1732,6 +1723,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     private processRemoteMessage(message: ISequencedDocumentMessage): IProcessMessageResult {
         const local = this.clientId === message.clientId;
 
+        // back-compat: ADO #1385
+        // This JSON parsing should be removed from here!
+        // Two changes we depend on to propagate through the system and saturate:
+        // 1. Handling of MessageType.Propose in ProtocolOpHandler.processMessage() parses content
+        // 2. ContainerRuntime.process() also parses content
+        if (typeof message.contents === "string") {
+            message.contents = JSON.parse(message.contents);
+        }
+
         // Allow the protocol handler to process the message
         let result: IProcessMessageResult = { immediateNoOp: false };
         try {
@@ -1741,10 +1741,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 new DataCorruptionError(errorMessage, extractSafePropertiesFromMessage(message))));
         }
 
-        // Forward non system messages to the loaded runtime for processing
-        if (isRuntimeMessage(message)) {
-            this.context.process(message, local, undefined);
-        }
+        // Forward messages to the loaded runtime for processing
+        this.context.process(message, local);
 
         // Inactive (not in quorum or not writers) clients don't take part in the minimum sequence number calculation.
         if (this.activeConnection()) {
@@ -1760,7 +1758,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                     (type) => {
                         assert(this.activeConnection(),
                             0x241 /* "disconnect should result in stopSequenceNumberUpdate() call" */);
-                        this.submitMessageObject(type);
+                        this.submitMessage(type);
                     },
                     this.serviceConfiguration.noopTimeFrequency,
                     this.serviceConfiguration.noopCountFrequency,
@@ -1847,6 +1845,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             new QuorumProxy(this.protocolHandler.quorum),
             loader,
             (type, contents, batch, metadata) => this.submitContainerMessage(type, contents, batch, metadata),
+            (summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
             (message) => this.submitSignal(message),
             (error?: ICriticalContainerError) => this.close(error),
             Container.version,

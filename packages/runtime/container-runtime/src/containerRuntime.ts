@@ -1871,6 +1871,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // but would not modify contents details
         let message = { ...messageArg };
 
+        // back-compat: ADO #1385: eventually should become unconditional, but only for runtime messages!
+        // System message may have no contents, or in some cases (mostly for back-compat) they may have actual objects.
+        if (typeof message.contents === "string") {
+            message.contents = JSON.parse(message.contents);
+        }
+
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
         // messages once a batch has been fully processed.
@@ -2776,7 +2782,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             let clientSequenceNumber: number;
             try {
-                clientSequenceNumber = this.submitSystemMessage(MessageType.Summarize, summaryMessage);
+                clientSequenceNumber = this.submitSummaryMessage(summaryMessage);
             } catch (error) {
                 return { stage: "upload", ...uploadData, error };
             }
@@ -2994,19 +3000,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         return this.context.submitFn(
             type,
-            // back-compat: remove supports_OpContentsPassThrough in future and make unconditional
-            this.context.supports_OpContentsPassThrough ? JSON.stringify(contents) : contents,
+            // back-compat: ADO #1385: remove this check in future and make unconditional
+            this.context.submitSummaryFn === undefined ? JSON.stringify(contents) : contents,
             batch,
             metaData);
     }
 
-    private submitSystemMessage(type: MessageType, contents: any) {
+    private submitSummaryMessage(contents: ISummaryContent) {
         // System message should not be sent in the middle of the batch.
         assert(this.flushMode !== FlushMode.TurnBased || !this.needsFlush, "System op in the middle of a batch");
-        return this.submitMessageCore(
-            type,
-            contents,
-            false); // batch
+        // back-compat: ADO #1385: Make this call unconditional in the future
+        if (this.context.submitSummaryFn !== undefined) {
+            return this.context.submitSummaryFn(contents);
+        } else {
+            return this.submitMessageCore(
+                MessageType.Summarize,
+                contents,
+                false); // batch
+            }
     }
 
     private submitRuntimeMessage(

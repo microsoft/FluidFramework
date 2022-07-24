@@ -20,6 +20,7 @@ import {
     IVersion,
     IDocumentMessage,
     IQuorumClients,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
@@ -69,7 +70,7 @@ export interface IRuntime extends IDisposable {
     /**
      * Processes the given op (message)
      */
-    process(message: ISequencedDocumentMessage, local: boolean, context: any);
+    process(message: ISequencedDocumentMessage, local: boolean);
 
     /**
      * Processes the given signal
@@ -112,9 +113,6 @@ export interface IRuntime extends IDisposable {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
-    // back-compat: should be removed and all usage replaced with true
-    readonly supports_OpContentsPassThrough?: true;
-
     readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
@@ -123,6 +121,7 @@ export interface IContainerContext extends IDisposable {
     readonly connected: boolean;
     readonly baseSnapshot: ISnapshotTree | undefined;
     readonly submitFn: (type: MessageType, contents: string, batch: boolean, appData?: any) => number;
+    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     readonly submitSignalFn: (contents: any) => void;
     readonly closeFn: (error?: ICriticalContainerError) => void;
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

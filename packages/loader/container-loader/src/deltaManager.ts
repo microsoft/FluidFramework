@@ -202,7 +202,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             return -1;
         }
 
-        this.opsSize += message.contents.length;
+        if (contents !== undefined) {
+            this.opsSize += contents.length;
+        }
 
         this.messageBuffer.push(message);
 
@@ -771,10 +773,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             || !(isClientMessage(message)),
             0x0ed /* "non-system message have to have clientId" */,
         );
-
-        if (typeof message.contents === "string") {
-            message.contents = JSON.parse(message.contents);
-        }
 
         this.connectionManager.beforeProcessingIncomingOp(message);
 

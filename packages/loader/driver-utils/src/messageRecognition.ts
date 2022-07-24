@@ -26,7 +26,6 @@ export function isClientMessage(message: ISequencedDocumentMessage | IDocumentMe
     }
     switch (message.type) {
         case MessageType.Propose:
-        case MessageType.Reject:
         case MessageType.NoOp:
         case MessageType.Summarize:
         case MessageType2.Accept:

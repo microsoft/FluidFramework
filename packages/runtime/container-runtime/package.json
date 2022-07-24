@@ -130,6 +130,14 @@
       },
       "TypeAliasDeclaration_SubmitSummaryResult": {
         "backCompat": false
+      },
+      "RemovedFunctionDeclaration_isRuntimeMessage": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "RemovedEnumDeclaration_RuntimeMessage": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }

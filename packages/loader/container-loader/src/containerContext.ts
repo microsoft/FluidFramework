@@ -42,6 +42,7 @@ import {
     ISummaryTree,
     IVersion,
     MessageType,
+    ISummaryContent,
 } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { Container } from "./container";
@@ -59,6 +60,7 @@ export class ContainerContext implements IContainerContext {
         quorum: IQuorum,
         loader: ILoader,
         submitFn: (type: MessageType, contents: string, batch: boolean, appData: any) => number,
+        submitSummaryFn: (summaryOp: ISummaryContent) => number,
         submitSignalFn: (contents: any) => void,
         closeFn: (error?: ICriticalContainerError) => void,
         version: string,
@@ -76,6 +78,7 @@ export class ContainerContext implements IContainerContext {
             quorum,
             loader,
             submitFn,
+            submitSummaryFn,
             submitSignalFn,
             closeFn,
             version,
@@ -85,9 +88,6 @@ export class ContainerContext implements IContainerContext {
         await context.instantiateRuntime(existing);
         return context;
     }
-
-    // back-compat: should be removed in future.
-    public readonly supports_OpContentsPassThrough = true;
 
     public readonly taggedLogger: ITelemetryLogger;
 
@@ -169,6 +169,7 @@ export class ContainerContext implements IContainerContext {
         quorum: IQuorum,
         public readonly loader: ILoader,
         public readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData: any) => number,
+        public readonly submitSummaryFn: (summaryOp: ISummaryContent) => number,
         public readonly submitSignalFn: (contents: any) => void,
         public readonly closeFn: (error?: ICriticalContainerError) => void,
         public readonly version: string,
@@ -232,8 +233,8 @@ export class ContainerContext implements IContainerContext {
         runtime.setConnectionState(connected, clientId);
     }
 
-    public process(message: ISequencedDocumentMessage, local: boolean, context: any) {
-        this.runtime.process(message, local, context);
+    public process(message: ISequencedDocumentMessage, local: boolean) {
+        this.runtime.process(message, local);
     }
 
     public processSignal(message: ISignalMessage, local: boolean) {

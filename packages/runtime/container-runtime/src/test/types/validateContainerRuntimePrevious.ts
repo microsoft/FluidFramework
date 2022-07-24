@@ -883,6 +883,18 @@ use_old_InterfaceDeclaration_IRootSummaryTreeWithStats(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_isRuntimeMessage": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedFunctionDeclaration_isRuntimeMessage": {"backCompat": false}
+*/
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISubmitSummaryOpResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISubmitSummaryOpResult():
@@ -1531,6 +1543,18 @@ declare function use_old_EnumDeclaration_RuntimeHeaders(
     use: TypeOnly<old.RuntimeHeaders>);
 use_old_EnumDeclaration_RuntimeHeaders(
     get_current_EnumDeclaration_RuntimeHeaders());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_RuntimeMessage": {"forwardCompat": false}
+*/
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "RemovedEnumDeclaration_RuntimeMessage": {"backCompat": false}
+*/
 
 /*
 * Validate forward compat by using old type in place of current type

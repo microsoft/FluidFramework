@@ -239,9 +239,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
         private readonly logger: ITelemetryLogger,
     ) {
         super();
-        this.deltaManager.on(
-            "op",
-            (op) => this.handleOp(op));
+        this.deltaManager.on("op", (op) => this.handleOp(op));
     }
 
     /**
@@ -300,6 +298,16 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
      * @param op - op message to handle
      */
     private handleOp(op: ISequencedDocumentMessage) {
+        switch (op.type) {
+            case MessageType.Summarize:
+            case MessageType.SummaryAck:
+            case MessageType.SummaryNack:
+                // back-compat: ADO #1385: remove cast when ISequencedDocumentMessage changes are propagated
+                op.contents = JSON.parse((op as any).data);
+                break;
+            default:
+        }
+
         switch (op.type) {
             case MessageType.Summarize: {
                 this.handleSummaryOp(op as ISummaryOpMessage);

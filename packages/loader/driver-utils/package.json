@@ -107,6 +107,10 @@
       "RemovedClassDeclaration_SummaryTreeAssembler": {
         "forwardCompat": false,
         "backCompat": false
+      },
+      "RemovedFunctionDeclaration_isUnpackedRuntimeMessage": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }

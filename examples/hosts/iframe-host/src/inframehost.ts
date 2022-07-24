@@ -78,7 +78,7 @@ class ProxyRuntime implements IRuntime {
     }
     async setConnectionState(connected: boolean, clientId?: string) {
     }
-    async process(message: ISequencedDocumentMessage, local: boolean, context: any) {
+    async process(message: ISequencedDocumentMessage, local: boolean) {
     }
     async processSignal(message: any, local: boolean) {
     }

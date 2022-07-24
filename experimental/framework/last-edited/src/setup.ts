@@ -6,6 +6,7 @@
 import { ISequencedDocumentMessage, IQuorumClients } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { ILastEditDetails, IFluidLastEditedTracker } from "./interfaces";
 
 // Default implementation of the shouldDiscardMessageFn function below that tells that all messages other
@@ -55,7 +56,7 @@ export function setupLastEditedTrackerForContainer(
     // last edited tracker. If the lastEditedTracker hasn't loaded, store the last edited information temporarily.
     runtime.on("op", (message: ISequencedDocumentMessage) => {
         // If this message should be discarded as per shouldDiscardMessageFn, return.
-        if (shouldDiscardMessageFn(message)) {
+        if (!isRuntimeMessage(message) || shouldDiscardMessageFn(message)) {
             return;
         }
 

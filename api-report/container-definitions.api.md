@@ -28,6 +28,7 @@ import { ISequencedProposal } from '@fluidframework/protocol-definitions';
 import { ISignalClient } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
@@ -183,7 +184,7 @@ export interface IContainerContext extends IDisposable {
     // (undocumented)
     readonly submitSignalFn: (contents: any) => void;
     // (undocumented)
-    readonly supports_OpContentsPassThrough?: true;
+    readonly submitSummaryFn: (summaryOp: ISummaryContent) => number;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)
@@ -476,7 +477,7 @@ export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getPendingLocalState(): unknown;
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
-    process(message: ISequencedDocumentMessage, local: boolean, context: any): any;
+    process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     request(request: IRequest): Promise<IResponse>;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
