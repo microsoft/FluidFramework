@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Delta } from "../changeset";
 import { IEditableForest, IForestSubscription } from "../forest";
 import { ChangeFamily, ProgressiveEditBuilder } from "../change-family";
 
@@ -22,7 +21,7 @@ class Transaction<
 > {
     public readonly editor: TEditor;
     constructor(private readonly forest: IEditableForest, changeFamily: ChangeFamily<TEditor, TChange>) {
-        this.editor = changeFamily.buildEditor((delta) => applyDeltaToForest(this.forest, delta), forest.anchors);
+        this.editor = changeFamily.buildEditor((delta) => this.forest.applyDelta(delta), forest.anchors);
     }
 }
 
@@ -44,7 +43,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
         // TODO: maybe unify logic to edit forest and its anchors here with that in ProgressiveEditBuilder.
         // TODO: update schema in addition to anchors and tree data (in both places).
         checkout.changeFamily.rebaser.rebaseAnchors(checkout.forest.anchors, inverse);
-        applyDeltaToForest(checkout.forest, checkout.changeFamily.intoDelta(inverse));
+        checkout.forest.applyDelta(checkout.changeFamily.intoDelta(inverse));
 
         return result;
     }
@@ -52,11 +51,6 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     checkout.submitEdit(edit);
 
     return result;
-}
-
-// Does NOT update anchors.
-function applyDeltaToForest(forest: IEditableForest, delta: Delta.Root) {
-    // TODO
 }
 
 enum CommandResult {

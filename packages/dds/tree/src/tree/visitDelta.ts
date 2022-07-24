@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, Value } from "../tree";
 import { fail, unreachableCase } from "../util";
+import { FieldKey, Value } from "./types";
 import * as Delta from "./delta";
 
 /**
@@ -57,9 +57,10 @@ import * as Delta from "./delta";
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
     const moveInfo: MoveOutInfo = new Map();
-    firstPass(delta, { visitor, moveInfo });
+    const props = { visitor, moveInfo };
+    visitFieldMarks(delta, props, firstPass);
     if (moveInfo.size > 0) {
-        secondPass(delta, { visitor, moveInfo });
+        visitFieldMarks(delta, props, secondPass);
     }
 }
 
@@ -97,6 +98,14 @@ interface ModifyLike {
     fields?: Delta.FieldMarks<Delta.Mark>;
 }
 
+function visitFieldMarks(fields: Delta.FieldMarks<Delta.Mark>, props: PassProps, func: Pass): void {
+    for (const [key, field] of fields) {
+        props.visitor.enterField(key);
+        func(field, props);
+        props.visitor.exitField(key);
+    }
+}
+
 function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
     const { startIndex, visitor } = props;
     visitor.enterNode(startIndex || 0);
@@ -107,11 +116,7 @@ function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
         visitor.onSetValue(modify.setValue);
     }
     if (modify.fields !== undefined) {
-        for (const [key, field] of modify.fields) {
-            visitor.enterField(key);
-            func(field, props);
-            visitor.exitField(key);
-        }
+        visitFieldMarks(modify.fields, props, func);
     }
     visitor.exitNode(startIndex || 0);
 }
@@ -167,7 +172,7 @@ function firstPass(delta: Delta.MarkList, props: PassProps): void {
 
 const NO_MATCHING_MOVE_OUT_ERR = "Encountered a MoveIn mark for which there is not corresponding MoveOut mark";
 
-function secondPass(delta: Delta.Root, props: PassProps): void {
+function secondPass(delta: Delta.MarkList, props: PassProps): void {
     const { startIndex, visitor, moveInfo } = props;
     let index = startIndex ?? 0;
     for (const mark of delta) {

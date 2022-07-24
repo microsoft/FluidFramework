@@ -55,8 +55,11 @@ export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
     _typeCheck?: Covariant<TChange> & Contravariant<TFinalChange> & Invariant<TChangeSet>;
 }
 
+// @public (undocumented)
+export type ChangeSetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, any, infer TChangeSet> ? TChangeSet : never;
+
 // @public
-export type ChildCollection = FieldKey | RootRange;
+export type ChildCollection = FieldKey | RootField;
 
 // @public
 export interface ChildLocation {
@@ -82,6 +85,46 @@ export interface Covariant<T> {
 export function cursorToJsonObject(reader: ITreeCursor): unknown;
 
 // @public
+interface Delete {
+    // (undocumented)
+    count: number;
+    // (undocumented)
+    type: typeof MarkType.Delete;
+}
+
+declare namespace Delta {
+    export {
+        inputLength,
+        Root,
+        Mark,
+        OuterMark,
+        InnerModify,
+        MarkList,
+        Skip,
+        Modify,
+        ModifyDeleted,
+        ModifyMovedOut,
+        ModifyMovedIn,
+        ModifyInserted,
+        Delete,
+        ModifyAndDelete,
+        MoveOut,
+        ModifyAndMoveOut,
+        MoveIn,
+        MoveInAndModify,
+        Insert,
+        InsertAndModify,
+        ProtoNode,
+        MoveId,
+        Offset,
+        FieldMap_2 as FieldMap,
+        FieldMarks,
+        MarkType
+    }
+}
+export { Delta }
+
+// @public
 export interface Dependee extends NamedComputation {
     registerDependent(dependent: Dependent): boolean;
     removeDependent(dependent: Dependent): void;
@@ -93,7 +136,7 @@ export interface Dependent extends NamedComputation {
 }
 
 // @public
-export interface DetachedRange extends Opaque<Brand<number, "tree.DetachedRange">> {
+export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
 
 // @public
@@ -134,6 +177,12 @@ export interface FieldMap<TChild> {
 }
 
 // @public (undocumented)
+type FieldMap_2<T> = Map<FieldKey, T>;
+
+// @public (undocumented)
+type FieldMarks<TMark> = FieldMap_2<MarkList<TMark>>;
+
+// @public (undocumented)
 export interface FieldSchema {
     // (undocumented)
     readonly kind: FieldKind;
@@ -164,24 +213,44 @@ export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKe
 
 // @public
 export interface IEditableForest extends IForestSubscription {
-    add(nodes: Iterable<ITreeCursor>): DetachedRange;
     readonly anchors: AnchorSet;
-    attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void;
-    delete(ids: DetachedRange): void;
-    detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange;
+    applyDelta(delta: Delta.Root): void;
     // (undocumented)
     readonly schema: StoredSchemaRepository;
-    setValue(nodeId: ForestLocation, value: Value): void;
 }
 
 // @public
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
-    root(range: DetachedRange): ForestAnchor;
+    root(range: DetachedField): ForestAnchor;
     // (undocumented)
-    readonly rootField: DetachedRange;
+    readonly rootField: DetachedField;
     readonly schema: SchemaRepository & Dependee;
     tryGet(destination: ForestAnchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
+}
+
+// @public
+type InnerModify = ModifyDeleted | ModifyInserted | ModifyMovedIn | ModifyMovedOut;
+
+// @public
+function inputLength(mark: Mark): number;
+
+// @public
+interface Insert {
+    // (undocumented)
+    content: ProtoNode[];
+    // (undocumented)
+    type: typeof MarkType.Insert;
+}
+
+// @public
+interface InsertAndModify {
+    // (undocumented)
+    content: ProtoNode;
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+    // (undocumented)
+    type: typeof MarkType.InsertAndModify;
 }
 
 // @public
@@ -236,6 +305,13 @@ export enum ITreeSubscriptionCursorState {
     Freed = 2
 }
 
+// @public
+export interface JsonableTree extends PlaceholderTree {
+}
+
+// @public
+export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
+
 // @public (undocumented)
 export const jsonArray: NamedTreeSchema;
 
@@ -286,6 +362,117 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 export interface MakeNominal {
 }
 
+// @public
+type Mark = OuterMark | InnerModify;
+
+// @public
+type MarkList<TMark = Mark> = TMark[];
+
+// @public (undocumented)
+const MarkType: {
+    readonly Modify: 0;
+    readonly Insert: 1;
+    readonly InsertAndModify: 2;
+    readonly MoveIn: 3;
+    readonly MoveInAndModify: 4;
+    readonly Delete: 5;
+    readonly ModifyAndDelete: 6;
+    readonly MoveOut: 7;
+    readonly ModifyAndMoveOut: 8;
+};
+
+// @public
+interface Modify {
+    // (undocumented)
+    fields?: FieldMarks<OuterMark>;
+    // (undocumented)
+    setValue?: Value;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface ModifyAndDelete {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyDeleted | MoveOut>;
+    // (undocumented)
+    type: typeof MarkType.ModifyAndDelete;
+}
+
+// @public
+interface ModifyAndMoveOut {
+    // (undocumented)
+    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | MoveOut>;
+    moveId: MoveId;
+    // (undocumented)
+    setValue?: Value;
+    // (undocumented)
+    type: typeof MarkType.ModifyAndMoveOut;
+}
+
+// @public
+interface ModifyDeleted {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyDeleted | ModifyAndMoveOut | MoveOut>;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface ModifyInserted {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface ModifyMovedIn {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | MoveInAndModify | Insert | InsertAndModify>;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface ModifyMovedOut {
+    // (undocumented)
+    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | ModifyAndDelete | ModifyAndMoveOut | MoveOut>;
+    // (undocumented)
+    setValue?: Value;
+    // (undocumented)
+    type: typeof MarkType.Modify;
+}
+
+// @public
+interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
+}
+
+// @public
+interface MoveIn {
+    moveId: MoveId;
+    // (undocumented)
+    type: typeof MarkType.MoveIn;
+}
+
+// @public
+interface MoveInAndModify {
+    // (undocumented)
+    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | Insert>;
+    moveId: MoveId;
+    // (undocumented)
+    type: typeof MarkType.MoveInAndModify;
+}
+
+// @public
+interface MoveOut {
+    // (undocumented)
+    count: number;
+    moveId: MoveId;
+    // (undocumented)
+    type: typeof MarkType.MoveOut;
+}
+
 // @public (undocumented)
 export interface Named<TName> {
     // (undocumented)
@@ -318,14 +505,20 @@ export interface ObservingDependent extends Dependent {
     registerDependee(dependee: Dependee): void;
 }
 
+// @public (undocumented)
+type Offset = number;
+
 // @public
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
 
 // @public
-export class PathCollection extends PathShared<RootRange> {
+type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
+
+// @public
+export class PathCollection extends PathShared<RootField> {
     constructor();
     // (undocumented)
-    delete(range: DetachedRange): void;
+    delete(range: DetachedField): void;
 }
 
 // @public (undocumented)
@@ -340,11 +533,11 @@ export class PathShared<TParent extends ChildCollection = ChildCollection> imple
     // (undocumented)
     protected readonly children: Map<TParent, PathNode[]>;
     // (undocumented)
-    detach(start: number, length: number, destination: DetachedRange): void;
+    detach(start: number, length: number, destination: DetachedField): void;
     // (undocumented)
     insert(start: number, paths: PathNode, length: number): void;
     // (undocumented)
-    parent(): UpPath | DetachedRange;
+    parent(): UpPath | undefined;
     // (undocumented)
     parentField(): FieldKey;
     // (undocumented)
@@ -355,7 +548,7 @@ export class PathShared<TParent extends ChildCollection = ChildCollection> imple
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 // @public
-export function placeholderTreeFromCursor(cursor: ITreeCursor): PlaceholderTree;
+type ProtoNode = JsonableTree;
 
 // @public
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
@@ -363,6 +556,8 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
     discardRevision(revision: RevisionTag): void;
     // (undocumented)
     readonly empty: RevisionTag;
+    // (undocumented)
+    getResolutionPath(from: RevisionTag, to: RevisionTag): ChangeSetFromChangeRebaser<TChangeRebaser>;
     rebase(changes: ChangeFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>];
     rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void;
     // (undocumented)
@@ -376,13 +571,16 @@ export function recordDependency(dependent: ObservingDependent | undefined, depe
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 
 // @public
-export const rootFieldKey: BrandedType<string, "tree.GlobalFieldKey">;
+type Root = FieldMarks<OuterMark>;
 
 // @public
-export interface RootRange {
+export interface RootField {
     // (undocumented)
-    readonly key: DetachedRange;
+    readonly key: DetachedField;
 }
+
+// @public
+export const rootFieldKey: BrandedType<string, "tree.GlobalFieldKey">;
 
 // @public (undocumented)
 export interface SchemaRepository {
@@ -409,6 +607,9 @@ export class SimpleDependee implements Dependee {
 }
 
 // @public
+type Skip = number;
+
+// @public
 export class StoredSchemaRepository extends SimpleDependee implements SchemaRepository, Dependee {
     constructor(fields?: Map<GlobalFieldKey, FieldSchema>, trees?: Map<TreeSchemaIdentifier, TreeSchema>);
     // (undocumented)
@@ -433,15 +634,15 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaRepo
 
 // @public
 export class TextCursor implements ITreeCursor {
-    constructor(root: PlaceholderTree);
+    constructor(root: JsonableTree);
     // (undocumented)
     down(key: FieldKey, index: number): TreeNavigationResult;
     // (undocumented)
-    getField(key: FieldKey): readonly PlaceholderTree[];
+    getField(key: FieldKey): readonly JsonableTree[];
     // (undocumented)
-    getFields(): Readonly<FieldMap<PlaceholderTree>>;
+    getFields(): Readonly<FieldMap<JsonableTree>>;
     // (undocumented)
-    getNode(): PlaceholderTree;
+    getNode(): JsonableTree;
     // (undocumented)
     get keys(): Iterable<FieldKey>;
     // (undocumented)
@@ -464,7 +665,7 @@ export interface TreeLocation {
     // (undocumented)
     readonly index: number;
     // (undocumented)
-    readonly range: FieldLocation | DetachedRange;
+    readonly range: FieldLocation | DetachedField;
 }
 
 // @public (undocumented)
@@ -496,10 +697,8 @@ export interface TreeValue extends Serializable {
 // @public
 export interface UpPath {
     // (undocumented)
-    parent(): UpPath | DetachedRange;
-    // (undocumented)
+    parent(): UpPath | undefined;
     parentField(): FieldKey;
-    // (undocumented)
     parentIndex(): number;
 }
 

@@ -17,10 +17,9 @@ import {
 } from "../forest";
 import { Index, SummaryElement } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
-import { Delta } from "../changeset";
-import { PlaceholderTree } from "../tree";
-import { ObjectForest } from "./object-forest";
-import { placeholderTreeFromCursor, TextCursor } from "./treeTextCursor";
+import { JsonableTree, Delta, FieldKey } from "../tree";
+import { brand } from "../util";
+import { jsonableTreeFromCursor } from "./treeTextCursor";
 
 /**
  * Index which provides an editable forest for the current state for the document.
@@ -33,7 +32,6 @@ import { placeholderTreeFromCursor, TextCursor } from "./treeTextCursor";
  */
 export class ForestIndex implements Index<unknown>, SummaryElement {
     readonly key: string = "Forest";
-    private readonly forest: IEditableForest = new ObjectForest();
 
     // TODO: implement this to provide snapshots in summaries.
     readonly summaryElement?: SummaryElement = this;
@@ -44,7 +42,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     private readonly treeBlob: ICachedValue<Promise<ISummaryAttachment>>;
     private readonly schemaBlob: ICachedValue<Promise<ISummaryAttachment>>;
 
-    public constructor(private readonly runtime: IFluidDataStoreRuntime) {
+    public constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly forest: IEditableForest) {
         this.cursor = this.forest.allocateCursor();
         this.treeBlob = cachedValue(async (observer) => {
             // TODO: could optimize to depend on tree only, not also schema.
@@ -52,6 +50,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
             const treeText = this.getTreeString();
 
             // For now we are not chunking the data, and instead put it in a single blob:
+            // TODO: use lower level API to avoid blob manager?
             const blob = await this.runtime.uploadBlob(IsoBuffer.from(treeText));
             return { type: SummaryType.Attachment, id: idFromBlob(blob) };
         });
@@ -66,9 +65,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     }
 
     newLocalState(changeDelta: Delta.Root): void {
-        // TODO: apply changeDelta to the forest.
-        // TODO: unity this with logic in transaction.
-        throw new Error("Method not implemented.");
+        this.forest.applyDelta(changeDelta);
     }
 
     /**
@@ -82,10 +79,10 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         // TODO: maybe assert there are no other roots
         // (since we don't save them, and they should not exist outside transactions).
         const rootAnchor = this.forest.root(this.forest.rootField);
-        const roots: PlaceholderTree[] = [];
+        const roots: JsonableTree[] = [];
         let result = this.forest.tryGet(rootAnchor, this.cursor);
         while (result === TreeNavigationResult.Ok) {
-            roots.push(placeholderTreeFromCursor(this.cursor));
+            roots.push(jsonableTreeFromCursor(this.cursor));
             result = this.cursor.seek(1).result;
         }
         this.cursor.clear();
@@ -165,12 +162,13 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         const decodedSchema = bufferToString(schemaBuffer, "utf8");
         const decodedtree = bufferToString(treeBuffer, "utf8");
 
-        const placeholderTree = JSON.parse(decodedtree) as PlaceholderTree[];
+        const placeholderTree = JSON.parse(decodedtree) as JsonableTree[];
 
         // TODO: maybe assert forest is empty?
-        const range = this.forest.add(placeholderTree.map((t) => new TextCursor(t)));
-        const dst = { index: 0, range: this.forest.rootField };
-        this.forest.attachRangeOfChildren(dst, range);
+        const insert: Delta.Insert = { type: Delta.MarkType.Insert, content: placeholderTree };
+        // TODO: make type-safe
+        const rootField = brand<FieldKey>(this.forest.rootField as unknown as string);
+        this.forest.applyDelta(new Map([[rootField, [insert]]]));
 
         // TODO: use decodedSchema to initialize forest.schema
         throw new Error("Method not implemented.");
