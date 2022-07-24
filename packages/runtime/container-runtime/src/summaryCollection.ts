@@ -300,7 +300,15 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     private handleOp(op: ISequencedDocumentMessage) {
         switch (op.type) {
             case MessageType.Summarize: {
-                this.handleSummaryOp(op as ISummaryOpMessage);
+                const op2 = { ...op };
+                // back-compat: ADO #1385: Make this unconditional in the future, when Container.processRemoteMessage
+                // stops parsing contents. That said, we should move to listen for "op" events from ContainerRuntime,
+                // and parsing may not be required at all if ContainerRuntime.process() would parse it for all types
+                // of ops.
+                if (typeof op.contents === "string") {
+                    op2.contents = JSON.parse(op.contents);
+                }
+                this.handleSummaryOp(op2 as ISummaryOpMessage);
                 return;
             }
             case MessageType.SummaryAck: {

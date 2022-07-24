@@ -11,7 +11,6 @@ import {
     IDocumentMessage,
     INack,
     ISignalMessage,
-    MessageType,
     NackErrorType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";

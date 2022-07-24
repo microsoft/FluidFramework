@@ -8,7 +8,6 @@ import {
     IHelpMessage,
     IQueueMessage,
     ISequencedDocumentSystemMessage,
-    MessageType,
     ScopeType,
 } from "@fluidframework/protocol-definitions";
 import * as core from "@fluidframework/server-services-core";

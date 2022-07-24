@@ -1729,9 +1729,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
 
         // back-compat: ADO #1385
         // This JSON parsing should be removed from here!
-        // Two changes we depend on to propagate through the system and saturate:
+        // Changes we depend on to propagate through the system and saturate, before it can be removed:
         // 1. Handling of MessageType.Propose in ProtocolOpHandler.processMessage() parses content
         // 2. ContainerRuntime.process() also parses content
+        // 3. SummaryCollection.handleOp() parsing content for MessageType.Summarize op.
         if (typeof message.contents === "string") {
             message.contents = JSON.parse(message.contents);
         }

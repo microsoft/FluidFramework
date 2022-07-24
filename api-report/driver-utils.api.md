@@ -235,7 +235,7 @@ export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolve
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
 
-// @public (undocumented)
+// @public
 export function isRuntimeMessage(message: {
     type: string;
 }): boolean;
