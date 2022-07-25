@@ -13,8 +13,8 @@ import {
     MockSharedObjectServices,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IValueChanged } from "../interfaces";
-import { MapFactory, SharedMap } from "../map";
+import { IValueChanged } from "../../interfaces";
+import { MapFactory, SharedMap } from "../../map";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();

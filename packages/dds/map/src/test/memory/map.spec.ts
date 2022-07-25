@@ -15,8 +15,8 @@ function createLocalMap(id: string) {
     return map;
 }
 
-function createTestForAddingIntegerEntries(howManyEntries: number): () => void {
-    return () => {
+function createTestForAddingIntegerEntries(howManyEntries: number): () => Promise<unknown> {
+    return async () => {
         const map = createLocalMap("testMap");
         for (let i = 0; i < howManyEntries; i++) {
             map.set(i.toString().padStart(6, "0"), i);
@@ -24,8 +24,8 @@ function createTestForAddingIntegerEntries(howManyEntries: number): () => void {
     };
 }
 
-function createTestForAddingIntegerEntriesAndClearing(howManyEntries: number): () => void {
-    return () => {
+function createTestForAddingIntegerEntriesAndClearing(howManyEntries: number): () => Promise<unknown> {
+    return async () => {
         const map = createLocalMap("testMap");
         for (let i = 0; i < howManyEntries; i++) {
             map.set(i.toString().padStart(6, "0"), i);
@@ -56,7 +56,7 @@ describe("Memory usage", () => {
     benchmarkMemory({
         title: "Create empty map",
         minSampleCount: 1000,
-        benchmarkFn: () => {
+        benchmarkFn: async () => {
             createLocalMap("testMap");
         },
     });
