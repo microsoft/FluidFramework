@@ -18,6 +18,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 
     return (
         <div>
+            <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
             <MigrationStatusView model={ model } />
             <ControlsView proposeVersion={ model.proposeVersion } />
         </div>
@@ -47,8 +48,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
     }, [model]);
 
     return (
-        <>
-            <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
+        <div style={{ margin: "10px 0" }}>
             <div>
                 Using model: { model.version }
             </div>
@@ -72,7 +72,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
                         : `Migrated to new container at ${model.newContainerId}`
                 }
             </div>
-        </>
+        </div>
     );
 };
 
@@ -86,12 +86,13 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
     } = props;
 
     return (
-        <div>
+        <div style={{ margin: "10px 0" }}>
+            Propose code:<br />
             <button onClick={ () => { proposeVersion("one"); } }>
-                Propose code version one
+                "one"
             </button>
             <button onClick={ () => { proposeVersion("two"); } }>
-                Propose code version two
+                "two"
             </button>
         </div>
     );
