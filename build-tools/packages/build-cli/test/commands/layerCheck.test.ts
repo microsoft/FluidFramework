@@ -8,14 +8,14 @@ import {expect, test} from '@oclif/test'
 describe('layer-check', () => {
   test
   .stdout()
-  .command(['layer-check'])
+  .command(['layerCheck'])
   .it('runs hello', ctx => {
     expect(ctx.stdout).to.contain('hello world')
   })
 
   test
   .stdout()
-  .command(['layer-check', '--name', 'jeff'])
+  .command(['layerCheck', '--name', 'jeff'])
   .it('runs hello --name jeff', ctx => {
     expect(ctx.stdout).to.contain('hello jeff')
   })
