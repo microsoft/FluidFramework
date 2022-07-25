@@ -137,4 +137,50 @@ describe("SequenceEditBuilder", () => {
             expected,
         );
     });
+
+    it("Can delete a root node", () => {
+        const expected: Delta.Root = new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Delete,
+                count: 1,
+            }],
+        ]]);
+        test(
+            (builder) => { builder.delete(root, 1); },
+            expected,
+        );
+    });
+
+    it("Can delete child nodes", () => {
+        const expected: Delta.Root = new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                fields: new Map([[
+                    fooKey,
+                    [
+                        2,
+                        {
+                            type: Delta.MarkType.Modify,
+                            fields: new Map([[
+                                fooKey,
+                                [
+                                    5,
+                                    {
+                                        type: Delta.MarkType.Delete,
+                                        count: 10,
+                                    },
+                                ],
+                            ]]),
+                        },
+                    ],
+                ]]),
+            }],
+        ]]);
+        test(
+            (builder) => { builder.delete(grandChild, 10); },
+            expected,
+        );
+    });
 });
