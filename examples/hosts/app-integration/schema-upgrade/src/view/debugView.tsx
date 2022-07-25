@@ -48,6 +48,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
 
     return (
         <>
+            <h2 style={{ textDecoration: "underline" }}>Debug info</h2>
             <div>
                 Using model: { model.version }
             </div>

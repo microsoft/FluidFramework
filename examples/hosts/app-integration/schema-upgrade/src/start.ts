@@ -31,7 +31,6 @@ const isInventoryListContainer2 = (model: IMigratable): model is InventoryListCo
 };
 
 const render = (model: IMigratable) => {
-    // The InventoryListContainerView is what a normal user would see in a normal scenario...
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     // This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
@@ -45,7 +44,7 @@ const render = (model: IMigratable) => {
         throw new Error(`Don't know how to render version ${model.version}`);
     }
 
-    // Whereas the DebugView is just for the purposes of this demo.  Separated out here to clarify the division.
+    // The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
     const debugDiv = document.getElementById("debug") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(debugDiv);
     ReactDOM.render(
