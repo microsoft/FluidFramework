@@ -8,12 +8,7 @@ import { assert } from "@fluidframework/common-utils";
 import { canRetryOnError, NonRetryableError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import {
-    IOdspUrlParts,
-    OdspResourceTokenFetchOptions,
-    IdentityType,
-    TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+import { IOdspUrlParts, OdspResourceTokenFetchOptions, TokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, getWithRetryForTokenRefresh, toInstrumentedOdspTokenFetcher } from "./odspUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
