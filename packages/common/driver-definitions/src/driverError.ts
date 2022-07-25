@@ -8,7 +8,6 @@ import { IResolvedUrl } from "./urlResolver";
 /**
  * Driver Error types
  * Lists types that are likely to be used by all drivers
- * ! 2022-07-01 Per GH #6214: We likely need to rethink the strategy around this enum
  */
 export enum DriverErrorType {
     /**
@@ -87,6 +86,7 @@ export enum DriverErrorType {
 
     /**
      * Error indicating an API is being used improperly resulting in an invalid operation.
+     * ! Should match the value of ContainerErrorType.usageError
      */
     usageError = "usageError",
 }
