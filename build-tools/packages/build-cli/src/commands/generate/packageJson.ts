@@ -4,7 +4,7 @@
  */
 
 import { Flags } from '@oclif/core'
-import { generateMonoRepoInstallPackageJson, MonoRepoKind } from "@fluidframework/build-tools";
+import { generateMonoRepoInstallPackageJson, MonoRepoKind, Timer } from "@fluidframework/build-tools";
 import { BaseCommand } from '../../base'
 
 export class GeneratePackageJson extends BaseCommand {
