@@ -61,8 +61,6 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         }
 
         const doTheMigration = async () => {
-            this.emit("migrating");
-
             const migrationSupported = await this.modelLoader.isVersionSupported(acceptedVersion);
             if (!migrationSupported) {
                 this.emit("migrationNotSupported", acceptedVersion);
@@ -72,14 +70,19 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
             const extractedData = await migratable.exportStringData();
 
-            // Possibly transform the extracted data here
+            // If we needed to transform the extracted data, we would do it here.  In this demo, the export/import
+            // format is unchanged between the two versions, so there's no transformation needed.
+            // TODO: think about how we might enable a transform while allowing Migrator to remain generic?
+            // E.g. have some callback with from/to version that does the transform?
 
             // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Currently
             // this call will throw, but instead ModelLoader should probably provide an isSupported(string) method
             // and/or the flow should fail gracefully/quietly and/or find a way to get the new ModelLoader.
             const createResponse = await this.modelLoader.createDetached(acceptedVersion);
             const migratedModel: IMigratable = createResponse.model;
-            // TODO: Validate that the migratedModel is capable of importing the extractedData (format check)
+            // TODO: Validate that the migratedModel is capable of importing the extractedData (format check)...
+            // Or probably better - validate at proposal time that the model we're proposing will be able to import
+            // the exported format of the current container (taking into consideration our format transform options).
             await migratedModel.importStringData(extractedData);
 
             // Before attaching, let's check to make sure no one else has already done the migration
@@ -88,7 +91,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 return;
             }
 
-            // TODO: Maybe need retry here.
+            // TODO: Support retry
             // TODO: Use TaskManager here to reduce container noise.
             const containerId = await createResponse.attach();
 
@@ -97,7 +100,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 return;
             }
 
-            // TODO: Maybe need retry here.
+            // TODO: Support retry
             await migratable.finalizeMigration(containerId);
 
             // Note that we do not assume the migratedModel is the correct new one, and let it fall out of scope
@@ -111,6 +114,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             this.takeAppropriateActionForCurrentMigratable();
         };
 
+        this.emit("migrating");
         this._migrationP = doTheMigration().catch(console.error);
     };
 

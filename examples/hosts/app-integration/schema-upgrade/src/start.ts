@@ -60,33 +60,23 @@ async function start(): Promise<void> {
     let model: IMigratable;
     const modelLoader = new ModelLoader();
 
-    // In interacting with the service, we need to be explicit about whether we're creating a new container vs.
-    // loading an existing one.  If loading, we also need to provide the unique ID for the container we are
-    // loading from.
-
-    // In this app, we'll choose to create a new container when navigating directly to http://localhost:8080.
-    // A newly created container will generate its own ID, which we'll place in the URL hash.
-    // If navigating to http://localhost:8080#containerId, we'll load from the ID in the hash.
-
-    // These policy choices are arbitrary for demo purposes, and can be changed however you'd like.
     if (location.hash.length === 0) {
-        // Fetching and importing the data here is optional
-        // For demo purposes it's nice to have some prepopulated entries though.
-        const fetchedData = await externalDataSource.fetchData();
-        // Choosing to create with the old version for demo purposes, so we can demo the upgrade flow.
+        // Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
         // Normally we would create with the most-recent version.
         const createResponse = await modelLoader.createDetached("one");
         model = createResponse.model;
+
+        // Fetching and importing the data here is optional
+        // For demo purposes it's nice to have some prepopulated entries though.
+        const fetchedData = await externalDataSource.fetchData();
         // TODO: Validate that the model is capable of importing the fetchedData (format check)
         await model.importStringData(fetchedData);
+
         id = await createResponse.attach();
     } else {
         id = location.hash.substring(1);
         model = await modelLoader.loadExisting(id);
     }
-
-    // TODO: here I proceed to rendering without waiting to see if an upgrade is needed, but instead we could
-    // check first and defer rendering until the upgrade is complete.  Consider whether this would be better.
 
     // Could be reasonable to merge Migrator into the ModelLoader, for a MigratingModelLoader.
     const migrator = new Migrator(modelLoader, model);
@@ -99,6 +89,8 @@ async function start(): Promise<void> {
         console.error(`Tried to migrate to version ${version} which is not supported by the current ModelLoader`);
     });
 
+    // TODO: here I proceed to rendering without checking the migration state, but instead we could decline to render
+    // if we're going to immediately load a new container.  Consider whether this would be better.
     render(model);
     updateTabForId(id);
 }
