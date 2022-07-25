@@ -131,14 +131,14 @@ describe('revert', () => {
 				const result = revert([insertedBuild, insertChange], testTree.view);
 				expect(result).to.be.undefined;
 			});
-            it('when reverting a detach of an empty trait', () => {
+			it('when reverting a detach of an empty trait', () => {
 				const insertedNodeId = 0 as DetachedSequenceId;
 				const insertedBuild = ChangeInternal.build([], insertedNodeId);
 				const insertChange = ChangeInternal.insert(insertedNodeId, {
 					referenceTrait: testTree.left.traitLocation,
 					side: Side.After,
 				});
-                const detachChange = ChangeInternal.detach(StableRangeInternal.only(testTree.left), insertedNodeId);
+				const detachChange = ChangeInternal.detach(StableRangeInternal.only(testTree.left), insertedNodeId);
 				const result = revert([insertedBuild, insertChange, detachChange], testTree.view);
 				expect(result).to.be.undefined;
 			});
