@@ -205,13 +205,10 @@ export class Client {
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
      */
-    public removeRangeLocal(start: number, end: number) {
+    public removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg {
         const removeOp = createRemoveRangeOp(start, end);
-
-        if (this.applyRemoveRangeOp({ op: removeOp })) {
-            return removeOp;
-        }
-        return undefined;
+        this.applyRemoveRangeOp({ op: removeOp });
+        return removeOp;
     }
 
     /**
@@ -269,13 +266,27 @@ export class Client {
         return op;
     }
 
-    public walkSegments<TClientData>(handler: ISegmentAction<TClientData>,
-        start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
-    public walkSegments<undefined>(handler: ISegmentAction<undefined>,
-        start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
     public walkSegments<TClientData>(
         handler: ISegmentAction<TClientData>,
-        start: number | undefined, end: number | undefined, accum: TClientData, splitRange: boolean = false) {
+        start: number | undefined,
+        end: number | undefined,
+        accum: TClientData,
+        splitRange?: boolean
+    ): void;
+    public walkSegments<undefined>(
+        handler: ISegmentAction<undefined>,
+        start?: number,
+        end?: number,
+        accum?: undefined,
+        splitRange?: boolean
+    ): void;
+    public walkSegments<TClientData>(
+        handler: ISegmentAction<TClientData>,
+        start: number | undefined,
+        end: number | undefined,
+        accum: TClientData,
+        splitRange: boolean = false,
+    ): void {
         this._mergeTree.mapRange(
             {
                 leaf: handler,
@@ -337,7 +348,7 @@ export class Client {
         return this._mergeTree.removeLocalReferencePosition(lref);
     }
 
-    public localReferencePositionToPosition(lref: ReferencePosition) {
+    public localReferencePositionToPosition(lref: ReferencePosition): number {
         return this._mergeTree.referencePositionToLocalPosition(lref);
     }
 
@@ -350,7 +361,7 @@ export class Client {
         return this._mergeTree.posFromRelativePos(relativePos);
     }
 
-    public getMarkerFromId(id: string) {
+    public getMarkerFromId(id: string): ISegment | undefined {
         return this._mergeTree.getMarkerFromId(id);
     }
 
@@ -421,9 +432,6 @@ export class Client {
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
-        if (!range) {
-            return false;
-        }
 
         let traceStart: Trace | undefined;
         if (this.measureOps) {
@@ -558,7 +566,7 @@ export class Client {
      */
     private getValidOpRange(
         op: IMergeTreeAnnotateMsg | IMergeTreeInsertMsg | IMergeTreeRemoveMsg,
-        clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange | undefined {
+        clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange {
         let start: number | undefined = op.pos1;
         if (start === undefined && op.relativePos1) {
             start = this._mergeTree.posFromRelativePos(

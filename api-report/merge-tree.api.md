@@ -189,7 +189,7 @@ export class Client {
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg | undefined;
+    removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     rollback?(op: any, localOpMetadata: unknown): void;
     serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;

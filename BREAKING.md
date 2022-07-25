@@ -22,7 +22,31 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
 - [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
+
+### Remove `ConnectionState.Connecting`
+`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
+
+### `IContainerRuntime.flush` is deprecated
+`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
+### MergeTree class is deprecated
+    The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
+
+## 2.0.0 Breaking changes
+- [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
+- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
+- [IntervalCollection event semantics changed](#IntervalCollection-event-semantics-changed)
+- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
+- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
+- [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
+- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
+- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
+- [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+- [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
+- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
+- [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
+- [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
 
 ### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
 
@@ -57,30 +81,6 @@ This field has been deprecated and will be removed in a future breaking change.
 ### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
 `clientId` can only ever be of type `string`, so it is superfluous for the type
 to be `string | undefined`.
-
-### Remove `ConnectionState.Connecting`
-`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
-
-### `IContainerRuntime.flush` is deprecated
-`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
-
-### MergeTree class is deprecated
-    The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
-
-## 2.0.0 Breaking changes
-- [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
-- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
-- [IntervalCollection event semantics changed](#IntervalCollection-event-semantics-changed)
-- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
-- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
-- [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
-- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
-- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
-- [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
-- [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
-- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
-- [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
-- [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)

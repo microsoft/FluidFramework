@@ -38,6 +38,8 @@ export class SharedStringFactory implements IChannelFactory {
 
         const maybeMarker = Marker.fromJSONObject(spec);
         if (maybeMarker) { return maybeMarker; }
+
+        throw new Error(`Unrecognized IJSONObject`);
     }
 
     public get type() {
@@ -93,7 +95,7 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
      * @deprecated SharedObjectSequence is not recommended for use and will be removed in an upcoming release.
      * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
      */
-    public static segmentFromSpec(segSpec: IJSONSegment) {
+    public static segmentFromSpec(segSpec: IJSONSegment): SubSequence<object> {
         const runSegment = segSpec as IJSONRunSegment<object>;
         if (runSegment.items) {
             const seg = new SubSequence<object>(runSegment.items);
@@ -102,6 +104,8 @@ export class SharedObjectSequenceFactory implements IChannelFactory {
             }
             return seg;
         }
+
+        throw new Error(`Unrecognized IJSONObject`);
     }
 
     /**
@@ -172,7 +176,7 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
      * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
      * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
      */
-    public static segmentFromSpec(segSpec: IJSONSegment) {
+    public static segmentFromSpec(segSpec: IJSONSegment): SubSequence<number> {
         const runSegment = segSpec as IJSONRunSegment<number>;
         if (runSegment.items) {
             const seg = new SubSequence<number>(runSegment.items);
@@ -181,6 +185,8 @@ export class SharedNumberSequenceFactory implements IChannelFactory {
             }
             return seg;
         }
+
+        throw new Error(`Unrecognized IJSONObject`);
     }
 
     /**
