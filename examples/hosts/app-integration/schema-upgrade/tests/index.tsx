@@ -9,7 +9,7 @@ import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { InventoryListView } from "../src/inventoryView";
+import { InventoryListView } from "../src/view/inventoryView";
 import { InventoryList, InventoryListContainerRuntimeFactory } from "../src/version1";
 
 // Since this is a single page Fluid application we are generating a new document id

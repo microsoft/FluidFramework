@@ -6,14 +6,13 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { InventoryListContainerView } from "./appView";
 import { ModelLoader } from "./modelLoader";
-import { DebugView } from "./debugView";
 import { externalDataSource } from "./externalData";
 import { IMigratable } from "./interfaces";
 import { Migrator } from "./migrator";
 import { InventoryListContainer as InventoryListContainer1 } from "./version1";
 import { InventoryListContainer as InventoryListContainer2 } from "./version2";
+import { DebugView, InventoryListContainerView } from "./view";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
