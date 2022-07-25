@@ -171,9 +171,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
             return cachedLinkPromise;
         }
         const newLinkPromise = getFileLink(
-            this.shareLinkFetcherProps.tokenFetcher,
-            resolvedUrl,
-            this.logger,
+            this.shareLinkFetcherProps.tokenFetcher, resolvedUrl, this.logger,
         ).catch((error) => {
             // This should imply that error is a non-retriable error.
             this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);
