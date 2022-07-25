@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import sinon from "sinon";
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseEvent, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter } from "../logger";
+import { TelemetryDataTag, TelemetryLogger, TaggedLoggerAdapter, ITelemetryBaseEventExt } from "../logger";
 import {
     LoggingError,
     isTaggedTelemetryPropertyValue,
@@ -121,10 +121,10 @@ describe("Error Logging", () => {
         });
     });
     describe("TaggedLoggerAdapter", () => {
-        const events: ITelemetryBaseEvent[] = [];
+        const events: ITelemetryBaseEventExt[] = [];
         class TestTelemetryLogger extends TelemetryLogger {
-            public events: ITelemetryBaseEvent[] = [];
-            public send(event: ITelemetryBaseEvent): void {
+            public events: ITelemetryBaseEventExt[] = [];
+            public send(event: ITelemetryBaseEventExt): void {
                 events.push(this.prepareEvent(event));
             }
         }
