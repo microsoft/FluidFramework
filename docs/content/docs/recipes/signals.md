@@ -4,7 +4,7 @@ menuPosition: 5
 draft: true
 ---
 
-In this recipe, we will go over the `PresenceTracker` example to learn how the `Signaler` DataObject is used in a Fluid application to share user presence information between collaborators. We'll cover how the `Signaler` DataObject is used in both the `MouseTracker` and `FocusTracker` classes to share mouse position and focus state. You can find the completed code for this example in the Fluid Repo [here](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker).
+In this article, we will go over the `PresenceTracker` example to learn how the [`Signaler`](https://github.com/microsoft/FluidFramework/tree/main/experimental/framework/data-objects/src/signaler) DataObject is used in a Fluid application to share user presence information between collaborators. We'll cover how the `Signaler` DataObject is used in both the `MouseTracker` and `FocusTracker` classes to share mouse position and focus state. You can find the completed code for this example in the Fluid Repo [here](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker).
 
 ## Creation
 
@@ -19,13 +19,13 @@ const containerSchema: ContainerSchema = {
 };
 ```
 
-The `FluidContainer` is then created (or fetched if it already exists) alongside the `services` object, since audience will be required in this application. To learn more about how to create a new Fluid container and load an existing container, see our [DiceRoller Tutorial](https://fluidframework.com/docs/start/tutorial/).
+The `FluidContainer` is then created (or loaded if it already exists) alongside the `services` object, since audience will be required in this application. To learn more about how to create a new Fluid container and load an existing container, see our [DiceRoller Tutorial](https://fluidframework.com/docs/start/tutorial/).
 
 ## MouseTracker
 
 Let's look at how the `MouseTracker` class uses the `Signaler` DataObject to share mouse position information.
 
-The class defines the `mouseSignalType` that will be sent and listened to the connected clients when there is a presence change:
+The class defines the `mouseSignalType` that will be sent to the connected clients when there is a presence change:
 
 ```typescript
 export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
@@ -33,7 +33,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
     /*...*/
 }
 ```
-The class also initializes a local map (`posMap`) of `IMousePosition` values for all of the connected clients. Each audience member has a single userID and can have multiple clientIDs, representing each active connection the member has to the container (e.g., the same user connected to a container separate devices). This the reason for the nesting of the position `Map`, which is used to populate the view and what will be updated on `mouseSignalType` signals. To learn more about audience members and connections click [here](https://fluidframework.com/docs/build/audience/).
+The class also initializes a local map (`posMap`) of `IMousePosition` values for all of the connected clients. Each audience member has a single userID along with multiple clientIDs representing each active connection the member has to the container (e.g., the same user connected to a container separate devices). In the circumstance that one user is connected on mulitple client devices, both of the user's mouse presences on each devices would appear seperately on the page. This the reason for the nesting of the position `Map`, which is used to populate the view and what will be updated on `mouseSignalType` signals. To learn more about audience members and connections click [here](https://fluidframework.com/docs/build/audience/).
 
 ```typescript
 private readonly posMap = new Map<string, Map<string, IMousePosition>>();
@@ -59,7 +59,7 @@ constructor(
   /*...*/
 }
 ```
-Whenever there is any change to a client's mouse position, we'll fire a `mousePositionChanged` event to notify listeners that updated data is available.
+Whenever there is any change to a client's mouse position, a `mousePositionChanged` event is fired to notify listeners that updated data is available.
 
 ```typescript
 export interface IMouseTrackerEvents extends IEvent {
@@ -130,7 +130,7 @@ private readonly onMouseSignalFn = (clientId: string, payload: Jsonable) => {
 
 ## FocusTracker
 
-Let's now look at how the `FocusTracker` class uses the `Signaler` DataObject to share user focus infomation.
+HTML documents and elements within the documents can be focused on by users. Knowing which users are currently focused on the document is another intriuging form of user presence to explore. Let's now look at how the `FocusTracker` class uses the `Signaler` DataObject to share user focus infomation.
 
 The class defines the `focusSignalType` that will be sent and listened to the connected clients when there is a presence change:
 
@@ -140,7 +140,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     /*...*/
 }
 ```
-The class then initializes a local map of boolean values for all of the connected clients. The boolean denotes whether or not the client has focus or not:
+The class then initializes a local map of boolean values for all of the connected clients. The boolean denotes whether or not the client is focused on the document:
 
 ```typescript
 private readonly focusMap = new Map<string, Map<string, boolean>>();
@@ -200,7 +200,7 @@ private sendFocusSignal(hasFocus: boolean) {
 To make sure all connected clients are notified of this focus change, we use the `onSignal` function to listen to the `focusSignalType`. We then update the local data using the payload information from the signal and emit a `focusChanged` event to re-render:
 
 ```typescript
-this.signaler.onSignal(FocusTracker.focusSignalType, (clientId, local, payload) => {
+this.signaler.onSignal(FocusTracker.focusSignalType, (clientId: string, local: boolean, payload: Jsonable) => {
     this.onFocusSignalFn(clientId, payload);
 });
 ```
@@ -253,11 +253,11 @@ async function start(): Promise<void> {
     const focusTracker = new FocusTracker(
         container,
         services.audience,
-        container.initialObjects.signaler as Signaler,
+        container.initialObjects.signaler,
     );
     const mouseTracker = new MouseTracker(
         services.audience,
-        container.initialObjects.signaler as Signaler,
+        container.initialObjects.signaler,
     );
 
     /*...*/
