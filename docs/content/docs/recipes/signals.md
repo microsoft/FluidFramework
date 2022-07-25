@@ -109,12 +109,12 @@ private sendMouseSignal(position: IMousePosition) {
 But what is the point of sending a signal if nobody is listening to it? To listen to the `mouseSignalType`, we use `Signaler`'s `onSignal` function. We then update the local data using the payload information from the signal. To display the new presence data, we then emit `mousePositionChanged` to let the view know to re-render:
 
 ```typescript
-this.signaler.onSignal(MouseTracker.mouseSignalType, (clientId: string, local: boolean, payload: Jsonable) => {
+this.signaler.onSignal(MouseTracker.mouseSignalType, (clientId: string, local: boolean, payload: IMouseSignalPayload) => {
   this.onMouseSignalFn(clientId, payload);
 });
 ```
 ```typescript
-private readonly onMouseSignalFn = (clientId: string, payload: Jsonable) => {
+private readonly onMouseSignalFn = (clientId: string, payload: IMouseSignalPayload) => {
     const userId: string = payload.userId;
     const position: IMousePosition = payload.pos;
 
@@ -126,6 +126,14 @@ private readonly onMouseSignalFn = (clientId: string, payload: Jsonable) => {
     clientIdMap.set(clientId, position);
     this.emit("mousePositionChanged");
 };
+```
+Note: The app defines `IMouseSignalPayload` to be the corresponding payload that is sent attached to the `mouseSignalType`
+
+```typescript
+export interface IMouseSignalPayload {
+    userId: string;
+    pos: IMousePosition;
+}
 ```
 
 ## FocusTracker
@@ -140,6 +148,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
     /*...*/
 }
 ```
+
 The class then initializes a local map of boolean values for all of the connected clients. The boolean denotes whether or not the client is focused on the document:
 
 ```typescript
@@ -200,12 +209,12 @@ private sendFocusSignal(hasFocus: boolean) {
 To make sure all connected clients are notified of this focus change, we use the `onSignal` function to listen to the `focusSignalType`. We then update the local data using the payload information from the signal and emit a `focusChanged` event to re-render:
 
 ```typescript
-this.signaler.onSignal(FocusTracker.focusSignalType, (clientId: string, local: boolean, payload: Jsonable) => {
+this.signaler.onSignal(FocusTracker.focusSignalType, (clientId: string, local: boolean, payload: IFocusSignalPayload) => {
     this.onFocusSignalFn(clientId, payload);
 });
 ```
 ```typescript
-private readonly onFocusSignalFn = (clientId: string, payload: any) => {
+private readonly onFocusSignalFn = (clientId: string, payload: IFocusSignalPayload) => {
     const userId: string = payload.userId;
     const hasFocus: boolean = payload.focus;
 
@@ -218,6 +227,16 @@ private readonly onFocusSignalFn = (clientId: string, payload: any) => {
     this.emit("focusChanged");
 };
 ```
+
+Note: The app defines `IFocusSignalPayload` to be the corresponding payload that is sent attached to the `focusSignalType`
+
+```typescript
+export interface IFocusSignalPayload {
+    userId: string;
+    focus: boolean;
+}
+```
+
 `FocusTracker` differs from `MouseTracker` as it uses the `Signal Request` pattern. This is when a newly joining client requests a specific signal to be sent from other connected clients, so that the new client can receive pertinent information immediately after connecting to the container.
 
 To achieve this pattern, `FocusTracker` defines the `focusRequestType` that will be sent to request the focus status of all the connected clients:
