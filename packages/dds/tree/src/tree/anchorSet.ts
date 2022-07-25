@@ -97,10 +97,7 @@ export class AnchorSet {
                 return path;
             }
         }
-        let parent = path.parent;
-        if (parent === undefined) {
-            parent = this.root;
-        }
+        const parent = path.parent ?? this.root;
         const parentPath = this.find(parent);
         return parentPath?.tryGetChild(path.parentField, path.parentIndex);
     }
@@ -174,6 +171,8 @@ class PathNode implements UpPath {
      */
     private refCount = 1;
 
+    // PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
+    protected readonly children: Map<FieldKey, PathNode[]> = new Map();
     /**
      * Construct a PathNode with refcount 1.
      * @param anchorSet - used to determine if this PathNode is already part of a specific anchorSet
@@ -184,9 +183,6 @@ class PathNode implements UpPath {
         public parentField: FieldKey,
         public parentIndex: number,
         public parentPath: PathNode | undefined) {}
-
-    // PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
-    protected readonly children: Map<FieldKey, PathNode[]> = new Map();
 
     /**
      * @returns true iff this PathNode is the special root node that sits above all the detached fields.
@@ -233,8 +229,7 @@ class PathNode implements UpPath {
             field = [];
             this.children.set(key, field);
         }
-        // TODO: should do more optimized search (ex: binary search or better) using index
-        // Note that this is the index in the list of child paths, not the index withing the field
+        // TODO: should do more optimized search (ex: binary search).
         let child = field.find((c) => c.parentIndex === index);
         if (child === undefined) {
             child = new PathNode(this.anchorSet, key, index, this);
@@ -256,8 +251,7 @@ class PathNode implements UpPath {
         if (field === undefined) {
             return undefined;
         }
-        // TODO: should do more optimized search (ex: binary search or better) using index
-        // Note that this is the index in the list of child paths, not the index withing the field
+        // TODO: should do more optimized search (ex: binary search or better) using index.
         return field.find((c) => c.parentIndex === index);
     }
 
