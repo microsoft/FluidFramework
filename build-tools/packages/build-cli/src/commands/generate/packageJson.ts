@@ -57,11 +57,15 @@ export class GeneratePackageJson extends BaseCommand {
         kind = flags.server;
     }
 
-    const releaseGroup = repo.monoRepos.get(kind);
-    if(releaseGroup === undefined) {
-        throw new Error(`release group couldn't be found.`);
-    }
+    try {
+        const releaseGroup = repo.monoRepos.get(kind);
+        if(releaseGroup === undefined) {
+            throw new Error(`release group couldn't be found.`);
+        }
 
-    await generateMonoRepoInstallPackageJson(releaseGroup);
+        await generateMonoRepoInstallPackageJson(releaseGroup);
+    } catch (error_: unknown) {
+        throw new Error(error_ as string);
+    }
   }
 }
