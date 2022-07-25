@@ -14,7 +14,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
-import { ListRemoveEntry, RedBlackTree } from "./collections";
+import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition } from "./localReference";
 import {
@@ -355,34 +355,47 @@ export class Client {
      * Revert an op
      */
     public rollback?(op: any, localOpMetadata: unknown) {
-        if (op.type !== MergeTreeDeltaType.INSERT) {
+        if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
+            const pendingSegmentGroup = this.mergeTree.pendingSegments?.pop ?
+                this.mergeTree.pendingSegments?.pop() : undefined;
+            if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
+                || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
+                throw new Error("Rollback op doesn't match last edit");
+            }
+            let i = 0;
+            for (const segment of pendingSegmentGroup.segments) {
+                const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
+                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+
+                const start = this.findRollbackPosition(segment);
+                const segWindow = this.getCollabWindow();
+                if (op.type === MergeTreeDeltaType.INSERT) {
+                    const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
+                    this.mergeTree.markRangeRemoved(
+                        start,
+                        start + segment.cachedLength,
+                        UniversalSequenceNumber,
+                        segWindow.clientId,
+                        UniversalSequenceNumber,
+                        false,
+                        { op: removeOp });
+                } else {
+                    const props = pendingSegmentGroup.previousProps![i];
+                    const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props, undefined);
+                    this.mergeTree.annotateRange(
+                        start,
+                        start + segment.cachedLength,
+                        props,
+                        undefined,
+                        UniversalSequenceNumber,
+                        segWindow.clientId,
+                        UniversalSequenceNumber,
+                        { op: annotateOp });
+                    i++;
+                }
+            }
+        } else {
             throw new Error("Unsupported op type for rollback");
-        }
-
-        const lastList = this.mergeTree.pendingSegments?.prev;
-        if (!lastList) {
-            throw new Error("No pending segments");
-        }
-        ListRemoveEntry(lastList);
-        const pendingSegmentGroup = lastList.data;
-        if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
-            throw new Error("Rollback op doesn't match last edit");
-        }
-        for (const segment of pendingSegmentGroup.segments) {
-            const segmentSegmentGroup = segment.segmentGroups.dequeue();
-            assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
-
-            const start = this.findRollbackPosition(segment);
-            const segWindow = this.getCollabWindow();
-            const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
-            this.mergeTree.markRangeRemoved(
-                start,
-                start + segment.cachedLength,
-                UniversalSequenceNumber,
-                segWindow.clientId,
-                UniversalSequenceNumber,
-                false,
-                { op: removeOp });
         }
     }
 

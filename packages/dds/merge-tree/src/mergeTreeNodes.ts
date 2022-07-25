@@ -235,6 +235,7 @@ export interface MergeTreeStats {
 
 export interface SegmentGroup {
     segments: ISegment[];
+    previousProps?: PropertySet[];
     localSeq: number;
 }
 

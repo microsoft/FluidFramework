@@ -837,6 +837,8 @@ export class List<T> {
     // (undocumented)
     next: List<T>;
     // (undocumented)
+    pop?(): T | undefined;
+    // (undocumented)
     prev: List<T>;
     // (undocumented)
     some(fn: (data: T, l: List<T>) => boolean, rev?: boolean): T[];
@@ -1430,6 +1432,8 @@ export interface SegmentGroup {
     // (undocumented)
     localSeq: number;
     // (undocumented)
+    previousProps?: PropertySet[];
+    // (undocumented)
     segments: ISegment[];
 }
 
@@ -1446,6 +1450,8 @@ export class SegmentGroupCollection {
     get empty(): boolean;
     // (undocumented)
     enqueue(segmentGroup: SegmentGroup): void;
+    // (undocumented)
+    pop?(): SegmentGroup | undefined;
     // (undocumented)
     get size(): number;
 }

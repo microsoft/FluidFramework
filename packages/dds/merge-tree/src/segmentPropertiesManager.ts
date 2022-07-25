@@ -6,7 +6,7 @@
  /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/common-utils";
-import { UnassignedSequenceNumber } from "./constants";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import {
     combine,
@@ -51,7 +51,8 @@ export class PropertiesManager {
         }
 
         // There are outstanding local rewrites, so block all non-local changes
-        if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {
+        if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && seq !== UniversalSequenceNumber
+            && collaborating) {
             return undefined;
         }
 
@@ -60,6 +61,7 @@ export class PropertiesManager {
 
         const shouldModifyKey = (key: string): boolean => {
             if (seq === UnassignedSequenceNumber
+                || seq === UniversalSequenceNumber
                 || this.pendingKeyUpdateCount?.[key] === undefined
                 || combiningOp) {
                 return true;
@@ -93,6 +95,10 @@ export class PropertiesManager {
                     this.pendingKeyUpdateCount[key]++;
                 } else if (!shouldModifyKey(key)) {
                     continue;
+                } else if (seq === UniversalSequenceNumber
+                    && this.pendingKeyUpdateCount?.[key] !== undefined && this.pendingKeyUpdateCount?.[key] > 0) {
+                        // decrement if local annotation is rolled back
+                        this.pendingKeyUpdateCount[key]--;
                 }
             }
 

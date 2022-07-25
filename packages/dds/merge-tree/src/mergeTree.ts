@@ -1217,12 +1217,23 @@ export class MergeTree {
         }
     }
 
-    private addToPendingList(segment: ISegment, segmentGroup?: SegmentGroup, localSeq?: number) {
+    private addToPendingList(segment: ISegment, segmentGroup?: SegmentGroup, localSeq?: number,
+        previousProps?: PropertySet) {
         let _segmentGroup = segmentGroup;
         if (_segmentGroup === undefined) {
             // TODO: review the cast
             _segmentGroup = { segments: [], localSeq } as SegmentGroup;
+            if (previousProps) {
+                _segmentGroup.previousProps = [];
+            }
             this.pendingSegments!.enqueue(_segmentGroup);
+        }
+        if ((!_segmentGroup.previousProps && previousProps) ||
+            (_segmentGroup.previousProps && !previousProps)) {
+            throw new Error("All segments in group should have previousProps or none");
+        }
+        if (previousProps) {
+            _segmentGroup.previousProps!.push(previousProps);
         }
         segment.segmentGroups.enqueue(_segmentGroup);
         return _segmentGroup;
@@ -1806,7 +1817,8 @@ export class MergeTree {
             deltaSegments.push({ segment, propertyDeltas });
             if (this.collabWindow.collaborating) {
                 if (seq === UnassignedSequenceNumber) {
-                    segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
+                    segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq,
+                        propertyDeltas ? propertyDeltas : {});
                 } else {
                     if (MergeTree.options.zamboniSegments) {
                         this.addToLRUSet(segment, seq);
