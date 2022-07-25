@@ -22,41 +22,6 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
 - [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
-- [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
-
-### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
-
-Strict null checks have been enabled in `@fluidframework/sequence`. As part of this, the return types of several functions have been modified to include `| undefined`. This does not represent a behavioral change.
-
-The functions affected are:
- - `Interval.getAdditionalPropertySets`
- - `Interval.modify`
- - `IntervalCollection.getIntervalById`
- - `IntervalCollection.nextInterval`
- - `IntervalCollection.previousInterval`
- - `IntervalCollection.removeIntervalById`
- - `ISharedString.insertMarker`
- - `PaddingSegment.fromJSONObject`
- - `RunSegment.createSplitSegmentAt`
- - `RunSegment.fromJSONObject`
- - `SequenceEvent.clientId`
- - `SharedSegmentSequence.getPropertiesAtPosition`
- - `SharedSegmentSequence.removeLocalReferencePosition`
- - `SharedSegmentSequence.resolveRemoteClientPosition`
- - `SharedString.findTile`
- - `SharedString.getMarkerFromId`
- - `SharedString.insertMarker`
- - `SparseMatrix.getItem`
- - `SparseMatrix.getPositionProperties`
- - `SubSequence.createSplitSegmentAt`
- - `SubSequence.fromJSONObject`
-
-### Remove `documentId` field from `MockFluidDataStoreContext`
-This field has been deprecated and will be removed in a future breaking change.
-
-### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
-`clientId` can only ever be of type `string`, so it is superfluous for the type
-to be `string | undefined`.
 
 ### Remove `ConnectionState.Connecting`
 `ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
@@ -80,8 +45,16 @@ to be `string | undefined`.
 - [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
 - [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
 - [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
+- [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
 - [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
+
+### Remove `documentId` field from `MockFluidDataStoreContext`
+This field has been deprecated and will be removed in a future breaking change.
+
+### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -130,6 +103,33 @@ See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluid
 
 ### Remove `aliasing` return value from `AliasResult`
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
+
+### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
+
+Strict null checks have been enabled in `@fluidframework/sequence`. As part of this, the return types of several functions have been modified to include `| undefined`. This does not represent a behavioral change.
+
+The functions affected are:
+ - `Interval.getAdditionalPropertySets`
+ - `Interval.modify`
+ - `IntervalCollection.getIntervalById`
+ - `IntervalCollection.nextInterval`
+ - `IntervalCollection.previousInterval`
+ - `IntervalCollection.removeIntervalById`
+ - `ISharedString.insertMarker`
+ - `PaddingSegment.fromJSONObject`
+ - `RunSegment.createSplitSegmentAt`
+ - `RunSegment.fromJSONObject`
+ - `SequenceEvent.clientId`
+ - `SharedSegmentSequence.getPropertiesAtPosition`
+ - `SharedSegmentSequence.removeLocalReferencePosition`
+ - `SharedSegmentSequence.resolveRemoteClientPosition`
+ - `SharedString.findTile`
+ - `SharedString.getMarkerFromId`
+ - `SharedString.insertMarker`
+ - `SparseMatrix.getItem`
+ - `SparseMatrix.getPositionProperties`
+ - `SubSequence.createSplitSegmentAt`
+ - `SubSequence.fromJSONObject`
 
 ### MergeTree class no longer exported
     The MergeTree class was deprecated and is no longer be exported. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.

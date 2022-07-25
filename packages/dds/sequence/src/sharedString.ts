@@ -38,7 +38,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
      * @param refType - The reference type of the marker
      * @param props - The properties of the marker
      */
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg | undefined;
 
     /**
      * {@inheritDoc SharedSegmentSequence.posFromRelativePos}
@@ -84,7 +84,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     private readonly mergeTreeTextHelper: IMergeTreeTextHelper;
 
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
-        super(document, id, attributes, SharedStringFactory.segmentFromSpec);
+        super(document, id, attributes, SharedStringFactory.segmentFromSpec as any);
         this.mergeTreeTextHelper = this.client.createTextHelper();
     }
 
@@ -116,7 +116,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     public insertMarker(
         pos: number,
         refType: ReferenceType,
-        props?: PropertySet): IMergeTreeInsertMsg {
+        props?: PropertySet): IMergeTreeInsertMsg | undefined {
         const segment = new Marker(refType);
         if (props) {
             segment.addProperties(props);
@@ -219,8 +219,8 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     public findTile(startPos: number | undefined, tileLabel: string, preceding = true): {
         tile: ReferencePosition;
         pos: number;
-    } {
-        return this.client.findTile(startPos, tileLabel, preceding);
+    } | undefined {
+        return this.client.findTile(startPos ?? 0, tileLabel, preceding);
     }
 
     public getTextAndMarkers(label: string) {
@@ -257,7 +257,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
     }
 
-    public getMarkerFromId(id: string): ISegment {
+    public getMarkerFromId(id: string): ISegment | undefined {
         return this.client.getMarkerFromId(id);
     }
 
