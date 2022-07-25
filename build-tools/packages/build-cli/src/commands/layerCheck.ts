@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line unicorn/prefer-node-protocol
 import path from "path";
 import { Flags } from '@oclif/core';
 import { LayerGraph, Timer, writeFileAsync } from "@fluidframework/build-tools";
@@ -16,9 +15,9 @@ export class LayerCheck extends BaseCommand {
   static description = 'description of this example command';
 
   static flags = {
-    md: Flags.boolean({ required: true }),
-    dot: Flags.boolean({ required: true }),
-    info: Flags.boolean({ required: true }),
+    md: Flags.string({ required: false }),
+    dot: Flags.file({ required: false }),
+    info: Flags.string({ required: false }),
     ...super.flags,
   };
 
@@ -36,17 +35,17 @@ export class LayerCheck extends BaseCommand {
 
     try {
 
-        const layerGraph = LayerGraph.load(resolvedRoot, packages, String(flags.info));
+        const layerGraph = LayerGraph.load(resolvedRoot, packages, flags.info);
 
         // Write human-readable package list organized by layer
-        if (flags.md) {
-            const packagesMdFilePath: string = path.join(resolvedRoot, String(flags.md), packagesMdFileName);
+        if (flags.md !== undefined) {
+            const packagesMdFilePath: string = path.join(resolvedRoot, flags.md, packagesMdFileName);
             await writeFileAsync(packagesMdFilePath, layerGraph.generatePackageLayersMarkdown(resolvedRoot));
         }
 
         // Write machine-readable dot file used to render a dependency graph
         if (flags.dot !== undefined) {
-            await writeFileAsync(Number(flags.dot), layerGraph.generateDotGraph());
+            await writeFileAsync(flags.dot, layerGraph.generateDotGraph());
         }
 
         const success: boolean = layerGraph.verify();
