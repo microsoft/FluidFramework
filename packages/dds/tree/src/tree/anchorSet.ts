@@ -175,11 +175,22 @@ class PathNode implements UpPath {
         public parentPath: PathNode | undefined) {}
     // PathNode arrays are kept sorted by index for efficient search.
     protected readonly children: Map<FieldKey, PathNode[]> = new Map();
-    // public constructor() {}
+
+    /**
+     * @returns true iff this PathNode is the special root node that sits above all the detached fields.
+     * In this case, the fields are detached sequences.
+     * Note that the special root node should never appear in an UpPath
+     * since UpPaths represent this root as `undefined`.
+     */
+    private isRoot(): boolean {
+        return this.parentPath === undefined;
+    }
 
     public get parent(): UpPath | undefined {
-        // Root PathNode corresponds to the undefined root for UpPath.
-        if (this.parentPath?.parentPath === undefined) {
+        assert(this.parentPath !== undefined,
+            "PathNode.parent is an UpPath API and thus should never be called on the root PathNode.");
+        // Root PathNode corresponds to the undefined root for UpPath API.
+        if (this.parentPath.isRoot()) {
             return undefined;
         }
         return this.parentPath;
