@@ -354,7 +354,7 @@ class Cursor implements ITreeSubscriptionCursor {
         // For example, the cursor could cache UpPaths from the anchorSet when creating an anchor,
         // then reuse them as a starting point when making another.
         // Could cache this at one depth, and remember the depth.
-        // When navigating up, adjust cached anchor is present.
+        // When navigating up, adjust cached anchor if present.
 
         let path: UpPath | undefined;
         const length = this.parentStack.length;
