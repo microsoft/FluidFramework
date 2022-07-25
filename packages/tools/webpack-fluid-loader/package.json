@@ -85,6 +85,7 @@
     "@fluidframework/view-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/web-code-loader": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "axios": "^0.26.0",
+    "buffer": "^6.0.3",
     "express": "^4.16.3",
     "nconf": "^0.11.4",
     "sillyname": "^0.1.0",
