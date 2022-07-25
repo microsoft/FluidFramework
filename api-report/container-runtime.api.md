@@ -361,6 +361,7 @@ export interface IGCRuntimeOptions {
     disableGC?: boolean;
     gcAllowed?: boolean;
     runFullGC?: boolean;
+    sessionExpiryTimeoutMs?: number;
     sweepAllowed?: boolean;
 }
 

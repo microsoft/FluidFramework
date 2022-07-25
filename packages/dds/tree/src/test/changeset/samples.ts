@@ -48,10 +48,10 @@ const nodeX = { type: jsonString.name, value: "X" };
  * Demonstrates how to represent a change that swaps a pair of nodes from different traits.
  */
 export namespace SwapCousins {
-    export const e1: T.Changeset = {
+    export const e1: T.PeerChangeset = {
         moves: [
-            { id: 0, src: { foo: 0 }, dst: { bar: 0 } },
-            { id: 1, src: { bar: 0 }, dst: { foo: 0 } },
+            { id: 0, src: { 0: { foo: 0 } }, dst: { 0: { bar: 0 } } },
+            { id: 1, src: { 0: { bar: 0 } }, dst: { 0: { foo: 0 } } },
         ],
         marks: [{
             type: "Modify",
@@ -76,14 +76,14 @@ export namespace SwapCousins {
  * To:  ` R{ foo: C{ bar: B{ baz: D } } }`
  */
 export namespace SwapParentChild {
-    export const e1: T.Changeset = {
+    export const e1: T.PeerChangeset = {
         moves: [
-            { id: 0, src: { foo: 0 }, dst: { foo: { 0: { bar: 0 } } } }, // B
-            { id: 1, src: { foo: { 0: { bar: 0 } } }, dst: { foo: 0 } }, // C
+            { id: 0, src: { 0: { foo: 0 } }, dst: { 0: { foo: { 0: { bar: 0 } } } } }, // B
+            { id: 1, src: { 0: { foo: { 0: { bar: 0 } } } }, dst: { 0: { foo: 0 } } }, // C
             { // D
                 id: 2,
-                src: { foo: { 0: { bar: { 0: { baz: 0 } } } } },
-                dst: { foo: { 0: { bar: { 0: { baz: 0 } } } } },
+                src: { 0: { foo: { 0: { bar: { 0: { baz: 0 } } } } } },
+                dst: { 0: { foo: { 0: { bar: { 0: { baz: 0 } } } } } },
             },
         ],
         marks: [{
@@ -170,7 +170,7 @@ export namespace ScenarioA {
     export const e2: S.Transaction = {
         ref: 0,
         seq: 2,
-        moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 0 } }],
+        moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
         marks: [{
             type: "Modify",
             fields: {
@@ -213,9 +213,9 @@ export namespace ScenarioA {
         ref: 0,
         newRef: 1,
         moves: [
-            { id: 0, src: { foo: 1 }, dst: { bar: 0 } },
-            { id: 1, src: { foo: 1 }, dst: { bar: 0 } },
-            { id: 2, src: { foo: 1 }, dst: { bar: 0 } },
+            { id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
+            { id: 1, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
+            { id: 2, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
         ],
         marks: [{
             type: "Modify",
@@ -273,7 +273,7 @@ export namespace ScenarioA {
         seq: 3,
         ref: 0,
         newRef: 2,
-        moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 0 } }],
+        moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
         marks: [{
             type: "Modify",
             fields: {
@@ -783,7 +783,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e1_p_e2: T.Changeset = {
+//     export const e1_p_e2: T.PeerChangeset = {
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -946,7 +946,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e1_p_e2: T.Changeset = {
+//     export const e1_p_e2: T.PeerChangeset = {
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
@@ -989,7 +989,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e1_p_e3: T.Changeset = {
+//     export const e1_p_e3: T.PeerChangeset = {
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
@@ -1036,7 +1036,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e1_p_e4: T.Changeset = {
+//     export const e1_p_e4: T.PeerChangeset = {
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
