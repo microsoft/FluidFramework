@@ -129,10 +129,16 @@ export class AnchorSet {
             }
             let dstPath: PathNode | undefined;
             if (toMove.length > 0) {
+                // There are anchors which are getting moved,
+                // therefor the destination needs to be created if it does not yet exist.
                 dstPath = this.trackInner(dst);
             } else {
+                // There are no anchors to move,
+                // therefor we want to avoid creating the destination if it does not already exist.
                 dstPath = this.find(dst);
                 if (dstPath !== undefined) {
+                    // Since we need a remove ref below to handle the `toMove.length > 0` case above,
+                    // add a ref here so that does not break this case.
                     dstPath.addRef();
                 }
             }
