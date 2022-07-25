@@ -10,9 +10,11 @@ import { ModelLoader } from "./modelLoader";
 import { externalDataSource } from "./externalData";
 import { IMigratable } from "./interfaces";
 import { Migrator } from "./migrator";
+import { demoCodeLoader, DemoModelCodeLoader } from "./modelLoader";
 import { InventoryListContainer as InventoryListContainer1 } from "./version1";
 import { InventoryListContainer as InventoryListContainer2 } from "./version2";
 import { DebugView, InventoryListContainerView } from "./view";
+import { TinyliciousService } from "./tinyliciousService";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -58,7 +60,15 @@ const render = (model: IMigratable) => {
 async function start(): Promise<void> {
     let id: string;
     let model: IMigratable;
-    const modelLoader = new ModelLoader();
+
+    const tinyliciousService = new TinyliciousService();
+
+    const modelLoader = new ModelLoader({
+        urlResolver: tinyliciousService.urlResolver,
+        documentServiceFactory: tinyliciousService.documentServiceFactory,
+        codeLoader: demoCodeLoader,
+        modelCodeLoader: new DemoModelCodeLoader(),
+    });
 
     if (location.hash.length === 0) {
         // Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.

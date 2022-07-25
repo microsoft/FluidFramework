@@ -9,11 +9,10 @@ import {
     IFluidModuleWithDetails,
     IHostLoader,
 } from "@fluidframework/container-definitions";
-import { Loader } from "@fluidframework/container-loader";
+import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 import { IMigratable, IModelLoader } from "./interfaces";
-import { TinyliciousService } from "./tinyliciousService";
 import {
     InventoryListContainer as InventoryListContainer1,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
@@ -33,7 +32,7 @@ const v2ModuleWithDetails: IFluidModuleWithDetails = {
     details: { package: "two" },
 };
 
-const demoCodeLoader = {
+export const demoCodeLoader = {
     load: async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
         const version = source.package;
         if (typeof version !== "string") {
@@ -47,17 +46,7 @@ const demoCodeLoader = {
     },
 };
 
-function createLoader(): IHostLoader {
-    const tinyliciousService = new TinyliciousService();
-
-    return new Loader({
-        urlResolver: tinyliciousService.urlResolver,
-        documentServiceFactory: tinyliciousService.documentServiceFactory,
-        codeLoader: demoCodeLoader,
-    });
-}
-
-interface IModelCodeLoader {
+export interface IModelCodeLoader {
     /**
      * Check if the IModelCodeLoader knows how to instantiate an appropriate model for the provided container code
      * version.  It is async to permit dynamic model loading - e.g. referring to a remote service to determine if
@@ -67,7 +56,7 @@ interface IModelCodeLoader {
     supportsVersion: (version: string) => Promise<boolean>;
     getModel: (container: IContainer) => Promise<IMigratable>;
 }
-class DemoModelCodeLoader implements IModelCodeLoader {
+export class DemoModelCodeLoader implements IModelCodeLoader {
     public readonly supportsVersion = async (version: string) => {
         return version === "one" || version === "two";
     };
@@ -104,12 +93,17 @@ class DemoModelCodeLoader implements IModelCodeLoader {
 // the Loader (urlResolver, documentServiceFactory, codeLoader) plus a modelCodeLoader that provides the getModel
 // functionality.  TODO: Determine if this demo should do that.
 export class ModelLoader implements IModelLoader {
-    private readonly loader: IHostLoader = createLoader();
-    private readonly modelCodeLoader: IModelCodeLoader = new DemoModelCodeLoader();
+    private readonly loader: IHostLoader;
+    private readonly modelCodeLoader: IModelCodeLoader;
 
-    // public constructor(props: ILoaderProps & { modelLoader: IModelCodeLoader }) {
-    //     this.loader =
-    // }
+    public constructor(props: ILoaderProps & { modelCodeLoader: IModelCodeLoader }) {
+        this.loader = new Loader({
+            urlResolver: props.urlResolver,
+            documentServiceFactory: props.documentServiceFactory,
+            codeLoader: props.codeLoader,
+        });
+        this.modelCodeLoader = props.modelCodeLoader;
+    }
 
     // TODO: If I parameterize a modelCodeLoader, then the modelCodeLoader would implement this method.
     public async isVersionSupported(version: string): Promise<boolean> {
