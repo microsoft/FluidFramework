@@ -60,7 +60,7 @@ export class AnchorSet {
 
     /**
      * TODO: Add APIs need to allow callers of this function to reduce copying here.
-     * Ex: maybe a return something extending UpPath here.
+     * Ex: maybe return something extending UpPath here.
      */
     public track(path: UpPath): Anchor {
         const foundPath = this.trackInner(path);
