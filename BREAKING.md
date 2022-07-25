@@ -16,7 +16,7 @@ There are a few steps you can take to write a good change note and avoid needing
 
 # 2.0.0
 
-## 2.0.0 Upcoming changes
+## 2.0.0-internal.2.0.0 Upcoming changes
 - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
 - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
 - [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
@@ -67,7 +67,7 @@ to be `string | undefined`.
 ### MergeTree class is deprecated
     The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
-## 2.0.0 Breaking changes
+## 2.0.0-internal.1.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
 - [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
