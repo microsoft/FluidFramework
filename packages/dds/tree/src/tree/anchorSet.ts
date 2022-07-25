@@ -73,16 +73,11 @@ export class AnchorSet {
      * Finds a path node, creating if needed, and adds a ref count to it.
      */
     private trackInner(path: UpPath): PathNode {
-        if (path instanceof PathNode) {
-            if (path.anchorSet === this) {
-                path.addRef();
-                return path;
-            }
+        if (path instanceof PathNode && path.anchorSet === this) {
+            path.addRef();
+            return path;
         }
-        let parent = path.parent;
-        if (parent === undefined) {
-            parent = this.root;
-        }
+        const parent = path.parent ?? this.root;
         const parentPath = this.trackInner(parent);
 
         const child = parentPath.getOrCreateChild(path.parentField, path.parentIndex);
@@ -181,7 +176,7 @@ class PathNode implements UpPath {
 
     /**
      * Construct a PathNode with refcount 1.
-     * @param anchorSet - used to determine if this PathNode is already part a specific anchorSet
+     * @param anchorSet - used to determine if this PathNode is already part of a specific anchorSet
      * to early out UpPath walking.
      */
     public constructor(
@@ -238,7 +233,7 @@ class PathNode implements UpPath {
             field = [];
             this.children.set(key, field);
         }
-        // TODO: should do more optimized search (ex: binary search or better) using index;
+        // TODO: should do more optimized search (ex: binary search or better) using index
         // Note that this is the index in the list of child paths, not the index withing the field
         let child = field.find((c) => c.parentIndex === index);
         if (child === undefined) {
@@ -261,7 +256,7 @@ class PathNode implements UpPath {
         if (field === undefined) {
             return undefined;
         }
-        // TODO: should do more optimized search (ex: binary search or better) using index;
+        // TODO: should do more optimized search (ex: binary search or better) using index
         // Note that this is the index in the list of child paths, not the index withing the field
         return field.find((c) => c.parentIndex === index);
     }
@@ -269,8 +264,8 @@ class PathNode implements UpPath {
     public removeChild(child: PathNode): void {
         const key = child.parentField;
         const field = this.children.get(key);
-        // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex();
-        // Note that this is the index in the list  of child paths, not the index withing the field
+        // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
+        // Note that this is the index in the list of child paths, not the index within the field
         const childIndex = field?.indexOf(child);
         assert(childIndex !== undefined, "child must be parented to be removed");
         field?.splice(childIndex, 1);
