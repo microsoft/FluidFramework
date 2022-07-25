@@ -173,7 +173,6 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
         const newLinkPromise = getFileLink(
             this.shareLinkFetcherProps.tokenFetcher,
             resolvedUrl,
-            this.shareLinkFetcherProps.identityType,
             this.logger,
         ).catch((error) => {
             // This should imply that error is a non-retriable error.
