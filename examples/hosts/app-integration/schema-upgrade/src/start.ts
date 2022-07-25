@@ -78,7 +78,9 @@ async function start(): Promise<void> {
         model = await modelLoader.loadExisting(id);
     }
 
-    // Could be reasonable to merge Migrator into the ModelLoader, for a MigratingModelLoader.
+    // TODO: Could be reasonable to merge Migrator into the ModelLoader, for a MigratingModelLoader.
+    // The eventing would be a little weird if the loader can load multiple models, but maybe it's OK to have one
+    // loader per model?
     const migrator = new Migrator(modelLoader, model);
     migrator.on("migrated", (newModel: IMigratable, newModelId: string) => {
         render(newModel);

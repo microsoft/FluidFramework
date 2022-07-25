@@ -89,7 +89,6 @@ const getModel = async (container: IContainer): Promise<IMigratable> => {
 export class ModelLoader implements IModelLoader {
     private readonly loader: IHostLoader = createLoader();
 
-    // TODO: Make this async to support network calls (e.g. if dynamically retrieving the model code)?
     // TODO: If I parameterize a modelCodeLoader, then the modelCodeLoader would implement this method.
     public async isVersionSupported(version: string): Promise<boolean> {
         return version === "one" || version === "two";
