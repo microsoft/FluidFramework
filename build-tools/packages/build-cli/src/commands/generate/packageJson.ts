@@ -1,28 +1,67 @@
-import {Command, Flags} from '@oclif/core'
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
-export default class GeneratePackageJson extends Command {
+import { Flags } from '@oclif/core'
+import { generateMonoRepoInstallPackageJson, MonoRepoKind } from "@fluidframework/build-tools";
+import { BaseCommand } from '../../base'
+
+export class GeneratePackageJson extends BaseCommand {
   static description = 'describe the command here'
 
-  static examples = [
-    '<%= config.bin %> <%= command.id %>',
-  ]
-
   static flags = {
-    // flag with a value (-n, --name=VALUE)
-    name: Flags.string({char: 'n', description: 'name to print'}),
-    // flag with no value (-f, --force)
-    force: Flags.boolean({char: 'f'}),
+    server: Flags.enum({
+        description: "",
+        options: [ MonoRepoKind.Server ],
+        required: false,
+     }),
+    azure: Flags.enum({
+        description: "",
+        options: [ MonoRepoKind.Azure ],
+        required: false,
+     }),
+    buildTools: Flags.enum({
+        description: "",
+        options: [ MonoRepoKind.BuildTools ],
+        required: false,
+     }),
+     client: Flags.enum({
+        description: "",
+        options: [ MonoRepoKind.Client ],
+        required: false,
+     }),
+    ...super.flags,
   }
 
-  static args = [{name: 'file'}]
+  async run() {
+    const { flags } = await this.parse(GeneratePackageJson);
+    const timer = new Timer(flags.timer);
 
-  public async run(): Promise<void> {
-    const {args, flags} = await this.parse(GeneratePackageJson)
+    const context = await this.getContext(flags.verbose);
 
-    const name = flags.name ?? 'world'
-    this.log(`hello ${name} from C:\\Users\\sdeshpande\\Documents\\FluidFramework\\build-tools\\packages\\build-cli\\src\\commands\\generate\\packageJson.ts`)
-    if (args.file && flags.force) {
-      this.log(`you input --force and --file: ${args.file}`)
+    // Load the package
+    const repo = context.repo;
+    timer.time("Package scan completed");
+
+    let kind = flags.client;
+    if(flags.azure) {
+        kind = flags.azure;
     }
+
+    if(flags.buildTools) {
+        kind = flags.buildTools;
+    }
+
+    if(flags.server) {
+        kind = flags.server;
+    }
+
+    const releaseGroup = repo.monoRepos.get(kind);
+    if(releaseGroup === undefined) {
+        throw new Error(`release group couldn't be found.`);
+    }
+
+    await generateMonoRepoInstallPackageJson(releaseGroup);
   }
 }
