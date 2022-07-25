@@ -134,8 +134,13 @@ function extractShareLinkData(requestedSharingLinkKind: ShareLinkTypes | Sharing
         shareLinkInfo = {
             createLink: {
                 type: requestedSharingLinkKind,
-                link: sharing || sharingLink,
-                error: sharingLinkErrorReason,
+                // If 'sharingLink' string is present in the response, it means that the user had requested
+                // `createLinkType' query parameter, which is deprecated flow. Keeping it around for backward
+                // compatibility. The new way of requesting for a sharing link is by providing `createLinkScope`
+                // and 'createLinkRole' params in the request, response for which can be found in 'sharing.sharingLink'
+                link: sharingLink ? sharingLink : sharing?.sharingLink,
+                error: sharingLinkErrorReason ? sharingLinkErrorReason : sharing?.error,
+                shareId: sharing?.shareId,
             },
         };
     }

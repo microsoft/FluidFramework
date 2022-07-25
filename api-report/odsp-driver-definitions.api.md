@@ -178,43 +178,14 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 }
 
 // @public
-export interface ShareLink {
-    // (undocumented)
-    linkRole?: ShareLinkRole;
-    // (undocumented)
-    linkScope: ShareLinkScope;
-}
-
-// @public
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes | ShareLink;
-        link?: string;
+        type?: ShareLinkTypes | SharingLinkKind;
+        link?: string | SharingLink;
         error?: any;
         shareId?: string;
-        sharingLink?: SharingLink;
     };
     sharingLinkToRedeem?: string;
-}
-
-// @public
-export enum ShareLinkRole {
-    // (undocumented)
-    edit = "edit",
-    // (undocumented)
-    view = "view"
-}
-
-// @public
-export enum ShareLinkScope {
-    // (undocumented)
-    anonymous = "anonymous",
-    // (undocumented)
-    default = "default",
-    // (undocumented)
-    organization = "organization",
-    // (undocumented)
-    users = "users"
 }
 
 // @public @deprecated (undocumented)
@@ -223,14 +194,42 @@ export enum ShareLinkTypes {
     csl = "csl"
 }
 
-// @public (undocumented)
+// @public
 export interface SharingLink {
     // (undocumented)
-    scope: ShareLinkScope;
+    scope?: SharingLinkScope;
     // (undocumented)
-    type?: ShareLinkRole;
+    type?: SharingLinkRole;
     // (undocumented)
     webUrl: string;
+}
+
+// @public
+export interface SharingLinkKind {
+    // (undocumented)
+    linkRole?: SharingLinkRole;
+    // (undocumented)
+    linkScope: SharingLinkScope;
+}
+
+// @public
+export enum SharingLinkRole {
+    // (undocumented)
+    edit = "edit",
+    // (undocumented)
+    view = "view"
+}
+
+// @public
+export enum SharingLinkScope {
+    // (undocumented)
+    anonymous = "anonymous",
+    // (undocumented)
+    default = "default",
+    // (undocumented)
+    organization = "organization",
+    // (undocumented)
+    users = "users"
 }
 
 // @public
