@@ -26,9 +26,9 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 // @public
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
-    protected readonly baseLogger: ITelemetryBaseLogger;
-    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEvent): void;
+    protected readonly baseLogger: ITelemetryBaseLoggerExt;
+    static create(baseLogger?: ITelemetryBaseLoggerExt, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEventExt): void;
 }
 
 // @public (undocumented)
@@ -42,7 +42,7 @@ export class DebugLogger extends TelemetryLogger {
     constructor(debug: IDebugger, debugErr: IDebugger, properties?: ITelemetryLoggerPropertyBags);
     static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     static mixinDebugLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEvent): void;
+    send(event: ITelemetryBaseEventExt): void;
 }
 
 // @public (undocumented)
@@ -140,11 +140,25 @@ export function isTaggedTelemetryPropertyValue(x: any): x is ITaggedTelemetryPro
 export function isValidLegacyError(e: any): e is Omit<IFluidErrorBase, "errorInstanceId">;
 
 // @public (undocumented)
+export interface ITaggedTelemetryPropertyTypeExt {
+    // (undocumented)
+    tag: string;
+    // (undocumented)
+    value: TelemetryEventPropertyTypeExt;
+}
+
+// @public (undocumented)
 export interface ITelemetryBaseEventExt extends ITelemetryPropertiesExt {
     // (undocumented)
     category: string;
     // (undocumented)
     eventName: string;
+}
+
+// @public (undocumented)
+export interface ITelemetryBaseLoggerExt {
+    // (undocumented)
+    send(event: ITelemetryBaseEventExt): void;
 }
 
 // @public (undocumented)
@@ -178,7 +192,7 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 // @public (undocumented)
 export interface ITelemetryPropertiesExt {
     // (undocumented)
-    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType | TelemetryEventPropertyTypeExt;
+    [index: string]: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt;
 }
 
 // @public (undocumented)
@@ -230,7 +244,7 @@ export class MultiSinkLogger extends TelemetryLogger {
     addLogger(logger?: ITelemetryBaseLogger): void;
     // (undocumented)
     protected loggers: ITelemetryBaseLogger[];
-    send(event: ITelemetryBaseEvent): void;
+    send(event: ITelemetryBaseEventExt): void;
 }
 
 // @public
@@ -277,8 +291,8 @@ export class SampledTelemetryHelper implements IDisposable {
 export const sessionStorageConfigProvider: Lazy<IConfigProviderBase>;
 
 // @public @deprecated (undocumented)
-export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
-    constructor(logger: ITelemetryBaseLogger);
+export class TaggedLoggerAdapter implements ITelemetryBaseLoggerExt {
+    constructor(logger: ITelemetryBaseLoggerExt);
     // (undocumented)
     send(eventWithTagsMaybe: ITelemetryBaseEvent): void;
 }
@@ -308,14 +322,14 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
     // (undocumented)
     protected readonly namespace?: string | undefined;
     static numberFromString(str: string | null | undefined): string | number | undefined;
-    static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean): void;
+    static prepareErrorObject(event: ITelemetryBaseEventExt, error: any, fetchStack: boolean): void;
     // (undocumented)
-    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent;
+    protected prepareEvent(event: ITelemetryBaseEventExt): ITelemetryBaseEventExt;
     // (undocumented)
     protected readonly properties?: ITelemetryLoggerPropertyBags | undefined;
     // (undocumented)
     static sanitizePkgName(name: string): string;
-    abstract send(event: ITelemetryBaseEvent | ITelemetryBaseEventExt): void;
+    abstract send(event: ITelemetryBaseEventExt): void;
     sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void;
     sendPerformanceEvent(event: ITelemetryPerformanceEvent | ITelemetryPerformanceEventExt, error?: any): void;
     sendTelemetryEvent(event: ITelemetryGenericEvent | ITelemetryGenericEventExt, error?: any): void;
