@@ -88,8 +88,11 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 
     return (
         <div>
+            <button onClick={ () => { proposeVersion("one"); } }>
+                Propose code version one
+            </button>
             <button onClick={ () => { proposeVersion("two"); } }>
-                Propose code upgrade
+                Propose code version two
             </button>
         </div>
     );
