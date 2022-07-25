@@ -52,7 +52,6 @@ const render = (model: IMigratable) => {
     ReactDOM.render(
         React.createElement(DebugView, {
             model,
-            externalDataSource,
         }),
         debugDiv,
     );

@@ -12,11 +12,16 @@ export interface IInventoryListContainerViewProps {
     model: IInventoryListContainer;
 }
 
+/**
+ * The InventoryListContainerView is the top-level app view.  It is made to pair with an InventoryListContainer and
+ * render its contents appropriately.  Since container migration is a top-level concept, it takes the responsibility
+ * of appropriately disabling the view during migration.  It would also be what triggers any other migration UI we
+ * might want, progress wheels, etc.
+ */
 export const InventoryListContainerView: React.FC<IInventoryListContainerViewProps> =
     (props: IInventoryListContainerViewProps) => {
     const { model } = props;
 
-    // TODO: Maybe move disable handling outside of the view?
     const [disableInput, setDisableInput] = useState<boolean>(
         model.getMigrationState() !== MigrationState.collaborating,
     );

@@ -19,6 +19,8 @@ export interface IModelLoader {
 
     /**
      * Create a detached model using the specified version of container code.
+     * Returns an object containing the detached model plus an attach callback.  When invoked, the attach callback
+     * returns a promise that will resolve after attach has completed with the id of the container.
      * @param version - the container code version to create a model for
      */
     createDetached(version: string): Promise<{ model: IMigratable; attach: () => Promise<string>; }>;

@@ -132,7 +132,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
 
     public get acceptedVersion() {
         const version = this.containerKillBit.acceptedCodeDetails?.package;
-        if (typeof version !== "string") {
+        if (typeof version !== "string" && version !== undefined) {
             throw new Error("Unexpected code detail format");
         }
         return version;

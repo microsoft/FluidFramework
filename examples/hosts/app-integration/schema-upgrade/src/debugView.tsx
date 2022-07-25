@@ -3,28 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import type { ExternalDataSource } from "./externalData";
 import { IMigratable, MigrationState } from "./interfaces";
 
 export interface IDebugViewProps {
     model: IMigratable;
-    externalDataSource: ExternalDataSource;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
     const {
         model,
-        externalDataSource,
     } = props;
 
     return (
         <div>
             <MigrationStatusView model={ model } />
-            <ImportedDataView data={ undefined } />
             <ControlsView proposeVersion={ model.proposeVersion } />
-            <ExternalDataSourceView externalDataSource={ externalDataSource }/>
         </div>
     );
 };
@@ -53,27 +48,27 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
 
     return (
         <>
-            { migrationState === MigrationState.migrating && <h1>Migration in progress...</h1> }
-            { migrationState === MigrationState.migrated && <h1>This app has been migrated.</h1> }
+            <div>
+                Status:
+                { migrationState === MigrationState.collaborating && " Normal collaboration" }
+                { migrationState === MigrationState.migrating && " Migration in progress" }
+                { migrationState === MigrationState.migrated && " Migration complete" }
+            </div>
+            <div>
+                {
+                    model.acceptedVersion === undefined
+                        ? "No migration proposed yet"
+                        : `Proposed version to migrate to: ${model.acceptedVersion}`
+                }
+            </div>
+            <div>
+                {
+                    model.newContainerId === undefined
+                        ? "No migrated container yet"
+                        : `Migrated to new container at ${model.newContainerId}`
+                }
+            </div>
         </>
-    );
-};
-
-interface IImportedDataViewProps {
-    data: string | undefined;
-}
-
-const ImportedDataView: React.FC<IImportedDataViewProps> = (props: IImportedDataViewProps) => {
-    const { data } = props;
-    if (data === undefined) {
-        return <div>Loaded from existing container</div>;
-    }
-
-    return (
-        <div>
-            <div>Imported data:</div>
-            <textarea rows={ 5 } value={ data } readOnly></textarea>
-        </div>
     );
 };
 
@@ -94,36 +89,6 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
             <button onClick={ () => { proposeVersion("two"); } }>
                 Propose code version two
             </button>
-        </div>
-    );
-};
-
-interface IExternalDataSourceViewProps {
-    externalDataSource: ExternalDataSource;
-}
-
-const ExternalDataSourceView: React.FC<IExternalDataSourceViewProps> = (props: IExternalDataSourceViewProps) => {
-    const { externalDataSource } = props;
-    const externalDataTextareaRef = useRef<HTMLTextAreaElement>(null);
-
-    useEffect(() => {
-        const onDataWritten = (data: string) => {
-            if (externalDataTextareaRef.current !== null) {
-                externalDataTextareaRef.current.value = data;
-            }
-            console.log("Wrote data:");
-            console.log(data);
-        };
-        externalDataSource.on("dataWritten", onDataWritten);
-        return () => {
-            externalDataSource.off("dataWritten", onDataWritten);
-        };
-    }, [externalDataSource]);
-
-    return (
-        <div>
-            <div>External data source:</div>
-            <textarea ref={ externalDataTextareaRef } rows={ 5 } readOnly></textarea>
         </div>
     );
 };
