@@ -6,6 +6,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 import { demoCodeLoader, DemoModelCodeLoader } from "./demoLoaders";
 import { ModelLoader } from "./modelLoader";
 import { externalDataSource } from "./externalData";
@@ -68,6 +69,7 @@ async function start(): Promise<void> {
         documentServiceFactory: tinyliciousService.documentServiceFactory,
         codeLoader: demoCodeLoader,
         modelCodeLoader: new DemoModelCodeLoader(),
+        generateCreateNewRequest: createTinyliciousCreateNewRequest,
     });
 
     if (location.hash.length === 0) {

@@ -7,26 +7,30 @@ import {
     IHostLoader,
 } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
 import { IMigratable, IModelCodeLoader, IModelLoader } from "./interfaces";
 
-// This ModelLoader specifically supports versions one and two.  Other approaches might have network calls to
-// dynamically load in the appropriate model for unknown versions.
-// It has a default constructor, but a more realistic usage of the pattern might take the same parameters as
-// the Loader (urlResolver, documentServiceFactory, codeLoader) plus a modelCodeLoader that provides the getModel
-// functionality.  TODO: Determine if this demo should do that.
 export class ModelLoader implements IModelLoader {
     private readonly loader: IHostLoader;
     private readonly modelCodeLoader: IModelCodeLoader;
+    private readonly generateCreateNewRequest: () => IRequest;
 
-    public constructor(props: ILoaderProps & { modelCodeLoader: IModelCodeLoader; }) {
+    // TODO: See if there's a nicer way to parameterize the createNew request.
+    public constructor(
+        props: ILoaderProps
+        & {
+            modelCodeLoader: IModelCodeLoader;
+            generateCreateNewRequest: () => IRequest;
+        },
+    ) {
         this.loader = new Loader({
             urlResolver: props.urlResolver,
             documentServiceFactory: props.documentServiceFactory,
             codeLoader: props.codeLoader,
         });
         this.modelCodeLoader = props.modelCodeLoader;
+        this.generateCreateNewRequest = props.generateCreateNewRequest;
     }
 
     // TODO: Should this be exposed on the ModelLoader, vs. having the caller consult the modelCodeLoader directly?
@@ -35,8 +39,7 @@ export class ModelLoader implements IModelLoader {
     }
 
     // Would be preferable to have a way for the customer to call service.attach(model) rather than returning an
-    // attach callback here.
-    // TODO: Figure out how the attach call looks with the service parameterized
+    // attach callback here.  TODO: See if this is achievable.
     public async createDetached(version: string): Promise<{ model: IMigratable; attach: () => Promise<string>; }> {
         const supported = await this.modelCodeLoader.supportsVersion(version);
         if (!supported) {
@@ -48,7 +51,7 @@ export class ModelLoader implements IModelLoader {
         // without leaking out the loader, service, etc.  We also return the container ID here so we don't have
         // to stamp it on something that would rather not know it (e.g. the model).
         const attach = async () => {
-            await container.attach(createTinyliciousCreateNewRequest());
+            await container.attach(this.generateCreateNewRequest());
             const resolved = container.resolvedUrl;
             ensureFluidResolvedUrl(resolved);
             return resolved.id;

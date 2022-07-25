@@ -43,6 +43,8 @@ export const demoCodeLoader = {
     },
 };
 
+// This IModelCodeLoader specifically supports versions one and two.  Other approaches might have network calls to
+// dynamically load in the appropriate model for unknown versions.
 export class DemoModelCodeLoader implements IModelCodeLoader {
     public readonly supportsVersion = async (version: string) => {
         return version === "one" || version === "two";
