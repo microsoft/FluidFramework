@@ -41,7 +41,7 @@ export class AnchorSet {
     private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
 
     /**
-     * TODO: support extra/custom return types for specific anchor types:
+     * TODO: support extra/custom return types for specific/custom anchor types:
      * for now caller must rely on data in anchor + returned node location
      * (not ideal for anchors for places or ranges instead of nodes).
      */
@@ -59,7 +59,8 @@ export class AnchorSet {
     }
 
     /**
-     * TODO: add API to UpPath (maybe extend as AnchorPath to allow building without having to copy here?)
+     * TODO: Add APIs need to allow callers of this function to reduce copying here.
+     * Ex: maybe a return something extending UpPath here.
      */
     public track(path: UpPath): Anchor {
         const foundPath = this.trackInner(path);
@@ -182,7 +183,8 @@ class PathNode implements UpPath {
         public parentField: FieldKey,
         public parentIndex: number,
         public parentPath: PathNode | undefined) {}
-    // PathNode arrays are kept sorted by index for efficient search.
+
+    // PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
     protected readonly children: Map<FieldKey, PathNode[]> = new Map();
 
     /**
