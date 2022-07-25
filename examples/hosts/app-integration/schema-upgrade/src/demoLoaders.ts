@@ -1,0 +1,75 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import {
+    IContainer,
+    IFluidCodeDetails,
+    IFluidModuleWithDetails,
+} from "@fluidframework/container-definitions";
+
+import { IModelCodeLoader } from "./interfaces";
+import {
+    InventoryListContainer as InventoryListContainer1,
+    InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
+} from "./version1";
+import {
+    InventoryListContainer as InventoryListContainer2,
+    InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
+} from "./version2";
+
+const v1ModuleWithDetails: IFluidModuleWithDetails = {
+    module: { fluidExport: new InventoryListContainerRuntimeFactory1() },
+    details: { package: "one" },
+};
+
+const v2ModuleWithDetails: IFluidModuleWithDetails = {
+    module: { fluidExport: new InventoryListContainerRuntimeFactory2() },
+    details: { package: "two" },
+};
+
+export const demoCodeLoader = {
+    load: async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+        const version = source.package;
+        if (typeof version !== "string") {
+            throw new Error("Unexpected code detail format");
+        }
+        switch (version) {
+            case "one": return v1ModuleWithDetails;
+            case "two": return v2ModuleWithDetails;
+            default: throw new Error("Unknown version");
+        }
+    },
+};
+
+export class DemoModelCodeLoader implements IModelCodeLoader {
+    public readonly supportsVersion = async (version: string) => {
+        return version === "one" || version === "two";
+    };
+
+    public readonly getModel = async (container: IContainer) => {
+        // Here I'm using the specified code details for convenience since it already exists (a real code proposal).
+        // However, it could be reasonable to use an alternative in-container storage for the container type (e.g. a
+        // standalone Quorum DDS).  The important thing is that we need a dependable way to discover the version of the
+        // container, so ideally it remains constant across versions.
+        const version = container.getSpecifiedCodeDetails()?.package;
+        if (typeof version !== "string") {
+            throw new Error("Unexpected code detail format");
+        }
+
+        switch (version) {
+            case "one": {
+                const model = new InventoryListContainer1(container);
+                await model.initialize();
+                return model;
+            }
+            case "two": {
+                const model = new InventoryListContainer2(container);
+                await model.initialize();
+                return model;
+            }
+            default: throw new Error("Unknown version");
+        }
+    };
+}

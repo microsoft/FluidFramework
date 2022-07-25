@@ -6,11 +6,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
+import { demoCodeLoader, DemoModelCodeLoader } from "./demoLoaders";
 import { ModelLoader } from "./modelLoader";
 import { externalDataSource } from "./externalData";
 import { IMigratable } from "./interfaces";
 import { Migrator } from "./migrator";
-import { demoCodeLoader, DemoModelCodeLoader } from "./modelLoader";
 import { InventoryListContainer as InventoryListContainer1 } from "./version1";
 import { InventoryListContainer as InventoryListContainer2 } from "./version2";
 import { DebugView, InventoryListContainerView } from "./view";

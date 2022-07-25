@@ -5,8 +5,19 @@
 
 import { EventEmitter } from "events";
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedString } from "@fluidframework/sequence";
+
+export interface IModelCodeLoader {
+    /**
+     * Check if the IModelCodeLoader knows how to instantiate an appropriate model for the provided container code
+     * version.  It is async to permit dynamic model loading - e.g. referring to a remote service to determine if
+     * the requested model is available.
+     * @param version - the container code version to check
+     */
+    supportsVersion: (version: string) => Promise<boolean>;
+    getModel: (container: IContainer) => Promise<IMigratable>;
+}
 
 export interface IModelLoader {
     /**
@@ -15,7 +26,7 @@ export interface IModelLoader {
      * model is available.
      * @param version - the container code version to check
      */
-    isVersionSupported(version: string): Promise<boolean>;
+    supportsVersion(version: string): Promise<boolean>;
 
     /**
      * Create a detached model using the specified version of container code.

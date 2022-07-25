@@ -61,7 +61,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         }
 
         const doTheMigration = async () => {
-            const migrationSupported = await this.modelLoader.isVersionSupported(acceptedVersion);
+            const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
             if (!migrationSupported) {
                 this.emit("migrationNotSupported", acceptedVersion);
                 this._migrationP = undefined;
@@ -139,7 +139,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         }
 
         const doTheLoad = async () => {
-            const migrationSupported = await this.modelLoader.isVersionSupported(acceptedVersion);
+            const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
             if (!migrationSupported) {
                 this.emit("migrationNotSupported", acceptedVersion);
                 this._migratedLoadP = undefined;
