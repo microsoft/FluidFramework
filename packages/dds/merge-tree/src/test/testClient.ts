@@ -15,12 +15,14 @@ import {
     ListMakeHead,
 } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
-import { ISegment, Marker, MergeTree } from "../mergeTree";
+import { ISegment, Marker } from "../mergeTreeNodes";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { IJSONSegment, IMarkerDef, IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { SnapshotLegacy } from "../snapshotlegacy";
-import { MergeTreeTextHelper, TextSegment } from "../textSegment";
+import { TextSegment } from "../textSegment";
+import { MergeTree } from "../mergeTree";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -89,7 +91,7 @@ export class TestClient extends Client {
         return client2;
     }
 
-    declare public mergeTree: MergeTree;
+    public readonly mergeTree: MergeTree;
 
     public readonly checkQ: List<string> = ListMakeHead<string>();
     protected readonly q: List<ISequencedDocumentMessage> = ListMakeHead<ISequencedDocumentMessage>();
@@ -102,6 +104,7 @@ export class TestClient extends Client {
             specToSeg,
             DebugLogger.create("fluid:testClient"),
             options);
+        this.mergeTree = (this as Record<"_mergeTree", MergeTree>)._mergeTree;
         this.textHelper = new MergeTreeTextHelper(this.mergeTree);
 
         // Validate by default

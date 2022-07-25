@@ -15,7 +15,10 @@ module.exports = {
         "prettier",
     ],
     rules: {
+        "@typescript-eslint/no-unused-vars": "warn",
+
         // oclif uses default exports for commands
         "import/no-default-export": "off",
+        "unicorn/prefer-node-protocol": "off",
     },
 };

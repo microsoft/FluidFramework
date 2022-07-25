@@ -5,7 +5,7 @@
 
 import * as path from "path";
 import { Package, Packages } from "./npmPackage";
-import { MonoRepo, MonoRepoKind } from "./monoRepo";
+import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "./monoRepo";
 import { getPackageManifest } from "./fluidUtils";
 import { ExecAsyncResult } from "./utils";
 
@@ -49,7 +49,7 @@ export class FluidRepo {
         return this.monoRepos.get(MonoRepoKind.Azure);
     }
 
-    constructor(public readonly resolvedRoot: string, services: boolean) {
+    constructor(public readonly resolvedRoot: string, services: boolean, logVerbose = false) {
         const packageManifest = getPackageManifest(resolvedRoot);
 
         // Expand to full IFluidRepoPackage and full path
@@ -70,20 +70,10 @@ export class FluidRepo {
         const loadedPackages: Package[] = [];
         for (const group in packageManifest.repoPackages) {
             const item = normalizeEntry(packageManifest.repoPackages[group]);
-            if (group === "client") {
+            if (isMonoRepoKind(group)) {
                 const { directory, ignoredDirs } = item as IFluidRepoPackage;
-                const monorepo = new MonoRepo(MonoRepoKind.Client, directory, ignoredDirs);
-                this.monoRepos.set(MonoRepoKind.Client, monorepo);
-                loadedPackages.push(...monorepo.packages);
-            } else if (group === "server") {
-                const { directory, ignoredDirs } = item as IFluidRepoPackage;
-                const monorepo = new MonoRepo(MonoRepoKind.Server, directory, ignoredDirs);
-                this.monoRepos.set(MonoRepoKind.Server, monorepo);
-                loadedPackages.push(...monorepo.packages);
-            } else if (group === "azure") {
-                const { directory, ignoredDirs } = item as IFluidRepoPackage;
-                const monorepo = new MonoRepo(MonoRepoKind.Azure, directory, ignoredDirs);
-                this.monoRepos.set(MonoRepoKind.Azure, monorepo);
+                const monorepo = new MonoRepo(group, directory, ignoredDirs, logVerbose);
+                this.monoRepos.set(group, monorepo);
                 loadedPackages.push(...monorepo.packages);
             } else if (group !== "services" || services) {
                 if (Array.isArray(item)) {

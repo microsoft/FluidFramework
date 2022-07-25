@@ -285,6 +285,7 @@ stages:
               codeCoverageTool: Cobertura
               summaryFileLocation: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report/cobertura-coverage.xml'
               reportDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.buildDirectory }}/nyc/**/report'
+              failIfCoverageEmpty: true
             condition: succeededOrFailed()
 
         # Test - Upload results

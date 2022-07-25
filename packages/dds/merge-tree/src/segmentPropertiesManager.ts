@@ -97,7 +97,7 @@ export class PropertiesManager {
             }
 
             const previousValue: any = oldProps[key];
-            // The delta should be null if undefined, as thats how we encode delete
+            // The delta should be null if undefined, as that's how we encode delete
             deltas[key] = (previousValue === undefined) ? null : previousValue;
             let newValue: any;
             if (combiningOp) {

@@ -37,10 +37,11 @@ export enum QueuedMessageProperties {
 }
 
 export enum HttpProperties {
-    contentLength = "contentLength",
     driverVersion = "driverVersion",
     method = "method",
     pathCategory = "pathCategory",
+    requestContentLength = "requestContentLength",
+    responseContentLength = "responseContentLength",
     responseTime = "responseTime",
     status = "status",
     url = "url",

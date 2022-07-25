@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions";
-import { FieldKey, TreeType } from "../tree";
+import { assert } from "@fluidframework/common-utils";
+import { FieldKey, TreeType, Value } from "../tree";
 
 export const enum TreeNavigationResult {
     /** Attempt to navigate cursor to a key or index that is outside the client's view. */
@@ -16,16 +16,6 @@ export const enum TreeNavigationResult {
     /** ITreeReader successfully navigated to the desired node. */
     Ok = 1,
 }
-
-/**
- * Value stored on a node.
- *
- * TODO: `Serializable` is not really the right type to use here,
- * since may types (including functions) are "Serializable" (according to the type) despite not being serializable.
- *
- * Use this type instead of directly using Serializable for both clarity and so the above TODO can be addressed.
- */
-export type Value = undefined | Serializable;
 
 /**
  * A stateful low-level interface for reading tree data.
@@ -70,4 +60,30 @@ export interface ITreeCursor {
 
     /** value associated with the currently selected node. */
     readonly value: Value;
+}
+
+/**
+ * @param cursor - tree who's field will be visited.
+ * @param key - the field to visit.
+ * @param f - builds output from field member, which will be selected in cursor when cursor is provided.
+ *  If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
+ * @returns array resulting from applying `f` to each item of field `key` on `cursor`'s current node.
+ * Returns an empty array if the field is empty or not present (which are considered the same).
+ */
+export function mapCursorField<T>(cursor: ITreeCursor, key: FieldKey, f: (cursor: ITreeCursor) => T): T[] {
+    const output: T[] = [];
+    let result = cursor.down(key, 0);
+    if (result !== TreeNavigationResult.Ok) {
+        assert(result === TreeNavigationResult.NotFound, "pending not supported in mapCursorField");
+        // This has to be special cased (and not fall through the code below)
+        // since the call to `up` needs to be skipped.
+        return [];
+    }
+    while (result === TreeNavigationResult.Ok) {
+        output.push(f(cursor));
+        result = cursor.seek(1).result;
+    }
+    assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
+    cursor.up();
+    return output;
 }

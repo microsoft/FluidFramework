@@ -14,9 +14,9 @@ import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../summarizerH
 import { ISummarizeHeuristicData, ISummarizeAttempt } from "../summarizerTypes";
 import { SummarizeReason } from "../summaryGenerator";
 
-describe.only("Runtime", () => {
-    describe.only("Summarization", () => {
-        describe.only("Summarize Heuristic Runner", () => {
+describe("Runtime", () => {
+    describe("Summarization", () => {
+        describe("Summarize Heuristic Runner", () => {
             let clock: sinon.SinonFakeTimers;
             before(() => { clock = sinon.useFakeTimers(); });
             after(() => { clock.restore(); });
@@ -47,7 +47,7 @@ describe.only("Runtime", () => {
             };
             const getLastAttempt = () => attempts.length > 0 ? attempts[attempts.length - 1] : undefined;
             function assertAttemptCount(count: number, message?: string) {
-                const fullMessage = `${attempts.length} !== ${count}; ${message || "unexpected attempt count"}`;
+                const fullMessage = `${attempts.length} !== ${count}; ${message ?? "unexpected attempt count"}`;
                 assert(attempts.length === count, fullMessage);
             }
 

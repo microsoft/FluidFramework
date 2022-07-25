@@ -10,8 +10,8 @@
  * as well as on the type of the property itself. For example: `IProvideFoo.IFoo.IFoo`
  * This aligns with the FluidObject pattern expected to be used with all FluidObjects.
  *
- * For example:
- * ```
+ * @example
+ * ```typescript
  * interface IProvideFoo{
  *  IFoo: IFoo
  * }
@@ -40,8 +40,9 @@ export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> =
  * A common way to specify a type implements the FluidObject pattern is to expose it as a
  * FluidObject without a generic argument.
  *
+ * @example
  * For example, if we have an interface like below
- * ```
+ * ```typescript
  * interface IProvideFoo{
  *  IFoo: IFoo
  * }

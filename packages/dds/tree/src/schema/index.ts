@@ -5,7 +5,8 @@
 
 export {
     FieldSchema, FieldKind, ValueSchema, GlobalFieldKey, TreeSchema,
-    TreeSchemaIdentifier, LocalFieldKey, NamedTreeSchema,
+    TreeSchemaIdentifier, LocalFieldKey, NamedTreeSchema, SchemaRepository,
+    Named,
 } from "./Schema";
 export { anyField, anyTree, neverField, neverTree } from "./SpecialSchema";
 export { StoredSchemaRepository } from "./StoredSchemaRepository";

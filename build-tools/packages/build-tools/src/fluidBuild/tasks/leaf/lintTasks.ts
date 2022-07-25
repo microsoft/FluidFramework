@@ -22,11 +22,6 @@ abstract class LintBaseTask extends TscDependentTask {
 }
 
 export class TsLintTask extends LintBaseTask {
-    protected get doneFile() {
-        // TODO: This assume there is only one tslint task per package
-        return "tslint.done.build.log";
-    }
-
     protected get configFileFullPath() {
         return this.getPackageFileFullPath("tslint.json");
     }
@@ -34,11 +29,6 @@ export class TsLintTask extends LintBaseTask {
 
 export class EsLintTask extends LintBaseTask {
     private _configFileFullPath: string | undefined
-    protected get doneFile() {
-        // TODO: This assume there is only one eslint task per package
-        return "eslint.done.build.log";
-    }
-
     protected get configFileFullPath() {
         if (!this._configFileFullPath) {
             // TODO: we currently don't support .yaml and .yml, or config in package.json
@@ -96,11 +86,6 @@ export class EsLintTask extends LintBaseTask {
 }
 
 export class TsFormatTask extends LintBaseTask {
-    protected get doneFile() {
-        // TODO: This assume there is only one tsfmt task per package
-        return "tsfmt.done.build.log";
-    }
-
     protected get configFileFullPath() {
         // Currently there's no package-level config file, so just use tsconfig.json
         return this.getPackageFileFullPath("tsconfig.json");
