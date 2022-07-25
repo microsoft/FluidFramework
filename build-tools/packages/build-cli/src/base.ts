@@ -24,6 +24,14 @@ export abstract class BaseCommand extends Command {
             description: "Verbose logging.",
             required: false,
         }),
+        defroot: Flags.directory({
+            description: "Default root directory of the Fluid repo if infer failed",
+            env: "_FLUID_DEFAULT_ROOT_",
+        }),
+        logtime: Flags.boolean({
+            description: "Display the current time on every status message for logging",
+            required: false
+        })
     };
 
     private _context: Context | undefined;

@@ -15,9 +15,28 @@ export class LayerCheck extends BaseCommand {
   static description = 'description of this example command';
 
   static flags = {
-    md: Flags.string({ required: false }),
-    dot: Flags.file({ required: false }),
-    info: Flags.string({ required: false }),
+    md: Flags.string({
+        description: "Generate PACKAGES.md file for human consumption at path relative to repo root",
+        required: false,
+        default: ".", // default is repo root (relative path to repo root)
+     }),
+    dot: Flags.file({
+        description: "Generate *.dot for GraphViz",
+        required: false
+     }),
+    info: Flags.string({
+        description: "Path to the layer graph json file",
+        required: false
+     }),
+     help: Flags.option({
+        description: "Print this message",
+        parse: async () => `
+        Options:
+             --dot <path>     Generate *.dot for GraphViz
+             --info <path>    Path to the layer graph json file
+             --md [<path>]    Generate PACKAGES.md file for human consumption at path relative to repo root (default: repo root)
+        `,
+     }),
     ...super.flags,
   };
 
