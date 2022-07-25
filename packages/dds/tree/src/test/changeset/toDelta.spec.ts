@@ -11,7 +11,7 @@ import {
     Transposed as T,
 } from "../../changeset";
 import { FieldKey, Delta } from "../../tree";
-import { brand } from "../../util";
+import { brand, brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";
 
 function toDelta(changeset: T.LocalChangeset): Delta.Root {
@@ -27,7 +27,9 @@ function toTreeDelta(list: T.MarkList): Delta.MarkList<Delta.OuterMark> {
 
 const type = brand<TreeSchemaIdentifier>("Node");
 const rootKey = brand<FieldKey>("root");
+const detachedKey = brand<FieldKey>("detached");
 const fooKey = brand<FieldKey>("foo");
+const barKey = brand<FieldKey>("bar");
 const content: ProtoNode[] = [{
     type,
     value: 42,
@@ -35,6 +37,7 @@ const content: ProtoNode[] = [{
 }];
 
 const opId = 42;
+const moveId = brandOpaque<Delta.MoveId>(opId);
 
 describe("toDelta", () => {
     it("empty changeset", () => {
@@ -163,6 +166,139 @@ describe("toDelta", () => {
             fields: new Map([[fooKey, [42, mark]]]),
         }];
         const actual = toTreeDelta(changeset);
+        assert.deepStrictEqual(actual, expected);
+    });
+
+    it("move within trait", () => {
+        const changeset: T.MarkList = [{
+            type: "Modify",
+            fields: {
+                foo: [
+                    42,
+                    {
+                        type: "MoveOut",
+                        id: opId,
+                        count: 10,
+                    },
+                    8,
+                    [{
+                        type: "MoveIn",
+                        id: opId,
+                        count: 10,
+                    }],
+                ],
+            },
+        }];
+        const moveOut: Delta.MoveOut = {
+            type: Delta.MarkType.MoveOut,
+            moveId,
+            count: 10,
+        };
+        const moveIn: Delta.MoveIn = {
+            type: Delta.MarkType.MoveIn,
+            moveId,
+        };
+        const expected: Delta.MarkList = [{
+            type: Delta.MarkType.Modify,
+            fields: new Map([[fooKey, [42, moveOut, 8, moveIn]]]),
+        }];
+        const actual = toTreeDelta(changeset);
+        assert.deepStrictEqual(actual, expected);
+    });
+
+    it("move across traits", () => {
+        const changeset: T.MarkList = [{
+            type: "Modify",
+            fields: {
+                foo: [
+                    42,
+                    {
+                        type: "MoveOut",
+                        id: opId,
+                        count: 10,
+                    },
+                ],
+                bar: [
+                        8,
+                    [{
+                        type: "MoveIn",
+                        id: opId,
+                        count: 10,
+                    }],
+                ],
+            },
+        }];
+        const moveOut: Delta.MoveOut = {
+            type: Delta.MarkType.MoveOut,
+            moveId,
+            count: 10,
+        };
+        const moveIn: Delta.MoveIn = {
+            type: Delta.MarkType.MoveIn,
+            moveId,
+        };
+        const expected: Delta.MarkList = [{
+            type: Delta.MarkType.Modify,
+            fields: new Map([
+                [fooKey, [42, moveOut]],
+                [barKey, [8, moveIn]],
+            ]),
+        }];
+        const actual = toTreeDelta(changeset);
+        assert.deepStrictEqual(actual, expected);
+    });
+
+    it("move across trees", () => {
+        const changeset: T.LocalChangeset = {
+            marks: {
+                root: [{
+                    type: "Modify",
+                    fields: {
+                        foo: [
+                            42,
+                            {
+                                type: "MoveOut",
+                                id: opId,
+                                count: 10,
+                            },
+                        ],
+                    },
+                }],
+                detached: [
+                    8,
+                    [{
+                        type: "MoveIn",
+                        id: opId,
+                        count: 10,
+                    }],
+                ],
+            },
+        };
+        const moveOut: Delta.MoveOut = {
+            type: Delta.MarkType.MoveOut,
+            moveId,
+            count: 10,
+        };
+        const moveIn: Delta.MoveIn = {
+            type: Delta.MarkType.MoveIn,
+            moveId,
+        };
+        const expected: Delta.Root = new Map([
+            [
+                rootKey,
+                [{
+                    type: Delta.MarkType.Modify,
+                    fields: new Map([
+                        [fooKey, [42, moveOut]],
+                    ]),
+                }],
+            ],
+            [
+                detachedKey,
+                [8, moveIn],
+            ],
+        ]);
+        const actual = toDelta(changeset);
         assert.deepStrictEqual(actual, expected);
     });
 
