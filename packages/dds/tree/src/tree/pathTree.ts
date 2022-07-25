@@ -13,6 +13,9 @@ import { FieldKey } from "./types";
  *
  * UpPaths can be thought of as terminating at a special root node (that is `undefined`)
  * who's FieldKeys are all LocalFieldKey's that correspond to detached sequences.
+ *
+ * UpPaths can be mutated over time and should be considered to be invalidated when any edits occurs:
+ * Use of an UpPath that was acquired before the most recent edit is undefined behavior.
  */
 export interface UpPath {
     /**

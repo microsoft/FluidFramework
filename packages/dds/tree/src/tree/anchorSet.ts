@@ -22,8 +22,19 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
  * See {@link Rebaser} for how to update across revisions.
  */
 export class AnchorSet {
+    // Incrementing counter to give each anchor in this set a unique index for its identifier.
     private anchorCounter = 0;
-    // This keeps a ref to this, preventing the root from being deleted.
+    /**
+     * Special root node under which all anchors in this anchor set are transitively parented.
+     * This does not appear in the UpPaths (instead they use undefined for the root).
+     * Immediate children of this root are in detached fields (which have their identifiers used as the field keys).
+     *
+     * This is allocated with refCount one, which is never freed so it is never cleaned up
+     * (as long as this AnchorSet is not garbage collected).
+     *
+     * There should never be any children other than the special root detached field under this between transactions:
+     * TODO: check for and enforce this.
+     */
     private readonly root = new PathNode(this, EmptyKey, 0, undefined);
     // TODO: anchor system could be optimized a bit to avoid the maps (Anchor is ref to Path, path has ref count).
     // For now use this more encapsulated approach with maps.
@@ -135,31 +146,29 @@ export class AnchorSet {
 }
 
 /**
- * This file contains some work in progress code to implement a prefix tree style collection of paths,
- * designed to support collections of cursors and anchors,
- * allowing for optimize rebase and storage of batches of paths.
- *
- * This is currently unused as object forest is focused on correctness not performance.
- */
-
-/**
  * Tree of anchors.
- * Updated on changes to forest.
- * Contains parent pointers.
+ *
+ * Contains both child and parent pointers, which are kept in sync.
  *
  * Each anchor is equivalent to a path through the tree.
  * This tree structure stores a collection of these paths, but deduplicating the common prefixes of the tree
  * prefix-tree style.
  *
- * These anchors are used instead of just holding onto the node objects so that the parent path is available:
- * these store parents, but regular object forest nodes do not.
+ * These anchors are used instead of just holding onto the node objects in forests for several reasons:
+ * - Update policy might be more complex than just tracking a node object in the forest.
+ * - Not all forests will have node objects: some may use compressed binary formats with no objects to reference.
+ * - Anchors are need even when not using forests,
+ *      and for nodes that are outside the currently loaded part of the forest.
+ * - Forest in general do not need to sport up pointers, but they are needed for anchors.
  *
- * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors
- * (and thus need parent paths).
+ * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors,
+ * plus the parent paths for them.
  */
 class PathNode implements UpPath {
     /**
-     * Number of references to this from external sources (ex: `Anchors` via `AnchorSet`.)
+     * Number of references to this from external sources (ex: `Anchors` via `AnchorSet`.).
+     *
+     * PathNodes are kept as long as they have children, OR their refcount is non-zero.
      */
     private refCount = 1;
 
@@ -266,6 +275,8 @@ class PathNode implements UpPath {
     }
 
     private deleteThis(): void {
+        // TODO: set some deleted state so operations on detached/deleted PathNodes/UpPaths
+        // error instead of behaving unexpectedly.
         this.parentPath?.removeChild(this);
     }
 }
