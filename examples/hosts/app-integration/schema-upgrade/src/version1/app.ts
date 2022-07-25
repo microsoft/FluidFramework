@@ -65,7 +65,6 @@ const extractStringData = async (inventoryList: IInventoryList) => {
  * with stronger typing and accessory functionality.  It should have the same layering restrictions as we want for
  * the Container (e.g. no direct access to the Loader).  It does not have a goal of being general-purpose like
  * Container does -- instead it is specially designed for the specific container code.
- * TODO: Rename to ContainerModel?
  */
 export class InventoryListContainer extends TypedEventEmitter<IInventoryListContainerEvents>
     implements IInventoryListContainer {

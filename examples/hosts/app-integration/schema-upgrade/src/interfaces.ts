@@ -9,12 +9,13 @@ import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 export interface IModelLoader {
-    // TODO: Make async to support dynamic loading of model
     /**
      * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
+     * It is async to permit dynamic model loading - e.g. referring to a remote service to determine if the requested
+     * model is available.
      * @param version - the container code version to check
      */
-    isVersionSupported(version: string): boolean;
+    isVersionSupported(version: string): Promise<boolean>;
 
     /**
      * Create a detached model using the specified version of container code.

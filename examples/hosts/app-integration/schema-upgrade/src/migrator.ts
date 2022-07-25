@@ -37,17 +37,17 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
     private readonly takeAppropriateActionForCurrentMigratable = () => {
         const migrationState = this._currentMigratable.getMigrationState();
         if (migrationState === MigrationState.migrating) {
-            this.ensureMigrating().catch(console.error);
+            this.ensureMigrating();
         } else if (migrationState === MigrationState.migrated) {
-            this.ensureLoading().catch(console.error);
+            this.ensureLoading();
         } else {
             this._currentMigratable.once("migrating", this.takeAppropriateActionForCurrentMigratable);
         }
     };
 
-    private readonly ensureMigrating = async () => {
+    private readonly ensureMigrating = () => {
         if (this._migrationP !== undefined) {
-            return this._migrationP;
+            return;
         }
 
         if (this._migratedLoadP !== undefined) {
@@ -60,14 +60,16 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             throw new Error("Expect an accepted version before migration starts");
         }
 
-        if (!this.modelLoader.isVersionSupported(acceptedVersion)) {
-            this.emit("migrationNotSupported", acceptedVersion);
-            return;
-        }
-
-        this.emit("migrating");
-
         const doTheMigration = async () => {
+            this.emit("migrating");
+
+            const migrationSupported = await this.modelLoader.isVersionSupported(acceptedVersion);
+            if (!migrationSupported) {
+                this.emit("migrationNotSupported", acceptedVersion);
+                this._migrationP = undefined;
+                return;
+            }
+
             const extractedData = await migratable.exportStringData();
 
             // Possibly transform the extracted data here
@@ -109,14 +111,12 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             this.takeAppropriateActionForCurrentMigratable();
         };
 
-        this._migrationP = doTheMigration();
-
-        return this._migrationP;
+        this._migrationP = doTheMigration().catch(console.error);
     };
 
-    private readonly ensureLoading = async () => {
+    private readonly ensureLoading = () => {
         if (this._migratedLoadP !== undefined) {
-            return this._migratedLoadP;
+            return;
         }
 
         if (this._migrationP !== undefined) {
@@ -129,17 +129,18 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             throw new Error("Expect an accepted version before migration starts");
         }
 
-        if (!this.modelLoader.isVersionSupported(acceptedVersion)) {
-            this.emit("migrationNotSupported", acceptedVersion);
-            return;
-        }
-
         const migratedId = migratable.newContainerId;
         if (migratedId === undefined) {
             throw new Error("Migration ended without a new container being created");
         }
 
         const doTheLoad = async () => {
+            const migrationSupported = await this.modelLoader.isVersionSupported(acceptedVersion);
+            if (!migrationSupported) {
+                this.emit("migrationNotSupported", acceptedVersion);
+                this._migratedLoadP = undefined;
+                return;
+            }
             const migrated = await this.modelLoader.loadExisting(migratedId);
             this._currentMigratable = migrated;
             this.emit("migrated", migrated, migratedId);
@@ -151,8 +152,6 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             this.takeAppropriateActionForCurrentMigratable();
         };
 
-        this._migratedLoadP = doTheLoad();
-
-        return this._migratedLoadP;
+        this._migratedLoadP = doTheLoad().catch(console.error);
     };
 }

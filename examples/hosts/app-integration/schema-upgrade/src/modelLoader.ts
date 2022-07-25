@@ -91,7 +91,7 @@ export class ModelLoader implements IModelLoader {
 
     // TODO: Make this async to support network calls (e.g. if dynamically retrieving the model code)?
     // TODO: If I parameterize a modelCodeLoader, then the modelCodeLoader would implement this method.
-    public isVersionSupported(version: string): boolean {
+    public async isVersionSupported(version: string): Promise<boolean> {
         return version === "one" || version === "two";
     }
 
@@ -101,7 +101,8 @@ export class ModelLoader implements IModelLoader {
     public async createDetached(
         version: "one" | "two",
     ): Promise<{ model: IMigratable; attach: () => Promise<string>; }> {
-        if (!this.isVersionSupported(version)) {
+        const supported = await this.isVersionSupported(version);
+        if (!supported) {
             throw new Error("Unknown accepted version");
         }
         const container = await this.loader.createDetachedContainer({ package: version });
