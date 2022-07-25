@@ -230,6 +230,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         const newEvent: ITelemetryBaseEventExt = {
             ...event,
         };
+        stringifyEventFields(event);
         if (this.namespace !== undefined) {
             newEvent.eventName = `${this.namespace}${TelemetryLogger.eventNamespaceSeparator}${newEvent.eventName}`;
         }
