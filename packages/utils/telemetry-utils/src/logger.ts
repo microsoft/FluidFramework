@@ -50,9 +50,14 @@ export interface ITelemetryLoggerPropertyBags{
     error?: ITelemetryLoggerPropertyBag;
 }
 
+export interface ITaggedTelemetryPropertyTypeExt {
+    value: TelemetryEventPropertyTypeExt;
+    tag: string;
+}
+
 // Less restrictive telemetry properties to include arrays with primitives.
 export interface ITelemetryPropertiesExt {
-    [index: string]: TelemetryEventPropertyType | ITaggedTelemetryPropertyType | TelemetryEventPropertyTypeExt;
+    [index: string]: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt;
 }
 
 // Base interface for logging telemetry statements allowing flat arrays containing primitives.
@@ -76,6 +81,10 @@ export type TelemetryEventTypes =
     | ITelemetryGenericEventExt
     | ITelemetryPerformanceEvent
     | ITelemetryPerformanceEventExt;
+
+export interface ITelemetryBaseLoggerExt {
+    send(event: ITelemetryBaseEventExt): void;
+}
 
 /**
  * TelemetryLogger class contains various helper telemetry methods,
@@ -114,7 +123,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - Error to extract info from
      * @param fetchStack - Whether to fetch the current callstack if error.stack is undefined
      */
-    public static prepareErrorObject(event: ITelemetryBaseEvent, error: any, fetchStack: boolean) {
+    public static prepareErrorObject(event: ITelemetryBaseEventExt, error: any, fetchStack: boolean) {
         const { message, errorType, stack } = extractLogSafeErrorProperties(error, true /* sanitizeStack */);
         // First, copy over error message, stack, and errorType directly (overwrite if present on event)
         event.stack = stack;
@@ -149,7 +158,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      *
      * @param event - the event to send
      */
-    public abstract send(event: ITelemetryBaseEvent | ITelemetryBaseEventExt): void;
+    public abstract send(event: ITelemetryBaseEventExt): void;
 
     /**
      * Send a telemetry event with the logger
@@ -216,9 +225,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         this.sendTelemetryEventCore(perfEvent, error);
     }
 
-    protected prepareEvent(event: ITelemetryBaseEvent): ITelemetryBaseEvent {
+    protected prepareEvent(event: ITelemetryBaseEventExt): ITelemetryBaseEventExt {
         const includeErrorProps = event.category === "error" || event.error !== undefined;
-        const newEvent: ITelemetryBaseEvent = {
+        const newEvent: ITelemetryBaseEventExt = {
             ...event,
         };
         if (this.namespace !== undefined) {
@@ -255,9 +264,9 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
  * container-runtime. Issue: #8191
  * TaggedLoggerAdapter class can add tag handling to your logger.
  */
- export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
+ export class TaggedLoggerAdapter implements ITelemetryBaseLoggerExt {
     public constructor(
-        private readonly logger: ITelemetryBaseLogger) {
+        private readonly logger: ITelemetryBaseLoggerExt) {
     }
 
     public send(eventWithTagsMaybe: ITelemetryBaseEvent) {
@@ -312,7 +321,7 @@ export class ChildLogger extends TelemetryLogger {
      * @param propertyGetters - Getters to add additional properties to all events
      */
     public static create(
-        baseLogger?: ITelemetryBaseLogger,
+        baseLogger?: ITelemetryBaseLoggerExt,
         namespace?: string,
         properties?: ITelemetryLoggerPropertyBags): TelemetryLogger {
         // if we are creating a child of a child, rather than nest, which will increase
@@ -356,7 +365,7 @@ export class ChildLogger extends TelemetryLogger {
     }
 
     private constructor(
-        protected readonly baseLogger: ITelemetryBaseLogger,
+        protected readonly baseLogger: ITelemetryBaseLoggerExt,
         namespace: string | undefined,
         properties: ITelemetryLoggerPropertyBags | undefined,
     ) {
@@ -375,8 +384,10 @@ export class ChildLogger extends TelemetryLogger {
      *
      * @param event - the event to send
      */
-    public send(event: ITelemetryBaseEvent): void {
-        this.baseLogger.send(this.prepareEvent(event));
+    public send(event: ITelemetryBaseEventExt): void {
+        const newEvent = this.prepareEvent(event);
+        stringifyEventFields(newEvent);
+        this.baseLogger.send(newEvent);
     }
 }
 
@@ -415,10 +426,10 @@ export class MultiSinkLogger extends TelemetryLogger {
      *
      * @param event - the event to send to all the registered logger
      */
-    public send(event: ITelemetryBaseEvent): void {
+    public send(event: ITelemetryBaseEventExt): void {
         const newEvent = this.prepareEvent(event);
         stringifyEventFields(newEvent);
-        this.loggers.forEach((logger: ITelemetryBaseLogger) => {
+        this.loggers.forEach((logger: ITelemetryBaseLoggerExt) => {
             logger.send(newEvent);
         });
     }
