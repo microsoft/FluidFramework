@@ -47,33 +47,7 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
 - [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
-
-### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
-
-Strict null checks have been enabled in `@fluidframework/sequence`. As part of this, the return types of several functions have been modified to include `| undefined`. This does not represent a behavioral change.
-
-The functions affected are:
- - `Interval.getAdditionalPropertySets`
- - `Interval.modify`
- - `IntervalCollection.getIntervalById`
- - `IntervalCollection.nextInterval`
- - `IntervalCollection.previousInterval`
- - `IntervalCollection.removeIntervalById`
- - `ISharedString.insertMarker`
- - `PaddingSegment.fromJSONObject`
- - `RunSegment.createSplitSegmentAt`
- - `RunSegment.fromJSONObject`
- - `SequenceEvent.clientId`
- - `SharedSegmentSequence.getPropertiesAtPosition`
- - `SharedSegmentSequence.removeLocalReferencePosition`
- - `SharedSegmentSequence.resolveRemoteClientPosition`
- - `SharedString.findTile`
- - `SharedString.getMarkerFromId`
- - `SharedString.insertMarker`
- - `SparseMatrix.getItem`
- - `SparseMatrix.getPositionProperties`
- - `SubSequence.createSplitSegmentAt`
- - `SubSequence.fromJSONObject`
+- [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
 
 ### Remove `documentId` field from `MockFluidDataStoreContext`
 This field has been deprecated and will be removed in a future breaking change.
@@ -130,8 +104,38 @@ See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluid
 ### Remove `aliasing` return value from `AliasResult`
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
 
+### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
+
+Strict null checks have been enabled in `@fluidframework/sequence`. As part of this, the return types of several functions have been modified to include `| undefined`. This does not represent a behavioral change.
+
+The functions affected are:
+ - `Interval.getAdditionalPropertySets`
+ - `Interval.modify`
+ - `IntervalCollection.getIntervalById`
+ - `IntervalCollection.nextInterval`
+ - `IntervalCollection.previousInterval`
+ - `IntervalCollection.removeIntervalById`
+ - `ISharedString.insertMarker`
+ - `PaddingSegment.fromJSONObject`
+ - `RunSegment.createSplitSegmentAt`
+ - `RunSegment.fromJSONObject`
+ - `SequenceEvent.clientId`
+ - `SharedSegmentSequence.getPropertiesAtPosition`
+ - `SharedSegmentSequence.removeLocalReferencePosition`
+ - `SharedSegmentSequence.resolveRemoteClientPosition`
+ - `SharedString.findTile`
+ - `SharedString.getMarkerFromId`
+ - `SharedString.insertMarker`
+ - `SparseMatrix.getItem`
+ - `SparseMatrix.getPositionProperties`
+ - `SubSequence.createSplitSegmentAt`
+ - `SubSequence.fromJSONObject`
+
 ### MergeTree class no longer exported
     The MergeTree class was deprecated and is no longer be exported. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
+
+### Remove `IContainerRuntimeBase.setFlushMode`
+The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
 
 # 1.2.0
 
