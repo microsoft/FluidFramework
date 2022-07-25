@@ -48,7 +48,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
         this.emit("focusChanged");
     };
 
-    public constructor(
+    constructor(
         container: IFluidContainer,
         public readonly audience: IServiceAudience<IMember>,
         private readonly signaler: Signaler,

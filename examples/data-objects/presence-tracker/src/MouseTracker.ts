@@ -50,7 +50,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
         this.emit("mousePositionChanged");
     };
 
-    public constructor(
+    constructor(
         public readonly audience: IServiceAudience<IMember>,
         private readonly signaler: Signaler,
     ) {
