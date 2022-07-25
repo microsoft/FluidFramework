@@ -72,7 +72,7 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:tinylicious
         testFileTarName: azure-client
-        extraDependencies: "cross-env mocha @fluidframework/test-client-utils"
+        extraDependencies: "cross-env mocha start-server-and-test @fluidframework/test-client-utils"
         downloadAzureTestArtifacts: true
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
