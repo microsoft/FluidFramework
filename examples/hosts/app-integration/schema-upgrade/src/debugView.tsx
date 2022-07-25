@@ -49,6 +49,9 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrat
     return (
         <>
             <div>
+                Using model: { model.version }
+            </div>
+            <div>
                 Status:
                 { migrationState === MigrationState.collaborating && " Normal collaboration" }
                 { migrationState === MigrationState.migrating && " Migration in progress" }
