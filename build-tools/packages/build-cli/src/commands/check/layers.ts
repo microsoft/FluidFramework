@@ -6,13 +6,13 @@
 import path from "path";
 import { Flags } from '@oclif/core';
 import { LayerGraph, Timer, writeFileAsync } from "@fluidframework/build-tools";
-import { BaseCommand } from "../base";
+import { BaseCommand } from "../../base";
 
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
 const packagesMdFileName: string = "PACKAGES.md";
 
 export class LayerCheck extends BaseCommand {
-  static description = 'description of this example command';
+  static description = 'Make sure the dependencies between Fluid Framework packages are properly layered';
 
   static flags = {
     md: Flags.string({
@@ -28,15 +28,6 @@ export class LayerCheck extends BaseCommand {
         description: "Path to the layer graph json file",
         required: false
      }),
-     help: Flags.option({
-        description: "Print this message",
-        parse: async () => `
-        Options:
-             --dot <path>     Generate *.dot for GraphViz
-             --info <path>    Path to the layer graph json file
-             --md [<path>]    Generate PACKAGES.md file for human consumption at path relative to repo root (default: repo root)
-        `,
-     }),
     ...super.flags,
   };
 
@@ -44,7 +35,7 @@ export class LayerCheck extends BaseCommand {
     const { flags } = await this.parse(LayerCheck);
     const timer = new Timer(flags.timer);
 
-    const context = await this.getContext(true);
+    const context = await this.getContext(flags.verbose);
     const resolvedRoot = context.repo.resolvedRoot;
 
     // Load the package
@@ -74,7 +65,7 @@ export class LayerCheck extends BaseCommand {
             throw new Error("Layer check not succesful");
         }
 
-        console.log(`Layer check passed (${packages.packages.length} packages)`)
+        this.log(`Layer check passed (${packages.packages.length} packages)`)
     } catch (error_: unknown) {
         throw new Error(error_ as string);
     }
