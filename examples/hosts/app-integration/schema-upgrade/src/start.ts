@@ -59,9 +59,6 @@ const render = (model: IMigratable) => {
 };
 
 async function start(): Promise<void> {
-    let id: string;
-    let model: IMigratable;
-
     const tinyliciousService = new TinyliciousService();
 
     const modelLoader = new ModelLoader({
@@ -71,6 +68,9 @@ async function start(): Promise<void> {
         modelCodeLoader: new DemoModelCodeLoader(),
         generateCreateNewRequest: createTinyliciousCreateNewRequest,
     });
+
+    let id: string;
+    let model: IMigratable;
 
     if (location.hash.length === 0) {
         // Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
@@ -95,8 +95,10 @@ async function start(): Promise<void> {
     // loader per model?
     const migrator = new Migrator(modelLoader, model);
     migrator.on("migrated", (newModel: IMigratable, newModelId: string) => {
+        model.close();
         render(newModel);
         updateTabForId(newModelId);
+        model = newModel;
     });
     migrator.on("migrationNotSupported", (version: string) => {
         // TODO: Figure out what a reasonable end-user experience might be in this case.

@@ -33,8 +33,10 @@ export class ModelLoader implements IModelLoader {
         this.generateCreateNewRequest = props.generateCreateNewRequest;
     }
 
-    // TODO: Should this be exposed on the ModelLoader, vs. having the caller consult the modelCodeLoader directly?
     public async supportsVersion(version: string): Promise<boolean> {
+        // TODO: To really answer the question of whether we support a given version, we would want to check both the
+        // modelCodeLoader and also the codeLoader.  Consider what that might look like (e.g. augment codeLoader with
+        // some supportsVersion call).
         return this.modelCodeLoader.supportsVersion(version);
     }
 

@@ -61,6 +61,12 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         }
 
         const doTheMigration = async () => {
+            // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Currently
+            // this fails the migration gracefully and emits an event so the app developer can know they're stuck.
+            // Ideally the app developer would find a way to acquire a new ModelLoader and move forward, or at least
+            // advise the end user to refresh the page or something.
+            // TODO: Does the app developer have everything they need to dispose gracefully when recovering with a new
+            // ModelLoader?
             const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
             if (!migrationSupported) {
                 this.emit("migrationNotSupported", acceptedVersion);
@@ -75,14 +81,13 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             // TODO: think about how we might enable a transform while allowing Migrator to remain generic?
             // E.g. have some callback with from/to version that does the transform?
 
-            // It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.  Currently
-            // this call will throw, but instead ModelLoader should probably provide an isSupported(string) method
-            // and/or the flow should fail gracefully/quietly and/or find a way to get the new ModelLoader.
             const createResponse = await this.modelLoader.createDetached(acceptedVersion);
             const migratedModel: IMigratable = createResponse.model;
             // TODO: Validate that the migratedModel is capable of importing the extractedData (format check)...
-            // Or probably better - validate at proposal time that the model we're proposing will be able to import
-            // the exported format of the current container (taking into consideration our format transform options).
+            // Or probably better/additionally - validate at proposal time that the model we're proposing will be
+            // able to import the exported format of the current container (taking into consideration our format
+            // transform options).  Not all clients might agree about support if some have old ModelLoaders -- these
+            // clients could use this opportunity to dispose early and try to get new ModelLoaders.
             await migratedModel.importStringData(extractedData);
 
             // Before attaching, let's check to make sure no one else has already done the migration
@@ -146,10 +151,12 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 return;
             }
             const migrated = await this.modelLoader.loadExisting(migratedId);
+            // Note: I'm choosing not to close the old migratable here, and instead allow the lifecycle management
+            // of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
+            // migratable).  It could also be fine to close here, just need to have an explicit contract to clarify
+            // who is responsible for managing that.
             this._currentMigratable = migrated;
             this.emit("migrated", migrated, migratedId);
-            // TODO: Not sure I really want to do the closing here - should this be left to the caller to decide?
-            migratable.close();
             this._migratedLoadP = undefined;
 
             // Only once we've completely finished with the old migratable, start on the new one.
