@@ -4,7 +4,7 @@
         "declaration": false,
         "declarationMap": false,
         "rootDir": "./",
-        "outDir": "../../../dist/test/mocha",
+        "outDir": "../../dist/test",
         "types": [
             "node",
             "mocha"
@@ -16,7 +16,7 @@
     ],
     "references": [
         {
-            "path": "../../.."
+            "path": "../.."
         }
     ]
 }
