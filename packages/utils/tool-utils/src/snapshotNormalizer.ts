@@ -9,6 +9,7 @@ import {
     TreeEntry,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
+import { SharedMatrixFactory } from "@fluidframework/matrix";
 
 /** The name of the metadata blob added to the root of the container runtime. */
 const metadataBlobName = ".metadata";
@@ -153,6 +154,46 @@ export function getNormalizedSnapshot(snapshot: ITree, config?: ISnapshotNormali
     };
 }
 
+function normalizeMatrix(value: ITree): ITree {
+    const rows = value.entries.find((e) => e.path === "rows");
+
+    if (!rows || !("entries" in rows.value)) {
+        return value;
+    }
+
+    const segments = rows.value.entries.find((e) => e.path === "segments");
+
+    if (!segments || !("entries" in segments.value)) {
+        return value;
+    }
+
+    const header = segments.value.entries.find((e) => e.path === "header");
+
+    if (!header || !("contents" in header.value)) {
+        return value;
+    }
+
+    if (!header?.value.contents.includes("removedClientId")) {
+        return value;
+    }
+
+    const contents = JSON.parse(header?.value.contents);
+
+    for (const segment of contents.segments) {
+        if ("removedClientId" in segment) {
+            segment.removedClientId = undefined;
+        }
+
+        if ("removedClientIds" in segment) {
+            segment.removedClientIds = undefined;
+        }
+    }
+
+    header.value.contents = JSON.stringify(contents);
+
+    return value;
+}
+
 function normalizeEntry(
     entry: ITreeEntry,
     config: ISnapshotNormalizerConfig | undefined,
@@ -171,6 +212,12 @@ function normalizeEntry(
                 for (const maybeAttributes of entry.value.entries) {
                     if (maybeAttributes.type === TreeEntry.Blob && maybeAttributes.path === ".attributes") {
                         const parsed: { type?: string; } = JSON.parse(maybeAttributes.value.contents);
+                        if (parsed.type === SharedMatrixFactory.Type) {
+                            return new TreeTreeEntry(
+                                entry.path,
+                                normalizeMatrix(getNormalizedSnapshot(entry.value, config)),
+                            );
+                        }
                         if (parsed.type !== undefined && config.excludedChannelContentTypes.includes(parsed.type)) {
                             // remove everything to match the unknown channel
                             return new TreeTreeEntry(entry.path, { entries: [maybeAttributes] });
