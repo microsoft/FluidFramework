@@ -547,7 +547,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
         }
         // In case we have pending summaries on the parent, let's initialize it on the child.
-        if (child._latestSummary !== undefined && this.pendingSummaries.size > 0) {
+        if (child._latestSummary !== undefined) {
             for (const [key, value] of this.pendingSummaries.entries()) {
                 const newLatestSummaryNode = new SummaryNode({
                     referenceSequenceNumber: value.referenceSequenceNumber,

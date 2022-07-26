@@ -257,7 +257,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
     }
 
     /**
-     * Called when we get an ack from the server for a summary we've sent. Update the reference state of this node
+     * Called when we get an ack from the server for a summary we sent. Update the reference state of this node
      * from the state in the pending summary queue.
      */
     protected refreshLatestSummaryFromPending(
@@ -272,7 +272,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
             }
         }
 
-        super.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
+        return super.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
     }
 
     /**
