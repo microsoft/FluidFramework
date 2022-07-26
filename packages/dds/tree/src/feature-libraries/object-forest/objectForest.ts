@@ -129,7 +129,9 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         assert(deleted, "deleted range must exist in forest");
     }
     allocateCursor(): Cursor {
-        return new Cursor(this);
+        const cursor = new Cursor(this);
+        cursor.set(this.rootField, 0);
+        return cursor;
     }
 
     private beforeChange(): void {

@@ -126,7 +126,7 @@ export class TextCursor implements ITreeCursor {
         this.siblings = this.parentStack.length === 0 ?
             this.root :
             (this.parentStack[this.parentStack.length - 1].fields ?? {}
-                )[this.keyStack[this.keyStack.length - 1] as string];
+                )[this.keyStack[this.keyStack.length - 1] as string] || {};
         return TreeNavigationResult.Ok;
     }
 

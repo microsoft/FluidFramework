@@ -16,8 +16,10 @@ import {
 import { TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema } from "../domains";
 import { recordDependency } from "../dependency-tracking";
+import { TextCursor } from "../feature-libraries";
+import { brand } from "../util";
+import { FieldKey } from "../tree";
 import { MockDependent } from "./utils";
-
 /**
  * Generic forest test suite
  */
@@ -93,6 +95,36 @@ function testForest(suiteName: string, factory: () => ObjectForest): void {
             assert.equal(forest.tryGet(anchor, reader), TreeNavigationResult.Ok);
             assert.equal(reader.value, 2);
             assert.equal(reader.seek(1).result, TreeNavigationResult.NotFound);
+        });
+
+        it("Attach basic TextCursor example to a forest", () => {
+            const forest = factory();
+            const Name = "Adam";
+            const streetName = "treeStreet";
+            const cursor = new TextCursor({
+                type: brand("Person"),
+                fields: {
+                    name: [{ value: Name, type: brand("String") }],
+                    address: [{
+                        fields: {
+                            street: [{ value: streetName, type: brand("String") }],
+                        },
+                        type: brand("Address"),
+                    }],
+                },
+            });
+            const newRange = forest.add([cursor]);
+            const dst = { index: 0, range: forest.rootField };
+            forest.attachRangeOfChildren(dst, newRange);
+
+            const reader = forest.allocateCursor();
+            reader.down("name" as FieldKey, 0);
+            assert.equal(reader.value, "Adam");
+            reader.up();
+            reader.down("address" as FieldKey, 0);
+            assert.equal(reader.value, undefined);
+            reader.down("street" as FieldKey, 0);
+            assert.equal(reader.value, streetName);
         });
 
         describe("top level invalidation", () => {
