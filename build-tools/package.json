@@ -16,7 +16,7 @@
     "build:compile": "lerna run build:compile --stream",
     "build:docs": "lerna run build:docs --stream --parallel",
     "build:fast": "fluid-build --root ..",
-    "build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
+    "build:full": "npm run build:genver && npm run build:full:compile",
     "build:full:compile": "lerna run build:full:compile --stream",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root ..",
@@ -30,7 +30,7 @@
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
     "postinstall": "npm run postinstall:lerna && npm run build:compile",
-    "install:build-tools": "cd packages/build-tools && npm run build:compile && npm link && cd ..",
+    "install:build-tools": "cd packages/build-tools && npm run build:compile && npm link && cd ../..",
     "layer-check": "node packages/build-tools/dist/layerCheck/layerCheck.js --root ..",
     "layer-check:doc": "node packages/build-tools/dist/layerCheck/layerCheck.js --root .. --md",
     "lerna": "lerna",
@@ -86,6 +86,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
+    "@fluidframework/build-tools": "^0.3.0-0",
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",

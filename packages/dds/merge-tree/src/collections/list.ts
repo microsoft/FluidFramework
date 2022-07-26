@@ -15,6 +15,8 @@ export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
     } else {
         entry.next.prev = entry.prev;
         entry.prev.next = entry.next;
+        entry.next = deadhead;
+        entry.prev = deadhead;
     }
     return (entry);
 }
@@ -135,14 +137,14 @@ export class List<T> {
     }
 
     public [Symbol.iterator]() {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let node: List<T> | undefined = this;
+        let node: List<T> | undefined = this.next;
         const iterator: IterableIterator<T> = {
             next(): IteratorResult<T> {
-                while (node && node.next.isHead === false) {
+                while (node && node.isHead === false) {
+                    const value = node.data;
                     node = node.next;
-                    if (node.data !== undefined) {
-                        return { value: node.data, done: false };
+                    if (value !== undefined) {
+                        return { value, done: false };
                     }
                 }
                 return { value: undefined, done: true };
@@ -154,3 +156,5 @@ export class List<T> {
         return iterator;
     }
 }
+
+const deadhead = ListMakeHead<any>();

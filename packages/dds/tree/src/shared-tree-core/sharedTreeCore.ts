@@ -9,8 +9,10 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryContext, ISummaryTreeWithStats, IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ChangeRebaser, FinalFromChangeRebaser, Rebaser } from "../rebase";
-import { Invariant } from "../util";
+import { toDelta } from "../changeset";
+import { ChangeRebaser, FinalFromChangeRebaser, Rebaser, RevisionTag } from "../rebase";
+import { AnchorSet, Delta } from "../tree";
+import { fail } from "../util";
 import { LazyPageTree } from "./lazyPageTree";
 
 /**
@@ -23,6 +25,14 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
     public readonly rebaser: Rebaser<TChangeRebaser>;
 
     /**
+     * The revision that is currently viewed as the head of the local branch.
+     * Updated when calling by the indexes' newLocalState.
+     */
+    private localState: RevisionTag;
+
+    private sequencedRevision: RevisionTag;
+
+    /**
      * @param id - The id of the shared object
      * @param runtime - The IFluidDataStoreRuntime which contains the shared object
      * @param attributes - Attributes of the shared object
@@ -30,6 +40,7 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
     public constructor(
         private readonly indexes: Index<FinalFromChangeRebaser<TChangeRebaser>>[],
         changeRebaser: TChangeRebaser,
+        private readonly anchors: AnchorSet,
 
         // Base class arguments
         id: string,
@@ -38,6 +49,8 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
         telemetryContextPrefix: string) {
         super(id, runtime, attributes, telemetryContextPrefix);
         this.rebaser = new Rebaser(changeRebaser);
+        this.localState = this.rebaser.empty;
+        this.sequencedRevision = this.rebaser.empty;
     }
 
     // TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -54,7 +67,16 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
         throw new Error("Method not implemented.");
     }
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        throw new Error("Method not implemented.");
+        const changes = fail("Method not implemented.");
+        const srcRevision = fail("Method not implemented.");
+        const [sequencedRevision, finalChange] = this.rebaser.rebase(changes, srcRevision, this.sequencedRevision);
+        for (const index of this.indexes) {
+            index.sequencedChange?.(finalChange);
+        }
+        this.sequencedRevision = sequencedRevision;
+
+        const newLocalRevisionHead = fail("TODO: rebase local changes onto new sequencedRevision");
+        this.updateLocalState(newLocalRevisionHead);
     }
     protected onDisconnect() {
         throw new Error("Method not implemented.");
@@ -64,14 +86,23 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
     }
 
     // TODO: custom getGCData.
+
+    // TODO: call this after local or remote edits.
+    private updateLocalState(revision: RevisionTag): void {
+        // TODO: maybe unify these two calls into rebaser as an optimziation.
+        this.rebaser.rebaseAnchors(this.anchors, this.localState, revision);
+        const delta = toDelta(this.rebaser.getResolutionPath(this.localState, revision));
+        for (const index of this.indexes) {
+            index.newLocalState?.(delta);
+        }
+        this.localState = revision;
+    }
 }
 
 /**
  * Observes Changesets (after rebase), after writes data into summaries when requested.
  */
 export interface Index<TChangeset> {
-    _typeCheck: Invariant<TChangeset>;
-
     /**
      * @param change - change that was just sequenced.
      * @param derivedFromLocal - iff provided, change was a local change (from this session)
@@ -87,7 +118,7 @@ export interface Index<TChangeset> {
      * May involve effects of a new sequenced change (including rebasing of local changes onto it),
      * or a new local change. Called after either sequencedChange or newLocalChange.
      */
-    newLocalState?(changeDelta: TChangeset): void;
+    newLocalState?(changeDelta: Delta.Root): void;
 
     /**
      * If provided, records data into summaries.
