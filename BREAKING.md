@@ -49,6 +49,15 @@ There are a few steps you can take to write a good change note and avoid needing
 - [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
 
+###  Update to React 17
+The following packages use React and thus were impacted:
+- @fluidframework/view-adapters
+- @fluid-tools/webpack-fluid-loader
+- @fluid-experimental/react-inputs
+- @fluid-experimental/property-inspector-table
+
+Users of these packages may need to update to React 17, and/or take other action to ensure compatibility.
+
 ### Remove `documentId` field from `MockFluidDataStoreContext`
 This field has been deprecated and will be removed in a future breaking change.
 
