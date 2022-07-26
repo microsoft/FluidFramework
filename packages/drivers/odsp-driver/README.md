@@ -10,11 +10,11 @@ Developers should not depend on this driver for their own solutions.
 
 ## ODSP APIs
 
-Documenting some basics about opds-driver specific apis that are relevant for creation or loading of a fluid file from ODSP.
+Documenting some basics about opds-driver specific apis that are relevant for creation or loading of a Fluid file from ODSP.
 
 ### /snapshot API
 
-- Creates a new fluid file with the contents as the summary provided in the request body.
+- Creates a new Fluid file with the contents as the summary provided in the request body.
 - The creation of file along with the summary is done in a single api call to reduce the number of round trips during new file creation.
 - Also supports creation of sharing link for the file if appropriate request headers are provided in the api call. This feature was introduced to save the number of round trips that a host app makes while creating a file and then creating a sharing link. 
 	1. Earlier only `&createLinkType=csl` paramter was supported which could create organizational scoped sharing links. Feature is gated by `enableShareLinkWithCreate` provided via `HostStoragePolicy`. (createLinkType is now deprecated, so prefer using option 2 below)
@@ -22,6 +22,6 @@ Documenting some basics about opds-driver specific apis that are relevant for cr
 
 ### /trees/latest API
 
-- Fetches the snapshot of an existing fluid file.
+- Fetches the snapshot of an existing Fluid file.
 - Earlier, application needed to redeem the sharing link of the file before a /trees/latest fetch could be made. To reduce the number of round trips made to ODSP, redemption of the share link now happens along with fetching latest snapshot in the same api request by passing share link in `&sl` request parameter.
 - This api is also preflight-less, which means it is not preceded by an OPTIONS call in the browsers to reduce the network trips to the server.
