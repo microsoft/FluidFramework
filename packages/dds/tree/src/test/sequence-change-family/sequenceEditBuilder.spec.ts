@@ -62,6 +62,18 @@ const root_bar2_bar5: UpPath = {
     parentIndex: () => 5,
 };
 
+const root_foo2_foo5_foo7: UpPath = {
+    parent: () => root_foo2_foo5,
+    parentField: () => fooKey,
+    parentIndex: () => 7,
+};
+
+const root_bar2_bar5_bar7: UpPath = {
+    parent: () => root_bar2_bar5,
+    parentField: () => barKey,
+    parentIndex: () => 7,
+};
+
 const nodeX = { type: jsonString.name, value: "X" };
 const content = [nodeX];
 const moveId = brandOpaque<Delta.MoveId>(0);
@@ -389,6 +401,86 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo2_foo5, 3, root_bar2_bar5); },
+            expected,
+        );
+    });
+
+    it("Can move nodes across deep subtrees of different fields", () => {
+        const expected: Delta.Root = new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                fields: new Map([
+                    [
+                        fooKey,
+                        [
+                            2,
+                            {
+                                type: Delta.MarkType.Modify,
+                                fields: new Map([
+                                    [
+                                        fooKey,
+                                        [
+                                            5,
+                                            {
+                                                type: Delta.MarkType.Modify,
+                                                fields: new Map([
+                                                    [
+                                                        fooKey,
+                                                        [
+                                                            7,
+                                                            {
+                                                                type: Delta.MarkType.MoveOut,
+                                                                moveId,
+                                                                count: 3,
+                                                            },
+                                                        ],
+                                                    ],
+                                                ]),
+                                            },
+                                        ],
+                                    ],
+                                ]),
+                            },
+                        ],
+                    ],
+                    [
+                        barKey,
+                        [
+                            2,
+                            {
+                                type: Delta.MarkType.Modify,
+                                fields: new Map([
+                                    [
+                                        barKey,
+                                        [
+                                            5,
+                                            {
+                                                type: Delta.MarkType.Modify,
+                                                fields: new Map([
+                                                    [
+                                                        barKey,
+                                                        [
+                                                            7,
+                                                            {
+                                                                type: Delta.MarkType.MoveIn,
+                                                                moveId,
+                                                            },
+                                                        ],
+                                                    ],
+                                                ]),
+                                            },
+                                        ],
+                                    ],
+                                ]),
+                            },
+                        ],
+                    ],
+                ]),
+            }],
+        ]]);
+        test(
+            (builder) => { builder.move(root_foo2_foo5_foo7, 3, root_bar2_bar5_bar7); },
             expected,
         );
     });

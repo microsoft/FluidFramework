@@ -41,6 +41,9 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
     }
 
     public move(source: PlacePath, count: number, destination: PlacePath) {
+        if (count === 0) {
+            return;
+        }
         const id = this.opId++;
         const moveOut: T.Detach = { type: "MoveOut", id, count };
         const moveIn: T.AttachGroup = [{ type: "MoveIn", id, count }];
@@ -48,42 +51,39 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
             const srcIndex = source.parentIndex();
             const dstIndex = destination.parentIndex();
             if (source.parentField() === destination.parentField()) {
-                let marks;
+                const marks: T.MarkList = [];
                 if (dstIndex <= srcIndex) {
-                    const gap = srcIndex - dstIndex;
-                    if (dstIndex === 0) {
-                        if (gap === 0) {
-                            marks = [moveIn, moveOut];
-                        } else {
-                            marks = [moveIn, gap, moveOut];
-                        }
-                    } else {
-                        if (gap === 0) {
-                            marks = [moveIn, moveOut];
-                        } else {
-                            marks = [dstIndex, moveIn, gap, moveOut];
-                        }
+                    if (dstIndex > 0) {
+                        marks.push(dstIndex);
                     }
+                    marks.push(moveIn);
+                    const gap = srcIndex - dstIndex;
+                    if (gap > 0) {
+                        marks.push(gap);
+                    }
+                    marks.push(moveOut);
                 } else {
+                    if (srcIndex > 0) {
+                        marks.push(srcIndex);
+                    }
                     const gap = dstIndex - srcIndex;
                     if (gap < count) {
-                        // The target attach point lies within the range of nodes being detached
-                        fail("Not implemented");
+                        // The target attach point lies within the range of nodes being detached.
+                        // Split the operation into two moves.
+                        const id2 = this.opId++;
+                        marks.push(
+                            { type: "MoveOut", id, count: gap },
+                            [{ type: "MoveIn", id, count: count - gap }],
+                            [{ type: "MoveIn", id: id2, count: gap }],
+                            { type: "MoveOut", id: id2, count: count - gap },
+                        );
                     } else {
+                        marks.push(moveOut);
                         const updatedGap = gap - count;
-                        if (srcIndex === 0) {
-                            if (updatedGap === 0) {
-                                marks = [moveOut, moveIn];
-                            } else {
-                                marks = [moveOut, updatedGap, moveIn];
-                            }
-                        } else {
-                            if (updatedGap === 0) {
-                                marks = [srcIndex, moveOut, moveIn];
-                            } else {
-                                marks = [srcIndex, moveOut, updatedGap, moveIn];
-                            }
+                        if (updatedGap >= 0) {
+                            marks.push(updatedGap);
                         }
+                        marks.push(moveIn);
                     }
                 }
                 this.applyFieldMarksAtPath({ [source.parentField() as string]: marks }, source.parent());
@@ -116,8 +116,8 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
             a = wrapN(a.marks, a.path, depthDiff);
             // Nest both marks one level at a time until they reach the same parent
             while (a.path?.parent() !== b.path?.parent()) {
-                a = wrapN(a.marks, a.path, 1);
-                b = wrapN(b.marks, b.path, 1);
+                a = { marks: wrap1(a.marks, a.path), path: a.path?.parent() };
+                b = { marks: wrap1(b.marks, b.path), path: b.path?.parent() };
             }
             if (a.path === undefined) {
                 this.applyChange({ marks: { ...a.marks, ...b.marks } });
@@ -141,19 +141,11 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
                         [a, indexA, b, indexB] = [b, indexB, a, indexA];
                     }
                     const gap = indexB - indexA - 1;
-                    let marks;
-                    if (indexA === 0) {
-                        if (gap === 0) {
-                            marks = [aMarks[keyA][0], bMarks[keyB][1]];
-                        } else {
-                            marks = [aMarks[keyA][0], gap, bMarks[keyB][1]];
-                        }
-                    } else {
-                        if (gap === 0) {
-                            marks = [indexA, aMarks[keyA][1], bMarks[keyB][1]];
-                        } else {
-                            marks = [indexA, aMarks[keyA][1], gap, bMarks[keyB][1]];
-                        }
+                    const bMark = bMarks[keyB][1];
+                    const aMark = aMarks[keyA][indexA === 0 ? 0 : 1];
+                    const marks = gap === 0 ? [aMark, bMark] : [aMark, gap, bMark];
+                    if (indexA > 0) {
+                        marks.unshift(indexA);
                     }
                     this.applyFieldMarksAtPath({ [keyA]: marks }, aPath.parent());
                 }
