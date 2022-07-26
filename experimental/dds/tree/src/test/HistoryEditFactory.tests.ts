@@ -124,26 +124,31 @@ describe('revert', () => {
 			it('handles reverting the insert of an empty trait', () => {
 				const insertedNodeId = 0 as DetachedSequenceId;
 				const result = revert(
-                    [
-                        ChangeInternal.build([], insertedNodeId),
-                        ChangeInternal.insert(insertedNodeId, {
-                            referenceTrait: testTree.left.traitLocation,
-                            side: Side.After,
-                        }),
-                    ],
-                    testTree.view);
+					[
+						ChangeInternal.build([], insertedNodeId),
+						ChangeInternal.insert(insertedNodeId, {
+							referenceTrait: testTree.left.traitLocation,
+							side: Side.After,
+						}),
+					],
+					testTree.view
+				);
 				expect(result).to.be.undefined;
 			});
 			it('handles reverting the detach of an empty trait', () => {
 				const insertedNodeId = 0 as DetachedSequenceId;
 				const result = revert(
-                    [
-                        ChangeInternal.detach(
-                            StableRangeInternal.all({ label: 'testTraitLabel' as TraitLabel, parent: testTree.identifier }),
-                            insertedNodeId
-                        )
-                    ],
-                    testTree.left.view);
+					[
+						ChangeInternal.detach(
+							StableRangeInternal.all({
+								label: 'testTraitLabel' as TraitLabel,
+								parent: testTree.identifier,
+							}),
+							insertedNodeId
+						),
+					],
+					testTree.left.view
+				);
 				expect(result).to.be.undefined;
 			});
 		});
