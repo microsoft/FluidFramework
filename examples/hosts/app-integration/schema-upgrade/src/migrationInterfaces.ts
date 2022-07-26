@@ -5,6 +5,13 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
+export interface IVersionedModel {
+    /**
+     * The string version of the model, matching the version of the container code it's paired with.
+     */
+    readonly version: string;
+}
+
 export enum MigrationState {
     collaborating,
     migrating,
@@ -15,12 +22,7 @@ export interface IMigratableModelEvents extends IEvent {
     (event: "migrating" | "migrated", listener: () => void);
 }
 
-export interface IMigratableModel extends IEventProvider<IMigratableModelEvents> {
-    /**
-     * The string version of the model, matching the version of the container code it's paired with.
-     */
-    readonly version: string;
-
+export interface IMigratableModel extends IVersionedModel, IEventProvider<IMigratableModelEvents> {
     /**
      * importStringData must be called after initialization but before modifying or attaching the model (i.e. can only
      * be called on an unaltered, detached model).  Here I use a string as the export/import format, but it could be

@@ -10,7 +10,7 @@ import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-d
 import { demoCodeLoader, DemoModelCodeLoader } from "./demoLoaders";
 import { ModelLoader } from "./modelLoading";
 import { externalDataSource } from "./externalData";
-import { IMigratableModel } from "./migrationInterfaces";
+import { IMigratableModel, IVersionedModel } from "./migrationInterfaces";
 import { Migrator } from "./migrator";
 import { InventoryListContainer as InventoryListContainer1 } from "./modelVersion1";
 import { InventoryListContainer as InventoryListContainer2 } from "./modelVersion2";
@@ -25,15 +25,15 @@ const updateTabForId = (id: string) => {
     document.title = id;
 };
 
-const isInventoryListContainer1 = (model: IMigratableModel): model is InventoryListContainer1 => {
+const isInventoryListContainer1 = (model: IVersionedModel): model is InventoryListContainer1 => {
     return model.version === "one";
 };
 
-const isInventoryListContainer2 = (model: IMigratableModel): model is InventoryListContainer2 => {
+const isInventoryListContainer2 = (model: IVersionedModel): model is InventoryListContainer2 => {
     return model.version === "two";
 };
 
-const render = (model: IMigratableModel) => {
+const render = (model: IVersionedModel) => {
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     // This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model

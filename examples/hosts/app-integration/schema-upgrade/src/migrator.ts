@@ -23,7 +23,10 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
     // TODO: Maybe also have a prop for the id and the current MigrationState?
 
-    public constructor(private readonly modelLoader: IModelLoader<IMigratableModel>, initialMigratable: IMigratableModel) {
+    public constructor(
+        private readonly modelLoader: IModelLoader<IMigratableModel>,
+        initialMigratable: IMigratableModel,
+    ) {
         super();
         this._currentMigratable = initialMigratable;
         this.takeAppropriateActionForCurrentMigratable();
