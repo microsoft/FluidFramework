@@ -55,7 +55,7 @@ async function createContainer(
 async function createMainContainerAndSummarizer(
     provider: ITestObjectProvider,
     containerConfig?: ITestContainerConfig,
-): Promise<{ mainContainer: IContainer, summarizer: ISummarizer }> {
+): Promise<{ mainContainer: IContainer; summarizer: ISummarizer; }> {
     const loader = provider.makeTestLoader(containerConfig ?? testContainerConfig);
     const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
     await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
@@ -366,7 +366,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
         provider = getTestObjectProvider();
         configForSingleCommitSummary = {
             ...testContainerConfig,
-            loaderProps: { ...testContainerConfig.loaderProps, options: { summarizeProtocolTree: true }},
+            loaderProps: { ...testContainerConfig.loaderProps, options: { summarizeProtocolTree: true } },
         };
     });
 
@@ -392,7 +392,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 
         // Second Summary
         const result2: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test2" });
-        let submitResult2 = await result2.summarySubmitted;
+        const submitResult2 = await result2.summarySubmitted;
         assert(submitResult2.success, "on-demand summary2 should submit");
         assert(submitResult2.data.stage === "submit",
             "on-demand summary2 submitted data stage should be submit");
@@ -400,12 +400,13 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
         const broadcastResult2 = await result2.summaryOpBroadcasted;
         assert(broadcastResult2.success, "summary op2 should be broadcast");
         const summary2ParentHandle = broadcastResult2.data.summarizeOp.contents.head;
-        assert(summary2ParentHandle === summary1AckHandle, "Summary Parent should match ack handle of previous summary");
+        assert(summary2ParentHandle === summary1AckHandle,
+            "Summary Parent should match ack handle of previous summary");
     });
 
     it("Non single commit summary/Last summary should be discarded due to missing SummaryOp", async () => {
         const { mainContainer, summarizer } = await createMainContainerAndSummarizer(provider);
- 
+
         // Summarize
         const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
         const submitResult = await result.summarySubmitted;
@@ -443,7 +444,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 
         // Summarize third time
         const result3: ISummarizeResults = summarizer3.summarizeOnDemand({ reason: "test3" });
-        let submitResult3 = await result3.summarySubmitted;
+        const submitResult3 = await result3.summarySubmitted;
         assert(submitResult3.success, "on-demand summary3 should submit");
         assert(submitResult3.data.stage === "submit",
             "on-demand summary3 submitted data stage should be submit");
@@ -454,7 +455,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
         assert(summary3ParentHandle === summary1AckHandle, "Summary Parent should match ack handle of summary1");
     });
 
-    it("Single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+    it("Single commit summary/Match last summary ackHandle  with current summary parent", async function() {
         if (provider.driver.type !== "odsp") {
             this.skip();
         }
@@ -483,7 +484,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
             configForSingleCommitSummary);
         // Second Summary
         const result2: ISummarizeResults = summarizer2.summarizeOnDemand({ reason: "test2" });
-        let submitResult2 = await result2.summarySubmitted;
+        const submitResult2 = await result2.summarySubmitted;
         assert(submitResult2.success, "on-demand summary2 should submit");
         assert(submitResult2.data.stage === "submit",
             "on-demand summary2 submitted data stage should be submit");
@@ -491,10 +492,11 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
         const broadcastResult2 = await result2.summaryOpBroadcasted;
         assert(broadcastResult2.success, "summary op2 should be broadcast");
         const summary2ParentHandle = broadcastResult2.data.summarizeOp.contents.head;
-        assert(summary2ParentHandle === summary1AckHandle, "Summary Parent should match ack handle of previous summary");
+        assert(summary2ParentHandle === summary1AckHandle,
+            "Summary Parent should match ack handle of previous summary");
     });
 
-    it.skip("Single commit summary/Last summary should not be discarded due to missing SummaryOp", async function () {
+    it.skip("Single commit summary/Last summary should not be discarded due to missing SummaryOp", async function() {
         if (provider.driver.type !== "odsp") {
             this.skip();
         }
@@ -538,11 +540,11 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 
         // Create new summarizer
         const summarizer3 = await createSummarizerFromContainer(provider, mainContainer,
-            configForSingleCommitSummary); 
+            configForSingleCommitSummary);
 
         // Summarize third time
         const result3: ISummarizeResults = summarizer3.summarizeOnDemand({ reason: "test3", refreshLatestAck: true });
-        let submitResult3 = await result3.summarySubmitted;
+        const submitResult3 = await result3.summarySubmitted;
         assert(submitResult3.success, "on-demand summary3 should submit");
         assert(submitResult3.data.stage === "submit",
             "on-demand summary3 submitted data stage should be submit");
