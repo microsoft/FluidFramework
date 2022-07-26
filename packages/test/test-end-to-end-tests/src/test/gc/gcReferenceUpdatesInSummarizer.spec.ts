@@ -20,11 +20,14 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider,
+    createSummarizerFromFactory,
+    summarizeNow,
+    waitForContainerConnection,
+ } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
-import { createSummarizerFromFactory, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 class TestDataObject extends DataObject {
     public get _root() {
