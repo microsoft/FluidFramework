@@ -78,7 +78,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 return;
             }
 
-            const extractedData = await migratable.exportStringData();
+            const extractedData = await migratable.exportData();
 
             // If we needed to transform the extracted data, we would do it here.  In this demo, the export/import
             // format is unchanged between the two versions, so there's no transformation needed.
@@ -92,7 +92,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             // able to import the exported format of the current container (taking into consideration our format
             // transform options).  Not all clients might agree about support if some have old ModelLoaders -- these
             // clients could use this opportunity to dispose early and try to get new ModelLoaders.
-            await migratedModel.importStringData(extractedData);
+            await migratedModel.importData(extractedData);
 
             // Before attaching, let's check to make sure no one else has already done the migration
             // To avoid creating unnecessary extra containers.

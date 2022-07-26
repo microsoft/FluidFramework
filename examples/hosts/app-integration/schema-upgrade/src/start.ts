@@ -83,7 +83,7 @@ async function start(): Promise<void> {
         // For demo purposes it's nice to have some prepopulated entries though.
         const fetchedData = await externalDataSource.fetchData();
         // TODO: Validate that the model is capable of importing the fetchedData (format check)
-        await model.importStringData(fetchedData);
+        await model.importData(fetchedData);
 
         id = await createResponse.attach();
     } else {

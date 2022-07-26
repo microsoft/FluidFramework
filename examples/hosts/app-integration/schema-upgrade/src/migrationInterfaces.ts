@@ -12,19 +12,17 @@ export interface IVersionedModel {
     readonly version: string;
 }
 
-export interface IExportImportModel {
+export interface IExportImportModel<ExportFormat = string> {
     /**
-     * importStringData must be called after initialization but before modifying or attaching the model (i.e. can only
-     * be called on an unaltered, detached model).  Here I use a string as the export/import format, but it could be
-     * some other format if you prefer.
+     * importData must be called after initialization but before modifying or attaching the model (i.e. can only
+     * be called on an unaltered, detached model).
      */
-    importStringData: (initialData: string) => Promise<void>;
+    importData: (initialData: ExportFormat) => Promise<void>;
 
     /**
-     * Export the string data from the model.  Can be passed into importStringData() for a new container to replicate
-     * the data.
+     * Export the data from the model.  Can be passed into importData() for a new container to replicate the data.
      */
-    exportStringData: () => Promise<string>;
+    exportData: () => Promise<ExportFormat>;
 }
 
 export enum MigrationState {

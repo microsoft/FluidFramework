@@ -111,7 +111,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
     // importing data into a completely untouched InventoryListContainer.
-    public readonly importStringData = async (initialData: string) => {
+    public readonly importData = async (initialData: string) => {
         if (this.container.attachState !== AttachState.Detached) {
             throw new Error("Cannot set initial data after attach");
         }
@@ -128,7 +128,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         this.emit("migrated");
     };
 
-    public readonly exportStringData = async () => {
+    public readonly exportData = async () => {
         return extractStringData(this.inventoryList);
     };
 
