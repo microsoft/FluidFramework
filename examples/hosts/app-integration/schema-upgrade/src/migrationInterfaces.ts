@@ -12,17 +12,17 @@ export interface IVersionedModel {
     readonly version: string;
 }
 
-export interface IExportImportModel<ExportFormat = string> {
+export interface IExportImportModel<ExportType> {
     /**
      * importData must be called after initialization but before modifying or attaching the model (i.e. can only
      * be called on an unaltered, detached model).
      */
-    importData: (initialData: ExportFormat) => Promise<void>;
+    importData: (initialData: ExportType) => Promise<void>;
 
     /**
      * Export the data from the model.  Can be passed into importData() for a new container to replicate the data.
      */
-    exportData: () => Promise<ExportFormat>;
+    exportData: () => Promise<ExportType>;
 }
 
 export enum MigrationState {
@@ -36,7 +36,7 @@ export interface IMigratableModelEvents extends IEvent {
 }
 
 export interface IMigratableModel
-    extends IVersionedModel, IExportImportModel, IEventProvider<IMigratableModelEvents> {
+    extends IVersionedModel, IExportImportModel<string>, IEventProvider<IMigratableModelEvents> {
     /**
      * Get the current migration state of the model.
      */
