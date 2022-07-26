@@ -12,8 +12,8 @@ import { ModelLoader } from "./modelLoading";
 import { externalDataSource } from "./externalData";
 import { IMigratable } from "./interfaces";
 import { Migrator } from "./migrator";
-import { InventoryListContainer as InventoryListContainer1 } from "./version1";
-import { InventoryListContainer as InventoryListContainer2 } from "./version2";
+import { InventoryListContainer as InventoryListContainer1 } from "./modelVersion1";
+import { InventoryListContainer as InventoryListContainer2 } from "./modelVersion2";
 import { DebugView, InventoryListContainerView } from "./view";
 import { TinyliciousService } from "./tinyliciousService";
 
@@ -38,6 +38,7 @@ const render = (model: IMigratable) => {
     ReactDOM.unmountComponentAtNode(appDiv);
     // This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
     // versions, we could check its version here and select the appropriate view.
+    // TODO: Better view code loading.
     if (isInventoryListContainer1(model) || isInventoryListContainer2(model)) {
         ReactDOM.render(
             React.createElement(InventoryListContainerView, { model }),

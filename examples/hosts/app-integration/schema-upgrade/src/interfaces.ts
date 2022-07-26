@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { SharedString } from "@fluidframework/sequence";
 
 export enum MigrationState {
     collaborating,
@@ -77,54 +74,4 @@ export interface IMigratorEvents extends IEvent {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMigrator extends IEventProvider<IMigratorEvents> {
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IInventoryListContainerEvents extends IMigrationEvents { }
-
-/**
- * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
- * for the application to run.
- */
-export interface IInventoryListContainer extends IMigratable, IEventProvider<IInventoryListContainerEvents> {
-    /**
-     * An inventory tracker list.
-     */
-    inventoryList: IInventoryList;
-}
-
-export interface IContainerKillBitEvents extends IEvent {
-    (event: "codeDetailsAccepted" | "migrated", listener: () => void);
-}
-
-export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvents> {
-    migrated: boolean;
-    newContainerId: string | undefined;
-    setNewContainerId(id: string): Promise<void>;
-    codeDetailsAccepted: boolean;
-    acceptedCodeDetails: IFluidCodeDetails | undefined;
-    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<void>;
-    volunteerForMigration(): Promise<void>;
-    haveMigrationTask(): boolean;
-}
-
-export interface IInventoryItem extends EventEmitter {
-    readonly id: string;
-    readonly name: SharedString;
-    quantity: number;
-}
-
-/**
- * IInventoryList describes the public API surface for our inventory list object.
- */
-export interface IInventoryList extends EventEmitter {
-    readonly addItem: (name: string, quantity: number) => void;
-
-    readonly getItems: () => IInventoryItem[];
-    readonly getItem: (id: string) => IInventoryItem | undefined;
-
-    /**
-     * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
-     */
-    on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this;
 }

@@ -6,12 +6,10 @@
 import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedMap } from "@fluidframework/map";
+import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
 
-import type { IInventoryItem, IInventoryList } from "../interfaces";
-
-const quantityKey = "quantity";
+import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 
 class InventoryItem extends EventEmitter implements IInventoryItem {
     public get id() {
@@ -22,19 +20,19 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
         return this._name;
     }
     public get quantity() {
-        const mapValue = this._quantity.get<number>(quantityKey);
-        if (mapValue === undefined) {
+        const cellValue = this._quantity.get();
+        if (cellValue === undefined) {
             throw new Error("Expected a valid quantity");
         }
-        return mapValue;
+        return cellValue;
     }
     public set quantity(newValue: number) {
-        this._quantity.set(quantityKey, newValue);
+        this._quantity.set(newValue);
     }
     public constructor(
         private readonly _id: string,
         private readonly _name: SharedString,
-        private readonly _quantity: SharedMap,
+        private readonly _quantity: SharedCell<number>,
     ) {
         super();
         // this._name.on("sequenceDelta", () =>{
@@ -46,7 +44,7 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
     }
 }
 
-// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<SharedMap> };
+// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<SharedCell> };
 
 /**
  * The InventoryList is our data object that implements the IInventoryList interface.
@@ -57,10 +55,10 @@ export class InventoryList extends DataObject implements IInventoryList {
     public readonly addItem = (name: string, quantity: number) => {
         const nameString = SharedString.create(this.runtime);
         nameString.insertText(0, name);
-        const quantityMap: SharedMap = SharedMap.create(this.runtime);
-        quantityMap.set(quantityKey, quantity);
+        const quantityCell: SharedCell<number> = SharedCell.create(this.runtime);
+        quantityCell.set(quantity);
         const id = uuid();
-        this.root.set(id, { name: nameString.handle, quantity: quantityMap.handle });
+        this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });
     };
 
     public readonly getItems = () => {
@@ -73,7 +71,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 
     private readonly handleItemAdded = async (id: string) => {
         const itemData = this.root.get(id);
-        const [nameSharedString, quantitySharedMap] = await Promise.all([
+        const [nameSharedString, quantitySharedCell] = await Promise.all([
             itemData.name.get(),
             itemData.quantity.get(),
         ]);
@@ -81,7 +79,7 @@ export class InventoryList extends DataObject implements IInventoryList {
         if (this.root.get(id) === undefined) {
             return;
         }
-        const newInventoryItem = new InventoryItem(id, nameSharedString, quantitySharedMap);
+        const newInventoryItem = new InventoryItem(id, nameSharedString, quantitySharedCell);
         this.inventoryItems.set(id, newInventoryItem);
         this.emit("itemAdded", newInventoryItem);
     };
@@ -107,18 +105,18 @@ export class InventoryList extends DataObject implements IInventoryList {
                 // Must be from a deletion
                 this.handleItemDeleted(changed.key);
             } else {
-                // Since all data modifications happen within the SharedString or SharedMap, the root directory
+                // Since all data modifications happen within the SharedString or SharedCell, the root directory
                 // should never see anything except adds and deletes.
                 console.error("Unexpected modification to inventory list");
             }
         });
 
         for (const [id, itemData] of this.root) {
-            const [nameSharedString, quantitySharedMap] = await Promise.all([
+            const [nameSharedString, quantitySharedCell] = await Promise.all([
                 itemData.name.get(),
                 itemData.quantity.get(),
             ]);
-            this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedMap));
+            this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedCell));
         }
     }
 }
@@ -132,7 +130,7 @@ export const InventoryListInstantiationFactory = new DataObjectFactory<Inventory
     "inventory-list",
     InventoryList,
     [
-        SharedMap.getFactory(),
+        SharedCell.getFactory(),
         SharedString.getFactory(),
     ],
     {},

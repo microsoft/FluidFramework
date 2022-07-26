@@ -11,14 +11,15 @@ import {
 
 import { IMigratable } from "./interfaces";
 import { IModelCodeLoader } from "./modelLoading";
+// TODO: Maybe build these as standalone demo packages?  Though might be overkill.
 import {
     InventoryListContainer as InventoryListContainer1,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
-} from "./version1";
+} from "./modelVersion1";
 import {
     InventoryListContainer as InventoryListContainer2,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
-} from "./version2";
+} from "./modelVersion2";
 
 const v1ModuleWithDetails: IFluidModuleWithDetails = {
     module: { fluidExport: new InventoryListContainerRuntimeFactory1() },

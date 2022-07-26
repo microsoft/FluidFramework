@@ -5,7 +5,8 @@
 
 import React, { useEffect, useState } from "react";
 
-import { IInventoryListContainer, MigrationState } from "../interfaces";
+import { IInventoryListContainer } from "../modelInterfaces";
+import { MigrationState } from "../interfaces";
 import { InventoryListView } from "./inventoryView";
 
 export interface IInventoryListContainerViewProps {

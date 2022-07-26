@@ -24,6 +24,7 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
             generateCreateNewRequest: () => IRequest;
         },
     ) {
+        // TODO: Also probably pass through other loader props, they just don't matter for this demo.
         this.loader = new Loader({
             urlResolver: props.urlResolver,
             documentServiceFactory: props.documentServiceFactory,
