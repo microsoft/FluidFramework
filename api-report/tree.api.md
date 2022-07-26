@@ -12,14 +12,10 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @public
 export class AnchorSet {
-    constructor();
-    // (undocumented)
-    readonly anchorsToPath: Map<Anchor, PathShared>;
     // (undocumented)
     forget(anchor: Anchor): void;
     locate(anchor: Anchor): UpPath | undefined;
-    // (undocumented)
-    readonly paths: PathCollection;
+    moveChildren(src: UpPath, srcField: FieldKey, start: number, count: number, dst: UpPath, dstField: FieldKey, dstIndex: number): void;
     track(path: UpPath): Anchor;
 }
 
@@ -515,36 +511,6 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueTy
 type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
 
 // @public
-export class PathCollection extends PathShared<RootField> {
-    constructor();
-    // (undocumented)
-    delete(range: DetachedField): void;
-}
-
-// @public (undocumented)
-export class PathNode extends PathShared<FieldKey> {
-    constructor(parentPath: PathShared<FieldKey>, location: ChildLocation);
-    // (undocumented)
-    parentPath: PathShared<FieldKey>;
-}
-
-// @public
-export class PathShared<TParent extends ChildCollection = ChildCollection> implements UpPath {
-    // (undocumented)
-    protected readonly children: Map<TParent, PathNode[]>;
-    // (undocumented)
-    detach(start: number, length: number, destination: DetachedField): void;
-    // (undocumented)
-    insert(start: number, paths: PathNode, length: number): void;
-    // (undocumented)
-    parent(): UpPath | undefined;
-    // (undocumented)
-    parentField(): FieldKey;
-    // (undocumented)
-    parentIndex(): number;
-}
-
-// @public
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 // @public
@@ -697,9 +663,9 @@ export interface TreeValue extends Serializable {
 // @public
 export interface UpPath {
     // (undocumented)
-    parent(): UpPath | undefined;
-    parentField(): FieldKey;
-    parentIndex(): number;
+    readonly parent: UpPath | undefined;
+    readonly parentField: FieldKey;
+    readonly parentIndex: number;
 }
 
 // @public

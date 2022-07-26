@@ -7,3 +7,4 @@ export * from "./generators";
 export * from "./types";
 export * from "./performActions";
 export * from "./random";
+export { XSadd } from "./xsadd";
