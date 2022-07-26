@@ -229,7 +229,7 @@ describe("SequenceEditBuilder", () => {
         );
     });
 
-    it("Can move nodes within a field", () => {
+    it("Can move nodes to the right within a field", () => {
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -254,6 +254,72 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo2, 10, root_foo17); },
+            expected,
+        );
+    });
+
+    it("Can move nodes to the left within a field", () => {
+        const expected: Delta.Root = new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                fields: new Map([[
+                    fooKey,
+                    [
+                        2,
+                        {
+                            type: Delta.MarkType.MoveIn,
+                            moveId,
+                        },
+                        15,
+                        {
+                            type: Delta.MarkType.MoveOut,
+                            moveId,
+                            count: 10,
+                        },
+                    ],
+                ]]),
+            }],
+        ]]);
+        test(
+            (builder) => { builder.move(root_foo17, 10, root_foo2); },
+            expected,
+        );
+    });
+
+    it("Can move nodes into their own midst", () => {
+        const expected: Delta.Root = new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                fields: new Map([[
+                    fooKey,
+                    [
+                        2,
+                        {
+                            type: Delta.MarkType.MoveOut,
+                            moveId,
+                            count: 15,
+                        },
+                        {
+                            type: Delta.MarkType.MoveIn,
+                            moveId,
+                        },
+                        {
+                            type: Delta.MarkType.MoveIn,
+                            moveId: 1,
+                        },
+                        {
+                            type: Delta.MarkType.MoveOut,
+                            moveId: 1,
+                            count: 5,
+                        },
+                    ],
+                ]]),
+            }],
+        ]]);
+        test(
+            (builder) => { builder.move(root_foo2, 20, root_foo17); },
             expected,
         );
     });
