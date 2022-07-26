@@ -9,7 +9,8 @@ import {
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 
-import { IMigratable, IModelCodeLoader } from "./interfaces";
+import { IMigratable } from "./interfaces";
+import { IModelCodeLoader } from "./modelLoading";
 import {
     InventoryListContainer as InventoryListContainer1,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
