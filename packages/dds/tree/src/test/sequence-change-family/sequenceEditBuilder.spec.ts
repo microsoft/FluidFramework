@@ -361,7 +361,7 @@ describe("SequenceEditBuilder", () => {
         );
     });
 
-    it("Can move nodes across subtrees of the same field", () => {
+    it("Can move nodes to the right across subtrees of the same field", () => {
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -410,6 +410,59 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo2_foo5, 3, root_foo17_foo5); },
+            expected,
+        );
+    });
+
+    it("Can move nodes to the left across subtrees of the same field", () => {
+        const expected: Delta.Root = new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                fields: new Map([
+                    [
+                        fooKey,
+                        [
+                            2,
+                            {
+                                type: Delta.MarkType.Modify,
+                                fields: new Map([
+                                    [
+                                        fooKey,
+                                        [
+                                            5,
+                                            {
+                                                type: Delta.MarkType.MoveIn,
+                                                moveId,
+                                            },
+                                        ],
+                                    ],
+                                ]),
+                            },
+                            14,
+                            {
+                                type: Delta.MarkType.Modify,
+                                fields: new Map([
+                                    [
+                                        fooKey,
+                                        [
+                                            5,
+                                            {
+                                                type: Delta.MarkType.MoveOut,
+                                                moveId,
+                                                count: 3,
+                                            },
+                                        ],
+                                    ],
+                                ]),
+                            },
+                        ],
+                    ],
+                ]),
+            }],
+        ]]);
+        test(
+            (builder) => { builder.move(root_foo17_foo5, 3, root_foo2_foo5); },
             expected,
         );
     });

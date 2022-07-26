@@ -127,26 +127,27 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
                 const bPath = b.path!;
                 const keyA = aPath.parentField() as string;
                 const keyB = bPath.parentField() as string;
-                let indexA = aPath.parentIndex();
-                let indexB = bPath.parentIndex();
-                const aMarks = wrap1(a.marks, aPath);
-                const bMarks = wrap1(b.marks, bPath);
+                const aFieldMarks = wrap1(a.marks, aPath);
+                const bFieldMarks = wrap1(b.marks, bPath);
                 if (keyA !== keyB) {
-                    this.applyFieldMarksAtPath({ ...aMarks, ...bMarks }, aPath.parent());
+                    this.applyFieldMarksAtPath({ ...aFieldMarks, ...bFieldMarks }, aPath.parent());
                 } else {
+                    let indexA = aPath.parentIndex();
+                    let indexB = bPath.parentIndex();
                     if (indexA === indexB) {
                         fail(ERR_UP_PATH_NOT_VALID);
                     }
+                    let aMarkList = aFieldMarks[keyA];
+                    let bMarkList = bFieldMarks[keyB];
                     if (indexA > indexB) {
-                        [a, indexA, b, indexB] = [b, indexB, a, indexA];
+                        [aMarkList, indexA, bMarkList, indexB] = [bMarkList, indexB, aMarkList, indexA];
                     }
+                    const marks = aMarkList;
                     const gap = indexB - indexA - 1;
-                    const bMark = bMarks[keyB][1];
-                    const aMark = aMarks[keyA][indexA === 0 ? 0 : 1];
-                    const marks = gap === 0 ? [aMark, bMark] : [aMark, gap, bMark];
-                    if (indexA > 0) {
-                        marks.unshift(indexA);
+                    if (gap > 0) {
+                        marks.push(gap);
                     }
+                    marks.push(bMarkList[1]);
                     this.applyFieldMarksAtPath({ [keyA]: marks }, aPath.parent());
                 }
             }
