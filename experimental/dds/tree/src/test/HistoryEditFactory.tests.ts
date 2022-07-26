@@ -141,13 +141,13 @@ describe('revert', () => {
 					[
 						ChangeInternal.detach(
 							StableRangeInternal.all({
-								label: 'testTraitLabel' as TraitLabel,
+								label: 'someNonExistentTraitLabel' as TraitLabel,
 								parent: testTree.identifier,
 							}),
 							insertedNodeId
 						),
 					],
-					testTree.left.view
+					testTree.view
 				);
 				expect(result).to.be.undefined;
 			});
