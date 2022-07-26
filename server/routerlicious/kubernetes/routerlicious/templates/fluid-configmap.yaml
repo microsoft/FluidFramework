@@ -65,6 +65,7 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
+            "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "throttling": {
                 "restCalls": {
                     "maxPerMs": {{ .Values.alfred.throttling.restCalls.maxPerMs }},

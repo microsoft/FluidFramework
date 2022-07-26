@@ -40,6 +40,7 @@ function createCompatSuite(
                         config.containerRuntime,
                         config.dataRuntime,
                     );
+                    // eslint-disable-next-line @typescript-eslint/no-invalid-this
                     Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
                 });
                 tests.bind(this)((options?: ITestObjectProviderOptions) => {

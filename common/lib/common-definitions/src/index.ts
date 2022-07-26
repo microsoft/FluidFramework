@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export type {
-    IDisposable,
-} from "./disposable";
+/**
+ * This package contains common interfaces and definitions used by the Fluid Framework.
+ *
+ * @packageDocumentation
+ */
+
+export type { IDisposable } from "./disposable";
 export type {
     ExtendEventProvider,
     IErrorEvent,

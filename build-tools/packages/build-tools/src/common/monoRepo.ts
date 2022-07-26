@@ -22,7 +22,9 @@ export enum MonoRepoKind {
 /**
  * A type guard used to determine if a string is a MonoRepoKind.
  */
-export function isMonoRepoKind(str: string): str is MonoRepoKind {
+export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
+    if(str === undefined) { return false; }
+
     const list = Object.values<string>(MonoRepoKind);
     const isMonoRepoValue = list.includes(str);
     return isMonoRepoValue;

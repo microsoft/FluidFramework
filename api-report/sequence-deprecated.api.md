@@ -194,7 +194,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     static create(runtime: IFluidDataStoreRuntime, id?: string): SparseMatrix;
     static getFactory(): IChannelFactory;
     // (undocumented)
-    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle>;
+    getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle> | undefined;
     // (undocumented)
     getPositionProperties(row: number, col: number): PropertySet;
     // (undocumented)

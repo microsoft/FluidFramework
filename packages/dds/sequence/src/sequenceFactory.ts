@@ -33,6 +33,8 @@ export class SharedStringFactory implements IChannelFactory {
 
         const maybeMarker = Marker.fromJSONObject(spec);
         if (maybeMarker) { return maybeMarker; }
+
+        throw new Error(`Unrecognized IJSONObject`);
     }
 
     public get type() {

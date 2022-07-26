@@ -37,11 +37,6 @@ export class PrettierTask extends LeafWithDoneFileTask {
         }
         this.parsed = this.glob !== undefined;
     }
-    protected get doneFile() {
-        // TODO: This assume there is only one prettier task per package
-        return "prettier.done.build.log";
-    }
-
     protected get configFileFullPath() {
         // Currently there's no package-level config file, so just use tsconfig.json
         return this.getPackageFileFullPath(".prettierrc.json");

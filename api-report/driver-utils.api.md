@@ -5,6 +5,7 @@
 ```ts
 
 import { DriverErrorType } from '@fluidframework/driver-definitions';
+import { FetchSource } from '@fluidframework/driver-definitions';
 import { IAuthorizationError } from '@fluidframework/driver-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
@@ -131,14 +132,14 @@ export function createGenericNetworkError(message: string, retryInfo: {
 export const createWriteError: (message: string, props: DriverErrorTelemetryProps) => NonRetryableError<DriverErrorType.writeError>;
 
 // @public (undocumented)
-export class DeltaStreamConnectionForbiddenError extends LoggingError implements IFluidErrorBase {
+export class DeltaStreamConnectionForbiddenError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string, props: DriverErrorTelemetryProps);
     // (undocumented)
     readonly canRetry = false;
     // (undocumented)
-    static readonly errorType: string;
+    static readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
     // (undocumented)
-    readonly errorType: string;
+    readonly errorType = DriverErrorType.deltaStreamConnectionForbidden;
 }
 
 // @public (undocumented)
@@ -151,7 +152,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     // (undocumented)
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
     // (undocumented)
-    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     // (undocumented)
     protected readonly internalStorageService: IDocumentStorageService;
     set policies(policies: IDocumentStorageServicePolicies | undefined);
@@ -429,10 +430,12 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
 }
 
 // @public
-export class UsageError extends LoggingError implements IFluidErrorBase {
+export class UsageError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string);
     // (undocumented)
-    readonly errorType = "usageError";
+    readonly canRetry = false;
+    // (undocumented)
+    readonly errorType = DriverErrorType.usageError;
 }
 
 // @public

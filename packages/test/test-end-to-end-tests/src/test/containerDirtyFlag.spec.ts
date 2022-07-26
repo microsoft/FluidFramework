@@ -15,6 +15,7 @@ import {
     ITestContainerConfig,
     ITestObjectProvider,
     DataObjectFactoryType,
+    ensureContainerConnected,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
@@ -32,12 +33,6 @@ const lots = 30;
 const testValue = "test value";
 
 type MapCallback = (container: IContainer, dataStore: ITestFluidObject, map: SharedMap) => void | Promise<void>;
-
-async function ensureContainerConnected(container: Container): Promise<void> {
-    if (!container.connected) {
-        return new Promise((resolve) => container.once("connected", () => resolve()));
-    }
-}
 
 const getPendingStateWithoutClose = (container: IContainer): string => {
     const containerClose = container.close;

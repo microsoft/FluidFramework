@@ -4,7 +4,7 @@
  */
 
 import { Stack } from "./collections";
-import { ISegment } from "./mergeTree";
+import { ISegment } from "./mergeTreeNodes";
 import { ReferenceType, ICombiningOp } from "./ops";
 import { PropertySet, MapLike } from "./properties";
 
@@ -67,6 +67,7 @@ export interface ReferencePosition {
 }
 
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
+
 export const DetachedReferencePosition = -1;
 
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T {

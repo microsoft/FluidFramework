@@ -30,6 +30,7 @@ export {
     SequenceInterval,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,
+    SerializedIntervalDelta,
 } from "./intervalCollection";
 export {
     IMapMessageLocalMetadata,
@@ -40,3 +41,4 @@ export * from "./sequence";
 export * from "./sequenceFactory";
 export * from "./sequenceDeltaEvent";
 export * from "./sharedSequence";
+export { IInterval, IntervalConflictResolver } from "./intervalTree";
