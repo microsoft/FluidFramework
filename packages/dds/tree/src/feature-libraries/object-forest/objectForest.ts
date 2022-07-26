@@ -284,7 +284,7 @@ class Cursor implements ITreeSubscriptionCursor {
     // then brute force on anchor restoration? (Add smarter anchor type later?)
     private root: DetachedField | undefined;
 
-    // Ancestors traversed to visit this node (including this node).
+    // Ancestors traversed to visit this node (including this node and nodes at root level).
     private readonly parentStack: JsonableTree[] = [];
     // Keys traversed to visit this node
     private readonly keyStack: FieldKey[] = [];
@@ -398,18 +398,25 @@ class Cursor implements ITreeSubscriptionCursor {
         return { result: TreeNavigationResult.NotFound, moved: 0 };
     }
     up(): TreeNavigationResult {
-        if (this.parentStack.pop() === undefined) {
-            // We are at the root, so return NotFound without making any changes to the state.
+        const length = this.parentStack.length;
+        assert(this.indexStack.length === length, "Unexpected indexStack.length");
+        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
+
+        // Already at the root
+        if (length === 1) {
             return TreeNavigationResult.NotFound;
         }
+
+        assert(length > 1, "Unexpected parentStack.length");
+        this.parentStack.pop();
         this.indexStack.pop();
         this.keyStack.pop();
         // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        if (this.parentStack.length === 0) {
+        if (length === 2) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.siblings = this.forest.getRoot(this.root!);
         } else {
-            const newParent = this.parentStack[this.parentStack.length - 1];
+            const newParent = this.parentStack[this.parentStack.length - 2];
             const key = this.keyStack[this.keyStack.length - 1];
             this.siblings = getGenericTreeField(newParent, key, false);
         }

@@ -48,7 +48,7 @@ import {
  * Maybe do a refactoring to deduplicate this.
  */
 export class TextCursor implements ITreeCursor {
-    // Ancestors traversed to visit this node (including this node).
+    // Ancestors traversed to visit this node (including this node and the root).
     private readonly parentStack: JsonableTree[] = [];
     // Keys traversed to visit this node
     private readonly keyStack: FieldKey[] = [];
@@ -122,17 +122,20 @@ export class TextCursor implements ITreeCursor {
         assert(this.indexStack.length === length, "Unexpected indexStack.length");
         assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
 
-        if (length === 0) {
+        // Already at the root
+        if (length === 1) {
             return TreeNavigationResult.NotFound;
         }
+
+        assert(length > 1, "Unexpected parentStack.length");
         this.parentStack.pop();
         this.indexStack.pop();
         this.keyStack.pop();
         // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        if (length === 1) {
+        if (length === 2) {
             this.siblings = this.root;
         } else {
-            const newParent = this.parentStack[this.parentStack.length - 1];
+            const newParent = this.parentStack[this.parentStack.length - 2];
             const key = this.keyStack[this.keyStack.length - 1];
             this.siblings = getGenericTreeField(newParent, key, false);
         }
