@@ -2,10 +2,7 @@
   "name": "@fluid-tools/build-cli",
   "version": "0.3.0",
   "private": true,
-  "description": "",
-  "keywords": [
-    "oclif"
-  ],
+  "description": "Build tools for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
@@ -14,6 +11,7 @@
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
+  "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -61,6 +59,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@microsoft/api-extractor": "^7.22.2",
     "@types/chai": "^4",
     "@types/inquirer": "^8.2.1",
     "@types/mocha": "^9.0.0",
