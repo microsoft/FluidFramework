@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import * as v8 from "v8";
 import { performance } from "perf_hooks";
 import { assert } from "chai";
