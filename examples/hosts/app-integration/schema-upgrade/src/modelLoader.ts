@@ -9,18 +9,18 @@ import {
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { IMigratable, IModelCodeLoader, IModelLoader } from "./interfaces";
+import { IModelCodeLoader, IModelLoader } from "./interfaces";
 
-export class ModelLoader implements IModelLoader<IMigratable> {
+export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     private readonly loader: IHostLoader;
-    private readonly modelCodeLoader: IModelCodeLoader<IMigratable>;
+    private readonly modelCodeLoader: IModelCodeLoader<ModelType>;
     private readonly generateCreateNewRequest: () => IRequest;
 
     // TODO: See if there's a nicer way to parameterize the createNew request.
     public constructor(
         props: ILoaderProps
         & {
-            modelCodeLoader: IModelCodeLoader<IMigratable>;
+            modelCodeLoader: IModelCodeLoader<ModelType>;
             generateCreateNewRequest: () => IRequest;
         },
     ) {
@@ -42,7 +42,7 @@ export class ModelLoader implements IModelLoader<IMigratable> {
 
     // Would be preferable to have a way for the customer to call service.attach(model) rather than returning an
     // attach callback here.  TODO: See if this is achievable.
-    public async createDetached(version: string): Promise<{ model: IMigratable; attach: () => Promise<string>; }> {
+    public async createDetached(version: string): Promise<{ model: ModelType; attach: () => Promise<string>; }> {
         const supported = await this.modelCodeLoader.supportsVersion(version);
         if (!supported) {
             throw new Error("Unknown accepted version");
@@ -61,7 +61,7 @@ export class ModelLoader implements IModelLoader<IMigratable> {
         return { model, attach };
     }
 
-    public async loadExisting(id: string): Promise<IMigratable> {
+    public async loadExisting(id: string): Promise<ModelType> {
         const container = await this.loader.resolve({ url: id });
         const model = await this.modelCodeLoader.getModel(container);
         return model;

@@ -61,7 +61,7 @@ const render = (model: IMigratable) => {
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
-    const modelLoader = new ModelLoader({
+    const modelLoader = new ModelLoader<IMigratable>({
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
         codeLoader: demoCodeLoader,
