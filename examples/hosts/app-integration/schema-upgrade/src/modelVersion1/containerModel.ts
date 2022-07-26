@@ -62,6 +62,9 @@ const extractStringData = async (inventoryList: IInventoryList) => {
     return inventoryItemStrings.join("\n");
 };
 
+// This type is actually more specific than just any string - it needs to be in the right format.
+export type InventoryListContainerExportType = string;
+
 /**
  * The InventoryListContainer serves the purpose of wrapping this particular Container in a friendlier interface,
  * with stronger typing and accessory functionality.  It should have the same layering restrictions as we want for
@@ -109,9 +112,14 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         this.containerKillBit.on("migrated", this.onMigrated);
     };
 
+    public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListContainerExportType => {
+        // TODO: Actually validate the string format.
+        return typeof initialData === "string";
+    };
+
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
     // importing data into a completely untouched InventoryListContainer.
-    public readonly importData = async (initialData: string) => {
+    public readonly importData = async (initialData: InventoryListContainerExportType) => {
         if (this.container.attachState !== AttachState.Detached) {
             throw new Error("Cannot set initial data after attach");
         }
@@ -128,7 +136,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         this.emit("migrated");
     };
 
-    public readonly exportData = async () => {
+    public readonly exportData = async (): Promise<InventoryListContainerExportType> => {
         return extractStringData(this.inventoryList);
     };
 
