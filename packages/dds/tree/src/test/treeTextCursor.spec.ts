@@ -16,6 +16,34 @@ const testCases: [string, PlaceholderTree][] = [
 	["minimal", { type: brand("Foo") }],
 	["value", { type: brand("Foo"), value: "test" }],
 	["nested", { type: brand("Foo"), fields: { x: [{ type: brand("Bar") }, { type: brand("Foo"), value: 6 }] } }],
+	["multiple fields", {
+		type: brand("Foo"),
+		fields: {
+			a: [{ type: brand("Bar") }],
+			b: [{ type: brand("Baz") }],
+		},
+	}],
+	["double nested", {
+		type: brand("Foo"),
+		fields: {
+			b: [{
+				type: brand("Bar"),
+				fields: { c: [{ type: brand("Baz") }] },
+			}],
+		},
+	}],
+	["complex", {
+		type: brand("Foo"),
+		fields: {
+			a: [{ type: brand("Bar") }],
+			b: [{
+				type: brand("Bar"),
+				fields: {
+					c: [{ type: brand("Bar"), value: 6 }],
+				},
+			}],
+		},
+	}],
 ];
 
 describe("textTreeFormat", () => {

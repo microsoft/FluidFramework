@@ -410,7 +410,8 @@ class Cursor implements ITreeSubscriptionCursor {
             this.siblings = this.forest.getRoot(this.root!);
         } else {
             const newParent = this.parentStack[this.parentStack.length - 1];
-            this.siblings = getGenericTreeField(newParent, this.keyStack[this.keyStack.length - 1], false);
+            const key = this.keyStack[this.keyStack.length - 1];
+            this.siblings = getGenericTreeField(newParent, key, false);
         }
         return TreeNavigationResult.Ok;
     }
