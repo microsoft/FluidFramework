@@ -35,13 +35,11 @@
     "lint:fix": "npm run eslint:fix",
     "test": "npm run test:mocha && npm run test:memory",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+    "test:memory": "mocha --config ./src/test/memory/.mocharc.js",
     "test:mocha": "mocha --unhandled-rejections=strict --recursive 'dist/test/mocha/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup --exit",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-    "test:memory": "mocha --config ./src/.mocharc.memory.js",
     "test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
     "test:report": "nyc npm run test:mocha:report && npm run test:jest:report",
-
-
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",

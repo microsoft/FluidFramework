@@ -1,3 +1,7 @@
+/**
+ * Mocha configuration file to run memory-profiling tests
+ */
+
 module.exports = {
     exit: true,
     fgrep: "@Benchmark",
@@ -9,6 +13,3 @@ module.exports = {
     spec: ["dist/test/memory/**/*.spec.js", "--perfMode"],
     timeout: "60000"
 }
-
-
-//"test:mocha:memory": "cross-env FLUID_TEST_VERBOSE=1 mocha --config src/.mocharc.memory.js",
