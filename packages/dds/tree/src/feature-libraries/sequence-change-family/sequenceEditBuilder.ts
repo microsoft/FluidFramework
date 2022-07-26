@@ -116,8 +116,12 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
             a = wrapN(a.marks, a.path, depthDiff);
             // Nest both marks one level at a time until they reach the same parent
             while (a.path?.parent() !== b.path?.parent()) {
-                a = { marks: wrap1(a.marks, a.path), path: a.path?.parent() };
-                b = { marks: wrap1(b.marks, b.path), path: b.path?.parent() };
+                // The paths are at same depth they must both be defined in order to have different parents
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                a = { marks: wrap1(a.marks, a.path!), path: a.path?.parent() };
+                // The paths are at same depth they must both be defined in order to have different parents
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                b = { marks: wrap1(b.marks, b.path!), path: b.path?.parent() };
             }
             if (a.path === undefined) {
                 this.applyChange({ marks: { ...a.marks, ...b.marks } });
@@ -198,11 +202,8 @@ function wrap(mark: T.FieldMarks, node: UpPath | undefined): T.FieldMarks {
     return out;
 }
 
-function wrap1(marks: T.FieldMarks, node: UpPath | undefined): T.FieldMarks {
-    if (node !== undefined) {
-        return toFieldMarks({ type: "Modify", fields: marks }, node);
-    }
-    return marks;
+function wrap1(marks: T.FieldMarks, node: UpPath): T.FieldMarks {
+    return toFieldMarks({ type: "Modify", fields: marks }, node);
 }
 
 type NodePath = UpPath;
