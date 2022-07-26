@@ -62,7 +62,7 @@ const extractStringData = async (inventoryList: IInventoryList) => {
     return inventoryItemStrings.join("\n");
 };
 
-// This type is actually more specific than just any string - it needs to be in the right format.
+// This type represents a stronger expectation than just any string - it needs to be in the right format.
 export type InventoryListContainerExportType = string;
 
 /**
@@ -113,8 +113,15 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     };
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListContainerExportType => {
-        // TODO: Actually validate the string format.
-        return typeof initialData === "string";
+        if (typeof initialData !== "string") {
+            return false;
+        }
+        try {
+            parseStringData(initialData);
+        } catch {
+            return false;
+        }
+        return true;
     };
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
