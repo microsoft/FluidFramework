@@ -29,15 +29,17 @@ export interface IConnectionStateHandlerInputs {
     connectionStateChanged: () => void;
 }
 
-/** A type that contains details pertaining to the connection state */
+/** 
+ * A type that contains details pertaining to the connection state 
+ */
 export type ConnectionStateDetails =
-| {
-    state: ConnectionState.Connected | ConnectionState.CatchingUp;
-}
-| {
-    state: ConnectionState.Disconnected;
-    reason?: string;
-};
+    | {
+        state: ConnectionState.Connected | ConnectionState.CatchingUp;
+    }
+    | {
+        state: ConnectionState.Disconnected;
+        reason?: string;
+    };
 
 const JoinOpTimeoutMs = 45000;
 
