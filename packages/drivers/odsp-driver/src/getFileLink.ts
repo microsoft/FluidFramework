@@ -8,12 +8,7 @@ import { assert } from "@fluidframework/common-utils";
 import { canRetryOnError, NonRetryableError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import {
-    IOdspUrlParts,
-    OdspResourceTokenFetchOptions,
-    IdentityType,
-    TokenFetcher,
-} from "@fluidframework/odsp-driver-definitions";
+import { IOdspUrlParts, OdspResourceTokenFetchOptions, TokenFetcher } from "@fluidframework/odsp-driver-definitions";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import { fetchHelper, getWithRetryForTokenRefresh, toInstrumentedOdspTokenFetcher } from "./odspUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
@@ -29,17 +24,13 @@ const fileLinkCache = new Map<string, Promise<string>>();
  * throttling error. In future, we are thinking of app allowing to pass some cancel token, with which
  * we would be able to stop retrying.
  * @param getToken - used to fetch access tokens needed to execute operation
- * @param siteUrl - url of the site that contains the file
- * @param driveId - drive where file is stored
- * @param itemId - file id
- * @param identityType - type of client account
+ * @param odspUrlParts - object describing file storage identity
  * @param logger - used to log results of operation, including any error
  * @returns Promise which resolves to file link url when successful; otherwise, undefined.
  */
 export async function getFileLink(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
     odspUrlParts: IOdspUrlParts,
-    identityType: IdentityType,
     logger: ITelemetryLogger,
 ): Promise<string> {
     const cacheKey = `${odspUrlParts.siteUrl}_${odspUrlParts.driveId}_${odspUrlParts.itemId}`;
@@ -52,7 +43,7 @@ export async function getFileLink(
         let fileLinkCore: string;
         try {
             fileLinkCore = await runWithRetry(
-                async () => getFileLinkCore(getToken, odspUrlParts, identityType, logger),
+                async () => getFileLinkCore(getToken, odspUrlParts, logger),
                 "getFileLinkCore",
                 logger,
             );
@@ -78,10 +69,9 @@ export async function getFileLink(
 async function getFileLinkCore(
     getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
     odspUrlParts: IOdspUrlParts,
-    identityType: IdentityType,
     logger: ITelemetryLogger,
 ): Promise<string> {
-    const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, identityType === "Consumer");
+    const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, true);
 
     // ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
     return PerformanceEvent.timedExecAsync(
@@ -107,7 +97,7 @@ async function getFileLinkCore(
                         encodeURIComponent(`'${fileItem.webDavUrl}'`)
                     }`,
                     storageToken,
-                    false,
+                    true,
                 );
                 const requestInit = {
                     method: "POST",
