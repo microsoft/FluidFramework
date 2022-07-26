@@ -106,36 +106,39 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         return `TODO: actual format ${treeSchema}, ${globalFieldSchema}`;
     }
 
-    getAttachSummary(
-        serialize: SummaryElementStringifier,
+    public getAttachSummary(
+        stringify: SummaryElementStringifier,
         fullTree?: boolean,
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
-        const builder = new SummaryTreeBuilder();
-        const serializedTreeString = serialize(this.getTreeString());
-        builder.addBlob(treeBlobKey, serializedTreeString);
-        const serializedSchemaString = serialize(this.getSchemaString());
-        builder.addBlob(schemaBlobKey, serializedSchemaString);
-        return builder.getSummaryTree();
+        return this.summarizeCore(stringify, this.getSchemaString(), this.getTreeString());
     }
 
-    async summarize(
-        serialize: SummaryElementStringifier,
+    public async summarize(
+        stringify: SummaryElementStringifier,
         fullTree?: boolean,
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats> {
-        const builder = new SummaryTreeBuilder();
         const [schemaBlobHandle, treeBlobHandle] = await Promise.all([this.schemaBlob.get(), this.treeBlob.get()]);
-        const serializedSchemaBlobHandle = serialize(schemaBlobHandle);
+        return this.summarizeCore(stringify, schemaBlobHandle, treeBlobHandle);
+    }
+
+    private summarizeCore(
+        stringify: SummaryElementStringifier,
+        schema: string | IFluidHandle<ArrayBufferLike>,
+        tree: string | IFluidHandle<ArrayBufferLike>,
+    ): ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+        const serializedSchemaBlobHandle = stringify(schema);
         builder.addBlob(schemaBlobKey, serializedSchemaBlobHandle);
-        const serializedTreeBlobHandle = serialize(treeBlobHandle);
+        const serializedTreeBlobHandle = stringify(tree);
         builder.addBlob(treeBlobKey, serializedTreeBlobHandle);
         return builder.getSummaryTree();
     }
 
-    getGCData(fullGC?: boolean): IGarbageCollectionData {
+    public getGCData(fullGC?: boolean): IGarbageCollectionData {
         // TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
         // by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
         // to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
@@ -145,7 +148,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         };
     }
 
-    async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
+    public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
         const [_schemaBuffer, treeBuffer] = await Promise.all([
             services.readBlob(schemaBlobKey),
             services.readBlob(treeBlobKey),

@@ -176,11 +176,11 @@ export interface SummaryElement {
 
 /**
  * Serializes the given contents into a string acceptable for storing in summaries, i.e. all
- * fluid handles have been replaced appropriately by an IFluidSerializer
+ * Fluid handles have been replaced appropriately by an IFluidSerializer
  */
 export type SummaryElementStringifier = (contents: unknown) => string;
 
 /**
- * Parses a serialized/summarized string into an object, rehydrating any fluid handles as necessary
+ * Parses a serialized/summarized string into an object, rehydrating any Fluid handles as necessary
  */
  export type SummaryElementParser = (contents: string) => unknown;
