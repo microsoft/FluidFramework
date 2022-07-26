@@ -119,9 +119,12 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
 
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
     // importing data into a completely untouched InventoryListContainer.
-    public readonly importData = async (initialData: InventoryListContainerExportType) => {
+    public readonly importData = async (initialData: unknown) => {
         if (this.container.attachState !== AttachState.Detached) {
             throw new Error("Cannot set initial data after attach");
+        }
+        if (!this.supportsDataFormat(initialData)) {
+            throw new Error("Data format not supported");
         }
         await applyStringData(this.inventoryList, initialData);
     };
