@@ -12,6 +12,21 @@ export interface IVersionedModel {
     readonly version: string;
 }
 
+export interface IExportImportModel {
+    /**
+     * importStringData must be called after initialization but before modifying or attaching the model (i.e. can only
+     * be called on an unaltered, detached model).  Here I use a string as the export/import format, but it could be
+     * some other format if you prefer.
+     */
+    importStringData: (initialData: string) => Promise<void>;
+
+    /**
+     * Export the string data from the model.  Can be passed into importStringData() for a new container to replicate
+     * the data.
+     */
+    exportStringData: () => Promise<string>;
+}
+
 export enum MigrationState {
     collaborating,
     migrating,
@@ -22,19 +37,8 @@ export interface IMigratableModelEvents extends IEvent {
     (event: "migrating" | "migrated", listener: () => void);
 }
 
-export interface IMigratableModel extends IVersionedModel, IEventProvider<IMigratableModelEvents> {
-    /**
-     * importStringData must be called after initialization but before modifying or attaching the model (i.e. can only
-     * be called on an unaltered, detached model).  Here I use a string as the export/import format, but it could be
-     * some other format if you prefer.
-     */
-    importStringData: (initialData: string) => Promise<void>;
-    /**
-     * Export the string data from the model.  Can be passed into initialize() for a new container to replicate
-     * the data.
-     */
-    exportStringData: () => Promise<string>;
-
+export interface IMigratableModel
+    extends IVersionedModel, IExportImportModel, IEventProvider<IMigratableModelEvents> {
     /**
      * Get the current migration state of the model.
      */
