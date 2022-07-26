@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import {
     MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
@@ -24,13 +23,18 @@ function createTestForAddingIntegerEntries(howManyEntries: number): () => Promis
     };
 }
 
-function createTestForAddingIntegerEntriesAndClearing(howManyEntries: number): () => Promise<unknown> {
+function createTestForAddingIntegerEntriesAndClearing(
+    howManyEntries: number,
+    runGC: boolean = false): () => Promise<unknown> {
     return async () => {
         const map = createLocalMap("testMap");
         for (let i = 0; i < howManyEntries; i++) {
             map.set(i.toString().padStart(6, "0"), i);
         }
         map.clear();
+        if (runGC === true) {
+            global.gc();
+        }
     };
 }
 
@@ -70,15 +74,13 @@ describe("Memory usage", () => {
         });
 
         benchmarkMemory({
-            title: `Add ${x} integers to a local map and clear it`,
+            title: `Add ${x} integers to a local map, clear it`,
             benchmarkFn: createTestForAddingIntegerEntriesAndClearing(x),
         });
-    });
 
-    benchmarkMemory({
-        title: "Test that fails",
-        benchmarkFn: () => {
-            assert.fail("FAILED");
-        },
+        benchmarkMemory({
+            title: `Add ${x} integers to a local map, clear it, run GC`,
+            benchmarkFn: createTestForAddingIntegerEntriesAndClearing(x, true),
+        });
     });
 });
