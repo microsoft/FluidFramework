@@ -3,36 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as v8 from "v8";
 import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 import { benchmarkTypes, isChildProcess, performanceTestSuiteTag } from "./Configuration";
 import { bold, getArrayStatistics, green, italicize, pad, prettyNumber, red } from "./ReporterUtilities";
-
-/**
- * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was
- * potentially iterated several times). Each property is an array and all should be the same length, which
- * is the number of iterations done during the benchmark.
- */
- export interface MemoryTestData {
-    memoryUsage: NodeJS.MemoryUsage[];
-    heap: v8.HeapInfo[];
-    heapSpace: v8.HeapSpaceInfo[][];
-}
-
-/**
- * Contains the full results for a benchmark (a test which was potentially iterated several times).
- * 'samples' contains the raw 'before' and 'after' measurements instead of calculated deltas
- * for flexibility, at the cost of more memory and bigger output.
- */
-export interface MemoryBenchmarkStats {
-    runs: number;
-    samples: { before: MemoryTestData; after: MemoryTestData; };
-    aborted: boolean;
-    error?: Error;
-}
+import { MemoryBenchmarkStats } from "./MemoryTestRunner";
 
 const tags = [performanceTestSuiteTag];
 
@@ -79,7 +56,6 @@ class MochaMemoryTestReporter {
             fs.mkdirSync(this.outputDirectory, { recursive: true });
         }
 
-        // const benchmarkReporter = new BenchmarkReporter(options?.reportDir);
         const data: Map<Test, MemoryBenchmarkStats> = new Map();
 
         runner
@@ -115,7 +91,6 @@ class MochaMemoryTestReporter {
                                 test.state}' without reporting any data.`,
                         ),
                     );
-                    // benchmarkReporter.recordTestResult(suite, getName(test.title), failedData);
                     return;
                 }
                 if (test.state !== "passed") {
@@ -140,7 +115,6 @@ class MochaMemoryTestReporter {
                         this.inProgressSuites.set(suite, suiteData);
                     }
                     suiteData.push([getName(test.title), memoryTestStats]);
-                    // benchmarkReporter.recordTestResult(suite, getName(test.title), memoryTestStats);
                 }
             })
             .on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
@@ -151,8 +125,6 @@ class MochaMemoryTestReporter {
                         return;
                     }
                     console.log(`\n${bold(suiteName)}`);
-
-                    // console.log(JSON.stringify(suiteData));
 
                     const table = new Table();
                     suiteData?.forEach(([testName, testData]) => {
@@ -179,23 +151,14 @@ class MochaMemoryTestReporter {
                     console.log(`${table.toString()}`);
                     this.writeCompletedBenchmarks(suiteName);
                     this.inProgressSuites.delete(suiteName);
-
-                    // benchmarkReporter.recordSuiteResults(getSuiteName(suite));
                 }
             })
-            .once(Runner.constants.EVENT_RUN_END, () => {
-                if (!isChildProcess) {
-                    // benchmarkReporter.recordResultsSummary();
-                }
-            });
+            .once(Runner.constants.EVENT_RUN_END, () => { });
     }
 
     private writeCompletedBenchmarks(suiteName: string): string {
         const outputFriendlyBenchmarks: unknown[] = [];
-        // Filter successful benchmarks and ready them for output to file
         const suiteData = this.inProgressSuites.get(suiteName);
-
-//        const successful = Benchmark.filter(Array.from(benchmarks.values()), "successful");
         suiteData?.forEach(([testName, testData]) => {
             if (testData.aborted) {
                 return;

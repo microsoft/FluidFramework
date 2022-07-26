@@ -11,8 +11,30 @@ import {
     HookArguments,
     BenchmarkType,
 } from "./Configuration";
-import { MemoryBenchmarkStats } from "./MochaMemoryTestReporter";
 import { getArrayStatistics } from "./ReporterUtilities";
+
+/**
+ * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was
+ * potentially iterated several times). Each property is an array and all should be the same length, which
+ * is the number of iterations done during the benchmark.
+ */
+ export interface MemoryTestData {
+    memoryUsage: NodeJS.MemoryUsage[];
+    heap: v8.HeapInfo[];
+    heapSpace: v8.HeapSpaceInfo[][];
+}
+
+/**
+ * Contains the full results for a benchmark (a test which was potentially iterated several times).
+ * 'samples' contains the raw 'before' and 'after' measurements instead of calculated deltas
+ * for flexibility, at the cost of more memory and bigger output.
+ */
+export interface MemoryBenchmarkStats {
+    runs: number;
+    samples: { before: MemoryTestData; after: MemoryTestData; };
+    aborted: boolean;
+    error?: Error;
+}
 
 export interface MemoryTestArguments extends MochaExclusiveOptions, HookArguments{
     /**
@@ -112,10 +134,18 @@ export function benchmarkMemory(args: MemoryTestArguments): Test {
 
             // Do this import only if isParentProcess to enable running in the web as long as isParentProcess is false.
             const childProcess = await import("child_process");
-            const result = childProcess.spawnSync(command, childArgs, { encoding: "utf8" });
+            const result = childProcess.spawnSync(command, childArgs,
+                {
+                    encoding: "utf8",
+                    maxBuffer: 1024 * 1024, /* 1024 * 1024 is the default value, here for ease of adjustment */
+                });
 
             if (result.error) {
-                assert.fail(`Child process reported an error: ${result.error.message}`);
+                const failureMessage = result.error.message.includes("ENOBUFS")
+                    ? "Child process tried to write too much data to stdout (too many iterations?). " +
+                      "The maxBuffer option might need to be tweaked."
+                    : `Child process reported an error: ${result.error.message}`;
+                assert.fail(failureMessage);
             }
 
             if (result.stderr !== "") {
