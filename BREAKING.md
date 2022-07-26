@@ -15,6 +15,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
 - Avoid using code formatting in the title (it's fine to use in the body).
+- To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
 # 2.0.0
 
