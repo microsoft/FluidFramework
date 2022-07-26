@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { placeholderTreeFromCursor, TextCursor } from "../feature-libraries/treeTextCursor";
+import { jsonableTreeFromCursor, TextCursor } from "../feature-libraries/treeTextCursor";
 
 import { PlaceholderTree } from "../tree";
 import { brand } from "../util";
@@ -23,7 +23,7 @@ describe("textTreeFormat", () => {
 		for (const [name, data] of testCases) {
 			it(name, () => {
 				const cursor = new TextCursor(data);
-				const clone = placeholderTreeFromCursor(cursor);
+				const clone = jsonableTreeFromCursor(cursor);
 				assert.deepEqual(clone, data);
 				// Check objects are actually json compatible
 				const text = JSON.stringify(clone);

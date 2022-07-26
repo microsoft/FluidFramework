@@ -6,17 +6,6 @@
 import type { SemVer } from "semver";
 
 /**
- * A type defining the version schemes that can be used for packages.
- *
- * - "semver" is the standard semver scheme.
- *
- * - "internal" is the 2.0.0-internal.1.0.0 scheme.
- *
- * - "virtualPatch" is the 0.36.1002 scheme.
- */
-export type VersionScheme = "semver" | "internal" | "virtualPatch";
-
-/**
  * A type defining the three basic version bump types:
  *
  * - major
@@ -46,13 +35,17 @@ export type VersionChangeTypeExtended = VersionBumpTypeExtended | SemVer;
 /**
  * A typeguard to check if a version is a {@link VersionBumpType}.
  */
-export function isVersionBumpType(type: VersionChangeType | string): type is VersionBumpType {
-    return type === "major" || type === "minor" || type === "patch";
+export function isVersionBumpType(
+    type: VersionChangeType | string | undefined,
+): type is VersionBumpType {
+    return type === undefined ? false : type === "major" || type === "minor" || type === "patch";
 }
 
 /**
  * A typeguard to check if a version is a {@link VersionBumpTypeExtended}.
  */
- export function isVersionBumpTypeExtended(type: VersionChangeType | string): type is VersionBumpTypeExtended {
+export function isVersionBumpTypeExtended(
+    type: VersionChangeType | string,
+): type is VersionBumpTypeExtended {
     return type === "major" || type === "minor" || type === "patch" || type === "current";
 }

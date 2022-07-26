@@ -4,8 +4,7 @@
  */
 
 import { ChangeFamily } from "../../change-family";
-import { Delta } from "../../changeset";
-import { AnchorSet } from "../../tree";
+import { AnchorSet, Delta } from "../../tree";
 import { sequenceChangeRebaser } from "./sequenceChangeRebaser";
 import { SequenceChangeset } from "./sequenceChangeset";
 import { SequenceEditBuilder } from "./sequenceEditBuilder";

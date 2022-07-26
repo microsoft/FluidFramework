@@ -4,8 +4,7 @@
  */
 
 import { ChangeFamily } from "../change-family";
-import { Delta } from "../changeset";
-import { AnchorSet } from "../tree";
+import { AnchorSet, Delta } from "../tree";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -16,8 +15,6 @@ export interface Commit<TChangeset> {
 
 type SessionId = number;
 type SeqNumber = number;
-
-const emptyDelta: Delta.Root = [];
 
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
@@ -38,7 +35,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     public addSequencedChange(newCommit: Commit<TChangeset>, anchors?: AnchorSet): Delta.Root {
         if (newCommit.sessionId === this.localSessionId) {
             this.localChanges.shift();
-            return emptyDelta;
+            return Delta.empty;
         }
 
         const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
