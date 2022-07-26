@@ -9,7 +9,6 @@ import {
     TreeEntry,
     ITreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { SharedMatrixFactory } from "@fluidframework/matrix";
 
 /** The name of the metadata blob added to the root of the container runtime. */
 const metadataBlobName = ".metadata";
@@ -212,7 +211,7 @@ function normalizeEntry(
                 for (const maybeAttributes of entry.value.entries) {
                     if (maybeAttributes.type === TreeEntry.Blob && maybeAttributes.path === ".attributes") {
                         const parsed: { type?: string; } = JSON.parse(maybeAttributes.value.contents);
-                        if (parsed.type === SharedMatrixFactory.Type) {
+                        if (parsed.type === "https://graph.microsoft.com/types/sharedmatrix") {
                             return new TreeTreeEntry(
                                 entry.path,
                                 normalizeMatrix(getNormalizedSnapshot(entry.value, config)),
