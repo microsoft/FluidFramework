@@ -11,21 +11,21 @@ const rootKey = brand<FieldKey>("root");
 const fooKey = brand<FieldKey>("foo");
 
 const root: UpPath = {
-    parent: () => undefined,
-    parentField: () => rootKey,
-    parentIndex: () => 0,
+    parent: undefined,
+    parentField: rootKey,
+    parentIndex: 0,
 };
 
 const child: UpPath = {
-    parent: () => root,
-    parentField: () => fooKey,
-    parentIndex: () => 0,
+    parent: root,
+    parentField: fooKey,
+    parentIndex: 0,
 };
 
 const grandChild: UpPath = {
-    parent: () => child,
-    parentField: () => fooKey,
-    parentIndex: () => 0,
+    parent: child,
+    parentField: fooKey,
+    parentIndex: 0,
 };
 
 describe("getDepth", () => {

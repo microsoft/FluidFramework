@@ -15,63 +15,63 @@ const fooKey = brand<FieldKey>("foo");
 const barKey = brand<FieldKey>("bar");
 
 const root: UpPath = {
-    parent: () => undefined,
-    parentField: () => rootKey,
-    parentIndex: () => 0,
+    parent: undefined,
+    parentField: rootKey,
+    parentIndex: 0,
 };
 
 const detached: UpPath = {
-    parent: () => undefined,
-    parentField: () => detachedKey,
-    parentIndex: () => 0,
+    parent: undefined,
+    parentField: detachedKey,
+    parentIndex: 0,
 };
 
 const root_foo2: UpPath = {
-    parent: () => root,
-    parentField: () => fooKey,
-    parentIndex: () => 2,
+    parent: root,
+    parentField: fooKey,
+    parentIndex: 2,
 };
 
 const root_bar2: UpPath = {
-    parent: () => root,
-    parentField: () => barKey,
-    parentIndex: () => 2,
+    parent: root,
+    parentField: barKey,
+    parentIndex: 2,
 };
 
 const root_foo17: UpPath = {
-    parent: () => root,
-    parentField: () => fooKey,
-    parentIndex: () => 17,
+    parent: root,
+    parentField: fooKey,
+    parentIndex: 17,
 };
 
 const root_foo2_foo5: UpPath = {
-    parent: () => root_foo2,
-    parentField: () => fooKey,
-    parentIndex: () => 5,
+    parent: root_foo2,
+    parentField: fooKey,
+    parentIndex: 5,
 };
 
 const root_foo17_foo5: UpPath = {
-    parent: () => root_foo17,
-    parentField: () => fooKey,
-    parentIndex: () => 5,
+    parent: root_foo17,
+    parentField: fooKey,
+    parentIndex: 5,
 };
 
 const root_bar2_bar5: UpPath = {
-    parent: () => root_bar2,
-    parentField: () => barKey,
-    parentIndex: () => 5,
+    parent: root_bar2,
+    parentField: barKey,
+    parentIndex: 5,
 };
 
 const root_foo2_foo5_foo7: UpPath = {
-    parent: () => root_foo2_foo5,
-    parentField: () => fooKey,
-    parentIndex: () => 7,
+    parent: root_foo2_foo5,
+    parentField: fooKey,
+    parentIndex: 7,
 };
 
 const root_bar2_bar5_bar7: UpPath = {
-    parent: () => root_bar2_bar5,
-    parentField: () => barKey,
-    parentIndex: () => 7,
+    parent: root_bar2_bar5,
+    parentField: barKey,
+    parentIndex: 7,
 };
 
 const nodeX = { type: jsonString.name, value: "X" };

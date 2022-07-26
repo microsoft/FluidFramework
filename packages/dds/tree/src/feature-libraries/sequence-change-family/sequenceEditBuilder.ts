@@ -47,10 +47,10 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
         const id = this.opId++;
         const moveOut: T.Detach = { type: "MoveOut", id, count };
         const moveIn: T.AttachGroup = [{ type: "MoveIn", id, count }];
-        if (source.parent() === destination.parent()) {
-            const srcIndex = source.parentIndex();
-            const dstIndex = destination.parentIndex();
-            if (source.parentField() === destination.parentField()) {
+        if (source.parent === destination.parent) {
+            const srcIndex = source.parentIndex;
+            const dstIndex = destination.parentIndex;
+            if (source.parentField === destination.parentField) {
                 const marks: T.MarkList = [];
                 if (dstIndex <= srcIndex) {
                     if (dstIndex > 0) {
@@ -86,25 +86,25 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
                         marks.push(moveIn);
                     }
                 }
-                this.applyFieldMarksAtPath({ [source.parentField() as string]: marks }, source.parent());
+                this.applyFieldMarksAtPath({ [source.parentField as string]: marks }, source.parent);
             } else {
                 this.applyFieldMarksAtPath(
                     {
-                        [source.parentField() as string]: srcIndex > 0 ? [srcIndex, moveOut] : [moveOut],
-                        [destination.parentField() as string]: dstIndex > 0 ? [dstIndex, moveIn] : [moveIn],
+                        [source.parentField as string]: srcIndex > 0 ? [srcIndex, moveOut] : [moveOut],
+                        [destination.parentField as string]: dstIndex > 0 ? [dstIndex, moveIn] : [moveIn],
                     },
-                    source.parent(),
+                    source.parent,
                 );
             }
         } else {
             // The source and destination are under different parent nodes
             let a: NestBranch = {
                 marks: toFieldMarks(moveOut, source),
-                path: source.parent(),
+                path: source.parent,
             };
             let b: NestBranch = {
                 marks: toFieldMarks(moveIn, destination),
-                path: destination.parent(),
+                path: destination.parent,
             };
             let depthDiff = getDepth(source) - getDepth(destination);
             // Ensure that a represents the deeper mark
@@ -115,13 +115,13 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
             // Nest the deeper mark so that they are both at the same depth
             a = wrapN(a.marks, a.path, depthDiff);
             // Nest both marks one level at a time until they reach the same parent
-            while (a.path?.parent() !== b.path?.parent()) {
+            while (a.path?.parent !== b.path?.parent) {
                 // The paths are at same depth they must both be defined in order to have different parents
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                a = { marks: wrap1(a.marks, a.path!), path: a.path?.parent() };
+                a = { marks: wrap1(a.marks, a.path!), path: a.path?.parent };
                 // The paths are at same depth they must both be defined in order to have different parents
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                b = { marks: wrap1(b.marks, b.path!), path: b.path?.parent() };
+                b = { marks: wrap1(b.marks, b.path!), path: b.path?.parent };
             }
             if (a.path === undefined) {
                 this.applyChange({ marks: { ...a.marks, ...b.marks } });
@@ -129,15 +129,15 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
                 const aPath = a.path;
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const bPath = b.path!;
-                const keyA = aPath.parentField() as string;
-                const keyB = bPath.parentField() as string;
+                const keyA = aPath.parentField as string;
+                const keyB = bPath.parentField as string;
                 const aFieldMarks = wrap1(a.marks, aPath);
                 const bFieldMarks = wrap1(b.marks, bPath);
                 if (keyA !== keyB) {
-                    this.applyFieldMarksAtPath({ ...aFieldMarks, ...bFieldMarks }, aPath.parent());
+                    this.applyFieldMarksAtPath({ ...aFieldMarks, ...bFieldMarks }, aPath.parent);
                 } else {
-                    let indexA = aPath.parentIndex();
-                    let indexB = bPath.parentIndex();
+                    let indexA = aPath.parentIndex;
+                    let indexB = bPath.parentIndex;
                     if (indexA === indexB) {
                         fail(ERR_UP_PATH_NOT_VALID);
                     }
@@ -152,14 +152,14 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
                         marks.push(gap);
                     }
                     marks.push(bMarkList[1]);
-                    this.applyFieldMarksAtPath({ [keyA]: marks }, aPath.parent());
+                    this.applyFieldMarksAtPath({ [keyA]: marks }, aPath.parent);
                 }
             }
         }
     }
 
     private applyMarkAtPath(mark: T.Mark, path: UpPath) {
-        this.applyFieldMarksAtPath(toFieldMarks(mark, path), path.parent());
+        this.applyFieldMarksAtPath(toFieldMarks(mark, path), path.parent);
     }
 
     private applyFieldMarksAtPath(marks: T.FieldMarks, path: UpPath | undefined) {
@@ -173,8 +173,8 @@ interface NestBranch {
 }
 
 function toFieldMarks(mark: T.Mark, node: UpPath): T.FieldMarks {
-    const key = node.parentField();
-    const index = node.parentIndex();
+    const key = node.parentField;
+    const index = node.parentIndex;
     return {
         [key as string]: index === 0 ? [mark] : [index, mark],
     };
@@ -187,7 +187,7 @@ function wrapN(mark: T.FieldMarks, node: UpPath | undefined, depth: number) {
     while (currentNode !== undefined && currentDepth < depth) {
         out = wrap1(out, currentNode);
         currentDepth += 1;
-        currentNode = currentNode.parent();
+        currentNode = currentNode.parent;
     }
     return { marks: out, path: currentNode };
 }
@@ -197,7 +197,7 @@ function wrap(mark: T.FieldMarks, node: UpPath | undefined): T.FieldMarks {
     let out: T.FieldMarks = mark;
     while (currentNode !== undefined) {
         out = wrap1(out, currentNode);
-        currentNode = currentNode.parent();
+        currentNode = currentNode.parent;
     }
     return out;
 }

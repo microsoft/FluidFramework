@@ -35,10 +35,10 @@ export interface UpPath {
 
 export function getDepth(path: UpPath): number {
     let depth = 0;
-    let next = path.parent();
+    let next = path.parent;
     while (next !== undefined) {
         depth += 1;
-        next = next.parent();
+        next = next.parent;
     }
     return depth;
 }
