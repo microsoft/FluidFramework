@@ -7,18 +7,18 @@ import {
     MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
 import { benchmarkMemory } from "@fluid-tools/benchmark";
-import { MapFactory, SharedMap } from "../../map";
+import { DirectoryFactory, SharedDirectory } from "../../directory";
 
-function createLocalMap(id: string) {
-    const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
-    return map;
+function createLocalDirectory(id: string) {
+    const directory = new SharedDirectory(id, new MockFluidDataStoreRuntime(), DirectoryFactory.Attributes);
+    return directory;
 }
 
 function createTestForAddingIntegerEntries(howManyEntries: number): () => Promise<unknown> {
     return async () => {
-        const map = createLocalMap("testMap");
+        const dir = createLocalDirectory("testDirectory");
         for (let i = 0; i < howManyEntries; i++) {
-            map.set(i.toString().padStart(6, "0"), i);
+            dir.set(i.toString().padStart(6, "0"), i);
         }
     };
 }
@@ -27,18 +27,18 @@ function createTestForAddingIntegerEntriesAndClearing(
     howManyEntries: number,
     runGC: boolean = false): () => Promise<unknown> {
     return async () => {
-        const map = createLocalMap("testMap");
+        const dir = createLocalDirectory("testDirectory");
         for (let i = 0; i < howManyEntries; i++) {
-            map.set(i.toString().padStart(6, "0"), i);
+            dir.set(i.toString().padStart(6, "0"), i);
         }
-        map.clear();
+        dir.clear();
         if (runGC === true) {
             global.gc();
         }
     };
 }
 
-describe("ShareMap memory usage", () => {
+describe("SharedDirectory memory usage", () => {
     // IMPORTANT: variables scoped to the test suite are a big problem for memory-profiling tests
     // because they won't be out of scope when we garbage-collect between runs of the same test,
     // and that will skew measurements. Tests should allocate all the memory they need using local
@@ -58,10 +58,10 @@ describe("ShareMap memory usage", () => {
     });
 
     benchmarkMemory({
-        title: "Create empty map",
+        title: "Create empty directory",
         minSampleCount: 1000,
         benchmarkFn: async () => {
-            createLocalMap("testMap");
+            createLocalDirectory("testDirectory");
         },
     });
 
@@ -69,17 +69,17 @@ describe("ShareMap memory usage", () => {
 
     numbersOfEntriesForTests.forEach((x) => {
         benchmarkMemory({
-            title: `Add ${x} integers to a local map`,
+            title: `Add ${x} integers to a local directory`,
             benchmarkFn: createTestForAddingIntegerEntries(x),
         });
 
         benchmarkMemory({
-            title: `Add ${x} integers to a local map, clear it`,
+            title: `Add ${x} integers to a local directory, clear it`,
             benchmarkFn: createTestForAddingIntegerEntriesAndClearing(x),
         });
 
         benchmarkMemory({
-            title: `Add ${x} integers to a local map, clear it, run GC`,
+            title: `Add ${x} integers to a local directory, clear it, run GC`,
             benchmarkFn: createTestForAddingIntegerEntriesAndClearing(x, true),
         });
     });
