@@ -343,7 +343,6 @@ export class SharedPropertyTree extends SharedObject {
 		this.updateRemoteHeadGuid();
 	}
 
-
 	private updateRemoteHeadGuid() {
 		this.headCommitGuid = this.remoteChanges.length > 0
 				? this.remoteChanges[this.remoteChanges.length - 1].guid

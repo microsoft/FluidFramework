@@ -22,15 +22,19 @@ import {
     ChannelFactoryRegistry,
     ITestObjectProvider,
     createSummarizer,
-    summarizeNow
+    summarizeNow,
 } from "@fluidframework/test-utils";
-import { PropertyFactory, StringProperty, BaseProperty, NodeProperty, ArrayProperty } from "@fluid-experimental/property-properties";
+import { PropertyFactory,
+    StringProperty,
+    BaseProperty,
+    NodeProperty,
+    ArrayProperty }
+from "@fluid-experimental/property-properties";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
 import { LocalServerTestDriver } from "@fluidframework/test-drivers";
 import { DeflatedPropertyTree } from "../propertyTreeExt";
 import { SharedPropertyTree } from "../propertyTree";
 import { PropertyTreeFactory } from "../propertyTreeFactory";
-
 
 interface Result {
     container: IContainer;
@@ -59,7 +63,7 @@ describe("PropertyDDS summarizer", () => {
             summarizer,
             client,
             dataObject,
-            container
+            container,
         };
         return res;
     };
@@ -84,10 +88,9 @@ describe("PropertyDDS summarizer", () => {
             () =>
                 new TestContainerRuntimeFactory(
                     "@fluid-experimental/test-propertyTree",
-                    new TestFluidObjectFactory(registry)
-                )
+                    new TestFluidObjectFactory(registry),
+                ),
         );
-
     });
 
     it("Scenario 1", async function() {
@@ -134,16 +137,15 @@ describe("PropertyDDS summarizer", () => {
         const { client: u2, dataObject: dataObject2, container: container2 } = await getClient(false, true);
         await objProvider.ensureSynchronized();
 
-
         // We do two changes to a different DDS (the root map), to make sure, that
         // updates are triggered that do not affect the propertyDDS
-        dataObject1.root.set('c2', 'aaa');
-        dataObject2.root.set('c2', 'aaa');
+        dataObject1.root.set("c2", "aaa");
+        dataObject2.root.set("c2", "aaa");
 
         // Now we wait until the msn has sufficiently advanced that the pruning below
         // will remove all remoteChanges
         const expectedSequenceNumber = container2.deltaManager.lastSequenceNumber;
-        await new Promise( (resolve) => {
+        await new Promise((resolve) => {
             const waitForMSN = () => {
                 if (container1.deltaManager.minimumSequenceNumber >= expectedSequenceNumber &&
                     container2.deltaManager.minimumSequenceNumber >= expectedSequenceNumber) {
@@ -174,7 +176,6 @@ describe("PropertyDDS summarizer", () => {
         expect(u1.root.get<ArrayProperty>(USERS)?.getValues().length).to.equal(1);
     });
 });
-
 
 describe("PropertyTree", () => {
     const documentId = "localServerTest";

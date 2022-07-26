@@ -8,7 +8,7 @@ import { stringToBuffer, TelemetryNullLogger } from "@fluidframework/common-util
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestContainerConfig, ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
     describeFullCompat,
     describeNoCompat,
@@ -18,7 +18,7 @@ import {
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { defaultGCConfig } from "./gcTestConfigs";
-import { getGCStateFromSummary, waitForContainerConnection } from "./gcTestSummaryUtils";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
  * Validates the state of the given node in the GC summary tree:

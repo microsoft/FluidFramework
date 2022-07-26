@@ -21,10 +21,12 @@ import {
     ITestFluidObject,
     ITestObjectProvider,
     TestFluidObjectFactory,
+    createSummarizerFromFactory,
+    summarizeNow,
+    waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { createSummarizerFromFactory, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
  * Runtime dataObjectFactory that increments the current GC version of the container runtime it creates. This is used
