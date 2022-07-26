@@ -9,7 +9,7 @@ import {
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 
-import { IModelCodeLoader } from "./interfaces";
+import { IMigratable, IModelCodeLoader } from "./interfaces";
 import {
     InventoryListContainer as InventoryListContainer1,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
@@ -45,7 +45,7 @@ export const demoCodeLoader = {
 
 // This IModelCodeLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate model for unknown versions.
-export class DemoModelCodeLoader implements IModelCodeLoader {
+export class DemoModelCodeLoader implements IModelCodeLoader<IMigratable> {
     public readonly supportsVersion = async (version: string) => {
         return version === "one" || version === "two";
     };

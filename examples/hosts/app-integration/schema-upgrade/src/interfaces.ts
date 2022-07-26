@@ -8,7 +8,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/common-definitions"
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
-export interface IModelCodeLoader {
+export interface IModelCodeLoader<ModelType> {
     /**
      * Check if the IModelCodeLoader knows how to instantiate an appropriate model for the provided container code
      * version.  It is async to permit dynamic model loading - e.g. referring to a remote service to determine if
@@ -16,10 +16,14 @@ export interface IModelCodeLoader {
      * @param version - the container code version to check
      */
     supportsVersion: (version: string) => Promise<boolean>;
-    getModel: (container: IContainer) => Promise<IMigratable>;
+
+    /**
+     * Instantiate and return the appropriate model for the given container.
+     */
+    getModel: (container: IContainer) => Promise<ModelType>;
 }
 
-export interface IModelLoader {
+export interface IModelLoader<ModelType> {
     /**
      * Check if the IModelLoader knows how to instantiate an appropriate model for the provided container code version.
      * It is async to permit dynamic model loading - e.g. referring to a remote service to determine if the requested
@@ -34,13 +38,13 @@ export interface IModelLoader {
      * returns a promise that will resolve after attach has completed with the id of the container.
      * @param version - the container code version to create a model for
      */
-    createDetached(version: string): Promise<{ model: IMigratable; attach: () => Promise<string>; }>;
+    createDetached(version: string): Promise<{ model: ModelType; attach: () => Promise<string>; }>;
 
     /**
      * Load a model for the container with the given id.
      * @param id - the id of the container to load
      */
-    loadExisting(id: string): Promise<IMigratable>;
+    loadExisting(id: string): Promise<ModelType>;
 }
 
 export enum MigrationState {

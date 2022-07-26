@@ -11,16 +11,16 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { IMigratable, IModelCodeLoader, IModelLoader } from "./interfaces";
 
-export class ModelLoader implements IModelLoader {
+export class ModelLoader implements IModelLoader<IMigratable> {
     private readonly loader: IHostLoader;
-    private readonly modelCodeLoader: IModelCodeLoader;
+    private readonly modelCodeLoader: IModelCodeLoader<IMigratable>;
     private readonly generateCreateNewRequest: () => IRequest;
 
     // TODO: See if there's a nicer way to parameterize the createNew request.
     public constructor(
         props: ILoaderProps
         & {
-            modelCodeLoader: IModelCodeLoader;
+            modelCodeLoader: IModelCodeLoader<IMigratable>;
             generateCreateNewRequest: () => IRequest;
         },
     ) {
