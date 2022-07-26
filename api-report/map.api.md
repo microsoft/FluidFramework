@@ -135,6 +135,52 @@ export interface ILocalValue {
     readonly value: any;
 }
 
+// @public (undocumented)
+export interface IMapClearLocalOpMetadata {
+    // (undocumented)
+    pendingMessageId: number;
+    // (undocumented)
+    previousMap?: Map<string, ILocalValue>;
+    // (undocumented)
+    type: "clear";
+}
+
+// @public
+export interface IMapClearOperation {
+    type: "clear";
+}
+
+// @public
+export interface IMapDeleteOperation {
+    key: string;
+    type: "delete";
+}
+
+// @public (undocumented)
+export interface IMapKeyAddLocalOpMetadata {
+    // (undocumented)
+    pendingMessageId: number;
+    // (undocumented)
+    type: "add";
+}
+
+// @public (undocumented)
+export interface IMapKeyEditLocalOpMetadata {
+    // (undocumented)
+    pendingMessageId: number;
+    // (undocumented)
+    previousValue: ILocalValue;
+    // (undocumented)
+    type: "edit";
+}
+
+// @public
+export interface IMapSetOperation {
+    key: string;
+    type: "set";
+    value: ISerializableValue;
+}
+
 // @public @deprecated
 export interface ISerializableValue {
     type: string;
@@ -204,6 +250,12 @@ export class MapFactory implements IChannelFactory {
     get type(): string;
 }
 
+// @public (undocumented)
+export type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
+
+// @public (undocumented)
+export type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
+
 // @public @sealed
 export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
     [Symbol.iterator](): IterableIterator<[string, any]>;
@@ -261,7 +313,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
-    protected applyStashedOp(content: any): unknown;
+    protected applyStashedOp(content: any): MapLocalOpMetadata;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
     delete(key: string): boolean;

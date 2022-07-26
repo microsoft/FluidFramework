@@ -5,6 +5,7 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IDisposable, IEvent, IEventProvider, IEventThisPlaceHolder } from "@fluidframework/common-definitions";
+import { ILocalValue } from "./localValues";
 
 /**
  * Type of "valueChanged" event parameter.
@@ -21,6 +22,70 @@ export interface IValueChanged {
     previousValue: any;
 }
 
+/**
+ * Operation indicating a value should be set for a key.
+ */
+ export interface IMapSetOperation {
+    /**
+     * String identifier of the operation type.
+     */
+    type: "set";
+
+    /**
+     * Map key being modified.
+     */
+    key: string;
+
+    /**
+     * Value to be set on the key.
+     */
+    value: ISerializableValue;
+}
+
+/**
+ * Operation indicating the map should be cleared.
+ */
+ export interface IMapClearOperation {
+    /**
+     * String identifier of the operation type.
+     */
+    type: "clear";
+}
+
+/**
+ * Operation indicating a key should be deleted from the map.
+ */
+ export interface IMapDeleteOperation {
+    /**
+     * String identifier of the operation type.
+     */
+    type: "delete";
+
+    /**
+     * Map key being modified.
+     */
+    key: string;
+}
+
+export interface IMapKeyEditLocalOpMetadata {
+    type: "edit";
+    pendingMessageId: number;
+    previousValue: ILocalValue;
+}
+
+export interface IMapKeyAddLocalOpMetadata {
+    type: "add";
+    pendingMessageId: number;
+}
+
+export interface IMapClearLocalOpMetadata {
+    type: "clear";
+    pendingMessageId: number;
+    previousMap?: Map<string, ILocalValue>;
+}
+
+export type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
+export type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
 /**
  * Interface describing actions on a directory.
  *

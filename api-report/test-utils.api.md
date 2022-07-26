@@ -42,6 +42,7 @@ import { ITestDriver } from '@fluidframework/test-driver-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { Loader } from '@fluidframework/container-loader';
 import { RuntimeRequestHandler } from '@fluidframework/request-handler';
+import { SharedMap } from '@fluidframework/map';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @public (undocumented)
@@ -296,6 +297,12 @@ export class TestObjectProvider implements ITestObjectProvider {
     get urlResolver(): IUrlResolver;
     // (undocumented)
     waitContainerToCatchUp(container: IContainer): Promise<boolean>;
+}
+
+// @public (undocumented)
+export class TestSharedMap extends SharedMap {
+    // (undocumented)
+    testApplyStashedOp(content: any): unknown;
 }
 
 // @public (undocumented)
