@@ -3,39 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { Effects, Transposed as T, Sequenced as S, Tiebreak, NodeId } from "../../changeset";
-import { brandOpaque } from "../../util";
-
-const id = (str: string): NodeId => brandOpaque<NodeId>(str);
+import { jsonArray, jsonNumber, jsonObject, jsonString } from "../../domains";
+import { Effects, Transposed as T, Sequenced as S } from "../../changeset";
 
 /**
  * Demonstrates how to represent a change that inserts a root tree.
  */
 export namespace InsertRoot {
-    export const e1: T.PositionedMarks = [{
-        mark: [{
+    export const e1: T.MarkList = [
+        [{
             type: "Insert",
             id: 0, // ID of the insert operation
             content: [ // Serialized trees
                 {
-                    id: id("cbb9bf86-12bf-46d2-95e5-bdc50bde3cd0"), // ID of the root node
-                    type: "Point",
+                    type: jsonObject.name,
                     fields: {
                         x: [{
-                            id: id("cebb2540-a654-4e1d-8d04-5a678f628c1d"), // ID of the X node
+                            type: jsonNumber.name,
                             value: 42,
                         }],
                         y: [{
-                            id: id("2dc94084-dcd5-4141-9eee-fa59f9c4642e"), // ID of the Y node
+                            type: jsonNumber.name,
                             value: 42,
                         }],
                         arrayField: [{
-                            id: id("376aa297-4b8b-4d85-ad0f-79ee7e9e6efc"),
-                            type: "JSON-Array",
+                            type: jsonArray.name,
                             fields: {
                                 entries: [
-                                    { id: id("1a2815ee-0495-4ffa-b958-156abbfbb074"), value: 0 },
-                                    { id: id("e39fe778-35ac-4629-b890-5b38bf441984"), value: 1 },
+                                    { type: jsonNumber.name, value: 0 },
+                                    { type: jsonNumber.name, value: 1 },
                                 ],
                             },
                         }],
@@ -43,31 +39,31 @@ export namespace InsertRoot {
                 },
             ],
         }],
-    }];
+    ];
 }
+
+const nodeX = { type: jsonString.name, value: "X" };
 
 /**
  * Demonstrates how to represent a change that swaps a pair of nodes from different traits.
  */
 export namespace SwapCousins {
-    export const e1: T.Changeset = {
+    export const e1: T.PeerChangeset = {
         moves: [
-            { id: 0, src: { foo: 0 }, dst: { bar: 0 } },
-            { id: 1, src: { bar: 0 }, dst: { foo: 0 } },
+            { id: 0, src: { 0: { foo: 0 } }, dst: { 0: { bar: 0 } } },
+            { id: 1, src: { 0: { bar: 0 } }, dst: { 0: { foo: 0 } } },
         ],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        { mark: { type: "MoveOut", id: 0, count: 1 } },
-                        { mark: [{ type: "MoveIn", id: 1, count: 1 }] },
-                    ],
-                    bar: [
-                        { mark: { type: "MoveOut", id: 1, count: 1 } },
-                        { mark: [{ type: "MoveIn", id: 0, count: 1 }] },
-                    ],
-                },
+            type: "Modify",
+            fields: {
+                foo: [
+                    { type: "MoveOut", id: 0, count: 1 },
+                    [{ type: "MoveIn", id: 1, count: 1 }],
+                ],
+                bar: [
+                    { type: "MoveOut", id: 1, count: 1 },
+                    [{ type: "MoveIn", id: 0, count: 1 }],
+                ],
             },
         }],
     };
@@ -80,69 +76,59 @@ export namespace SwapCousins {
  * To:  ` R{ foo: C{ bar: B{ baz: D } } }`
  */
 export namespace SwapParentChild {
-    export const e1: T.Changeset = {
+    export const e1: T.PeerChangeset = {
         moves: [
-            { id: 0, src: { foo: 0 }, dst: { foo: { 0: { bar: 0 } } } }, // B
-            { id: 1, src: { foo: { 0: { bar: 0 } } }, dst: { foo: 0 } }, // C
+            { id: 0, src: { 0: { foo: 0 } }, dst: { 0: { foo: { 0: { bar: 0 } } } } }, // B
+            { id: 1, src: { 0: { foo: { 0: { bar: 0 } } } }, dst: { 0: { foo: 0 } } }, // C
             { // D
                 id: 2,
-                src: { foo: { 0: { bar: { 0: { baz: 0 } } } } },
-                dst: { foo: { 0: { bar: { 0: { baz: 0 } } } } },
+                src: { 0: { foo: { 0: { bar: { 0: { baz: 0 } } } } } },
+                dst: { 0: { foo: { 0: { bar: { 0: { baz: 0 } } } } } },
             },
         ],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        {
-                            mark: {
+            type: "Modify",
+            fields: {
+                foo: [
+                    {
+                        type: "MMoveOut",
+                        id: 0,
+                        fields: {
+                            bar: [{
                                 type: "MMoveOut",
-                                id: 0,
-                                fields: {
-                                    bar: [{
-                                        mark: {
-                                            type: "MMoveOut",
-                                            id: 1,
-                                            fields: {
-                                                baz: [{
-                                                    mark: {
-                                                        type: "MoveOut",
-                                                        id: 2,
-                                                        count: 1,
-                                                    },
-                                                }],
-                                            },
-                                        },
-                                    }],
-                                },
-                            },
-                        },
-                        {
-                            mark: [{
-                                type: "MMoveIn",
                                 id: 1,
                                 fields: {
-                                    bar: [{
-                                        mark: [{
-                                            type: "MMoveIn",
-                                            id: 0,
-                                            fields: {
-                                                baz: [{
-                                                    mark: [{
-                                                        type: "MoveIn",
-                                                        id: 2,
-                                                        count: 1,
-                                                    }],
-                                                }],
-                                            },
-                                        }],
+                                    baz: [{
+                                        type: "MoveOut",
+                                        id: 2,
+                                        count: 1,
                                     }],
                                 },
                             }],
                         },
-                    ],
-                },
+                    },
+                    [{
+                        type: "MMoveIn",
+                        id: 1,
+                        fields: {
+                            bar: [
+                                [{
+                                    type: "MMoveIn",
+                                    id: 0,
+                                    fields: {
+                                        baz: [
+                                            [{
+                                                type: "MoveIn",
+                                                id: 2,
+                                                count: 1,
+                                            }],
+                                        ],
+                                    },
+                                }],
+                            ],
+                        },
+                    }],
+                ],
             },
         }],
     };
@@ -167,18 +153,16 @@ export namespace ScenarioA {
         ref: 0,
         seq: 1,
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [{
-                        offset: 1, // A
-                        mark: {
-                            type: "Delete",
-                            id: 0,
-                            count: 2, // B C
-                        },
-                    }],
-                },
+            type: "Modify",
+            fields: {
+                foo: [
+                    1, // A
+                    {
+                        type: "Delete",
+                        id: 0,
+                        count: 2, // B C
+                    },
+                ],
             },
         }],
     };
@@ -186,28 +170,26 @@ export namespace ScenarioA {
     export const e2: S.Transaction = {
         ref: 0,
         seq: 2,
-        moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 0 } }],
+        moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [{
-                        offset: 1, // A
-                        mark: {
-                            type: "MoveOut",
-                            id: 0,
-                            count: 3, // B C D
-                            gaps: [{ id: 0, type: "Forward" }],
-                        },
+            type: "Modify",
+            fields: {
+                foo: [
+                    1, // A
+                    {
+                        type: "MoveOut",
+                        id: 0,
+                        count: 3, // B C D
+                        gaps: [{ id: 0, type: "Forward" }],
+                    },
+                ],
+                bar: [
+                    [{
+                        type: "MoveIn",
+                        id: 0,
+                        count: 3, // B C D
                     }],
-                    bar: [{
-                        mark: [{
-                            type: "MoveIn",
-                            id: 0,
-                            count: 3, // B C D
-                        }],
-                    }],
-                },
+                ],
             },
         }],
     };
@@ -216,14 +198,12 @@ export namespace ScenarioA {
         ref: 0,
         seq: 3,
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [{
-                        offset: 2,
-                        mark: [{ type: "Insert", id: 0, content: [{ id: id("X") }], heed: Effects.All }],
-                    }],
-                },
+            type: "Modify",
+            fields: {
+                foo: [
+                    2,
+                    [{ type: "Insert", id: 0, content: [nodeX], heed: Effects.All }],
+                ],
             },
         }],
     };
@@ -233,49 +213,41 @@ export namespace ScenarioA {
         ref: 0,
         newRef: 1,
         moves: [
-            { id: 0, src: { foo: 1 }, dst: { bar: 0 } },
-            { id: 1, src: { foo: 1 }, dst: { bar: 0 } },
-            { id: 2, src: { foo: 1 }, dst: { bar: 0 } },
+            { id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
+            { id: 1, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
+            { id: 2, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } },
         ],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        {
-                            offset: 1, // A
-                            mark: {
-                                type: "MoveOut",
-                                id: 0,
-                                tomb: 1,
-                                count: 2, // B C
-                                gaps: [{ id: 0, type: "Forward" }],
-                            },
-                        },
-                        {
-                            mark: {
-                                type: "Gap",
-                                count: 1,
-                                stack: [{ id: 1, type: "Forward" }],
-                            },
-                        },
-                        {
-                            mark: {
-                                type: "MoveOut",
-                                id: 0,
-                                count: 1, // D
-                                gaps: [{ id: 2, type: "Forward" }],
-                            },
-                        },
+            type: "Modify",
+            fields: {
+                foo: [
+                    1, // A
+                    {
+                        type: "MoveOut",
+                        id: 0,
+                        tomb: 1,
+                        count: 2, // B C
+                        gaps: [{ id: 0, type: "Forward" }],
+                    },
+                    {
+                        type: "Gap",
+                        count: 1,
+                        stack: [{ id: 1, type: "Forward" }],
+                    },
+                    {
+                        type: "MoveOut",
+                        id: 0,
+                        count: 1, // D
+                        gaps: [{ id: 2, type: "Forward" }],
+                    },
+                ],
+                bar: [
+                    [
+                        { type: "MoveIn", id: 0, count: 0 }, // B C
+                        { type: "MoveIn", id: 1, count: 0 }, // C-D
+                        { type: "MoveIn", id: 2, count: 1 }, // D
                     ],
-                    bar: [{
-                        mark: [
-                            { type: "MoveIn", id: 0, count: 0 }, // B C
-                            { type: "MoveIn", id: 1, count: 0 }, // C-D
-                            { type: "MoveIn", id: 2, count: 1 }, // D
-                        ],
-                    }],
-                },
+                ],
             },
         }],
     };
@@ -285,15 +257,14 @@ export namespace ScenarioA {
         ref: 0,
         newRef: 1,
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        { offset: 1, mark: { type: "Tomb", seq: 1, count: 1 } }, // B
-                        { mark: [{ type: "Insert", id: 0, content: [{ id: id("X") }], heed: Effects.All }] },
-                        { mark: { type: "Tomb", seq: 1, count: 1 } }, // C
-                    ],
-                },
+            type: "Modify",
+            fields: {
+                foo: [
+                    1,
+                    { type: "Tomb", seq: 1, count: 1 }, // B
+                    [{ type: "Insert", id: 0, content: [nodeX], heed: Effects.All }],
+                    { type: "Tomb", seq: 1, count: 1 }, // C
+                ],
             },
         }],
     };
@@ -302,30 +273,29 @@ export namespace ScenarioA {
         seq: 3,
         ref: 0,
         newRef: 2,
-        moves: [{ id: 0, src: { foo: 1 }, dst: { bar: 0 } }],
+        moves: [{ id: 0, src: { 0: { foo: 1 } }, dst: { 0: { bar: 0 } } }],
         marks: [{
-            mark: {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        { offset: 1, mark: { type: "Tomb", seq: 1, count: 1 } }, // B
-                        { mark: [{ type: "Bounce", id: 0, heed: Effects.All }] },
-                        { mark: { type: "Tomb", seq: 1, count: 1 } }, // C
+            type: "Modify",
+            fields: {
+                foo: [
+                    1,
+                    { type: "Tomb", seq: 1, count: 1 }, // B
+                    [{ type: "Bounce", id: 0, heed: Effects.All }],
+                    { type: "Tomb", seq: 1, count: 1 }, // C
+                ],
+                bar: [
+                    [
+                        {
+                            type: "Insert",
+                            id: 0,
+                            content: [nodeX],
+                            heed: Effects.All,
+                            src: { seq: 2, id: 0 },
+                        },
+                        { type: "Intake", seq: 2, id: 1 },
+                        { type: "Intake", seq: 2, id: 2 },
                     ],
-                    bar: [{
-                        mark: [
-                            {
-                                type: "Insert",
-                                id: 0,
-                                content: [{ id: id("X") }],
-                                heed: Effects.All,
-                                src: { seq: 2, id: 0 },
-                            },
-                            { type: "Intake", seq: 2, id: 1 },
-                            { type: "Intake", seq: 2, id: 2 },
-                        ],
-                    }],
-                },
+                ],
             },
         }],
     };
@@ -813,7 +783,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e1_p_e2: T.Changeset = {
+//     export const e1_p_e2: T.PeerChangeset = {
 //         marks: {
 //             modify: [{
 //                 foo: {
@@ -976,7 +946,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e1_p_e2: T.Changeset = {
+//     export const e1_p_e2: T.PeerChangeset = {
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
@@ -1019,7 +989,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e1_p_e3: T.Changeset = {
+//     export const e1_p_e3: T.PeerChangeset = {
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{
@@ -1066,7 +1036,7 @@ export namespace ScenarioA {
 //         },
 //     };
 
-//     export const e1_p_e4: T.Changeset = {
+//     export const e1_p_e4: T.PeerChangeset = {
 //         moves: [{ id: 0, src: { foo: 0 }, dst: { bar: 0 } }],
 //         marks: {
 //             modify: [{

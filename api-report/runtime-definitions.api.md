@@ -97,8 +97,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly logger: ITelemetryBaseLogger;
     orderSequentially(callback: () => void): void;
     request(request: IRequest): Promise<IResponse>;
-    // @deprecated
-    setFlushMode(mode: FlushMode): void;
     submitSignal(type: string, content: any): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;

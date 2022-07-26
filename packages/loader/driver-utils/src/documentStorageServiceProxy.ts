@@ -4,6 +4,7 @@
  */
 
 import {
+    FetchSource,
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     ISummaryContext,
@@ -37,8 +38,13 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
         return this.internalStorageService.getSnapshotTree(version, scenarioName);
     }
 
-    public async getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]> {
-        return this.internalStorageService.getVersions(versionId, count, scenarioName);
+    public async getVersions(
+        versionId: string | null,
+        count: number,
+        scenarioName?: string,
+        fetchSource?: FetchSource,
+    ): Promise<IVersion[]> {
+        return this.internalStorageService.getVersions(versionId, count, scenarioName, fetchSource);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {

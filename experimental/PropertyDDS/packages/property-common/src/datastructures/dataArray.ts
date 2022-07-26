@@ -5,8 +5,9 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint accessor-pairs: [2, { "getWithoutSet": false }] */
+
 /**
- @fileoverview The data arrays definition file.
+ * The data arrays definition file.
  */
 
 /**
@@ -251,9 +252,9 @@ class BaseDataArray {
     }
 
     /**
-     * change the size of the array
-     * @param size - the target size
-     * @returns  the DataArray itself
+     * Change the size of the array
+     * @param size - The target size
+     * @returns The DataArray itself
      */
     resize(size: number) {   // this can be costly!!!
         this._alloc(size);
@@ -351,9 +352,9 @@ class UniversalDataArray extends BaseDataArray {
     }
 
     /**
-     * insert the content of an array into the DataArray
-     * @param in_offset - the target index
-     * @param  in_array - the array to be inserted
+     * Insert the content of an array into the DataArray
+     * @param in_offset - The target index
+     * @param in_array - The array to be inserted
      */
     insertRange(in_offset: number, in_array: any[]) {
         this._buffer.splice.call(this._buffer, ...[in_offset, 0].concat(in_array));

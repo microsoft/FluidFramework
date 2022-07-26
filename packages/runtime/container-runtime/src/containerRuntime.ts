@@ -44,7 +44,12 @@ import {
     MonitoringContext,
     loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { DriverHeader, IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+    DriverHeader,
+    FetchSource,
+    IDocumentStorageService,
+    ISummaryContext,
+} from "@fluidframework/driver-definitions";
 import { readAndParse, isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
 import {
     DataCorruptionError,
@@ -315,25 +320,30 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
 export interface IGCRuntimeOptions {
     /**
-     * Flag that if true, will enable running garbage collection (GC) in a container. GC has mark phase and sweep phase.
-     * In mark phase, unreferenced objects are identified and marked as such in the summary. This option enables the
-     * mark phase.
+     * Flag that if true, will enable running garbage collection (GC) for a new container.
+     *
+     * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
+     * and marked as such in the summary. This option enables the mark phase.
      * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
      * Sweep phase can be enabled via the "sweepAllowed" option.
-     * Note: This setting becomes part of the container's summary and cannot be changed.
+     *
+     * Note: This setting is persisted in the container's summary and cannot be changed.
      */
     gcAllowed?: boolean;
 
     /**
-     * Flag that if true, enables GC's sweep phase which will eventually delete unreferenced objects from the container.
+     * Flag that if true, enables GC's sweep phase for a new container.
+     *
+     * This will allow GC to eventually delete unreferenced objects from the container.
      * This flag should only be set to true if "gcAllowed" is true.
-     * Note: This setting becomes part of the container's summary and cannot be changed.
+     *
+     * Note: This setting is persisted in the container's summary and cannot be changed.
      */
     sweepAllowed?: boolean;
 
     /**
-     * Flag that will disable garbage collection if set to true. Can be used to disable running GC on container where
-     * is allowed via the gcAllowed option.
+     * Flag that if true, will disable garbage collection for the session.
+     * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
      */
     disableGC?: boolean;
 
@@ -342,6 +352,13 @@ export interface IGCRuntimeOptions {
      * changed or not.
      */
     runFullGC?: boolean;
+
+    /**
+     * Maximum session duration for a new container. If not present, a default value will be used.
+     *
+     * Note: This setting is persisted in the container's summary and cannot be changed.
+     */
+    sessionExpiryTimeoutMs?: number;
 
     /**
      * Allows additional GC options to be passed.
@@ -1059,9 +1076,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly defaultMaxConsecutiveReconnects = 15;
 
     private _orderSequentiallyCalls: number = 0;
-    private _flushMode: FlushMode;
+    private readonly _flushMode: FlushMode;
     private needsFlush = false;
-    private flushTrigger = false;
 
     private _connected: boolean;
 
@@ -1352,12 +1368,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 close: this.closeFn,
                 connected: () => this.connected,
                 flush: this.flush.bind(this),
-                flushMode: () => this.flushMode,
                 reSubmit: this.reSubmit.bind(this),
                 rollback: this.rollback.bind(this),
-                setFlushMode: (mode) => this.setFlushMode(mode),
+                orderSequentially: this.orderSequentially.bind(this),
             },
-            this._flushMode,
+            this.flushMode,
             pendingRuntimeState?.pending);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1485,9 +1500,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 createContainerRuntimeVersion: metadata?.createContainerRuntimeVersion,
                 createContainerTimestamp: metadata?.createContainerTimestamp,
             };
-            // back-compat 0.59.3000 - Older document may either write summaryCount or not write it at all. If it does
-            // not write it, initialize summaryNumber to 0.
-            loadSummaryNumber = metadata?.summaryNumber ?? metadata?.summaryCount ?? 0;
+            // summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
+            // the count is reset to 0.
+            loadSummaryNumber = metadata?.summaryNumber ?? 0;
         } else {
             this.createContainerMetadata = {
                 createContainerRuntimeVersion: pkgVersion,
@@ -1663,8 +1678,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
         const metadata: IContainerRuntimeMetadata = {
             ...this.createContainerMetadata,
-            // back-compat 0.59.3000: This is renamed to summaryNumber. Can be removed when 0.59.3000 saturates.
-            summaryCount: this.nextSummaryNumber,
             // Increment the summary number for the next summary that will be generated.
             summaryNumber: this.nextSummaryNumber++,
             summaryFormatVersion: 1,
@@ -2022,29 +2035,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return context.realize();
     }
 
-    public setFlushMode(mode: FlushMode): void {
-        if (mode === this._flushMode) {
-            return;
-        }
-
-        this.mc.logger.sendTelemetryEvent({
-            eventName: "FlushMode Updated",
-            old: this._flushMode,
-            new: mode,
-        });
-
-        // Flush any pending batches if switching to immediate
-        if (mode === FlushMode.Immediate) {
-            this.flush();
-        }
-
-        this._flushMode = mode;
-
-        // Let the PendingStateManager know that FlushMode has been updated.
-        this.pendingStateManager.onFlushModeUpdated(mode);
-    }
-
-    public flush(): void {
+    /**
+     * Flush the pending ops manually.
+     * This method is expected to be called at the end of a batch.
+     * @param isImmediateBatch - is this "flush" being called at the end of a "FlushMode.Immediate" batch?
+     */
+    public flush(isImmediateBatch: boolean = false): void {
         assert(this._orderSequentiallyCalls === 0,
             0x24c /* "Cannot call `flush()` from `orderSequentially`'s callback" */);
 
@@ -2056,7 +2052,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Note that this should happen before the `this.needsFlush` check below because in the scenario where we are
         // not connected, `this.needsFlush` will be false but the PendingStateManager might have pending messages and
         // hence needs to track this.
-        this.pendingStateManager.onFlush();
+        this.pendingStateManager.onFlush(isImmediateBatch);
 
         // If flush has already been called then exit early
         if (!this.needsFlush) {
@@ -2075,33 +2071,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     public orderSequentially(callback: () => void): void {
-        // If flush mode is already TurnBased we are either
-        // nested in another orderSequentially, or
-        // the app is flushing manually, in which
-        // case this invocation doesn't own
-        // flushing.
-        if (this.flushMode === FlushMode.TurnBased) {
-            this.trackOrderSequentiallyCalls(callback);
-            return;
-        }
-
-        const savedFlushMode = this.flushMode;
-        this.setFlushMode(FlushMode.TurnBased);
-
-        try {
-            this.trackOrderSequentiallyCalls(callback);
-            this.flush();
-        } finally {
-            this.setFlushMode(savedFlushMode);
-        }
-    }
-
-    private trackOrderSequentiallyCalls(callback: () => void): void {
         let checkpoint: { rollback: () => void; } | undefined;
         if (this.mc.config.getBoolean("Fluid.ContainerRuntime.EnableRollback")) {
             checkpoint = this.pendingStateManager.checkpoint();
         }
-
         try {
             this._orderSequentiallyCalls++;
             callback();
@@ -2116,6 +2089,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             throw error; // throw the original error for the consumer of the runtime
         } finally {
             this._orderSequentiallyCalls--;
+        }
+
+        if (this.flushMode === FlushMode.Immediate && this._orderSequentiallyCalls === 0) {
+            this.flush(true);
         }
     }
 
@@ -2260,6 +2237,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     private canSendOps() {
         return this.connected && !this.deltaManager.readOnlyInfo.readonly;
+    }
+
+    /**
+     * Are we in the middle of batching ops together?
+     */
+    private currentlyBatching() {
+        return this.flushMode === FlushMode.TurnBased || this._orderSequentiallyCalls !== 0;
     }
 
     public getQuorum(): IQuorumClients {
@@ -2906,7 +2890,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in TurnBased flush mode we will trigger a flush at the next turn break
-            if (this.flushMode === FlushMode.TurnBased && !this.needsFlush) {
+            if (this.currentlyBatching() && !this.needsFlush) {
                 opMetadataInternal = {
                     ...opMetadata,
                     batch: true,
@@ -2914,10 +2898,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.needsFlush = true;
 
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                if (!this.flushTrigger) {
+                if (this.flushMode === FlushMode.TurnBased) {
                     // eslint-disable-next-line @typescript-eslint/no-floating-promises
                     Promise.resolve().then(() => {
-                        this.flushTrigger = false;
                         this.flush();
                     });
                 }
@@ -2928,7 +2911,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 content,
                 serializedContent,
                 maxOpSize,
-                this._flushMode === FlushMode.TurnBased,
+                this.currentlyBatching(),
                 opMetadataInternal);
         }
 
@@ -3012,7 +2995,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // System message should not be sent in the middle of the batch.
         // That said, we can preserve existing behavior by not flushing existing buffer.
         // That might be not what caller hopes to get, but we can look deeper if telemetry tells us it's a problem.
-        const middleOfBatch = this.flushMode === FlushMode.TurnBased && this.needsFlush;
+        const middleOfBatch = this.currentlyBatching() && this.needsFlush;
         if (middleOfBatch) {
             this.mc.logger.sendErrorEvent({ eventName: "submitSystemMessageError", type });
         }
@@ -3133,9 +3116,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async refreshLatestSummaryAckFromServer(summaryLogger: ITelemetryLogger): Promise<number> {
         const snapshot = await this.fetchSnapshotFromStorage(null, summaryLogger, {
-            eventName: "RefreshLatestSummaryGetSnapshot",
-            fetchLatest: true,
-        });
+                eventName: "RefreshLatestSummaryGetSnapshot",
+                fetchLatest: true,
+            },
+            FetchSource.noCache,
+        );
 
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const snapshotRefSeq = await seqFromTree(snapshot, readAndParseBlob);
@@ -3155,7 +3140,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private async fetchSnapshotFromStorage(
-        versionId: string | null, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
+        versionId: string | null,
+        logger: ITelemetryLogger,
+        event: ITelemetryGenericEvent,
+        fetchSource?: FetchSource,
+    ) {
         return PerformanceEvent.timedExecAsync(
             logger, event, async (perfEvent: {
                 end: (arg0: {
@@ -3166,7 +3155,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const stats: { getVersionDuration?: number; getSnapshotDuration?: number; } = {};
             const trace = Trace.start();
 
-            const versions = await this.storage.getVersions(versionId, 1);
+            const versions = await this.storage.getVersions(
+                versionId, 1, "refreshLatestSummaryAckFromServer", fetchSource);
             assert(!!versions && !!versions[0], 0x137 /* "Failed to get version from storage" */);
             stats.getVersionDuration = trace.trace().duration;
 

@@ -14,7 +14,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
-import { RedBlackTree } from "./collections";
+import { ListRemoveEntry, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition } from "./localReference";
 import {
@@ -205,13 +205,10 @@ export class Client {
      * @param start - The inclusive start of the range to remove
      * @param end - The exclusive end of the range to remove
      */
-    public removeRangeLocal(start: number, end: number) {
+    public removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg {
         const removeOp = createRemoveRangeOp(start, end);
-
-        if (this.applyRemoveRangeOp({ op: removeOp })) {
-            return removeOp;
-        }
-        return undefined;
+        this.applyRemoveRangeOp({ op: removeOp });
+        return removeOp;
     }
 
     /**
@@ -269,13 +266,27 @@ export class Client {
         return op;
     }
 
-    public walkSegments<TClientData>(handler: ISegmentAction<TClientData>,
-        start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
-    public walkSegments<undefined>(handler: ISegmentAction<undefined>,
-        start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
     public walkSegments<TClientData>(
         handler: ISegmentAction<TClientData>,
-        start: number | undefined, end: number | undefined, accum: TClientData, splitRange: boolean = false) {
+        start: number | undefined,
+        end: number | undefined,
+        accum: TClientData,
+        splitRange?: boolean
+    ): void;
+    public walkSegments<undefined>(
+        handler: ISegmentAction<undefined>,
+        start?: number,
+        end?: number,
+        accum?: undefined,
+        splitRange?: boolean
+    ): void;
+    public walkSegments<TClientData>(
+        handler: ISegmentAction<TClientData>,
+        start: number | undefined,
+        end: number | undefined,
+        accum: TClientData,
+        splitRange: boolean = false,
+    ): void {
         this._mergeTree.mapRange(
             {
                 leaf: handler,
@@ -337,7 +348,7 @@ export class Client {
         return this._mergeTree.removeLocalReferencePosition(lref);
     }
 
-    public localReferencePositionToPosition(lref: ReferencePosition) {
+    public localReferencePositionToPosition(lref: ReferencePosition): number {
         return this._mergeTree.referencePositionToLocalPosition(lref);
     }
 
@@ -350,8 +361,65 @@ export class Client {
         return this._mergeTree.posFromRelativePos(relativePos);
     }
 
-    public getMarkerFromId(id: string) {
+    public getMarkerFromId(id: string): ISegment | undefined {
         return this._mergeTree.getMarkerFromId(id);
+    }
+
+    /**
+     * Revert an op
+     */
+    public rollback?(op: any, localOpMetadata: unknown) {
+        if (op.type !== MergeTreeDeltaType.INSERT) {
+            throw new Error("Unsupported op type for rollback");
+        }
+
+        const lastList = this._mergeTree.pendingSegments?.prev;
+        if (!lastList) {
+            throw new Error("No pending segments");
+        }
+        ListRemoveEntry(lastList);
+        const pendingSegmentGroup = lastList.data;
+        if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
+            throw new Error("Rollback op doesn't match last edit");
+        }
+        for (const segment of pendingSegmentGroup.segments) {
+            const segmentSegmentGroup = segment.segmentGroups.dequeue();
+            assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+
+            const start = this.findRollbackPosition(segment);
+            const segWindow = this.getCollabWindow();
+            const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
+            this._mergeTree.markRangeRemoved(
+                start,
+                start + segment.cachedLength,
+                UniversalSequenceNumber,
+                segWindow.clientId,
+                UniversalSequenceNumber,
+                false,
+                { op: removeOp });
+        }
+    }
+
+    /**
+     *  Walk the segments up to the current segment and calculate its position
+     */
+    private findRollbackPosition(segment: ISegment) {
+        let segmentPosition = 0;
+        this._mergeTree.walkAllSegments(this._mergeTree.root, (seg) => {
+            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
+            if (seg === segment) {
+                return false;
+            }
+
+            // If not removed, increase position
+            if (seg.removedSeq === undefined) {
+                segmentPosition += seg.cachedLength;
+            }
+
+            return true;
+        });
+
+        return segmentPosition;
     }
 
     /**
@@ -364,9 +432,6 @@ export class Client {
         const op = opArgs.op;
         const clientArgs = this.getClientSequenceArgs(opArgs);
         const range = this.getValidOpRange(op, clientArgs);
-        if (!range) {
-            return false;
-        }
 
         let traceStart: Trace | undefined;
         if (this.measureOps) {
@@ -501,7 +566,7 @@ export class Client {
      */
     private getValidOpRange(
         op: IMergeTreeAnnotateMsg | IMergeTreeInsertMsg | IMergeTreeRemoveMsg,
-        clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange | undefined {
+        clientArgs: IMergeTreeClientSequenceArgs): IIntegerRange {
         let start: number | undefined = op.pos1;
         if (start === undefined && op.relativePos1) {
             start = this._mergeTree.posFromRelativePos(
@@ -674,7 +739,7 @@ export class Client {
         assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         let segmentPosition = 0;
         /*
-            Walk the segments up to the current segment, and calculate it's
+            Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
             after the current segment.
 
