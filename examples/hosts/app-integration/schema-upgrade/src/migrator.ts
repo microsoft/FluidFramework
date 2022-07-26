@@ -87,8 +87,10 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
             const createResponse = await this.modelLoader.createDetached(acceptedVersion);
             const migratedModel: IMigratableModel = createResponse.model;
-            // TODO: Validate that the migratedModel is capable of importing the extractedData (format check)...
-            // Or probably better/additionally - validate at proposal time that the model we're proposing will be
+            if (!migratedModel.supportsDataFormat(extractedData)) {
+                throw new Error("New model doesn't support extracted data format");
+            }
+            // TODO: Probably should also validate at proposal time that the model we're proposing will be
             // able to import the exported format of the current container (taking into consideration our format
             // transform options).  Not all clients might agree about support if some have old ModelLoaders -- these
             // clients could use this opportunity to dispose early and try to get new ModelLoaders.
