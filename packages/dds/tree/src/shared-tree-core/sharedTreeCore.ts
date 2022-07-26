@@ -58,7 +58,7 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
         // TODO: Do something like this loop for most of the methods in here.
         for (const index of this.indexes) {
-            index.summaryElement?.getAttachSummary();
+            index.summaryElement?.getAttachSummary((contents) => this.serializer.stringify(contents, this.handle));
         }
         throw new Error("Method not implemented.");
     }
@@ -126,6 +126,9 @@ export interface Index<TChangeset> {
     readonly summaryElement?: SummaryElement;
 }
 
+/**
+ * Specifies the behavior of an {@link Index} that puts data in a summary.
+ */
 export interface SummaryElement {
     /**
      * Field name in summary json under which this element stores its data.
@@ -134,24 +137,50 @@ export interface SummaryElement {
      */
     readonly key: string;
 
-    // See IChannel
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
+     * @param stringify - Serializes the contents of the index (including {@link IFluidHandle}s) for storage.
+     */
     getAttachSummary(
+        stringify: SummaryElementStringifier,
         fullTree?: boolean,
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats;
 
-    // See IChannel
+    /**
+     * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
+     * @param stringify - Serializes the contents of the index (including {@link IFluidHandle}s) for storage.
+     */
     summarize(
+        stringify: SummaryElementStringifier,
         fullTree?: boolean,
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats>;
 
-    // See ISharedObject
-    // TODO: how do we many this work synchronously when using blobs that reference blobs?
+    /**
+     * {@inheritDoc (ISharedObject:interface).getGCData}
+     */
+    // TODO: Change this interface (and the one in ISharedObject, if necessary) to support "handles within handles".
+    // Consider the case of a document with history; the return value here currently grows unboundedly.
     getGCData(fullGC?: boolean): IGarbageCollectionData;
 
-    // See SharedObjectCore
-    loadCore(services: IChannelStorageService): Promise<void>;
+    /**
+     * Allows the index to perform custom loading
+     * @param services - Storage used by the index
+     * @param parse - Parses serialized data from storage into runtime objects for the index
+     */
+    load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void>;
 }
+
+/**
+ * Serializes the given contents into a string acceptable for storing in summaries, i.e. all
+ * fluid handles have been replaced appropriately by an IFluidSerializer
+ */
+export type SummaryElementStringifier = (contents: unknown) => string;
+
+/**
+ * Parses a serialized/summarized string into an object, rehydrating any fluid handles as necessary
+ */
+ export type SummaryElementParser = (contents: string) => unknown;
