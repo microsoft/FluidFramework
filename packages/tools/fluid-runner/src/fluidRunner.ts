@@ -52,7 +52,7 @@ function fluidRunner() {
                     argv.telemetryFile,
                 );
                 if (!result.success) {
-                    console.error(result.errorMessage);
+                    console.error(`${result.eventName}: ${result.errorMessage}`);
                     process.exit(1);
                 }
             },

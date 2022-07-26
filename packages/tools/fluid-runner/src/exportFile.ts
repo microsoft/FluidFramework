@@ -23,8 +23,11 @@ interface IExportFileResponseSuccess {
 
 interface IExportFileResponseFailure {
     success: false;
+    eventName: string;
     errorMessage: string;
 }
+
+const clientArgsValidationError = "Client_ArgsValidationError";
 
 export async function exportFile(
     codeLoader: string,
@@ -34,7 +37,11 @@ export async function exportFile(
     telemetryFile: string,
 ): Promise<IExportFileResponse> {
     if (fs.existsSync(telemetryFile)) {
-        return { success: false, errorMessage: `Telemetry file already exists [${telemetryFile}]` };
+        return {
+            success: false,
+            eventName: clientArgsValidationError,
+            errorMessage: `Telemetry file already exists [${telemetryFile}]`,
+        };
     }
 
     const fileLogger = new FileLogger(telemetryFile, 50);
@@ -43,25 +50,27 @@ export async function exportFile(
         { all: { Event_Time: () => Date.now() } });
 
     try {
-        await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
+        return await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
             // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
             const codeLoaderBundle = require(codeLoader);
             if (!isCodeLoaderBundle(codeLoaderBundle)) {
+                const eventName = clientArgsValidationError;
                 const message = "Code loader bundle is not of type CodeLoaderBundle";
                 logger.sendErrorEvent({
-                    eventName: "Client_ArgsValidationError",
+                    eventName,
                     message,
                 });
-                return { success: false, errorMessage: message };
+                return { success: false, eventName, errorMessage: message };
             }
 
             const argsValidationError = getArgsValidationError(inputFile, outputFolder, scenario);
             if (argsValidationError) {
+                const eventName = clientArgsValidationError;
                 logger.sendErrorEvent({
-                    eventName: "Client_ArgsValidationError",
+                    eventName,
                     message: argsValidationError,
                 });
-                return { success: false, errorMessage: argsValidationError };
+                return { success: false, eventName, errorMessage: argsValidationError };
             }
 
             // TODO: read file stream
@@ -76,15 +85,15 @@ export async function exportFile(
             for (const key in results) {
                 fs.appendFileSync(path.join(outputFolder, key), results[key]);
             }
+            return { success: true };
         });
     } catch (error) {
-        logger.sendErrorEvent({ eventName: "Client_UnexpectedError" }, error);
-        return { success: false, errorMessage: "Unexpected error" };
+        const eventName = "Client_UnexpectedError";
+        logger.sendErrorEvent({ eventName }, error);
+        return { success: false, eventName, errorMessage: "Unexpected error" };
     } finally {
         await fileLogger.flush();
     }
-
-    return { success: true };
 }
 
 export async function createContainerAndExecute(
