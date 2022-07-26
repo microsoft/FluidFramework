@@ -19,8 +19,13 @@ type SeqNumber = number;
 
 const emptyDelta: Delta.Root = [];
 
-// TODO: Try to reduce this to a single type parameter
+/**
+ * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
+ * which were based on a given session's branch, to the document history
+ */
 // TODO: Remove commits when they are no longer in the collab window
+// TODO: Try to reduce this to a single type parameter
+// TODO: Move logic into Rebaser if possible
 export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> {
     private readonly trunk: Commit<TChangeset>[] = [];
     private readonly branches: Map<SessionId, Branch<TChangeset>> = new Map();
