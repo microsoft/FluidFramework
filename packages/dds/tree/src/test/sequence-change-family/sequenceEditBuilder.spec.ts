@@ -77,6 +77,7 @@ const root_bar2_bar5_bar7: UpPath = {
 const nodeX = { type: jsonString.name, value: "X" };
 const content = [nodeX];
 const moveId = brandOpaque<Delta.MoveId>(0);
+const moveId2 = brandOpaque<Delta.MoveId>(1);
 
 function test(editor: (builder: SequenceEditBuilder) => void, expected: Delta.Root): void {
     let wasCalled = false;
@@ -307,11 +308,11 @@ describe("SequenceEditBuilder", () => {
                         },
                         {
                             type: Delta.MarkType.MoveIn,
-                            moveId: 1,
+                            moveId: moveId2,
                         },
                         {
                             type: Delta.MarkType.MoveOut,
-                            moveId: 1,
+                            moveId: moveId2,
                             count: 5,
                         },
                     ],
