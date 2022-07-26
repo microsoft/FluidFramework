@@ -10,13 +10,15 @@ import {
     ISerializableValue,
     ISerializedValue,
     ISharedMapEvents,
+} from "./interfaces";
+import {
     IMapSetOperation,
     IMapDeleteOperation,
     IMapClearOperation,
     IMapKeyEditLocalOpMetadata,
     IMapKeyAddLocalOpMetadata,
     IMapClearLocalOpMetadata,
-} from "./interfaces";
+} from "./internalInterfaces";
 import {
     ILocalValue,
     LocalValueMaker,
@@ -403,7 +405,7 @@ export class MapKernel {
         return true;
     }
 
-    public tryApplyStashedOp(op: any): MapLocalOpMetadata {
+    public tryApplyStashedOp(op: any): unknown {
         const handler = this.messageHandlers.get(op.type);
         if (handler === undefined) {
             throw new Error("no apply stashed op handler");

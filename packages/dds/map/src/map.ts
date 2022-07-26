@@ -21,7 +21,6 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
     ISharedMap,
     ISharedMapEvents,
-    MapLocalOpMetadata,
 } from "./interfaces";
 import { IMapDataObjectSerializable, MapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
@@ -353,7 +352,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
      * @internal
      */
-    protected applyStashedOp(content: any): MapLocalOpMetadata {
+    protected applyStashedOp(content: any): unknown {
         return this.kernel.tryApplyStashedOp(content);
     }
 

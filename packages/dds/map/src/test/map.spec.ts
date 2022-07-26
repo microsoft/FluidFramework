@@ -13,14 +13,14 @@ import {
     MockSharedObjectServices,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
+import { ISerializableValue,
+         IValueChanged } from "../interfaces";
 import { IMapSetOperation,
-         ISerializableValue,
-         IValueChanged,
+         IMapDeleteOperation,
+         IMapClearOperation,
          IMapKeyEditLocalOpMetadata,
          IMapClearLocalOpMetadata,
-         MapLocalOpMetadata,
-         IMapClearOperation,
-         IMapDeleteOperation } from "../interfaces";
+         MapLocalOpMetadata } from "../internalInterfaces";
 import { MapFactory, SharedMap } from "../map";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory) {
@@ -40,9 +40,9 @@ function createLocalMap(id: string) {
     return map;
 }
 
-export class TestSharedMap extends SharedMap {
+class TestSharedMap extends SharedMap {
     public testApplyStashedOp(content: any): MapLocalOpMetadata {
-        return this.applyStashedOp(content);
+        return this.applyStashedOp(content) as MapLocalOpMetadata;
     }
 }
 
