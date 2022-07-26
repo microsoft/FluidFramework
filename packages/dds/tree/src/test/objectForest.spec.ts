@@ -17,7 +17,6 @@ import { TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema } from "../domains";
 import { recordDependency } from "../dependency-tracking";
 import { MockDependent } from "./utils";
-
 /**
  * Generic forest test suite
  */
@@ -32,7 +31,7 @@ function testForest(suiteName: string, factory: () => ObjectForest): void {
                 ["primitive", 5],
                 ["array", [1, 2, 3]],
                 ["object", { blah: "test" }],
-                ["nested objects", { blah: { foo: 5 }, baz: [{}, {}] }],
+                ["nested objects", { blah: { foo: 5 }, baz: [{}, { foo: 3 }] }],
             ];
             for (const [name, data] of testCases) {
                 it(name, () => {
