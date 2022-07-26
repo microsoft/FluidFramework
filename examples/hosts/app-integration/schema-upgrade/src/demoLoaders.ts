@@ -9,7 +9,7 @@ import {
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 
-import { IMigratable } from "./interfaces";
+import { IMigratableModel } from "./migrationInterfaces";
 import { IModelCodeLoader } from "./modelLoading";
 // TODO: Maybe build these as standalone demo packages?  Though might be overkill.
 import {
@@ -47,7 +47,7 @@ export const demoCodeLoader = {
 
 // This IModelCodeLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate model for unknown versions.
-export class DemoModelCodeLoader implements IModelCodeLoader<IMigratable> {
+export class DemoModelCodeLoader implements IModelCodeLoader<IMigratableModel> {
     public readonly supportsVersion = async (version: string) => {
         return version === "one" || version === "two";
     };

@@ -5,10 +5,10 @@
 
 import React, { useEffect, useState } from "react";
 
-import { IMigratable, MigrationState } from "../interfaces";
+import { IMigratableModel, MigrationState } from "../migrationInterfaces";
 
 export interface IDebugViewProps {
-    model: IMigratable;
+    model: IMigratableModel;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
@@ -26,7 +26,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 };
 
 interface IMigrationStatusViewProps {
-    model: IMigratable;
+    model: IMigratableModel;
 }
 
 const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (props: IMigrationStatusViewProps) => {

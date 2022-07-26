@@ -10,7 +10,7 @@ import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-d
 import { demoCodeLoader, DemoModelCodeLoader } from "./demoLoaders";
 import { ModelLoader } from "./modelLoading";
 import { externalDataSource } from "./externalData";
-import { IMigratable } from "./interfaces";
+import { IMigratableModel } from "./migrationInterfaces";
 import { Migrator } from "./migrator";
 import { InventoryListContainer as InventoryListContainer1 } from "./modelVersion1";
 import { InventoryListContainer as InventoryListContainer2 } from "./modelVersion2";
@@ -25,15 +25,15 @@ const updateTabForId = (id: string) => {
     document.title = id;
 };
 
-const isInventoryListContainer1 = (model: IMigratable): model is InventoryListContainer1 => {
+const isInventoryListContainer1 = (model: IMigratableModel): model is InventoryListContainer1 => {
     return model.version === "one";
 };
 
-const isInventoryListContainer2 = (model: IMigratable): model is InventoryListContainer2 => {
+const isInventoryListContainer2 = (model: IMigratableModel): model is InventoryListContainer2 => {
     return model.version === "two";
 };
 
-const render = (model: IMigratable) => {
+const render = (model: IMigratableModel) => {
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     // This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
@@ -62,7 +62,7 @@ const render = (model: IMigratable) => {
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
-    const modelLoader = new ModelLoader<IMigratable>({
+    const modelLoader = new ModelLoader<IMigratableModel>({
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
         codeLoader: demoCodeLoader,
@@ -71,7 +71,7 @@ async function start(): Promise<void> {
     });
 
     let id: string;
-    let model: IMigratable;
+    let model: IMigratableModel;
 
     if (location.hash.length === 0) {
         // Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.
@@ -95,7 +95,7 @@ async function start(): Promise<void> {
     // The eventing would be a little weird if the loader can load multiple models, but maybe it's OK to have one
     // loader per model?
     const migrator = new Migrator(modelLoader, model);
-    migrator.on("migrated", (newModel: IMigratable, newModelId: string) => {
+    migrator.on("migrated", (newModel: IMigratableModel, newModelId: string) => {
         model.close();
         render(newModel);
         updateTabForId(newModelId);

@@ -11,12 +11,11 @@ export enum MigrationState {
     migrated,
 }
 
-export interface IMigrationEvents extends IEvent {
+export interface IMigratableModelEvents extends IEvent {
     (event: "migrating" | "migrated", listener: () => void);
 }
 
-// A "migratable" is a model that can be migrated.
-export interface IMigratable extends IEventProvider<IMigrationEvents> {
+export interface IMigratableModel extends IEventProvider<IMigratableModelEvents> {
     /**
      * The string version of the model, matching the version of the container code it's paired with.
      */
@@ -67,7 +66,7 @@ export interface IMigratable extends IEventProvider<IMigrationEvents> {
 }
 
 export interface IMigratorEvents extends IEvent {
-    (event: "migrated", listener: (newModel: IMigratable, newModelId: string) => void);
+    (event: "migrated", listener: (newModel: IMigratableModel, newModelId: string) => void);
     (event: "migrating", listener: () => void);
     (event: "migrationNotSupported", listener: (version: string) => void);
 }

@@ -7,7 +7,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { MigrationState } from "../interfaces";
+import { MigrationState } from "../migrationInterfaces";
 import type {
     IContainerKillBit,
 } from "../containerKillBit";

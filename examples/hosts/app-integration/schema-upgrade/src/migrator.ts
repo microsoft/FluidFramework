@@ -5,11 +5,11 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
-import { IMigratable, IMigrator, IMigratorEvents, MigrationState } from "./interfaces";
+import { IMigratableModel, IMigrator, IMigratorEvents, MigrationState } from "./migrationInterfaces";
 import { IModelLoader } from "./modelLoading";
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
-    private _currentMigratable: IMigratable;
+    private _currentMigratable: IMigratableModel;
     /**
      * If migration is in progress, the promise that will resolve when it completes.  Mutually exclusive with
      * _migratedLoadP promise.
@@ -23,7 +23,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
 
     // TODO: Maybe also have a prop for the id and the current MigrationState?
 
-    public constructor(private readonly modelLoader: IModelLoader<IMigratable>, initialMigratable: IMigratable) {
+    public constructor(private readonly modelLoader: IModelLoader<IMigratableModel>, initialMigratable: IMigratableModel) {
         super();
         this._currentMigratable = initialMigratable;
         this.takeAppropriateActionForCurrentMigratable();
@@ -83,7 +83,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             // E.g. have some callback with from/to version that does the transform?
 
             const createResponse = await this.modelLoader.createDetached(acceptedVersion);
-            const migratedModel: IMigratable = createResponse.model;
+            const migratedModel: IMigratableModel = createResponse.model;
             // TODO: Validate that the migratedModel is capable of importing the extractedData (format check)...
             // Or probably better/additionally - validate at proposal time that the model we're proposing will be
             // able to import the exported format of the current container (taking into consideration our format
