@@ -26,11 +26,12 @@ describe("exportFile", () => {
             });
 
             it("Output file is correct", async () => {
+                const scenario = "sampleScenario";
                 const exportFileResult = await exportFile(
                     path.join(__dirname, "sampleCodeLoader.js"),
                     path.join(snapshotFolder, snapshotFileName),
                     outputFolder,
-                    "sampleScenario",
+                    scenario,
                     new MockLogger(),
                 );
 
@@ -40,16 +41,18 @@ describe("exportFile", () => {
                 assert(fs.existsSync(resultFilePath), "result file does not exist");
 
                 const resultFileContent = fs.readFileSync(resultFilePath, { encoding: "utf-8" });
-                assert.strictEqual(resultFileContent, "sample result", "result output is not correct");
+                assert.strictEqual(resultFileContent, scenario, "result output is not correct");
             });
 
             it("Execution result is correct", async () => {
+                const scenario = "sampleScenario";
                 const result = await createContainerAndExecute(
                     fs.readFileSync(path.join(snapshotFolder, snapshotFileName), { encoding: "utf-8" }),
-                    new MockLogger(),
                     await fluidExport,
+                    scenario,
+                    new MockLogger(),
                 );
-                assert.deepStrictEqual(result, { "result.txt": "sample result" }, "result objects do not match");
+                assert.deepStrictEqual(result, { "result.txt": scenario }, "result objects do not match");
             });
         });
     });

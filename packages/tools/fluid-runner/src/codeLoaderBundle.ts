@@ -35,15 +35,16 @@ export interface IFluidFileConverter {
     /**
      * Execute code and return the results
      * @param container - container created by this application
-     * @param logger - TODO
+     * @param scenario - scenario this execution is related to
+     * @param logger - passed through logger object
      * @returns - object containing file names as property keys and file content as values
      */
-    execute(container: IContainer, logger: ITelemetryBaseLogger): Promise<Record<string, string>>;
+    execute(container: IContainer, scenario: string, logger: ITelemetryBaseLogger): Promise<Record<string, string>>;
 }
 
 /**
  * Type cast to ensure necessary methods are present in the provided bundle
- * @param bundle - TODO
+ * @param bundle - bundle provided to this application
  */
 export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

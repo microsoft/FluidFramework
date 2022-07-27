@@ -7,7 +7,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerPackageInfo, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 
-const fakeId = "b9d30c31-dd2a-4658-bd01-cf77a7dec25c";
+const fakeId = "FakeUrlResolver";
 const fakeUrl = "/FakeUrlResolver/";
 
 /**

@@ -57,8 +57,9 @@ export async function exportFile(
 
             const results = await createContainerAndExecute(
                 inputFileContent,
-                logger,
                 await codeLoaderBundle.fluidExport,
+                scenario,
+                logger,
             );
             // eslint-disable-next-line guard-for-in, no-restricted-syntax
             for (const key in results) {
@@ -74,8 +75,9 @@ export async function exportFile(
 
 export async function createContainerAndExecute(
     localOdspSnapshot: string,
-    logger: ITelemetryLogger,
     fluidFileConverter: IFluidFileConverter,
+    scenario: string,
+    logger: ITelemetryLogger,
 ): Promise<Record<string, string>> {
     const loader = new Loader({
         urlResolver: new FakeUrlResolver(),
@@ -88,5 +90,5 @@ export async function createContainerAndExecute(
         [LoaderHeader.loadMode]: { opsBeforeReturn: "cached" } } });
 
     return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () =>
-        fluidFileConverter.execute(container, logger));
+        fluidFileConverter.execute(container, scenario, logger));
 }

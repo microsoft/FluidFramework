@@ -19,8 +19,12 @@ async function getCodeLoader(): Promise<ICodeDetailsLoader> {
     };
 }
 
-async function execute(_container: IContainer, _logger: ITelemetryBaseLogger): Promise<Record<string, string>> {
-    return { "result.txt": "sample result" };
+async function execute(
+    _container: IContainer,
+    scenario: string,
+    _logger: ITelemetryBaseLogger,
+): Promise<Record<string, string>> {
+    return { "result.txt": scenario };
 }
 
 async function getFluidExport(): Promise<IFluidFileConverter> {
