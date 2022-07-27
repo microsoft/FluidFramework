@@ -830,7 +830,6 @@ export class MergeTree {
      */
     public get length() { return this.root.cachedLength; }
 
-    // TODO: This API is currently broken as if localSeq !== undefined, returns incorrect results if refSeq is not latest.
     public getPosition(node: MergeNode, refSeq: number, clientId: number, localSeq?: number) {
         let totalOffset = 0;
         let parent = node.parent;
