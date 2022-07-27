@@ -5,7 +5,6 @@
 
 import { fail, strict as assert } from "assert";
 import { ChangeFamily } from "../../change-family";
-import { SeqNumber } from "../../changeset";
 import { EditManager } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
@@ -458,7 +457,7 @@ describe("EditManager", () => {
         checkChangeList(manager, rebaser);
     });
 
-    it.only("Can handle all possible interleaving of steps", () => {
+    it("Can handle all possible interleaving of steps", () => {
         developAndRunScenario([]);
     });
 });
