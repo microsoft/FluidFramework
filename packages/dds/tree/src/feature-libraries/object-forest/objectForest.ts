@@ -378,7 +378,7 @@ class Cursor implements ITreeSubscriptionCursor {
     }
 
     getParentFieldKey(): FieldKey | DetachedField {
-        assert(this.state === ITreeSubscriptionCursorState.Current, 0x33d /* Cursor must be current to be used */);
+        assert(this.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
         if (this.keyStack.length === 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return this.root!;
