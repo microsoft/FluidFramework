@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { fail, strict as assert } from "assert";
 import { ChangeFamily } from "../../change-family";
 import { EditManager } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
@@ -107,6 +107,7 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
             }
             ++index;
         }
+        assert.strictEqual(intentionsSeen.size, this.intentionCounter);
     }
 }
 
@@ -140,9 +141,94 @@ function editManagerFactory(): {
 
 const localSessionId = 0;
 const peerSessionId1 = 1;
+const peerSessionId2 = 2;
 
 describe.only("EditManager", () => {
-    it("Can handle non-concurrent sequenced changes", () => {
+    it("Can handle non-concurrent local changes being sequenced immediately", () => {
+        const { rebaser, manager } = editManagerFactory();
+        const cs1 = rebaser.mintChangeset(0);
+        const cs2 = rebaser.mintChangeset(cs1.outputContext);
+        const cs3 = rebaser.mintChangeset(cs2.outputContext);
+        manager.addLocalChange(cs1);
+        manager.addSequencedChange({
+            sessionId: localSessionId,
+            seqNumber: 1,
+            refNumber: 0,
+            changeset: cs1,
+        });
+        manager.addLocalChange(cs2);
+        manager.addSequencedChange({
+            sessionId: localSessionId,
+            seqNumber: 2,
+            refNumber: 0,
+            changeset: cs2,
+        });
+        manager.addLocalChange(cs3);
+        manager.addSequencedChange({
+            sessionId: localSessionId,
+            seqNumber: 3,
+            refNumber: 0,
+            changeset: cs3,
+        });
+        checkChangeList(manager, rebaser);
+    });
+
+    it("Can handle non-concurrent local changes being sequenced later", () => {
+        const { rebaser, manager } = editManagerFactory();
+        const cs1 = rebaser.mintChangeset(0);
+        const cs2 = rebaser.mintChangeset(cs1.outputContext);
+        const cs3 = rebaser.mintChangeset(cs2.outputContext);
+        manager.addLocalChange(cs1);
+        manager.addLocalChange(cs2);
+        manager.addLocalChange(cs3);
+        manager.addSequencedChange({
+            sessionId: localSessionId,
+            seqNumber: 1,
+            refNumber: 0,
+            changeset: cs1,
+        });
+        manager.addSequencedChange({
+            sessionId: localSessionId,
+            seqNumber: 2,
+            refNumber: 0,
+            changeset: cs2,
+        });
+        manager.addSequencedChange({
+            sessionId: localSessionId,
+            seqNumber: 3,
+            refNumber: 0,
+            changeset: cs3,
+        });
+        checkChangeList(manager, rebaser);
+    });
+
+    it("Can handle non-concurrent peer changes sequenced immediately", () => {
+        const { rebaser, manager } = editManagerFactory();
+        const cs1 = rebaser.mintChangeset(0);
+        const cs2 = rebaser.mintChangeset(cs1.outputContext);
+        const cs3 = rebaser.mintChangeset(cs2.outputContext);
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 1,
+            refNumber: 0,
+            changeset: cs1,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 2,
+            refNumber: 1,
+            changeset: cs2,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 3,
+            refNumber: 2,
+            changeset: cs3,
+        });
+        checkChangeList(manager, rebaser);
+    });
+
+    it("Can handle non-concurrent peer changes sequenced later", () => {
         const { rebaser, manager } = editManagerFactory();
         const cs1 = rebaser.mintChangeset(0);
         const cs2 = rebaser.mintChangeset(cs1.outputContext);
@@ -165,7 +251,224 @@ describe.only("EditManager", () => {
             refNumber: 0,
             changeset: cs3,
         });
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        rebaser.checkChangeList(manager.getTrunk().map((c) => c.changeset));
+        checkChangeList(manager, rebaser);
+    });
+
+    it("Can rebase single peer change over multiple peer changes", () => {
+        const { rebaser, manager } = editManagerFactory();
+        const cs1 = rebaser.mintChangeset(0);
+        const cs2 = rebaser.mintChangeset(cs1.outputContext);
+        const cs3 = rebaser.mintChangeset(cs2.outputContext);
+        const cs4 = rebaser.mintChangeset(0);
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 1,
+            refNumber: 0,
+            changeset: cs1,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 2,
+            refNumber: 1,
+            changeset: cs2,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 3,
+            refNumber: 2,
+            changeset: cs3,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 4,
+            refNumber: 0,
+            changeset: cs4,
+        });
+        checkChangeList(manager, rebaser);
+    });
+
+    it("Can rebase multiple non-interleaved peer changes", () => {
+        const { rebaser, manager } = editManagerFactory();
+        const cs1 = rebaser.mintChangeset(0);
+        const cs2 = rebaser.mintChangeset(cs1.outputContext);
+        const cs3 = rebaser.mintChangeset(cs2.outputContext);
+        const cs4 = rebaser.mintChangeset(0);
+        const cs5 = rebaser.mintChangeset(cs4.outputContext);
+        const cs6 = rebaser.mintChangeset(cs5.outputContext);
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 1,
+            refNumber: 0,
+            changeset: cs1,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 2,
+            refNumber: 1,
+            changeset: cs2,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 3,
+            refNumber: 2,
+            changeset: cs3,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 4,
+            refNumber: 0,
+            changeset: cs4,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 5,
+            refNumber: 0,
+            changeset: cs5,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 6,
+            refNumber: 0,
+            changeset: cs6,
+        });
+        checkChangeList(manager, rebaser);
+    });
+
+    it("Can rebase multiple interleaved peer changes", () => {
+        const { rebaser, manager } = editManagerFactory();
+        const cs1 = rebaser.mintChangeset(0);
+        const cs2 = rebaser.mintChangeset(cs1.outputContext);
+        const cs3 = rebaser.mintChangeset(cs2.outputContext);
+        const cs4 = rebaser.mintChangeset(0);
+        const cs5 = rebaser.mintChangeset(cs4.outputContext);
+        const cs6 = rebaser.mintChangeset(cs5.outputContext);
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 1,
+            refNumber: 0,
+            changeset: cs1,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 2,
+            refNumber: 0,
+            changeset: cs4,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 3,
+            refNumber: 1,
+            changeset: cs2,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 4,
+            refNumber: 2,
+            changeset: cs3,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 5,
+            refNumber: 0,
+            changeset: cs5,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 6,
+            refNumber: 0,
+            changeset: cs6,
+        });
+        checkChangeList(manager, rebaser);
+    });
+
+    it("Can rebase multiple interleaved peer and local changes", () => {
+        const { rebaser, manager } = editManagerFactory();
+        const cs1 = rebaser.mintChangeset(0);
+        const cs2 = rebaser.mintChangeset(cs1.outputContext);
+        const cs3 = rebaser.mintChangeset(cs2.outputContext);
+        const cs4 = rebaser.mintChangeset(0);
+        const cs5 = rebaser.mintChangeset(cs4.outputContext);
+        const cs6 = rebaser.mintChangeset(cs5.outputContext);
+        const cs7 = rebaser.mintChangeset(0);
+        manager.addLocalChange(cs7);
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 1,
+            refNumber: 0,
+            changeset: cs1,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 2,
+            refNumber: 0,
+            changeset: cs4,
+        });
+        const cs8 = rebaser.mintChangeset(getLocalContext(manager));
+        manager.addLocalChange(cs8);
+        const cs9 = rebaser.mintChangeset(getLocalContext(manager));
+        manager.addLocalChange(cs9);
+        manager.addSequencedChange({
+            sessionId: localSessionId,
+            seqNumber: 3,
+            refNumber: 0,
+            changeset: cs7,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 4,
+            refNumber: 1,
+            changeset: cs2,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId1,
+            seqNumber: 5,
+            refNumber: 2,
+            changeset: cs3,
+        });
+        manager.addSequencedChange({
+            sessionId: localSessionId,
+            seqNumber: 6,
+            refNumber: 2,
+            changeset: cs8,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 7,
+            refNumber: 0,
+            changeset: cs5,
+        });
+        manager.addSequencedChange({
+            sessionId: localSessionId,
+            seqNumber: 8,
+            refNumber: 2,
+            changeset: cs9,
+        });
+        manager.addSequencedChange({
+            sessionId: peerSessionId2,
+            seqNumber: 9,
+            refNumber: 0,
+            changeset: cs6,
+        });
+        checkChangeList(manager, rebaser);
     });
 });
+
+function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser): void {
+    rebaser.checkChangeList(
+        manager.getTrunk().map((c) => c.changeset)
+        .concat(manager.getLocalChanges()),
+    );
+}
+
+function getLocalContext(manager: TestEditManager): number {
+    const localChanges = manager.getLocalChanges();
+    if (localChanges.length === 0) {
+        fail("Can't determine local context");
+    }
+    const lastChange = localChanges[localChanges.length - 1];
+    const context = lastChange.outputContext;
+    if (context === undefined) {
+        fail("Can't determine local context");
+    }
+    return context;
+}
