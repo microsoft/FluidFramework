@@ -5,17 +5,17 @@
 
 import {expect, test} from '@oclif/test'
 
-describe('layerCheck', () => {
+describe('layers', () => {
   test
   .stdout()
-  .command(['check kayers'])
+  .command(['check/layers'])
   .it('runs hello', ctx => {
     expect(ctx.stdout).to.contain('hello world')
   })
 
   test
   .stdout()
-  .command(['check layers', '--name', 'jeff'])
+  .command(['check/layers', '--name', 'jeff'])
   .it('runs hello --name jeff', ctx => {
     expect(ctx.stdout).to.contain('hello jeff')
   })
