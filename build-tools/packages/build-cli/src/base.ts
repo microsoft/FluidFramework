@@ -23,10 +23,6 @@ export abstract class BaseCommand extends Command {
             char: "v",
             description: "Verbose logging.",
             required: false,
-        }),
-        logtime: Flags.boolean({
-            description: "Display the current time on every status message for logging",
-            required: false
         })
     };
 
