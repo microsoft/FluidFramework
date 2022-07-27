@@ -66,7 +66,7 @@ export interface IConnect {
      * Properties that client can send to server to tell info about client environment. These are a bunch of properties
      * separated by ";" which server can log to better understand client environment etc.
      * Format: "prop1:val1;prop2:val2;prop3:val3"
-    */
+     */
     relayUserAgent?: string;
 }
 

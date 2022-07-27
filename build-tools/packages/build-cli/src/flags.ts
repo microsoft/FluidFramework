@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { supportedMonoRepoValues, isVersionBumpTypeExtended } from "@fluidframework/build-tools";
+import { isVersionBumpTypeExtended } from "@fluid-tools/version-tools";
+import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import * as semver from "semver";
 
 /**
  * A re-usable CLI flag to parse the root directory of the Fluid repo.
@@ -13,7 +15,7 @@ export const rootPathFlag = Flags.build({
     char: "r",
     description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
     env: "_FLUID_ROOT_",
-    // required: true,
+    hidden: true,
 });
 
 /**
@@ -22,30 +24,28 @@ export const rootPathFlag = Flags.build({
 export const releaseGroupFlag = Flags.build({
     char: "g",
     description: "release group",
-    options: [...supportedMonoRepoValues()], // releaseGroupOptions,
+    options: [...supportedMonoRepoValues()],
     parse: async (str: string, _: never) => str.toLowerCase(),
-    // Can't be used with individual packages.
-    exclusive: ["p"],
 });
 
 /**
- * A re-usable CLI flag to parse package name/version specifiers.
+ * A re-usable CLI flag to parse package names.
  */
 export const packageSelectorFlag = Flags.build({
     char: "p",
-    description: "package",
-    // Can't be used with release groups.
-    exclusive: ["g"],
+    description: "Name of package.",
+    multiple: false,
+});
+
+/**
+ * A re-usable CLI flag to parse semver ranges.
+ */
+export const semverRangeFlag = Flags.build<string | undefined>({
+    description: "A semver version range string.",
     multiple: false,
     parse: async (input) => {
-        // TODO: This function was inherited from previous build-tools commands. We should re-evaluate whether we want
-        // to support parsing versions out of strings or make it a separate explicit argument.
-
-        // If the package string includes a "=", then the string is assumed to be a package name and a version together.
-        const split = input.split("=");
-        const pkg = split[0];
-        const version = split[1];
-        return { pkg, version };
+        const range = semver.validRange(input);
+        return range === null ? undefined : input;
     },
 });
 

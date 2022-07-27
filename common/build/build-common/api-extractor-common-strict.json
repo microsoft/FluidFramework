@@ -1,76 +1,76 @@
 {
-    "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-    "extends": "./api-extractor-common-report.json",
-    /**
-    * Configures how API Extractor reports error and warning messages produced during analysis.
-    *
-    * There are three sources of messages:  compiler messages, API Extractor messages, and TSDoc messages.
-    *
-    * By setting the 'addToApiReportFile' property to false, API Extractor will report console errors instead of
-    * silently writing errors into the report file. This in turn will cause build failures.
-    */
-    "messages": {
-        "extractorMessageReporting": {
-            "default": {
-                "logLevel": "error",
-                "addToApiReportFile": false
-            },
-            // Prevent cyclic `@inheritDoc` comments
-            "ae-cyclic-inherit-doc": {
-                "logLevel": "error",
-                "addToApiReportFile": false
-            },
-            // A documentation comment should contain at most one release tag.
-            "ae-extra-release-tag": {
-                "logLevel": "error",
-                "addToApiReportFile": false
-            },
-            // Reported when an exported API refers to another declaration that is not exported.
-            "ae-forgotten-export": {
-                "logLevel": "error",
-                "addToApiReportFile": false
-            },
-            // A type signature should not reference another types whose release tag is less visible.
-            "ae-incompatible-release-tags": {
-                "logLevel": "error",
-                "addToApiReportFile": true
-            },
-            // Disabled. We don't require that internal members be prefixed with an underscore.
-            "ae-internal-missing-underscore": {
-                "logLevel": "none",
-                "addToApiReportFile": false
-            },
-            // Multiple function overloads should not have @internal tags with other tags.
-            "ae-internal-mixed-release-tag": {
-                "logLevel": "error",
-                "addToApiReportFile": false
-            },
-            // Require packages to include `@packageDocumentation` comment
-            "ae-misplaced-package-tag": {
-                "logLevel": "error",
-                "addToApiReportFile": false
-            },
-            // Disabled. We don't require that all exported members have an explicit release tag. While being explicit
-            // is preferred and is a best practice, enabling this requires that we have explicit release tags all the
-            // way down, which makes it very tough to adopt this config for most of our packages.
-            "ae-missing-release-tag": {
-                "logLevel": "none",
-                "addToApiReportFile": false
-            },
-            // The @inheritDoc tag needs a TSDoc declaration reference.
-            "ae-unresolved-inheritdoc-base": {
-                "logLevel": "error",
-                "addToApiReportFile": false
-            },
-            "ae-unresolved-inheritdoc-reference": {
-                "logLevel": "error",
-                "addToApiReportFile": false
-            },
-            // The @link tag needs a TSDoc declaration reference.
-            "ae-unresolved-link": {
-                "logLevel": "error",
-                "addToApiReportFile": false
-            }
-        }
+  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+  "extends": "./api-extractor-common-report.json",
+  /**
+   * Configures how API Extractor reports error and warning messages produced during analysis.
+   *
+   * There are three sources of messages:  compiler messages, API Extractor messages, and TSDoc messages.
+   *
+   * By setting the 'addToApiReportFile' property to false, API Extractor will report console errors instead of
+   * silently writing errors into the report file. This in turn will cause build failures.
+   */
+  "messages": {
+    "extractorMessageReporting": {
+      "default": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      // Prevent cyclic `@inheritDoc` comments
+      "ae-cyclic-inherit-doc": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      // A documentation comment should contain at most one release tag.
+      "ae-extra-release-tag": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      // Reported when an exported API refers to another declaration that is not exported.
+      "ae-forgotten-export": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      // A type signature should not reference another types whose release tag is less visible.
+      "ae-incompatible-release-tags": {
+        "logLevel": "error",
+        "addToApiReportFile": true
+      },
+      // Disabled. We don't require that internal members be prefixed with an underscore.
+      "ae-internal-missing-underscore": {
+        "logLevel": "none",
+        "addToApiReportFile": false
+      },
+      // Multiple function overloads should not have @internal tags with other tags.
+      "ae-internal-mixed-release-tag": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      // Require packages to include `@packageDocumentation` comment
+      "ae-misplaced-package-tag": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      // Disabled. We don't require that all exported members have an explicit release tag. While being explicit
+      // is preferred and is a best practice, enabling this requires that we have explicit release tags all the
+      // way down, which makes it very tough to adopt this config for most of our packages.
+      "ae-missing-release-tag": {
+        "logLevel": "none",
+        "addToApiReportFile": false
+      },
+      // The @inheritDoc tag needs a TSDoc declaration reference.
+      "ae-unresolved-inheritdoc-base": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      "ae-unresolved-inheritdoc-reference": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      },
+      // The @link tag needs a TSDoc declaration reference.
+      "ae-unresolved-link": {
+        "logLevel": "error",
+        "addToApiReportFile": false
+      }
     }
+  }
 }

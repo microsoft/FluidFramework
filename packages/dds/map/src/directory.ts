@@ -192,24 +192,47 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
- * @privateRemarks
- * Directly used in JSON.stringify, direct result from JSON.parse.
+ *
+ * @remarks Directly used in
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
+ * | JSON.stringify}, direct result from
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
 export interface IDirectoryDataObject {
+    /**
+     * Key/value date set by the user.
+     */
     storage?: { [key: string]: ISerializableValue; };
+
+    /**
+     * Recursive sub-directories {@link IDirectoryDataObject | objects}.
+     */
     subdirectories?: { [subdirName: string]: IDirectoryDataObject; };
 }
 
+/**
+ * {@link IDirectory} storage format.
+ *
+ * @internal
+ */
 export interface IDirectoryNewStorageFormat {
+    /**
+     * Blob IDs representing larger directory data that was serialized.
+     */
     blobs: string[];
+
+    /**
+     * Storage content representing directory data that was not serialized.
+     */
     content: IDirectoryDataObject;
 }
 
 /**
- * The factory that defines the directory.
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedDirectory}.
+ *
  * @sealed
  */
-export class DirectoryFactory {
+export class DirectoryFactory implements IChannelFactory {
     /**
      * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
      */
@@ -264,9 +287,7 @@ export class DirectoryFactory {
 }
 
 /**
- * SharedDirectory provides a hierarchical organization of map-like data structures as SubDirectories.
- * The values stored within can be accessed like a map, and the hierarchy can be navigated using path syntax.
- * SubDirectories can be retrieved for use as working directories.
+ * {@inheritDoc ISharedDirectory}
  *
  * @example
  * ```typescript
@@ -544,7 +565,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      * @internal
      */
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}

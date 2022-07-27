@@ -849,8 +849,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     loadSerializedSummary(blobData: string): ITelemetryProperties;
     // @internal
     loadSummary(summary: SharedTreeSummaryBase): void;
-    // (undocumented)
-    protected readonly logger: ITelemetryLogger;
+    readonly logger: ITelemetryLogger;
     get logViewer(): LogViewer;
     mergeEditsFrom(other: SharedTree, edits: Iterable<Edit<InternalizedChange>>, stableIdRemapper?: (id: StableNodeId) => StableNodeId): EditId[];
     // (undocumented)

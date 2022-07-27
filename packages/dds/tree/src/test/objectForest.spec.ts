@@ -13,16 +13,20 @@ import {
     fieldSchema, rootFieldKey,
     isNeverField, FieldKind,
 } from "../schema";
-import { IEditableForest, TreeNavigationResult } from "../forest";
+import { TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema } from "../domains";
+import { recordDependency } from "../dependency-tracking";
+import { MockDependent } from "./utils";
 
 /**
  * Generic forest test suite
  */
-function testForest(suiteName: string, factory: () => IEditableForest): void {
+// TODO: when ObjectForest can apply deltas correctly
+// update these tests to use Delta, and apply to IEditableForest instead of just ObjectForest.
+function testForest(suiteName: string, factory: () => ObjectForest): void {
     describe(suiteName, () => {
         // Use Json Cursor to insert and extract some Json data
-       describe("insert and extract json", () => {
+        describe("insert and extract json", () => {
             // eslint-disable-next-line @typescript-eslint/ban-types
             const testCases: [string, {} | number][] = [
                 ["primitive", 5],
@@ -53,13 +57,72 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
                     forest.attachRangeOfChildren(dst, newRange);
 
                     const reader = forest.allocateCursor();
-                    assert(forest.tryGet(forest.root, reader) === TreeNavigationResult.Ok);
+                    assert.equal(forest.tryGet(forest.root(forest.rootField), reader), TreeNavigationResult.Ok);
 
                     // copy data from reader into json object and compare to data.
                     const copy = cursorToJsonObject(reader);
+                    reader.free();
                     assert.deepEqual(copy, data);
                 });
             }
+        });
+
+        it("setValue", () => {
+            const forest = factory();
+            const insertCursor = new JsonCursor({});
+            const newRange = forest.add([insertCursor]);
+            const anchor = forest.root(newRange);
+
+            forest.setValue(anchor, "test");
+
+            const reader = forest.allocateCursor();
+            assert.equal(forest.tryGet(anchor, reader), TreeNavigationResult.Ok);
+
+            assert.equal(reader.value, "test");
+        });
+
+        it("detach delete", () => {
+            const forest = factory();
+            const newRange = forest.add([new JsonCursor(1), new JsonCursor(2)]);
+            const toDelete = forest.detachRangeOfChildren(newRange, 0, 1);
+            forest.delete(toDelete);
+
+            // Inspect resulting tree: should just have `2`.
+            const reader = forest.allocateCursor();
+            const anchor = forest.root(newRange);
+            assert.equal(forest.tryGet(anchor, reader), TreeNavigationResult.Ok);
+            assert.equal(reader.value, 2);
+            assert.equal(reader.seek(1).result, TreeNavigationResult.NotFound);
+        });
+
+        describe("top level invalidation", () => {
+            it("data editing", () => {
+                const forest = factory();
+                const dependent = new MockDependent("dependent");
+                recordDependency(dependent, forest);
+
+                assert.deepEqual(dependent.tokens, []);
+                const newRange = forest.add([new JsonCursor(1)]);
+                assert.deepEqual(dependent.tokens.length, 1);
+
+                forest.add([new JsonCursor(2)]);
+                assert.deepEqual(dependent.tokens.length, 2);
+
+                const toDelete = forest.detachRangeOfChildren(newRange, 0, 1);
+                forest.delete(toDelete);
+
+                assert.deepEqual(dependent.tokens.length, 4);
+            });
+
+            it("schema editing", () => {
+                const forest = factory();
+                const dependent = new MockDependent("dependent");
+                recordDependency(dependent, forest);
+                for (const t of jsonTypeSchema.values()) {
+                    assert(forest.schema.tryUpdateTreeSchema(t.name, t));
+                }
+                assert.deepEqual(dependent.tokens.length, jsonTypeSchema.size);
+            });
         });
     });
 }

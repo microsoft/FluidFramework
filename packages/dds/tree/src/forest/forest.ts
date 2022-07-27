@@ -5,7 +5,7 @@
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
 import { SchemaRepository } from "../schema";
-import { DetachedRange } from "../tree";
+import { DetachedField } from "../tree";
 import { ITreeCursor, TreeNavigationResult } from "./cursor";
 
 /**
@@ -16,11 +16,6 @@ import { ITreeCursor, TreeNavigationResult } from "./cursor";
  * but makes it practical to provide highly optimized implementations,
  * for example WASM powered binary formats that can track reference counts and only copy when needed.
  */
-
-/**
- * Ways to refer to a node in an IForestSubscription.
- */
-export type NodeId = ITreeSubscriptionCursor | Anchor;
 
 /**
  * Invalidates whenever `current` changes.
@@ -42,7 +37,7 @@ export interface IForestSubscription extends Dependee {
      */
     readonly schema: SchemaRepository & Dependee;
 
-    readonly rootField: DetachedRange;
+    readonly rootField: DetachedField;
 
     /**
      * Allocates a cursor in the "cleared" state.
@@ -50,9 +45,9 @@ export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
 
     /**
-     * Anchor at the beginning or root field.
+     * Anchor at the beginning of a root field.
      */
-    readonly root: Anchor;
+    root(range: DetachedField): ForestAnchor;
 
     /**
      * If observer is provided, it will be invalidated if the value returned from this changes
@@ -62,7 +57,7 @@ export interface IForestSubscription extends Dependee {
      * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
      */
     tryGet(
-        destination: Anchor,
+        destination: ForestAnchor,
         cursorToMove: ITreeSubscriptionCursor,
         observer?: ObservingDependent
     ): TreeNavigationResult;
@@ -90,17 +85,24 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 
     /**
      * Release any resources this cursor is holding onto.
-     * After doing this, further use of this object other than reading `state` or passing to `tryGet`
-     * is forbidden (undefined behavior).
+     * After doing this, further use of this object other than reading `state` is forbidden (undefined behavior).
      * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
      */
     free(): void;
 
     /**
+     * Release any resources this cursor is holding onto.
+     * After doing this, further use of this object other than reading `state` or passing to `tryGet`
+     * or calling `free` is forbidden (undefined behavior).
+     * Invalidation will still happen for the observer: it needs to unsubscribe separately if desired.
+     */
+    clear(): void;
+
+    /**
      * Construct an `Anchor` which the IForestSubscription will keep rebased to `current`.
      * Note that maintaining an Anchor has cost: free them to stop incurring that cost.
      */
-    buildAnchor(): Anchor;
+    buildAnchor(): ForestAnchor;
 
     /**
      * Current state.
@@ -122,7 +124,7 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
  * Anchors and thus use a ref count instead of allocating an object for each one.
  * This could be enabled by removing "state".
  */
-export interface Anchor {
+export interface ForestAnchor {
     /**
      * Release any resources this Anchor is holding onto.
      * After doing this, further use of this object other than reading `state` is forbidden (undefined behavior).

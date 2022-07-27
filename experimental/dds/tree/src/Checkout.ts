@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
-import { IDisposable, IErrorEvent } from '@fluidframework/common-definitions';
-import { assert } from './Common';
+import { ChildLogger, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { IDisposable, IErrorEvent, ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
+import { assert, fail } from './Common';
 import { EditId } from './Identifiers';
 import { CachingLogViewer } from './LogViewer';
 import { TreeView } from './TreeView';
@@ -114,6 +114,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 */
 	private currentEdit?: GenericTransaction;
 
+	private readonly logger: ITelemetryLogger;
+
 	public disposed: boolean = false;
 
 	protected constructor(tree: SharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler) {
@@ -121,6 +123,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 			this.tree.emit('error', error);
 		});
 		this.tree = tree;
+		this.logger = ChildLogger.create(this.tree.logger, 'Checkout');
 		if (tree.logViewer instanceof CachingLogViewer) {
 			this.cachingLogViewer = tree.logViewer;
 		}
@@ -169,10 +172,37 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		assert(currentEdit !== undefined, 'An edit is not open.');
 		this.currentEdit = undefined;
 		const editingResult = currentEdit.close();
-		assert(editingResult.status === EditStatus.Applied, 'Locally constructed edits must be well-formed and valid');
+		if (editingResult.status !== EditStatus.Applied) {
+			const { failure } = editingResult;
+			const additionalProps: ITelemetryProperties = {};
+			switch (failure.kind) {
+				case TransactionInternal.FailureKind.BadPlace:
+					additionalProps.placeFailure = failure.placeFailure;
+					break;
+				case TransactionInternal.FailureKind.BadRange: {
+					const { rangeFailure } = failure;
+					if (typeof rangeFailure === 'string') {
+						additionalProps.rangeFailure = rangeFailure;
+					} else {
+						additionalProps.rangeFailure = rangeFailure.kind;
+						additionalProps.rangeEndpointFailure = rangeFailure.placeFailure;
+					}
+					break;
+				}
+				default:
+					break;
+			}
+
+			this.logger.sendErrorEvent({
+				eventName: 'FailedLocalEdit',
+				status: editingResult.status === 0 ? 'Malformed' : 'Invalid',
+				failureKind: editingResult.failure.kind,
+				...additionalProps,
+			});
+			fail('Locally constructed edits must be well-formed and valid');
+		}
 
 		const id: EditId = newEditId();
-
 		this.handleNewEdit(id, editingResult);
 		return id;
 	}

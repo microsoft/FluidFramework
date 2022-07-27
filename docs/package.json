@@ -22,7 +22,7 @@
     "build:md-magic": "node md.js",
     "ci:build": "npm run download && npm run build",
     "clean": "rimraf public content/docs/apis _api-extractor-temp",
-    "download": "concurrently \"npm run download:api\" && npm run build:api-documenter",
+    "download": "npm run download:api && npm run build:api-documenter",
     "download:api": "download --extract --out ../_api-extractor-temp/doc-models/ https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz",
     "hugo": "hugo",
     "linkcheck": "npm run linkcheck:fast -- --external",
@@ -32,7 +32,7 @@
     "start": "npm run build:md-magic && hugo server"
   },
   "dependencies": {
-    "@tylerbu/custom-api-documenter": "~0.3.4-6",
+    "@tylerbu/custom-api-documenter": "~0.3.4-7",
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
     "@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
     "@vscode/codicons": "0.0.28",
