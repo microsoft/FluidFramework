@@ -130,8 +130,8 @@ export class AnchorSet {
         const srcParent = src === undefined ? undefined : this.find(src.path);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const srcChildren = srcParent?.children?.get(src!.field);
-            // Sorted list of PathNodes to move from src to dst.
-            let toMove: PathNode[];
+        // Sorted list of PathNodes to move from src to dst.
+        let toMove: PathNode[];
 
         // Update src
         if (srcChildren !== undefined) {
