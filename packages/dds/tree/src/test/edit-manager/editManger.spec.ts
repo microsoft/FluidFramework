@@ -5,21 +5,22 @@
 
 import { fail, strict as assert } from "assert";
 import { ChangeFamily } from "../../change-family";
+import { SeqNumber } from "../../changeset";
 import { EditManager } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { RecursiveReadonly } from "../../util";
 
 interface TestChangeset {
+    ref?: SeqNumber;
     inputContext?: number;
     outputContext?: number;
     intentions: number[];
 }
 
-interface NonEmptyTestChangeset {
+interface NonEmptyTestChangeset extends TestChangeset {
     inputContext: number;
     outputContext: number;
-    intentions: number[];
 }
 
 function isNonEmptyChange(change: RecursiveReadonly<TestChangeset>):
@@ -143,6 +144,12 @@ const localSessionId = 0;
 const peerSessionId1 = 1;
 const peerSessionId2 = 2;
 
+const NUM_STEPS = 5;
+const NUM_SESSIONS = 3;
+interface ScenarioStep { type: ScenarioAction; session: number; }
+type ScenarioAction = "Mint" | "Push";
+const actions: ScenarioAction[] = ["Mint", "Push"];
+
 describe.only("EditManager", () => {
     it("Can handle non-concurrent local changes being sequenced immediately", () => {
         const { rebaser, manager } = editManagerFactory();
@@ -160,14 +167,14 @@ describe.only("EditManager", () => {
         manager.addSequencedChange({
             sessionId: localSessionId,
             seqNumber: 2,
-            refNumber: 0,
+            refNumber: 1,
             changeset: cs2,
         });
         manager.addLocalChange(cs3);
         manager.addSequencedChange({
             sessionId: localSessionId,
             seqNumber: 3,
-            refNumber: 0,
+            refNumber: 2,
             changeset: cs3,
         });
         checkChangeList(manager, rebaser);
@@ -254,7 +261,7 @@ describe.only("EditManager", () => {
         checkChangeList(manager, rebaser);
     });
 
-    it("Can rebase single peer change over multiple peer changes", () => {
+    it("Can rebase a single peer change over multiple peer changes", () => {
         const { rebaser, manager } = editManagerFactory();
         const cs1 = rebaser.mintChangeset(0);
         const cs2 = rebaser.mintChangeset(cs1.outputContext);
@@ -451,7 +458,74 @@ describe.only("EditManager", () => {
         });
         checkChangeList(manager, rebaser);
     });
+
+    describe("Can handle all possible interleaving of steps", () => {
+        visitScenario([]);
+    });
 });
+
+function visitScenario(scenario: ScenarioStep[]): void {
+    if (scenario.length >= NUM_STEPS) {
+        executeScenario(scenario);
+    } else {
+        for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+            for (const type of actions) {
+                scenario.push({ type, session: iSession });
+                visitScenario(scenario);
+                scenario.pop();
+            }
+        }
+    }
+}
+
+function executeScenario(scenario: readonly ScenarioStep[]): void {
+    const name = scenarioString(scenario);
+    it(name, () => {
+        const scenarioWithFinalPush = [...scenario];
+        for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+            scenarioWithFinalPush.push({ type: "Push", session: iSession });
+        }
+        const { rebaser, family } = changeFamilyFactory();
+        const managers: TestEditManager[] = [];
+        for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+            const manager = new EditManager<TestChangeset, TestChangeFamily>(
+                iSession,
+                family,
+            );
+            managers[iSession] = manager;
+        }
+        let seqNumber = 1;
+        for (const step of scenarioWithFinalPush) {
+            if (step.type === "Mint") {
+                const manager = managers[step.session];
+                const cs = rebaser.mintChangeset(getLocalContext(manager));
+                manager.addLocalChange(cs);
+            } else {
+                const localChanges = managers[step.session].getLocalChanges() as TestChangeset[];
+                const ref = seqNumber;
+                for (const change of localChanges) {
+                    for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+                        const manager = managers[iSession];
+                            manager.addSequencedChange({
+                            changeset: change,
+                            refNumber: ref,
+                            sessionId: step.session,
+                            seqNumber,
+                        });
+                    }
+                    seqNumber += 1;
+                }
+            }
+        }
+        for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+            checkChangeList(managers[iSession], rebaser);
+        }
+    });
+}
+
+function scenarioString(scenario: readonly ScenarioStep[]): string {
+    return scenario.map((step) => `${step.type}${step.session}`).join("-");
+}
 
 function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser): void {
     rebaser.checkChangeList(
@@ -461,14 +535,18 @@ function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser): 
 }
 
 function getLocalContext(manager: TestEditManager): number {
+    let context;
     const localChanges = manager.getLocalChanges();
     if (localChanges.length === 0) {
-        fail("Can't determine local context");
+        const trunk = manager.getTrunk();
+        if (trunk.length === 0) {
+            context = 0;
+        } else {
+            context = trunk[trunk.length - 1].changeset.outputContext;
+        }
+    } else {
+        const lastChange = localChanges[localChanges.length - 1];
+        context = lastChange.outputContext;
     }
-    const lastChange = localChanges[localChanges.length - 1];
-    const context = lastChange.outputContext;
-    if (context === undefined) {
-        fail("Can't determine local context");
-    }
-    return context;
+    return context ?? fail("Can't determine local context");
 }
