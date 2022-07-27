@@ -42,11 +42,6 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public addSequencedChange(newCommit: Commit<TChangeset>, anchors?: AnchorSet): Delta.Root {
-        if (newCommit.sessionId === this.localSessionId) {
-            this.localChanges.shift();
-            return Delta.empty;
-        }
-
         const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
         this.rebaseBranch(branch, newCommit.refNumber);
         const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit.changeset, branch);
@@ -58,6 +53,11 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         });
 
         branch.localChanges.push(newCommit);
+
+        if (newCommit.sessionId === this.localSessionId) {
+            this.localChanges.shift();
+            return Delta.empty;
+        }
 
         return this.changeFamily.intoDelta(this.rebaseLocalBranch(newChangeFullyRebased, anchors));
     }
