@@ -39,7 +39,7 @@ import {
     IValueOperation,
     IValueType,
     IValueTypeOperationValue,
-} from "@fluidframework/default-map";
+} from "./defaultMapInterfaces";
 import { IInterval, IntervalConflictResolver, IntervalTree, IntervalNode } from "./intervalTree";
 
 const reservedIntervalIdKey = "intervalId";
@@ -1797,9 +1797,4 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
         return this.localCollection.nextInterval(pos);
     }
-}
-
-export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
-    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
-    getIntervalCollection(label: string): IntervalCollection<TInterval>;
 }

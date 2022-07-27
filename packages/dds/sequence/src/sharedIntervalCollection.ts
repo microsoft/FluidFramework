@@ -19,16 +19,14 @@ import {
     SharedObject,
 } from "@fluidframework/shared-object-base";
 import {
-    DefaultMap,
-    IMapMessageLocalMetadata,
-} from "@fluidframework/default-map";
-import {
     Interval,
     IntervalCollection,
     IntervalCollectionValueType,
-    ISharedIntervalCollection,
-} from "@fluidframework/sequence";
+    ISerializableInterval,
+} from "./intervalCollection";
+import { DefaultMap } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
+import { IMapMessageLocalMetadata } from "./defaultMapInterfaces";
 
 const snapshotFileName = "header";
 
@@ -76,6 +74,11 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 
         return map;
     }
+}
+
+export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
+    waitIntervalCollection(label: string): Promise<IntervalCollection<TInterval>>;
+    getIntervalCollection(label: string): IntervalCollection<TInterval>;
 }
 
 /**

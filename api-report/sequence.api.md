@@ -17,7 +17,6 @@ import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree';
-import { IMapMessageLocalMetadata } from '@fluidframework/default-map';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree';
@@ -32,10 +31,6 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { IValueFactory } from '@fluidframework/default-map';
-import { IValueOpEmitter } from '@fluidframework/default-map';
-import { IValueOperation } from '@fluidframework/default-map';
-import { IValueType } from '@fluidframework/default-map';
 import { LocalReferencePosition } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
@@ -97,7 +92,11 @@ export interface IJSONRunSegment<T> extends IJSONSegment {
     items: Serializable<T>[];
 }
 
-export { IMapMessageLocalMetadata }
+// @internal (undocumented)
+export interface IMapMessageLocalMetadata {
+    // (undocumented)
+    localSeq: number;
+}
 
 // @public (undocumented)
 export class Interval implements ISerializableInterval {
@@ -201,18 +200,6 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 }
 
 // @public (undocumented)
-export class IntervalCollectionValueType implements IValueType<IntervalCollection<Interval>> {
-    // (undocumented)
-    get factory(): IValueFactory<IntervalCollection<Interval>>;
-    // (undocumented)
-    static Name: string;
-    // (undocumented)
-    get name(): string;
-    // (undocumented)
-    get ops(): Map<string, IValueOperation<IntervalCollection<Interval>>>;
-}
-
-// @public (undocumented)
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 // @public (undocumented)
@@ -299,7 +286,10 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
-export { IValueOpEmitter }
+// @internal
+export interface IValueOpEmitter {
+    emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
+}
 
 // @public
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
@@ -372,6 +362,48 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 
 // @internal (undocumented)
 export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" | "properties"> & Partial<Pick<ISerializedInterval, "start" | "end" | "properties">>;
+
+// @public @deprecated (undocumented)
+export class SharedIntervalCollection extends SharedObject implements ISharedIntervalCollection<Interval> {
+    // (undocumented)
+    readonly [Symbol.toStringTag]: string;
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    // (undocumented)
+    protected applyStashedOp(): void;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedIntervalCollection;
+    static getFactory(): IChannelFactory;
+    // (undocumented)
+    getIntervalCollection(label: string): IntervalCollection<Interval>;
+    protected getIntervalCollectionPath(label: string): string;
+    // (undocumented)
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // (undocumented)
+    protected onDisconnect(): void;
+    // (undocumented)
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    // @deprecated (undocumented)
+    waitIntervalCollection(label: string): Promise<IntervalCollection<Interval>>;
+}
+
+// @public @deprecated
+export class SharedIntervalCollectionFactory implements IChannelFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(runtime: IFluidDataStoreRuntime, id: string): SharedIntervalCollection;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedIntervalCollection>;
+    // (undocumented)
+    static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
+    // (undocumented)
+    get type(): string;
+}
 
 // @public (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval> {

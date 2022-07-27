@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./sharedIntervalCollection";
 export * from "./sharedNumberSequence";
 export * from "./sharedObjectSequence";
 export * from "./sparsematrix";

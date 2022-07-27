@@ -8,22 +8,14 @@ import { BaseSegment } from '@fluidframework/merge-tree';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
-import { IChannelStorageService } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
-import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree';
-import { Interval } from '@fluidframework/sequence';
-import { IntervalCollection } from '@fluidframework/sequence';
 import { ISegment } from '@fluidframework/merge-tree';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { ISharedIntervalCollection } from '@fluidframework/sequence';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 import { PropertySet } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { SharedObject } from '@fluidframework/shared-object-base';
 import { SharedSegmentSequence } from '@fluidframework/sequence';
 import { SharedSequence } from '@fluidframework/sequence';
 import { SubSequence } from '@fluidframework/sequence';
@@ -110,48 +102,6 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     readonly type = "RunSegment";
     // (undocumented)
     static readonly typeString = "RunSegment";
-}
-
-// @public @deprecated (undocumented)
-export class SharedIntervalCollection extends SharedObject implements ISharedIntervalCollection<Interval> {
-    // (undocumented)
-    readonly [Symbol.toStringTag]: string;
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // (undocumented)
-    protected applyStashedOp(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedIntervalCollection;
-    static getFactory(): IChannelFactory;
-    // (undocumented)
-    getIntervalCollection(label: string): IntervalCollection<Interval>;
-    protected getIntervalCollectionPath(label: string): string;
-    // (undocumented)
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // (undocumented)
-    protected onDisconnect(): void;
-    // (undocumented)
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
-    // (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    // @deprecated (undocumented)
-    waitIntervalCollection(label: string): Promise<IntervalCollection<Interval>>;
-}
-
-// @public @deprecated
-export class SharedIntervalCollectionFactory implements IChannelFactory {
-    // (undocumented)
-    static readonly Attributes: IChannelAttributes;
-    // (undocumented)
-    get attributes(): IChannelAttributes;
-    // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): SharedIntervalCollection;
-    // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedIntervalCollection>;
-    // (undocumented)
-    static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
-    // (undocumented)
-    get type(): string;
 }
 
 // @public @deprecated

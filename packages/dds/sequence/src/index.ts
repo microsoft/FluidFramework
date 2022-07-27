@@ -22,11 +22,9 @@ export {
     Interval,
     IntervalCollection,
     IntervalCollectionIterator,
-    IntervalCollectionValueType,
     IntervalType,
     ISerializableInterval,
     ISerializedInterval,
-    ISharedIntervalCollection,
     SequenceInterval,
     ISerializedIntervalCollectionV2,
     CompressedSerializedInterval,
@@ -35,10 +33,11 @@ export {
 export {
     IMapMessageLocalMetadata,
     IValueOpEmitter,
-} from "@fluidframework/default-map";
+} from "./defaultMapInterfaces";
 export * from "./sharedString";
 export * from "./sequence";
 export * from "./sequenceFactory";
 export * from "./sequenceDeltaEvent";
 export * from "./sharedSequence";
+export * from "./sharedIntervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
