@@ -328,7 +328,6 @@ describe("Map", () => {
             });
 
             it("metadata op", async () => {
-                // type IMapKeyOperation = IMapSetOperation | IMapDeleteOperation;
                 const serializable: ISerializableValue = { type: "Plain", value: "value" };
                 const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
                 const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
@@ -356,7 +355,6 @@ describe("Map", () => {
                 assert.equal(metadata.type, "clear");
                 assert.equal(metadata.previousMap?.get("key")?.value, "value");
                 assert.equal(metadata.previousMap?.has("key2"), false);
-                // assert.strictEqual(map2.get(testKey), testValue);
             });
         });
     });
