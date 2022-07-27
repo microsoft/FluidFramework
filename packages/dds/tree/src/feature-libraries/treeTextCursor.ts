@@ -48,8 +48,8 @@ import {
  * Maybe do a refactoring to deduplicate this.
  */
 export class TextCursor implements ITreeCursor {
-    // Ancestors traversed to visit this node (including this node).
-    private readonly parentStack: JsonableTree[] = [];
+    // Ancestors traversed to visit this node (including this node and the root).
+    private readonly nodeStack: JsonableTree[] = [];
     // Keys traversed to visit this node
     private readonly keyStack: FieldKey[] = [];
     // Indices traversed to visit this node
@@ -62,11 +62,11 @@ export class TextCursor implements ITreeCursor {
         this.root = [root];
         this.indexStack.push(0);
         this.siblings = this.root;
-        this.parentStack.push(root);
+        this.nodeStack.push(root);
     }
 
     getNode(): JsonableTree {
-        return this.parentStack[this.parentStack.length - 1];
+        return this.nodeStack[this.nodeStack.length - 1];
     }
 
     getFields(): Readonly<FieldMap<JsonableTree>> {
@@ -96,7 +96,7 @@ export class TextCursor implements ITreeCursor {
         const siblings = this.getField(key);
         const child = siblings[index];
         if (child !== undefined) {
-            this.parentStack.push(child);
+            this.nodeStack.push(child);
             this.indexStack.push(index);
             this.keyStack.push(key);
             this.siblings = siblings;
@@ -110,7 +110,7 @@ export class TextCursor implements ITreeCursor {
         const child = this.siblings[index];
         if (child !== undefined) {
             this.indexStack[this.indexStack.length - 1] = index;
-            this.parentStack[this.parentStack.length - 1] = child;
+            this.nodeStack[this.nodeStack.length - 1] = child;
             return { result: TreeNavigationResult.Ok, moved: offset };
         }
         // TODO: Maybe truncate move, and move to end?
@@ -118,21 +118,28 @@ export class TextCursor implements ITreeCursor {
     }
 
     up(): TreeNavigationResult {
-        const length = this.parentStack.length;
+        const length = this.nodeStack.length;
         assert(this.indexStack.length === length, "Unexpected indexStack.length");
         assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
 
-        if (length === 0) {
+        // If nodeStack (which includes the current node) contains only one item,
+        // then the current node is the root, and we can not navigate up.
+        if (length === 1) {
             return TreeNavigationResult.NotFound;
         }
-        this.parentStack.pop();
+
+        assert(length > 1, "Unexpected nodeStack.length");
+        this.nodeStack.pop();
         this.indexStack.pop();
         this.keyStack.pop();
         // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        if (length === 1) {
+        if (length === 2) {
+            // Before navigation, cursor was one below the root (height 2), so now it's at the root.
+            // At the root it cannot get the sibling list by looking at the parent (since there is none),
+            // so use the saved root array.
             this.siblings = this.root;
         } else {
-            const newParent = this.parentStack[this.parentStack.length - 1];
+            const newParent = this.nodeStack[this.nodeStack.length - 2];
             const key = this.keyStack[this.keyStack.length - 1];
             this.siblings = getGenericTreeField(newParent, key, false);
         }
