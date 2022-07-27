@@ -355,7 +355,6 @@ export class PartialSequenceLengths {
         let segmentLen = segment.cachedLength;
         let clientId = segment.clientId;
         let removeClientOverlap: number[] | undefined;
-        let localRemoveOverlap: { localRemovedSeq: number; clientId: number } | undefined;
 
         if (removalInfo) {
             // unlike multi-client, there should be no overlapping delete case:
@@ -371,18 +370,7 @@ export class PartialSequenceLengths {
             assert(typeof removingClient === "number", "Local client cannot have removed first if there are overlapping removes");
             clientId = removingClient;
             const hasOverlap = removalInfo.removedClientIds.length > 1;
-            if (hasOverlap) {
-                removeClientOverlap = []
-                for (const entry of removalInfo.removedClientIds) {
-                    if (typeof entry === "number") {
-                        removeClientOverlap.push(entry);
-                    } else {
-                        removeClientOverlap.push((entry as any).clientId)
-                        localRemoveOverlap = entry as any;
-                    }
-                }
-
-            }
+            removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
         }
 
         const seqPartials = isLocal ? combinedPartialLengths.unsequencedRecords?.partialLengths : combinedPartialLengths.partialLengths;
@@ -438,8 +426,8 @@ export class PartialSequenceLengths {
         }
 
         const { unsequencedRecords } = combinedPartialLengths;
-        if (unsequencedRecords && localRemoveOverlap) {
-            const localSeq = localRemoveOverlap.localRemovedSeq;
+        if (unsequencedRecords && removeClientOverlap && segment.localRemovedSeq !== undefined) {
+            const localSeq = segment.localRemovedSeq;
             const localPartialLengthEntry: LocalPartialSequenceLength = {
                 seq,
                 localSeq,

@@ -506,8 +506,7 @@ export class MergeTree {
             // inserted remotely
             if (segment.seq > refSeq
                     || (segment.removedSeq !== undefined && segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= refSeq)
-                    || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)
-                    || (hasOverlappingLocalRemove(segment, localSeq))) {
+                    || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
                 return 0;
             }
             return segment.cachedLength;
@@ -1911,17 +1910,9 @@ export class MergeTree {
                     // so put them at the head of the list
                     // The list isn't ordered, but we keep the first removal at the head
                     // for partialLengths bookkeeping purposes
-                    if (existingRemovalInfo.removedClientIds.length === 1) {
-                        // TODO
-                        assert(existingRemovalInfo.removedClientIds[0] === this.collabWindow.clientId, "unexpected");
-                        segment.removedClientIds = [clientId, { clientId: this.collabWindow.clientId, localRemovedSeq: segment.localRemovedSeq } as unknown as number];
-                    } else {
-                        existingRemovalInfo.removedClientIds.unshift(clientId);
-                    }
+                    existingRemovalInfo.removedClientIds.unshift(clientId);
 
                     existingRemovalInfo.removedSeq = seq;
-                    // TODO: Finalize remove of this code, performing audit.
-                    segment.localRemovedSeq = undefined;
                     if (segment.localRefs?.empty === false) {
                         localOverlapWithRefs.push(segment);
                     }
@@ -2263,18 +2254,4 @@ export class MergeTree {
         }
         return go;
     }
-}
-
-export function hasOverlappingLocalRemove(segment: ISegment, localSeq: number): boolean {
-    const { removedSeq, localRemovedSeq, removedClientIds } = segment;
-    if (removedSeq !== undefined && localRemovedSeq === undefined && removedClientIds !== undefined) {
-        const localRemoval = removedClientIds.find((id) => typeof id === "object");
-        if (localRemoval) {
-            const localRemovedSeqActual: number = (localRemoval as any).localRemovedSeq;
-            if (localRemovedSeqActual <= localSeq) {
-                return true;
-            }
-        }
-    }
-    return false;
 }

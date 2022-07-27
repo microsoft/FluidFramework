@@ -53,7 +53,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
-import { hasOverlappingLocalRemove, MergeTree } from "./mergeTree";
+import { MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import {
     IMergeTreeClientSequenceArgs,
@@ -747,7 +747,7 @@ export class Client {
             // Note that all ACKed / remote ops are applied and we only need concern ourself with
             // determining if locally pending ops fall before/after the given 'localSeq'.
             if ((seg.localSeq === undefined || seg.localSeq <= localSeq)                // Is inserted
-                && (seg.removedSeq === undefined || seg.localRemovedSeq! > localSeq)     // Not removed
+                && (seg.removedSeq === undefined || (seg.removedSeq === UnassignedSequenceNumber && seg.localRemovedSeq! > localSeq))     // Not removed
             ) {
                 segmentPosition += seg.cachedLength;
             }
@@ -789,7 +789,6 @@ export class Client {
             const { removedSeq, localRemovedSeq } = segment;
             return (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
             || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq)
-            || hasOverlappingLocalRemove(segment, localSeq)
         }
 
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
@@ -858,7 +857,7 @@ export class Client {
                     // if the segment has been removed, there's no need to send the annotate op
                     // unless the remove was local, in which case the annotate must have come
                     // before the remove
-                    if (segment.removedSeq === undefined || segment.localRemovedSeq !== undefined) {
+                    if (segment.removedSeq === undefined || (segment.localRemovedSeq !== undefined && segment.removedSeq === UnassignedSequenceNumber)) {
                         newOp = createAnnotateRangeOp(
                             segmentPosition,
                             segmentPosition + segment.cachedLength,
@@ -882,7 +881,7 @@ export class Client {
                     break;
 
                 case MergeTreeDeltaType.REMOVE:
-                    if (segment.localRemovedSeq !== undefined) {
+                    if (segment.localRemovedSeq !== undefined && segment.removedSeq === UnassignedSequenceNumber) {
                         newOp = createRemoveRangeOp(
                             segmentPosition,
                             segmentPosition + segment.cachedLength);
