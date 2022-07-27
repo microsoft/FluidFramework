@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     ITreeCursor,
     TreeNavigationResult,
@@ -11,6 +12,7 @@ import {
 import {
     FieldKey,
     FieldMap,
+    getGenericTreeField,
     JsonableTree,
     TreeType,
     Value,
@@ -116,17 +118,24 @@ export class TextCursor implements ITreeCursor {
     }
 
     up(): TreeNavigationResult {
-        if (this.parentStack.length === 0) {
+        const length = this.parentStack.length;
+        assert(this.indexStack.length === length, "Unexpected indexStack.length");
+        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
+
+        if (length === 0) {
             return TreeNavigationResult.NotFound;
         }
         this.parentStack.pop();
         this.indexStack.pop();
         this.keyStack.pop();
         // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        this.siblings = this.parentStack.length === 0 ?
-            this.root :
-            (this.parentStack[this.parentStack.length - 1].fields ?? {}
-                )[this.keyStack[this.keyStack.length - 1] as string];
+        if (length === 1) {
+            this.siblings = this.root;
+        } else {
+            const newParent = this.parentStack[this.parentStack.length - 1];
+            const key = this.keyStack[this.keyStack.length - 1];
+            this.siblings = getGenericTreeField(newParent, key, false);
+        }
         return TreeNavigationResult.Ok;
     }
 
