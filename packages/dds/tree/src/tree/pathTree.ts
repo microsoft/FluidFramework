@@ -3,81 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import {
-    ChildLocation,
-    DetachedRange,
-    ChildCollection,
-    RootRange,
-    FieldKey,
- } from "../tree";
+import { FieldKey } from "./types";
 
 /**
  * Path from a location in the tree upward.
  * UpPaths can be used with deduplicated upper parts to allow
  * working with paths localized to part of the tree without incurring
  * costs related to the depth of the local subtree.
+ *
+ * UpPaths can be thought of as terminating at a special root node (that is `undefined`)
+ * who's FieldKeys are all LocalFieldKey's that correspond to detached sequences.
+ *
+ * UpPaths can be mutated over time and should be considered to be invalidated when any edits occurs:
+ * Use of an UpPath that was acquired before the most recent edit is undefined behavior.
  */
 export interface UpPath {
-    parent(): UpPath | DetachedRange;
-    parentField(): FieldKey; // TODO: Type information, including when in DetachedRange.
-    parentIndex(): number; // TODO: field index branded type?
-}
-
-/**
- * This file contains some work in progress code to implement a prefix tree style collection of paths,
- * designed to support collections of cursors and anchors,
- * allowing for optimize rebase and storage of batches of paths.
- *
- * This is currently unused as object forest is focused on correctness not performance.
- */
-
-/**
- * Base type for nodes in a path tree.
- * TODO: implement UpPath/
- */
-export class PathShared<TParent extends ChildCollection = ChildCollection> {
-    // PathNode arrays are kept sorted by index for efficient search.
-    protected readonly children: Map<TParent, PathNode[]> = new Map();
-    // public constructor() {}
-
-    public detach(start: number, length: number, destination: DetachedRange): void {
-        // TODO: implement.
-    }
-
-    public insert(start: number, paths: PathNode, length: number) {
-        assert(paths.parent instanceof PathCollection, 0x333 /* PathShared.splice can only insert detached ranges */);
-        // TODO: implement.
-    }
-}
-
-class PathNode extends PathShared<FieldKey> {
-    public constructor(public parent: PathShared<FieldKey>, location: ChildLocation) {
-        super();
-    }
-}
-
-/**
- * Tree of anchors.
- * Updated on changes to forest.
- * Contains parent pointers.
- *
- * Each anchor is equivalent to a path through the tree.
- * This tree structure stores a collection of these paths, but deduplicating the common prefixes of the tree
- * prefix-tree style.
- *
- * These anchors are used instead of just holding onto the node objects so that the parent path is available:
- * these store parents, but regular object forest nodes do not.
- *
- * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors
- * (and thus need parent paths).
- */
-class PathCollection extends PathShared<RootRange> {
-    public constructor() {
-        super();
-    }
-
-    public delete(range: DetachedRange): void {
-        throw new Error("Method not implemented.");
-    }
+    /**
+     * @returns the parent, or undefined in the case where this path is a member of a detached sequence.
+     */
+    readonly parent: UpPath | undefined;
+    /**
+     * The Field under which this path points.
+     * Note that if `parent` returns `undefined`, this key is a LocalFieldKey that corresponds to a detached sequence.
+     */
+     readonly parentField: FieldKey; // TODO: Type information, including when in DetachedField.
+    /**
+     * The index within `parentField` this path is pointing to.
+     */
+     readonly parentIndex: number; // TODO: field index branded type?
 }

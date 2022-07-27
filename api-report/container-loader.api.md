@@ -8,6 +8,7 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
+import { IAudienceOwner } from '@fluidframework/container-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
@@ -16,6 +17,7 @@ import { IContainerEvents } from '@fluidframework/container-definitions';
 import { IContainerLoadMode } from '@fluidframework/container-definitions';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
+import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -26,13 +28,17 @@ import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
+import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol-base';
 import { IProtocolState } from '@fluidframework/protocol-definitions';
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
+import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISignalClient } from '@fluidframework/protocol-definitions';
+import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
@@ -50,7 +56,7 @@ export enum ConnectionState {
 
 // @public (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
-    constructor(loader: Loader, config: IContainerConfig);
+    constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
     attach(request: IRequest): Promise<void>;
     // (undocumented)
@@ -73,7 +79,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get connected(): boolean;
     // (undocumented)
     get connectionState(): ConnectionState;
-    static createDetached(loader: Loader, codeDetails: IFluidCodeDetails): Promise<Container>;
+    static createDetached(loader: Loader, codeDetails: IFluidCodeDetails, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
@@ -87,7 +93,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     get IFluidRouter(): IFluidRouter;
     get isDirty(): boolean;
-    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState): Promise<Container>;
+    static load(loader: Loader, loadOptions: IContainerLoadOptions, pendingLocalState?: IPendingContainerState, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     get loadedFromVersion(): IVersion | undefined;
     // (undocumented)
@@ -96,7 +102,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     // (undocumented)
     get readOnlyInfo(): ReadOnlyInfo;
-    static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string): Promise<Container>;
+    static rehydrateDetachedFromSnapshot(loader: Loader, snapshot: string, protocolHandlerBuilder?: ProtocolHandlerBuilder): Promise<Container>;
     // (undocumented)
     request(path: IRequest): Promise<IResponse>;
     // (undocumented)
@@ -164,6 +170,7 @@ export interface ILoaderProps {
     readonly documentServiceFactory: IDocumentServiceFactory;
     readonly logger?: ITelemetryBaseLogger;
     readonly options?: ILoaderOptions;
+    readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
     readonly scope?: FluidObject;
     readonly urlResolver: IUrlResolver;
 }
@@ -193,6 +200,14 @@ export interface IPendingContainerState {
     url: string;
 }
 
+// @public (undocumented)
+export interface IProtocolHandler extends IProtocolHandler_2 {
+    // (undocumented)
+    readonly audience: IAudienceOwner;
+    // (undocumented)
+    processSignal(message: ISignalMessage): any;
+}
+
 // @public
 export class Loader implements IHostLoader {
     constructor(loaderProps: ILoaderProps);
@@ -209,6 +224,9 @@ export class Loader implements IHostLoader {
     // (undocumented)
     readonly services: ILoaderServices;
 }
+
+// @public
+export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number, initialClients: ISignalClient[]) => IProtocolHandler;
 
 // @public (undocumented)
 export class RelativeLoader implements ILoader {

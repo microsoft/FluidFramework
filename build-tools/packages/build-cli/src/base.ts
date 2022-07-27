@@ -5,6 +5,7 @@
 
 import { Context, getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
+import chalk from "chalk";
 import { rootPathFlag } from "./flags";
 
 /**
@@ -30,7 +31,7 @@ export abstract class BaseCommand extends Command {
      * @param logVerbose - Set to true to enable logging.
      * @returns The repo {@link Context}.
      */
-    async getContext(logVerbose = false): Promise<Context> {
+    async getContext(logVerbose: boolean): Promise<Context> {
         if (this._context === undefined) {
             const resolvedRoot = await getResolvedFluidRoot();
             const gitRepo = new GitRepo(resolvedRoot);
@@ -49,4 +50,39 @@ export abstract class BaseCommand extends Command {
 
         return this._context;
     }
+
+    logWarn(message?: string, preMessage = "WARNING", ...args: unknown[]): void {
+        this.log(chalk.yellow(`${preMessage}: ${message}`), ...args);
+    }
+}
+
+/**
+ * A base class that should be used by commands that possibly modify repo state. Such commands should provide a
+ * consistent set of flags to control which checks should be run or skipped.
+ */
+export abstract class RepoStateModifyingCommand extends BaseCommand {
+    static flags = {
+        policy: Flags.boolean({
+            allowNo: true,
+            default: true,
+            description: "Check policy before making changes.",
+        }),
+        branchCheck: Flags.boolean({
+            allowNo: true,
+            default: true,
+            description: "Commit the changes to a new branch.",
+        }),
+        updateCheck: Flags.boolean({
+            allowNo: true,
+            default: true,
+            description: "Check that the local repo is up to date with the remote.",
+        }),
+        install: Flags.boolean({
+            allowNo: true,
+            char: "i",
+            default: true,
+            description: "Update lockfiles by running 'npm install' automatically.",
+        }),
+        ...super.flags,
+    };
 }

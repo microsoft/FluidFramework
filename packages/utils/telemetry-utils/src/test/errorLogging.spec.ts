@@ -205,14 +205,6 @@ describe("Error Logging", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(
                 { value: Symbol("okay"), tag: "any string" }), true);
         });
-        it("object or null value not ok", () => {
-            assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: { foo: "bar" }, tag: "any string" }), false, "object value not ok");
-            assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: { }, tag: "any string" }), false, "object value not ok");
-            assert.strictEqual(isTaggedTelemetryPropertyValue(
-                { value: null, tag: "any string" }), false, "null value not ok");
-        });
         it("non-string tag not ok", () => {
             assert.strictEqual(isTaggedTelemetryPropertyValue(
                 { value: "hello", tag: 1 }), false, "number tag is bad");
@@ -297,11 +289,17 @@ describe("Error Logging", () => {
             const errorAsAny = loggingError as any;
             errorAsAny.p1 = { one: 1 };
             errorAsAny.p4 = null;
-            errorAsAny.p5 = ["a", "b", "c"];
+            errorAsAny.p5 = ["a", "b", "c", 1, true, undefined];
+            errorAsAny.p6 = ["a", "b", "c", null];
+            errorAsAny.p7 = { value: null, tag: "tag" };
+            errorAsAny.p8 = { value: errorAsAny.p5, tag: "tag" };
             const props = loggingError.getTelemetryProperties();
             assert.strictEqual(props.p1, "REDACTED (arbitrary object)");
             assert.strictEqual(props.p4, "REDACTED (arbitrary object)");
-            assert.strictEqual(props.p5, "REDACTED (arbitrary object)");
+            assert.strictEqual(props.p5, `["a","b","c",1,true,null]`);
+            assert.strictEqual(props.p6, "REDACTED (arbitrary object)");
+            assert.deepStrictEqual(props.p7, { value: "REDACTED (arbitrary object)", tag: "tag" });
+            assert.deepStrictEqual(props.p8, { value: props.p5, tag: "tag" });
         });
         it("addTelemetryProperties - Does not overwrite base class Error fields (untagged)", () => {
             const loggingError = new LoggingError("myMessage");

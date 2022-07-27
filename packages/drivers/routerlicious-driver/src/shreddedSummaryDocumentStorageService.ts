@@ -12,7 +12,7 @@ import {
     IDocumentStorageService,
     ISummaryContext,
     IDocumentStorageServicePolicies,
- } from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions";
 import { buildHierarchy } from "@fluidframework/protocol-base";
 import {
     ICreateBlobResponse,
@@ -45,10 +45,18 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
     protected readonly blobsShaCache = new Map<string, string>();
     private readonly blobCache: ICache<ArrayBufferLike> | undefined;
     private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> | undefined;
-    private readonly summaryUploadManager: ISummaryUploadManager;
 
     public get repositoryUrl(): string {
         return "";
+    }
+
+    private async getSummaryUploadManager(): Promise<ISummaryUploadManager> {
+        const manager = await this.getStorageManager();
+        return new SummaryTreeUploadManager(
+            new RetriableGitManager(manager, this.logger),
+            this.blobsShaCache,
+            this.getPreviousFullSnapshot.bind(this),
+        );
     }
 
     constructor(
@@ -58,12 +66,9 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
         public readonly policies: IDocumentStorageServicePolicies = {},
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
-        snapshotTreeCache?: ICache<ISnapshotTreeVersion>) {
-        this.summaryUploadManager = new SummaryTreeUploadManager(
-                new RetriableGitManager(manager, logger),
-                this.blobsShaCache,
-                this.getPreviousFullSnapshot.bind(this),
-            );
+        snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
+        private readonly getStorageManager: (disableCache?: boolean) => Promise<GitManager> = async () => this.manager,
+    ) {
         if (driverPolicies?.enableRestLess === true || isNode) {
             this.blobCache = blobCache ?? new InMemoryCache();
             this.snapshotTreeCache = snapshotTreeCache ?? new InMemoryCache();
@@ -79,7 +84,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                 versionId: id,
                 count,
             },
-            async () => this.manager.getCommits(id, count),
+            async () => {
+                const manager = await this.getStorageManager();
+                return manager.getCommits(id, count);
+            },
         );
         return commits.map((commit) => ({
             date: commit.commit.author.date,
@@ -111,7 +119,8 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                 treeId: requestVersion.treeId,
             },
             async (event) => {
-                const response = await this.manager.getTree(requestVersion!.treeId);
+                const manager = await this.getStorageManager();
+                const response = await manager.getTree(requestVersion!.treeId);
                 event.end({
                     size: response.tree.length,
                 });
@@ -136,7 +145,8 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                 blobId,
             },
             async (event) => {
-                const response = await this.manager.getBlob(blobId);
+                const manager = await this.getStorageManager();
+                const response = await manager.getBlob(blobId);
                 event.end({
                     size: response.size,
                 });
@@ -155,7 +165,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             {
                 eventName: "uploadSummaryWithContext",
             },
-            async () => this.summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel"),
+            async () => {
+                const summaryUploadManager = await this.getSummaryUploadManager();
+                return summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel");
+            },
         );
         return summaryHandle;
     }
@@ -173,7 +186,8 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                 size: uint8ArrayFile.length,
             },
             async (event) => {
-                const response = await this.manager.createBlob(
+                const manager = await this.getStorageManager();
+                const response = await manager.createBlob(
                     Uint8ArrayToString(
                         uint8ArrayFile, "base64"),
                     "base64").then((r) => ({ id: r.sha, url: r.url }));

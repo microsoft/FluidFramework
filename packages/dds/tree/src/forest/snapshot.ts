@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, ChildLocation } from "../tree";
-import { Value, ITreeCursor } from "./cursor";
+import { FieldKey, ChildLocation, Value } from "../tree";
+import { ITreeCursor } from "./cursor";
 
 /**
  * Copy on write and immutable views for forests.
@@ -17,7 +17,7 @@ import { Value, ITreeCursor } from "./cursor";
  * Ways to refer to a node in a forest.
  * TODO: other ways. Support for rebase to other forests.
  */
- export type NodeId = ITreeCursor;
+export type NodeId = ITreeCursor;
 
 /**
  * An immutable forest.
@@ -28,7 +28,7 @@ import { Value, ITreeCursor } from "./cursor";
  *
  * @public
  */
- export interface IForestSnapshot {
+export interface IForestSnapshot {
     /**
      * @returns the node associated with `id`. Should not be used if there is no node with the provided id.
      */
@@ -59,7 +59,7 @@ import { Value, ITreeCursor } from "./cursor";
  *
  * @public
  */
- export interface ICowForestSnapshot extends IForestSnapshot {
+export interface ICowForestSnapshot extends IForestSnapshot {
     /**
      * Adds the supplied nodes to the forest. The nodes' IDs must be unique in the forest.
      * @param nodes - the sequence of nodes to add to the forest.

@@ -36,7 +36,6 @@ export {
 } from "./garbageCollection";
 export {
     IPendingFlush,
-    IPendingFlushMode,
     IPendingLocalState,
     IPendingMessage,
     IPendingState,

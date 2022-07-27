@@ -42,6 +42,7 @@ export enum DriverErrorType {
     throttlingError = "throttlingError",
     // (undocumented)
     unsupportedClientProtocolVersion = "unsupportedClientProtocolVersion",
+    usageError = "usageError",
     writeError = "writeError"
 }
 
@@ -57,6 +58,14 @@ export enum DriverHeader {
 export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
     criticalBootDomains?: string[];
+}
+
+// @public (undocumented)
+export enum FetchSource {
+    // (undocumented)
+    default = "default",
+    // (undocumented)
+    noCache = "noCache"
 }
 
 // @public (undocumented)
@@ -153,7 +162,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -173,7 +182,7 @@ export interface IDocumentStorageServicePolicies {
 // @public
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
-    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage;
+    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.usageError;
     // (undocumented)
     readonly statusCode?: number;
 }

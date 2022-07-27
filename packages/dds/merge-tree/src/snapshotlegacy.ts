@@ -16,14 +16,14 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import {
     ISegment,
-    MergeTree,
-} from "./mergeTree";
+} from "./mergeTreeNodes";
 import { IJSONSegment } from "./ops";
 import { matchProperties } from "./properties";
 import {
     MergeTreeChunkLegacy,
     serializeAsMinSupportedVersion,
 } from "./snapshotChunks";
+import { MergeTree } from "./mergeTree";
 
 interface SnapshotHeader {
     chunkCount?: number;
@@ -36,6 +36,9 @@ interface SnapshotHeader {
     minSeq?: number;
 }
 
+/**
+ * @internal
+ */
 export class SnapshotLegacy {
     public static readonly header = "header";
     public static readonly body = "body";

@@ -37,7 +37,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      * Note: This is the type that is specified in the typeid of this reference and not the actual type
      * of the referenced object, which might inherit from that typeid.
      *
-     * @return {string} The typeid of the nodes this reference may point to
+     * @returns {string} The typeid of the nodes this reference may point to
      */
     getReferenceTargetTypeId() {
         return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
@@ -46,17 +46,16 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     /**
      * Resolves the referenced property for the given key
      *
-     * @param  {number|array<string|number>} in_ids the ID of the property or an array of IDs
-     *     if an array is passed, the .get function will be performed on each id in sequence
-     *     for example .get([0, 'position','x']) is equivalent to .get(0).get('position').get('x').
-     *     If .get resolves to a ReferenceProperty, it will, by default, return the property that the ReferenceProperty
-     *     refers to.
+     * @param {number|array<string|number>} in_ids - the ID of the property or an array of IDs if an array is passed,
+     * the .get function will be performed on each id in sequence for example .get([0, 'position','x']) is equivalent to
+     * .get(0).get('position').get('x'). If `.get` resolves to a ReferenceProperty, it will, by default, return the
+     * property that the ReferenceProperty refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
-     *     How should this function behave during reference resolution?
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
+     * should this function behave during reference resolution?
      *
-     * @return {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if it
-     *    could not be resolved
+     * @returns {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if
+     *    it could not be resolved
      */
     get(in_ids, in_options) {
         in_options = in_options || {};
@@ -82,8 +81,8 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
      * Checks whether the reference is valid. This is either the case when it is empty or when the referenced
      * property exists.
      *
-     * @param {number} in_position the target index
-     * @return {boolean} True if the reference is valid, otherwise false.
+     * @param {number} in_position - The target index
+     * @returns {boolean} True if the reference is valid, otherwise false.
      */
     isReferenceValid(in_position) {
         return ValueArrayProperty.prototype.get.call(this, in_position) === '' ||
@@ -93,13 +92,13 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     /**
      * Sets the range in the array to point to the given property objects or to be equal to the given paths
      *
-     * @param {number} in_offset - target start index
-     * @param {Array<property-properties.BaseProperty|undefined|String>} in_array - contains the properties to be set or
-     *   the paths to those properties. If undefined is passed, the reference will be set to an empty string to
-     *   indicate an empty reference.
-     * @throws if in_offset is smaller than zero, larger than the length of the array or not a number
-     * @throws if in_array is not an array
-     * @throws if one of the items in in_array is defined, but is not a property or a string.
+     * @param {number} in_offset - Target start index
+     * @param {Array<property-properties.BaseProperty|undefined|String>} in_array - Contains the properties to be set or
+     * the paths to those properties. If undefined is passed, the reference will be set to an empty string to
+     * indicate an empty reference.
+     * @throws If in_offset is smaller than zero, larger than the length of the array or not a number
+     * @throws If in_array is not an array
+     * @throws If one of the items in in_array is defined, but is not a property or a string.
      */
     setRange(in_offset, in_array) {
         var arr = ReferenceArrayProperty._convertInputToPaths(in_array, 'setRange');
@@ -109,13 +108,13 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     /**
      * Insert a range which points to the given property objects into the array
      *
-     * @param {number} in_offset - target start index
-     * @param {Array<property-properties.BaseProperty|undefined|String>} in_array  - contains the properties to be set or
-     *   the paths to those properties. If undefined is passed, the reference will be set to an empty string to
-     *   indicate an empty reference.
-     * @throws if in_offset is smaller than zero, larger than the length of the array or not a number
-     * @throws if in_array is not an array
-     * @throws if one of the items in in_array is defined, but is not a property or a string.
+     * @param {number} in_offset - Target start index
+     * @param {Array<property-properties.BaseProperty|undefined|String>} in_array - Contains the properties to be set or
+     * the paths to those properties. If undefined is passed, the reference will be set to an empty string to
+     * indicate an empty reference.
+     * @throws If in_offset is smaller than zero, larger than the length of the array or not a number
+     * @throws If in_array is not an array
+     * @throws If one of the items in in_array is defined, but is not a property or a string.
      */
     insertRange(in_offset, in_array) {
         var arr = ReferenceArrayProperty._convertInputToPaths(in_array, 'insertRange');
@@ -123,9 +122,9 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     }
 
     /**
-     * returns the path value of a reference.
-     * @param {number} in_id the index of the property
-     * @return {string} the path string
+     * Returns the path value of a reference.
+     * @param {number} in_id - The index of the property
+     * @returns {string} The path string
      */
     getValue(in_id) {
         return this._dataArrayRef.getValue(in_id);
@@ -133,7 +132,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
     /**
      * Returns an object with all the nested values contained in this property
-     * @return {array<String>} an array of strings representing the paths listed in this array
+     * @returns {array<String>} an array of strings representing the paths listed in this array
      * for example: ['/path1', '/path2']
      */
     getValues() {
@@ -147,8 +146,8 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
     /**
      * Removes the last element of the array
-     * @throws if trying to modify a referenced property
-     * @return {String} deleted element (string path)
+     * @throws If trying to modify a referenced property
+     * @returns {String} deleted element (string path)
      */
     pop() {
         if (this._dataArrayRef.length > 0) {
@@ -162,11 +161,11 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
     /**
      * Removes an element of the array and shift remaining elements to the left
-     * @param {number} in_position the index that will be removed
-     * @throws if in_position is not a number
-     * @throws if trying to remove an item with a parent
-     * @throws if trying to remove something that does not exist
-     * @return {String} the value that was removed (string path).
+     * @param {number} in_position - The index that will be removed
+     * @throws If in_position is not a number
+     * @throws If trying to remove an item with a parent
+     * @throws If trying to remove something that does not exist
+     * @returns {String} the value that was removed (string path).
      */
     remove(in_position) {
         var value = this.getValue(in_position);
@@ -176,13 +175,13 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
     /**
      * Removes a given number of elements from the array and shifts remaining values to the left.
-     * @param {number} in_offset target start index
-     * @param {number} in_deleteCount number of elements to be deleted
-     * @throws if in_offset is not a number
-     * @throws if in_deleteCount is not a number
-     * @throws if trying to remove an item with a parent
-     * @throws if in_offset is smaller than zero or if in_offset + in_delete count is larger than the length of the array
-     * @return {Array<String>} an array containing the values removed (string paths)
+     * @param {number} in_offset - Target start index
+     * @param {number} in_deleteCount - Number of elements to be deleted
+     * @throws If in_offset is not a number
+     * @throws If in_deleteCount is not a number
+     * @throws If trying to remove an item with a parent
+     * @throws If in_offset is smaller than zero or if in_offset + in_delete count is larger than the length of the array
+     * @returns {Array<String>} an array containing the values removed (string paths)
      */
     removeRange(in_offset, in_deleteCount) {
         ConsoleUtils.assert(_.isNumber(in_offset),
@@ -216,7 +215,7 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
 
     /**
      * Creates and initializes the data array
-     * @param {Number} in_length      the initial length of the array
+     * @param {Number} in_length - The initial length of the array
      */
     _dataArrayCreate(in_length) {
         this._dataArrayRef = new UniversalDataArray(in_length);
@@ -228,14 +227,14 @@ export class ReferenceArrayProperty extends ValueArrayProperty {
     /**
      * Validates the array and returns a sanitized version of it containing only strings.
      *
-     * @param {Array<property-properties.BaseProperty|undefined|String>} in_array  - contains the properties to be set or
-     *   the paths to those properties. If undefined is passed, the reference will be set to an empty string to
-     *   indicate an empty reference.
-     * @param {String} in_callerName  - the name of the function that called, to make it appear in
-     *   the error message if any
-     * @return {Array<string>} the array of paths
-     * @throws if in_array is not an array
-     * @throws if one of the items in in_array is defined, but is not a property or a string.
+     * @param {Array<property-properties.BaseProperty|undefined|String>} in_array - contains the properties to be set or
+     * the paths to those properties. If undefined is passed, the reference will be set to an empty string to
+     * indicate an empty reference.
+     * @param {String} in_callerName - the name of the function that called, to make it appear in
+     * the error message if any
+     * @returns {Array<string>} The array of paths
+     * @throws If in_array is not an array
+     * @throws If one of the items in in_array is defined, but is not a property or a string.
      */
     static _convertInputToPaths = function(in_array, in_callerName) {
         if (!_.isArray(in_array)) {
