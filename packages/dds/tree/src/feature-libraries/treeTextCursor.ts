@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     ITreeCursor,
     TreeNavigationResult,
@@ -11,7 +12,8 @@ import {
 import {
     FieldKey,
     FieldMap,
-    PlaceholderTree,
+    getGenericTreeField,
+    JsonableTree,
     TreeType,
     Value,
 } from "../tree";
@@ -35,46 +37,46 @@ import {
  * Note:
  * Currently a lot of Tree's codebase is using json for serialization.
  * Because putting json strings inside json works poorly (adds lots of escaping),
- * for now this library actually outputs and inputs the Json compatible type PlaceholderTree
+ * for now this library actually outputs and inputs the Json compatible type JsonableTree
  * rather than actual strings.
  */
 
 /**
- * An ITreeCursor implementation for PlaceholderTree.
+ * An ITreeCursor implementation for JsonableTree.
  *
  * TODO: object-forest's cursor is mostly a superset of this functionality.
  * Maybe do a refactoring to deduplicate this.
  */
 export class TextCursor implements ITreeCursor {
     // Ancestors traversed to visit this node (including this node).
-    private readonly parentStack: PlaceholderTree[] = [];
+    private readonly parentStack: JsonableTree[] = [];
     // Keys traversed to visit this node
     private readonly keyStack: FieldKey[] = [];
     // Indices traversed to visit this node
     private readonly indexStack: number[] = [];
 
-    private siblings: readonly PlaceholderTree[];
-    private readonly root: readonly PlaceholderTree[];
+    private siblings: readonly JsonableTree[];
+    private readonly root: readonly JsonableTree[];
 
-    public constructor(root: PlaceholderTree) {
+    public constructor(root: JsonableTree) {
         this.root = [root];
         this.indexStack.push(0);
         this.siblings = this.root;
         this.parentStack.push(root);
     }
 
-    getNode(): PlaceholderTree {
+    getNode(): JsonableTree {
         return this.parentStack[this.parentStack.length - 1];
     }
 
-    getFields(): Readonly<FieldMap<PlaceholderTree>> {
+    getFields(): Readonly<FieldMap<JsonableTree>> {
         return this.getNode().fields ?? {};
     }
 
-    getField(key: FieldKey): readonly PlaceholderTree[] {
+    getField(key: FieldKey): readonly JsonableTree[] {
         // Save result to a constant to work around linter bug:
         // https://github.com/typescript-eslint/typescript-eslint/issues/5014
-        const field: readonly PlaceholderTree[] = this.getFields()[key as string] ?? [];
+        const field: readonly JsonableTree[] = this.getFields()[key as string] ?? [];
         return field;
     }
 
@@ -116,17 +118,24 @@ export class TextCursor implements ITreeCursor {
     }
 
     up(): TreeNavigationResult {
-        if (this.parentStack.length === 0) {
+        const length = this.parentStack.length;
+        assert(this.indexStack.length === length, "Unexpected indexStack.length");
+        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
+
+        if (length === 0) {
             return TreeNavigationResult.NotFound;
         }
         this.parentStack.pop();
         this.indexStack.pop();
         this.keyStack.pop();
         // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        this.siblings = this.parentStack.length === 0 ?
-            this.root :
-            (this.parentStack[this.parentStack.length - 1].fields ?? {}
-                )[this.keyStack[this.keyStack.length - 1] as string];
+        if (length === 1) {
+            this.siblings = this.root;
+        } else {
+            const newParent = this.parentStack[this.parentStack.length - 1];
+            const key = this.keyStack[this.keyStack.length - 1];
+            this.siblings = getGenericTreeField(newParent, key, false);
+        }
         return TreeNavigationResult.Ok;
     }
 
@@ -136,17 +145,17 @@ export class TextCursor implements ITreeCursor {
 }
 
 /**
- * Extract a PlaceholderTree from the contents of the given ITreeCursor's current node.
+ * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
-export function placeholderTreeFromCursor(cursor: ITreeCursor): PlaceholderTree {
-    let fields: FieldMap<PlaceholderTree> | undefined;
+export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
+    let fields: FieldMap<JsonableTree> | undefined;
     for (const key of cursor.keys) {
         fields ??= {};
-        const field: PlaceholderTree[] = mapCursorField(cursor, key, placeholderTreeFromCursor);
+        const field: JsonableTree[] = mapCursorField(cursor, key, jsonableTreeFromCursor);
         fields[key as string] = field;
     }
 
-    const node: PlaceholderTree = {
+    const node: JsonableTree = {
         type: cursor.type,
         value: cursor.value,
         fields,

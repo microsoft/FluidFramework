@@ -8,9 +8,9 @@ export {
     FieldKey,
     TreeType,
     ChildLocation,
-    DetachedRange,
+    DetachedField,
     ChildCollection,
-    RootRange,
+    RootField,
     Value,
     TreeValue,
 } from "./types";
