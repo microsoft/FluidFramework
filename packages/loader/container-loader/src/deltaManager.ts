@@ -192,8 +192,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
         if (this.opsCurrentlyProcessing > 0) {
             this.close(new UsageError("Currently processing ops: Container closed"));
-            }
-        this.opsCurrentlyProcessing++;
+        }
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: JSON.stringify(contents),
             metadata,
@@ -219,7 +218,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         if (!batch) {
             this.flush();
         }
-        this.opsCurrentlyProcessing--;
         return message.clientSequenceNumber;
     }
 
@@ -770,10 +768,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
-        if (this.opsCurrentlyProcessing !== 0) {
-                this.close(new UsageError("Currently processing ops: Container closed"));
-        }
-       this.opsCurrentlyProcessing++;
+        this.opsCurrentlyProcessing++;
         this.lastProcessedMessage = message;
 
         // All non-system messages are coming from some client, and should have clientId
