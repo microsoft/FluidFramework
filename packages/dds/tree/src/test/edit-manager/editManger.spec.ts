@@ -460,25 +460,25 @@ describe.only("EditManager", () => {
     });
 
     describe("Can handle all possible interleaving of steps", () => {
-        visitScenario([]);
+        developAndRunScenario([]);
     });
 });
 
-function visitScenario(scenario: ScenarioStep[]): void {
+function developAndRunScenario(scenario: ScenarioStep[]): void {
     if (scenario.length >= NUM_STEPS) {
-        executeScenario(scenario);
+        runScenario(scenario);
     } else {
         for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
             for (const type of actions) {
                 scenario.push({ type, session: iSession });
-                visitScenario(scenario);
+                developAndRunScenario(scenario);
                 scenario.pop();
             }
         }
     }
 }
 
-function executeScenario(scenario: readonly ScenarioStep[]): void {
+function runScenario(scenario: readonly ScenarioStep[]): void {
     const name = scenarioString(scenario);
     it(name, () => {
         const scenarioWithFinalPush = [...scenario];
