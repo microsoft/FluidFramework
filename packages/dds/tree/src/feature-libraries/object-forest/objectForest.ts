@@ -4,30 +4,29 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { TextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
     DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
 } from "../../dependency-tracking";
 import {
-    ITreeCursor, ITreeSubscriptionCursor, ForestLocation,
+    ITreeCursor, ITreeSubscriptionCursor,
     ForestAnchor, IEditableForest,
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
-    FieldLocation, TreeLocation, isFieldLocation,
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
 import {
     FieldKey, TreeType, DetachedField, AnchorSet,
-    Value, Delta, JsonableTree, getGenericTreeField, FieldMap, UpPath, Anchor,
+    Value, Delta, JsonableTree, getGenericTreeField, FieldMap, UpPath, Anchor, visitDelta,
 } from "../../tree";
 import { brand, fail } from "../../util";
-import { jsonableTreeFromCursor } from "../treeTextCursor";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
     public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
     public root(range: DetachedField): ForestAnchor { return new RootAnchor(range); }
-    public readonly rootField: DetachedField = this.newRange();
+    public readonly rootField: DetachedField;
 
     private readonly roots: Map<DetachedField, ObjectField> = new Map();
 
@@ -38,13 +37,114 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 
     public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
         super("object-forest.ObjectForest");
+        this.rootField = this.newDetachedField();
         this.roots.set(this.rootField, []);
         // Invalidate forest if schema change.
         recordDependency(this.dependent, this.schema);
     }
 
     applyDelta(delta: Delta.Root): void {
-        throw new Error("Method not implemented.");
+        // TODO: refactor object forest to use root node above detached fields, like how PathNode works.
+        // Then factor out this editing code to work on any such JsonableTree.
+
+        this.beforeChange();
+        const moves: Map<Delta.MoveId, DetachedField> = new Map();
+        const currentNode: Cursor = this.allocateCursor();
+        let currentField: FieldKey | undefined;
+        const moveIn = (index: number, toAttach: DetachedField): number => {
+            assert(currentField !== undefined, "must be in field to onMoveIn");
+            const children = this.roots.get(toAttach) ?? fail("Can not attach non-existent range");
+            this.roots.delete(toAttach);
+            let dstField: ObjectField;
+            if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
+                const dst = currentField as unknown as DetachedField;
+                assert(toAttach !== dst, "can not attach range to itself");
+                // TODO: protect against parenting under itself creating a cycle as well:
+                // or maybe that should delete the subtree?
+                dstField = this.getRoot(dst);
+            } else {
+                if (children.length === 0) {
+                    return 0; // Prevent creating 0 sized fields when inserting empty into empty.
+                }
+                dstField = getGenericTreeField(currentNode, currentField, true);
+            }
+            assertValidIndex(index, dstField, true);
+            // TODO: this will fail for very large moves due to argument limits.
+            dstField.splice(index, 0, ...children);
+
+            return children.length;
+        };
+        const visitor = {
+            onDelete: (index: number, count: number): void => {
+                assert(currentField !== undefined, "must be in field to onDelete");
+                visitor.onMoveOut(index, count);
+            },
+            onInsert: (index: number, content: Delta.ProtoNode[]): void => {
+                assert(currentField !== undefined, "must be in field to onInsert");
+                const range = this.add(content.map((data) => new TextCursor(data)));
+                moveIn(index, range);
+            },
+            onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
+                assert(currentField !== undefined, "must be in field to onMoveOut");
+                let srcField: ObjectField;
+                if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
+                    srcField = this.getRoot(currentField as unknown as DetachedField);
+                } else {
+                    srcField = getGenericTreeField(currentNode, currentField, false);
+                }
+                const field = this.detachRangeOfChildren(srcField, index, index + count);
+                if (id !== undefined) {
+                    moves.set(id, field);
+                } else {
+                    this.delete(field);
+                }
+            },
+            onMoveIn: (index: number, count: number, id: Delta.MoveId): void => {
+                assert(currentField !== undefined, "must be in field to onMoveIn");
+                const toAttach = moves.get(id) ?? fail("move in without move out");
+                moves.delete(id);
+                const countMoved = moveIn(index, toAttach);
+                assert(countMoved === count, "counts must match");
+            },
+            onSetValue: (value: Value): void => {
+                assert(currentField === undefined, "must be in node to onSetValue");
+                const node = currentNode.getNode();
+                if (value !== undefined) {
+                    node.value = value;
+                } else {
+                    delete node.value;
+                }
+            },
+            enterNode: (index: number): void => {
+                assert(currentField !== undefined, "must be in field to enterNode");
+                let result: TreeNavigationResult;
+                if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
+                    result = this.tryGet(this.root(currentField as unknown as DetachedField), currentNode);
+                } else {
+                    result = currentNode.down(currentField, index);
+                }
+                assert(result === TreeNavigationResult.Ok, "can only enter existing nodes");
+                currentField = undefined;
+            },
+            exitNode: (index: number): void => {
+                assert(currentField === undefined, "must be in node to exitNode");
+                currentField = currentNode.getParentFieldKey() as unknown as FieldKey;
+                const result = currentNode.up();
+                if (result === TreeNavigationResult.NotFound) {
+                    currentNode.clear();
+                }
+            },
+            enterField: (key: FieldKey): void => {
+                assert(currentField === undefined, "must be in node to enterField");
+                currentField = key;
+            },
+            exitField: (key: FieldKey): void => {
+                assert(currentField !== undefined, "must be in field to exitField");
+                currentField = undefined;
+            },
+        };
+        visitDelta(delta, visitor);
+        currentNode.free();
     }
 
     public observeItem(item: ObjectField | JsonableTree, observer: ObservingDependent | undefined): void {
@@ -68,66 +168,37 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     private nextRange = 0;
-    public newRange(): DetachedField {
+    public newDetachedField(): DetachedField {
         const range = brand<DetachedField>(String(this.nextRange));
         this.nextRange += 1;
         return range;
     }
 
-    add(nodes: Iterable<ITreeCursor>): DetachedField {
-        this.beforeChange();
-        const range = this.newRange();
+    private add(nodes: Iterable<ITreeCursor>): DetachedField {
+        const range = this.newDetachedField();
         assert(!this.roots.has(range), "new range must not already exist");
         const field: ObjectField = Array.from(nodes, jsonableTreeFromCursor);
         this.roots.set(range, field);
         return range;
     }
-    attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedField): void {
-        this.beforeChange();
-        const children = this.roots.get(toAttach) ?? fail("Can not attach non-existent range");
-        this.roots.delete(toAttach);
-        const destRange = destination.range;
-        assert(toAttach !== destRange, "can not attach range to itself");
-        if (children.length === 0) {
-            return; // Prevent creating 0 sized fields when inserting empty into empty.
-        }
-        const field: ObjectField = this.lookupField(destRange, true);
-        assertValidIndex(destination.index, field, true);
-        field.splice(destination.index, 0, ...children);
-    }
 
-    private lookupField(range: FieldLocation | DetachedField, create: boolean): ObjectField {
-        if (!isFieldLocation(range)) {
-            return this.getRoot(range);
-        } else {
-            const node = this.lookupNodeId(range.parent);
-            return getGenericTreeField(node, range.key, create);
-        }
-    }
-
-    detachRangeOfChildren(range: FieldLocation | DetachedField, startIndex: number, endIndex: number): DetachedField {
-        this.beforeChange();
-        const field: ObjectField = this.lookupField(range, false);
+    private detachRangeOfChildren(field: ObjectField, startIndex: number, endIndex: number): DetachedField {
         assertValidIndex(startIndex, field, true);
         assertValidIndex(endIndex, field, true);
         assert(startIndex <= endIndex, "detached range's end must be after it's start");
-        const newRange = this.newRange();
+        const newRange = this.newDetachedField();
         const newField = field.splice(startIndex, endIndex - startIndex);
         this.roots.set(newRange, newField);
         return newRange;
     }
-    setValue(nodeId: ForestLocation, value: Value): void {
-        this.beforeChange();
-        const node = this.lookupNodeId(nodeId);
-        node.value = value;
-    }
-    delete(range: DetachedField): void {
-        this.beforeChange();
+
+    private delete(range: DetachedField): void {
         // TODO: maybe define this to leave the forest with an empty root field?
         assert(range !== this.rootField, "root field can not be deleted");
         const deleted = this.roots.delete(range);
         assert(deleted, "deleted range must exist in forest");
     }
+
     allocateCursor(): Cursor {
         return new Cursor(this);
     }
@@ -163,21 +234,6 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         }
 
         return TreeNavigationResult.NotFound;
-    }
-
-    private lookupNodeId(id: ForestLocation): JsonableTree {
-        if (id instanceof Cursor) {
-            return id.getNode();
-        }
-
-        // TODO: this could be much more efficient (and not use cursor)
-        const cursor = this.allocateCursor();
-        const result = this.tryGet(id, cursor);
-        assert(result === TreeNavigationResult.Ok, "Expected to find anchor");
-        const node = cursor.getNode();
-        cursor.free();
-
-        return node;
     }
 
     private search(destination: JsonableTree, cursor: Cursor): TreeNavigationResult {
@@ -319,6 +375,16 @@ class Cursor implements ITreeSubscriptionCursor {
         assert(this.state === ITreeSubscriptionCursorState.Current, 0x33d /* Cursor must be current to be used */);
         assert(this.nodeStack.length > 0, 0x33e /* Cursor must be current to be used */);
         return this.nodeStack[this.nodeStack.length - 1];
+    }
+
+    getParentFieldKey(): FieldKey | DetachedField {
+        assert(this.state === ITreeSubscriptionCursorState.Current, 0x33d /* Cursor must be current to be used */);
+        if (this.keyStack.length === 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.root!;
+        } else {
+            return this.keyStack[this.keyStack.length - 1];
+        }
     }
 
     getFields(): Readonly<FieldMap<JsonableTree>> {
