@@ -18,6 +18,12 @@ export const enum TreeNavigationResult {
 }
 
 /**
+ * TreeNavigationResult, but never "Pending".
+ * Can be used when data is never pending.
+ */
+export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
+
+/**
  * A stateful low-level interface for reading tree data.
  *
  * TODO: Needs rules around invalidation/mutation of the underlying tree.
@@ -30,9 +36,9 @@ export const enum TreeNavigationResult {
  * Leverage "chunks" and "shape" for this, and skip to next chunk with seek (chunk length).
  * Default chunks of size 1, and "node" shape?
  */
-export interface ITreeCursor {
+export interface ITreeCursor<TResult = TreeNavigationResult> {
     /** Select the child located at the given key and index. */
-    down(key: FieldKey, index: number): TreeNavigationResult;
+    down(key: FieldKey, index: number): TResult;
 
     /**
      * Moves `offset` entries in the field.
@@ -40,10 +46,10 @@ export interface ITreeCursor {
      * In this case the distance moved is returned, and may be less than `offset`.
      * Iff `ok` then `moved` will equal `offset`.
      */
-    seek(offset: number): { result: TreeNavigationResult; moved: number; };
+    seek(offset: number): { result: TResult; moved: number; };
 
     /** Select the parent of the currently selected node. */
-    up(): TreeNavigationResult;
+    up(): TResult;
 
     /** The type of the currently selected node. */
     readonly type: TreeType;

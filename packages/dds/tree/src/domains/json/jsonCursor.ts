@@ -9,6 +9,7 @@ import {
     ITreeCursor,
     mapCursorField,
     TreeNavigationResult,
+    SynchronousNavigationResult,
 } from "../../forest";
 import {
     EmptyKey,
@@ -24,7 +25,7 @@ import {
 /**
  * An ITreeCursor implementation used to read a Jsonable tree for testing and benchmarking.
  */
-export class JsonCursor<T> implements ITreeCursor {
+export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     // PERF: JsonCursor maintains a stack of nodes/edges traversed.  This stack is
     //       partitioned across 3 arrays, with the top of the stack stored in fields.
     //       This design was advantageous in a similar tree visitor, but should
@@ -47,7 +48,7 @@ export class JsonCursor<T> implements ITreeCursor {
         this.currentIndex = -1;
     }
 
-    public seek(offset: number): { result: TreeNavigationResult; moved: number; } {
+    public seek(offset: number): { result: SynchronousNavigationResult; moved: number; } {
         if (offset === 0) {
             return { result: TreeNavigationResult.Ok, moved: 0 };
         }
@@ -79,7 +80,7 @@ export class JsonCursor<T> implements ITreeCursor {
         }
     }
 
-    public down(key: FieldKey, index: number): TreeNavigationResult {
+    public down(key: FieldKey, index: number): SynchronousNavigationResult {
         const parentNode = this.currentNode;
         let childNode: any;
 
@@ -108,7 +109,7 @@ export class JsonCursor<T> implements ITreeCursor {
         return TreeNavigationResult.Ok;
     }
 
-    public up(): TreeNavigationResult {
+    public up(): SynchronousNavigationResult {
         // TODO: Should benchmark vs. detecting via returned 'undefined' from 'pop()'.
         if (this.parentStack.length < 1) {
             return TreeNavigationResult.NotFound;
