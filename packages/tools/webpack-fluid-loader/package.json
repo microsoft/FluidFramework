@@ -85,6 +85,7 @@
     "@fluidframework/view-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/web-code-loader": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "axios": "^0.26.0",
+    "buffer": "^6.0.3",
     "express": "^4.16.3",
     "nconf": "^0.11.4",
     "sillyname": "^0.1.0",
@@ -94,7 +95,7 @@
   "devDependencies": {
     "@fluid-tools/webpack-fluid-loader-previous": "npm:@fluid-tools/webpack-fluid-loader@^1.1.0",
     "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/build-tools": "^0.2.74327",
+    "@fluidframework/build-tools": "^0.3.0-0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@rushstack/eslint-config": "^2.5.1",

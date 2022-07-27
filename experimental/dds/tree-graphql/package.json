@@ -26,6 +26,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint src",
     "eslint:fix": "eslint src --fix",
+    "format": "npm run prettier:fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\"",

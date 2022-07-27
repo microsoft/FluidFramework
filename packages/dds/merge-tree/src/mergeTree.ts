@@ -1899,8 +1899,11 @@ export class MergeTree {
         };
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         // these segments are already viewed as being removed locally and are not event-ed
-        // so can slide immediately
-        localOverlapWithRefs.forEach((s) => this.slideReferences(s, s.localRefs!));
+        // so can slide non-StayOnRemove refs immediately
+        localOverlapWithRefs.forEach(
+            (s) => this.slideReferences(s, Array.from(s.localRefs!)
+                .filter((localRef) => !refTypeIncludesFlag(localRef, ReferenceType.StayOnRemove))),
+        );
         // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
             this.mergeTreeDeltaCallback(
@@ -1927,7 +1930,7 @@ export class MergeTree {
     private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {
         this.blockUpdate(node);
         if (this.collabWindow.collaborating) {
-            node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow, recur);
+            node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow, recur);
         }
     }
 
@@ -2016,9 +2019,9 @@ export class MergeTree {
                 && MergeTree.options.incrementalUpdate
                 && clientId !== NonCollabClient
             ) {
-                node.partialLengths.update(this, node, seq, clientId, this.collabWindow);
+                node.partialLengths.update(node, seq, clientId, this.collabWindow);
             } else {
-                node.partialLengths = PartialSequenceLengths.combine(this, node, this.collabWindow);
+                node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
             }
         }
     }

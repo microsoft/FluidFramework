@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isMonoRepoKind, MonoRepoKind, Package } from "@fluidframework/build-tools";
+import { isMonoRepoKind, MonoRepoKind } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { table } from "table";
 import { BaseCommand } from "../base";
@@ -16,7 +16,6 @@ export default class InfoCommand extends BaseCommand {
     static description = "Get info about the repo, release groups, and packages.";
 
     static flags = {
-        ...super.flags,
         releaseGroup: releaseGroupFlag({
             required: false,
         }),
@@ -27,13 +26,11 @@ export default class InfoCommand extends BaseCommand {
             description: "Include private packages (default true).",
             required: false,
         }),
+        ...super.flags,
     };
 
-    static args = [];
-
     async run(): Promise<void> {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { args, flags } = await this.parse(InfoCommand);
+        const { flags } = await this.parse(InfoCommand);
         const context = await this.getContext(flags.verbose);
         let packages =
             flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)
