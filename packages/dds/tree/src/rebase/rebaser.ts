@@ -86,7 +86,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
         return [];
     }
 
-    private getResolutionPath(
+    public getResolutionPath(
         from: RevisionTag,
         to: RevisionTag,
     ): ChangeSetFromChangeRebaser<TChangeRebaser> {

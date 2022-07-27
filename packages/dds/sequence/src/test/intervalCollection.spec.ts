@@ -141,6 +141,35 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        describe("remain consistent on double-delete", () => {
+            let collection: IntervalCollection<SequenceInterval>;
+            let collection2: IntervalCollection<SequenceInterval>;
+            beforeEach(() => {
+                sharedString.insertText(0, "01234");
+                collection = sharedString.getIntervalCollection("test");
+                collection2 = sharedString.getIntervalCollection("test");
+                containerRuntimeFactory.processAllMessages();
+            });
+
+            it("causing references to slide forward", () => {
+                sharedString2.removeRange(2, 3);
+                collection.add(2, 2, IntervalType.SlideOnRemove);
+                sharedString.removeRange(2, 4);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [{ start: 2, end: 2 }]);
+                assertIntervals(sharedString2, collection2, [{ start: 2, end: 2 }]);
+            });
+
+            it("causing references to slide backward", () => {
+                sharedString2.removeRange(2, 3);
+                collection.add(2, 2, IntervalType.SlideOnRemove);
+                sharedString.removeRange(2, 5);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [{ start: 1, end: 1 }]);
+                assertIntervals(sharedString2, collection2, [{ start: 1, end: 1 }]);
+            });
+        });
+
         it("errors creating invalid intervals", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             containerRuntimeFactory.processAllMessages();

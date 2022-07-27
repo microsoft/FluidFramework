@@ -13,36 +13,41 @@ import {
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
     FieldLocation, TreeLocation, isFieldLocation,
-    mapCursorField,
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
-import { FieldKey, TreeType, DetachedRange, AnchorSet, Value } from "../../tree";
+import {
+    FieldKey, TreeType, DetachedField, AnchorSet,
+    Value, Delta, JsonableTree, getGenericTreeField, FieldMap, UpPath, Anchor,
+} from "../../tree";
 import { brand, fail } from "../../util";
+import { jsonableTreeFromCursor } from "../treeTextCursor";
 
 export class ObjectForest extends SimpleDependee implements IEditableForest {
     private readonly dependent = new SimpleObservingDependent(() => this.invalidateDependents());
 
     public readonly schema: StoredSchemaRepository = new StoredSchemaRepository();
-    public readonly anchors: AnchorSet = new AnchorSet();
+    public root(range: DetachedField): ForestAnchor { return new RootAnchor(range); }
+    public readonly rootField: DetachedField = this.newRange();
 
-    public root(range: DetachedRange): ForestAnchor { return new RootAnchor(range); }
-    public readonly rootField: DetachedRange = this.newRange();
+    private readonly roots: Map<DetachedField, ObjectField> = new Map();
 
-    private readonly roots: Map<DetachedRange, ObjectField> = new Map();
-
-    private readonly dependees: Map<ObjectField | ObjectNode, DisposingDependee> = new Map();
+    private readonly dependees: Map<ObjectField | JsonableTree, DisposingDependee> = new Map();
 
     // All cursors that are in the "Current" state. Must be empty when editing.
     public readonly currentCursors: Set<Cursor> = new Set();
 
-    public constructor() {
+    public constructor(public readonly anchors: AnchorSet = new AnchorSet()) {
         super("object-forest.ObjectForest");
         this.roots.set(this.rootField, []);
         // Invalidate forest if schema change.
         recordDependency(this.dependent, this.schema);
     }
 
-    public observeItem(item: ObjectField | ObjectNode, observer: ObservingDependent | undefined): void {
+    applyDelta(delta: Delta.Root): void {
+        throw new Error("Method not implemented.");
+    }
+
+    public observeItem(item: ObjectField | JsonableTree, observer: ObservingDependent | undefined): void {
         let result = this.dependees.get(item);
         if (result === undefined) {
             result = new DisposingDependee("ObjectForest item");
@@ -54,7 +59,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         }
     }
 
-    public getRoot(item: DetachedRange): ObjectField {
+    public getRoot(item: DetachedField): ObjectField {
         // Currently we assume you only ever need to access a root of you know it exists.
         // Thus we do not track observation of the existence of the root, and error if it does not exists.
         const root = this.roots.get(item);
@@ -63,21 +68,21 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     private nextRange = 0;
-    public newRange(): DetachedRange {
-        const range = brand<DetachedRange>(this.nextRange);
+    public newRange(): DetachedField {
+        const range = brand<DetachedField>(String(this.nextRange));
         this.nextRange += 1;
         return range;
     }
 
-    add(nodes: Iterable<ITreeCursor>): DetachedRange {
+    add(nodes: Iterable<ITreeCursor>): DetachedField {
         this.beforeChange();
         const range = this.newRange();
         assert(!this.roots.has(range), "new range must not already exist");
-        const field: ObjectField = Array.from(nodes, nodeFromCursor);
+        const field: ObjectField = Array.from(nodes, jsonableTreeFromCursor);
         this.roots.set(range, field);
         return range;
     }
-    attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedRange): void {
+    attachRangeOfChildren(destination: TreeLocation, toAttach: DetachedField): void {
         this.beforeChange();
         const children = this.roots.get(toAttach) ?? fail("Can not attach non-existent range");
         this.roots.delete(toAttach);
@@ -91,26 +96,16 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         field.splice(destination.index, 0, ...children);
     }
 
-    private lookupField(range: FieldLocation | DetachedRange, create: boolean): ObjectField {
+    private lookupField(range: FieldLocation | DetachedField, create: boolean): ObjectField {
         if (!isFieldLocation(range)) {
             return this.getRoot(range);
         } else {
-            const children = this.lookupNodeId(range.parent).fields;
-            const field = children.get(range.key);
-            if (field !== undefined) {
-                    return field;
-            }
-            // Handle missing fields:
-            if (create === false) {
-                    return [];
-            }
-            const newField: ObjectField = [];
-            children.set(range.key, newField);
-            return newField;
+            const node = this.lookupNodeId(range.parent);
+            return getGenericTreeField(node, range.key, create);
         }
     }
 
-    detachRangeOfChildren(range: FieldLocation | DetachedRange, startIndex: number, endIndex: number): DetachedRange {
+    detachRangeOfChildren(range: FieldLocation | DetachedField, startIndex: number, endIndex: number): DetachedField {
         this.beforeChange();
         const field: ObjectField = this.lookupField(range, false);
         assertValidIndex(startIndex, field, true);
@@ -126,7 +121,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         const node = this.lookupNodeId(nodeId);
         node.value = value;
     }
-    delete(range: DetachedRange): void {
+    delete(range: DetachedField): void {
         this.beforeChange();
         // TODO: maybe define this to leave the forest with an empty root field?
         assert(range !== this.rootField, "root field can not be deleted");
@@ -170,9 +165,9 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return TreeNavigationResult.NotFound;
     }
 
-    private lookupNodeId(id: ForestLocation): ObjectNode {
-        if (id instanceof ObjectNode) {
-            return id;
+    private lookupNodeId(id: ForestLocation): JsonableTree {
+        if (id instanceof Cursor) {
+            return id.getNode();
         }
 
         // TODO: this could be much more efficient (and not use cursor)
@@ -185,7 +180,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         return node;
     }
 
-    private search(destination: ObjectNode, cursor: Cursor): TreeNavigationResult {
+    private search(destination: JsonableTree, cursor: Cursor): TreeNavigationResult {
         if (cursor.getNode() === destination) {
             return TreeNavigationResult.Ok;
         }
@@ -220,15 +215,6 @@ function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: bool
     }
 }
 
-export function nodeFromCursor(cursor: ITreeCursor): ObjectNode {
-    const node = new ObjectNode(cursor.type, cursor.value);
-    for (const key of cursor.keys) {
-        const field: ObjectField = mapCursorField(cursor, key, nodeFromCursor);
-        node.fields.set(key, field);
-    }
-    return node;
-}
-
 /**
  * Simple anchor that just points to a node object.
  * This results in pretty basic anchor rebase policy.
@@ -244,47 +230,49 @@ abstract class ObjectAnchor implements ForestAnchor {
      * Gets object node for anchor.
      * May return an object node thats no longer in the tree.
      */
-    abstract find(forest: ObjectForest, observer: ObservingDependent | undefined): ObjectNode | undefined;
+    abstract find(forest: ObjectForest, observer: ObservingDependent | undefined): JsonableTree | undefined;
 }
 
 class RootAnchor extends ObjectAnchor {
-    constructor(public readonly range: DetachedRange) {
+    constructor(public readonly range: DetachedField) {
         super();
     }
-    find(forest: ObjectForest, observer: ObservingDependent | undefined): ObjectNode | undefined {
+    find(forest: ObjectForest, observer: ObservingDependent | undefined): JsonableTree | undefined {
         const field = forest.getRoot(this.range);
         return field[0];
     }
 }
 
 /**
- * Simple anchor that just points to a node object.
- * This results in pretty basic anchor rebase policy.
+ * AnchorSet powered ForestAnchor.
  */
-class NodeAnchor extends ObjectAnchor {
-    public constructor(public readonly node: ObjectNode) {
+ export class ObjectPathAnchor extends ObjectAnchor implements ForestAnchor {
+    state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
+    public constructor(public readonly path: Anchor, private readonly anchorSet: AnchorSet) {
         super();
     }
-
-    find(forest: ObjectForest): ObjectNode | undefined {
-        return this.node;
-    }
-}
-
-class ObjectNode {
-    state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Current;
-    public readonly fields: Map<FieldKey, ObjectField> = new Map();
-    public constructor(public type: TreeType, public value: Value = undefined) { }
     free(): void {
-        assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33a /* Anchor must not be double freed */);
-        this.state = ITreeSubscriptionCursorState.Freed;
+        super.free();
+        this.anchorSet.forget(this.path);
+    }
+
+    find(forest: ObjectForest, observer: ObservingDependent | undefined): JsonableTree | undefined {
+        const path = forest.anchors.locate(this.path);
+        if (path === undefined) {
+            return undefined;
+        }
+        // TODO: follow path down tree and return subtree;
+        throw new Error("Method not implemented.");
     }
 }
 
-type ObjectField = ObjectNode[];
+type ObjectField = JsonableTree[];
 
 /**
  * TODO: track observations.
+ *
+ * TODO: TextCursor is mostly a subset of this functionality.
+ * Maybe do a refactoring to deduplicate this.
  */
 class Cursor implements ITreeSubscriptionCursor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Cleared;
@@ -294,16 +282,16 @@ class Cursor implements ITreeSubscriptionCursor {
 
     // TODO: store stack here,
     // then brute force on anchor restoration? (Add smarter anchor type later?)
-    private root: DetachedRange | undefined;
+    private root: DetachedField | undefined;
 
     // Ancestors traversed to visit this node (including this node).
-    private readonly parentStack: ObjectNode[] = [];
+    private readonly parentStack: JsonableTree[] = [];
     // Keys traversed to visit this node
     private readonly keyStack: FieldKey[] = [];
     // Indices traversed to visit this node
     private readonly indexStack: number[] = [];
 
-    private siblings?: readonly ObjectNode[];
+    private siblings?: readonly JsonableTree[];
 
     public clear(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33b /* Cursor must not be freed */);
@@ -316,7 +304,7 @@ class Cursor implements ITreeSubscriptionCursor {
         this.forest.currentCursors.delete(this);
     }
 
-    public set(root: DetachedRange, index: number): void {
+    public set(root: DetachedField, index: number): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33c /* Cursor must not be freed */);
         this.clear();
         this.root = root;
@@ -327,10 +315,18 @@ class Cursor implements ITreeSubscriptionCursor {
         this.forest.currentCursors.add(this);
     }
 
-    getNode(): ObjectNode {
+    getNode(): JsonableTree {
         assert(this.state === ITreeSubscriptionCursorState.Current, 0x33d /* Cursor must be current to be used */);
         assert(this.parentStack.length > 0, 0x33e /* Cursor must be current to be used */);
         return this.parentStack[this.parentStack.length - 1];
+    }
+
+    getFields(): Readonly<FieldMap<JsonableTree>> {
+        return this.getNode().fields ?? {};
+    }
+
+    getField(key: FieldKey): readonly JsonableTree[] {
+        return this.getFields()[key as string] ?? [];
     }
 
     get value(): Value {
@@ -341,7 +337,7 @@ class Cursor implements ITreeSubscriptionCursor {
         return this.getNode().type;
     }
     get keys(): Iterable<FieldKey> {
-        return this.getNode().fields.keys();
+        return Object.getOwnPropertyNames(this.getFields()) as Iterable<FieldKey>;
     }
 
     fork(observer?: ObservingDependent | undefined): ITreeSubscriptionCursor {
@@ -352,10 +348,32 @@ class Cursor implements ITreeSubscriptionCursor {
         this.state = ITreeSubscriptionCursorState.Freed;
     }
     buildAnchor(): ForestAnchor {
-        return new NodeAnchor(this.getNode());
+        // Perf Note:
+        // This is O(depth) in tree.
+        // If many different anchors are created, this could be optimized to amortize the costs.
+        // For example, the cursor could cache UpPaths from the anchorSet when creating an anchor,
+        // then reuse them as a starting point when making another.
+        // Could cache this at one depth, and remember the depth.
+        // When navigating up, adjust cached anchor if present.
+
+        let path: UpPath | undefined;
+        const length = this.parentStack.length;
+        assert(this.indexStack.length === length, "Unexpected indexStack.length");
+        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
+        for (let height = 0; height < length; height++) {
+            path = {
+                parent: path,
+                parentIndex: this.indexStack[height],
+                parentField: height === 0 ? this.root as unknown as FieldKey : this.keyStack[height + 1],
+            };
+        }
+        // Height must be at least one (since its greater than this.keyStack.length), so path will always be set here.
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const anchor = this.forest.anchors.track(path!);
+        return new ObjectPathAnchor(anchor, this.forest.anchors);
     }
     down(key: FieldKey, index: number): TreeNavigationResult {
-        const siblings = (this.getNode().fields.get(key) ?? []);
+        const siblings = this.getField(key);
         const child = siblings[index];
         if (child !== undefined) {
             this.parentStack.push(child);
@@ -380,23 +398,26 @@ class Cursor implements ITreeSubscriptionCursor {
         return { result: TreeNavigationResult.NotFound, moved: 0 };
     }
     up(): TreeNavigationResult {
-        assert(this.state === ITreeSubscriptionCursorState.Current, 0x341 /* Cursor must be current to be used */);
-        if (this.parentStack.length === 0) {
+        if (this.parentStack.pop() === undefined) {
+            // We are at the root, so return NotFound without making any changes to the state.
             return TreeNavigationResult.NotFound;
         }
-        this.parentStack.pop();
         this.indexStack.pop();
         this.keyStack.pop();
         // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        this.siblings = this.parentStack.length === 0 ?
+        if (this.parentStack.length === 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.forest.getRoot(this.root!) :
-            this.parentStack[this.parentStack.length - 1].fields.get(this.keyStack[this.keyStack.length - 1]);
+            this.siblings = this.forest.getRoot(this.root!);
+        } else {
+            const newParent = this.parentStack[this.parentStack.length - 1];
+            const key = this.keyStack[this.keyStack.length - 1];
+            this.siblings = getGenericTreeField(newParent, key, false);
+        }
         return TreeNavigationResult.Ok;
     }
 
     length(key: FieldKey): number {
-        return (this.getNode().fields.get(key) ?? []).length;
+        return this.getField(key).length;
     }
 }
 
