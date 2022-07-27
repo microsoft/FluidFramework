@@ -50,7 +50,7 @@ export class PaddingSegment extends BaseSegment {
     // (undocumented)
     protected createSplitSegmentAt(pos: number): PaddingSegment;
     // (undocumented)
-    static fromJSONObject(spec: any): PaddingSegment;
+    static fromJSONObject(spec: any): PaddingSegment | undefined;
     // (undocumented)
     static is(segment: ISegment): segment is PaddingSegment;
     // (undocumented)
@@ -58,7 +58,7 @@ export class PaddingSegment extends BaseSegment {
     // (undocumented)
     toJSONObject(): {
         pad: number;
-        props: PropertySet;
+        props: PropertySet | undefined;
     };
     // (undocumented)
     toString(): string;
@@ -85,9 +85,9 @@ export class RunSegment extends SubSequence<SparseMatrixItem> {
     // (undocumented)
     clone(start?: number, end?: number): RunSegment;
     // (undocumented)
-    protected createSplitSegmentAt(pos: number): RunSegment;
+    protected createSplitSegmentAt(pos: number): RunSegment | undefined;
     // (undocumented)
-    static fromJSONObject(spec: any): RunSegment;
+    static fromJSONObject(spec: any): RunSegment | undefined;
     // (undocumented)
     getTag(pos: number): any;
     // (undocumented)
@@ -146,7 +146,7 @@ export class SparseMatrix extends SharedSegmentSequence<MatrixSegment> {
     // (undocumented)
     getItem(row: number, col: number): Jsonable<string | number | boolean | IFluidHandle> | undefined;
     // (undocumented)
-    getPositionProperties(row: number, col: number): PropertySet;
+    getPositionProperties(row: number, col: number): PropertySet | undefined;
     // (undocumented)
     getTag(row: number, col: number): any;
     // (undocumented)
