@@ -36,7 +36,7 @@ const schemaBlobKey = "ForestSchema";
  * Used to capture snapshots of document for summaries.
  */
 export class ForestIndex implements Index<unknown>, SummaryElement {
-    readonly key: string = "Forest";
+    public readonly key = "Forest";
 
     readonly summaryElement?: SummaryElement = this;
 
