@@ -52,6 +52,9 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 				const { destination, source } = change;
 				assert(!builtNodes.has(destination), `Cannot revert Build: destination is already used by a Build`);
 				assert(!detachedNodes.has(destination), `Cannot revert Build: destination is already used by a Detach`);
+				if (source.length === 0) {
+					continue;
+				}
 				builtNodes.set(
 					destination,
 					source.reduce((ids: NodeId[], curr: BuildNodeInternal) => {
@@ -73,15 +76,9 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 				const nodesBuilt = builtNodes.get(source);
 				const nodesDetached = detachedNodes.get(source);
 				if (nodesBuilt !== undefined) {
-					if (nodesBuilt.length === 0) {
-						return undefined;
-					}
 					result.unshift(createInvertedInsert(change, nodesBuilt));
 					builtNodes.delete(source);
 				} else if (nodesDetached !== undefined) {
-					if (nodesDetached.length === 0) {
-						return undefined;
-					}
 					result.unshift(createInvertedInsert(change, nodesDetached, true));
 					detachedNodes.delete(source);
 				} else {
