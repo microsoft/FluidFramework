@@ -382,6 +382,11 @@ class PathNode implements UpPath {
         }
     }
 
+    /**
+     * Call this after directly editing the child array for a field to be empty.
+     * Handles cleaning up unneeded data
+     * (like the field in the map, and possibly this entire PathNode and its parents if they are no longer needed.)
+     */
     public afterEmptyField(key: FieldKey): void {
         assert(!this.deleted, "PathNode must not be deleted");
         this.children.delete(key);
