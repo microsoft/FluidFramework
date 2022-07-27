@@ -139,7 +139,9 @@ function extractShareLinkData(requestedSharingLinkKind: ShareLinkTypes | Sharing
                 // compatibility. The new way of requesting for a sharing link is by providing `createLinkScope`
                 // and 'createLinkRole' params in the request, response for which can be found in 'sharing.sharingLink'
                 link: sharingLink ? sharingLink : sharing?.sharingLink,
-                error: sharingLinkErrorReason ? sharingLinkErrorReason : sharing?.error,
+                // sharingLinkErrorReason string is present in both old and new response from ODSP api when creating a
+                // sharing link, we however use the sharing.error whenever possible as it provides more detailed error.
+                error: sharing?.error ? sharing?.error : sharingLinkErrorReason,
                 shareId: sharing?.shareId,
             },
         };

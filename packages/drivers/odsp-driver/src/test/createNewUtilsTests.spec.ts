@@ -150,6 +150,7 @@ describe("Create New Utils Tests", () => {
 
         // Test that sharing link is set appropriately when it is received in the response from ODSP
         const mockSharingLink = "mockSharingLink";
+        const mockSharingId = "mockSharingId";
         let odspResolvedUrl = await mockFetchOk(
             async () => createNewFluidFile(
                 async (_options) => "token",
@@ -167,7 +168,7 @@ describe("Create New Utils Tests", () => {
                 sharingLink: mockSharingLink,
                 sharingLinkErrorReason: undefined,
                 sharing: {
-                    shareId: "id",
+                    shareId: mockSharingId,
                     shareLink: {
                         scope: "organization",
                         type: "edit",
@@ -179,6 +180,7 @@ describe("Create New Utils Tests", () => {
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
             type: createLinkType,
             link: mockSharingLink,
+            shareId: mockSharingId,
             error: undefined,
         });
 
@@ -201,6 +203,7 @@ describe("Create New Utils Tests", () => {
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
             type: createLinkType,
             link: undefined,
+            shareId: undefined,
             error: mockError,
         });
         await epochTracker.removeEntries().catch(() => { });
@@ -243,7 +246,7 @@ describe("Create New Utils Tests", () => {
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
             type: createLinkType,
             shareId: mockSharingData.shareId,
-            sharingLink: mockSharingData,
+            link: mockSharingData.sharingLink,
             error: undefined,
         });
 
@@ -276,9 +279,9 @@ describe("Create New Utils Tests", () => {
             { "x-fluid-epoch": "epoch1" },
         );
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-            type: undefined,
+            type: createLinkType,
             shareId: undefined,
-            sharingLink: undefined,
+            link: undefined,
             error: mockSharingError.error,
         });
         await epochTracker.removeEntries().catch(() => { });
