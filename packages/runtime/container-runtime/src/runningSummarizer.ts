@@ -330,21 +330,14 @@ export class RunningSummarizer implements IDisposable {
         this.initialized = true;
     }
 
-    public async waitLockAndRunRefreshLatestSummaryAckAction<T>(action: () => Promise<T>) {
-        if (this.refreshSummaryAckLock !== undefined) {
-            await this.refreshSummaryAckLock;
-        }
-        await this.lockedRefreshSummaryAckAction(action);
-    }
-
-     /**
+    /**
      * Blocks a new summarizer from running in case RefreshSummaryAck is being processed.
      * Assumes that caller checked upfront for lack of concurrent action (this.refreshSummaryAckLock)
      * before calling this API. I.e. caller is responsible for either erroring out or waiting on this promise.
      * @param action - action to perform.
      * @returns - result of action.
      */
-    private async lockedRefreshSummaryAckAction<T>(action: () => Promise<T>) {
+    public async lockedRefreshSummaryAckAction<T>(action: () => Promise<T>) {
         assert(this.refreshSummaryAckLock === undefined,
             "Refresh Summary Ack - Caller is responsible for checking lock");
 

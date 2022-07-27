@@ -366,13 +366,20 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             try {
                 const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
-                await this.runningSummarizer.waitLockAndRunRefreshLatestSummaryAckAction(async () => {
+                this.runningSummarizer.lockedRefreshSummaryAckAction(async () => {
                     await this.internalsProvider.refreshLatestSummaryAck(
                         ack.summaryOp.contents.handle,
                         ack.summaryAck.contents.handle,
                         refSequenceNumber,
                         summaryLogger,
                     );
+                }).catch((error) => {
+                    this.logger.sendErrorEvent({
+                        eventName: "UnexpectedRefreshSummaryAckError",
+                        referenceSequenceNumber: refSequenceNumber,
+                        ackHandle: ack.summaryAck.contents.handle,
+                        opHandle: ack.summaryOp.contents.handle,
+                    }, error);
                 });
             } catch (error) {
                 summaryLogger.sendErrorEvent({
