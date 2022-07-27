@@ -116,7 +116,7 @@ export interface INewDataFormProps {
   /**
    * Callback that is executed on create.
    */
-  onDataCreate: (name: string, typeid: string, context: string) => void;
+  onDataCreate: (rowData: IInspectorRow, name: string, typeid: string, context: string) => void;
   /**
    * The available options.
    */
@@ -229,7 +229,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
   const handleCreateData = () => {
     setCreating(true);
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    ErrorPopup(onDataCreate.bind(null, inputName, selectedTypeOption.value, selectedContainerOption.value));
+    ErrorPopup(onDataCreate.bind(null, rowData, inputName, selectedTypeOption.value, selectedContainerOption.value));
   };
 
   const cancelBtn = (

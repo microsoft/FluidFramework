@@ -56,7 +56,7 @@ export const populateWorkspace = (workspace: MockWorkspace) => {
     typedReferencesSchema,
   ];
 
-  schemas.forEach((schema) => { PropertyFactory.register(schema); });
+  schemas.forEach((schema) => {  PropertyFactory.getTemplate(schema.typeid) ?? PropertyFactory.register(schema); });
  workspace.root.insert('BooleanFalse', PropertyFactory.create('Bool', 'single', false) as BaseProperty);
  workspace.root.insert('BooleanTrue', PropertyFactory.create('Bool', 'single', true) as BaseProperty);
  workspace.root.insert('String',
