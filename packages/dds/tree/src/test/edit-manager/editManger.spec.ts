@@ -147,7 +147,7 @@ const NUM_STEPS = 5;
 const NUM_SESSIONS = 3;
 interface ScenarioStep { type: ScenarioAction; session: number; }
 type ScenarioAction = "Mint" | "Push";
-const actions: ScenarioAction[] = ["Mint", "Push"];
+const actions: readonly ScenarioAction[] = ["Mint", "Push"];
 
 describe("EditManager", () => {
     it("Can handle non-concurrent local changes being sequenced immediately", () => {
@@ -458,7 +458,7 @@ describe("EditManager", () => {
         checkChangeList(manager, rebaser);
     });
 
-    describe("Can handle all possible interleaving of steps", () => {
+    it.only("Can handle all possible interleaving of steps", () => {
         developAndRunScenario([]);
     });
 });
@@ -478,52 +478,53 @@ function developAndRunScenario(scenario: ScenarioStep[]): void {
 }
 
 function runScenario(scenario: readonly ScenarioStep[]): void {
-    const name = scenarioString(scenario);
-    it(name, () => {
-        // Add push actions to ensure all minted changes have been pushed.
-        // We don't do this for the local session (session 0) because that's the one we check at the end.
-        const scenarioWithFinalPush = [...scenario];
-        for (let iSession = 1; iSession < NUM_SESSIONS; ++iSession) {
-            scenarioWithFinalPush.push({ type: "Push", session: iSession });
-        }
-        const { rebaser, family } = changeFamilyFactory();
-        const managers: TestEditManager[] = [];
-        for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
-            const manager = new EditManager<TestChangeset, TestChangeFamily>(
-                iSession,
-                family,
-            );
-            managers[iSession] = manager;
-        }
-        let seqNumber = 1;
-        for (const step of scenarioWithFinalPush) {
-            if (step.type === "Mint") {
-                const manager = managers[step.session];
-                const cs = rebaser.mintChangeset(getLocalContext(manager));
-                manager.addLocalChange(cs);
-            } else {
-                const localChange = managers[step.session].getLocalChanges()[0] as TestChangeset;
-                if (localChange !== undefined) {
-                    const ref = seqNumber;
-                    for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
-                        const manager = managers[iSession];
-                            manager.addSequencedChange({
-                            changeset: localChange,
-                            refNumber: ref,
-                            sessionId: step.session,
-                            seqNumber,
-                        });
-                    }
-                    seqNumber += 1;
+    const { rebaser, family } = changeFamilyFactory();
+    const managers: TestEditManager[] = [];
+    for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+        const manager = new EditManager<TestChangeset, TestChangeFamily>(
+            iSession,
+            family,
+        );
+        managers[iSession] = manager;
+    }
+    let seqNumber = 1;
+    for (const step of scenario) {
+        if (step.type === "Mint") {
+            const manager = managers[step.session];
+            const cs = rebaser.mintChangeset(getLocalContext(manager));
+            manager.addLocalChange(cs);
+        } else {
+            const localChange = managers[step.session].getLocalChanges()[0] as TestChangeset;
+            if (localChange !== undefined) {
+                const ref = getRef(managers[step.session]);
+                for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+                    const manager = managers[iSession];
+                        manager.addSequencedChange({
+                        changeset: localChange,
+                        refNumber: ref,
+                        sessionId: step.session,
+                        seqNumber,
+                    });
                 }
+                seqNumber += 1;
             }
         }
-        checkChangeList(managers[0], rebaser);
-    });
-}
-
-function scenarioString(scenario: readonly ScenarioStep[]): string {
-    return scenario.map((step) => `${step.type}${step.session}`).join("-");
+    }
+    // Push all minted changes to the edit manager
+    for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+        const changes = [...managers[iSession].getLocalChanges()] as TestChangeset[];
+        const ref = getRef(managers[iSession]);
+        for (const change of changes) {
+            managers[0].addSequencedChange({
+                changeset: change,
+                refNumber: ref,
+                sessionId: iSession,
+                seqNumber,
+            });
+            seqNumber += 1;
+        }
+    }
+    checkChangeList(managers[0], rebaser);
 }
 
 function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser): void {
@@ -548,4 +549,12 @@ function getLocalContext(manager: TestEditManager): number {
         context = lastChange.outputContext;
     }
     return context ?? fail("Can't determine local context");
+}
+
+function getRef(manager: TestEditManager) {
+    const trunk = manager.getTrunk();
+    if (trunk.length > 0) {
+        return trunk[trunk.length - 1].seqNumber;
+    }
+    return 0;
 }
