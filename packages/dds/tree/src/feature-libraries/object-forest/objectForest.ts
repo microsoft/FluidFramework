@@ -402,7 +402,8 @@ class Cursor implements ITreeSubscriptionCursor {
         assert(this.indexStack.length === length, "Unexpected indexStack.length");
         assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
 
-        // Already at the root
+        // If parentStack (which includes the current node) contains only one item,
+        // then the current node is the root, and we can not navigate up.
         if (length === 1) {
             return TreeNavigationResult.NotFound;
         }
@@ -413,6 +414,9 @@ class Cursor implements ITreeSubscriptionCursor {
         this.keyStack.pop();
         // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
         if (length === 2) {
+            // Before navigation, cursor was one below the root (height 2), so now it's at the root.
+            // At the root it cannot get the sibling list by looking at the parent (since there is none),
+            // so get it from the forest directly.
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             this.siblings = this.forest.getRoot(this.root!);
         } else {
