@@ -82,8 +82,10 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       t1=0
-      for f in *.tgz
+      sortedPackages=$(npx lerna ls --toposort | sed 's/@//' | sed 's/\//-/')
+      for packageName in $sortedPackages
       do
+          f=$(find -name "${packageName}-[0-9]*.tgz")
           npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
           if grep -q "npm ERR!" "publish_log"
           then
