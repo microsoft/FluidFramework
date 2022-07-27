@@ -155,10 +155,9 @@ export class AnchorSet {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 srcParent!.afterEmptyField(src!.field);
             }
-                toMove = [];
-            } else {
-                toMove = [];
-            }
+        } else {
+            toMove = [];
+        }
 
         if (dst === undefined) {
             // Change is a delete.
