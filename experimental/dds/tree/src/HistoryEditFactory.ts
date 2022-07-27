@@ -98,6 +98,10 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 				}
 				const { invertedDetach, detachedNodeIds } = invert;
 
+                if (detachedNodeIds.length === 0) {
+                    continue;
+                }
+
 				if (destination !== undefined) {
 					if (builtNodes.has(destination) || detachedNodes.has(destination)) {
 						// Malformed: destination was already used by a prior build or detach
@@ -200,10 +204,6 @@ function createInvertedDetach(
 	const { start, end } = rangeFromStableRange(viewBeforeChange, validatedSource);
 	const { trait: referenceTrait } = start;
 	const nodes = viewBeforeChange.getTrait(referenceTrait);
-
-	if (nodes.length === 0) {
-		return undefined;
-	}
 
 	const startIndex = viewBeforeChange.findIndexWithinTrait(start);
 	const endIndex = viewBeforeChange.findIndexWithinTrait(end);
