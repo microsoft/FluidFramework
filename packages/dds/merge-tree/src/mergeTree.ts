@@ -1899,8 +1899,11 @@ export class MergeTree {
         };
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         // these segments are already viewed as being removed locally and are not event-ed
-        // so can slide immediately
-        localOverlapWithRefs.forEach((s) => this.slideReferences(s, s.localRefs!));
+        // so can slide non-StayOnRemove refs immediately
+        localOverlapWithRefs.forEach(
+            (s) => this.slideReferences(s, Array.from(s.localRefs!)
+                .filter((localRef) => !refTypeIncludesFlag(localRef, ReferenceType.StayOnRemove))),
+        );
         // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
             this.mergeTreeDeltaCallback(
