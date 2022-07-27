@@ -1,6 +1,6 @@
 ## 0.21 Breaking changes
 
-- [ITelemetryBaseLogger.supportsTags deleted](#ITelemetryBaseLogger.supportstags-deleted)
+-   [ITelemetryBaseLogger.supportsTags deleted](#ITelemetryBaseLogger.supportstags-deleted)
 
 ### ITelemetryBaseLogger.supportsTags deleted
 
