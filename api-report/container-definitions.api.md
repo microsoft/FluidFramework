@@ -42,28 +42,16 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @public (undocumented)
-export enum BindState {
-    // (undocumented)
-    Binding = "Binding",
-    // (undocumented)
-    Bound = "Bound",
-    // (undocumented)
-    NotBound = "NotBound"
-}
-
 // @public
 export namespace ConnectionState {
     export type CatchingUp = 1;
     export type Connected = 2;
-    // @deprecated
-    export type Connecting = 1;
     export type Disconnected = 0;
     export type EstablishingConnection = 3;
 }
 
 // @public
-export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connecting | ConnectionState.Connected;
+export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
 // @public
 export enum ContainerErrorType {
@@ -88,6 +76,13 @@ export interface IAudience extends EventEmitter {
 }
 
 // @public
+export interface IAudienceOwner extends IAudience {
+    addMember(clientId: string, details: IClient): any;
+    clear(): any;
+    removeMember(clientId: string): boolean;
+}
+
+// @public
 export interface ICodeAllowList {
     // (undocumented)
     testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
@@ -96,11 +91,6 @@ export interface ICodeAllowList {
 // @public
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
-}
-
-// @public @deprecated
-export interface ICodeLoader extends Partial<IProvideFluidCodeDetailsComparer> {
-    load(source: IFluidCodeDetails): Promise<IFluidModule>;
 }
 
 // @public

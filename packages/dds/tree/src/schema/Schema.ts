@@ -37,15 +37,15 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 /**
  * SchemaIdentifier for a Field "global field",
- * meaning a field which has the same meaning for all usages withing the document
+ * meaning a field which has the same meaning for all usages within the document
  * (not scoped to a specific TreeSchema like LocalFieldKey).
  *
  * Note that the implementations should ensure that GlobalFieldKeys can never collide with LocalFieldKeys.
- * This can either be done in several ways
+ * This can be done in several ways
  * (keeping the two classes of fields separate, name-spacing/escaping,
  * compressing one into numbers and leaving the other strings, etc.)
  */
-export type GlobalFieldKey = Opaque<Brand<string, "tree.GlobalFieldKey">>;
+export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKey">>{}
 
 /**
  * Describes how a particular field functions.

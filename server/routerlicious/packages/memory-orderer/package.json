@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-memory-orderer",
-  "version": "0.1037.0",
+  "version": "0.1037.1000",
   "description": "Fluid server in memory orderer",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -55,13 +55,13 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/protocol-base": "^0.1037.0",
-    "@fluidframework/protocol-definitions": "^0.1028.2000",
-    "@fluidframework/server-lambdas": "^0.1037.0",
-    "@fluidframework/server-services-client": "^0.1037.0",
-    "@fluidframework/server-services-core": "^0.1037.0",
-    "@fluidframework/server-services-telemetry": "^0.1037.0",
+    "@fluidframework/common-utils": "^0.33.1000-74526",
+    "@fluidframework/protocol-base": "^0.1037.1000-0",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
+    "@fluidframework/server-lambdas": "^0.1037.1000-0",
+    "@fluidframework/server-services-client": "^0.1037.1000-0",
+    "@fluidframework/server-services-core": "^0.1037.1000-0",
+    "@fluidframework/server-services-telemetry": "^0.1037.1000-0",
     "@types/debug": "^4.1.5",
     "@types/double-ended-queue": "^2.1.0",
     "@types/lodash": "^4.14.118",

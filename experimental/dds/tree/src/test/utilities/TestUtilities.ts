@@ -191,7 +191,7 @@ export function setUpTestSharedTree(
 		});
 	}
 
-	const newContainerRuntimeFactory = containerRuntimeFactory || new MockContainerRuntimeFactory();
+	const newContainerRuntimeFactory = containerRuntimeFactory ?? new MockContainerRuntimeFactory();
 
 	if (localMode === true) {
 		componentRuntime.local = true;
@@ -327,7 +327,8 @@ export async function setUpLocalServerTestSharedTree(
 					summaryConfigOverrides: {
 						...DefaultSummaryConfiguration,
 						...{
-							idleTime: 1000, // Current default idleTime is 15000 which will cause some SharedTree tests to timeout.
+							minIdleTime: 1000, // Manually set idle times so some SharedTree tests don't timeout.
+							maxIdleTime: 1000,
 							maxTime: 1000 * 12,
 							initialSummarizerDelayMs: 0,
 						},
@@ -465,7 +466,7 @@ export async function asyncFunctionThrowsCorrectly(
 	return errorMessage === expectedError;
 }
 
-/*
+/**
  * Returns true if two nodes have equivalent data, otherwise false.
  * Does not compare children or payloads.
  * @param nodes - two or more nodes to compare

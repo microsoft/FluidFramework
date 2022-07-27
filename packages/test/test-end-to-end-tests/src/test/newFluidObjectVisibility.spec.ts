@@ -10,9 +10,9 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidHandle, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, timeoutPromise } from "@fluidframework/test-utils";
+import { ITestObjectProvider, ensureContainerConnected } from "@fluidframework/test-utils";
 import {
-    describeNoCompat,
+    describeFullCompat,
     ITestDataObject,
     TestDataObjectType,
 } from "@fluidframework/test-version-utils";
@@ -70,18 +70,12 @@ async function getAndValidateDataObject(
     return dataObject;
 }
 
-async function ensureContainerConnected(container: Container): Promise<void> {
-    if (!container.connected) {
-        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-    }
-}
-
 /**
  * These tests validate that new Fluid objects such as data stores and DDSes become visible correctly. For example,
  * new non-root data stores should not become visible (or reachable from root) until their handles are added to a
  * visible DDS.
  */
-describeNoCompat("New Fluid objects visibility", (getTestObjectProvider) => {
+describeFullCompat("New Fluid objects visibility", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let container1: IContainer;
     let containerRuntime1: IContainerRuntime;

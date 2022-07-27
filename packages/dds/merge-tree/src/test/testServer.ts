@@ -11,15 +11,15 @@ import {
     Stack,
 } from "../collections";
 import {
-    ClientSeq,
-    clientSeqComparer,
     compareNumbers,
     IncrementalExecOp,
     IncrementalMapState,
     ISegment,
-} from "../mergeTree";
+} from "../mergeTreeNodes";
+import { ClientSeq, clientSeqComparer } from "../mergeTree";
 import { PropertySet } from "../properties";
-import { MergeTreeTextHelper, TextSegment } from "../textSegment";
+import { TextSegment } from "../textSegment";
+import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { TestClient } from "./testClient";
 
 /**
