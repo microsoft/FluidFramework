@@ -106,12 +106,11 @@ export class RunningSummarizer implements IDisposable {
     }
 
     public get disposed() { return this._disposed; }
-    public get refreshSummaryAckLock() { return this._refreshSummaryAckLock; }
 
     private stopping = false;
     private _disposed = false;
     private summarizingLock: Promise<void> | undefined;
-    private _refreshSummaryAckLock: Promise<void> | undefined;
+    private refreshSummaryAckLock: Promise<void> | undefined;
     private tryWhileSummarizing = false;
     private readonly pendingAckTimer: PromiseTimer;
     private heuristicRunner?: ISummarizeHeuristicRunner;
@@ -331,7 +330,7 @@ export class RunningSummarizer implements IDisposable {
         this.initialized = true;
     }
 
-    public async waitLockAndRunRefreshSummaryAckAction<T>(action: () => Promise<T>) {
+    public async waitLockAndRunRefreshLatestSummaryAckAction<T>(action: () => Promise<T>) {
         if (this.refreshSummaryAckLock !== undefined) {
             await this.refreshSummaryAckLock;
         }
@@ -346,14 +345,15 @@ export class RunningSummarizer implements IDisposable {
      * @returns - result of action.
      */
     private async lockedRefreshSummaryAckAction<T>(action: () => Promise<T>) {
-        assert(this._refreshSummaryAckLock === undefined, "Caller is responsible for checking lock");
+        assert(this.refreshSummaryAckLock === undefined,
+            "Refresh Summary Ack - Caller is responsible for checking lock");
 
         const refreshSummaryAckLock = new Deferred<void>();
-        this._refreshSummaryAckLock = refreshSummaryAckLock.promise;
+        this.refreshSummaryAckLock = refreshSummaryAckLock.promise;
 
         return action().finally(() => {
             refreshSummaryAckLock.resolve();
-            this._refreshSummaryAckLock = undefined;
+            this.refreshSummaryAckLock = undefined;
         });
     }
 
