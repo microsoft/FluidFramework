@@ -107,7 +107,7 @@ describe('Common', () => {
 	});
 
 	describe('unwrapRestOrArray', () => {
-		function testUnwrap(...params: RestOrArray<number>): number[] {
+		function testUnwrap(...params: RestOrArray<number>): readonly number[] {
 			return unwrapRestOrArray(params);
 		}
 		it('unwraps array arguments', () => {
