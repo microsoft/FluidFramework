@@ -116,6 +116,8 @@ export class AnchorSet {
      * Now should custom anchors work (ex: ones not just tied to a specific Node)?
      * This design assumes they can be expressed in terms of a Node anchor + some extra stuff,
      * but we don't have an API for the extra stuff yet.
+     *
+     * TODO: tests
      */
     public moveChildren(
         count: number,
@@ -137,18 +139,21 @@ export class AnchorSet {
         if (srcChildren !== undefined) {
             let numberBeforeMove = 0;
             let numberToMove = 0;
-            for (let index = 0; index < srcChildren.length; index++) {
-                const element = srcChildren[index];
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                if (element.parentIndex < src!.start) {
-                    numberBeforeMove = index;
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                } else if (element.parentIndex < src!.start + count) {
-                    numberToMove++;
-                } else {
-                    // Fix indexes in src after moved items (subtract count).
-                    srcChildren[index].parentIndex -= count;
-                }
+            let index = 0;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            while (index < srcChildren.length && srcChildren[index].parentIndex < src!.start) {
+                numberBeforeMove++;
+                index++;
+            }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            while (index < srcChildren.length && srcChildren[index].parentIndex < src!.start + count) {
+                numberToMove++;
+                index++;
+            }
+            while (index < srcChildren.length) {
+                // Fix indexes in src after moved items (subtract count).
+                srcChildren[index].parentIndex -= count;
+                index++;
             }
             toMove = srcChildren.splice(numberBeforeMove, numberToMove);
             if (srcChildren.length === 0) {
@@ -198,11 +203,10 @@ export class AnchorSet {
         // Update dst
         if (dstPath !== undefined) {
             // Update new parent to add moved children
-            let field = dstPath.children.get(dst.field);
+            const field = dstPath.children.get(dst.field);
             if (field === undefined) {
                 if (toMove.length > 0) {
-                    field = toMove;
-                    dstPath.children.set(dst.field, field);
+                    dstPath.children.set(dst.field, toMove);
                 }
             } else {
                 // Update existing field contents
@@ -395,6 +399,9 @@ class PathNode implements UpPath {
         }
     }
 
+    /**
+     * Removes this from parent, and sets this to deleated.
+     */
     private deleteThis(): void {
         assert(!this.deleted, "must not double delete PathNode");
         this.parentPath?.removeChild(this);
