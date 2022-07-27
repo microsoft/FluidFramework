@@ -13,12 +13,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
-    IEditableForest, ITreeSubscriptionCursor, TreeNavigationResult,
+    IEditableForest, initializeForest, ITreeSubscriptionCursor, TreeNavigationResult,
 } from "../forest";
 import { Index, SummaryElement, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
-import { JsonableTree, Delta, FieldKey } from "../tree";
-import { brand } from "../util";
+import { JsonableTree, Delta } from "../tree";
 import { jsonableTreeFromCursor } from "./treeTextCursor";
 
 /** The storage key for the blob in the summary containing tree data */
@@ -156,11 +155,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         const tree = parse(bufferToString(treeBuffer, "utf8")) as string;
         const placeholderTree = JSON.parse(tree) as JsonableTree[];
 
-        // TODO: maybe assert forest is empty?
-        const insert: Delta.Insert = { type: Delta.MarkType.Insert, content: placeholderTree };
-        // TODO: make type-safe
-        const rootField = brand<FieldKey>(this.forest.rootField as unknown as string);
-        this.forest.applyDelta(new Map([[rootField, [insert]]]));
+        initializeForest(this.forest, placeholderTree);
 
         // TODO: use schema to initialize forest.schema
         // const schema = parse(bufferToString(_schemaBuffer, "utf8")) as string;
