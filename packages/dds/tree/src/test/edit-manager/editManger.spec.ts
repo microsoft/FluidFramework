@@ -12,7 +12,6 @@ import { AnchorSet } from "../../tree";
 import { RecursiveReadonly } from "../../util";
 
 interface TestChangeset {
-    ref?: SeqNumber;
     inputContext?: number;
     outputContext?: number;
     intentions: number[];
@@ -150,7 +149,7 @@ interface ScenarioStep { type: ScenarioAction; session: number; }
 type ScenarioAction = "Mint" | "Push";
 const actions: ScenarioAction[] = ["Mint", "Push"];
 
-describe.only("EditManager", () => {
+describe("EditManager", () => {
     it("Can handle non-concurrent local changes being sequenced immediately", () => {
         const { rebaser, manager } = editManagerFactory();
         const cs1 = rebaser.mintChangeset(0);
@@ -503,13 +502,13 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
                 const cs = rebaser.mintChangeset(getLocalContext(manager));
                 manager.addLocalChange(cs);
             } else {
-                const localChanges = managers[step.session].getLocalChanges() as TestChangeset[];
-                const ref = seqNumber;
-                for (const change of localChanges) {
+                const localChange = managers[step.session].getLocalChanges()[0] as TestChangeset;
+                if (localChange !== undefined) {
+                    const ref = seqNumber;
                     for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
                         const manager = managers[iSession];
                             manager.addSequencedChange({
-                            changeset: change,
+                            changeset: localChange,
                             refNumber: ref,
                             sessionId: step.session,
                             seqNumber,
