@@ -211,14 +211,15 @@ export class AnchorSet {
             } else {
                 // Update existing field contents
                 let numberBeforeMove = 0;
-                for (let index = 0; index < field.length; index++) {
-                    const element = field[index];
-                    if (element.parentIndex < dst.start) {
-                        numberBeforeMove = index;
-                    } else {
-                        // Fix indexes in dst after moved items (add count).
-                        field[index].parentIndex += count;
-                    }
+                let index = 0;
+                while (index < field.length && field[index].parentIndex < dst.start) {
+                    numberBeforeMove++;
+                    index++;
+                }
+                while (index < field.length) {
+                    // Fix indexes in dst after moved items (add count).
+                    field[index].parentIndex += count;
+                    index++;
                 }
                 // Insert toMove items into dstPath
                 // TODO: this will fail for very large numbers of anchors due to argument limits.
