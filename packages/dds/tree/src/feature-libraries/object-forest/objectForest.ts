@@ -195,7 +195,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         }
 
         // search siblings
-        while (cursor.seek(1).result === TreeNavigationResult.Ok) {
+        while (cursor.seek(1) === TreeNavigationResult.Ok) {
             if (this.search(destination, cursor) === TreeNavigationResult.Ok) {
                 return TreeNavigationResult.Ok;
             }
@@ -384,7 +384,7 @@ class Cursor implements ITreeSubscriptionCursor {
         }
         return TreeNavigationResult.NotFound;
     }
-    seek(offset: number): { result: TreeNavigationResult; moved: number; } {
+    seek(offset: number): TreeNavigationResult {
         assert(this.state === ITreeSubscriptionCursorState.Current, 0x340 /* Cursor must be current to be used */);
         const index = offset + this.indexStack[this.indexStack.length - 1];
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -392,10 +392,10 @@ class Cursor implements ITreeSubscriptionCursor {
         if (child !== undefined) {
             this.indexStack[this.indexStack.length - 1] = index;
             this.nodeStack[this.nodeStack.length - 1] = child;
-            return { result: TreeNavigationResult.Ok, moved: offset };
+            return TreeNavigationResult.Ok;
         }
         // TODO: Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: 0 };
+        return TreeNavigationResult.NotFound;
     }
     up(): TreeNavigationResult {
         const length = this.nodeStack.length;

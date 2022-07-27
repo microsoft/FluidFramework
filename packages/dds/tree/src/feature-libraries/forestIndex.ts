@@ -85,7 +85,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         let result = this.forest.tryGet(rootAnchor, this.cursor);
         while (result === TreeNavigationResult.Ok) {
             roots.push(jsonableTreeFromCursor(this.cursor));
-            result = this.cursor.seek(1).result;
+            result = this.cursor.seek(1);
         }
         this.cursor.clear();
         assert(result === TreeNavigationResult.NotFound, "Unsupported navigation result");

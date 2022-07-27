@@ -105,16 +105,15 @@ export class TextCursor implements ITreeCursor {
         return TreeNavigationResult.NotFound;
     }
 
-    seek(offset: number): { result: TreeNavigationResult; moved: number; } {
+    seek(offset: number): TreeNavigationResult {
         const index = offset + this.indexStack[this.indexStack.length - 1];
         const child = this.siblings[index];
         if (child !== undefined) {
             this.indexStack[this.indexStack.length - 1] = index;
             this.nodeStack[this.nodeStack.length - 1] = child;
-            return { result: TreeNavigationResult.Ok, moved: offset };
+            return TreeNavigationResult.Ok;
         }
-        // TODO: Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: 0 };
+        return TreeNavigationResult.NotFound;
     }
 
     up(): TreeNavigationResult {

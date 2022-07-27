@@ -91,7 +91,7 @@ function testForest(suiteName: string, factory: () => ObjectForest): void {
             const anchor = forest.root(newRange);
             assert.equal(forest.tryGet(anchor, reader), TreeNavigationResult.Ok);
             assert.equal(reader.value, 2);
-            assert.equal(reader.seek(1).result, TreeNavigationResult.NotFound);
+            assert.equal(reader.seek(1), TreeNavigationResult.NotFound);
         });
 
         describe("top level invalidation", () => {
