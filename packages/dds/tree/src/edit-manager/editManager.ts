@@ -5,6 +5,7 @@
 
 import { ChangeFamily } from "../change-family";
 import { AnchorSet, Delta } from "../tree";
+import { RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -31,6 +32,14 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     public constructor(private readonly localSessionId: SessionId,
         private readonly changeFamily: TChangeFamily,
     ) { }
+
+    public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
+        return this.trunk;
+    }
+
+    public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
+        return this.localChanges;
+    }
 
     public addSequencedChange(newCommit: Commit<TChangeset>, anchors?: AnchorSet): Delta.Root {
         if (newCommit.sessionId === this.localSessionId) {

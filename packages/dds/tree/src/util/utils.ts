@@ -5,6 +5,13 @@
 
 import structuredClone from "@ungap/structured-clone";
 
+/**
+ * Make all transitive properties in T readonly
+ */
+ export type RecursiveReadonly<T> = {
+    readonly [P in keyof T]: RecursiveReadonly<T[P]>;
+};
+
 export function clone<T>(original: T): T {
     return structuredClone(original);
 }
