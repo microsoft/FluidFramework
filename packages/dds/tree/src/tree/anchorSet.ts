@@ -104,7 +104,7 @@ export class AnchorSet {
 
     /**
      * Updates paths for a range move (including re-parenting path items and updating indexes).
-     * @param count - number of siblings to to insert/delete/move.
+     * @param count - number of siblings to insert/delete/move.
      * @param src - where the siblings are removed from. If undefined the operation is an insert.
      * @param dst - where the siblings are moved to. If undefined the operation is a delete.
      *
