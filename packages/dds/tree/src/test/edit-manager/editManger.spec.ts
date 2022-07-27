@@ -481,8 +481,10 @@ function developAndRunScenario(scenario: ScenarioStep[]): void {
 function runScenario(scenario: readonly ScenarioStep[]): void {
     const name = scenarioString(scenario);
     it(name, () => {
+        // Add push actions to ensure all minted changes have been pushed.
+        // We don't do this for the local session (session 0) because that's the one we check at the end.
         const scenarioWithFinalPush = [...scenario];
-        for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+        for (let iSession = 1; iSession < NUM_SESSIONS; ++iSession) {
             scenarioWithFinalPush.push({ type: "Push", session: iSession });
         }
         const { rebaser, family } = changeFamilyFactory();
@@ -517,9 +519,7 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
                 }
             }
         }
-        for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
-            checkChangeList(managers[iSession], rebaser);
-        }
+        checkChangeList(managers[0], rebaser);
     });
 }
 
