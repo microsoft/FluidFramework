@@ -1248,7 +1248,6 @@ export class MergeTree {
                 const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, this);
                 overwrite = overlappingRemove || overwrite;
 
-                // TODO: Block update length here or something in response to pending segment getting acked
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
                     this.updateSegmentRefsAfterMarkRemoved(pendingSegment, false);
                 }
@@ -2084,7 +2083,7 @@ export class MergeTree {
         this.blockUpdate(node);
         if (
             this.collabWindow.collaborating
-            && seq !== UnassignedSequenceNumber // right here
+            && seq !== UnassignedSequenceNumber
             && seq !== TreeMaintenanceSequenceNumber
         ) {
             this.localPartialsComputed = false;
