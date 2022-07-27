@@ -85,8 +85,8 @@ export class Transaction extends TypedEventEmitter<TransactionEvents> {
 	 * @param changes - the changes to apply
 	 * @returns either the `EditStatus` of the given changes or the `EditStatus` of the last change before the transaction was closed
 	 */
-	public apply(...changes: Change[]): EditStatus;
-	public apply(changes: Change[]): EditStatus;
+	public apply(...changes: readonly Change[]): EditStatus;
+	public apply(changes: readonly Change[]): EditStatus;
 	public apply(...changesOrArray: RestOrArray<Change>): EditStatus {
 		if (this.isOpen) {
 			const changes = unwrapRestOrArray(changesOrArray);

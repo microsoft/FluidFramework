@@ -208,8 +208,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Must be called during an ongoing edit (see `openEdit()`/`closeEdit()`).
 	 * `changes` must be well-formed and valid: it is an error if they do not apply cleanly.
 	 */
-	public applyChanges(changes: Change[]): void;
-	public applyChanges(...changes: Change[]): void;
+	public applyChanges(changes: readonly Change[]): void;
+	public applyChanges(...changes: readonly Change[]): void;
 	public applyChanges(...changes: RestOrArray<Change>): void {
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
 		const changeArray = unwrapRestOrArray(changes);
@@ -223,8 +223,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Must be called during an ongoing edit (see `openEdit()`/`closeEdit()`).
 	 * `changes` must be well-formed and valid: it is an error if they do not apply cleanly.
 	 */
-	protected tryApplyChangesInternal(changes: ChangeInternal[]): EditStatus;
-	protected tryApplyChangesInternal(...changes: ChangeInternal[]): EditStatus;
+	protected tryApplyChangesInternal(changes: readonly ChangeInternal[]): EditStatus;
+	protected tryApplyChangesInternal(...changes: readonly ChangeInternal[]): EditStatus;
 	protected tryApplyChangesInternal(...changes: RestOrArray<ChangeInternal>): EditStatus {
 		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
 		const changeArray = unwrapRestOrArray(changes);
@@ -239,8 +239,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * Convenience helper for applying an edit containing the given changes.
 	 * Opens an edit, applies the given changes, and closes the edit. See (`openEdit()`/`applyChanges()`/`closeEdit()`).
 	 */
-	public applyEdit(changes: Change[]): EditId;
-	public applyEdit(...changes: Change[]): EditId;
+	public applyEdit(changes: readonly Change[]): EditId;
+	public applyEdit(...changes: readonly Change[]): EditId;
 	public applyEdit(...changes: RestOrArray<Change>): EditId {
 		this.openEdit();
 		const changeArray = unwrapRestOrArray(changes);
@@ -253,8 +253,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * If the edit applied, its changes will be immediately visible on this checkout, though it still may end up invalid once sequenced due to concurrent edits.
 	 * @returns The EditId if the edit was valid and thus applied, and undefined if it was invalid and thus not applied.
 	 */
-	public tryApplyEdit(changes: Change[]): EditId | undefined;
-	public tryApplyEdit(...changes: Change[]): EditId | undefined;
+	public tryApplyEdit(changes: readonly Change[]): EditId | undefined;
+	public tryApplyEdit(...changes: readonly Change[]): EditId | undefined;
 	public tryApplyEdit(...changes: RestOrArray<Change>): EditId | undefined {
 		this.openEdit();
 

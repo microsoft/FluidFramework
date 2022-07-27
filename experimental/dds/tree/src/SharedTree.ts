@@ -1339,8 +1339,8 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * should be used instead.
 	 * @public
 	 */
-	public applyEdit(...changes: Change[]): Edit<InternalizedChange>;
-	public applyEdit(changes: Change[]): Edit<InternalizedChange>;
+	public applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
+	public applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
 	public applyEdit(...changesOrArray: RestOrArray<Change>): Edit<InternalizedChange> {
 		const changes = unwrapRestOrArray(changesOrArray);
 		const id = newEditId();
