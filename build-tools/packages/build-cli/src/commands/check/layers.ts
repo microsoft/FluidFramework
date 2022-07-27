@@ -72,12 +72,12 @@ export class CheckLayers extends BaseCommand {
             timer.time("Layer check completed");
 
             if (!success) {
-                throw new Error("Layer check not succesful");
+                this.error("Layer check not succesful");
             }
 
             this.log(`Layer check passed (${packages.packages.length} packages)`);
         } catch (error_: unknown) {
-            throw new Error(error_ as string);
+            this.error(error_ as string);
         }
     }
 }
