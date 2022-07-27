@@ -850,7 +850,9 @@ export class MergeTree {
         return totalOffset;
     }
 
-    public getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number) {
+    public getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number, localSeq?: number) {
+        assert(localSeq === undefined || clientId === this.collabWindow.clientId,
+            "localSeq provided for non-local client");
         let segment: T | undefined;
         let offset: number | undefined;
 
@@ -859,20 +861,7 @@ export class MergeTree {
             offset = start;
             return false;
         };
-        this.searchBlock(this.root, pos, 0, refSeq, clientId, { leaf }, undefined);
-        return { segment, offset };
-    }
-
-    public getContainingLocalSegment<T extends ISegment>(pos: number, refSeq: number, localSeq: number) {
-        let segment: T | undefined;
-        let offset: number | undefined;
-
-        const leaf = (leafSeg: ISegment, segpos: number, _refSeq: number, _clientId: number, start: number) => {
-            segment = leafSeg as T;
-            offset = start;
-            return false;
-        };
-        this.searchBlock(this.root, pos, 0, refSeq, this.collabWindow.clientId, { leaf }, undefined, localSeq);
+        this.searchBlock(this.root, pos, 0, refSeq, clientId, { leaf }, undefined, localSeq);
         return { segment, offset };
     }
 

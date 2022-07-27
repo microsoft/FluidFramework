@@ -778,10 +778,6 @@ export class Client {
         localSeq: number,
     ): number {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
-        // if (seqNumberFrom < this.mergeTree.collabWindow.minSeq) {
-        //     console.log("oh no");
-        // }
-        // assert(seqNumberFrom >= this.mergeTree.collabWindow.minSeq, "rebase attempted from outside collab window");
         let segment: ISegment | undefined;
         let posAccumulated = 0;
         let offset = pos;
@@ -812,21 +808,17 @@ export class Client {
             return posAccumulated <= pos;
         });
 
-        let fastPathSegment = this.mergeTree.getContainingLocalSegment(pos, seqNumberFrom, localSeq);
+        const { clientId, currentSeq: seqNumberTo } = this.getCollabWindow();
+        let fastPathSegment = this.mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
         if (fastPathSegment.segment === undefined && fastPathSegment.offset === undefined) {
-
             // TODO: We may want some more validation for this case. Old code path did happen to do the right thing...
-            fastPathSegment = this.mergeTree.getContainingLocalSegment(pos, seqNumberFrom, localSeq);
+            fastPathSegment = this.mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
         } else if (fastPathSegment.segment !== segment || fastPathSegment.offset !== offset) {
-            // PartialSequenceLengths.combine((this.mergeTree.root as any).children[5], this.getCollabWindow(), false, true);
-            // (this.mergeTree.root as any).children[5].partialLengths.getPartialLength(seqNumberFrom, 0, localSeq);
-            // Problem is in building partial lengths for mergeTree's 1st child for 4.json
-            this.mergeTree.getContainingLocalSegment(pos, seqNumberFrom, localSeq);
+            this.mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
             assert(false, "Fast path returned different result from regular path");
         }
 
         assert(segment !== undefined, 0x302 /* No segment found */);
-        const seqNumberTo = this.getCollabWindow().currentSeq;
         if ((segment.removedSeq !== undefined &&
              segment.removedSeq !== UnassignedSequenceNumber &&
              segment.removedSeq <= seqNumberTo)
