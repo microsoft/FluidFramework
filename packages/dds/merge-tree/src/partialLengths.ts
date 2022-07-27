@@ -150,6 +150,15 @@ interface LocalPartialSequenceLength extends PartialSequenceLength {
  *
  * where the subtraction avoids double-counting segments submitted by clientId sequenced within the collab window.
  *
+ * To enable reconnect, if constructed with `computeLocalPartials === true` it also supports querying for the length of
+ * the block from the perspective of the local client at a particular `refSeq` and `localSeq`. This computation is similar
+ * to the above:
+ *
+ * (length of the block at the minimum sequence number)
+ * + (partialLengths total length at refSeq)
+ * + (unsequenced edits' total length submitted before localSeq)
+ * - (overlapping remove of the unsequenced edits' total length at refSeq)
+ *
  * This algorithm scales roughly linearly with number of editing clients and the size of the collab window.
  * (certain unlikely sequences of operations may introduce log factors on those variables)
  *
@@ -537,10 +546,6 @@ export class PartialSequenceLengths {
      */
     private unsequencedRecords: UnsequencedPartialLengthInfo | undefined;
 
-    // private unsequencedPartialLengths: PartialSequenceLength[] | undefined;
-
-    // private localOverlapRemoves: LocalPartialSequenceLength[] | undefined;
-
     constructor(
         /**
          * The minimumSequenceNumber as defined by the collab window used in the last call to `update`,
@@ -622,8 +627,7 @@ export class PartialSequenceLengths {
      * length of all segments submitted at or before `refSeq` in addition to any local, unacked segments
      * with `segment.localSeq <= localSeq`.
      *
-     * Note: currently, the local case (where `localSeq !== undefined`) is only supported if `refSeq` is the
-     * latest seq in the collab window. Additionally, it is only supported on a PartialSequenceLength object
+     * Note: the local case (where `localSeq !== undefined`) is only supported on a PartialSequenceLength object
      * constructed with `computeLocalPartials` set to true and not subsequently updated with `update`.
      */
     public getPartialLength(refSeq: number, clientId: number, localSeq?: number) {
@@ -632,12 +636,12 @@ export class PartialSequenceLengths {
         const cliLatestIndex = this.cliLatest(clientId);
         const cliSeq = this.clientSeqNumbers[clientId];
         if (seqIndex >= 0) {
-            // Add the partial length up to refSeq
             pLen += this.partialLengths[seqIndex].len;
+        }
 
+        if (localSeq === undefined) {
             if (cliLatestIndex >= 0) {
                 const cliLatest = cliSeq[cliLatestIndex];
-
                 if (cliLatest.seq > refSeq) {
                     // The client has local edits after refSeq, add in the length adjustments
                     pLen += cliLatest.len;
@@ -650,50 +654,24 @@ export class PartialSequenceLengths {
                 }
             }
         } else {
-            // RefSeq is before any of the partial lengths
-            // so just add in all local edits of that client (which should all be after the refSeq)
-            if (cliLatestIndex >= 0) {
-                const cliLatest = cliSeq[cliLatestIndex];
-                pLen += cliLatest.len;
-            }
-        }
-
-        if (localSeq !== undefined) {
             assert(this.unsequencedRecords !== undefined, "Local getPartialLength invoked without computing local partials.");
-            if (cliLatestIndex >= 0) {
-                const cliLatest = cliSeq[cliLatestIndex];
-                if (cliLatest.seq > refSeq) {
-                    // This undoes the work of "the client has local edits after refSeq, add in the length adjustments"
-                    // (since any such adjustments we want to do using local information)
-                    // TODO: should refactor this to be less ugly.
-                    pLen -= cliLatest.len;
-                    const precedingCliIndex = this.cliLatestLEQ(clientId, refSeq);
-                    if (precedingCliIndex >= 0) {
-                        pLen += cliSeq[precedingCliIndex].len;
-                    }
-                }
-            }
             const unsequencedPartialLengths = this.unsequencedRecords.partialLengths;
             // Local segments at or before localSeq should also be included
-            // shoot--removedClientIds needs info about when it was removed locally for local remove cases
             const localIndex = latestLEQ(unsequencedPartialLengths, localSeq);
             if (localIndex >= 0) {
                 pLen += unsequencedPartialLengths[localIndex].len;
-                // ... and that's it!
-                // local insert never double-counts (nobody else has even seen it)
-                // local delete ends up never double-counting b/c segments that are deleted locally but un-acked, then
-                // concurrently deleted by someone else are handled exactly as if the local delete never happened, length-wise.
-                // Note this current approach will fail if refSeq is not most-recent seq
-                // TODO: that will be a problem for interval collection reconnect, which needs to interpret (seqFrom, localClient) perspective.
-                // sad.
-                // ...
-                // To remedy this, we then subtract out double-counted overlapping remove entries:
+
+                // Lastly, we must subtract out any double-counted removes, which occur if a currently un-acked local
+                // remove overlaps with a remote client's remove that occurred at sequence number <=refSeq.
+                // Note that the overlappingRemoves field's lengths aren't pre-computed, so we actually need to
+                // iterate in this case.
+                // If this ever becomes a problem, a simple cache of these values should bring the asymptotics to match
+                // the rest of the length computation, since reconnect only ever needs to compute for O(1) values of refSeq.
                 for (const partialLength of this.unsequencedRecords.overlappingRemoves) {
                     if (partialLength.seq > refSeq) {
                         break;
                     }
 
-                    // Length isn't computed on these yet. Maybe we can do better with a better indexing structure.
                     if (partialLength.localSeq <= localSeq) {
                         pLen -= partialLength.seglen;
                     }
