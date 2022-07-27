@@ -14,10 +14,7 @@ import { Empty } from '../src/Empty';
 import { IDataGetterParameter } from '../src/InspectorTableTypes';
 import { NameCell } from '../src/NameCell';
 import { fetchRegisteredTemplates } from '../src/PropertyDataCreationHandlers';
-import { BooleanView } from '../src/PropertyViews/Boolean';
-import { EnumView } from '../src/PropertyViews/Enum';
-import { NumberView } from '../src/PropertyViews/Number';
-import { StringView } from '../src/PropertyViews/String';
+import { BooleanView, EnumView, NumberView, StringView } from '../src/PropertyViews';
 import {
   coordinateSystem3DSchema,
   enumUnoDosTresSchema,

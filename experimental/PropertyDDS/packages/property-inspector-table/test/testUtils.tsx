@@ -3,25 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
-import { ModalRoot } from '../src/ModalRoot';
-import { ModalManager } from '../src/ModalManager';
 import { ArrayProperty, BaseProperty, MapProperty, NodeProperty, PropertyFactory } from "@fluid-experimental/property-properties";
+import { BaseProxifiedProperty, PropertyProxy } from "@fluid-experimental/property-proxy";
 import { mount, MountRendererProps } from 'enzyme';
 import * as React from 'react';
 import { act } from 'react-dom/test-utils';
 import { EditableValueCell } from '../src/EditableValueCell';
 import { HashCalculator } from '../src/HashCalculator';
+import { InspectorTable } from '../src/InspectorTable';
+import {
+  IColumns, IInspectorRow, IInspectorSearchMatch, IInspectorSearchMatchMap, IInspectorTableProps
+} from '../src/InspectorTableTypes';
+import { ModalManager } from '../src/ModalManager';
+import { ModalRoot } from '../src/ModalRoot';
 import {
   handlePropertyDataCreation,
-  handlePropertyDataCreationOptionGeneration,
+  handlePropertyDataCreationOptionGeneration
 } from '../src/PropertyDataCreationHandlers';
-import { InspectorTable } from '../src/InspectorTable';
 import { search } from '../src/utils';
-import {
-  IColumns, IInspectorSearchMatch, IInspectorSearchMatchMap, IInspectorRow,
-  IInspectorTableProps
-} from '../src/InspectorTableTypes';
 import {
   constantsCustomType,
   coordinateSystem3DSchema,
@@ -35,7 +34,7 @@ import {
   sampleConstCollectionSchema,
   sampleConstSchema,
   typedReferencesSchema,
-  uint64CasesSchema,
+  uint64CasesSchema
 } from './schemas';
 
 export const uniqueIdentifier = 'uniqueIdentifier';
@@ -260,8 +259,8 @@ export const addProperty = (wrapper, primitiveValue, contextValue, name?) => {
   const newPropertyOption = allOptions.find((primitiveProperty) => primitiveProperty.label === primitiveValue);
   const newContextOption = contextSelection.props().options.filter(
     (context) => context.value === contextValue)[0];
-  propertySelection.props().onChange(newPropertyOption);
-  contextSelection.props().onChange(newContextOption);
+  act( () => propertySelection.props().onChange(newPropertyOption));
+  act( () => contextSelection.props().onChange(newContextOption));
   // Calls creation
   const createButton = dataForm.find('button').find({ id: 'createDataButton' });
   createButton.simulate('click');

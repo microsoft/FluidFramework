@@ -219,7 +219,6 @@ class InspectorTable<
   }
 
   private readonly dataCreation: boolean;
-  private isUnmounted: boolean = false;
   private readonly columns: any;
   private readonly debouncedSearchChange: (searchExpression: string) => void;
   private readonly table;
@@ -369,10 +368,6 @@ class InspectorTable<
         }
       });
     }
-  }
-
-  public componentWillUnmount() {
-    this.isUnmounted = true;
   }
 
   public render() {
@@ -606,9 +601,7 @@ class InspectorTable<
   private readonly handleCreateData = async (rowData: T, name: string, type: string, context: string) => {
     if (this.dataCreation) {
       await this.props.dataCreationHandler!(rowData, name, type, context);
-      if (!this.isUnmounted) {
-        this.setState({ showFormRowID: "0" });
-      }
+      this.setState({ showFormRowID: "0" });
     }
   };
 

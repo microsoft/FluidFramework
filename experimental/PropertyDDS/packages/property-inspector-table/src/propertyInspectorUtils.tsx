@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { forEachProperty } from "@fluid-experimental/property-binder";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 import {

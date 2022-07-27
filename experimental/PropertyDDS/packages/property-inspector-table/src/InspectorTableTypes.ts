@@ -52,6 +52,9 @@ export interface IInspectorSearchControls {
   state: IInspectorSearchState;
 }
 export interface IRowData<T = never> {
+  /**
+   * The raw data to be visualized.
+   */
 	data?: T;
 	id: string;
 	children?: IRowData<T>[];
@@ -152,10 +155,6 @@ export interface IInspectorTableProps<T extends IRowData<T> = any> extends BaseT
    * Indicates whether the current urn is a v1 branch urn.
    */
   isV1Urn?: boolean;
-  /**
-   * The raw data to be visualized.
-   */
-  data?: any;
   /**
    *  Reference property handler
    */

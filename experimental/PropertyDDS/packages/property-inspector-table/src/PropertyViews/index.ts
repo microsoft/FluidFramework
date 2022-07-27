@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { BooleanView } from "./Boolean";
 import { EnumView } from "./Enum";
 import { NumberView } from "./Number";
