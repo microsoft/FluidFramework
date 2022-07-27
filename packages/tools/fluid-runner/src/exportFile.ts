@@ -6,10 +6,10 @@
 import * as fs from "fs";
 import path from "path";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
-// eslint-disable-next-line import/no-internal-modules
 import { getArgsValidationError } from "./getArgsValidationError";
 import { IFluidFileConverter, isCodeLoaderBundle } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
@@ -84,7 +84,8 @@ export async function createContainerAndExecute(
         scope: fluidFileConverter.scope,
     });
 
-    const container = await loader.resolve({ url: "/fakeUrl/" });
+    const container = await loader.resolve({ url: "/fakeUrl/", headers: {
+        [LoaderHeader.loadMode]: { opsBeforeReturn: "cached" } } });
 
     return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () =>
         fluidFileConverter.execute(container, logger));
