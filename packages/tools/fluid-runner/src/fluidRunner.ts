@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import * as fs from "fs";
 import * as yargs from "yargs";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { exportFile } from "./exportFile";
+// eslint-disable-next-line import/no-internal-modules
+import { FileLogger } from "./logger/FileLogger";
 
 function fluidRunner() {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -44,16 +48,31 @@ function fluidRunner() {
                     }),
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             async (argv) => {
+                if (fs.existsSync(argv.telemetryFile)) {
+                    console.error(`Telemetry file already exists [${argv.telemetryFile}]`);
+                    process.exit(1);
+                }
+
+                const fileLogger = new FileLogger(argv.telemetryFile);
+
+                const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp",
+                    { all: { Event_Time: () => Date.now() } });
+
                 const result = await exportFile(
                     argv.codeLoader,
                     argv.inputFile,
                     argv.outputFolder,
                     argv.scenario,
-                    argv.telemetryFile,
+                    logger,
                 );
+
                 if (!result.success) {
                     console.error(`${result.eventName}: ${result.errorMessage}`);
+                    logger.sendErrorEvent({ eventName: result.eventName, message: result.errorMessage }, result.error);
+                    await fileLogger.flush();
                     process.exit(1);
+                } else {
+                    await fileLogger.flush();
                 }
             },
         )

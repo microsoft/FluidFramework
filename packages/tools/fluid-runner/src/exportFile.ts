@@ -8,9 +8,8 @@ import path from "path";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { FileLogger } from "./logger/FileLogger";
 import { getArgsValidationError } from "./getArgsValidationError";
 import { IFluidFileConverter, isCodeLoaderBundle } from "./codeLoaderBundle";
 import { FakeUrlResolver } from "./fakeUrlResolver";
@@ -25,6 +24,7 @@ interface IExportFileResponseFailure {
     success: false;
     eventName: string;
     errorMessage: string;
+    error?: any;
 }
 
 const clientArgsValidationError = "Client_ArgsValidationError";
@@ -34,21 +34,8 @@ export async function exportFile(
     inputFile: string,
     outputFolder: string,
     scenario: string,
-    telemetryFile: string,
+    logger: ITelemetryLogger,
 ): Promise<IExportFileResponse> {
-    if (fs.existsSync(telemetryFile)) {
-        return {
-            success: false,
-            eventName: clientArgsValidationError,
-            errorMessage: `Telemetry file already exists [${telemetryFile}]`,
-        };
-    }
-
-    const fileLogger = new FileLogger(telemetryFile, 50);
-
-    const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp",
-        { all: { Event_Time: () => Date.now() } });
-
     try {
         return await PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
             // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -56,20 +43,12 @@ export async function exportFile(
             if (!isCodeLoaderBundle(codeLoaderBundle)) {
                 const eventName = clientArgsValidationError;
                 const message = "Code loader bundle is not of type CodeLoaderBundle";
-                logger.sendErrorEvent({
-                    eventName,
-                    message,
-                });
                 return { success: false, eventName, errorMessage: message };
             }
 
             const argsValidationError = getArgsValidationError(inputFile, outputFolder, scenario);
             if (argsValidationError) {
                 const eventName = clientArgsValidationError;
-                logger.sendErrorEvent({
-                    eventName,
-                    message: argsValidationError,
-                });
                 return { success: false, eventName, errorMessage: argsValidationError };
             }
 
@@ -89,10 +68,7 @@ export async function exportFile(
         });
     } catch (error) {
         const eventName = "Client_UnexpectedError";
-        logger.sendErrorEvent({ eventName }, error);
-        return { success: false, eventName, errorMessage: "Unexpected error" };
-    } finally {
-        await fileLogger.flush();
+        return { success: false, eventName, errorMessage: "Unexpected error", error };
     }
 }
 

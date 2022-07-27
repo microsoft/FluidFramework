@@ -21,7 +21,7 @@ export class FileLogger implements ITelemetryBaseLogger {
      */
     public constructor(
         private readonly filePath: string,
-        private readonly eventsPerFlush: number,
+        private readonly eventsPerFlush: number = 50,
     ) { }
 
     public async flush(): Promise<void> {

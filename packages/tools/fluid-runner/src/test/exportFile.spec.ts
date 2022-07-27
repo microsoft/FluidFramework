@@ -31,7 +31,7 @@ describe("exportFile", () => {
                     path.join(snapshotFolder, snapshotFileName),
                     outputFolder,
                     "sampleScenario",
-                    path.join(outputFolder, "telemetry.txt"),
+                    new MockLogger(),
                 );
 
                 assert(exportFileResult.success, "exportFile call was not successful");
