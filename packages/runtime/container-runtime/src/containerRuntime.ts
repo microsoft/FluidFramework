@@ -164,7 +164,6 @@ import {
 } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
-import { opSize } from "./opProperties";
 
 export enum ContainerMessageType {
     // An op to be delivered to store

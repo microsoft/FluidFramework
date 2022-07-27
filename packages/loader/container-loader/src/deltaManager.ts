@@ -190,7 +190,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
-        if (this.opsCurrentlyProcessing !== 0) {
+        if (this.opsCurrentlyProcessing > 0) {
             this.close(new UsageError("Currently processing ops: Container closed"));
             }
         this.opsCurrentlyProcessing++;
