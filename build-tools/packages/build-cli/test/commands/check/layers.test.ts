@@ -23,22 +23,21 @@ describe("layers", () => {
         .command(["check layers", "--dot", ""])
         .it("Run layer check command by passing dot flag", (ctx) => {
             // expect(ctx.stdout).to.contain("Layer check passed (170 packages)");
-    });
+        });
 
     test.stdout()
         .command(["check layers", "--info", ""])
         .it("Run layer check command by passing info flag", (ctx) => {
             // expect(ctx.stdout).to.contain("Layer check passed (170 packages)");
-    });
+        });
 
     test.stdout()
         .command(["check layers", "--logtime", ""])
         .it("Run layer check command by passing logtime flag", (ctx) => {
             // expect(ctx.stdout).to.contain("Layer check passed (170 packages)");
-    });
+        });
 
     // checks for multiple flags
-
 
     // test layer check failures
 });

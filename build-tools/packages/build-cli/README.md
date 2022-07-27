@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.3.0 win32-x64 node-v14.19.1
+@fluid-tools/build-cli/0.3.0 win32-x64 node-v14.18.1
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -102,6 +102,7 @@ USAGE
 # Command reference
 <!-- commands -->
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
+* [`flub check layers`](#flub-check-layers)
 * [`flub commands`](#flub-commands)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
@@ -153,6 +154,25 @@ EXAMPLES
   Bump dependencies on server packages to the current version, replacing any pre-release ranges with release ranges.
 
     $ flub bump deps server -g client -t current
+```
+
+## `flub check layers`
+
+Make sure the dependencies between Fluid Framework packages are properly layered
+
+```
+USAGE
+  $ flub check layers [--md <value>] [--dot <value>] [--info <value>] [--logtime] [-v]
+
+FLAGS
+  -v, --verbose   Verbose logging.
+  --dot=<value>   Generate *.dot for GraphViz
+  --info=<value>  Path to the layer graph json file
+  --logtime       Display the current time on every status message for logging
+  --md=<value>    [default: .] Generate PACKAGES.md file for human consumption at path relative to repo root
+
+DESCRIPTION
+  Make sure the dependencies between Fluid Framework packages are properly layered
 ```
 
 ## `flub commands`

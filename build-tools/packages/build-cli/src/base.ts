@@ -17,13 +17,13 @@ export abstract class BaseCommand extends Command {
         root: rootPathFlag(),
         timer: Flags.boolean({
             default: false,
-            hidden: true
+            hidden: true,
         }),
         verbose: Flags.boolean({
             char: "v",
             description: "Verbose logging.",
             required: false,
-        })
+        }),
     };
 
     private _context: Context | undefined;
