@@ -462,7 +462,7 @@ class Cursor implements ITreeSubscriptionCursor {
     up(): TreeNavigationResult {
         const index = this.indexStack.pop();
         if (index === undefined) {
-            // At root already (and made not changes to current location)
+            // At root already (and made no changes to current location)
             return TreeNavigationResult.NotFound;
         }
 
