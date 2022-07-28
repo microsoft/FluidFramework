@@ -21,24 +21,6 @@ export class GeneratePackageJson extends BaseCommand {
             required: false,
             default: "--client",
         }),
-        // server: Flags.enum({
-        //     description: `Generate package lock for server mono repo`,
-        //     default: MonoRepoKind.Server,
-        //     options: [],
-        //     required: false,
-        // }),
-        // azure: Flags.enum({
-        //     description: `Generate package lock for azure mono repo`,
-        //     default: MonoRepoKind.Azure,
-        //     options: [],
-        //     required: false,
-        // }),
-        // buildTools: Flags.enum({
-        //     description: `Generate package lock for build-tools mono repo`,
-        //     default: MonoRepoKind.BuildTools,
-        //     options: [],
-        //     required: false,
-        // }),
         ...super.flags,
     };
 
@@ -54,19 +36,19 @@ export class GeneratePackageJson extends BaseCommand {
 
         let kind = MonoRepoKind.Client;
 
+        // https://oclif.io/docs/base_class
         switch (flags.monoRepoKind) {
-            case '--server':
-                if (flags.monoRepoKind === '--server') kind = MonoRepoKind.Server;
+            case "--server":
+                if (flags.monoRepoKind === "--server") kind = MonoRepoKind.Server;
                 break;
 
-            case '--azure':
-                if (flags.monoRepoKind === '--azure') kind = MonoRepoKind.Azure;
+            case "--azure":
+                if (flags.monoRepoKind === "--azure") kind = MonoRepoKind.Azure;
                 break;
 
-            case '--build-tools':
-                if (flags.monoRepoKind === '--build-tools') kind = MonoRepoKind.BuildTools;
+            case "--build-tools":
+                if (flags.monoRepoKind === "--build-tools") kind = MonoRepoKind.BuildTools;
                 break;
-
         }
 
         try {
