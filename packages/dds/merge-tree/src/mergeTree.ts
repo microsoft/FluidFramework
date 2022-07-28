@@ -1836,7 +1836,6 @@ export class MergeTree {
                     // keep first removal at the head.
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
-                    segment.localRemovedSeq = undefined;
                     if (segment.localRefs?.empty === false) {
                         localOverlapWithRefs.push(segment);
                     }

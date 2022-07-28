@@ -251,7 +251,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         }
 
         // search siblings
-        while (cursor.seek(1).result === TreeNavigationResult.Ok) {
+        while (cursor.seek(1) === TreeNavigationResult.Ok) {
             if (this.search(destination, cursor) === TreeNavigationResult.Ok) {
                 return TreeNavigationResult.Ok;
             }
@@ -449,16 +449,15 @@ class Cursor implements ITreeSubscriptionCursor {
         return TreeNavigationResult.NotFound;
     }
 
-    seek(offset: number): { result: TreeNavigationResult; moved: number; } {
+    seek(offset: number): TreeNavigationResult {
         assert(this.siblings !== undefined, 0x340 /* Cursor must be current to be used */);
         const index = offset + this.index;
         const child = this.siblings[index];
         if (child !== undefined) {
             this.index = index;
-            return { result: TreeNavigationResult.Ok, moved: offset };
+            return TreeNavigationResult.Ok;
         }
-        // TODO: Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: 0 };
+        return TreeNavigationResult.NotFound;
     }
 
     up(): TreeNavigationResult {

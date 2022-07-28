@@ -117,7 +117,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
             const reader = forest.allocateCursor();
             assert.equal(forest.tryGet(anchor, reader), TreeNavigationResult.Ok);
             assert.equal(reader.value, 2);
-            assert.equal(reader.seek(1).result, TreeNavigationResult.NotFound);
+            assert.equal(reader.seek(1), TreeNavigationResult.NotFound);
         });
 
         // TODO: test more kinds of deltas, including moves.

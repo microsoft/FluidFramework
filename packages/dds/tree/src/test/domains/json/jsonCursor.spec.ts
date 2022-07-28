@@ -89,7 +89,7 @@ describe("JsonCursor", () => {
                     const cursor = new JsonCursor({ [key as string]: 0 });
                     assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
-                    assert.deepEqual(cursor.seek(0), { result: TreeNavigationResult.Ok, moved: 0 });
+                    assert.deepEqual(cursor.seek(0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
                 });
 
@@ -97,9 +97,9 @@ describe("JsonCursor", () => {
                     const cursor = new JsonCursor({ [key as string]: 0 });
                     assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
-                    assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                    assert.deepEqual(cursor.seek(1), TreeNavigationResult.NotFound);
                     assert.equal(cursor.value, 0);
-                    assert.deepEqual(cursor.seek(-1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                    assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
                     assert.equal(cursor.value, 0);
                 });
             });
@@ -110,7 +110,7 @@ describe("JsonCursor", () => {
                 const cursor = new JsonCursor([0, 1]);
                 assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 0);
-                assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.Ok, moved: 1 });
+                assert.deepEqual(cursor.seek(1), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 1);
             });
 
@@ -118,7 +118,7 @@ describe("JsonCursor", () => {
                 const cursor = new JsonCursor([0, 1]);
                 assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 1);
-                assert.deepEqual(cursor.seek(-1), { result: TreeNavigationResult.Ok, moved: -1 });
+                assert.deepEqual(cursor.seek(-1), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 0);
             });
 
@@ -126,7 +126,7 @@ describe("JsonCursor", () => {
                 const cursor = new JsonCursor([0, 1]);
                 assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 1);
-                assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                assert.deepEqual(cursor.seek(1), TreeNavigationResult.NotFound);
                 assert.equal(cursor.value, 1);
             });
 
@@ -134,7 +134,7 @@ describe("JsonCursor", () => {
                 const cursor = new JsonCursor([0, 1]);
                 assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 0);
-                assert.deepEqual(cursor.seek(-1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
                 assert.equal(cursor.value, 0);
             });
         });

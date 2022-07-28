@@ -255,6 +255,25 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(cell2.get(), testValue);
     });
 
+    it("resends delete op and can set after", async function() {
+        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+            map.delete("clear");
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(map1.has("clear"), false);
+        assert.strictEqual(map2.has("clear"), false);
+        map1.set("clear", "test1");
+        await provider.ensureSynchronized();
+        assert.strictEqual(map1.get("clear"), "test1");
+        assert.strictEqual(map2.get("clear"), "test1");
+    });
+
     it("resends a lot of ops", async function() {
         const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));

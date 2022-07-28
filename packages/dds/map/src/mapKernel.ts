@@ -12,6 +12,14 @@ import {
     ISharedMapEvents,
 } from "./interfaces";
 import {
+    IMapSetOperation,
+    IMapDeleteOperation,
+    IMapClearOperation,
+    IMapKeyEditLocalOpMetadata,
+    IMapKeyAddLocalOpMetadata,
+    IMapClearLocalOpMetadata,
+} from "./internalInterfaces";
+import {
     ILocalValue,
     LocalValueMaker,
     makeSerializable,
@@ -31,7 +39,7 @@ interface IMapMessageHandler {
     process(
         op: IMapOperation,
         local: boolean,
-        localOpMetadata: unknown,
+        localOpMetadata: MapLocalOpMetadata,
     ): void;
 
     /**
@@ -39,60 +47,15 @@ interface IMapMessageHandler {
      * @param op - The map operation to submit
      * @param localOpMetadata - The metadata to be submitted with the message.
      */
-    submit(op: IMapOperation, localOpMetadata: unknown): void;
+    submit(op: IMapOperation, localOpMetadata: MapLocalOpMetadata): void;
 
-    applyStashedOp(op: IMapOperation): unknown;
-}
-
-/**
- * Operation indicating a value should be set for a key.
- */
-export interface IMapSetOperation {
-    /**
-     * String identifier of the operation type.
-     */
-    type: "set";
-
-    /**
-     * Map key being modified.
-     */
-    key: string;
-
-    /**
-     * Value to be set on the key.
-     */
-    value: ISerializableValue;
-}
-
-/**
- * Operation indicating a key should be deleted from the map.
- */
-export interface IMapDeleteOperation {
-    /**
-     * String identifier of the operation type.
-     */
-    type: "delete";
-
-    /**
-     * Map key being modified.
-     */
-    key: string;
+    applyStashedOp(op: IMapOperation): MapLocalOpMetadata;
 }
 
 /**
  * Map key operations are one of several types.
  */
 export type IMapKeyOperation = IMapSetOperation | IMapDeleteOperation;
-
-/**
- * Operation indicating the map should be cleared.
- */
-export interface IMapClearOperation {
-    /**
-     * String identifier of the operation type.
-     */
-    type: "clear";
-}
 
 /**
  * Description of a map delta operation
@@ -116,23 +79,6 @@ export interface IMapDataObjectSerializable {
  */
 export interface IMapDataObjectSerialized {
     [key: string]: ISerializedValue;
-}
-
-interface IMapKeyEditLocalOpMetadata {
-    type: "edit";
-    pendingMessageId: number;
-    previousValue: ILocalValue;
-}
-
-interface IMapKeyAddLocalOpMetadata {
-    type: "add";
-    pendingMessageId: number;
-}
-
-interface IMapClearLocalOpMetadata {
-    type: "clear";
-    pendingMessageId: number;
-    previousMap?: Map<string, ILocalValue>;
 }
 
 type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
@@ -455,7 +401,7 @@ export class MapKernel {
         if (handler === undefined) {
             return false;
         }
-        handler.submit(op as IMapOperation, localOpMetadata);
+        handler.submit(op as IMapOperation, localOpMetadata as MapLocalOpMetadata);
         return true;
     }
 
@@ -484,7 +430,7 @@ export class MapKernel {
         if (handler === undefined) {
             return false;
         }
-        handler.process(op, local, localOpMetadata);
+        handler.process(op, local, localOpMetadata as MapLocalOpMetadata);
         return true;
     }
 
@@ -619,7 +565,7 @@ export class MapKernel {
     private needProcessKeyOperation(
         op: IMapKeyOperation,
         local: boolean,
-        localOpMetadata: unknown,
+        localOpMetadata: MapLocalOpMetadata,
     ): boolean {
         if (this.pendingClearMessageIds.length > 0) {
             if (local) {
@@ -677,7 +623,7 @@ export class MapKernel {
                     }
                     this.clearCore(local);
                 },
-                submit: (op: IMapClearOperation, localOpMetadata: unknown) => {
+                submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
                     assert(isClearLocalOpMetadata(localOpMetadata), 0x2fc /* Invalid localOpMetadata for clear */);
                     // We don't reuse the metadata pendingMessageId but send a new one on each submit.
                     const pendingClearMessageId = this.pendingClearMessageIds.shift();
@@ -701,7 +647,7 @@ export class MapKernel {
                     }
                     this.deleteCore(op.key, local);
                 },
-                submit: (op: IMapDeleteOperation, localOpMetadata: unknown) => {
+                submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);
                 },
                 applyStashedOp: (op: IMapDeleteOperation) => {
@@ -722,7 +668,7 @@ export class MapKernel {
                     const context = this.makeLocal(op.key, op.value);
                     this.setCore(op.key, context, local);
                 },
-                submit: (op: IMapSetOperation, localOpMetadata: unknown) => {
+                submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
                     this.resubmitMapKeyMessage(op, localOpMetadata);
                 },
                 applyStashedOp: (op: IMapSetOperation) => {
@@ -777,7 +723,7 @@ export class MapKernel {
      * @param op - The map key message
      * @param localOpMetadata - Metadata from the previous submit
      */
-    private resubmitMapKeyMessage(op: IMapKeyOperation, localOpMetadata: unknown): void {
+    private resubmitMapKeyMessage(op: IMapKeyOperation, localOpMetadata: MapLocalOpMetadata): void {
         assert(isMapKeyLocalOpMetadata(localOpMetadata), 0x2fe /* Invalid localOpMetadata in submit */);
 
         // clear the old pending message id
