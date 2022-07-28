@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
 import { AnchorSet, Delta } from "../tree";
-import { Brand, fail, RecursiveReadonly } from "../util";
+import { brand, Brand, fail, RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -29,8 +30,10 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     private readonly branches: Map<SessionId, Branch<TChangeset>> = new Map();
     private localChanges: TChangeset[] = [];
 
-    public constructor(private readonly localSessionId: SessionId,
+    public constructor(
+        private readonly localSessionId: SessionId,
         private readonly changeFamily: TChangeFamily,
+        private readonly anchors?: AnchorSet,
     ) { }
 
     public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
@@ -41,8 +44,17 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         return this.localChanges;
     }
 
-    public addSequencedChange(newCommit: Commit<TChangeset>, anchors?: AnchorSet): Delta.Root {
+    public addSequencedChange(newCommit: Commit<TChangeset>): Delta.Root {
+        if (this.trunk.length > 0) {
+            const lastSeqNumber = this.trunk[this.trunk.length - 1].seqNumber;
+            const nextSeqNumber: SeqNumber = brand(lastSeqNumber as number + 1);
+            assert(newCommit.seqNumber === nextSeqNumber, "Expected incoming commit to be next sequenced commit");
+        }
+
         if (newCommit.sessionId === this.localSessionId) {
+            // `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
+            // `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
+            // change in the incoming commit.
             const changeset = this.localChanges.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
             this.trunk.push({
                 ...newCommit,
@@ -63,14 +75,14 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
 
         branch.localChanges.push(newCommit);
 
-        return this.changeFamily.intoDelta(this.rebaseLocalBranch(newChangeFullyRebased, anchors));
+        return this.changeFamily.intoDelta(this.rebaseLocalBranch(newChangeFullyRebased));
     }
 
-    public addLocalChange(change: TChangeset, anchors?: AnchorSet): Delta.Root {
+    public addLocalChange(change: TChangeset): Delta.Root {
         this.localChanges.push(change);
 
-        if (anchors !== undefined) {
-            this.changeFamily.rebaser.rebaseAnchors(anchors, change);
+        if (this.anchors !== undefined) {
+            this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
         }
 
         return this.changeFamily.intoDelta(change);
@@ -87,7 +99,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
-    private rebaseLocalBranch(trunkChange: TChangeset, anchors: AnchorSet | undefined): TChangeset {
+    private rebaseLocalBranch(trunkChange: TChangeset): TChangeset {
         const newBranchChanges: TChangeset[] = [];
         const inverses: TChangeset[] = [];
 
@@ -107,8 +119,8 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             ...newBranchChanges,
         );
 
-        if (anchors !== undefined) {
-            this.changeFamily.rebaser.rebaseAnchors(anchors, netChange);
+        if (this.anchors !== undefined) {
+            this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
         }
 
         this.localChanges = newBranchChanges;
