@@ -130,7 +130,7 @@ const tTable = {
  *                                   to be discarded, 1 more sample is discarded from the higher end than the lower end.
  * @returns
  */
- export function getArrayStatistics(array: number[], percentageOfSamplesToUse: number = 1): Benchmark.Stats {
+export function getArrayStatistics(array: number[], percentageOfSamplesToUse: number = 1): Benchmark.Stats {
     if (percentageOfSamplesToUse < 0.1 || percentageOfSamplesToUse > 1) {
         throw new Error("percentageOfSamplesToUse must be between 0.1 and 1 (inclusive)");
     }
