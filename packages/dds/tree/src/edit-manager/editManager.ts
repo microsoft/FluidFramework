@@ -5,6 +5,7 @@
 
 import { ChangeFamily } from "../change-family";
 import { AnchorSet, Delta } from "../tree";
+import { fail, RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -26,15 +27,27 @@ type SeqNumber = number;
 export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> {
     private readonly trunk: Commit<TChangeset>[] = [];
     private readonly branches: Map<SessionId, Branch<TChangeset>> = new Map();
-    private readonly localChanges: TChangeset[] = [];
+    private localChanges: TChangeset[] = [];
 
     public constructor(private readonly localSessionId: SessionId,
         private readonly changeFamily: TChangeFamily,
     ) { }
 
+    public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
+        return this.trunk;
+    }
+
+    public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
+        return this.localChanges;
+    }
+
     public addSequencedChange(newCommit: Commit<TChangeset>, anchors?: AnchorSet): Delta.Root {
         if (newCommit.sessionId === this.localSessionId) {
-            this.localChanges.shift();
+            const changeset = this.localChanges.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
+            this.trunk.push({
+                ...newCommit,
+                changeset,
+            });
             return Delta.empty;
         }
 
@@ -83,10 +96,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             change = this.changeFamily.rebaser.rebase(change, trunkChange);
             change = this.rebaseChange(change, newBranchChanges);
 
-            newBranchChanges.push({
-                ...localChange,
-                changeset: change,
-            });
+            newBranchChanges.push(change);
 
             inverses.unshift(this.changeFamily.rebaser.invert(localChange));
         }
@@ -101,6 +111,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             this.changeFamily.rebaser.rebaseAnchors(anchors, netChange);
         }
 
+        this.localChanges = newBranchChanges;
         return netChange;
     }
 
@@ -161,3 +172,5 @@ interface Branch<TChangeset> {
     localChanges: Commit<TChangeset>[];
     refSeq: SeqNumber;
 }
+const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
+    "Received a sequenced change from the local session despite having no local changes";
