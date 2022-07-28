@@ -7,8 +7,6 @@ import { strict as assert } from "assert";
 import * as semver from "semver";
 import { VersionBumpTypeExtended } from "./bumpTypes";
 
-export const DEFAULT_PUBLIC_VERSION = "2.0.0";
-
 /**
  * Translates a version using the Fluid internal version scheme into two parts: the public version, and the internal
  * version, which is stored in the pre-release section of the version.

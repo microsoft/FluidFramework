@@ -9,12 +9,14 @@ import { table } from "table";
 import { isVersionBumpTypeExtended } from "../bumpTypes";
 import {
     bumpInternalVersion,
-    DEFAULT_PUBLIC_VERSION,
     fromInternalScheme,
     toInternalScheme,
     getVersionRange,
     isInternalVersionScheme,
 } from "../internalVersionScheme";
+
+/** The default public version used to generate Fluid internal versions when none is provided. */
+const DEFAULT_PUBLIC_VERSION = "2.0.0";
 
 interface VersionScheme {
     internalSchemeVersion: string;
