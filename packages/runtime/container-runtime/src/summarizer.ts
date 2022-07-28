@@ -20,7 +20,7 @@ import {
 import { ISummaryConfiguration } from "./containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
-import { SummaryCollection } from "./summaryCollection";
+import { IAckedSummary, SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
@@ -364,30 +364,28 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private async handleSummaryAcks() {
         let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;
+        let ack: IAckedSummary | undefined;
         while (this.runningSummarizer) {
             const summaryLogger = this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
             try {
-                const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
+                ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
-                this.runningSummarizer.lockedRefreshSummaryAckAction(async () => {
+                const summaryOpHandle = ack.summaryOp.contents.handle;
+                const summaryAckHandle = ack.summaryAck.contents.handle;
+                await this.runningSummarizer.lockedRefreshSummaryAckAction(async () => {
                     await this.internalsProvider.refreshLatestSummaryAck(
-                        ack.summaryOp.contents.handle,
-                        ack.summaryAck.contents.handle,
+                        summaryOpHandle,
+                        summaryAckHandle,
                         refSequenceNumber,
                         summaryLogger,
                     );
-                }).catch((error) => {
-                    this.logger.sendErrorEvent({
-                        eventName: "UnexpectedRefreshSummaryAckError",
-                        referenceSequenceNumber: refSequenceNumber,
-                        ackHandle: ack.summaryAck.contents.handle,
-                        opHandle: ack.summaryOp.contents.handle,
-                    }, error);
                 });
             } catch (error) {
                 summaryLogger.sendErrorEvent({
                     eventName: "HandleSummaryAckError",
                     referenceSequenceNumber: refSequenceNumber,
+                    handle: ack?.summaryOp?.contents?.handle ?? undefined,
+                    ackHandle: ack?.summaryAck?.contents?.handle ?? undefined,
                 }, error);
             }
             refSequenceNumber++;
