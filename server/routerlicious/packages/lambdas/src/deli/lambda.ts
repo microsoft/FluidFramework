@@ -664,17 +664,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
         // Update and retrieve the minimum sequence number
         const message = rawMessage as IRawOperationMessage;
-        // Message received by deli.
-        const timeNow = Date.now();
-        if (!message.operation.traces) {
-            message.operation.traces = [];
-        }
-        message.operation.traces.push(
-            {
-                action: "start",
-                service: "deli",
-                timestamp: timeNow,
-            });
         const dataContent = this.extractDataContent(message);
 
         // Check if we should nack this message

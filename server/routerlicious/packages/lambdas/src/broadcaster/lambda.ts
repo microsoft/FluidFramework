@@ -130,19 +130,6 @@ export class BroadcasterLambda implements IPartitionLambda {
 
             const value = baseMessage as INackMessage | ISequencedOperationMessage | ITicketedSignalMessage;
             // message received by broadcaster
-            if (value.type === SequencedOperationType) {
-                const timeNow = Date.now();
-                 if (!value.operation.traces) {
-                        value.operation.traces = [];
-                 }
-                 value.operation.traces.push(
-                     {
-                         action: "start",
-                         service: "broadcaster",
-                         timestamp: timeNow,
-                    });
-            }
-
             if (value.type === SequencedOperationType && value.operation?.traces && value.operation.traces.length > 0) {
                 value.operation.traces.push(
                     {
