@@ -16,7 +16,7 @@ import {
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
 import {
-    FieldKey, TreeType, DetachedField, AnchorSet,
+    FieldKey, TreeType, DetachedField, AnchorSet, detachedFieldAsKey,
     Value, Delta, JsonableTree, getGenericTreeField, FieldMap, UpPath, Anchor, visitDelta,
 } from "../../tree";
 import { brand, fail } from "../../util";
@@ -128,7 +128,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             },
             exitNode: (index: number): void => {
                 assert(currentField === undefined, "must be in node to exitNode");
-                currentField = currentNode.getParentFieldKey() as unknown as FieldKey;
+                currentField = currentNode.getParentFieldKey();
                 const result = currentNode.up();
                 if (result === TreeNavigationResult.NotFound) {
                     currentNode.clear();
@@ -169,7 +169,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 
     private nextRange = 0;
     public newDetachedField(): DetachedField {
-        const range = brand<DetachedField>(String(this.nextRange));
+        const range: DetachedField = brand(String(this.nextRange));
         this.nextRange += 1;
         return range;
     }
@@ -336,55 +336,43 @@ class Cursor implements ITreeSubscriptionCursor {
 
     observer?: ObservingDependent | undefined;
 
-    // TODO: store stack here,
-    // then brute force on anchor restoration? (Add smarter anchor type later?)
-    private root: DetachedField | undefined;
-
-    // Ancestors traversed to visit this node (including this node and nodes at root level).
-    private readonly nodeStack: JsonableTree[] = [];
-    // Keys traversed to visit this node
+    // Siblings of node stack: does not include currently level (which is stored in `siblings`).
+    private readonly siblingStack: JsonableTree[][] = [];
+    // Keys traversed to visit this node, including detached field at the beginning
     private readonly keyStack: FieldKey[] = [];
-    // Indices traversed to visit this node
+    // Indices traversed to visit this node: does not include currently level (which is stored in `index`).
     private readonly indexStack: number[] = [];
 
-    private siblings?: readonly JsonableTree[];
+    private siblings?: JsonableTree[];
+    private index: number = -1;
 
     public clear(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33b /* Cursor must not be freed */);
-        this.root = undefined;
         this.state = ITreeSubscriptionCursorState.Cleared;
-        this.nodeStack.length = 0;
-        this.keyStack.length = 0;
+        this.siblingStack.length = 0;
         this.indexStack.length = 0;
         this.siblings = undefined;
+        this.index = -1;
         this.forest.currentCursors.delete(this);
     }
 
     public set(root: DetachedField, index: number): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33c /* Cursor must not be freed */);
         this.clear();
-        this.root = root;
         this.state = ITreeSubscriptionCursorState.Current;
-        this.indexStack.push(index);
+        this.index = index;
         this.siblings = this.forest.getRoot(root);
-        this.nodeStack.push(this.siblings[index]);
         this.forest.currentCursors.add(this);
+        this.keyStack.push(detachedFieldAsKey(root));
     }
 
     getNode(): JsonableTree {
-        assert(this.state === ITreeSubscriptionCursorState.Current, 0x33d /* Cursor must be current to be used */);
-        assert(this.nodeStack.length > 0, 0x33e /* Cursor must be current to be used */);
-        return this.nodeStack[this.nodeStack.length - 1];
+        assert(this.siblings !== undefined, 0x33e /* Cursor must be current to be used */);
+        return this.siblings[this.index];
     }
 
-    getParentFieldKey(): FieldKey | DetachedField {
-        assert(this.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
-        if (this.keyStack.length === 0) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.root!;
-        } else {
-            return this.keyStack[this.keyStack.length - 1];
-        }
+    getParentFieldKey(): FieldKey {
+        return this.keyStack[this.keyStack.length - 1];
     }
 
     getFields(): Readonly<FieldMap<JsonableTree>> {
@@ -409,10 +397,12 @@ class Cursor implements ITreeSubscriptionCursor {
     fork(observer?: ObservingDependent | undefined): ITreeSubscriptionCursor {
         throw new Error("Method not implemented."); // TODO
     }
+
     free(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33f /* Cursor must not be double freed */);
         this.state = ITreeSubscriptionCursorState.Freed;
     }
+
     buildAnchor(): ForestAnchor {
         // Perf Note:
         // This is O(depth) in tree.
@@ -423,73 +413,62 @@ class Cursor implements ITreeSubscriptionCursor {
         // When navigating up, adjust cached anchor if present.
 
         let path: UpPath | undefined;
-        const length = this.nodeStack.length;
+        const length = this.indexStack.length;
         assert(this.indexStack.length === length, "Unexpected indexStack.length");
-        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
+        assert(this.keyStack.length === length + 1, "Unexpected keyStack.length");
         for (let height = 0; height < length; height++) {
             path = {
                 parent: path,
                 parentIndex: this.indexStack[height],
-                parentField: height === 0 ? this.root as unknown as FieldKey : this.keyStack[height + 1],
+                parentField: this.keyStack[height],
             };
         }
-        // Height must be at least one (since its greater than this.keyStack.length), so path will always be set here.
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const anchor = this.forest.anchors.track(path!);
+        path = {
+            parent: path,
+            parentIndex: this.index,
+            parentField: this.keyStack[length],
+        };
+        const anchor = this.forest.anchors.track(path);
         return new ObjectPathAnchor(anchor, this.forest.anchors);
     }
+
     down(key: FieldKey, index: number): TreeNavigationResult {
-        const siblings = this.getField(key);
+        const siblings = getGenericTreeField(this.getNode(), key, false);
         const child = siblings[index];
         if (child !== undefined) {
-            this.nodeStack.push(child);
-            this.indexStack.push(index);
+            this.indexStack.push(this.index);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.siblingStack.push(this.siblings!);
             this.keyStack.push(key);
             this.siblings = siblings;
+            this.index = index;
             return TreeNavigationResult.Ok;
         }
         return TreeNavigationResult.NotFound;
     }
+
     seek(offset: number): { result: TreeNavigationResult; moved: number; } {
-        assert(this.state === ITreeSubscriptionCursorState.Current, 0x340 /* Cursor must be current to be used */);
-        const index = offset + this.indexStack[this.indexStack.length - 1];
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const child = this.siblings![index];
+        assert(this.siblings !== undefined, 0x340 /* Cursor must be current to be used */);
+        const index = offset + this.index;
+        const child = this.siblings[index];
         if (child !== undefined) {
-            this.indexStack[this.indexStack.length - 1] = index;
-            this.nodeStack[this.nodeStack.length - 1] = child;
+            this.index = index;
             return { result: TreeNavigationResult.Ok, moved: offset };
         }
         // TODO: Maybe truncate move, and move to end?
         return { result: TreeNavigationResult.NotFound, moved: 0 };
     }
-    up(): TreeNavigationResult {
-        const length = this.nodeStack.length;
-        assert(this.indexStack.length === length, "Unexpected indexStack.length");
-        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
 
-        // If nodeStack (which includes the current node) contains only one item,
-        // then the current node is the root, and we can not navigate up.
-        if (length === 1) {
+    up(): TreeNavigationResult {
+        const index = this.indexStack.pop();
+        if (index === undefined) {
+            // At root already (and made not changes to current location)
             return TreeNavigationResult.NotFound;
         }
 
-        assert(length > 1, "Unexpected nodeStack.length");
-        this.nodeStack.pop();
-        this.indexStack.pop();
+        this.index = index;
+        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
         this.keyStack.pop();
-        // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        if (length === 2) {
-            // Before navigation, cursor was one below the root (height 2), so now it's at the root.
-            // At the root it cannot get the sibling list by looking at the parent (since there is none),
-            // so get it from the forest directly.
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.siblings = this.forest.getRoot(this.root!);
-        } else {
-            const newParent = this.nodeStack[this.nodeStack.length - 2];
-            const key = this.keyStack[this.keyStack.length - 1];
-            this.siblings = getGenericTreeField(newParent, key, false);
-        }
         return TreeNavigationResult.Ok;
     }
 
