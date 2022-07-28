@@ -414,7 +414,7 @@ class Cursor implements ITreeSubscriptionCursor {
 
         let path: UpPath | undefined;
         const length = this.indexStack.length;
-        assert(this.indexStack.length === length, "Unexpected indexStack.length");
+        assert(this.siblingStack.length === length, "Unexpected siblingStack.length");
         assert(this.keyStack.length === length + 1, "Unexpected keyStack.length");
         for (let height = 0; height < length; height++) {
             path = {
