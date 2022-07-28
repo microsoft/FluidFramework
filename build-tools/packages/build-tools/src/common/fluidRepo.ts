@@ -4,9 +4,10 @@
  */
 
 import * as path from "path";
-import { Package, Packages } from "./npmPackage";
-import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "./monoRepo";
 import { getPackageManifest } from "./fluidUtils";
+import { defaultLogger, Logger } from "./logging";
+import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "./monoRepo";
+import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
 
 export interface IPackageManifest {
@@ -24,7 +25,14 @@ export interface IFluidRepoPackage {
 export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
 
 export class FluidRepo {
+    /**
+     * @deprecated Use .releaseGroups instead.
+     */
     public readonly monoRepos = new Map<MonoRepoKind, MonoRepo>();
+
+    public get releaseGroups() {
+        return this.monoRepos;
+    }
 
     public readonly packages: Packages;
 
@@ -49,7 +57,11 @@ export class FluidRepo {
         return this.monoRepos.get(MonoRepoKind.Azure);
     }
 
-    constructor(public readonly resolvedRoot: string, services: boolean, logVerbose = false) {
+    constructor(
+        public readonly resolvedRoot: string,
+        services: boolean,
+        private readonly logger: Logger = defaultLogger,
+    ) {
         const packageManifest = getPackageManifest(resolvedRoot);
 
         // Expand to full IFluidRepoPackage and full path
@@ -72,7 +84,7 @@ export class FluidRepo {
             const item = normalizeEntry(packageManifest.repoPackages[group]);
             if (isMonoRepoKind(group)) {
                 const { directory, ignoredDirs } = item as IFluidRepoPackage;
-                const monorepo = new MonoRepo(group, directory, ignoredDirs, logVerbose);
+                const monorepo = new MonoRepo(group, directory, ignoredDirs, logger);
                 this.monoRepos.set(group, monorepo);
                 loadedPackages.push(...monorepo.packages);
             } else if (group !== "services" || services) {

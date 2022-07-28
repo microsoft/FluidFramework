@@ -52,7 +52,7 @@ releasegroup1 dependencies to `~1.4.0-0`:
 }
 ```
 
-## Bumping based on current dependency range
+### Bumping based on current dependency range
 
 It is very helpful to bump a dependency based on its current value and a bump type, such as "major" or "minor". The
 following command yields the same results as the above command:
@@ -63,7 +63,7 @@ flub bump deps releasegroup1 --bumpType minor --prerelease
 
 To bump to a release version instead, omit the `--prerelease` argument.
 
-## Bumping standalone dependencies
+### Bumping standalone dependencies
 
 Some packages are versioned independently from other release groups. In the example above, we could bump to the next
 major version of the eslint-config package across the whole repo using the following command:
@@ -85,6 +85,43 @@ That command will update the package.json like so:
 
 For more detailed usage information see the [command reference](#flub-bump-deps-package_or_release_group);
 
+## release prep
+
+The `release prep` command is used to prepare the repo to create release branches. It helps ensure that the main branch
+is ready for a release branch to be created -- that is, it checks policy, ensures that there are no pre-release
+dependencies that need to be updated, etc.
+
+### Release prep for minor versions
+
+Releasing minor versions requires creating a `release/*` branch for the release, and bumping the release groups to the
+_next_ minor version after the fork.
+
+1. Check policy. If policy changes are needed, they must be merged before continuing.
+1. Check for prerelease dependencies on released packages. If found, they must be updated and merged before continuing.
+1. Bump the release group to the next MINOR version, PR and merge the changes.
+1. Prompt the user to create the release branch at the commit just before the merged PR from the previous step. Also
+   tells them the command to run on the release branch in order to kick off the release.
+
+Release prep is done. Now you can switch to the release branch and run the [release command](#release) to complete the
+release.
+
+### Release prep for major versions
+
+Releasing major versions requires merging the next branch into main, then
+
+1. Check that next branch has been merged into main. If it has not, it must be before continuing.
+1. Check policy. If policy changes are needed, they must be merged before continuing.
+1. Check for prerelease dependencies on released packages. If found, they must be updated and merged before continuing.
+1. Bump the release group to the next MAJOR version, PR and merge the changes.
+1. Prompt the user to create the release branch at the commit just before the merged PR from the previous step.
+1. Still on the main branch, bump the release group to the next MINOR version, PR and merge the changes.
+
+## release
+
+The `release` command is used to release packages and release groups from release branches. By default, the `release`
+command will only run on release branches.
+
+### Releasing independent packages
 # Usage
 <!-- usage -->
 ```sh-session
@@ -92,7 +129,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.3.0 win32-x64 node-v14.18.1
+@fluid-tools/build-cli/0.3.0 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -106,6 +143,8 @@ USAGE
 * [`flub commands`](#flub-commands)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
+* [`flub release`](#flub-release)
+* [`flub release prep`](#flub-release-prep)
 * [`flub version VERSION`](#flub-version-version)
 
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
@@ -114,8 +153,8 @@ Update the dependency version of a specified package or release group. That is, 
 
 ```
 USAGE
-  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-n <value> | -t major|minor|patch|current] [-p ]
-    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit] [-v]
+  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-v] [-n <value> | -t major|minor|patch|current] [-p ]
+    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group. Dependencies on these packages will be bumped.
@@ -233,7 +272,7 @@ Get info about the repo, release groups, and packages.
 
 ```
 USAGE
-  $ flub info [-g client|server|azure|build-tools] [-p] [-v]
+  $ flub info [-v] [-g client|server|azure|build-tools] [-p]
 
 FLAGS
   -g, --releaseGroup=<option>  release group
@@ -246,6 +285,70 @@ DESCRIPTION
 ```
 
 _See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/info.ts)_
+
+## `flub release`
+
+Release a release group and any dependencies.
+
+```
+USAGE
+  $ flub release -S semver|internal|virtualPatch [-v] [-x | --install | --commit | --branchCheck |
+    --updateCheck | --policyCheck] [-g client|server|azure|build-tools | -p <value>]
+
+FLAGS
+  -S, --versionScheme=<option>  (required) Version scheme to use.
+                                <options: semver|internal|virtualPatch>
+  -g, --releaseGroup=<option>   release group
+                                <options: client|server|azure|build-tools>
+  -p, --package=<value>         Name of package.
+  -v, --verbose                 Verbose logging.
+  -x, --skipChecks              Skip all checks.
+  --[no-]branchCheck            Check that the current branch is correct.
+  --[no-]commit                 Commit changes to a new branch.
+  --[no-]install                Update lockfiles by running 'npm install' automatically.
+  --[no-]policyCheck            Check that the local repo complies with all policy.
+  --[no-]updateCheck            Check that the local repo is up to date with the remote.
+
+DESCRIPTION
+  Release a release group and any dependencies.
+
+EXAMPLES
+  $ flub release
+```
+
+_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/release.ts)_
+
+## `flub release prep`
+
+Prepares the repo for a major or minor release. Helps pre-bump to the next major/minor so release branches can be created.
+
+```
+USAGE
+  $ flub release prep -S semver|internal|virtualPatch -g client|server|azure|build-tools -t major|minor [-v] [-x |
+    --install | --commit | --branchCheck | --updateCheck | --policyCheck]
+
+FLAGS
+  -S, --versionScheme=<option>  (required) Version scheme to use.
+                                <options: semver|internal|virtualPatch>
+  -g, --releaseGroup=<option>   (required) release group
+                                <options: client|server|azure|build-tools>
+  -t, --bumpType=<option>       (required) Version bump type.
+                                <options: major|minor>
+  -v, --verbose                 Verbose logging.
+  -x, --skipChecks              Skip all checks.
+  --[no-]branchCheck            Check that the current branch is correct.
+  --[no-]commit                 Commit changes to a new branch.
+  --[no-]install                Update lockfiles by running 'npm install' automatically.
+  --[no-]policyCheck            Check that the local repo complies with all policy.
+  --[no-]updateCheck            Check that the local repo is up to date with the remote.
+
+DESCRIPTION
+  Prepares the repo for a major or minor release. Helps pre-bump to the next major/minor so release branches can be
+  created.
+
+EXAMPLES
+  $ flub release prep
+```
 
 ## `flub version VERSION`
 
