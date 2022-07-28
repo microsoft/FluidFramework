@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { default as Random } from "random-js";
 import { buildForest, ITreeCursor, jsonableTreeFromCursor, TextCursor } from "../../..";
@@ -107,7 +107,8 @@ function bench(name: string, getJson: () => any) {
     }
 }
 
-const canada = generateCanada(makeRng("canada"));
+// Make a test dataset, but only make it large in performance testing mode.
+const canada = generateCanada(makeRng("canada"), !isInPerformanceTestingMode);
 
 describe("ITreeCursor", () => {
     bench("canada", () => canada);
