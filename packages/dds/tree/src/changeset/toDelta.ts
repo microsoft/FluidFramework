@@ -216,7 +216,7 @@ function applyOrCollectModifications(
         const protoFields = node.fields ?? {};
         const modifyFields = modify.fields;
         for (const key of Object.keys(modifyFields)) {
-            const brandedKey = brand<FieldKey>(key);
+            const brandedKey: FieldKey = brand(key);
             const outNodes = protoFields[key] ?? fail(ERR_MOD_ON_MISSING_FIELD);
             const outMarks = new OffsetListFactory<InsertedFieldsMark>();
             let index = 0;
@@ -377,7 +377,7 @@ function convertFieldMarks<TMarks>(fields: T.FieldMarks): Delta.FieldMarks<TMark
     const outFields: Delta.FieldMarks<TMarks> = new Map();
     for (const key of Object.keys(fields)) {
         const marks = convertMarkList<TMarks>(fields[key]);
-        const brandedKey = brand<FieldKey>(key);
+        const brandedKey: FieldKey = brand(key);
         outFields.set(brandedKey, marks);
     }
     return outFields;

@@ -25,11 +25,11 @@ function toTreeDelta(list: T.MarkList): Delta.MarkList<Delta.OuterMark> {
     return fullDelta.get(rootKey) ?? assert.fail("Expected changes under the root");
 }
 
-const type = brand<TreeSchemaIdentifier>("Node");
-const rootKey = brand<FieldKey>("root");
-const detachedKey = brand<FieldKey>("detached");
-const fooKey = brand<FieldKey>("foo");
-const barKey = brand<FieldKey>("bar");
+const type: TreeSchemaIdentifier = brand("Node");
+const rootKey: FieldKey = brand("root");
+const detachedKey: FieldKey = brand("detached");
+const fooKey: FieldKey = brand("foo");
+const barKey: FieldKey = brand("bar");
 const content: ProtoNode[] = [{
     type,
     value: 42,

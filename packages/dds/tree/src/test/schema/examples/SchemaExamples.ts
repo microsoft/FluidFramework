@@ -16,15 +16,15 @@
     FieldKind,
     ValueSchema,
     TreeSchemaIdentifier,
-    LocalFieldKey,
     NamedTreeSchema,
     emptyField,
     emptyMap,
     emptySet,
 } from "../../../schema";
+import { brand } from "../../../util";
 
 export const codePoint: NamedTreeSchema = {
-    name: "Primitive.CodePoint" as TreeSchemaIdentifier,
+    name: brand("Primitive.CodePoint"),
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -41,7 +41,7 @@ export const string: TreeSchema = {
     extraGlobalFields: false,
     localFields: new Map([
         [
-            "children" as LocalFieldKey,
+            brand("children"),
             { kind: FieldKind.Sequence, types: new Set([codePoint.name]) },
         ],
     ]),
