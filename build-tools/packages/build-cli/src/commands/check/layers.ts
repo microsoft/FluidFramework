@@ -24,7 +24,7 @@ export class CheckLayers extends BaseCommand {
             description: "Generate *.dot for GraphViz",
             required: false,
         }),
-        info: Flags.string({
+        info: Flags.file({
             description: "Path to the layer graph json file",
             required: false,
         }),
