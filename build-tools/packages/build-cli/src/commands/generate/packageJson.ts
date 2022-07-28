@@ -17,10 +17,27 @@ export class GeneratePackageJson extends BaseCommand {
     static flags = {
         monoRepoKind: Flags.enum({
             description: `Generate package lock for specified (server/client/azure/build-tools) mono repo`,
-            options: [MonoRepoKind.Server, MonoRepoKind.Azure, MonoRepoKind.BuildTools],
+            options: ["--server", "--azure", "--build-tools"],
             required: false,
-            default: MonoRepoKind.Client,
         }),
+        // server: Flags.enum({
+        //     description: `Generate package lock for server mono repo`,
+        //     default: MonoRepoKind.Server,
+        //     options: [],
+        //     required: false,
+        // }),
+        // azure: Flags.enum({
+        //     description: `Generate package lock for azure mono repo`,
+        //     default: MonoRepoKind.Azure,
+        //     options: [],
+        //     required: false,
+        // }),
+        // buildTools: Flags.enum({
+        //     description: `Generate package lock for build-tools mono repo`,
+        //     default: MonoRepoKind.BuildTools,
+        //     options: [],
+        //     required: false,
+        // }),
         ...super.flags,
     };
 
@@ -34,8 +51,25 @@ export class GeneratePackageJson extends BaseCommand {
         const repo = context.repo;
         timer.time("Package scan completed");
 
+        let kind = MonoRepoKind.Client;
+
+        switch (flags.monoRepoKind) {
+            case '--server':
+                if (flags.monoRepoKind === '--server') kind = MonoRepoKind.Server;
+                break;
+
+            case '--azure':
+                if (flags.monoRepoKind === '--azure') kind = MonoRepoKind.Azure;
+                break;
+
+            case '--build-tools':
+                if (flags.monoRepoKind === '--build-tools') kind = MonoRepoKind.BuildTools;
+                break;
+
+        }
+
         try {
-            const releaseGroup = repo.monoRepos.get(flags.monoRepoKind);
+            const releaseGroup = repo.monoRepos.get(kind);
             if (releaseGroup === undefined) {
                 this.error(`release group couldn't be found.`);
             }

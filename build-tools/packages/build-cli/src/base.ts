@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Context, getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
+import { Context, getResolvedFluidRoot, GitRepo, MonoRepoKind } from "@fluidframework/build-tools";
 import { Command, Flags } from "@oclif/core";
 import chalk from "chalk";
 import { rootPathFlag } from "./flags";
@@ -23,6 +23,12 @@ export abstract class BaseCommand extends Command {
             char: "v",
             description: "Verbose logging.",
             required: false,
+        }),
+        releaseGroup: Flags.enum({
+            description: `Generate package lock for specified (server/client/azure/build-tools) mono repo`,
+            options: [MonoRepoKind.Server, MonoRepoKind.Azure, MonoRepoKind.BuildTools],
+            required: false,
+            default: MonoRepoKind.Client,
         }),
     };
 
