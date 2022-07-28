@@ -50,6 +50,57 @@ describe('revert', () => {
 		expect(revertedChange.source.end.referenceSibling).to.deep.equal(secondNode.identifier);
 	});
 
+	it('handles reverting the insert of empty nodes, with multiple subsequent non-empty nodes', () => {
+		// build and insert of empty traits
+		const emptyTraitNodeId = 0 as DetachedSequenceId;
+		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
+		const emptyTraitInsert = ChangeInternal.insert(emptyTraitNodeId, {
+			referenceTrait: testTree.left.traitLocation,
+			side: Side.After,
+		});
+
+		// build and insert of non-empty traits
+		const firstDetachedId = 1 as DetachedSequenceId;
+		const firstNode = testTree.buildLeafInternal();
+		const firstBuild = ChangeInternal.build([firstNode], firstDetachedId);
+		const secondDetachedId = 2 as DetachedSequenceId;
+		const secondNode = testTree.buildLeafInternal();
+		const secondBuild = ChangeInternal.build([secondNode], secondDetachedId);
+		const insertedNodeId = 3 as DetachedSequenceId;
+		const insertedBuild = ChangeInternal.build([firstDetachedId, secondDetachedId], insertedNodeId);
+		const insertChange = ChangeInternal.insert(insertedNodeId, {
+			referenceTrait: testTree.left.traitLocation,
+			side: Side.After,
+		});
+		const result = expectDefined(
+			revert(
+				[emptyTraitBuild, emptyTraitInsert, firstBuild, secondBuild, insertedBuild, insertChange],
+				testTree.view
+			)
+		);
+		expect(result.length).to.equal(1);
+		const revertedChange = result[0] as DetachInternal;
+		expect(revertedChange.source.start.referenceSibling).to.deep.equal(firstNode.identifier);
+		expect(revertedChange.source.end.referenceSibling).to.deep.equal(secondNode.identifier);
+	});
+
+	it('handles reverting the detach of an empty trait', () => {
+		const insertedNodeId = 0 as DetachedSequenceId;
+		const result = revert(
+			[
+				ChangeInternal.detach(
+					StableRangeInternal.all({
+						label: 'someNonExistentTraitLabel' as TraitLabel,
+						parent: testTree.identifier,
+					}),
+					insertedNodeId
+				),
+			],
+			testTree.view
+		);
+		expect(result).to.have.lengthOf(0);
+	});
+
 	describe('returns undefined for reverts that require more context than the view directly before the edit', () => {
 		describe('because the edit conflicted', () => {
 			it('when reverting a detach of a node that is not in the tree', () => {
@@ -118,38 +169,6 @@ describe('revert', () => {
 						testTree.view
 					)
 				).to.be.undefined;
-			});
-		});
-		describe('when reverting the insert/detach of an empty trait', () => {
-			it('handles reverting the insert of an empty trait', () => {
-				const insertedNodeId = 0 as DetachedSequenceId;
-				const result = revert(
-					[
-						ChangeInternal.build([], insertedNodeId),
-						ChangeInternal.insert(insertedNodeId, {
-							referenceTrait: testTree.left.traitLocation,
-							side: Side.After,
-						}),
-					],
-					testTree.view
-				);
-				expect(result).to.be.undefined;
-			});
-			it('handles reverting the detach of an empty trait', () => {
-				const insertedNodeId = 0 as DetachedSequenceId;
-				const result = revert(
-					[
-						ChangeInternal.detach(
-							StableRangeInternal.all({
-								label: 'someNonExistentTraitLabel' as TraitLabel,
-								parent: testTree.identifier,
-							}),
-							insertedNodeId
-						),
-					],
-					testTree.view
-				);
-				expect(result).to.be.undefined;
 			});
 		});
 	});
