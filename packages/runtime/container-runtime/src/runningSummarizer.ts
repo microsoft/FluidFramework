@@ -106,11 +106,11 @@ export class RunningSummarizer implements IDisposable {
     }
 
     public get disposed() { return this._disposed; }
-
+    public get refreshSummaryAckLock() { return this._refreshSummaryAckLock; }
     private stopping = false;
     private _disposed = false;
     private summarizingLock: Promise<void> | undefined;
-    private refreshSummaryAckLock: Promise<void> | undefined;
+    private _refreshSummaryAckLock: Promise<void> | undefined;
     private tryWhileSummarizing = false;
     private readonly pendingAckTimer: PromiseTimer;
     private heuristicRunner?: ISummarizeHeuristicRunner;
@@ -338,15 +338,15 @@ export class RunningSummarizer implements IDisposable {
      * @returns - result of action.
      */
     public async lockedRefreshSummaryAckAction<T>(action: () => Promise<T>) {
-        assert(this.refreshSummaryAckLock === undefined,
+        assert(this._refreshSummaryAckLock === undefined,
             "Refresh Summary Ack - Caller is responsible for checking lock");
 
         const refreshSummaryAckLock = new Deferred<void>();
-        this.refreshSummaryAckLock = refreshSummaryAckLock.promise;
+        this._refreshSummaryAckLock = refreshSummaryAckLock.promise;
 
         return action().finally(() => {
             refreshSummaryAckLock.resolve();
-            this.refreshSummaryAckLock = undefined;
+            this._refreshSummaryAckLock = undefined;
         });
     }
 
@@ -515,6 +515,7 @@ export class RunningSummarizer implements IDisposable {
             // The heuristics are blocking concurrent summarize attempts.
             throw new UsageError("Attempted to run an already-running summarizer on demand");
         }
+
         const result = this.trySummarizeOnce(
             { reason: `onDemand/${reason}` },
             options,
