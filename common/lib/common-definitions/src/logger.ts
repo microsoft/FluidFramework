@@ -34,12 +34,26 @@ export interface ITelemetryProperties {
 }
 
 /**
+ * Set of properties defined for the base logger to use only primitive types.
+ */
+export type TelemetryBasePropertyType = string | number | boolean | undefined;
+
+export interface ITaggedBasePropertyType {
+    value: TelemetryBasePropertyType;
+    tag: string;
+}
+
+export interface ITelemetryBaseProperties {
+    [index: string]: TelemetryBasePropertyType | ITaggedBasePropertyType;
+}
+
+/**
  * Base interface for logging telemetry statements.
  * Can contain any number of properties that get serialized as json payload.
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  */
-export interface ITelemetryBaseEvent extends ITelemetryProperties {
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     category: string;
     eventName: string;
 }

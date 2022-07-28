@@ -65,9 +65,6 @@
       "InterfaceDeclaration_ITaggedTelemetryPropertyType": {
         "backCompat": false
       },
-      "InterfaceDeclaration_ITelemetryBaseEvent": {
-        "backCompat": false
-      },
       "InterfaceDeclaration_ITelemetryErrorEvent": {
         "backCompat": false
       },
