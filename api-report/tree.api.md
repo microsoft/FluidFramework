@@ -604,26 +604,20 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaRepo
 export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
 
 // @public
-export class TextCursor implements ITreeCursor {
+export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: JsonableTree);
     // (undocumented)
-    down(key: FieldKey, index: number): TreeNavigationResult;
-    // (undocumented)
-    getField(key: FieldKey): readonly JsonableTree[];
-    // (undocumented)
-    getFields(): Readonly<FieldMap<JsonableTree>>;
-    // (undocumented)
-    getNode(): JsonableTree;
+    down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
     get keys(): Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
     // (undocumented)
-    seek(offset: number): TreeNavigationResult;
+    seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
     get type(): TreeType;
     // (undocumented)
-    up(): TreeNavigationResult;
+    up(): SynchronousNavigationResult;
     // (undocumented)
     get value(): Value;
 }
