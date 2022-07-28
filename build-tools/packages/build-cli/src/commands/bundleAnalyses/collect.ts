@@ -2,35 +2,34 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { execSync } from "child_process";
 import path from "path";
 import { existsSync, copySync, readJSONSync } from "fs-extra";
 import { Flags } from '@oclif/core';
 import { BaseCommand } from "../../base";
 
 export default class BundleAnalysesCollect extends BaseCommand {
-  static description = 'describe the command here'
+  static description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
 
   static examples = [
     '<%= config.bin %> <%= command.id %>',
   ]
 
   static flags = {
-    // flag with a value (-n, --name=VALUE)
-    name: Flags.string({char: 'n', description: 'name to print'}),
-    // flag with no value (-f, --force)
-    force: Flags.boolean({char: 'f'}),
+    lernaOutput: Flags.string({
+        description: "Lerna Output",
+        default: `npx lerna list --all --json`,
+        required: true,
+    }),
     ...super.flags,
   }
 
-  static args = [{name: 'file'}]
-
   public async run(): Promise<void> {
-    const {args, flags} = await this.parse(BundleAnalysesCollect)
+    const {flags} = await this.parse(BundleAnalysesCollect);
 
-    // Get all the package locations
-    const lernaOutput = JSON.parse(execSync("npx lerna list --all --json").toString());
-    if (!Array.isArray(lernaOutput)) {
+    // The smallest asset size that we deems to be correct. Adjust if we are testing for assets that are smaller.
+    const smallestAssetSize = 100;
+
+    if (!Array.isArray(flags.lernaOutput)) {
         this.error("failed to get package information");
     }
 
@@ -39,30 +38,31 @@ export default class BundleAnalysesCollect extends BaseCommand {
     let hasSmallAssetError = false;
     const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
 
-    lernaOutput.forEach((pkg: { name: string, location: string }) => {
+    // eslint-disable-next-line unicorn/no-array-for-each
+    flags.lernaOutput.forEach((pkg: { name: string, location: string }) => {
         if (pkg.location === undefined) {
+            this.exit(-1);
             this.error("missing location in lerna package entry");
-            // process.exit(-1);
         }
 
         const packageAnalysisPath = path.join(pkg.location, "bundleAnalysis");
         if (existsSync(packageAnalysisPath)) {
-            console.log(`found bundleAnalysis for ${pkg.name}`);
+            this.log(`found bundleAnalysis for ${pkg.name}`);
 
             // Check if we successfully generated any assets
             const reportPath = path.join(packageAnalysisPath, "report.json");
             if (!existsSync(reportPath)) {
-                throw new Error(`${reportPath} is missing, cannot verify bundel analysis correctness`);
+                this.error(`${reportPath} is missing, cannot verify bundel analysis correctness`);
             }
 
             const report = readJSONSync(reportPath);
-            if (!report.assets?.length) {
-                throw new Error(`${reportPath} doesn't have any assets info`);
+            if (report.assets?.length !== undefined) {
+                this.error(`${reportPath} doesn't have any assets info`);
             }
 
             for (const asset of report.assets) {
 
-                if (!asset.chunkNames?.length) {
+                if (asset.chunkNames?.length !== undefined) {
                     // Assets without chunkNAmes are not code files
                     continue;
                 }

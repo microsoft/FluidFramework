@@ -7,30 +7,21 @@ import { Flags } from '@oclif/core'
 import { BaseCommand } from "../../base";
 
 export default class BundleAnalysesRun extends BaseCommand {
-  static description = 'describe the command here'
-
-  static examples = [
-    '<%= config.bin %> <%= command.id %>',
-  ]
+  static description = `Run to report the bundle analysis. Donot run Danger directly at the root of the
+    repo as this better isolates its usage and dependencies`;
 
   static flags = {
-    // flag with a value (-n, --name=VALUE)
-    name: Flags.string({char: 'n', description: 'name to print'}),
-    // flag with no value (-f, --force)
-    force: Flags.boolean({char: 'f'}),
     ...super.flags,
   }
 
-  static args = [{name: 'file'}]
-
   public async run(): Promise<void> {
-    const {args, flags} = await this.parse(BundleAnalysesRun)
+    const {flags} = await this.parse(BundleAnalysesRun)
 
     try {
         execSync(`npx danger ci -d ${__dirname}/dangerfile.js`, { stdio: "inherit" });
     } catch (error_: unknown) {
+        this.exit(-1);
         this.error(error_ as string);
-        // process.exit(-1);
     }
   }
 }
