@@ -61,7 +61,7 @@ export class AnchorSet {
      */
     public track(path: UpPath): Anchor {
         const foundPath = this.trackInner(path);
-        const anchor = brand<Anchor>(this.anchorCounter++);
+        const anchor: Anchor = brand(this.anchorCounter++);
         this.anchorToPath.set(anchor, foundPath);
         return anchor;
     }
