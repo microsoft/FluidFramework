@@ -282,10 +282,7 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
     keys: Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
-    seek(offset: number): {
-        result: TResult;
-        moved: number;
-    };
+    seek(offset: number): TResult;
     readonly type: TreeType;
     up(): TResult;
     readonly value: Value;
@@ -332,10 +329,7 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     // (undocumented)
     length(key: FieldKey): number;
     // (undocumented)
-    seek(offset: number): {
-        result: SynchronousNavigationResult;
-        moved: number;
-    };
+    seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
     get type(): TreeType;
     // (undocumented)
@@ -619,10 +613,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     // (undocumented)
     length(key: FieldKey): number;
     // (undocumented)
-    seek(offset: number): {
-        result: SynchronousNavigationResult;
-        moved: number;
-    };
+    seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
     get type(): TreeType;
     // (undocumented)

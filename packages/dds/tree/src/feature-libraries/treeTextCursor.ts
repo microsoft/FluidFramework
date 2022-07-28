@@ -92,15 +92,14 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
         return TreeNavigationResult.NotFound;
     }
 
-    seek(offset: number): { result: SynchronousNavigationResult; moved: number; } {
+    seek(offset: number): SynchronousNavigationResult {
         const index = offset + this.index;
         const child = this.siblings[index];
         if (child !== undefined) {
             this.index = index;
-            return { result: TreeNavigationResult.Ok, moved: offset };
+            return TreeNavigationResult.Ok;
         }
-        // TODO: Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: 0 };
+        return TreeNavigationResult.NotFound;
     }
 
     up(): SynchronousNavigationResult {
