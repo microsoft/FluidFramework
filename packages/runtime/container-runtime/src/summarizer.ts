@@ -395,6 +395,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                             summaryLogger,
                             FetchSource.noCache,
                         );
+                    } else {
+                        throw error;
                     }
                 });
             } catch (error) {

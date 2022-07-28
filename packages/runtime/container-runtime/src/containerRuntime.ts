@@ -2773,24 +2773,27 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // submitting the summaryOp then we can't rely on summaryAck. So in case we have
             // latestSnapshotVersionId from storage and it does not match with the lastAck ackHandle, then use
             // the one fetched from storage as parent as that is the latest.
-            const summaryContext: ISummaryContext = lastAck?.summaryAck.contents.handle !== latestSnapshotVersionId &&
-                latestSnapshotVersionId !== undefined ?
-                {
+            let summaryContext: ISummaryContext;
+            if (lastAck?.summaryAck.contents.handle !== latestSnapshotVersionId
+                && latestSnapshotVersionId !== undefined) {
+                summaryContext = {
                     proposalHandle: undefined,
                     ackHandle: latestSnapshotVersionId,
                     referenceSequenceNumber: summaryRefSeqNum,
-                } :
-                lastAck === undefined
-                    ? {
-                        proposalHandle: undefined,
-                        ackHandle: this.context.getLoadedFromVersion()?.id,
-                        referenceSequenceNumber: summaryRefSeqNum,
-                    }
-                    : {
-                        proposalHandle: lastAck.summaryOp.contents.handle,
-                        ackHandle: lastAck.summaryAck.contents.handle,
-                        referenceSequenceNumber: summaryRefSeqNum,
-                    };
+                };
+            } else if (lastAck === undefined) {
+                summaryContext = {
+                    proposalHandle: undefined,
+                    ackHandle: this.context.getLoadedFromVersion()?.id,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                };
+            } else {
+                summaryContext = {
+                    proposalHandle: lastAck.summaryOp.contents.handle,
+                    ackHandle: lastAck.summaryAck.contents.handle,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                };
+            }
 
             let handle: string;
             try {
