@@ -43,7 +43,7 @@ import { fail } from "../util";
  * rather than actual strings.
  */
 
- /**
+/**
  * An ITreeCursor implementation for JsonableTree.
  *
  * TODO: object-forest's cursor is mostly a superset of this functionality.
