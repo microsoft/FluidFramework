@@ -8,9 +8,15 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { DriverHeader } from "@fluidframework/driver-definitions";
+import { DriverErrorType, DriverHeader, FetchSource } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger, IFluidErrorBase, LoggingError, wrapErrorAndLog } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    IFluidErrorBase,
+    isFluidError,
+    LoggingError,
+    wrapErrorAndLog,
+} from "@fluidframework/telemetry-utils";
 import {
     FluidObject,
     IFluidHandleContext,
@@ -372,7 +378,25 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     ack.summaryAck.contents.handle,
                     refSequenceNumber,
                     summaryLogger,
-                );
+                ).catch(async (error) => {
+                    // If the error is 404, so maybe the fetched version no longer exists on server. We retry to
+                    // refresh with the latest version one time. 
+                    if (isFluidError(error) && error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
+                        summaryLogger.sendTelemetryEvent({
+                            eventName: "HandleSummaryAckErrorRetry",
+                            referenceSequenceNumber: refSequenceNumber,
+                            proposalHandle: ack.summaryOp.contents.handle,
+                            ackHandle: ack.summaryAck.contents.handle,
+                        }, error);
+                        await this.internalsProvider.refreshLatestSummaryAck(
+                            ack.summaryOp.contents.handle,
+                            ack.summaryAck.contents.handle,
+                            refSequenceNumber,
+                            summaryLogger,
+                            FetchSource.noCache,
+                        );
+                    }
+                });
             } catch (error) {
                 summaryLogger.sendErrorEvent({
                     eventName: "HandleSummaryAckError",
