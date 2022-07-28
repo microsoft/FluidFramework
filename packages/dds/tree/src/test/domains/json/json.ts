@@ -9,7 +9,7 @@ type Source = () => number;
  * Generates a Jsonable tree with statistical similarities to 'canada.json':
  * https://github.com/serde-rs/json-benchmark/tree/master/data
  */
-export function generateCanada(rnd: Source) {
+export function generateCanada(rnd: Source, tinyVersion = false) {
     // Map uniform distribution in the range [0..1) to a uniform distribution
     // in the range [min, max).
     const uniform = (source: Source, min: number, max: number) =>
@@ -44,7 +44,7 @@ export function generateCanada(rnd: Source) {
     let last_y = 43;
 
     // The geometry of 'canada.json' is encoded as 480 segments of varying length.
-    const segmentLengths = [
+    const segmentLengths = tinyVersion ? [2, 10] : [
         14, 33, 18, 23, 10, 28, 9, 28, 279, 221, 11, 86, 28, 19, 26, 23, 24, 38, 24, 9, 30, 20, 27, 21, 19, 25, 24, 20,
         19, 18, 34, 19, 28, 12, 38, 30, 91, 17, 23, 28, 22, 24, 19, 44, 21, 19, 21, 24, 21, 24, 15, 20, 28, 18, 474,
         17, 19, 12, 12, 1436, 31, 27, 26, 40, 21, 20, 27, 21, 19, 18, 24, 20, 65, 27, 36, 21, 27, 28, 24, 17, 20, 17,
