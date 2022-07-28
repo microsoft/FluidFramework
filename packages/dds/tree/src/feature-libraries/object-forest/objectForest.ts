@@ -336,9 +336,9 @@ class Cursor implements ITreeSubscriptionCursor {
 
     observer?: ObservingDependent | undefined;
 
-    // Siblings of node stack: does not include currently level (which is stored in `siblings`).
+    // Siblings of into which indexStack indexes: does not include currently level (which is stored in `siblings`).
     private readonly siblingStack: JsonableTree[][] = [];
-    // Keys traversed to visit this node, including detached field at the beginning
+    // Keys traversed to visit this node, including detached field at the beginning.
     private readonly keyStack: FieldKey[] = [];
     // Indices traversed to visit this node: does not include current level (which is stored in `index`).
     private readonly indexStack: number[] = [];
@@ -346,9 +346,11 @@ class Cursor implements ITreeSubscriptionCursor {
     private siblings?: JsonableTree[];
     private index: number = -1;
 
+    // TODO: tests for clear when not at root.
     public clear(): void {
         assert(this.state !== ITreeSubscriptionCursorState.Freed, 0x33b /* Cursor must not be freed */);
         this.state = ITreeSubscriptionCursorState.Cleared;
+        this.keyStack.length = 1;
         this.siblingStack.length = 0;
         this.indexStack.length = 0;
         this.siblings = undefined;
