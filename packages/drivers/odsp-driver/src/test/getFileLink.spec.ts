@@ -20,7 +20,7 @@ describe("getFileLink", () => {
 
     it("should return share link with existing access", async () => {
         const result = await mockFetchMultiple(
-            async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId4" }, "Enterprise", logger),
+            async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId4" }, logger),
             [
                 async () => okResponse({}, fileItemResponse),
                 async () => okResponse({}, { d: { directUrl: "sharelink" } }),
@@ -32,7 +32,7 @@ describe("getFileLink", () => {
 
     it("should reject if file web dav url is missing", async () => {
         await assert.rejects(mockFetchMultiple(
-            async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId5" }, "Enterprise", logger),
+            async () => getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId5" }, logger),
             [
                 async () => okResponse({}, {}),
                 // We retry once on malformed response from server, so need a second response mocked.
@@ -43,7 +43,7 @@ describe("getFileLink", () => {
 
     it("should reject if file item is not found", async () => {
         await assert.rejects(mockFetchSingle(async () => {
-            return getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId6" }, "Enterprise", logger);
+            return getFileLink(storageTokenFetcher, { siteUrl, driveId, itemId: "itemId6" }, logger);
             },
             notFound,
         ), "File link should reject when not found");

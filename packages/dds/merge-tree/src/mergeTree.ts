@@ -25,6 +25,7 @@ import {
     UniversalSequenceNumber,
 } from "./constants";
 import {
+    assertLocalReferences,
      LocalReferenceCollection,
      LocalReferencePosition,
 } from "./localReference";
@@ -875,7 +876,8 @@ export class MergeTree {
         } else {
             for (const ref of refsToSlide) {
                 ref.callbacks?.beforeSlide?.();
-                segment.localRefs.removeLocalRef(ref);
+                assertLocalReferences(ref);
+                ref.link(undefined, 0, undefined);
                 ref.callbacks?.afterSlide?.();
             }
         }
@@ -1861,7 +1863,6 @@ export class MergeTree {
                     // keep first removal at the head.
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
-                    segment.localRemovedSeq = undefined;
                     if (segment.localRefs?.empty === false) {
                         localOverlapWithRefs.push(segment);
                     }
@@ -1899,8 +1900,11 @@ export class MergeTree {
         };
         this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
         // these segments are already viewed as being removed locally and are not event-ed
-        // so can slide immediately
-        localOverlapWithRefs.forEach((s) => this.slideReferences(s, s.localRefs!));
+        // so can slide non-StayOnRemove refs immediately
+        localOverlapWithRefs.forEach(
+            (s) => this.slideReferences(s, Array.from(s.localRefs!)
+                .filter((localRef) => !refTypeIncludesFlag(localRef, ReferenceType.StayOnRemove))),
+        );
         // opArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && removedSegments.length > 0) {
             this.mergeTreeDeltaCallback(
