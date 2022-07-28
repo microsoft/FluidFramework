@@ -336,12 +336,12 @@ class Cursor implements ITreeSubscriptionCursor {
 
     observer?: ObservingDependent | undefined;
 
-    // Siblings of into which indexStack indexes: does not include currently level (which is stored in `siblings`).
+    // Indices traversed to visit this node: does not include current level (which is stored in `index`).
+    private readonly indexStack: number[] = [];
+    // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
     private readonly siblingStack: JsonableTree[][] = [];
     // Keys traversed to visit this node, including detached field at the beginning.
     private readonly keyStack: FieldKey[] = [];
-    // Indices traversed to visit this node: does not include current level (which is stored in `index`).
-    private readonly indexStack: number[] = [];
 
     private siblings?: JsonableTree[];
     private index: number = -1;
