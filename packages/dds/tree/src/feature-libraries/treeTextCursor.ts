@@ -50,10 +50,10 @@ import { fail } from "../util";
  * Maybe do a refactoring to deduplicate this.
  */
 export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
-    // Siblings of node stack: does not include currently level (which is stored in `siblings`).
-    private readonly siblingStack: JsonableTree[][] = [];
-    // Indices traversed to visit this node: does not include currently level (which is stored in `index`).
+    // Indices traversed to visit this node: does not include current level (which is stored in `index`).
     private readonly indexStack: number[] = [];
+    // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
+    private readonly siblingStack: JsonableTree[][] = [];
 
     private siblings: JsonableTree[];
     private index: number;
@@ -106,7 +106,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     up(): SynchronousNavigationResult {
         const index = this.indexStack.pop();
         if (index === undefined) {
-            // At root already (and made not changes to current location)
+            // At root already (and made no changes to current location)
             return TreeNavigationResult.NotFound;
         }
 
