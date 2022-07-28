@@ -87,8 +87,8 @@ function bench(name: string, getJson: () => any) {
         ["jsonableTreeFromCursor", jsonableTreeFromCursor],
     ];
 
-    for (const [factoryName, factory] of cursorFactories) {
-        for (const [consumerName, consumer] of consumers) {
+    for (const [consumerName, consumer] of consumers) {
+        for (const [factoryName, factory] of cursorFactories) {
             let cursor: ITreeCursor;
             benchmark({
                 type: BenchmarkType.Measurement,
