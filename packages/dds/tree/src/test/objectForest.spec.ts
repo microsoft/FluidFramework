@@ -16,9 +16,8 @@ import {
 import { IEditableForest, initializeForest, TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber } from "../domains";
 import { recordDependency } from "../dependency-tracking";
-import { Delta, FieldKey, JsonableTree } from "../tree";
+import { Delta, detachedFieldAsKey, JsonableTree } from "../tree";
 import { jsonableTreeFromCursor } from "..";
-import { brand } from "../util";
 import { MockDependent } from "./utils";
 
 /**
@@ -73,7 +72,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
 
             const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: 2 };
             // TODO: make type-safe
-            const rootField = brand<FieldKey>(forest.rootField as unknown as string);
+            const rootField = detachedFieldAsKey(forest.rootField);
             const delta: Delta.Root = new Map([[rootField, [setValue]]]);
             forest.applyDelta(delta);
 
@@ -91,7 +90,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
 
             const setValue: Delta.Modify = { type: Delta.MarkType.Modify, setValue: undefined };
             // TODO: make type-safe
-            const rootField = brand<FieldKey>(forest.rootField as unknown as string);
+            const rootField = detachedFieldAsKey(forest.rootField);
             const delta: Delta.Root = new Map([[rootField, [setValue]]]);
             forest.applyDelta(delta);
 
@@ -109,7 +108,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
 
             // TODO: does does this select what to delete?
             const mark: Delta.Delete = { type: Delta.MarkType.Delete, count: 1 };
-            const rootField = brand<FieldKey>(forest.rootField as unknown as string);
+            const rootField = detachedFieldAsKey(forest.rootField);
             const delta: Delta.Root = new Map([[rootField, [0, mark]]]);
             // TODO: make type-safe
             forest.applyDelta(delta);
@@ -132,7 +131,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
                 const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
                 const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
                 // TODO: make type-safe
-                const rootField = brand<FieldKey>(forest.rootField as unknown as string);
+                const rootField = detachedFieldAsKey(forest.rootField);
                 const delta: Delta.Root = new Map([[rootField, [insert]]]);
 
                 assert.deepEqual(dependent.tokens, []);
