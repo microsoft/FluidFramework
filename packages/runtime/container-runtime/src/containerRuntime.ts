@@ -3177,7 +3177,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async refreshLatestSummaryAckFromServer(
         summaryLogger: ITelemetryLogger,
-    ): Promise<{ latestSnapshotRefSeq: number, latestSnapshotVersionId: string | undefined }> {
+    ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined; }> {
         const { snapshotTree, versionId } = await this.fetchSnapshotFromStorage(null, summaryLogger, {
                 eventName: "RefreshLatestSummaryGetSnapshot",
                 fetchLatest: true,
@@ -3207,7 +3207,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         fetchSource?: FetchSource,
-    ): Promise<{ snapshotTree: ISnapshotTree, versionId: string }> {
+    ): Promise<{ snapshotTree: ISnapshotTree; versionId: string; }> {
         return PerformanceEvent.timedExecAsync(
             logger, event, async (perfEvent: {
                 end: (arg0: {
