@@ -511,7 +511,7 @@ export class RunningSummarizer implements IDisposable {
         }
         // Check for concurrent summary attempts. If one is found,
         // return a promise that caller can await before trying again.
-        if (this.summarizingLock !== undefined || this.refreshSummaryAckLock !== undefined) {
+        if (this.summarizingLock !== undefined) {
             // The heuristics are blocking concurrent summarize attempts.
             throw new UsageError("Attempted to run an already-running summarizer on demand");
         }
