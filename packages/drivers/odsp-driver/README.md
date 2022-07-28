@@ -17,8 +17,8 @@ Documenting some basics about opds-driver specific apis that are relevant for cr
 - Creates a new Fluid file with the contents as the summary provided in the request body.
 - The creation of file along with the summary is done in a single api call to reduce the number of round trips during new file creation.
 - Also supports creation of sharing link for the file if appropriate request headers are provided in the api call. This feature was introduced to save the number of round trips that a host app makes while creating a file and then creating a sharing link. 
-	1. Earlier only `&createLinkType=csl` paramter was supported which could create organizational scoped sharing links. Feature is gated by `enableShareLinkWithCreate` provided via `HostStoragePolicy`. (createLinkType is now deprecated, so prefer using option 2 below)
-	1. Now, providing appropriate values for `&createLinkScope` and `&createLinkRole` request parameters will let you create sharing links with various permissioning scopes. See `resolvedUrl` definition for more details. Feature is gated by `enableSingleRoundTripForShareLinkWithCreate` provided via `HostStoragePolicy`.
+	1. Earlier only `&createLinkType=csl` parameter was supported which could create organizational scoped sharing links. Feature is gated by `enableShareLinkWithCreate` provided via `HostStoragePolicy`. (createLinkType is now deprecated, so prefer using option 2 below)
+	1. Now, providing appropriate values for `&createLinkScope` and `&createLinkRole` request parameters will let you create sharing links with various permission scopes. See `resolvedUrl` definition for more details. Feature is gated by `enableSingleRequestForShareLinkWithCreate ` provided via `HostStoragePolicy`.
 
 ### /trees/latest API
 

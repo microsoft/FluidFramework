@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
 import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes, SharingLinkKind, SharingLinkRole,
+import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes, ISharingLinkKind, SharingLinkRole,
     SharingLinkScope } from "@fluidframework/odsp-driver-definitions";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
@@ -210,7 +210,7 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should save 'sharing' information received during createNewFluidFile", async () => {
-        const createLinkType: SharingLinkKind = { linkScope: SharingLinkScope.users, linkRole: SharingLinkRole.edit };
+        const createLinkType: ISharingLinkKind = { linkScope: SharingLinkScope.users, linkRole: SharingLinkRole.edit };
         newFileParams.createLinkType = createLinkType;
 
         // Test that sharing link is set appropriately when it is received in the response from ODSP

@@ -19,8 +19,9 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
     // @deprecated (undocumented)
     enableRedeemFallback?: boolean;
+    // @deprecated (undocumented)
     enableShareLinkWithCreate?: boolean;
-    enableSingleRoundTripForShareLinkWithCreate?: boolean;
+    enableSingleRequestForShareLinkWithCreate?: boolean;
     // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
@@ -133,6 +134,24 @@ export interface IPersistedCache {
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
+// @public
+export interface ISharingLink {
+    // (undocumented)
+    scope?: SharingLinkScope;
+    // (undocumented)
+    type?: SharingLinkRole;
+    // (undocumented)
+    webUrl: string;
+}
+
+// @public
+export interface ISharingLinkKind {
+    // (undocumented)
+    linkRole?: SharingLinkRole;
+    // (undocumented)
+    linkScope: SharingLinkScope;
+}
+
 // @public (undocumented)
 export interface ISnapshotOptions {
     // (undocumented)
@@ -180,8 +199,8 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 // @public
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes | SharingLinkKind;
-        link?: string | SharingLink;
+        type?: ShareLinkTypes | ISharingLinkKind;
+        link?: string | ISharingLink;
         error?: any;
         shareId?: string;
     };
@@ -192,24 +211,6 @@ export interface ShareLinkInfoType {
 export enum ShareLinkTypes {
     // (undocumented)
     csl = "csl"
-}
-
-// @public
-export interface SharingLink {
-    // (undocumented)
-    scope?: SharingLinkScope;
-    // (undocumented)
-    type?: SharingLinkRole;
-    // (undocumented)
-    webUrl: string;
-}
-
-// @public
-export interface SharingLinkKind {
-    // (undocumented)
-    linkRole?: SharingLinkRole;
-    // (undocumented)
-    linkScope: SharingLinkScope;
 }
 
 // @public

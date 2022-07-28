@@ -12,7 +12,7 @@ export interface IOdspUrlParts {
 }
 
 /**
- * @deprecated Use SharingLinkKind type instead.
+ * @deprecated Use ISharingLinkKind type instead.
  * Type of shareLink requested/created when creating the file for the first time.
 */
 export enum ShareLinkTypes {
@@ -41,7 +41,7 @@ export enum SharingLinkRole {
  * Defines the permissions scope for a share link requested to be created during the creation the file in ODSP.
  * Providing these properties to the /snapshot api will also create and return the requested kind of sharing link.
 */
-export interface SharingLinkKind {
+export interface ISharingLinkKind {
     linkScope: SharingLinkScope;
     /*
      * If this parameter is not provided, the API will default to "edit" links (provided
@@ -53,7 +53,7 @@ export interface SharingLinkKind {
 /**
  * Sharing link data received from the /snapshot api response.
  */
-export interface SharingLink {
+export interface ISharingLink {
     webUrl: string;
     scope?: SharingLinkScope;
     type?: SharingLinkRole;
@@ -78,14 +78,14 @@ export interface ShareLinkInfoType {
          * @deprecated
          * Type of shareLink requested/created when creating the file for the first time. The 'type' property here
          * represents the type of sharing link requested.
-         * Will be deprecated soon. Type of sharing link will be present in the link:SharingLink property below.
+         * Will be deprecated soon. Type of sharing link will be present in the link:ISharingLink property below.
         */
-        type?: ShareLinkTypes | SharingLinkKind;
+        type?: ShareLinkTypes | ISharingLinkKind;
 
         /**
          * Share link created when the file is created for the first time with /snapshot api call.
          */
-        link?: string | SharingLink;
+        link?: string | ISharingLink;
 
         /**
          * Error message if creation of sharing link fails with /snapshot api call

@@ -16,7 +16,7 @@ import {
     IOdspResolvedUrl,
     OdspErrorType,
     ShareLinkInfoType,
-    SharingLinkKind,
+    ISharingLinkKind,
     SharingLinkScope,
     ShareLinkTypes,
 } from "@fluidframework/odsp-driver-definitions";
@@ -30,6 +30,7 @@ import {
 } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
+    buildOdspShareLinkReqParams,
     createCacheSnapshotKey,
     getWithRetryForTokenRefresh,
     INewFileInfo,
@@ -45,7 +46,6 @@ import { convertCreateNewSummaryTreeToTreeAndBlobs } from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ClpCompliantAppHeader } from "./contractsPublic";
-import { buildOdspShareLinkReqParams } from "./buildOdspShareLinkReqParams";
 
 const isInvalidFileName = (fileName: string): boolean => {
     const invalidCharsRegex = /["*/:<>?\\|]+/g;
@@ -75,14 +75,13 @@ export async function createNewFluidFile(
     }
 
     let itemId: string;
-    let content: any;
     let summaryHandle: string = "";
     let shareLinkInfo: ShareLinkInfoType | undefined;
     if (createNewSummary === undefined) {
         itemId = await createNewEmptyFluidFile(
             getStorageToken, newFileInfo, logger, epochTracker, forceAccessTokenViaAuthorizationHeader);
     } else {
-        content = await createNewFluidFileFromSummary(
+        const content = await createNewFluidFileFromSummary(
             getStorageToken,
             newFileInfo,
             logger,
@@ -124,24 +123,30 @@ export async function createNewFluidFile(
  * @param response - Response object received from the /snapshot api call
  * @returns Sharing link information received in the response from a successful creation of a file.
  */
-function extractShareLinkData(requestedSharingLinkKind: ShareLinkTypes | SharingLinkKind | undefined,
-    response: any = {}): ShareLinkInfoType | undefined {
+function extractShareLinkData(
+    requestedSharingLinkKind: ShareLinkTypes | ISharingLinkKind | undefined,
+    response: any = {},
+): ShareLinkInfoType | undefined {
     let shareLinkInfo: ShareLinkInfoType | undefined;
 
-    if (requestedSharingLinkKind && (ShareLinkTypes[requestedSharingLinkKind as ShareLinkTypes]
-        || SharingLinkScope[(requestedSharingLinkKind as SharingLinkKind).linkScope])) {
-        const { sharing, sharingLink, sharingLinkErrorReason } = response;
+    if (requestedSharingLinkKind && ShareLinkTypes[requestedSharingLinkKind as ShareLinkTypes]
+        ) {
+        const { sharing, sharingLink } = response;
         shareLinkInfo = {
             createLink: {
                 type: requestedSharingLinkKind,
-                // If 'sharingLink' string is present in the response, it means that the user had requested
-                // `createLinkType' query parameter, which is deprecated flow. Keeping it around for backward
-                // compatibility. The new way of requesting for a sharing link is by providing `createLinkScope`
-                // and 'createLinkRole' params in the request, response for which can be found in 'sharing.sharingLink'
-                link: sharingLink ? sharingLink : sharing?.sharingLink,
-                // sharingLinkErrorReason string is present in both old and new response from ODSP api when creating a
-                // sharing link, we however use the sharing.error whenever possible as it provides more detailed error.
-                error: sharing?.error ? sharing?.error : sharingLinkErrorReason,
+                link: sharingLink,
+                error: sharing?.error,
+                shareId: sharing?.shareId,
+            },
+        };
+    } else if (requestedSharingLinkKind && SharingLinkScope[(requestedSharingLinkKind as ISharingLinkKind).linkScope]) {
+        const { sharing } = response;
+        shareLinkInfo = {
+            createLink: {
+                type: requestedSharingLinkKind,
+                link: sharing?.sharingLink,
+                error: sharing?.error,
                 shareId: sharing?.shareId,
             },
         };
@@ -225,8 +230,8 @@ export async function createNewFluidFileFromSummary(
     // Build share link parameter based on the createLinkType provided so that the
     // snapshot api can create and return the share link along with creation of file in the response.
     const createShareLinkParam = buildOdspShareLinkReqParams(newFileInfo.createLinkType);
-    const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}`
-    : ""}`;
+    const initialUrl =
+        `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}` : ""}`;
 
     return getWithRetryForTokenRefresh(async (options) => {
         const storageToken = await getStorageToken(options, "CreateNewFile");

@@ -29,7 +29,7 @@ import {
     SharingLinkScope,
     SharingLinkRole,
     ShareLinkTypes,
-    SharingLinkKind,
+    ISharingLinkKind,
 } from "@fluidframework/odsp-driver-definitions";
 import type { io as SocketIOClientStatic } from "socket.io-client";
 import { v4 as uuid } from "uuid";
@@ -88,23 +88,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             }
         }
 
-        // extract request parameters for creation of sharing link (if provided) if the feature is enabled
-        let createShareLinkParam: ShareLinkTypes | SharingLinkKind | undefined;
-        if (this.hostPolicy.enableSingleRoundTripForShareLinkWithCreate) {
-            const createLinkScope = searchParams.get("createLinkScope");
-            const createLinkRole = searchParams.get("createLinkRole");
-            if (createLinkScope && SharingLinkScope[createLinkScope]) {
-                createShareLinkParam = { linkScope: SharingLinkScope[createLinkScope],
-                    ...(createLinkRole && SharingLinkRole[createLinkRole] ?
-                        { linkRole: SharingLinkRole[createLinkRole] } : {}) };
-            }
-        } else if (this.hostPolicy.enableShareLinkWithCreate) {
-            const createLinkType = searchParams.get("createLinkType");
-             if (createLinkType && ShareLinkTypes[createLinkType]) {
-                createShareLinkParam = ShareLinkTypes[createLinkType || ""];
-             }
-        }
-
+        const createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
         const newFileInfo: INewFileInfo = {
             driveId: odspResolvedUrl.driveId,
             siteUrl: odspResolvedUrl.siteUrl,
@@ -130,8 +114,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                 isWithSummaryUpload: true,
                 createShareLinkParam: JSON.stringify(createShareLinkParam),
                 enableShareLinkWithCreate: this.hostPolicy.enableShareLinkWithCreate,
-                enableSingleRoundTripForShareLinkWithCreate:
-                this.hostPolicy.enableSingleRoundTripForShareLinkWithCreate,
+                enableSingleRequestForShareLinkWithCreate:
+                    this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
             },
             async (event) => {
                 odspResolvedUrl = await createNewFluidFile(
@@ -244,4 +228,32 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
             clientIsSummarizer,
         );
     }
+}
+
+/**
+ * Extract the sharing link kind from the resolved URL's query paramerters
+ */
+function getSharingLinkParams(
+    hostPolicy: HostStoragePolicy,
+    searchParams: URLSearchParams,
+): ShareLinkTypes | ISharingLinkKind | undefined {
+    // extract request parameters for creation of sharing link (if provided) if the feature is enabled
+    let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
+    if (hostPolicy.enableSingleRequestForShareLinkWithCreate) {
+        const createLinkScope = searchParams.get("createLinkScope");
+        const createLinkRole = searchParams.get("createLinkRole");
+        if (createLinkScope && SharingLinkScope[createLinkScope]) {
+            createShareLinkParam = {
+                linkScope: SharingLinkScope[createLinkScope],
+                ...(createLinkRole && SharingLinkRole[createLinkRole] ?
+                    { linkRole: SharingLinkRole[createLinkRole] } : {}),
+            };
+        }
+    } else if (hostPolicy.enableShareLinkWithCreate) {
+        const createLinkType = searchParams.get("createLinkType");
+        if (createLinkType && ShareLinkTypes[createLinkType]) {
+            createShareLinkParam = ShareLinkTypes[createLinkType || ""];
+        }
+    }
+    return createShareLinkParam;
 }
