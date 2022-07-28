@@ -19,6 +19,7 @@ export class GeneratePackageJson extends BaseCommand {
             description: `Generate package lock for specified (server/client/azure/build-tools) mono repo`,
             options: ["--server", "--azure", "--build-tools"],
             required: false,
+            default: "--client",
         }),
         // server: Flags.enum({
         //     description: `Generate package lock for server mono repo`,
