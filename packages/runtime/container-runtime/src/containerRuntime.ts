@@ -413,6 +413,25 @@ export interface ISummaryRuntimeOptions {
 }
 
 /**
+ * Options for op compression.
+ */
+export interface ICompressionRuntimeOptions {
+    /**
+     * On/off switch for compression. Telemetry is still collected while off.
+     */
+    readonly compressionEnabled: boolean;
+    /**
+     * The minimum size the content payload must exceed before it is compressed.
+     */
+    readonly minimumSize: number;
+}
+
+const DefaultCompressionRuntimeOptions: ICompressionRuntimeOptions = {
+    compressionEnabled: false,
+    minimumSize: 2000,
+};
+
+/**
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
@@ -447,7 +466,7 @@ export interface IContainerRuntimeOptions {
     /**
      * Enables the runtime to compress ops.
      */
-    readonly opCompression?: boolean;
+    readonly compressionOptions?: ICompressionRuntimeOptions;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -910,7 +929,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             useDataStoreAliasing = false,
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            opCompression = false,
+            compressionOptions = DefaultCompressionRuntimeOptions,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -987,7 +1006,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 useDataStoreAliasing,
                 flushMode,
                 enableOfflineLoad,
-                opCompression,
+                compressionOptions,
             },
             containerScope,
             logger,
@@ -2955,7 +2974,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this._maxOpSizeInBytes >= 0) {
             // Chunking disabled
             if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
-                return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
+                return this.submitRuntimeMessage(type,
+                                                 content,
+                                                 batch,
+                                                 serializedContent?.length ?? 0,
+                                                 opMetadataInternal);
             }
 
             // When chunking is disabled, we ignore the server max message size
@@ -2974,7 +2997,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Chunking enabled, fallback on the server's max message size
         // and split the content accordingly
         if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
-            return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
+            return this.submitRuntimeMessage(type, content, batch, serializedContent?.length ?? 0, opMetadataInternal);
         }
 
         return this.submitChunkedMessage(type, serializedContent, serverMaxOpSize);
@@ -2996,7 +3019,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             clientSequenceNumber = this.submitRuntimeMessage(
                 ContainerMessageType.ChunkedOp,
                 chunkedOp,
-                false);
+                false,
+                maxOpSize);
         }
         return clientSequenceNumber;
     }
@@ -3025,12 +3049,13 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
+        contentLength: number,
         appData?: any,
     ) {
         this.verifyNotClosed();
         assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
 
-        if (new TextEncoder().encode(JSON.stringify(contents)).length > 2000) {
+        if (contentLength > this.runtimeOptions.compressionOptions?.minimumSize) {
             const originalContentLength = IsoBuffer.from(JSON.stringify(contents)).toString("base64").length;
 
             const compressionStart = Date.now();
@@ -3047,7 +3072,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 sizeAfterCompression: compressedContent.length,
             });
 
-            if (this.runtimeOptions.opCompression) {
+            if (this.runtimeOptions.compressionOptions?.compressionEnabled) {
                 const compressedPayload: ContainerRuntimeMessage = { type, contents: compressedContent };
                 return this.context.submitFn(
                     MessageType.Operation,

@@ -309,6 +309,12 @@ export interface IClientSummaryWatcher extends IDisposable {
     watchSummary(clientSequenceNumber: number): ISummary;
 }
 
+// @public
+export interface ICompressionRuntimeOptions {
+    readonly compressionEnabled: boolean;
+    readonly minimumSize: number;
+}
+
 // @public (undocumented)
 export interface IConnectableRuntime {
     // (undocumented)
@@ -325,12 +331,12 @@ export interface IConnectableRuntime {
 
 // @public
 export interface IContainerRuntimeOptions {
+    readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableOfflineLoad?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
-    readonly opCompression?: boolean;
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
     readonly useDataStoreAliasing?: boolean;
