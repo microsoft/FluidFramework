@@ -23,4 +23,5 @@ export {
 export {
     Package
 } from "./common/npmPackage";
+export { Timer } from "./common/timer";
 export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/genMonoRepoPackageJson";
