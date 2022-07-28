@@ -5,7 +5,7 @@
 
 import { ChangeFamily } from "../change-family";
 import { AnchorSet, Delta } from "../tree";
-import { RecursiveReadonly } from "../util";
+import { fail, RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -42,6 +42,15 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public addSequencedChange(newCommit: Commit<TChangeset>, anchors?: AnchorSet): Delta.Root {
+        if (newCommit.sessionId === this.localSessionId) {
+            const changeset = this.localChanges.shift() ?? fail(UNEXPECTED_SEQUENCED_LOCAL_EDIT);
+            this.trunk.push({
+                ...newCommit,
+                changeset,
+            });
+            return Delta.empty;
+        }
+
         const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
         this.rebaseBranch(branch, newCommit.refNumber);
         const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit.changeset, branch);
@@ -53,11 +62,6 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         });
 
         branch.localChanges.push(newCommit);
-
-        if (newCommit.sessionId === this.localSessionId) {
-            this.localChanges.shift();
-            return Delta.empty;
-        }
 
         return this.changeFamily.intoDelta(this.rebaseLocalBranch(newChangeFullyRebased, anchors));
     }
@@ -92,10 +96,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             change = this.changeFamily.rebaser.rebase(change, trunkChange);
             change = this.rebaseChange(change, newBranchChanges);
 
-            newBranchChanges.push({
-                ...localChange,
-                changeset: change,
-            });
+            newBranchChanges.push(change);
 
             inverses.unshift(this.changeFamily.rebaser.invert(localChange));
         }
@@ -171,3 +172,5 @@ interface Branch<TChangeset> {
     localChanges: Commit<TChangeset>[];
     refSeq: SeqNumber;
 }
+const UNEXPECTED_SEQUENCED_LOCAL_EDIT =
+    "Received a sequenced change from the local session despite having no local changes";

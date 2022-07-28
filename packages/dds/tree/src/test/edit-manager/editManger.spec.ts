@@ -90,6 +90,13 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
             if (isNonEmptyChange(over)) {
                 return {
                     inputContext: over.outputContext,
+                    // Note that we mint a new context ID for each rebased operation.
+                    // This means that rebasing some change A over some change B will produce
+                    // a change with a different output context every time.
+                    // This lack of fidelity could make some of the tests fail when they
+                    // should not, but will not make tests pass if they should not.
+                    // If a rebaser implementation needed to leverage this missing fidelity then this gap could
+                    // be addressed by using a more complex encoding to represent contexts.
                     outputContext: ++this.contextCounter,
                     intentions: change.intentions,
                 };
@@ -503,7 +510,7 @@ describe("EditManager", () => {
             clientData: makeArray(NUM_CLIENTS, () => ({ pulled: 0, numLocal: 0 })),
             seq: 0,
         };
-        for (const scenario of developAndRunScenario([], meta)) {
+        for (const scenario of buildScenario([], meta)) {
             runScenario(scenario);
         }
     });
@@ -523,7 +530,7 @@ interface ScenarioMetadata {
     seq: SeqNumber;
 }
 
-function* developAndRunScenario(
+function* buildScenario(
     scenario: ScenarioStep[],
     meta: ScenarioMetadata,
 ): Generator<readonly ScenarioStep[]> {
@@ -534,7 +541,9 @@ function* developAndRunScenario(
         for (let iClient = 0; iClient < NUM_CLIENTS; ++iClient) {
             meta.clientData[iClient].numLocal += 1;
             scenario.push({ type: "Mint", client: iClient });
-            developAndRunScenario(scenario, meta);
+            for (const built of buildScenario(scenario, meta)) {
+                yield built;
+            }
             scenario.pop();
             meta.clientData[iClient].numLocal -= 1;
         }
@@ -546,7 +555,9 @@ function* developAndRunScenario(
                 meta.clientData[iClient].numLocal -= 1;
                 meta.seq += 1;
                 scenario.push({ type: "Sequence", client: iClient });
-                developAndRunScenario(scenario, meta);
+                for (const built of buildScenario(scenario, meta)) {
+                    yield built;
+                }
                 scenario.pop();
                 meta.seq -= 1;
                 meta.clientData[iClient].numLocal += 1;
@@ -559,7 +570,9 @@ function* developAndRunScenario(
             if (meta.clientData[iClient].pulled < meta.seq) {
                 meta.clientData[iClient].pulled += 1;
                 scenario.push({ type: "Receive", client: iClient });
-                developAndRunScenario(scenario, meta);
+                for (const built of buildScenario(scenario, meta)) {
+                    yield built;
+                }
                 scenario.pop();
                 meta.clientData[iClient].pulled -= 1;
             }
@@ -578,6 +591,7 @@ interface ClientData {
 }
 
 function runScenario(scenario: readonly ScenarioStep[]): void {
+    const name = scenario.map((step) => `${step.type}${step.client}`).join("-");
     const { rebaser, family } = changeFamilyFactory();
     const trunk: Commit<TestChangeset>[] = [];
     const clientData: ClientData[] = makeArray(NUM_CLIENTS, (iClient) => ({
@@ -590,29 +604,33 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
         intentions: new Set(),
     }));
     for (const step of scenario) {
-        const client = clientData[step.client];
-        if (step.type === "Mint") {
-            const cs = rebaser.mintChangeset(getTipContext(client.manager));
-            client.manager.addLocalChange(cs);
-            client.localChanges.push({ change: cs, ref: client.ref });
-            cs.intentions.map(client.intentions.add);
-        } else if (step.type === "Sequence") {
-            const local = client.localChanges.shift() ?? fail("No local changes to sequence");
-            trunk.push({
-                changeset: local.change,
-                refNumber: local.ref,
-                sessionId: step.client,
-                seqNumber: trunk.length + 1,
-            });
-        } else { // step.type === "Receive"
-            const commit = trunk[client.ref];
-            client.manager.addSequencedChange(commit);
-            commit.changeset.intentions.map(client.intentions.add);
-            client.ref += 1;
+        // Perform the step
+        {
+            const client = clientData[step.client];
+            if (step.type === "Mint") {
+                const cs = rebaser.mintChangeset(getTipContext(client.manager));
+                client.manager.addLocalChange(cs);
+                client.localChanges.push({ change: cs, ref: client.ref });
+                cs.intentions.forEach((intention) => client.intentions.add(intention));
+            } else if (step.type === "Sequence") {
+                const local = client.localChanges.shift() ?? fail("No local changes to sequence");
+                trunk.push({
+                    changeset: local.change,
+                    refNumber: local.ref,
+                    sessionId: step.client,
+                    seqNumber: trunk.length + 1,
+                });
+            } else { // step.type === "Receive"
+                const commit = trunk[client.ref];
+                client.manager.addSequencedChange(commit);
+                commit.changeset.intentions.forEach((intention) => client.intentions.add(intention));
+                client.ref += 1;
+            }
         }
-    }
-    for (const client of clientData) {
-        checkChangeList(client.manager, rebaser, client.intentions);
+        // Check the validity of the managers
+        for (const client of clientData) {
+            checkChangeList(client.manager, rebaser, client.intentions);
+        }
     }
 }
 
