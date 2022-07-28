@@ -32,8 +32,8 @@ class EmptyAudience extends EventEmitter implements IAudienceOwner {
         return true;
     }
 
-    addMember(_clientId: string, _details: IClient) {}
-    clear() {}
+    addMember(_clientId: string, _details: IClient) { }
+    clear() { }
 }
 
 class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
@@ -97,7 +97,7 @@ class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
 
     async propose(key: string, value: any): Promise<void> {
         this.proposals.set(key, value);
-        return new Promise<void>(() => {});
+        return new Promise<void>(() => { });
     }
 
     has(key: string): boolean {
@@ -121,8 +121,15 @@ class EmptyProtocolHandler implements IProtocolHandler {
         return this.initialSnapshot;
     }
 
-    processMessage(_message: ISequencedDocumentMessage, _local: boolean): IProcessMessageResult {
-        return {};
+    processMessage(message: ISequencedDocumentMessage, _local: boolean): IProcessMessageResult {
+        const emptyResult = {};
+        const clientId = message.clientId;
+        if (this.quorum.getMember(clientId) !== undefined) {
+            return emptyResult;
+        }
+
+        this.quorum.connectLocalClient(clientId, message.sequenceNumber);
+        return emptyResult;
     }
 
     getProtocolState(): IScribeProtocolState {
@@ -138,13 +145,11 @@ class EmptyProtocolHandler implements IProtocolHandler {
     setConnectionState(connected: boolean, clientId: string | undefined) {
         if (connected) {
             this.quorum.connectLocalClient(clientId, this.attributes.sequenceNumber);
-        } else {
-            this.quorum.disconnectLocalClient(clientId);
         }
     }
 
-    close(): void {}
-    processSignal(_message: ISignalMessage) {}
+    close(): void { }
+    processSignal(_message: ISignalMessage) { }
 }
 
 export const emptyProtocolHandlerBuilder: ProtocolHandlerBuilder = (
