@@ -56,7 +56,7 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
                 if (outputContext !== undefined) {
                     // One can only compose changes of the output context of each change N matches
                     // the input context of the change N+1.
-                    assert.strictEqual(outputContext, change.inputContext);
+                    assert.equal(outputContext, change.inputContext);
                 }
                 inputContext ??= change.inputContext;
                 outputContext = change.outputContext;
@@ -138,26 +138,26 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
             for (const intention of change.intentions) {
                 if (intention > 0) {
                     // The same intention should never be applied multiple times
-                    assert.strictEqual(intentionsSeen.has(intention), false);
+                    assert(!intentionsSeen.has(intention));
                     intentionsSeen.add(intention);
                     // The intention should be part of the expected set for this client
-                    assert.strictEqual(intentionsExpected.has(intention), true);
+                    assert(intentionsExpected.has(intention));
                 } else if (intention < 0) {
                     // We are dealing with the inverse of an intention.
                     // In order for the inverse to apply, the non-inverse should have been applied already
-                    assert.strictEqual(intentionsSeen.has(-intention), true);
+                    assert(intentionsSeen.has(-intention));
                     intentionsSeen.delete(-intention);
                 }
             }
             if (index > 0) {
                 const prev = filtered[index - 1];
                 // The current change should apply to the context brought about by the previous change
-                assert.strictEqual(change.inputContext, prev.outputContext);
+                assert.equal(change.inputContext, prev.outputContext);
             }
             ++index;
         }
         // All expected intentions were present
-        assert.strictEqual(intentionsSeen.size, intentionsExpected.size);
+        assert.equal(intentionsSeen.size, intentionsExpected.size);
     }
 }
 
