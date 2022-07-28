@@ -330,6 +330,7 @@ export interface IContainerRuntimeOptions {
     // (undocumented)
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
+    readonly opCompression?: boolean;
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
     readonly useDataStoreAliasing?: boolean;

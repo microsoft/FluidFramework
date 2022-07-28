@@ -444,6 +444,10 @@ export interface IContainerRuntimeOptions {
      * Save enough runtime state to be able to serialize upon request and load to the same state in a new container.
      */
     readonly enableOfflineLoad?: boolean;
+    /**
+     * Enables the runtime to compress ops.
+     */
+    readonly opCompression?: boolean;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -593,19 +597,6 @@ class ScheduleManagerCore {
                 delete firstMessageMetadata.batch;
                 return;
             }
-
-            messages.map((msg) => {
-                const parsedMessage = JSON.parse(msg.contents);
-                const innerContents = JSON.stringify(parsedMessage.contents);
-                const bufferedContent = new TextEncoder().encode(innerContents);
-                const compressedContent = compress(bufferedContent);
-                const base64 = IsoBuffer.from(compressedContent).toString("base64");
-
-                parsedMessage.contents = { ...parsedMessage, contents: base64 };
-
-                msg.metadata = { ...msg.metadata, compressed: true };
-                msg.contents = JSON.stringify(parsedMessage.contents);
-            });
 
             // Set the batch flag to false on the last message to indicate the end of the send batch
             const lastMessage = messages[messages.length - 1];
@@ -919,6 +910,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             useDataStoreAliasing = false,
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
+            opCompression = false,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -995,6 +987,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 useDataStoreAliasing,
                 flushMode,
                 enableOfflineLoad,
+                opCompression,
             },
             containerScope,
             logger,
@@ -1917,6 +1910,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // but would not modify contents details
         let message = { ...messageArg };
 
+        if (message.metadata?.compressed) {
+            const contents = IsoBuffer.from(message.contents.contents, "base64");
+            const decompressedMessage = decompress(contents);
+            const intoString = new TextDecoder().decode(decompressedMessage);
+            const asObj = JSON.parse(intoString);
+            message.contents.contents = asObj;
+            message.metadata.compressed = false;
+        }
+
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
         // messages once a batch has been fully processed.
@@ -1942,14 +1944,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             // the document is no longer dirty.
             if (!this.pendingStateManager.hasPendingMessages()) {
                 this.updateDocumentDirtyState(false);
-            }
-
-            if (message.metadata?.compressed) {
-                const contents = IsoBuffer.from(message.contents, "base64");
-                const decompressedMessage = decompress(contents);
-                const intoString = new TextDecoder().decode(decompressedMessage);
-                const asObj = JSON.parse(intoString);
-                message = { ...message, contents: asObj };
             }
 
             switch (message.type) {
@@ -3035,6 +3029,34 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ) {
         this.verifyNotClosed();
         assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
+
+        if (new TextEncoder().encode(JSON.stringify(contents)).length > 2000) {
+            const originalContentLength = IsoBuffer.from(JSON.stringify(contents)).toString("base64").length;
+
+            const compressionStart = Date.now();
+            const stringifiedContent = JSON.stringify(contents);
+            const contentsAsBuffer = new TextEncoder().encode(stringifiedContent);
+            const compressedContents = compress(contentsAsBuffer);
+            const compressionTime = Date.now() - compressionStart;
+            const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+
+            this.logger.sendPerformanceEvent({
+                eventName: "compressedOp",
+                compressionTime,
+                sizeBeforeCompression: originalContentLength,
+                sizeAfterCompression: compressedContent.length,
+            });
+
+            if (this.runtimeOptions.opCompression) {
+                const compressedPayload: ContainerRuntimeMessage = { type, contents: compressedContent };
+                return this.context.submitFn(
+                    MessageType.Operation,
+                    compressedPayload,
+                    batch,
+                    { ...appData, compressed: true });
+            }
+        }
+
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,
