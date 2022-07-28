@@ -102,7 +102,6 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
      */
      private getSchemaString(): string {
         const { treeSchema, globalFieldSchema } = this.forest.schema;
-        throw new Error("Method not implemented.");
         return `TODO: actual format ${treeSchema}, ${globalFieldSchema}`;
     }
 

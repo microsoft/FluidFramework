@@ -81,6 +81,7 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
             type: SummaryType.Tree,
             tree: {},
         };
+        stats.treeNodeCount += 1;
 
         // Merge the summaries of all indexes together under a single ISummaryTree
         if (this.summaryElements.length > 0) {
@@ -100,6 +101,7 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
                 type: SummaryType.Tree,
                 tree: indexSummaryTree,
             };
+            stats.treeNodeCount += 1;
         }
 
         return {
