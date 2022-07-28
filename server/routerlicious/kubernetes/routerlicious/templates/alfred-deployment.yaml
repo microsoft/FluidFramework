@@ -12,6 +12,8 @@ spec:
   selector:
     matchLabels:
       app: {{ template "routerlicious.name" . }}
+      component: "{{ .Values.alfred.name }}"
+      release: {{ .Release.Name }}
   replicas: {{ .Values.alfred.replicas }}
   template:
     metadata:
