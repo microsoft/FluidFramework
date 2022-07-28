@@ -15,7 +15,15 @@ export class AnchorSet {
     // (undocumented)
     forget(anchor: Anchor): void;
     locate(anchor: Anchor): UpPath | undefined;
-    moveChildren(src: UpPath, srcField: FieldKey, start: number, count: number, dst: UpPath, dstField: FieldKey, dstIndex: number): void;
+    moveChildren(count: number, src: undefined | {
+        path: UpPath;
+        field: FieldKey;
+        start: number;
+    }, dst: undefined | {
+        path: UpPath;
+        field: FieldKey;
+        start: number;
+    }): void;
     track(path: UpPath): Anchor;
 }
 
