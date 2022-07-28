@@ -9,7 +9,7 @@ import { SeqNumber } from "../../changeset";
 import { Commit, EditManager } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
-import { RecursiveReadonly } from "../../util";
+import { makeArray, RecursiveReadonly } from "../../util";
 
 interface TestChangeset {
     inputContext?: number;
@@ -83,9 +83,13 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
         };
     }
 
-    public checkChangeList(changes: readonly RecursiveReadonly<TestChangeset>[]): void {
+    public checkChangeList(changes: readonly RecursiveReadonly<TestChangeset>[], intentions?: Set<number>): void {
         const filtered = changes.filter(isNonEmptyChange);
         const intentionsSeen = new Set<number>();
+        const intentionsExpected = new Set<number>(
+            intentions ??
+            makeArray(this.intentionCounter, (i: number) => i + 1),
+        );
         let index = 0;
         for (const change of filtered) {
             for (const intention of change.intentions) {
@@ -93,6 +97,8 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
                     // The same intention should never be applied multiple times
                     assert.strictEqual(intentionsSeen.has(intention), false);
                     intentionsSeen.add(intention);
+                    // The intention should be part of the expected set for this client
+                    assert.strictEqual(intentionsExpected.has(intention), true);
                 } else if (intention < 0) {
                     // We are dealing with the inverse of an intention.
                     // In order for the inverse to apply, the non-inverse should have been applied already
@@ -107,7 +113,8 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
             }
             ++index;
         }
-        // assert.strictEqual(intentionsSeen.size, this.intentionCounter);
+        // All expected intentions were present
+        assert.strictEqual(intentionsSeen.size, intentionsExpected.size);
     }
 }
 
@@ -144,7 +151,7 @@ const peerSessionId1 = 1;
 const peerSessionId2 = 2;
 
 const NUM_STEPS = 5;
-const NUM_SESSIONS = 3;
+const NUM_CLIENTS = 3;
 
 describe("EditManager", () => {
     it("Can handle non-concurrent local changes being sequenced immediately", () => {
@@ -456,12 +463,8 @@ describe("EditManager", () => {
     });
 
     it("Can handle all possible interleaving of steps", () => {
-        const clientData = [];
-        for (let iClient = 0; iClient < NUM_SESSIONS; ++iClient) {
-            clientData[iClient] = { pulled: 0, numLocal: 0 };
-        }
         const meta = {
-            clientData,
+            clientData: makeArray(NUM_CLIENTS, () => ({ pulled: 0, numLocal: 0 })),
             seq: 0,
         };
         for (const scenario of developAndRunScenario([], meta)) {
@@ -492,7 +495,7 @@ function* developAndRunScenario(
         yield scenario;
     } else {
         // Mint
-        for (let iClient = 0; iClient < NUM_SESSIONS; ++iClient) {
+        for (let iClient = 0; iClient < NUM_CLIENTS; ++iClient) {
             meta.clientData[iClient].numLocal += 1;
             scenario.push({ type: "Mint", client: iClient });
             developAndRunScenario(scenario, meta);
@@ -501,7 +504,7 @@ function* developAndRunScenario(
         }
 
         // Push
-        for (let iClient = 0; iClient < NUM_SESSIONS; ++iClient) {
+        for (let iClient = 0; iClient < NUM_CLIENTS; ++iClient) {
             // If there are any local changes
             if (meta.clientData[iClient].numLocal > 0) {
                 meta.clientData[iClient].numLocal -= 1;
@@ -515,7 +518,7 @@ function* developAndRunScenario(
         }
 
         // Pull
-        for (let iClient = 1; iClient < NUM_SESSIONS; ++iClient) {
+        for (let iClient = 1; iClient < NUM_CLIENTS; ++iClient) {
             // If there are any sequenced changes to catch up on
             if (meta.clientData[iClient].pulled < meta.seq) {
                 meta.clientData[iClient].pulled += 1;
@@ -534,29 +537,29 @@ interface ClientData {
     localChanges: { change: TestChangeset; ref: SeqNumber; }[];
     /** The last sequence number received by the client */
     ref: SeqNumber;
+    /** Intentions that the client should be aware of */
+    intentions: Set<number>;
 }
 
 function runScenario(scenario: readonly ScenarioStep[]): void {
     const { rebaser, family } = changeFamilyFactory();
     const trunk: Commit<TestChangeset>[] = [];
-    const clientData: ClientData[] = [];
-    for (let iClient = 0; iClient < NUM_SESSIONS; ++iClient) {
-        const manager = new EditManager<TestChangeset, TestChangeFamily>(
+    const clientData: ClientData[] = makeArray(NUM_CLIENTS, (iClient) => ({
+        manager: new EditManager<TestChangeset, TestChangeFamily>(
             iClient,
             family,
-        );
-        clientData[iClient] = {
-            manager,
-            localChanges: [],
-            ref: 0,
-        };
-    }
+        ),
+        localChanges: [],
+        ref: 0,
+        intentions: new Set(),
+    }));
     for (const step of scenario) {
         const client = clientData[step.client];
         if (step.type === "Mint") {
             const cs = rebaser.mintChangeset(getLocalContext(client.manager));
             client.manager.addLocalChange(cs);
             client.localChanges.push({ change: cs, ref: client.ref });
+            cs.intentions.map(client.intentions.add);
         } else if (step.type === "Sequence") {
             const local = client.localChanges.shift() ?? fail("No local changes to sequence");
             trunk.push({
@@ -565,21 +568,23 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
                 sessionId: step.client,
                 seqNumber: trunk.length + 1,
             });
-        } else {
+        } else { // step.type === "Receive"
             const commit = trunk[client.ref];
             client.manager.addSequencedChange(commit);
+            commit.changeset.intentions.map(client.intentions.add);
             client.ref += 1;
         }
     }
     for (const client of clientData) {
-        checkChangeList(client.manager, rebaser);
+        checkChangeList(client.manager, rebaser, client.intentions);
     }
 }
 
-function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser): void {
+function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser, intentions?: Set<number>): void {
     rebaser.checkChangeList(
         manager.getTrunk().map((c) => c.changeset)
         .concat(manager.getLocalChanges()),
+        intentions,
     );
 }
 
@@ -598,12 +603,4 @@ function getLocalContext(manager: TestEditManager): number {
         context = lastChange.outputContext;
     }
     return context ?? fail("Can't determine local context");
-}
-
-function getRef(manager: TestEditManager) {
-    const trunk = manager.getTrunk();
-    if (trunk.length > 0) {
-        return trunk[trunk.length - 1].seqNumber;
-    }
-    return 0;
 }
