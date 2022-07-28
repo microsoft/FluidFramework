@@ -27,7 +27,7 @@ type SeqNumber = number;
 export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> {
     private readonly trunk: Commit<TChangeset>[] = [];
     private readonly branches: Map<SessionId, Branch<TChangeset>> = new Map();
-    private readonly localChanges: TChangeset[] = [];
+    private localChanges: TChangeset[] = [];
 
     public constructor(private readonly localSessionId: SessionId,
         private readonly changeFamily: TChangeFamily,
@@ -110,6 +110,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             this.changeFamily.rebaser.rebaseAnchors(anchors, netChange);
         }
 
+        this.localChanges = newBranchChanges;
         return netChange;
     }
 

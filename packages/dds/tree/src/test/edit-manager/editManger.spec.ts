@@ -5,7 +5,8 @@
 
 import { fail, strict as assert } from "assert";
 import { ChangeFamily } from "../../change-family";
-import { EditManager } from "../../edit-manager";
+import { SeqNumber } from "../../changeset";
+import { Commit, EditManager } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { RecursiveReadonly } from "../../util";
@@ -106,7 +107,7 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
             }
             ++index;
         }
-        assert.strictEqual(intentionsSeen.size, this.intentionCounter);
+        // assert.strictEqual(intentionsSeen.size, this.intentionCounter);
     }
 }
 
@@ -144,9 +145,6 @@ const peerSessionId2 = 2;
 
 const NUM_STEPS = 5;
 const NUM_SESSIONS = 3;
-interface ScenarioStep { type: ScenarioAction; session: number; }
-type ScenarioAction = "Mint" | "Push";
-const actions: readonly ScenarioAction[] = ["Mint", "Push"];
 
 describe("EditManager", () => {
     it("Can handle non-concurrent local changes being sequenced immediately", () => {
@@ -458,72 +456,124 @@ describe("EditManager", () => {
     });
 
     it("Can handle all possible interleaving of steps", () => {
-        developAndRunScenario([]);
+        const clientData = [];
+        for (let iClient = 0; iClient < NUM_SESSIONS; ++iClient) {
+            clientData[iClient] = { pulled: 0, numLocal: 0 };
+        }
+        const meta = {
+            clientData,
+            seq: 0,
+        };
+        for (const scenario of developAndRunScenario([], meta)) {
+            runScenario(scenario);
+        }
     });
 });
 
-function developAndRunScenario(scenario: ScenarioStep[]): void {
+type ScenarioStep =
+    // Represents a client making a local change
+    | { type: "Mint"; client: number; }
+    // Represents a change from a client being sequenced by the service
+    | { type: "Sequence"; client: number; }
+    // Represents a client receiving a sequenced change
+    | { type: "Receive"; client: number; }
+;
+
+interface ScenarioMetadata {
+    clientData: { pulled: SeqNumber; numLocal: number; }[];
+    seq: SeqNumber;
+}
+
+function* developAndRunScenario(
+    scenario: ScenarioStep[],
+    meta: ScenarioMetadata,
+): Generator<readonly ScenarioStep[]> {
     if (scenario.length >= NUM_STEPS) {
-        runScenario(scenario);
+        yield scenario;
     } else {
-        for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
-            for (const type of actions) {
-                scenario.push({ type, session: iSession });
-                developAndRunScenario(scenario);
+        // Mint
+        for (let iClient = 0; iClient < NUM_SESSIONS; ++iClient) {
+            meta.clientData[iClient].numLocal += 1;
+            scenario.push({ type: "Mint", client: iClient });
+            developAndRunScenario(scenario, meta);
+            scenario.pop();
+            meta.clientData[iClient].numLocal -= 1;
+        }
+
+        // Push
+        for (let iClient = 0; iClient < NUM_SESSIONS; ++iClient) {
+            // If there are any local changes
+            if (meta.clientData[iClient].numLocal > 0) {
+                meta.clientData[iClient].numLocal -= 1;
+                meta.seq += 1;
+                scenario.push({ type: "Sequence", client: iClient });
+                developAndRunScenario(scenario, meta);
                 scenario.pop();
+                meta.seq -= 1;
+                meta.clientData[iClient].numLocal += 1;
+            }
+        }
+
+        // Pull
+        for (let iClient = 1; iClient < NUM_SESSIONS; ++iClient) {
+            // If there are any sequenced changes to catch up on
+            if (meta.clientData[iClient].pulled < meta.seq) {
+                meta.clientData[iClient].pulled += 1;
+                scenario.push({ type: "Receive", client: iClient });
+                developAndRunScenario(scenario, meta);
+                scenario.pop();
+                meta.clientData[iClient].pulled -= 1;
             }
         }
     }
 }
 
+interface ClientData {
+    manager: TestEditManager;
+    /** The local changes in their original form */
+    localChanges: { change: TestChangeset; ref: SeqNumber; }[];
+    /** The last sequence number received by the client */
+    ref: SeqNumber;
+}
+
 function runScenario(scenario: readonly ScenarioStep[]): void {
     const { rebaser, family } = changeFamilyFactory();
-    const managers: TestEditManager[] = [];
-    for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
+    const trunk: Commit<TestChangeset>[] = [];
+    const clientData: ClientData[] = [];
+    for (let iClient = 0; iClient < NUM_SESSIONS; ++iClient) {
         const manager = new EditManager<TestChangeset, TestChangeFamily>(
-            iSession,
+            iClient,
             family,
         );
-        managers[iSession] = manager;
+        clientData[iClient] = {
+            manager,
+            localChanges: [],
+            ref: 0,
+        };
     }
-    let seqNumber = 1;
     for (const step of scenario) {
+        const client = clientData[step.client];
         if (step.type === "Mint") {
-            const manager = managers[step.session];
-            const cs = rebaser.mintChangeset(getLocalContext(manager));
-            manager.addLocalChange(cs);
-        } else {
-            const localChange = managers[step.session].getLocalChanges()[0] as TestChangeset;
-            if (localChange !== undefined) {
-                const ref = getRef(managers[step.session]);
-                for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
-                    const manager = managers[iSession];
-                        manager.addSequencedChange({
-                        changeset: localChange,
-                        refNumber: ref,
-                        sessionId: step.session,
-                        seqNumber,
-                    });
-                }
-                seqNumber += 1;
-            }
-        }
-    }
-    // Push all minted changes to the edit manager
-    for (let iSession = 0; iSession < NUM_SESSIONS; ++iSession) {
-        const changes = [...managers[iSession].getLocalChanges()] as TestChangeset[];
-        const ref = getRef(managers[iSession]);
-        for (const change of changes) {
-            managers[0].addSequencedChange({
-                changeset: change,
-                refNumber: ref,
-                sessionId: iSession,
-                seqNumber,
+            const cs = rebaser.mintChangeset(getLocalContext(client.manager));
+            client.manager.addLocalChange(cs);
+            client.localChanges.push({ change: cs, ref: client.ref });
+        } else if (step.type === "Sequence") {
+            const local = client.localChanges.shift() ?? fail("No local changes to sequence");
+            trunk.push({
+                changeset: local.change,
+                refNumber: local.ref,
+                sessionId: step.client,
+                seqNumber: trunk.length + 1,
             });
-            seqNumber += 1;
+        } else {
+            const commit = trunk[client.ref];
+            client.manager.addSequencedChange(commit);
+            client.ref += 1;
         }
     }
-    checkChangeList(managers[0], rebaser);
+    for (const client of clientData) {
+        checkChangeList(client.manager, rebaser);
+    }
 }
 
 function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser): void {
