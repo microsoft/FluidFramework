@@ -214,19 +214,29 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     tryGet(
-        destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent | undefined,
+        destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent,
     ): TreeNavigationResult {
-        assert(cursorToMove instanceof Cursor, 0x337 /* ObjectForest must only be given its own Cursor type */);
-        assert(cursorToMove.forest === this, 0x338 /* ObjectForest must only be given its own Cursor */);
-        const node = this.anchors.locate(destination);
-        if (node === undefined) {
+        const path = this.anchors.locate(destination);
+        if (path === undefined) {
             return TreeNavigationResult.NotFound;
         }
+       this.getAtPath(path, cursorToMove, observer);
+        return TreeNavigationResult.Ok;
+    }
+
+    /**
+     * Set `cursorToMove` to location described by path.
+     * This is NOT a relative move: current position is discarded.
+     * Path must point to existing node.
+     */
+    getAtPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): void {
+        assert(cursorToMove instanceof Cursor, 0x337 /* ObjectForest must only be given its own Cursor type */);
+        assert(cursorToMove.forest === this, 0x338 /* ObjectForest must only be given its own Cursor */);
 
         const indexStack: number[] = [];
         const keyStack: FieldKey[] = [];
 
-        let path: UpPath | undefined = node;
+        let path: UpPath | undefined = destination;
         while (path !== undefined) {
             indexStack.push(path.parentIndex);
             keyStack.push(path.parentField);
@@ -240,7 +250,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             assert(result === TreeNavigationResult.Ok, "path should point to existing node");
         }
 
-        return TreeNavigationResult.Ok;
+        return;
     }
 }
 
@@ -328,8 +338,11 @@ class Cursor implements ITreeSubscriptionCursor {
         return Object.getOwnPropertyNames(this.getFields()) as Iterable<FieldKey>;
     }
 
-    fork(observer?: ObservingDependent | undefined): ITreeSubscriptionCursor {
-        throw new Error("Method not implemented."); // TODO
+    fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
+        const other = this.forest.allocateCursor();
+        const path = this.getPath();
+        this.forest.getAtPath(path, other, observer);
+        return other;
     }
 
     free(): void {
@@ -337,7 +350,7 @@ class Cursor implements ITreeSubscriptionCursor {
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 
-    buildAnchor(): Anchor {
+    getPath(): UpPath {
         // Perf Note:
         // This is O(depth) in tree.
         // If many different anchors are created, this could be optimized to amortize the costs.
@@ -362,7 +375,11 @@ class Cursor implements ITreeSubscriptionCursor {
             parentIndex: this.index,
             parentField: this.keyStack[length],
         };
-        return this.forest.anchors.track(path);
+        return path;
+    }
+
+    buildAnchor(): Anchor {
+        return this.forest.anchors.track(this.getPath());
     }
 
     down(key: FieldKey, index: number): TreeNavigationResult {
