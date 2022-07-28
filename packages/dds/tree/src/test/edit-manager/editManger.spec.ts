@@ -11,20 +11,36 @@ import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { makeArray, RecursiveReadonly } from "../../util";
 
-interface TestChangeset {
-    inputContext?: number;
-    outputContext?: number;
+interface NonEmptyTestChangeset {
+    /**
+     * Identifies the document state that the changeset should apply to.
+     */
+    inputContext: number;
+    /**
+     * Identifies the document state brought about by applying the changeset to the document.
+     */
+    outputContext: number;
+    /**
+     * Identifies the editing intentions included in the changeset.
+     * Editing intentions can be thought of as user actions, where each user action is unique.
+     * Editing intentions can be inverted (represented negative number of the same magnitude) but are
+     * otherwise unchanged by rebasing.
+     */
     intentions: number[];
 }
 
-interface NonEmptyTestChangeset extends TestChangeset {
-    inputContext: number;
-    outputContext: number;
+interface EmptyTestChangeset {
+    intentions: [];
 }
 
-function isNonEmptyChange(change: RecursiveReadonly<TestChangeset>):
-	change is RecursiveReadonly<NonEmptyTestChangeset> {
-    return change.inputContext !== undefined && change.outputContext !== undefined;
+const emptyChange: EmptyTestChangeset = { intentions: [] };
+
+export type TestChangeset = NonEmptyTestChangeset | EmptyTestChangeset;
+
+function isNonEmptyChange(
+    change: RecursiveReadonly<TestChangeset>,
+): change is RecursiveReadonly<NonEmptyTestChangeset> {
+    return "inputContext" in change && "outputContext" in change;
 }
 
 class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, TestChangeset> {
@@ -36,31 +52,51 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
         let outputContext: number | undefined;
         const intentions: number[] = [];
         for (const change of changes) {
-            inputContext ??= change.inputContext;
-            outputContext = change.outputContext ?? outputContext;
-            intentions.push(...change.intentions);
+            if (isNonEmptyChange(change)) {
+                if (outputContext !== undefined) {
+                    // One can only compose changes of the output context of each change N matches
+                    // the input context of the change N+1.
+                    assert.strictEqual(outputContext, change.inputContext);
+                }
+                inputContext ??= change.inputContext;
+                outputContext = change.outputContext;
+                intentions.push(...change.intentions);
+            }
         }
-        return {
-            inputContext,
-            outputContext,
-            intentions,
-        };
+        if (inputContext !== undefined) {
+            return {
+                inputContext,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                outputContext: outputContext!,
+                intentions,
+            };
+        }
+        return emptyChange;
     }
 
     public invert(change: TestChangeset): TestChangeset {
-        return {
-            inputContext: change.outputContext,
-            outputContext: change.inputContext,
-            intentions: change.intentions.map((i) => -i),
-        };
+        if (isNonEmptyChange(change)) {
+            return {
+                inputContext: change.outputContext,
+                outputContext: change.inputContext,
+                intentions: change.intentions.map((i) => -i).reverse(),
+            };
+        }
+        return emptyChange;
     }
 
     public rebase(change: TestChangeset, over: TestChangeset): TestChangeset {
-        return {
-            inputContext: over.outputContext,
-            outputContext: ++this.contextCounter,
-            intentions: change.intentions,
-        };
+        if (isNonEmptyChange(change)) {
+            if (isNonEmptyChange(over)) {
+                return {
+                    inputContext: over.outputContext,
+                    outputContext: ++this.contextCounter,
+                    intentions: change.intentions,
+                };
+            }
+            return change;
+        }
+        return emptyChange;
     }
 
     public rebaseAnchors(anchor: AnchorSet, over: TestChangeset): void {
@@ -107,7 +143,7 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
                 }
             }
             if (index > 0) {
-                const prev = changes[index - 1];
+                const prev = filtered[index - 1];
                 // The current change should apply to the context brought about by the previous change
                 assert.strictEqual(change.inputContext, prev.outputContext);
             }
@@ -413,9 +449,9 @@ describe("EditManager", () => {
             refNumber: 0,
             changeset: cs4,
         });
-        const cs8 = rebaser.mintChangeset(getLocalContext(manager));
+        const cs8 = rebaser.mintChangeset(getTipContext(manager));
         manager.addLocalChange(cs8);
-        const cs9 = rebaser.mintChangeset(getLocalContext(manager));
+        const cs9 = rebaser.mintChangeset(getTipContext(manager));
         manager.addLocalChange(cs9);
         manager.addSequencedChange({
             sessionId: localSessionId,
@@ -556,7 +592,7 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
     for (const step of scenario) {
         const client = clientData[step.client];
         if (step.type === "Mint") {
-            const cs = rebaser.mintChangeset(getLocalContext(client.manager));
+            const cs = rebaser.mintChangeset(getTipContext(client.manager));
             client.manager.addLocalChange(cs);
             client.localChanges.push({ change: cs, ref: client.ref });
             cs.intentions.map(client.intentions.add);
@@ -581,26 +617,20 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
 }
 
 function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser, intentions?: Set<number>): void {
-    rebaser.checkChangeList(
-        manager.getTrunk().map((c) => c.changeset)
-        .concat(manager.getLocalChanges()),
-        intentions,
-    );
+    rebaser.checkChangeList(getAllChanges(manager), intentions);
 }
 
-function getLocalContext(manager: TestEditManager): number {
-    let context;
-    const localChanges = manager.getLocalChanges();
-    if (localChanges.length === 0) {
-        const trunk = manager.getTrunk();
-        if (trunk.length === 0) {
-            context = 0;
-        } else {
-            context = trunk[trunk.length - 1].changeset.outputContext;
+function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChangeset>[] {
+    return manager.getTrunk().map((c) => c.changeset).concat(manager.getLocalChanges());
+}
+
+function getTipContext(manager: TestEditManager): number {
+    const changes = getAllChanges(manager);
+    for (let i = changes.length - 1; i >= 0; --i) {
+        const change = changes[i];
+        if (isNonEmptyChange(change)) {
+            return change.outputContext;
         }
-    } else {
-        const lastChange = localChanges[localChanges.length - 1];
-        context = lastChange.outputContext;
     }
-    return context ?? fail("Can't determine local context");
+    return 0;
 }
