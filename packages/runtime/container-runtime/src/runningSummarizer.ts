@@ -415,7 +415,7 @@ export class RunningSummarizer implements IDisposable {
     private trySummarize(
         reason: SummarizeReason,
         cancellationToken = this.cancellationToken): void {
-        if (this.summarizingLock !== undefined || this.refreshSummaryAckLock !== undefined) {
+        if (this.summarizingLock !== undefined) {
             // lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
             // if it's still needed
             this.tryWhileSummarizing = true;
@@ -466,6 +466,10 @@ export class RunningSummarizer implements IDisposable {
                         ...summarizeProps,
                     });
                     await delay(delaySeconds * 1000);
+                }
+
+                if (this.refreshSummaryAckLock !== undefined) {
+                    await this.refreshSummaryAckLock;
                 }
                 // Note: no need to account for cancellationToken.waitCancelled here, as
                 // this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.

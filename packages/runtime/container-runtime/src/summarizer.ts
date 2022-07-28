@@ -389,7 +389,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     eventName: "HandleSummaryAckError",
                     referenceSequenceNumber: refSequenceNumber,
                 }, error);
-                this.runningSummarizer.waitStop
             }
             refSequenceNumber++;
         }
