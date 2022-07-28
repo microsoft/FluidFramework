@@ -5,7 +5,7 @@
 
 import { ChangeFamily } from "../change-family";
 import { AnchorSet, Delta } from "../tree";
-import { fail, RecursiveReadonly } from "../util";
+import { Brand, fail, RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
@@ -14,8 +14,8 @@ export interface Commit<TChangeset> {
     changeset: TChangeset;
 }
 
-type SessionId = number;
-type SeqNumber = number;
+export type SessionId = Brand<number, "edit-manager.SessionId">;
+export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
