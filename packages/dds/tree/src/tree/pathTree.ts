@@ -33,6 +33,10 @@ export interface UpPath {
      readonly parentIndex: number; // TODO: field index branded type?
 }
 
+/**
+ * @returns the number of nodes above this one.
+ * Zero when parent is undefined.
+ */
 export function getDepth(path: UpPath): number {
     let depth = 0;
     let next = path.parent;

@@ -79,16 +79,13 @@ const content = [nodeX];
 const moveId = brandOpaque<Delta.MoveId>(0);
 const moveId2 = brandOpaque<Delta.MoveId>(1);
 
-function test(editor: (builder: SequenceEditBuilder) => void, expected: Delta.Root): void {
-    let wasCalled = false;
-    const receiver = (actual: Delta.Root) => {
-        wasCalled = true;
-        assert.deepStrictEqual(actual, expected);
-    };
+function test(editor: (builder: SequenceEditBuilder) => void, expected: Delta.Root[]): void {
+    const deltas: Delta.Root[] = [];
+    const receiver = (delta: Delta.Root) => deltas.push(delta);
     const anchors = new AnchorSet();
     const builder = new SequenceEditBuilder(receiver, anchors);
     editor(builder);
-    assert.strictEqual(wasCalled, true);
+    assert.deepStrictEqual(deltas, expected);
 }
 
 describe("SequenceEditBuilder", () => {
@@ -102,7 +99,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.setValue(root, 42); },
-            expected,
+            [expected],
         );
     });
 
@@ -134,7 +131,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.setValue(root_foo2_foo5, 42); },
-            expected,
+            [expected],
         );
     });
 
@@ -148,7 +145,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.insert(root, new TextCursor(nodeX)); },
-            expected,
+            [expected],
         );
     });
 
@@ -180,7 +177,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.insert(root_foo2_foo5, new TextCursor(nodeX)); },
-            expected,
+            [expected],
         );
     });
 
@@ -194,7 +191,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.delete(root, 1); },
-            expected,
+            [expected],
         );
     });
 
@@ -226,7 +223,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.delete(root_foo2_foo5, 10); },
-            expected,
+            [expected],
         );
     });
 
@@ -255,7 +252,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo2, 10, root_foo17); },
-            expected,
+            [expected],
         );
     });
 
@@ -284,7 +281,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo17, 10, root_foo2); },
-            expected,
+            [expected],
         );
     });
 
@@ -321,7 +318,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo2, 20, root_foo17); },
-            expected,
+            [expected],
         );
     });
 
@@ -357,7 +354,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo2, 10, root_bar2); },
-            expected,
+            [expected],
         );
     });
 
@@ -410,7 +407,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo2_foo5, 3, root_foo17_foo5); },
-            expected,
+            [expected],
         );
     });
 
@@ -463,7 +460,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo17_foo5, 3, root_foo2_foo5); },
-            expected,
+            [expected],
         );
     });
 
@@ -521,7 +518,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo2_foo5, 3, root_bar2_bar5); },
-            expected,
+            [expected],
         );
     });
 
@@ -601,7 +598,7 @@ describe("SequenceEditBuilder", () => {
         ]]);
         test(
             (builder) => { builder.move(root_foo2_foo5_foo7, 3, root_bar2_bar5_bar7); },
-            expected,
+            [expected],
         );
     });
 
@@ -638,7 +635,7 @@ describe("SequenceEditBuilder", () => {
         ]);
         test(
             (builder) => { builder.move(root_foo2, 10, detached); },
-            expected,
+            [expected],
         );
     });
 
@@ -675,7 +672,7 @@ describe("SequenceEditBuilder", () => {
         ]);
         test(
             (builder) => { builder.move(detached, 10, root_foo2); },
-            expected,
+            [expected],
         );
     });
 });

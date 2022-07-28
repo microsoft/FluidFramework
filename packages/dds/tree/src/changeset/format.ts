@@ -75,7 +75,8 @@ export namespace Transposed {
 
 	export interface SetValue {
 		type: "Set";
-		value: Value;
+		/** Can be left unset to represent the value being cleared. */
+		value?: Value;
 	}
 
 	export interface RevertValue {
@@ -334,7 +335,7 @@ export type NodeCount = number;
 export type GapCount = number;
 export type Skip = number;
 export type SeqNumber = number;
-export type Value = number | string | boolean | undefined;
+export type Value = number | string | boolean;
 export type ClientId = number;
 export enum Tiebreak { Left, Right }
 export enum Effects {

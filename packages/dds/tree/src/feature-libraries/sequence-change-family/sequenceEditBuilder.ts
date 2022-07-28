@@ -23,7 +23,12 @@ export class SequenceEditBuilder extends ProgressiveEditBuilder<SequenceChangese
     }
 
     public setValue(node: NodePath, value: Value) {
-        const modify: T.Modify = { type: "Modify", value: { type: "Set", value } };
+        const modify: T.Modify & { value: T.SetValue; } = { type: "Modify", value: { type: "Set" } };
+        // Only set the `SetValue.value` field if the given `value` is defined.
+        // This ensures the object properly round-trips through JSON.
+        if (value !== undefined) {
+            modify.value.value = value;
+        }
         this.applyMarkAtPath(modify, node);
     }
 
