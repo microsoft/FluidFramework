@@ -9,7 +9,7 @@ import { ObjectForest } from "../feature-libraries";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { jsonableTreeFromCursor, TextCursor } from "../feature-libraries/treeTextCursor";
-import { ITreeCursor, TreeNavigationResult } from "../forest";
+import { initializeForest, ITreeCursor, TreeNavigationResult } from "../forest";
 
 import { JsonableTree } from "../tree";
 import { brand } from "../util";
@@ -91,8 +91,8 @@ testCursor("textTreeFormat", (data): ITreeCursor => new TextCursor(data));
 // TODO: put these in a better place / unify with object forest tests.
 testCursor("object-forest cursor", (data): ITreeCursor => {
     const forest = new ObjectForest();
-    const insert = forest.add([new TextCursor(data)]);
+    initializeForest(forest, [data]);
     const cursor = forest.allocateCursor();
-    assert.equal(forest.tryGet(forest.root(insert), cursor), TreeNavigationResult.Ok);
+    assert.equal(forest.tryGet(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
     return cursor;
 });

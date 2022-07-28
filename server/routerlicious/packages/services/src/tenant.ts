@@ -55,7 +55,7 @@ export class TenantManager implements core.ITenantManager {
         const restWrapper = new BasicRestWrapper();
         const [details, key] = await Promise.all([
             restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`,
-            { params: { includeDisabledTenant } }),
+            { includeDisabledTenant }),
             this.getKey(tenantId, includeDisabledTenant)]);
 
         const defaultQueryString = {
@@ -104,7 +104,7 @@ export class TenantManager implements core.ITenantManager {
         const restWrapper = new BasicRestWrapper();
         const result = await restWrapper.get<core.ITenantKeys>(
             `${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
-            { params: { includeDisabledTenant } },
+            { includeDisabledTenant },
         );
         return result.key1;
     }
