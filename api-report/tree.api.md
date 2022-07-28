@@ -15,7 +15,15 @@ export class AnchorSet {
     // (undocumented)
     forget(anchor: Anchor): void;
     locate(anchor: Anchor): UpPath | undefined;
-    moveChildren(src: UpPath, srcField: FieldKey, start: number, count: number, dst: UpPath, dstField: FieldKey, dstIndex: number): void;
+    moveChildren(count: number, src: undefined | {
+        path: UpPath;
+        field: FieldKey;
+        start: number;
+    }, dst: undefined | {
+        path: UpPath;
+        field: FieldKey;
+        start: number;
+    }): void;
     track(path: UpPath): Anchor;
 }
 
@@ -268,18 +276,18 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
-export interface ITreeCursor {
-    down(key: FieldKey, index: number): TreeNavigationResult;
+export interface ITreeCursor<TResult = TreeNavigationResult> {
+    down(key: FieldKey, index: number): TResult;
     // (undocumented)
     keys: Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
     seek(offset: number): {
-        result: TreeNavigationResult;
+        result: TResult;
         moved: number;
     };
     readonly type: TreeType;
-    up(): TreeNavigationResult;
+    up(): TResult;
     readonly value: Value;
 }
 
@@ -315,23 +323,23 @@ export const jsonArray: NamedTreeSchema;
 export const jsonBoolean: NamedTreeSchema;
 
 // @public
-export class JsonCursor<T> implements ITreeCursor {
+export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: Jsonable<T>);
     // (undocumented)
-    down(key: FieldKey, index: number): TreeNavigationResult;
+    down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
     get keys(): Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
     // (undocumented)
     seek(offset: number): {
-        result: TreeNavigationResult;
+        result: SynchronousNavigationResult;
         moved: number;
     };
     // (undocumented)
     get type(): TreeType;
     // (undocumented)
-    up(): TreeNavigationResult;
+    up(): SynchronousNavigationResult;
     // (undocumented)
     get value(): Value;
 }
@@ -597,6 +605,9 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaRepo
     tryUpdateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): boolean;
     tryUpdateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): boolean;
 }
+
+// @public
+export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
 
 // @public
 export class TextCursor implements ITreeCursor {
