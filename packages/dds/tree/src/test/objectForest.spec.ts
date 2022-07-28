@@ -55,7 +55,8 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
                     initializeForest(forest, content);
 
                     const reader = forest.allocateCursor();
-                    assert.equal(forest.tryGet(forest.root(forest.rootField), reader), TreeNavigationResult.Ok);
+                    assert.equal(
+                        forest.tryMoveCursorTo(forest.root(forest.rootField), reader), TreeNavigationResult.Ok);
 
                     // copy data from reader into json object and compare to data.
                     const copy = cursorToJsonObject(reader);
@@ -78,7 +79,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
             forest.applyDelta(delta);
 
             const reader = forest.allocateCursor();
-            assert.equal(forest.tryGet(anchor, reader), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
 
             assert.equal(reader.value, 2);
         });
@@ -96,7 +97,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
             forest.applyDelta(delta);
 
             const reader = forest.allocateCursor();
-            assert.equal(forest.tryGet(anchor, reader), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
 
             assert.equal(reader.value, undefined);
         });
@@ -116,7 +117,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
 
             // Inspect resulting tree: should just have `2`.
             const reader = forest.allocateCursor();
-            assert.equal(forest.tryGet(anchor, reader), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorTo(anchor, reader), TreeNavigationResult.Ok);
             assert.equal(reader.value, 2);
             assert.equal(reader.seek(1), TreeNavigationResult.NotFound);
         });
@@ -136,7 +137,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
             const rootAnchor = forest.root(forest.rootField);
 
             const cursor = forest.allocateCursor();
-            assert.equal(forest.tryGet(rootAnchor, cursor), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorTo(rootAnchor, cursor), TreeNavigationResult.Ok);
             const parentAnchor = cursor.buildAnchor();
             assert.equal(cursor.down(brand("data"), 0), TreeNavigationResult.Ok);
             assert.equal(cursor.value, 1);
@@ -177,11 +178,11 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
             assert.deepStrictEqual(childPath1, expectedChild1);
             assert.deepStrictEqual(childPath2, expectedChild2);
 
-            assert.equal(forest.tryGet(parentAnchor, cursor), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorTo(parentAnchor, cursor), TreeNavigationResult.Ok);
             assert.equal(cursor.value, undefined);
-            assert.equal(forest.tryGet(childAnchor1, cursor), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorTo(childAnchor1, cursor), TreeNavigationResult.Ok);
             assert.equal(cursor.value, 1);
-            assert.equal(forest.tryGet(childAnchor2, cursor), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorTo(childAnchor2, cursor), TreeNavigationResult.Ok);
             assert.equal(cursor.value, 2);
 
             // Cleanup is not required for this test (since anchor set will go out of scope here),

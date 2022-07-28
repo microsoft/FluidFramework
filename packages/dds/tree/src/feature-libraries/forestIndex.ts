@@ -81,7 +81,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         // (since we don't save them, and they should not exist outside transactions).
         const rootAnchor = this.forest.root(this.forest.rootField);
         const roots: JsonableTree[] = [];
-        let result = this.forest.tryGet(rootAnchor, this.cursor);
+        let result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
         while (result === TreeNavigationResult.Ok) {
             roots.push(jsonableTreeFromCursor(this.cursor));
             result = this.cursor.seek(1);

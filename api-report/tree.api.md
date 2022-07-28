@@ -225,7 +225,7 @@ export interface IForestSubscription extends Dependee {
     // (undocumented)
     readonly rootField: DetachedField;
     readonly schema: SchemaRepository & Dependee;
-    tryGet(destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
+    tryMoveCursorTo(destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
 }
 
 // @public

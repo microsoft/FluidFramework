@@ -56,7 +56,7 @@ export interface IForestSubscription extends Dependee {
      * It is an error not to free `cursorToMove` before the next edit.
      * Must provide a `cursorToMove` from this subscription (acquired via `allocateCursor`).
      */
-    tryGet(
+    tryMoveCursorTo(
         destination: Anchor,
         cursorToMove: ITreeSubscriptionCursor,
         observer?: ObservingDependent

@@ -124,7 +124,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
                 assert(currentField !== undefined, "must be in field to enterNode");
                 let result: TreeNavigationResult;
                 if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
-                    result = this.tryGet(this.root(currentField as unknown as DetachedField), currentNode);
+                    result = this.tryMoveCursorTo(this.root(currentField as unknown as DetachedField), currentNode);
                 } else {
                     result = currentNode.down(currentField, index);
                 }
@@ -213,14 +213,14 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         this.invalidateDependents();
     }
 
-    tryGet(
+    tryMoveCursorTo(
         destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent,
     ): TreeNavigationResult {
         const path = this.anchors.locate(destination);
         if (path === undefined) {
             return TreeNavigationResult.NotFound;
         }
-        this.getAtPath(path, cursorToMove, observer);
+        this.moveCursorToPath(path, cursorToMove, observer);
         return TreeNavigationResult.Ok;
     }
 
@@ -229,7 +229,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
      * This is NOT a relative move: current position is discarded.
      * Path must point to existing node.
      */
-    getAtPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): void {
+    moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): void {
         assert(cursorToMove instanceof Cursor, 0x337 /* ObjectForest must only be given its own Cursor type */);
         assert(cursorToMove.forest === this, 0x338 /* ObjectForest must only be given its own Cursor */);
 
@@ -341,7 +341,7 @@ class Cursor implements ITreeSubscriptionCursor {
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
         const other = this.forest.allocateCursor();
         const path = this.getPath();
-        this.forest.getAtPath(path, other, observer);
+        this.forest.moveCursorToPath(path, other, observer);
         return other;
     }
 
