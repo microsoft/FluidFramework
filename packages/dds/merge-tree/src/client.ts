@@ -727,6 +727,11 @@ export class Client {
     protected findReconnectionPosition(segment: ISegment, localSeq: number) {
         assert(localSeq <= this.mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
         let segmentPosition = 0;
+
+        const isInsertedInView = (seg: ISegment) => seg.localSeq === undefined || seg.localSeq <= localSeq;
+
+        const isRemovedFromView = (seg: ISegment) => seg.removedSeq !== undefined &&
+            (seg.removedSeq !== UnassignedSequenceNumber || seg.localRemovedSeq! <= localSeq);
         /*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
@@ -746,9 +751,7 @@ export class Client {
             //
             // Note that all ACKed / remote ops are applied and we only need concern ourself with
             // determining if locally pending ops fall before/after the given 'localSeq'.
-            if ((seg.localSeq === undefined || seg.localSeq <= localSeq)                // Is inserted
-                && (seg.removedSeq === undefined || (seg.removedSeq === UnassignedSequenceNumber && seg.localRemovedSeq! > localSeq))     // Not removed
-            ) {
+            if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
                 segmentPosition += seg.cachedLength;
             }
 
@@ -857,7 +860,8 @@ export class Client {
                     // if the segment has been removed, there's no need to send the annotate op
                     // unless the remove was local, in which case the annotate must have come
                     // before the remove
-                    if (segment.removedSeq === undefined || (segment.localRemovedSeq !== undefined && segment.removedSeq === UnassignedSequenceNumber)) {
+                    if (segment.removedSeq === undefined ||
+                        (segment.localRemovedSeq !== undefined && segment.removedSeq === UnassignedSequenceNumber)) {
                         newOp = createAnnotateRangeOp(
                             segmentPosition,
                             segmentPosition + segment.cachedLength,

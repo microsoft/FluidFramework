@@ -9,6 +9,7 @@ import { FieldKey } from "../../../tree";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
+import { brand } from "../../../util";
 
 describe("JsonCursor", () => {
     // This tests that test data roundtrips via extract.
@@ -79,7 +80,7 @@ describe("JsonCursor", () => {
     describe("seek()", () => {
         describe("with map-like node", () => {
             const tests: [string, FieldKey][] = [
-                ["non-empty", "key" as const as FieldKey],
+                ["non-empty", brand("key")],
                 ["empty", EmptyKey],
             ];
 
@@ -140,8 +141,8 @@ describe("JsonCursor", () => {
     });
 
     describe("TreeNavigationResult", () => {
-        const notFoundKey = "notFound" as FieldKey;
-        const foundKey = "found" as FieldKey;
+        const notFoundKey: FieldKey = brand("notFound");
+        const foundKey: FieldKey = brand("found");
 
         function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
             assert(0 <= index && index < cursor.length(key),

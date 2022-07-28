@@ -23,6 +23,7 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     ITreeSubscriptionCursor,
     ForestAnchor,
     ITreeSubscriptionCursorState,
+    SynchronousNavigationResult,
 } from "./forest";
 
 export {

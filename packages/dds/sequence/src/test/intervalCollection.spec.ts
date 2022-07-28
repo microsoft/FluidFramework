@@ -367,7 +367,7 @@ describe("SharedString interval collections", () => {
             const assertAllIntervals = (expected: readonly { start: number; end: number; }[]) => {
                 assertIntervals(sharedString, collection1, expected, false);
                 assertIntervals(sharedString2, collection2, expected, false);
-            }
+            };
 
             sharedString.insertText(0, "ABCD");
             const interval = collection1.add(1, 3, IntervalType.SlideOnRemove);
@@ -377,7 +377,8 @@ describe("SharedString interval collections", () => {
 
             assertAllIntervals([{ start: -1, end: -1 }]);
 
-            collection2.change(interval.getIntervalId()!, undefined, 2);
+            const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
+            collection2.change(id, undefined, 2);
             containerRuntimeFactory.processAllMessages();
 
             assertAllIntervals([{ start: -1, end: 2 }]);

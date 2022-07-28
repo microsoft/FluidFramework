@@ -21,11 +21,11 @@ import {
 	ValueSchema,
 	emptyField, emptyMap, emptySet, fieldSchema, anyField, anyTree, neverField, neverTree, StoredSchemaRepository,
 } from "../../schema";
-import { brandOpaque } from "../../util";
+import { brand, brandOpaque } from "../../util";
 
 describe("Schema Comparison", () => {
 	const neverTree2: TreeSchema = {
-		localFields: new Map([["x" as LocalFieldKey, neverField]]),
+		localFields: new Map([[brand("x"), neverField]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
 		extraGlobalFields: true,
@@ -33,7 +33,7 @@ describe("Schema Comparison", () => {
 	};
 
 	const emptyTree: NamedTreeSchema = {
-		name: "empty" as TreeSchemaIdentifier,
+		name: brand("empty"),
 		localFields: emptyMap,
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
@@ -42,8 +42,8 @@ describe("Schema Comparison", () => {
 	};
 
 	const emptyLocalFieldTree: NamedTreeSchema = {
-		name: "emptyLocalFieldTree" as TreeSchemaIdentifier,
-		localFields: new Map([["x" as LocalFieldKey, emptyField]]),
+		name: brand("emptyLocalFieldTree"),
+		localFields: new Map([[brand("x"), emptyField]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
@@ -51,8 +51,8 @@ describe("Schema Comparison", () => {
 	};
 
 	const optionalLocalFieldTree: NamedTreeSchema = {
-		name: "optionalLocalFieldTree" as TreeSchemaIdentifier,
-		localFields: new Map([["x" as LocalFieldKey, fieldSchema(FieldKind.Optional, [emptyTree.name])]]),
+		name: brand("optionalLocalFieldTree"),
+		localFields: new Map([[brand("x"), fieldSchema(FieldKind.Optional, [emptyTree.name])]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
@@ -60,8 +60,8 @@ describe("Schema Comparison", () => {
 	};
 
 	const valueLocalFieldTree: NamedTreeSchema = {
-		name: "valueLocalFieldTree" as TreeSchemaIdentifier,
-		localFields: new Map([["x" as LocalFieldKey, fieldSchema(FieldKind.Value, [emptyTree.name])]]),
+		name: brand("valueLocalFieldTree"),
+		localFields: new Map([[brand("x"), fieldSchema(FieldKind.Value, [emptyTree.name])]]),
 		globalFields: emptySet,
 		extraLocalFields: emptyField,
 		extraGlobalFields: false,
@@ -71,18 +71,18 @@ describe("Schema Comparison", () => {
 	it("isNeverField", () => {
 		const repo = new StoredSchemaRepository();
 		assert(isNeverField(repo, neverField));
-		repo.tryUpdateTreeSchema("never" as TreeSchemaIdentifier, neverTree);
+		repo.tryUpdateTreeSchema(brand("never"), neverTree);
 		const neverField2: FieldSchema = {
 			kind: FieldKind.Value,
-			types: new Set(["never" as TreeSchemaIdentifier]),
+			types: new Set([brand("never")]),
 		};
 		assert(isNeverField(repo, neverField2));
 		assert.equal(isNeverField(repo, emptyField), false);
 		assert.equal(isNeverField(repo, anyField), false);
-		repo.tryUpdateTreeSchema("empty" as TreeSchemaIdentifier, emptyTree);
+		repo.tryUpdateTreeSchema(brand("empty"), emptyTree);
 		assert.equal(isNeverField(repo, {
 			kind: FieldKind.Value,
-			types: new Set(["empty" as TreeSchemaIdentifier]),
+			types: new Set([brand("empty")]),
 		}), false);
 	});
 
@@ -135,10 +135,10 @@ describe("Schema Comparison", () => {
 
 	it("allowsFieldSuperset", () => {
 		const repo = new StoredSchemaRepository();
-		repo.tryUpdateTreeSchema("never" as TreeSchemaIdentifier, neverTree);
+		repo.tryUpdateTreeSchema(brand("never"), neverTree);
 		const neverField2: FieldSchema = {
 			kind: FieldKind.Value,
-			types: new Set(["never" as TreeSchemaIdentifier]),
+			types: new Set([brand("never")]),
 		};
 		const compare = (a: FieldSchema, b: FieldSchema): boolean => allowsFieldSuperset(repo, a, b);
 		testOrder(compare, [neverField, emptyField, anyField]);
