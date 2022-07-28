@@ -52,6 +52,7 @@
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
     "chalk": "^2.4.2",
+    "fs-extra": "^9.0.1",
     "inquirer": "^9.0.0",
     "semver": "^7.3.7",
     "table": "^6.8.0"

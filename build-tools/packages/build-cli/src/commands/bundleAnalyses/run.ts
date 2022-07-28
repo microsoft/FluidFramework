@@ -1,6 +1,12 @@
-import {Command, Flags} from '@oclif/core'
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+import { execSync } from "child_process";
+import { Flags } from '@oclif/core'
+import { BaseCommand } from "../../base";
 
-export default class BundleAnalysesRun extends Command {
+export default class BundleAnalysesRun extends BaseCommand {
   static description = 'describe the command here'
 
   static examples = [
@@ -12,6 +18,7 @@ export default class BundleAnalysesRun extends Command {
     name: Flags.string({char: 'n', description: 'name to print'}),
     // flag with no value (-f, --force)
     force: Flags.boolean({char: 'f'}),
+    ...super.flags,
   }
 
   static args = [{name: 'file'}]
@@ -19,10 +26,11 @@ export default class BundleAnalysesRun extends Command {
   public async run(): Promise<void> {
     const {args, flags} = await this.parse(BundleAnalysesRun)
 
-    const name = flags.name ?? 'world'
-    this.log(`hello ${name} from C:\\Users\\sdeshpande\\Documents\\FluidFramework\\build-tools\\packages\\build-cli\\src\\commands\\bundleAnalyses\\run.ts`)
-    if (args.file && flags.force) {
-      this.log(`you input --force and --file: ${args.file}`)
+    try {
+        execSync(`npx danger ci -d ${__dirname}/dangerfile.js`, { stdio: "inherit" });
+    } catch (error_: unknown) {
+        this.error(error_ as string);
+        // process.exit(-1);
     }
   }
 }
