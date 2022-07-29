@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { strict as assert } from "assert";
+import { UnassignedSequenceNumber } from "../constants";
 import { createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
@@ -65,6 +66,43 @@ describe("MergeTree.markRangeRemoved", () => {
                 "remote"));
 
         assert.equal(client.getText(), "text");
+    });
+
+    it("local remove followed by remote overlapping remove", () => {
+        const originalSeq = client.getCurrentSeq();
+        let seq = originalSeq;
+        const remoteDeleteMessage = client.makeOpMessage(
+            createRemoveRangeOp(0, client.getLength()),
+            ++seq,
+            undefined,
+            "remote",
+        );
+        const segmentExpectedRemovedSeq = seq;
+        const { segment } = client.getContainingSegment(0);
+        assert(segment !== undefined, "expected to find segment");
+        const localDeleteMessage = client.makeOpMessage(
+            client.removeRangeLocal(0, client.getLength()),
+            ++seq,
+            originalSeq, /* refSeq */
+        );
+
+        assert.equal(client.getText(), "");
+        assert.equal(segment.removedSeq, UnassignedSequenceNumber);
+        assert(segment.localRemovedSeq !== undefined);
+        const expectedLocalRemovedSeq = segment.localRemovedSeq;
+
+        client.applyMsg(remoteDeleteMessage);
+        assert.equal(segment.removedSeq, segmentExpectedRemovedSeq);
+        assert.equal(segment.localRemovedSeq, expectedLocalRemovedSeq);
+        assert.equal(client.getText(), "");
+
+        // localRemovedSeq should remain on the segment until the local removal has been acked.
+        // This ensures there's enough information to determine segment length in the case of
+        // reconnect.
+        client.applyMsg(localDeleteMessage);
+        assert.equal(segment.removedSeq, segmentExpectedRemovedSeq);
+        assert.equal(segment.localRemovedSeq, undefined);
+        assert.equal(client.getText(), "");
     });
 
     it("remote remove followed by remote insert", () => {

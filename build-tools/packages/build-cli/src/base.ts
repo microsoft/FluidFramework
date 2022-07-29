@@ -15,6 +15,10 @@ import { rootPathFlag } from "./flags";
 export abstract class BaseCommand extends Command {
     static flags = {
         root: rootPathFlag(),
+        timer: Flags.boolean({
+            default: false,
+            hidden: true,
+        }),
         verbose: Flags.boolean({
             char: "v",
             description: "Verbose logging.",
