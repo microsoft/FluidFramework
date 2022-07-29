@@ -4,7 +4,7 @@
  */
 
 import { List, ListMakeHead } from "./collections";
-import { ISegment, SegmentGroup } from "./mergeTree";
+import { ISegment, SegmentGroup } from "./mergeTreeNodes";
 
 export class SegmentGroupCollection {
     private readonly segmentGroups: List<SegmentGroup>;

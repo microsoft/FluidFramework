@@ -57,17 +57,17 @@ interface IRunningTimerState extends ITimeout {
     restart?: ITimeout;
 }
 
-const maxSetTimeoutMs = 0x7FFFFFFF; // setTimeout limit is MAX_INT32=(2^31-1).
+const maxSetTimeoutMs = 0x7fffffff; // setTimeout limit is MAX_INT32=(2^31-1).
 
 /**
  * Sets timeouts like the setTimeout function allowing timeouts to exceed the setTimeout's max timeout limit.
  * Timeouts may not be exactly accurate due to browser implementations and the OS.
  * https://stackoverflow.com/questions/21097421/what-is-the-reason-javascript-settimeout-is-so-inaccurate
- * @param timeoutFn - executed when the timeout expires
- * @param timeoutMs - duration of the timeout in milliseconds
- * @param setTimeoutIdFn - executed to update the timeout if multiple timeouts are required when
- *  timeoutMs greater than maxTimeout
- * @returns the initial timeout
+ * @param timeoutFn - Executed when the timeout expires
+ * @param timeoutMs - Duration of the timeout in milliseconds
+ * @param setTimeoutIdFn - Executed to update the timeout if multiple timeouts are required when
+ * timeoutMs greater than maxTimeout
+ * @returns The initial timeout
  */
 export function setLongTimeout(
     timeoutFn: () => void,
@@ -78,7 +78,10 @@ export function setLongTimeout(
     let timeoutId: ReturnType<typeof setTimeout>;
     if (timeoutMs > maxSetTimeoutMs) {
         const newTimeoutMs = timeoutMs - maxSetTimeoutMs;
-        timeoutId = setTimeout(() => setLongTimeout(timeoutFn, newTimeoutMs, setTimeoutIdFn), maxSetTimeoutMs);
+        timeoutId = setTimeout(
+            () => setLongTimeout(timeoutFn, newTimeoutMs, setTimeoutIdFn),
+            maxSetTimeoutMs,
+        );
     } else {
         timeoutId = setTimeout(() => timeoutFn(), timeoutMs);
     }
@@ -97,7 +100,7 @@ export class Timer implements ITimer {
     /**
      * Returns true if the timer is running.
      */
-    public get hasTimer() {
+    public get hasTimer(): boolean {
         return !!this.runningState;
     }
 
@@ -106,21 +109,25 @@ export class Timer implements ITimer {
     constructor(
         private readonly defaultTimeout: number,
         private readonly defaultHandler: () => void,
-        private readonly getCurrentTick: () => number = () => Date.now()) { }
+        private readonly getCurrentTick: () => number = (): number => Date.now(),
+    ) {}
 
     /**
      * Calls setTimeout and tracks the resulting timeout.
      * @param ms - overrides default timeout in ms
      * @param handler - overrides default handler
      */
-    public start(ms: number = this.defaultTimeout, handler: () => void = this.defaultHandler) {
+    public start(
+        ms: number = this.defaultTimeout,
+        handler: () => void = this.defaultHandler,
+    ): void {
         this.startCore(ms, handler, ms);
     }
 
     /**
      * Calls clearTimeout on the underlying timeout if running.
      */
-    public clear() {
+    public clear(): void {
         if (!this.runningState) {
             return;
         }
@@ -137,13 +144,14 @@ export class Timer implements ITimer {
      * @param ms - overrides previous or default timeout in ms
      * @param handler - overrides previous or default handler
      */
-    public restart(ms?: number, handler?: () => void) {
+    public restart(ms?: number, handler?: () => void): void {
         if (!this.runningState) {
             // If restart is called first, it behaves as a call to start
             this.start(ms, handler);
         } else {
             const duration = ms ?? this.runningState.intendedDuration;
-            const handlerToUse = handler ?? this.runningState.restart?.handler ?? this.runningState.handler;
+            const handlerToUse =
+                handler ?? this.runningState.restart?.handler ?? this.runningState.handler;
             const remainingTime = this.calculateRemainingTime(this.runningState);
 
             if (duration < remainingTime) {
@@ -167,7 +175,7 @@ export class Timer implements ITimer {
         }
     }
 
-    private startCore(duration: number, handler: () => void, intendedDuration: number) {
+    private startCore(duration: number, handler: () => void, intendedDuration: number): void {
         this.clear();
         this.runningState = {
             startTick: this.getCurrentTick(),
@@ -186,7 +194,7 @@ export class Timer implements ITimer {
         };
     }
 
-    private handler() {
+    private handler(): void {
         assert(!!this.runningState, 0x00a /* "Running timer missing handler" */);
         const restart = this.runningState.restart;
         if (restart !== undefined) {
@@ -233,25 +241,28 @@ export class PromiseTimer implements IPromiseTimer {
     private deferred?: Deferred<IPromiseTimerResult>;
     private readonly timer: Timer;
 
-    public get hasTimer() {
+    /**
+     * {@inheritDoc Timer.hasTimer}
+     */
+    public get hasTimer(): boolean {
         return this.timer.hasTimer;
     }
 
-    constructor(
-        defaultTimeout: number,
-        defaultHandler: () => void,
-    ) {
+    constructor(defaultTimeout: number, defaultHandler: () => void) {
         this.timer = new Timer(defaultTimeout, () => this.wrapHandler(defaultHandler));
     }
 
+    /**
+     * {@inheritDoc IPromiseTimer.start}
+     */
     public async start(ms?: number, handler?: () => void): Promise<IPromiseTimerResult> {
         this.clear();
         this.deferred = new Deferred<IPromiseTimerResult>();
-        this.timer.start(ms, handler ? () => this.wrapHandler(handler) : undefined);
+        this.timer.start(ms, handler ? (): void => this.wrapHandler(handler) : undefined);
         return this.deferred.promise;
     }
 
-    public clear() {
+    public clear(): void {
         this.timer.clear();
         if (this.deferred) {
             this.deferred.resolve({ timerResult: "cancel" });
@@ -259,7 +270,7 @@ export class PromiseTimer implements IPromiseTimer {
         }
     }
 
-    protected wrapHandler(handler: () => void) {
+    protected wrapHandler(handler: () => void): void {
         handler();
         assert(!!this.deferred, 0x00b /* "Handler executed without deferred" */);
         this.deferred.resolve({ timerResult: "timeout" });

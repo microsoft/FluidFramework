@@ -71,6 +71,7 @@ declare function get_old_InterfaceDeclaration_AzureClientProps():
 declare function use_current_InterfaceDeclaration_AzureClientProps(
     use: TypeOnly<current.AzureClientProps>);
 use_current_InterfaceDeclaration_AzureClientProps(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_AzureClientProps());
 
 /*

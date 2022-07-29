@@ -12,11 +12,12 @@ import {
     throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspError, OdspErrorType } from "@fluidframework/odsp-driver-definitions";
+import { OdspError } from "@fluidframework/odsp-driver-definitions";
 import { IOdspSocketError } from "../contracts";
-import { getWithRetryForTokenRefresh } from "../odspUtils";
+import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
 import { pkgVersion } from "../packageVersion";
+import { mockFetchError } from "./mockFetch";
 
 describe("Odsp Error", () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -279,8 +280,30 @@ describe("Odsp Error", () => {
         };
         const error: any = createOdspNetworkErrorWithResponse(
             "The site has been moved to a new location.", 404, undefined, JSON.stringify(responseText));
-        assert.strictEqual(error.errorType, OdspErrorType.locationRedirection, "Error type should be locationRedirection");
+        assert.strictEqual(error.errorType, DriverErrorType.fileNotFoundOrAccessDeniedError, "Error type should be locationRedirection");
         assert.strictEqual(error.redirectLocation, redirectLocation, "Site location should match");
         assert.strictEqual(error.statusCode, 404, "Status code should match");
+    });
+
+    it("Sharepoint url should be redacted in the error", async () => {
+        try {
+            await mockFetchError(
+                async () => fetchAndParseAsJSONHelper("https://microsoft.sharepoint-df.com/siteUrl", {}),
+                new Error("Request to https://6c482541-f706-4168-9e58-8e35a9992f58.sharepoint.com failed"));
+            assert.fail("Fetch should throw an error");
+        } catch (error: any) {
+            assert((error.message as string).includes("REDACTED_URL"), "sharepoint url should get redacted");
+        }
+    });
+
+    it("url should be redacted in the error", async () => {
+        try {
+            await mockFetchError(
+                async () => fetchAndParseAsJSONHelper("https://microsoft.sharepoint-df.com/siteUrl", {}),
+                new Error("Request to http://f706-4168-9e58-8e35a9992f58.COM failed"));
+            assert.fail("Fetch should throw an error");
+        } catch (error: any) {
+            assert((error.message as string).includes("REDACTED_URL"), "url should get redacted");
+        }
     });
 });

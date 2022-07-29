@@ -208,10 +208,8 @@ export class DefaultMap<T> {
      * {@inheritDoc ISharedMap.get}
      */
     public get(key: string): T {
-        let localValue = this.data.get(key);
-        if (!this.data.has(key)) {
-            localValue = this.createCore(key, true);
-        }
+        const localValue = this.data.get(key) ?? this.createCore(key, true);
+
         return localValue.value;
     }
 

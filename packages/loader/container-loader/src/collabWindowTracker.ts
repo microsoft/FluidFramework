@@ -62,7 +62,7 @@ export class CollabWindowTracker {
 
         // We don't acknowledge no-ops to avoid acknowledgement cycles (i.e. ack the MSN
         // update, which updates the MSN, then ack the update, etc...).
-        // Intent here is for runtime (and DDSs) not to keep too much tracking state / memory
+        // Intent here is for runtime (and DDSes) not to keep too much tracking state / memory
         // due to runtime ops from other clients.
         if (!isRuntimeMessage(message)) {
             return;

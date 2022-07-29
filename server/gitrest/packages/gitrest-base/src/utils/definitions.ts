@@ -14,6 +14,7 @@ export enum Constants {
 export interface IStorageDirectoryConfig {
     useRepoOwner: boolean;
     baseDir?: string;
+    suffixPath?: string;
 }
 
 export interface IExternalWriterConfig {
@@ -123,7 +124,9 @@ export enum BaseGitRestTelemetryProperties {
     ref = "ref",
     repoName = "repoName",
     repoOwner = "repoOwner",
+    repoPerDocEnabled = "repoPerDocEnabled",
     sha = "sha",
+    softDelete = "softDelete",
     storageName = "storageName",
     summaryType = "summaryType",
 }

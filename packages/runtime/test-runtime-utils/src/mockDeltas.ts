@@ -81,8 +81,8 @@ export class MockDeltaQueue<T> extends EventEmitter implements IDeltaQueue<T> {
 
     public dispose() { }
 
-    public async waitTillProcessingDone() {
-        assert(false, "NYI");
+    public async waitTillProcessingDone(): Promise<{ count: number; duration: number; }> {
+        throw new Error("NYI");
     }
 
     constructor() {

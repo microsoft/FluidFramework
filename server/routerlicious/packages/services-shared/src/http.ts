@@ -6,6 +6,7 @@
 import { parse } from "path";
 import { NetworkError } from "@fluidframework/server-services-client";
 import type { RequestHandler, Response } from "express";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Check a given path string for path traversal (e.g. "../" or "/").
@@ -18,7 +19,7 @@ export function containsPathTraversal(path: string): boolean {
 /**
  * Validate specific request parameters to prevent directory traversal.
  */
- export function validateRequestParams(...paramNames: (string | number)[]): RequestHandler {
+export function validateRequestParams(...paramNames: (string | number)[]): RequestHandler {
     return (req, res, next) => {
         for (const paramName of paramNames) {
             const param = req.params[paramName];
@@ -37,6 +38,11 @@ export function containsPathTraversal(path: string): boolean {
 }
 
 /**
+ * Default error message sent to API consumer when an unknown error is encountered.
+ */
+export const defaultErrorMessage = "Internal Server Error";
+
+/**
  * Helper function to handle a promise that should be returned to the user.
  * @param resultP - Promise whose resolved value or rejected error will send with appropriate status codes.
  * @param response - Express Response used for writing response body, headers, and status.
@@ -45,13 +51,13 @@ export function containsPathTraversal(path: string): boolean {
  * @param successStatus - Status to send when result is successful. Default: 200
  * @param onSuccess - Additional callback fired when response is successful before sending response.
  */
- export function handleResponse<T>(
+export function handleResponse<T>(
     resultP: Promise<T>,
     response: Response,
     allowClientCache?: boolean,
     errorStatus?: number,
     successStatus: number = 200,
-    onSuccess: (value: T) => void = () => {},
+    onSuccess: (value: T) => void = () => { },
 ) {
     resultP.then(
         (result) => {
@@ -65,13 +71,17 @@ export function containsPathTraversal(path: string): boolean {
             response.status(successStatus).json(result);
         },
         (error) => {
+            // Only log unexpected errors on the assumption that explicitly thrown
+            // NetworkErrors have additional logging in place at the source.
             if (error instanceof Error && error?.name === "NetworkError") {
                 const networkError = error as NetworkError;
                 response
                     .status(errorStatus ?? networkError.code ?? 400)
                     .json(networkError.details ?? error);
             } else {
-                response.status(errorStatus ?? 400).json(error?.message ?? error);
+                // Mask unexpected internal errors in outgoing response.
+                Lumberjack.error("Unexpected error when processing HTTP Request", undefined, error);
+                response.status(errorStatus ?? 400).json(defaultErrorMessage);
             }
         });
 }
