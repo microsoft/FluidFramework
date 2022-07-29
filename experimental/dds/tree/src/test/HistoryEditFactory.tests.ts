@@ -112,6 +112,21 @@ describe('revert', () => {
 		expect(result).to.have.lengthOf(0);
 	});
 
+    it('handles reverting the insert of an empty trait', () => {
+		const emptyTraitNodeId = 0 as DetachedSequenceId;
+		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
+		const emptyTraitInsert = ChangeInternal.insert(emptyTraitNodeId,
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+		);
+		const result = expectDefined(
+            revert(
+                [emptyTraitBuild, emptyTraitInsert],
+                testTree.view
+		    )
+        );
+		expect(result).to.have.lengthOf(0);
+	});
+
 	describe('returns undefined for reverts that require more context than the view directly before the edit', () => {
 		describe('because the edit conflicted', () => {
 			it('when reverting a detach of a node that is not in the tree', () => {
