@@ -509,7 +509,6 @@ export interface IPendingRuntimeState {
     savedOps: ISequencedDocumentMessage[];
 }
 
-const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
 // Feature gate for the max op size. If the value is negative, chunking is enabled
@@ -1865,11 +1864,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         "Runtime detected too many reconnects with no progress syncing local ops",
                         "setConnectionState",
                         undefined,
-                       {
-                        dataLoss: 1,
-                        attempts: this.consecutiveReconnects,
-                        pendingMessages: this.pendingStateManager.pendingMessagesCount,
-                    }));
+                        {
+                            dataLoss: 1,
+                            attempts: this.consecutiveReconnects,
+                            pendingMessages: this.pendingStateManager.pendingMessagesCount,
+                        }));
                 return;
             }
         }
@@ -3053,9 +3052,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      */
     private async refreshLatestSummaryAckFromServer(summaryLogger: ITelemetryLogger): Promise<number> {
         const snapshot = await this.fetchSnapshotFromStorage(null, summaryLogger, {
-                eventName: "RefreshLatestSummaryGetSnapshot",
-                fetchLatest: true,
-            },
+            eventName: "RefreshLatestSummaryGetSnapshot",
+            fetchLatest: true,
+        },
             FetchSource.noCache,
         );
 

@@ -28,7 +28,6 @@ import { Loader } from "@fluidframework/container-loader";
 import { UsageError } from "@fluidframework/container-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
-import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
@@ -82,11 +81,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     };
 
     const reset = async () => provider.reset();
-
-    const anyDataCorruption = async (containers: IContainer[]) => Promise.race(
-        containers.map(async (c) => new Promise<boolean>((resolve) => c.once("closed", (error) => {
-            resolve(error?.errorType === ContainerErrorType.dataCorruptionError);
-        }))));
 
     const allDataCorruption = async (containers: IContainer[]) => Promise.all(
         containers.map(async (c) => new Promise<boolean>((resolve) => c.once("closed", (error) => {
@@ -344,7 +338,6 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
             const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "/");
             assert.ok(await getRootDataStore(dataObject3, alias));
         });
-
 
         it("Assign multiple data stores to the same alias, first write wins, " +
             "different containers from snapshot", async () => {

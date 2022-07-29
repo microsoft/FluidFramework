@@ -32,8 +32,11 @@ const registryEntries = new Map([
 
 // Just a little helper, since we're going to create multiple coordinates.
 const createAndAttachCoordinate = async (runtime: IContainerRuntime, id: string) => {
+    const dataStore = await runtime.createDataStore(Coordinate.ComponentName);
+    const aliasResult = await dataStore.trySetAlias(id);
     const simpleCoordinateComponentRuntime =
-        await runtime.createRootDataStore(Coordinate.ComponentName, id);
+        aliasResult === "Success" ? dataStore : await runtime.getRootDataStore(id);
+
     return requestFluidObject<ICoordinate>(simpleCoordinateComponentRuntime, "/");
 };
 
@@ -109,9 +112,11 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
         triangleCoordinate3.y = 60;
 
         // Create the constellation component
-        const constellationComponent = await requestFluidObject<Constellation>(
-            await runtime.createRootDataStore(Constellation.ComponentName, constellationComponentId),
-            "/");
+        const dataStore = await runtime.createDataStore(Constellation.ComponentName);
+        const aliasResult = await dataStore.trySetAlias(constellationComponentId);
+        const component =
+            aliasResult === "Success" ? dataStore : await runtime.getRootDataStore(constellationComponentId);
+        const constellationComponent = await requestFluidObject<Constellation>(component, "/");
 
         // Add a few stars
         await constellationComponent.addStar(86, 74);
