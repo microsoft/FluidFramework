@@ -7,11 +7,16 @@ import { strict as assert } from "assert";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestContainerConfig,
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { RuntimeHeaders, ISummarizer } from "@fluidframework/container-runtime";
 import { defaultGCConfig } from "./gcTestConfigs";
-import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
  * Validates this scenario: When a data store is shared with an external app, if the data store becomes unreferenced

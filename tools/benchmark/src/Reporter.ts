@@ -144,7 +144,7 @@ export class BenchmarkReporter {
         if (!benchmarkInstance.aborted) {
             const numIterations: number = benchmarkInstance.stats.sample.length * benchmarkInstance.count;
             table.cell("period (ns/op)", prettyNumber(1e9 * benchmarkInstance.times.period, 1), Table.padLeft);
-            table.cell("root mean error", `±${benchmarkInstance.stats.rme.toFixed(2)}%`, Table.padLeft);
+            table.cell("relative margin of error", `±${benchmarkInstance.stats.rme.toFixed(2)}%`, Table.padLeft);
             table.cell("iterations", `${prettyNumber(numIterations, 0)}`, Table.padLeft);
             table.cell("samples", benchmarkInstance.stats.sample.length.toString(), Table.padLeft);
             table.cell("total time (s)", benchmarkInstance.times.elapsed.toFixed(2), Table.padLeft);

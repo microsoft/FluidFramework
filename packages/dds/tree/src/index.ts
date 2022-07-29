@@ -21,8 +21,8 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     FieldLocation,
     ForestLocation,
     ITreeSubscriptionCursor,
-    ForestAnchor,
     ITreeSubscriptionCursorState,
+    SynchronousNavigationResult,
 } from "./forest";
 
 export {
