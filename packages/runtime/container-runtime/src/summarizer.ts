@@ -372,6 +372,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
                 const summaryOpHandle = ack.summaryOp.contents.handle;
                 const summaryAckHandle = ack.summaryAck.contents.handle;
+                // Make sure we block any summarizer from being executed/enqueued while
+                // executing the refreshLatestSummaryAck.
+                // https://dev.azure.com/fluidframework/internal/_workitems/edit/779
                 await this.runningSummarizer.lockedRefreshSummaryAckAction(async () => {
                     await this.internalsProvider.refreshLatestSummaryAck(
                         summaryOpHandle,

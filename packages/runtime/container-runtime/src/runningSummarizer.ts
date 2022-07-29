@@ -334,6 +334,11 @@ export class RunningSummarizer implements IDisposable {
      * Blocks a new summarizer from running in case RefreshSummaryAck is being processed.
      * Assumes that caller checked upfront for lack of concurrent action (this.refreshSummaryAckLock)
      * before calling this API. I.e. caller is responsible for either erroring out or waiting on this promise.
+     * Note: The refreshSummaryAckLock makes sure no summarizer gets enqueued or processed
+     * until the refresh has completed. One can't rely uniquely on the summarizingLock as the
+     * refreshLatestSummaryAck also happens during the time summarizingLock !== undefined.
+     * Ex. Summarizer submits a summay + op and then waits for the Summary Ack to proceed
+     * with the refreshLatestSummaryAck and complete the summary.
      * @param action - action to perform.
      * @returns - result of action.
      */
