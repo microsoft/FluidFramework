@@ -17,6 +17,21 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.1.0
+## 2.1.0 Breaking changes
+- [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
+- [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
+- [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
+### Remove `type` field from `ShareLinkInfoType`
+This field has been deprecated and will be removed in a future breaking change.
+
+### Remove `ShareLinkTypes` field from `ShareLinkInfoType`
+This interface has been deprecated and will be removed in a future breaking change. Functions impacted are:
+- `createOdspCreateContainerRequest`
+
+
+### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
+This field has been deprecated and will be removed in a future breaking change.
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
