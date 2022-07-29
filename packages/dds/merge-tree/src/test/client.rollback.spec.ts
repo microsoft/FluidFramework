@@ -180,7 +180,7 @@ describe("client.rollback", () => {
     it("Should zamboni rolled back annotated segment", async () => {
         client.applyMsg(
             client.makeOpMessage(
-                client.insertTextLocal(0, "abcde"),
+                client.insertTextLocal(0, "abcde", { color: "red" }),
                 client.getCurrentSeq() + 1,
                 client.getCurrentSeq(),
                 undefined,

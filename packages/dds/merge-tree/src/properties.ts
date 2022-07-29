@@ -65,28 +65,34 @@ export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue
 
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
     if (a) {
-        // For now, straightforward; later use hashing
+        if (!b) {
+            return false;
+        } else {
+            // For now, straightforward; later use hashing
 
-        // eslint-disable-next-line no-restricted-syntax
-        for (const key in a) {
-            if (!b || b[key] === undefined) {
-                return false;
-            } else if (typeof b[key] === "object") {
-                if (!matchProperties(a[key], b[key])) {
+            // eslint-disable-next-line no-restricted-syntax
+            for (const key in a) {
+                if (b[key] === undefined) {
+                    return false;
+                } else if (typeof b[key] === "object") {
+                    if (!matchProperties(a[key], b[key])) {
+                        return false;
+                    }
+                } else if (b[key] !== a[key]) {
                     return false;
                 }
-            } else if (b[key] !== a[key]) {
-                return false;
+            }
+
+            // eslint-disable-next-line no-restricted-syntax
+            for (const key in b) {
+                if (a[key] === undefined) {
+                    return false;
+                }
             }
         }
-    }
-
-    if (b) {
-        // eslint-disable-next-line no-restricted-syntax
-        for (const key in b) {
-            if (!a || a[key] === undefined) {
-                return false;
-            }
+    } else {
+        if (b) {
+            return false;
         }
     }
 

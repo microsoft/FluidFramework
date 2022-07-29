@@ -38,11 +38,11 @@ describe("Properties", () => {
         it("empty properties match", () => {
             assert(matchProperties({}, {}));
         });
-        it("undefined and empty properties match", () => {
-            assert(matchProperties(undefined, {}));
+        it("undefined and empty properties don't match", () => {
+            assert(!matchProperties(undefined, {}));
         });
-        it("empty and undefined properties match", () => {
-            assert(matchProperties({}, undefined));
+        it("empty and undefined properties don't match", () => {
+            assert(!matchProperties({}, undefined));
         });
     });
 });
