@@ -16,7 +16,7 @@ import {
 import { StoredSchemaRepository } from "../../schema";
 import {
     FieldKey, TreeType, DetachedField, AnchorSet, detachedFieldAsKey, keyAsDetachedField,
-    Value, Delta, JsonableTree, getGenericTreeField, FieldMap, UpPath, Anchor, visitDelta,
+    Value, Delta, JsonableTree, getGenericTreeField, UpPath, Anchor, visitDelta, getGenericTreeFieldMap,
 } from "../../tree";
 import { brand, fail } from "../../util";
 
@@ -285,7 +285,7 @@ class Cursor implements ITreeSubscriptionCursor {
     // Keys traversed to visit this node, including detached field at the beginning.
     private readonly keyStack: FieldKey[] = [];
 
-    private siblings?: JsonableTree[];
+    private siblings: JsonableTree[] = [];
     private index: number = -1;
 
     // TODO: tests for clear when not at root.
@@ -295,7 +295,6 @@ class Cursor implements ITreeSubscriptionCursor {
         this.keyStack.length = 0;
         this.siblingStack.length = 0;
         this.indexStack.length = 0;
-        this.siblings = undefined;
         this.index = -1;
         this.forest.currentCursors.delete(this);
     }
@@ -311,20 +310,12 @@ class Cursor implements ITreeSubscriptionCursor {
     }
 
     getNode(): JsonableTree {
-        assert(this.siblings !== undefined, 0x33e /* Cursor must be current to be used */);
+        assert(this.state === ITreeSubscriptionCursorState.Current, 0x33e /* Cursor must be current to be used */);
         return this.siblings[this.index];
     }
 
     getParentFieldKey(): FieldKey {
         return this.keyStack[this.keyStack.length - 1];
-    }
-
-    getFields(): Readonly<FieldMap<JsonableTree>> {
-        return this.getNode().fields ?? {};
-    }
-
-    getField(key: FieldKey): readonly JsonableTree[] {
-        return this.getFields()[key as string] ?? [];
     }
 
     get value(): Value {
@@ -335,7 +326,7 @@ class Cursor implements ITreeSubscriptionCursor {
         return this.getNode().type;
     }
     get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(this.getFields()) as Iterable<FieldKey>;
+        return Object.getOwnPropertyNames(getGenericTreeFieldMap(this.getNode(), false)) as Iterable<FieldKey>;
     }
 
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
@@ -387,8 +378,7 @@ class Cursor implements ITreeSubscriptionCursor {
         const child = siblings[index];
         if (child !== undefined) {
             this.indexStack.push(this.index);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            this.siblingStack.push(this.siblings!);
+            this.siblingStack.push(this.siblings);
             this.keyStack.push(key);
             this.siblings = siblings;
             this.index = index;
@@ -422,7 +412,7 @@ class Cursor implements ITreeSubscriptionCursor {
     }
 
     length(key: FieldKey): number {
-        return this.getField(key).length;
+        return getGenericTreeField(this.getNode(), key, false).length;
     }
 }
 
