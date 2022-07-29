@@ -106,11 +106,10 @@ export class RunningSummarizer implements IDisposable {
     }
 
     public get disposed() { return this._disposed; }
-    public get refreshSummaryAckLock() { return this._refreshSummaryAckLock; }
     private stopping = false;
     private _disposed = false;
     private summarizingLock: Promise<void> | undefined;
-    private _refreshSummaryAckLock: Promise<void> | undefined;
+    private refreshSummaryAckLock: Promise<void> | undefined;
     private tryWhileSummarizing = false;
     private readonly pendingAckTimer: PromiseTimer;
     private heuristicRunner?: ISummarizeHeuristicRunner;
@@ -343,15 +342,15 @@ export class RunningSummarizer implements IDisposable {
      * @returns - result of action.
      */
     public async lockedRefreshSummaryAckAction<T>(action: () => Promise<T>) {
-        assert(this._refreshSummaryAckLock === undefined,
+        assert(this.refreshSummaryAckLock === undefined,
             "Refresh Summary Ack - Caller is responsible for checking lock");
 
         const refreshSummaryAckLock = new Deferred<void>();
-        this._refreshSummaryAckLock = refreshSummaryAckLock.promise;
+        this.refreshSummaryAckLock = refreshSummaryAckLock.promise;
 
         return action().finally(() => {
             refreshSummaryAckLock.resolve();
-            this._refreshSummaryAckLock = undefined;
+            this.refreshSummaryAckLock = undefined;
         });
     }
 
@@ -369,6 +368,8 @@ export class RunningSummarizer implements IDisposable {
         this.summarizingLock = summarizingLock.promise;
 
         this.summarizeCount++;
+        // Make sure the RefreshLatestSummaryAck is not being executed.
+        await this.refreshSummaryAckLock;
 
         return action().finally(() => {
             summarizingLock.resolve();
@@ -578,7 +579,6 @@ export class RunningSummarizer implements IDisposable {
             this.enqueuedSummary === undefined
             || this.heuristicData.lastOpSequenceNumber < this.enqueuedSummary.afterSequenceNumber
             || this.summarizingLock !== undefined
-            || this.refreshSummaryAckLock !== undefined
         ) {
             // If no enqueued summary is ready or a summary is already in progress, take no action.
             return false;

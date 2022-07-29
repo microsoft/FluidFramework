@@ -332,8 +332,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const startP = this.start(this.runtime.clientId!, runCoordinator);
                 startP.then(async (runningSummarizer) => {
-                    // Make sure the refresh Summary Ack is not being executed.
-                    await runningSummarizer.refreshSummaryAckLock;
                     // Successfully started the summarizer. Run it.
                     runningSummarizer.summarizeOnDemand(builder, ...args);
                     // Wait for a command to stop or loss of connectivity before tearing down the summarizer and client.
