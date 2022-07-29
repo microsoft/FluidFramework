@@ -10,6 +10,8 @@ import {
     SynchronousNavigationResult,
 } from "../forest";
 import {
+    DetachedField,
+    detachedFieldAsKey,
     FieldKey,
     FieldMap,
     getGenericTreeField,
@@ -44,6 +46,13 @@ import { fail } from "../util";
  */
 
 /**
+ * @returns a TextCursor for a single JsonableTree.
+ */
+export function singleTextCursor(root: JsonableTree): TextCursor {
+    return new TextCursor([root], 0);
+}
+
+/**
  * An ITreeCursor implementation for JsonableTree.
  *
  * TODO: object-forest's cursor is mostly a superset of this functionality.
@@ -54,13 +63,25 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     private readonly indexStack: number[] = [];
     // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
     private readonly siblingStack: JsonableTree[][] = [];
+    // Keys traversed to visit this node, including detached field at the beginning if there is one.
+    private readonly keyStack: FieldKey[] = [];
 
     private siblings: JsonableTree[];
     private index: number;
 
-    public constructor(root: JsonableTree) {
-        this.index = 0;
-        this.siblings = [root];
+    public constructor(root: JsonableTree[], index: number, field?: DetachedField) {
+        this.index = index;
+        this.siblings = root;
+        if (field) {
+            this.keyStack.push(detachedFieldAsKey(field));
+        }
+    }
+
+    /**
+     * @returns true iff this cursor is rooted in a detached field.
+     */
+    public isRooted(): boolean {
+        return this.keyStack.length === this.siblingStack.length + 1;
     }
 
     private getNode(): JsonableTree {
@@ -85,6 +106,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
         if (child !== undefined) {
             this.indexStack.push(this.index);
             this.siblingStack.push(this.siblings);
+            this.keyStack.push(key);
             this.siblings = siblings;
             this.index = index;
             return TreeNavigationResult.Ok;
@@ -111,6 +133,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
 
         this.index = index;
         this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
+        this.keyStack.pop();
         return TreeNavigationResult.Ok;
     }
 

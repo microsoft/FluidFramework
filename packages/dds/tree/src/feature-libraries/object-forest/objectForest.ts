@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { TextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
+import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import {
     DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
 } from "../../dependency-tracking";
@@ -86,7 +86,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             },
             onInsert: (index: number, content: Delta.ProtoNode[]): void => {
                 assert(currentField !== undefined, "must be in field to onInsert");
-                const range = this.add(content.map((data) => new TextCursor(data)));
+                const range = this.add(content.map((data) => singleTextCursor(data)));
                 moveIn(index, range);
             },
             onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
