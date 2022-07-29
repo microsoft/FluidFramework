@@ -33,7 +33,7 @@ describe("SharedTreeCore", () => {
         const { summary, stats } = await tree.summarize();
         assert(summary);
         assert(stats);
-        assert.equal(stats.treeNodeCount, 1);
+        assert.equal(stats.treeNodeCount, 2);
         assert.equal(stats.blobNodeCount, 0);
         assert.equal(stats.handleNodeCount, 0);
     });

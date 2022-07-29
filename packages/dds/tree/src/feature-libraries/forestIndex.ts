@@ -38,7 +38,7 @@ const schemaBlobKey = "ForestSchema";
 export class ForestIndex implements Index<unknown>, SummaryElement {
     public readonly key = "Forest";
 
-    readonly summaryElement?: SummaryElement = this;
+    public readonly summaryElement?: SummaryElement = this;
 
     private readonly cursor: ITreeSubscriptionCursor;
 

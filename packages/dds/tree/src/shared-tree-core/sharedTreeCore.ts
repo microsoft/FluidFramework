@@ -69,7 +69,7 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
         this.summaryElements = indexes.map((i) => i.summaryElement).filter((e): e is SummaryElement => e !== undefined);
         assert(
             new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
-            "Index summary element keys are not unique",
+            "Index summary element keys must be unique",
         );
     }
 
@@ -84,25 +84,23 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
         stats.treeNodeCount += 1;
 
         // Merge the summaries of all indexes together under a single ISummaryTree
-        if (this.summaryElements.length > 0) {
-            const indexSummaryTree: ISummaryTree["tree"] = {};
-            for (const summaryElement of this.summaryElements) {
-                const { stats: elementStats, summary: elementSummary } = summaryElement.getAttachSummary(
-                    (contents) => serializer.stringify(contents, this.handle),
-                    undefined,
-                    undefined,
-                    telemetryContext,
-                );
-                indexSummaryTree[summaryElement.key] = elementSummary;
-                stats = mergeStats(stats, elementStats);
-            }
-
-            summary.tree.indexes = {
-                type: SummaryType.Tree,
-                tree: indexSummaryTree,
-            };
-            stats.treeNodeCount += 1;
+        const indexSummaryTree: ISummaryTree["tree"] = {};
+        for (const summaryElement of this.summaryElements) {
+            const { stats: elementStats, summary: elementSummary } = summaryElement.getAttachSummary(
+                (contents) => serializer.stringify(contents, this.handle),
+                undefined,
+                undefined,
+                telemetryContext,
+            );
+            indexSummaryTree[summaryElement.key] = elementSummary;
+            stats = mergeStats(stats, elementStats);
         }
+
+        summary.tree.indexes = {
+            type: SummaryType.Tree,
+            tree: indexSummaryTree,
+        };
+        stats.treeNodeCount += 1;
 
         return {
             stats,
@@ -144,7 +142,9 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
         for (const summaryElement of this.summaryElements) {
             for (const [id, routes] of Object.entries(summaryElement.getGCData(fullGC).gcNodes)) {
                 gcNodes[id] ??= [];
-                gcNodes[id].push(...routes);
+                for (const route of routes) {
+                    gcNodes[id].push(route);
+                }
             }
         }
 
