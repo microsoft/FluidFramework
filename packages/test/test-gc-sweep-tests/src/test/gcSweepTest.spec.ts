@@ -6,11 +6,10 @@
 import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { EventAndErrorTrackingLogger, ITestObjectProvider } from "@fluidframework/test-utils";
+import { IFluidHandle, IFluidRouter, IRequest } from "@fluidframework/core-interfaces";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import {
     IContainerRuntimeOptions,
@@ -18,9 +17,13 @@ import {
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryBaseEvent, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
-import { TestDataObject } from "../testDataObjects";
+import Random from "random-js";
+import {
+    DataObjectManyDDSes,
+    testDataObjectWithEveryDDSFactory,
+} from "../testDataObjects";
 import { mockConfigProvider } from "../mockConfigProvider";
+import { IgnoreErrorLogger } from "../ignoreErrorLogger";
 
 enum ReferenceState {
     Unreferenced,
@@ -29,50 +32,26 @@ enum ReferenceState {
 }
 
 class TestNode {
-    public readonly parents: Set<string> = new Set();
-    public readonly children: Set<string> = new Set();
+    public readonly parents: string[] = [];
+    public readonly children: string[] = [];
     public referenceState: ReferenceState;
     constructor(public readonly id: string, referenceState = ReferenceState.Unreferenced) {
         this.referenceState = referenceState;
     }
-}
 
-class IgnoreErrorLogger extends EventAndErrorTrackingLogger {
-    private readonly ignoredEvents: Map<string, ITelemetryGenericEvent> = new Map();
-
-    public ignoreExpectedEventTypes(... anyIgnoredEvents: ITelemetryGenericEvent[]) {
-        for (const event of anyIgnoredEvents) {
-            this.ignoredEvents.set(event.eventName, event);
-        }
+    public deleteChild(id: string) {
+        const deleteId = this.children.indexOf(id);
+        this.children.splice(deleteId, 1);
     }
 
-    send(event: ITelemetryBaseEvent): void {
-        if (this.ignoredEvents.has(event.eventName)) {
-            let matches = true;
-            const ie = this.ignoredEvents.get(event.eventName);
-            assert(ie !== undefined);
-            for (const key of Object.keys(ie)) {
-                if (ie[key] !== event[key]) {
-                    matches = false;
-                    break;
-                }
-            }
-            if (matches) {
-                event.category = "generic";
-            }
-        }
-
-        super.send(event);
+    public deleteParent(id: string) {
+        const deleteId = this.parents.indexOf(id);
+        this.parents.splice(deleteId, 1);
     }
 }
 
 describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const dataObjectFactory = new DataObjectFactory(
-        "TestDataObject",
-        TestDataObject,
-        [],
-        []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
@@ -81,12 +60,12 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
                 initialSummarizerDelayMs: 0,
                 summarizerClientElection: true,
                 maxAckWaitTime: 5000,
-                maxOpsSinceLastSummary: 10,
-                idleTime: 1000,
+                maxOpsSinceLastSummary: 100,
+                idleTime: 100,
                 minIdleTime: 0,
-                maxIdleTime: 2000,
+                maxIdleTime: 300,
                 maxTime: 4000,
-                maxOps: 5,
+                maxOps: 100,
                 minOpsForLastSummaryAttempt: 1,
                 runtimeOpWeight: 1,
                 nonRuntimeOpWeight: 1,
@@ -99,9 +78,9 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-        dataObjectFactory,
+        testDataObjectWithEveryDDSFactory,
         [
-            [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
+            [testDataObjectWithEveryDDSFactory.type, Promise.resolve(testDataObjectWithEveryDDSFactory)],
         ],
         undefined,
         [innerRequestHandler],
@@ -133,23 +112,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     const seed = Math.random();
-    const random = makeRandom(seed);
-
-    beforeEach(async () => {
-        provider = getTestObjectProvider({
-            syncSummarizer: true,
-        });
-        overrideLogger = new IgnoreErrorLogger(provider.logger);
-        provider.logger = overrideLogger;
-
-        // Create a Container for the first client.
-        mainContainer = await createContainer();
-        const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
-        connectedContainers = [];
-        closedContainers = [];
-        testNodes = new Map();
-        testNodes.set(mainDataStore.id, new TestNode(mainDataStore.id, ReferenceState.Root));
-    });
+    const random: Random = makeRandom(seed);
 
     const randomInteger = (min: number, max: number): number => {
         return random.integer(min, max);
@@ -173,10 +136,19 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
         random.pick(connectedContainers).close();
     };
 
-    const createDataStoreForContainer = async (container: IContainer, dataStoreType: string = "TestDataObject") => {
-        const defaultDataStore = await requestFluidObject<TestDataObject>(container, "default");
+    const requestDataStore = async (router: IFluidRouter, route: string) => {
+        const dataStore = await requestFluidObject<DataObjectManyDDSes>(router, route);
+        dataStore.setRandom(random);
+        return dataStore;
+    };
+
+    const createDataStoreForContainer = async (
+        container: IContainer,
+        dataStoreType: string = DataObjectManyDDSes.type,
+    ) => {
+        const defaultDataStore = await requestDataStore(container, "default");
         const newDataStore = await defaultDataStore.containerRuntime.createDataStore(dataStoreType);
-        const newDataObject = await requestFluidObject<TestDataObject>(newDataStore, "");
+        const newDataObject = await requestDataStore(newDataStore, "");
         testNodes.set(newDataObject.id, new TestNode(newDataObject.id));
         return newDataObject;
     };
@@ -224,20 +196,25 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
         }
     };
 
-    const referenceDataStore = (dataStore: TestDataObject, parentDataStore: TestDataObject) => {
-        parentDataStore._root.set(dataStore.id, dataStore.handle);
+    const referenceDataStore = async (dataStore: DataObjectManyDDSes, parentDataStore: DataObjectManyDDSes) => {
+        const handle = await parentDataStore.generateAddHandleOp(dataStore.handle);
+        if (handle !== undefined) {
+            if (handle.absolutePath === dataStore.handle.absolutePath) {
+                return;
+            }
+            await unreferenceDataStoreFromHandle(handle, parentDataStore);
+        }
         const parentNode = getTestNode(parentDataStore.id);
-        parentNode.children.add(dataStore.id);
-        getTestNode(dataStore.id).parents.add(parentDataStore.id);
+        parentNode.children.push(dataStore.id);
+        getTestNode(dataStore.id).parents.push(parentDataStore.id);
         if (parentNode.referenceState !== ReferenceState.Unreferenced) {
             trackDataStoreAsReferenced(dataStore.id);
         }
     };
 
-    const unreferenceDataStore = (dataStore: TestDataObject, parentDataStore: TestDataObject) => {
-        parentDataStore._root.delete(dataStore.id);
-        getTestNode(parentDataStore.id).children.delete(dataStore.id);
-        getTestNode(dataStore.id).parents.delete(parentDataStore.id);
+    const unreferenceDataStore = (dataStore: DataObjectManyDDSes, parentDataStore: DataObjectManyDDSes) => {
+        getTestNode(parentDataStore.id).deleteChild(dataStore.id);
+        getTestNode(dataStore.id).deleteParent(parentDataStore.id);
         updateUnreferencedDataStores(dataStore.id);
     };
 
@@ -246,17 +223,8 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     };
 
     const getRandomDataStoreFromContainer = async (container: IContainer) => {
-        const dataStoreId = random.pick(Array.from(testNodes.values())).id;
-        return requestFluidObject<TestDataObject>(container, dataStoreId);
-    };
-
-    const getRandomParentForDataStore = async (dataStore: TestDataObject, container: IContainer) => {
-        const parents = getTestNode(dataStore.id).parents;
-        if (parents.size <= 0) {
-            return undefined;
-        }
-        const parentId = random.pick(Array.from(parents.values()));
-        return requestFluidObject<TestDataObject>(container, parentId);
+        const testNode = random.pick(Array.from(testNodes.values())); // where test nodes have a reference
+        return requestDataStore(container, testNode.id);
     };
 
     const referenceRandomDataStore = async () => {
@@ -266,7 +234,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
         const container = getRandomContainer();
         const dataStore = await getRandomDataStoreFromContainer(container);
         const parent = await getRandomDataStoreFromContainer(container);
-        referenceDataStore(dataStore, parent);
+        await referenceDataStore(dataStore, parent);
     };
 
     const unreferenceRandomDataStore = async () => {
@@ -275,11 +243,19 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
         }
         const container = getRandomContainer();
         const dataStore = await getRandomDataStoreFromContainer(container);
-        const parentDataStore = await getRandomParentForDataStore(dataStore, container);
-        if (parentDataStore === undefined) {
-            return;
+        const handle = await dataStore.generateRemoveHandleOp();
+        if (handle !== undefined) {
+            await unreferenceDataStoreFromHandle(handle, dataStore);
         }
-        unreferenceDataStore(dataStore, parentDataStore);
+    };
+
+    const unreferenceDataStoreFromHandle = async (handle: IFluidHandle, dataStore: DataObjectManyDDSes) => {
+        const childObject = await handle.get();
+        if (childObject instanceof DataObjectManyDDSes) {
+            unreferenceDataStore(childObject, dataStore);
+        } else {
+            throw new Error(`Got a fluid handle to a typeof ${typeof childObject}`);
+        }
     };
 
     const actionsList: (() => Promise<void>)[] = [
@@ -290,23 +266,45 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
         unreferenceRandomDataStore,
     ];
     const testTime = 60 * 1000; // 1 minute
+    let sleptTime = 0;
+    const plannedActions: { action: (() => Promise<void>); sleepTime: number; }[] = [];
+    while (sleptTime < testTime) {
+        const sleepTime: number = randomInteger(0, 100);
+        const action = random.pick(actionsList);
+        plannedActions.push({ action, sleepTime });
+        sleptTime += sleepTime;
+    }
 
-    it.skip(`Create and reference and unreference datastores with multiple containers. Seed: ${seed}`, async () => {
+    let plannedActionsString: string = "";
+    for (const action of plannedActions) {
+        plannedActionsString += `action: ${action.action.name}, sleepTime: ${action.sleepTime}\n`;
+    }
+
+    it.skip(`Planned Actions:\n${plannedActionsString}\nSeed: ${seed}`, async () => {
+        provider = getTestObjectProvider({
+            syncSummarizer: true,
+        });
+        overrideLogger = new IgnoreErrorLogger(provider.logger);
+        provider.logger = overrideLogger;
         overrideLogger.ignoreExpectedEventTypes({
             eventName: "fluid:telemetry:Container:ContainerClose",
             errorType: ContainerErrorType.clientSessionExpiredError,
         });
 
-        const testEnd = Date.now() + testTime;
-        const errorList: any[] = [];
-        while (Date.now() < testEnd) {
-            const sleepTime: number = randomInteger(0, defaultSessionExpiryDurationMs + 1000);
-            const action = random.pick(actionsList);
+        // Create a Container for the first client.
+        mainContainer = await createContainer();
+        const mainDataStore = await requestFluidObject<DataObjectManyDDSes>(mainContainer, "default");
+        connectedContainers = [];
+        closedContainers = [];
+        testNodes = new Map();
+        testNodes.set(mainDataStore.id, new TestNode(mainDataStore.id, ReferenceState.Root));
 
-            action().catch((error) => {
+        const errorList: any[] = [];
+        for (const plannedAction of plannedActions) {
+            plannedAction.action().catch((error) => {
                 errorList.push(error);
             });
-            await sleep(sleepTime);
+            await sleep(plannedAction.sleepTime);
         }
         assert(errorList.length === 0, `${errorList}`);
     }).timeout(100 * 1000); // Add 40s of leeway
