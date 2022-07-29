@@ -29,7 +29,6 @@ This field has been deprecated and will be removed in a future breaking change.
 This interface has been deprecated and will be removed in a future breaking change. Functions impacted are:
 - `createOdspCreateContainerRequest`
 
-
 ### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
 This field has been deprecated and will be removed in a future breaking change.
 # 2.0.0
