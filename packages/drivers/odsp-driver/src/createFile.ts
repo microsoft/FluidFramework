@@ -101,6 +101,9 @@ export async function createNewFluidFile(
         url: odspUrl,
         headers: { [ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp },
     });
+    fileEntry.docId = odspResolvedUrl.hashedDocumentId;
+    fileEntry.resolvedUrl = odspResolvedUrl;
+
     odspResolvedUrl.shareLinkInfo = shareLinkInfo;
 
     if (createNewSummary !== undefined && createNewCaching) {
@@ -131,21 +134,26 @@ function extractShareLinkData(
 
     if (requestedSharingLinkKind && ShareLinkTypes[requestedSharingLinkKind as ShareLinkTypes]
         ) {
-        const { sharing, sharingLink } = response;
+        const { sharing, sharingLink, sharingLinkErrorReason } = response;
         shareLinkInfo = {
             createLink: {
                 type: requestedSharingLinkKind,
                 link: sharingLink,
-                error: sharing?.error,
+                error: sharingLinkErrorReason,
                 shareId: sharing?.shareId,
             },
         };
-    } else if (requestedSharingLinkKind && SharingLinkScope[(requestedSharingLinkKind as ISharingLinkKind).linkScope]) {
+    } else if (requestedSharingLinkKind && SharingLinkScope[(requestedSharingLinkKind as ISharingLinkKind).scope]) {
         const { sharing } = response;
         shareLinkInfo = {
             createLink: {
                 type: requestedSharingLinkKind,
-                link: sharing?.sharingLink,
+                link: sharing?.sharingLink ? {
+                    scope: sharing?.sharingLink.scope,
+                    role: sharing?.sharingLink.type,
+                    webUrl: sharing?.sharingLink.webUrl,
+                    ...sharing?.sharingLink,
+                } : undefined,
                 error: sharing?.error,
                 shareId: sharing?.shareId,
             },

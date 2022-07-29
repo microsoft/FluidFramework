@@ -244,9 +244,9 @@ function getSharingLinkParams(
         const createLinkRole = searchParams.get("createLinkRole");
         if (createLinkScope && SharingLinkScope[createLinkScope]) {
             createShareLinkParam = {
-                linkScope: SharingLinkScope[createLinkScope],
+                scope: SharingLinkScope[createLinkScope],
                 ...(createLinkRole && SharingLinkRole[createLinkRole] ?
-                    { linkRole: SharingLinkRole[createLinkRole] } : {}),
+                    { role: SharingLinkRole[createLinkRole] } : {}),
             };
         }
     } else if (hostPolicy.enableShareLinkWithCreate) {

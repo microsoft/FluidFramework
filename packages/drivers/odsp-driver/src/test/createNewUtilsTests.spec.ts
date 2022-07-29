@@ -172,6 +172,7 @@ describe("Create New Utils Tests", () => {
                     shareLink: {
                         scope: "organization",
                         type: "edit",
+                        webUrl: "webUrl",
                     },
                 },
             },
@@ -197,7 +198,13 @@ describe("Create New Utils Tests", () => {
                 false,
                 false,
             ),
-            { itemId: "mockItemId", id: "mockId", sharingLink: undefined, sharingLinkErrorReason: mockError },
+            {
+                itemId: "mockItemId",
+                id: "mockId",
+                sharingLink: undefined,
+                sharingLinkErrorReason: mockError,
+                sharing: { error: {} },
+            },
             { "x-fluid-epoch": "epoch1" },
         );
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
@@ -210,7 +217,7 @@ describe("Create New Utils Tests", () => {
     });
 
     it("Should save 'sharing' information received during createNewFluidFile", async () => {
-        const createLinkType: ISharingLinkKind = { linkScope: SharingLinkScope.users, linkRole: SharingLinkRole.edit };
+        const createLinkType: ISharingLinkKind = { scope: SharingLinkScope.users, role: SharingLinkRole.edit };
         newFileParams.createLinkType = createLinkType;
 
         // Test that sharing link is set appropriately when it is received in the response from ODSP
@@ -246,7 +253,10 @@ describe("Create New Utils Tests", () => {
         assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
             type: createLinkType,
             shareId: mockSharingData.shareId,
-            link: mockSharingData.sharingLink,
+            link: {
+                role: mockSharingData.sharingLink.type,
+                ...mockSharingData.sharingLink,
+            },
             error: undefined,
         });
 

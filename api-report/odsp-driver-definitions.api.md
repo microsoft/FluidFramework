@@ -135,11 +135,7 @@ export interface IPersistedCache {
 }
 
 // @public
-export interface ISharingLink {
-    // (undocumented)
-    scope?: SharingLinkScope;
-    // (undocumented)
-    type?: SharingLinkRole;
+export interface ISharingLink extends ISharingLinkKind {
     // (undocumented)
     webUrl: string;
 }
@@ -147,9 +143,9 @@ export interface ISharingLink {
 // @public
 export interface ISharingLinkKind {
     // (undocumented)
-    linkRole?: SharingLinkRole;
+    role?: SharingLinkRole;
     // (undocumented)
-    linkScope: SharingLinkScope;
+    scope: SharingLinkScope;
 }
 
 // @public (undocumented)

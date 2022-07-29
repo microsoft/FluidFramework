@@ -8,15 +8,15 @@ import { SharingLinkRole, SharingLinkScope, ShareLinkTypes } from "@fluidframewo
 import { buildOdspShareLinkReqParams } from "../odspUtils";
 
 describe("buildOdspShareLinkReqParams", () => {
-    it("Should return appropriate query parameters when only linkScope is provided", async () => {
-        const result = buildOdspShareLinkReqParams({ linkScope: SharingLinkScope.organization });
+    it("Should return appropriate query parameters when only scope is provided", async () => {
+        const result = buildOdspShareLinkReqParams({ scope: SharingLinkScope.organization });
         assert.strictEqual(result, `createLinkScope=${SharingLinkScope.organization}`);
     });
 
-    it("Should return appropriate query parameters when both linkScope and link role are provided", async () => {
+    it("Should return appropriate query parameters when both scope and link role are provided", async () => {
         const result = buildOdspShareLinkReqParams({
-            linkScope: SharingLinkScope.organization,
-            linkRole: SharingLinkRole.view,
+            scope: SharingLinkScope.organization,
+            role: SharingLinkRole.view,
         });
         assert.strictEqual(
             result, `createLinkScope=${SharingLinkScope.organization}&createLinkRole=${SharingLinkRole.view}`);

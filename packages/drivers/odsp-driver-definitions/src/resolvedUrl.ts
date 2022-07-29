@@ -42,21 +42,19 @@ export enum SharingLinkRole {
  * Providing these properties to the /snapshot api will also create and return the requested kind of sharing link.
 */
 export interface ISharingLinkKind {
-    linkScope: SharingLinkScope;
+    scope: SharingLinkScope;
     /*
      * If this parameter is not provided, the API will default to "edit" links (provided
      * a valid createLinkScope setting is given).
     */
-    linkRole?: SharingLinkRole;
+    role?: SharingLinkRole;
 }
 
 /**
  * Sharing link data received from the /snapshot api response.
  */
-export interface ISharingLink {
+export interface ISharingLink extends ISharingLinkKind{
     webUrl: string;
-    scope?: SharingLinkScope;
-    type?: SharingLinkRole;
 }
 
 /**

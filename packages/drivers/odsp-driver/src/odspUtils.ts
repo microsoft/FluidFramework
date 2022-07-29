@@ -362,12 +362,12 @@ export function buildOdspShareLinkReqParams(shareLinkType: ShareLinkTypes | ISha
     if (!shareLinkType) {
         return;
     }
-    const linkScope = (shareLinkType as ISharingLinkKind).linkScope;
-    if (!linkScope) {
+    const scope = (shareLinkType as ISharingLinkKind).scope;
+    if (!scope) {
         return `createLinkType=${shareLinkType}`;
     }
-    let shareLinkRequestParams = `createLinkScope=${linkScope}`;
-    const linkRole = (shareLinkType as ISharingLinkKind).linkRole;
-    shareLinkRequestParams = linkRole ? `${shareLinkRequestParams}&createLinkRole=${linkRole}` : shareLinkRequestParams;
+    let shareLinkRequestParams = `createLinkScope=${scope}`;
+    const role = (shareLinkType as ISharingLinkKind).role;
+    shareLinkRequestParams = role ? `${shareLinkRequestParams}&createLinkRole=${role}` : shareLinkRequestParams;
     return shareLinkRequestParams;
 }
