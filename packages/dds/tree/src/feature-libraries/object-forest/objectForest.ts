@@ -42,9 +42,9 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         recordDependency(this.dependent, this.schema);
     }
 
-    public root(range: DetachedField): Anchor {
+    public root(range: DetachedField, index = 0): Anchor {
         return this.anchors.track(
-            { parent: undefined, parentField: detachedFieldAsKey(range), parentIndex: 0 },
+            { parent: undefined, parentField: detachedFieldAsKey(range), parentIndex: index },
         );
     }
 
@@ -53,6 +53,13 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         // Then factor out this editing code to work on any such JsonableTree.
 
         this.beforeChange();
+
+        // Note: This code uses cursors, however it also modifies the tree.
+        // In general this is not safe, but this code happens to only modify the tree below the current cursor location,
+        // which happens to work.
+        // This pattern could be generalized/formalized with a concept of an exclusive cursor,
+        // which can edit, but is the only cursor allowed at the time.
+
         const moves: Map<Delta.MoveId, DetachedField> = new Map();
         const currentNode: Cursor = this.allocateCursor();
         let currentField: FieldKey | undefined;
@@ -62,7 +69,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             this.roots.delete(toAttach);
             let dstField: ObjectField;
             if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
-                const dst = currentField as unknown as DetachedField;
+                const dst = keyAsDetachedField(currentField);
                 assert(toAttach !== dst, "can not attach range to itself");
                 // TODO: protect against parenting under itself creating a cycle as well:
                 // or maybe that should delete the subtree?
@@ -93,7 +100,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
                 assert(currentField !== undefined, "must be in field to onMoveOut");
                 let srcField: ObjectField;
                 if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
-                    srcField = this.getRoot(currentField as unknown as DetachedField);
+                    srcField = this.getRoot(keyAsDetachedField(currentField));
                 } else {
                     srcField = getGenericTreeField(currentNode, currentField, false);
                 }
@@ -124,7 +131,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
                 assert(currentField !== undefined, "must be in field to enterNode");
                 let result: TreeNavigationResult;
                 if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
-                    result = this.tryMoveCursorTo(this.root(currentField as unknown as DetachedField), currentNode);
+                    result = this.tryMoveCursorTo(this.root(keyAsDetachedField(currentField), index), currentNode);
                 } else {
                     result = currentNode.down(currentField, index);
                 }
