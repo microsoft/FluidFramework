@@ -5,7 +5,6 @@
         "node_modules"
     ],
     "compilerOptions": {
-        // "rootDir": "./src",
         "outDir": "dist",
         "jsx": "react",
         "types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"]

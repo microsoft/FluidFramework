@@ -54,11 +54,14 @@ describe("Presence Tracker", () => {
     });
 
     it("Bold when focused", async () => {
+        // Click page
         await page.click("*");
+        // Get font weight of cursor
         const fontWeight = await page.evaluate((className: string) => {
             const cursor = document.getElementsByClassName(className)[0] as HTMLDivElement;
             return cursor.style.fontWeight;
         }, "posDiv");
+        // Check if cursor font weight is bold
         expect(fontWeight).toEqual("bold");
     });
 
