@@ -35,7 +35,8 @@ export interface UpPath {
 
 /**
  * @returns the number of nodes above this one.
- * Zero when parent is undefined.
+ * Zero when the path's parent is undefined, meaning the path represents a node in a detached field.
+ * Runs in O(depth) time.
  */
 export function getDepth(path: UpPath): number {
     let depth = 0;
