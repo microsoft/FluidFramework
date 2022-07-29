@@ -22,7 +22,9 @@ export const isDataObjectClass = (obj: any): obj is DataObjectClass<any> => {
 /**
  * Runtime check to determine if a class is a SharedObject type
  */
-export const isSharedObjectClass = (obj: any): obj is SharedObjectClass<any> => {
+export const isSharedObjectClass = (
+    obj: any,
+): obj is SharedObjectClass<any> => {
     return obj?.getFactory !== undefined;
 };
 
@@ -31,16 +33,25 @@ export const isSharedObjectClass = (obj: any): obj is SharedObjectClass<any> => 
  * of both SharedObject or DataObject. This function seperates the two and returns a registery
  * of DataObject types and an array of SharedObjects.
  */
-export const parseDataObjectsFromSharedObjects = (schema: ContainerSchema):
-    [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
+export const parseDataObjectsFromSharedObjects = (
+    schema: ContainerSchema,
+): [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
     const registryEntries: Set<NamedFluidDataStoreRegistryEntry> = new Set();
     const sharedObjects: Set<IChannelFactory> = new Set();
+    const usedDataObjTypes: Set<string> = new Set();
 
     const tryAddObject = (obj: LoadableObjectClass<any>) => {
         if (isSharedObjectClass(obj)) {
             sharedObjects.add(obj.getFactory());
         } else if (isDataObjectClass(obj)) {
-            registryEntries.add([obj.factory.type, Promise.resolve(obj.factory)]);
+            const dataObjType = obj.factory.type;
+            if (!usedDataObjTypes.has(dataObjType)) {
+                registryEntries.add([
+                    dataObjType,
+                    Promise.resolve(obj.factory),
+                ]);
+                usedDataObjTypes.add(dataObjType);
+            }
         } else {
             throw new Error(`Entry is neither a DataObject or a SharedObject`);
         }
@@ -59,7 +70,9 @@ export const parseDataObjectsFromSharedObjects = (schema: ContainerSchema):
     }
 
     if (registryEntries.size === 0 && sharedObjects.size === 0) {
-        throw new Error("Container cannot be initialized without any DataTypes");
+        throw new Error(
+            "Container cannot be initialized without any DataTypes",
+        );
     }
 
     return [Array.from(registryEntries), Array.from(sharedObjects)];
