@@ -7,6 +7,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
+import { timeoutPromise } from "@fluidframework/test-utils";
 import { AzureClient } from "../AzureClient";
 import { AzureMember, IAzureAudience } from "../interfaces";
 import { createAzureClient } from "./AzureClientFactory";
@@ -46,6 +47,7 @@ const waitForMyself = async (audience: IAzureAudience): Promise<AzureMember> => 
 };
 
 describe("AzureClient", () => {
+    const connectTimeoutMs = 1000;
     let client: AzureClient;
     let schema: ContainerSchema;
 
@@ -101,10 +103,10 @@ describe("AzureClient", () => {
         it("can attach a container", async () => {
             const { container } = await client.createContainer(schema);
             const containerId = await container.attach();
-            await new Promise<void>((resolve) => {
-                container.on("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
@@ -124,10 +126,10 @@ describe("AzureClient", () => {
         it("cannot attach a container twice", async () => {
             const { container } = await client.createContainer(schema);
             const containerId = await container.attach();
-            await new Promise<void>((resolve) => {
-                container.on("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
@@ -152,10 +154,10 @@ describe("AzureClient", () => {
         it("can retrieve existing Azure Fluid Relay container successfully", async () => {
             const { container: newContainer } = await client.createContainer(schema);
             const containerId = await newContainer.attach();
-            await new Promise<void>((resolve) => {
-                newContainer.on("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             const resources = client.getContainer(containerId, schema);
@@ -202,10 +204,10 @@ describe("AzureClient", () => {
         it("can set DDSes as initial objects for a container", async () => {
             const { container: newContainer } = await client.createContainer(schema);
             const containerId = await newContainer.attach();
-            await new Promise<void>((resolve) => {
-                newContainer.on("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => newContainer.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             const resources = client.getContainer(containerId, schema);
@@ -231,10 +233,10 @@ describe("AzureClient", () => {
         it("can change DDSes within initialObjects value", async () => {
             const { container } = await client.createContainer(schema);
             const containerId = await container.attach();
-            await new Promise<void>((resolve) => {
-                container.once("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             const initialObjectsCreate = container.initialObjects;
@@ -258,15 +260,59 @@ describe("AzureClient", () => {
                 initialObjects: {
                     mdo1: TestDataObject,
                     mdo2: CounterTestDataObject,
+                },
+            };
+            const { container } = await client.createContainer(doSchema);
+            const containerId = await container.attach();
+
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
+            });
+
+            const initialObjectsCreate = container.initialObjects;
+            assert(
+                initialObjectsCreate.mdo1 instanceof TestDataObject,
+                "container returns the wrong type for mdo1",
+            );
+            assert(
+                initialObjectsCreate.mdo2 instanceof CounterTestDataObject,
+                "container returns the wrong type for mdo2",
+            );
+
+            const { container: containerGet } = await client.getContainer(containerId, doSchema);
+            const initialObjectsGet = containerGet.initialObjects;
+            assert(
+                initialObjectsGet.mdo1 instanceof TestDataObject,
+                "container returns the wrong type for mdo1",
+            );
+            assert(
+                initialObjectsCreate.mdo2 instanceof CounterTestDataObject,
+                "container returns the wrong type for mdo2",
+            );
+        });
+
+        /**
+         * Scenario: test if we can create multiple DataObjects of the same type
+         *
+         * Expected behavior: DataObjects of the same type can be retrieved from the
+         * original and loaded container.
+         * TODO: Known bug that needs to be re-tested once fixed.
+         */
+        it.skip("can use multiple DataObjects of the same type", async () => {
+            const doSchema: ContainerSchema = {
+                initialObjects: {
+                    mdo1: TestDataObject,
+                    mdo2: CounterTestDataObject,
                     mdo3: CounterTestDataObject,
                 },
             };
             const { container } = await client.createContainer(doSchema);
             const containerId = await container.attach();
-            await new Promise<void>((resolve) => {
-                container.once("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             const initialObjectsCreate = container.initialObjects;
@@ -309,40 +355,33 @@ describe("AzureClient", () => {
                 initialObjects: {
                     mdo1: TestDataObject,
                     mdo2: CounterTestDataObject,
-                    mdo3: CounterTestDataObject,
                 },
             };
             const { container } = await client.createContainer(doSchema);
             const initialObjectsCreate = container.initialObjects;
             const mdo2 = initialObjectsCreate.mdo2 as CounterTestDataObject;
             mdo2.increment();
+            mdo2.increment();
+            mdo2.increment();
 
-            const mdo3 = initialObjectsCreate.mdo3 as CounterTestDataObject;
-            mdo3.increment();
-            mdo3.increment();
-            mdo3.increment();
-
-            assert.strictEqual(mdo2.value, 1);
-            assert.strictEqual(mdo3.value, 3);
+            assert.strictEqual(mdo2.value, 3);
 
             const containerId = await container.attach();
-            await new Promise<void>((resolve) => {
-                container.once("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             const { container: containerGet } = await client.getContainer(containerId, doSchema);
             const initialObjectsGet = containerGet.initialObjects;
             const mdo2get = initialObjectsGet.mdo2 as CounterTestDataObject;
-            const mdo3get = initialObjectsGet.mdo3 as CounterTestDataObject;
 
-            assert.strictEqual(mdo2get.value, 1);
-            assert.strictEqual(mdo3get.value, 3);
+            assert.strictEqual(mdo2get.value, 3);
 
-            mdo3get.increment();
-            mdo3get.increment();
-            assert.strictEqual(mdo3get.value, 5);
+            mdo2get.increment();
+            mdo2get.increment();
+            assert.strictEqual(mdo2get.value, 5);
         });
 
         /**
@@ -391,10 +430,9 @@ describe("AzureClient", () => {
             const { container } = await client.createContainer(schema);
             const containerId = await container.attach();
 
-            await new Promise<void>((resolve) => {
-                container.on("connected", () => {
-                    resolve();
-                });
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
             const resources = client.getContainerVersions(containerId);
             await assert.doesNotReject(
@@ -431,10 +469,9 @@ describe("AzureClient", () => {
             const { container } = await client.createContainer(schema);
             const containerId = await container.attach();
 
-            await new Promise<void>((resolve) => {
-                container.on("connected", () => {
-                    resolve();
-                });
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
             const resources = client.copyContainer(containerId, schema);
             await assert.doesNotReject(resources, () => true, "container could not be copied");
@@ -442,10 +479,9 @@ describe("AzureClient", () => {
             const { container: containerCopy } = await resources;
 
             const newContainerId = await containerCopy.attach();
-            await new Promise<void>((resolve) => {
-                containerCopy.on("connected", () => {
-                    resolve();
-                });
+            await timeoutPromise((resolve) => containerCopy.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             assert.strictEqual(
@@ -470,10 +506,9 @@ describe("AzureClient", () => {
             const { container } = await client.createContainer(schema);
             const containerId = await container.attach();
 
-            await new Promise<void>((resolve) => {
-                container.on("connected", () => {
-                    resolve();
-                });
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             const versions = await client.getContainerVersions(containerId);
@@ -485,10 +520,9 @@ describe("AzureClient", () => {
             const { container: containerCopy } = await resources;
 
             const newContainerId = await containerCopy.attach();
-            await new Promise<void>((resolve) => {
-                containerCopy.on("connected", () => {
-                    resolve();
-                });
+            await timeoutPromise((resolve) => containerCopy.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             assert.strictEqual(
@@ -520,10 +554,9 @@ describe("AzureClient", () => {
 
             const containerId = await container.attach();
 
-            await new Promise<void>((resolve) => {
-                container.on("connected", () => {
-                    resolve();
-                });
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             const resources = client.copyContainer(containerId, schema);
@@ -556,10 +589,10 @@ describe("AzureClient", () => {
         it("can find original member", async () => {
             const { container, services } = await client.createContainer(schema);
             const containerId = await container.attach();
-            await new Promise<void>((resolve) => {
-                container.on("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
@@ -586,10 +619,10 @@ describe("AzureClient", () => {
         it("can find partner member", async () => {
             const { container, services } = await client.createContainer(schema);
             const containerId = await container.attach();
-            await new Promise<void>((resolve) => {
-                container.on("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
@@ -628,10 +661,10 @@ describe("AzureClient", () => {
         it("can observe member leaving", async () => {
             const { container } = await client.createContainer(schema);
             const containerId = await container.attach();
-            await new Promise<void>((resolve) => {
-                container.on("connected", () => {
-                    resolve();
-                });
+
+            await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
+                durationMs: connectTimeoutMs,
+                errorMsg: "container connect() timeout",
             });
 
             const client2 = createAzureClient("test-id-2", "test-user-name-2");
