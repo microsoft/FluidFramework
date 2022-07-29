@@ -33,7 +33,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     public constructor(
         private readonly localSessionId: SessionId,
         private readonly changeFamily: TChangeFamily,
-        private readonly anchors?: AnchorSet,
+        public readonly anchors?: AnchorSet,
     ) { }
 
     public getTrunk(): readonly RecursiveReadonly<Commit<TChangeset>>[] {
