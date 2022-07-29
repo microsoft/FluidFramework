@@ -254,7 +254,8 @@
             "chain-spell",
             "chain-intel",
             "chain-translation"
-        ]
+        ],
+        "enforceDiscoveryFlow": false
     },
     "tenantConfig": [
         {

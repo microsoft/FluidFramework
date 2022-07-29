@@ -86,7 +86,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             // Lookup the last sequence number stored
             // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
             document = await this.collection.findOne({ documentId, tenantId });
-            // Check if the document was deleted prior.
         } catch (error) {
             const errMsg = "Deli lambda creation failed";
             context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
@@ -94,6 +93,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             throw error;
         }
 
+        // Check if the document was deleted prior.
         if (!isDocumentValid(document)) {
             // (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
             // Document sessions can be joined (via Alfred) after a document is functionally deleted.
@@ -103,13 +103,13 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             );
             return new NoOpLambda(context);
         }
-        const sessionOrdererUrl = document.session?.ordererUrl;
         if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
-            // Session for this document exists in another location.
-            context.log?.error(
-                `Received attempt to connect to session existing in different location: ${sessionOrdererUrl}`,
-                { messageMetaData },
-            );
+            // Session for this document is either nonexistent or exists in a different location.
+            const errMsg =
+                `Received attempt to connect to invalid session: ${JSON.stringify(document.session)}`;
+            context.log?.error(errMsg, { messageMetaData });
+            // This can/will prevent any users from creating a valid session in this location
+            // for the liftime of this NoOpLambda. This is not ideal.
             return new NoOpLambda(context);
         }
 
@@ -189,16 +189,37 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             const handler = async () => {
                 if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {
                     const query = { documentId, tenantId, session: { $exists: true } };
-                    const data = { "session.isSessionAlive": false, "lastAccessTime": Date.now() };
+                    const data = {
+                        "session.isSessionAlive": false,
+                        "session.isSessionActive": false,
+                        "lastAccessTime": Date.now(),
+                    };
                     await this.collection.update(query, data, null);
-                    context.log?.info(`Marked isSessionAlive as false for closeType: ${JSON.stringify(closeType)}`,
-                        { messageMetaData });
+                    context.log?.info(
+                        `Marked session alive and active as false for closeType: ${JSON.stringify(closeType)}`,
+                        { messageMetaData },
+                    );
                 }
             };
             handler().catch((e) => {
-                context.log?.error(`Failed to handle isSessionAlive with exception ${e}`
-                    , { messageMetaData });
+                context.log?.error(
+                    `Failed to handle session alive and active with exception ${e}`,
+                    { messageMetaData },
+                );
             });
+        });
+
+        // Fire-and-forget sessionActive update for session-boot performance.
+        // Worst case is that document is allowed to be deleted while active.
+        this.collection.update(
+            { documentId, tenantId },
+            {
+                "session.isSessionActive": true,
+            },
+            null,
+        ).catch((error) => {
+            const errMsg = "Deli Lambda failed to mark session as active.";
+            context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
         });
 
         return deliLambda;

@@ -16,9 +16,15 @@ export function isDocumentValid(document: IDocument): boolean {
  * Whether a document's active session aligns with the service's location.
  */
 export function isDocumentSessionValid(document: IDocument, serviceConfiguration: IServiceConfiguration): boolean {
-    if (!serviceConfiguration.externalOrdererUrl || !document.session) {
-        // No session or location to validate.
+    if (!serviceConfiguration.enforceDiscoveryFlow || !serviceConfiguration.externalOrdererUrl || !document.session) {
+        // Not enforcing session discovery flow, or no session location to validate.
         return true;
+    }
+    if (!document.session.isSessionAlive) {
+        // Session is not "alive", so client has bypassed discovery flow.
+        // Other clients could be routed to alternate locations, resulting in "split-brain" scenario.
+        // Prevent Deli from processing ops.
+        return false;
     }
     return document.session.ordererUrl === serviceConfiguration.externalOrdererUrl;
 }

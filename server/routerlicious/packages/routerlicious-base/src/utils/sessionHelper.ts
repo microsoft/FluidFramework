@@ -27,6 +27,7 @@ export async function getSession(ordererUrl: string,
             ordererUrl,
             historianUrl,
             isSessionAlive: true,
+            isSessionActive: false,
         };
         await documentsCollection.upsert(
             {

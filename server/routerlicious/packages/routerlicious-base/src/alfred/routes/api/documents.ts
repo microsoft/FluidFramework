@@ -127,6 +127,7 @@ export function create(
                         ordererUrl: externalOrdererUrl,
                         historianUrl: externalHistorianUrl,
                         isSessionAlive: false,
+                        isSessionActive: false,
                     };
                     responseBody.session = session;
                 }

@@ -98,9 +98,11 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         kafkaSslCACertFilePath);
 
     const externalOrdererUrl = config.get("worker:serverUrl");
+    const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
     const serviceConfiguration: IServiceConfiguration = {
         ...DefaultServiceConfiguration,
         externalOrdererUrl,
+        enforceDiscoveryFlow,
     };
 
     return new ScribeLambdaFactory(

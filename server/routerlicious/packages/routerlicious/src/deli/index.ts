@@ -114,10 +114,12 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     await broadcasterLambda.start();
 
-    const externalOrdererUrl = config.get("worker:serverUrl");
+    const externalOrdererUrl: string = config.get("worker:serverUrl");
+    const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
     const serviceConfiguration: core.IServiceConfiguration = {
         ...core.DefaultServiceConfiguration,
         externalOrdererUrl,
+        enforceDiscoveryFlow,
     };
 
     return new DeliLambdaFactory(
