@@ -19,7 +19,8 @@ describe('revert', () => {
 		const firstBuild = ChangeInternal.build([node], firstDetachedId);
 		const insertedNodeId = 1 as DetachedSequenceId;
 		const insertedBuild = ChangeInternal.build([firstDetachedId], insertedNodeId);
-		const insertChange = ChangeInternal.insert(insertedNodeId,
+		const insertChange = ChangeInternal.insert(
+			insertedNodeId,
 			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
 		);
 		const result = expectDefined(revert([firstBuild, insertedBuild, insertChange], testTree.view));
@@ -38,9 +39,10 @@ describe('revert', () => {
 		const secondBuild = ChangeInternal.build([secondNode], secondDetachedId);
 		const insertedNodeId = 2 as DetachedSequenceId;
 		const insertedBuild = ChangeInternal.build([firstDetachedId, secondDetachedId], insertedNodeId);
-		const insertChange = ChangeInternal.insert(insertedNodeId,
-            StablePlaceInternal.atStartOf(testTree.left.traitLocation)
-        );
+		const insertChange = ChangeInternal.insert(
+			insertedNodeId,
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+		);
 		const result = expectDefined(revert([firstBuild, secondBuild, insertedBuild, insertChange], testTree.view));
 		expect(result.length).to.equal(1);
 		const revertedChange = result[0] as DetachInternal;
@@ -52,7 +54,8 @@ describe('revert', () => {
 		// build and insert of empty traits
 		const emptyTraitNodeId = 0 as DetachedSequenceId;
 		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
-		const emptyTraitInsert = ChangeInternal.insert(emptyTraitNodeId,
+		const emptyTraitInsert = ChangeInternal.insert(
+			emptyTraitNodeId,
 			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
 		);
 
@@ -62,68 +65,60 @@ describe('revert', () => {
 		const firstBuild = ChangeInternal.build([firstNode], firstDetachedId);
 		const insertedNodeId = 3 as DetachedSequenceId;
 		const insertedBuild = ChangeInternal.build([firstDetachedId], insertedNodeId);
-		const insertChange = ChangeInternal.insert(insertedNodeId,
-            StablePlaceInternal.atStartOf(testTree.left.traitLocation)
-        );
+		const insertChange = ChangeInternal.insert(
+			insertedNodeId,
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+		);
 		const result = expectDefined(
-			revert(
-				[emptyTraitBuild, emptyTraitInsert, firstBuild, insertedBuild, insertChange],
-				testTree.view
-			)
+			revert([emptyTraitBuild, emptyTraitInsert, firstBuild, insertedBuild, insertChange], testTree.view)
 		);
 		expect(result.length).to.equal(1);
 		const revertedChange = result[0] as DetachInternal;
 		expect(revertedChange.source.start.referenceSibling).to.deep.equal(firstNode.identifier);
 	});
 
-    /** This is a regression test for a bug where we make sure that any built/detached nodes are cleared when any
-     *  empty insert/detach change is skipped once encountered. The expected outcome is undefined, as during the second
-     *  empty insert (with the same DetachSequenceId), there should be no such node in the builtNodes.
-    */
-    it('handles reverting the insert of empty nodes, with subsequent empty nodes of same DetachedSequenceId', () => {
+	/** This is a regression test for a bug where we make sure that any built/detached nodes are cleared when any
+	 *  empty insert/detach change is skipped once encountered. The expected outcome is undefined, as during the second
+	 *  empty insert (with the same DetachSequenceId), there should be no such node in the builtNodes.
+	 */
+	it('handles reverting the insert of empty nodes, with subsequent empty nodes of same DetachedSequenceId', () => {
 		const emptyTraitNodeId = 0 as DetachedSequenceId;
 		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
-		const emptyTraitInsert = ChangeInternal.insert(emptyTraitNodeId,
+		const emptyTraitInsert = ChangeInternal.insert(
+			emptyTraitNodeId,
 			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
 		);
-		const result = revert(
-            [emptyTraitBuild, emptyTraitInsert, emptyTraitInsert],
-            testTree.view
-        );
+		const result = revert([emptyTraitBuild, emptyTraitInsert, emptyTraitInsert], testTree.view);
 		expect(result).to.be.undefined;
 	});
 
 	it('handles reverting the detach of an empty trait', () => {
 		const insertedNodeId = 0 as DetachedSequenceId;
 		const result = expectDefined(
-            revert(
-                [
-                    ChangeInternal.detach(
-                        StableRangeInternal.all({
-                            label: 'someNonExistentTraitLabel' as TraitLabel,
-                            parent: testTree.identifier,
-                        }),
-                        insertedNodeId
-                    ),
-                ],
-                testTree.view
-		    )
-        );
+			revert(
+				[
+					ChangeInternal.detach(
+						StableRangeInternal.all({
+							label: 'someNonExistentTraitLabel' as TraitLabel,
+							parent: testTree.identifier,
+						}),
+						insertedNodeId
+					),
+				],
+				testTree.view
+			)
+		);
 		expect(result).to.have.lengthOf(0);
 	});
 
-    it('handles reverting the insert of an empty trait', () => {
+	it('handles reverting the insert of an empty trait', () => {
 		const emptyTraitNodeId = 0 as DetachedSequenceId;
 		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
-		const emptyTraitInsert = ChangeInternal.insert(emptyTraitNodeId,
+		const emptyTraitInsert = ChangeInternal.insert(
+			emptyTraitNodeId,
 			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
 		);
-		const result = expectDefined(
-            revert(
-                [emptyTraitBuild, emptyTraitInsert],
-                testTree.view
-		    )
-        );
+		const result = expectDefined(revert([emptyTraitBuild, emptyTraitInsert], testTree.view));
 		expect(result).to.have.lengthOf(0);
 	});
 
