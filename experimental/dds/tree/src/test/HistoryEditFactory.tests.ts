@@ -19,10 +19,9 @@ describe('revert', () => {
 		const firstBuild = ChangeInternal.build([node], firstDetachedId);
 		const insertedNodeId = 1 as DetachedSequenceId;
 		const insertedBuild = ChangeInternal.build([firstDetachedId], insertedNodeId);
-		const insertChange = ChangeInternal.insert(insertedNodeId, {
-			referenceTrait: testTree.left.traitLocation,
-			side: Side.After,
-		});
+		const insertChange = ChangeInternal.insert(insertedNodeId,
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+		);
 		const result = expectDefined(revert([firstBuild, insertedBuild, insertChange], testTree.view));
 		expect(result.length).to.equal(1);
 		const revertedChange = result[0] as DetachInternal;
@@ -39,10 +38,9 @@ describe('revert', () => {
 		const secondBuild = ChangeInternal.build([secondNode], secondDetachedId);
 		const insertedNodeId = 2 as DetachedSequenceId;
 		const insertedBuild = ChangeInternal.build([firstDetachedId, secondDetachedId], insertedNodeId);
-		const insertChange = ChangeInternal.insert(insertedNodeId, {
-			referenceTrait: testTree.left.traitLocation,
-			side: Side.After,
-		});
+		const insertChange = ChangeInternal.insert(insertedNodeId,
+            StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+        );
 		const result = expectDefined(revert([firstBuild, secondBuild, insertedBuild, insertChange], testTree.view));
 		expect(result.length).to.equal(1);
 		const revertedChange = result[0] as DetachInternal;
@@ -54,10 +52,9 @@ describe('revert', () => {
 		// build and insert of empty traits
 		const emptyTraitNodeId = 0 as DetachedSequenceId;
 		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
-		const emptyTraitInsert = ChangeInternal.insert(emptyTraitNodeId, {
-			referenceTrait: testTree.left.traitLocation,
-			side: Side.After,
-		});
+		const emptyTraitInsert = ChangeInternal.insert(emptyTraitNodeId,
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+		);
 
 		// build and insert of non-empty traits
 		const firstDetachedId = 1 as DetachedSequenceId;
