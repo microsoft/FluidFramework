@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-    isVersionBumpTypeExtended,
-    isVersionScheme,
-} from "@fluid-tools/version-tools";
+import { isVersionBumpTypeExtended, isVersionScheme } from "@fluid-tools/version-tools";
 import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import * as semver from "semver";

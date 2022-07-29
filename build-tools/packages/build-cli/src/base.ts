@@ -13,9 +13,7 @@ import { rootPathFlag } from "./flags";
 // This is needed to get type safety working in derived classes.
 // https://github.com/oclif/oclif.github.io/pull/142
 export type InferredFlagsType<T> = T extends FlagInput<infer F>
-    ? F & {
-          json: boolean | undefined;
-      }
+    ? F & { json: boolean | undefined }
     : any;
 
 /**
@@ -57,7 +55,6 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
 
     private _context: Context | undefined;
     private _logger: Logger | undefined;
-    private _verboseLogging = false;
 
     async init() {
         this.parsedOutput = await this.parse(this.ctor);
@@ -104,7 +101,6 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
      */
     async getContext(): Promise<Context> {
         if (this._context === undefined) {
-            this._verboseLogging = this.baseFlags.verbose;
             const resolvedRoot = await getResolvedFluidRoot();
             const gitRepo = new GitRepo(resolvedRoot);
             const branch = await gitRepo.getCurrentBranchName();
