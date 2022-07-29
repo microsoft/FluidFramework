@@ -54,7 +54,6 @@ async function setup() {
     );
     renderFocusPresence(focusTracker, contentDiv);
     renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
-    // eslint-disable-next-line @typescript-eslint/dot-notation
     window["fluidStarted"] = true;
 }
 
