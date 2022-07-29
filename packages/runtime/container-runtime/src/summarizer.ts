@@ -29,7 +29,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
-import { SummaryCollection } from "./summaryCollection";
+import { IAckedSummary, SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
@@ -380,10 +380,14 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private async handleSummaryAcks() {
         let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;
+        let ack: IAckedSummary | undefined;
         while (this.runningSummarizer) {
             const summaryLogger = this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
             try {
-                const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
+                // Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
+                // we record undefined, not previous handles.
+                ack = undefined;
+                ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
                 const summaryOpHandle = ack.summaryOp.contents.handle;
                 const summaryAckHandle = ack.summaryAck.contents.handle;
@@ -396,30 +400,13 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                         summaryAckHandle,
                         refSequenceNumber,
                         summaryLogger,
-                    ).catch(async (error) => {
-                        // If the error is 404, so maybe the fetched version no longer exists on server. We just
-                        // ignore this error in that case, as that means we will have another summaryAck for the
-                        // latest version with which we will refresh the state. However in case of single commit
-                        // summary, we might me missing a summary ack, so in that case we are still fine as the
-                        // code in `submitSummary` function in container runtime, will refresh the latest state
-                        // by calling `refreshLatestSummaryAckFromServer` and we will be fine.
-                        if (isFluidError(error)
-                            && error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
-                            summaryLogger.sendTelemetryEvent({
-                                eventName: "HandleSummaryAckErrorIgnored",
-                                referenceSequenceNumber: refSequenceNumber,
-                                proposalHandle: summaryOpHandle,
-                                ackHandle: summaryAckHandle,
-                            }, error);
-                        } else {
-                            throw error;
-                        }
-                    }),
-                );
+                    ));
             } catch (error) {
                 summaryLogger.sendErrorEvent({
                     eventName: "HandleSummaryAckError",
                     referenceSequenceNumber: refSequenceNumber,
+                    handle: ack?.summaryOp?.contents?.handle,
+                    ackHandle: ack?.summaryAck?.contents?.handle,
                 }, error);
             }
             refSequenceNumber++;
