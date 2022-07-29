@@ -78,18 +78,20 @@ describe('revert', () => {
 
 	it('handles reverting the detach of an empty trait', () => {
 		const insertedNodeId = 0 as DetachedSequenceId;
-		const result = revert(
-			[
-				ChangeInternal.detach(
-					StableRangeInternal.all({
-						label: 'someNonExistentTraitLabel' as TraitLabel,
-						parent: testTree.identifier,
-					}),
-					insertedNodeId
-				),
-			],
-			testTree.view
-		);
+		const result = expectDefined(
+            revert(
+                [
+                    ChangeInternal.detach(
+                        StableRangeInternal.all({
+                            label: 'someNonExistentTraitLabel' as TraitLabel,
+                            parent: testTree.identifier,
+                        }),
+                        insertedNodeId
+                    ),
+                ],
+                testTree.view
+		    )
+        );
 		expect(result).to.have.lengthOf(0);
 	});
 
