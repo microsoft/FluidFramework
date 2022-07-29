@@ -24,12 +24,8 @@ export class TestDataObject extends DataObject {
     }
 }
 
-export class TestDataObject2 extends DataObject {
+export class CounterTestDataObject extends DataObject {
     private _counter: SharedCounter | undefined;
-
-    constructor(props: IDataObjectProps) {
-        super(props);
-    }
 
     /**
      * Do setup work here
@@ -49,17 +45,13 @@ export class TestDataObject2 extends DataObject {
     }
 
     public static readonly factory = new DataObjectFactory(
-        TestDataObject2.Name,
-        TestDataObject2,
+        CounterTestDataObject.Name,
+        CounterTestDataObject,
         [SharedCounter.getFactory()],
         {},
     );
 
     public increment(): void {
-        this.counter.increment(1);
-    }
-
-    public reset(): void {
         this.counter.increment(1);
     }
 
@@ -72,15 +64,5 @@ export class TestDataObject2 extends DataObject {
             throw new Error("SharedCounter not initialized");
         }
         return this._counter;
-    }
-}
-
-export class BadTestDataObject extends DataObject {
-    public static get Name(): string {
-        return "@fluid-example/bad-test-data-object";
-    }
-
-    constructor(props: IDataObjectProps) {
-        super(props);
     }
 }

@@ -8,8 +8,9 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { AzureClient } from "../AzureClient";
+import { AzureMember, IAzureAudience } from "../interfaces";
 import { createAzureClient } from "./AzureClientFactory";
-import { TestDataObject, TestDataObject2 } from "./TestDataObject";
+import { TestDataObject, CounterTestDataObject } from "./TestDataObject";
 
 const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
     const maybeValue = map.get<T>(key);
@@ -29,6 +30,18 @@ const mapWait = async <T>(map: ISharedMap, key: string): Promise<T> => {
             }
         };
         map.on("valueChanged", handler);
+    });
+};
+
+const waitForMyself = async (audience: IAzureAudience): Promise<AzureMember> => {
+    return new Promise((resolve) => {
+        const handler = (): void => {
+            const value = audience.getMyself();
+            if (value) {
+                resolve(value);
+            }
+        };
+        audience.on("memberAdded", handler);
     });
 };
 
@@ -227,7 +240,7 @@ describe("AzureClient", () => {
             const initialObjectsCreate = container.initialObjects;
             const map1Create = initialObjectsCreate.map1 as SharedMap;
             map1Create.set("new-key", "new-value");
-            const valueCreate: string | undefined = await map1Create.get("new-key");
+            const valueCreate: string | undefined = map1Create.get("new-key");
 
             const { container: containerGet } = await client.getContainer(containerId, schema);
             const map1Get = containerGet.initialObjects.map1 as SharedMap;
@@ -244,8 +257,8 @@ describe("AzureClient", () => {
             const doSchema: ContainerSchema = {
                 initialObjects: {
                     mdo1: TestDataObject,
-                    mdo2: TestDataObject2,
-                    mdo3: TestDataObject2,
+                    mdo2: CounterTestDataObject,
+                    mdo3: CounterTestDataObject,
                 },
             };
             const { container } = await client.createContainer(doSchema);
@@ -262,11 +275,11 @@ describe("AzureClient", () => {
                 "container returns the wrong type for mdo1",
             );
             assert(
-                initialObjectsCreate.mdo2 instanceof TestDataObject2,
+                initialObjectsCreate.mdo2 instanceof CounterTestDataObject,
                 "container returns the wrong type for mdo2",
             );
             assert(
-                initialObjectsCreate.mdo3 instanceof TestDataObject2,
+                initialObjectsCreate.mdo3 instanceof CounterTestDataObject,
                 "container returns the wrong type for mdo3",
             );
 
@@ -277,11 +290,11 @@ describe("AzureClient", () => {
                 "container returns the wrong type for mdo1",
             );
             assert(
-                initialObjectsCreate.mdo2 instanceof TestDataObject2,
+                initialObjectsCreate.mdo2 instanceof CounterTestDataObject,
                 "container returns the wrong type for mdo2",
             );
             assert(
-                initialObjectsCreate.mdo3 instanceof TestDataObject2,
+                initialObjectsCreate.mdo3 instanceof CounterTestDataObject,
                 "container returns the wrong type for mdo3",
             );
         });
@@ -295,16 +308,16 @@ describe("AzureClient", () => {
             const doSchema: ContainerSchema = {
                 initialObjects: {
                     mdo1: TestDataObject,
-                    mdo2: TestDataObject2,
-                    mdo3: TestDataObject2,
+                    mdo2: CounterTestDataObject,
+                    mdo3: CounterTestDataObject,
                 },
             };
             const { container } = await client.createContainer(doSchema);
             const initialObjectsCreate = container.initialObjects;
-            const mdo2 = initialObjectsCreate.mdo2 as TestDataObject2;
+            const mdo2 = initialObjectsCreate.mdo2 as CounterTestDataObject;
             mdo2.increment();
 
-            const mdo3 = initialObjectsCreate.mdo3 as TestDataObject2;
+            const mdo3 = initialObjectsCreate.mdo3 as CounterTestDataObject;
             mdo3.increment();
             mdo3.increment();
             mdo3.increment();
@@ -321,8 +334,8 @@ describe("AzureClient", () => {
 
             const { container: containerGet } = await client.getContainer(containerId, doSchema);
             const initialObjectsGet = containerGet.initialObjects;
-            const mdo2get = initialObjectsGet.mdo2 as TestDataObject2;
-            const mdo3get = initialObjectsGet.mdo3 as TestDataObject2;
+            const mdo2get = initialObjectsGet.mdo2 as CounterTestDataObject;
+            const mdo3get = initialObjectsGet.mdo3 as CounterTestDataObject;
 
             assert.strictEqual(mdo2get.value, 1);
             assert.strictEqual(mdo3get.value, 3);
@@ -350,11 +363,11 @@ describe("AzureClient", () => {
 
             const { container } = await client.createContainer(dynamicSchema);
 
-            const newPair = await container.create(TestDataObject);
-            assert.ok(newPair?.handle);
+            const newDo = await container.create(TestDataObject);
+            assert.ok(newDo?.handle);
 
             const map1 = container.initialObjects.map1 as SharedMap;
-            map1.set("new-pair-id", newPair.handle);
+            map1.set("new-pair-id", newDo.handle);
             const handle: IFluidHandle | undefined = await map1.get("new-pair-id");
             const obj: unknown = await handle?.get();
             assert.ok(obj, "container added dynamic objects incorrectly");
@@ -503,7 +516,7 @@ describe("AzureClient", () => {
             const initialObjectsCreate = container.initialObjects;
             const map1Create = initialObjectsCreate.map1 as SharedMap;
             map1Create.set("new-key", "new-value");
-            const valueCreate: string | undefined = await map1Create.get("new-key");
+            const valueCreate: string | undefined = map1Create.get("new-key");
 
             const containerId = await container.attach();
 
@@ -557,19 +570,11 @@ describe("AzureClient", () => {
             );
 
             /* This is a workaround for a known bug, we should have one member (self) upon container connection */
-            if (services.audience.getMembers().size === 0) {
-                await new Promise<void>((resolve) => {
-                    services.audience.on("memberAdded", () => {
-                        resolve();
-                    });
-                });
-            }
+            const myself = await waitForMyself(services.audience);
+            assert.notStrictEqual(myself, undefined, "We should have myself at this point.");
 
             const members = services.audience.getMembers();
             assert.strictEqual(members.size, 1, "We should have only one member at this point.");
-
-            const myself = services.audience.getMyself();
-            assert.notStrictEqual(myself, undefined, "We should have myself at this point.");
         });
 
         /**
@@ -595,15 +600,7 @@ describe("AzureClient", () => {
             );
 
             /* This is a workaround for a known bug, we should have one member (self) upon container connection */
-            if (services.audience.getMembers().size === 0) {
-                await new Promise<void>((resolve) => {
-                    services.audience.on("memberAdded", () => {
-                        resolve();
-                    });
-                });
-            }
-
-            const originalSelf = services.audience.getMyself();
+            const originalSelf = await waitForMyself(services.audience);
             assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
 
             const client2 = createAzureClient("test-id-2", "test-user-name-2");
