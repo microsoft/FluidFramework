@@ -36,7 +36,7 @@ export default class BundleAnalysesCollect extends BaseCommand {
 
         // Check each package location for a bundleAnalysis folder
         // and copy it to a central location
-        const analysesDestPath = path.join(this.config.configDir, "artifacts/bundleAnalysis"); // replaced process.cwd() with this.config.configDir
+        const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
 
         // eslint-disable-next-line unicorn/no-array-for-each
         flags.lernaOutput.forEach((pkg: { name: string; location: string }) => {
