@@ -9,7 +9,6 @@ export type ReleasePackage = string;
 
 export type ReleaseGroup = MonoRepoKind;
 
-// eslint-disable-next-line valid-jsdoc
 /** A type guard used to determine if a string is a ReleaseGroup. */
 export function isReleaseGroup(str: string | undefined): str is ReleaseGroup {
     return isMonoRepoKind(str);

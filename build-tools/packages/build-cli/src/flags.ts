@@ -6,7 +6,6 @@
 import {
     isVersionBumpTypeExtended,
     isVersionScheme,
-    VersionScheme,
 } from "@fluid-tools/version-tools";
 import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";

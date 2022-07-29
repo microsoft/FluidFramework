@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import { exec, MonoRepo, Package, VersionBag } from "@fluidframework/build-tools";
 import {
     adjustVersion,
