@@ -15,6 +15,17 @@ import {
     PropertySet,
 } from "./properties";
 
+export enum PropertiesRollback {
+    /** Not in a rollback */
+    None,
+
+    /** Rollback */
+    Rollback,
+
+    /** Rollback of a rewrite */
+    Rewrite,
+}
+
 export class PropertiesManager {
     private pendingKeyUpdateCount: MapLike<number> | undefined;
     private pendingRewriteCount: number;
@@ -24,10 +35,15 @@ export class PropertiesManager {
     }
 
     public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg) {
-        if (annotateOp.combiningOp && annotateOp.combiningOp.name === "rewrite") {
+        const rewrite = !!annotateOp.combiningOp && annotateOp.combiningOp.name === "rewrite";
+        this.decrementPendingCounts(rewrite, annotateOp.props);
+    }
+
+    private decrementPendingCounts(rewrite: boolean, props: PropertySet) {
+        if (rewrite) {
             this.pendingRewriteCount--;
         }
-        for (const key of Object.keys(annotateOp.props)) {
+        for (const key of Object.keys(props)) {
             if (this.pendingKeyUpdateCount?.[key] !== undefined) {
                 assert(this.pendingKeyUpdateCount[key] > 0,
                     0x05c /* "Trying to update more annotate props than do exist!" */);
@@ -45,7 +61,8 @@ export class PropertiesManager {
         newProps: PropertySet,
         op?: ICombiningOp,
         seq?: number,
-        collaborating: boolean = false): PropertySet | undefined {
+        collaborating: boolean = false,
+        rollback: PropertiesRollback = PropertiesRollback.None): PropertySet | undefined {
         if (!this.pendingKeyUpdateCount) {
             this.pendingKeyUpdateCount = createMap<number>();
         }
@@ -54,6 +71,18 @@ export class PropertiesManager {
         if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && seq !== UniversalSequenceNumber
             && collaborating) {
             return undefined;
+        }
+
+        // Clean up counts for rolled back edits before modifying oldProps
+        if (collaborating) {
+            if (rollback === PropertiesRollback.Rollback) {
+                this.decrementPendingCounts(false, newProps);
+            } else if (rollback === PropertiesRollback.Rewrite) {
+                // oldProps is the correct props for tracking counts on rewrite because the ones in newProps include
+                // those that were implicitly cleared by the rewrite for which we don't track pending counts.
+                // This doesn't handle the edge case for rewrite with a prop set to null to remove it redundantly.
+                this.decrementPendingCounts(true, oldProps);
+            }
         }
 
         const rewrite = (op && op.name === "rewrite");
@@ -95,10 +124,6 @@ export class PropertiesManager {
                     this.pendingKeyUpdateCount[key]++;
                 } else if (!shouldModifyKey(key)) {
                     continue;
-                } else if (seq === UniversalSequenceNumber
-                    && this.pendingKeyUpdateCount?.[key] !== undefined && this.pendingKeyUpdateCount?.[key] > 0) {
-                        // decrement if local annotation is rolled back
-                        this.pendingKeyUpdateCount[key]--;
                 }
             }
 

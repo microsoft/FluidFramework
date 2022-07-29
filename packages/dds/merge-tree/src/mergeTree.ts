@@ -83,6 +83,7 @@ import {
 	refGetTileLabels,
 	refHasTileLabel,
  } from "./referencePositions";
+import { PropertiesRollback } from "./segmentPropertiesManager";
 
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
@@ -1802,10 +1803,12 @@ export class MergeTree {
      * @param clientId - The id of the client making the annotate
      * @param seq - The sequence number of the annotate operation
      * @param opArgs - The op args for the annotate op. this is passed to the merge tree callback if there is one
+     * @param rollback - Whether this is for a local rollback and what kind
      */
     public annotateRange(
         start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined, refSeq: number,
-        clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
+        clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs,
+        rollback: PropertiesRollback = PropertiesRollback.None) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         const deltaSegments: IMergeTreeSegmentDelta[] = [];
@@ -1813,7 +1816,7 @@ export class MergeTree {
         let segmentGroup: SegmentGroup | undefined;
 
         const annotateSegment = (segment: ISegment) => {
-            const propertyDeltas = segment.addProperties(props, combiningOp, seq, this.collabWindow);
+            const propertyDeltas = segment.addProperties(props, combiningOp, seq, this.collabWindow, rollback);
             deltaSegments.push({ segment, propertyDeltas });
             if (this.collabWindow.collaborating) {
                 if (seq === UnassignedSequenceNumber) {

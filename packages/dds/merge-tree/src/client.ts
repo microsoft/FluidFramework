@@ -48,6 +48,7 @@ import {
     ReferenceType,
 } from "./ops";
 import { PropertySet } from "./properties";
+import { PropertiesRollback } from "./segmentPropertiesManager";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
@@ -356,8 +357,7 @@ export class Client {
      */
     public rollback?(op: any, localOpMetadata: unknown) {
         if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
-            const pendingSegmentGroup = this.mergeTree.pendingSegments?.pop ?
-                this.mergeTree.pendingSegments?.pop() : undefined;
+            const pendingSegmentGroup = this.mergeTree.pendingSegments?.pop?.();
             if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
                 || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
                 throw new Error("Rollback op doesn't match last edit");
@@ -381,6 +381,8 @@ export class Client {
                         { op: removeOp });
                 } else {
                     const props = pendingSegmentGroup.previousProps![i];
+                    const rollbackType = (op.combiningOp && op.combiningOp.name === "rewrite") ?
+                        PropertiesRollback.Rewrite : PropertiesRollback.Rollback;
                     const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props, undefined);
                     this.mergeTree.annotateRange(
                         start,
@@ -390,7 +392,8 @@ export class Client {
                         UniversalSequenceNumber,
                         segWindow.clientId,
                         UniversalSequenceNumber,
-                        { op: annotateOp });
+                        { op: annotateOp },
+                        rollbackType);
                     i++;
                 }
             }
@@ -838,7 +841,7 @@ export class Client {
         // We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
         // The reason they need them sorted, as they have the same local sequence number and which means
         // farther segments will  take into account nearer segments when calculating their position.
-        // By sorting we ensure the nearer segment will be applied and sequenced before the father segments
+        // By sorting we ensure the nearer segment will be applied and sequenced before the farther segments
         // so their recalculated positions will be correct.
         for (const segment of segmentGroup.segments.sort((a, b) => a.ordinal < b.ordinal ? -1 : 1)) {
             const segmentSegGroup = segment.segmentGroups.dequeue();

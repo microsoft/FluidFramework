@@ -134,7 +134,8 @@ describe("client.rollback", () => {
         );
         const marker = client.getMarkerFromId("markerId") as Marker;
         client.annotateMarker(marker, { abc: "def" }, { name: "rewrite" });
-        client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
+        client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE, combiningOp: { name: "rewrite" } },
+            client.peekPendingSegmentGroups());
 
         const properties = marker.getProperties();
         assert.equal(properties?.foo, "bar");
