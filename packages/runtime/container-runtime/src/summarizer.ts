@@ -394,12 +394,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                             summaryLogger.sendTelemetryEvent({
                                 eventName: "HandleSummaryAckErrorRetry",
                                 referenceSequenceNumber: refSequenceNumber,
-                                proposalHandle: ack.summaryOp.contents.handle,
-                                ackHandle: ack.summaryAck.contents.handle,
+                                proposalHandle: summaryOpHandle,
+                                ackHandle: summaryAckHandle,
                             }, error);
                             await this.internalsProvider.refreshLatestSummaryAck(
-                                ack.summaryOp.contents.handle,
-                                ack.summaryAck.contents.handle,
+                                summaryOpHandle,
+                                summaryAckHandle,
                                 refSequenceNumber,
                                 summaryLogger,
                                 FetchSource.noCache,
@@ -407,7 +407,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                         } else {
                             throw error;
                         }
-                    });
+                    })
                 );
             } catch (error) {
                 summaryLogger.sendErrorEvent({
