@@ -15,7 +15,12 @@ export type TelemetryEventCategory = "generic" | "error" | "performance";
  * easily add fields to objects that shouldn't be logged and not realize it's going to be logged.
  * General best practice is to explicitly log the fields you care about from objects.
  */
-export type TelemetryEventPropertyType = string | number | boolean | undefined | null | (string | number | boolean)[];
+export type TelemetryEventPropertyType =
+    | string
+    | number
+    | boolean
+    | undefined
+    | (string | number | boolean)[];
 
 /**
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
