@@ -90,6 +90,7 @@
     "@fluidframework/test-tools": "^0.2.3074",
     "@microsoft/api-documenter": "^7.17.9",
     "@microsoft/api-extractor": "^7.22.2",
+    "buffer": "^6.0.3",
     "c8": "^7.7.1",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.1.0",
