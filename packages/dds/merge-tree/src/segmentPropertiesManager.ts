@@ -45,6 +45,10 @@ export class PropertiesManager {
         }
         for (const key of Object.keys(props)) {
             if (this.pendingKeyUpdateCount?.[key] !== undefined) {
+                if (rewrite && props[key] === null) {
+                    // We don't track the pending count for this redundant case
+                    continue;
+                }
                 assert(this.pendingKeyUpdateCount[key] > 0,
                     0x05c /* "Trying to update more annotate props than do exist!" */);
                 this.pendingKeyUpdateCount[key]--;
@@ -80,7 +84,6 @@ export class PropertiesManager {
             } else if (rollback === PropertiesRollback.Rewrite) {
                 // oldProps is the correct props for tracking counts on rewrite because the ones in newProps include
                 // those that were implicitly cleared by the rewrite for which we don't track pending counts.
-                // This doesn't handle the edge case for rewrite with a prop set to null to remove it redundantly.
                 this.decrementPendingCounts(true, oldProps);
             }
         }
@@ -118,6 +121,11 @@ export class PropertiesManager {
         for (const key of Object.keys(newProps)) {
             if (collaborating) {
                 if (seq === UnassignedSequenceNumber) {
+                    if (rewrite && newProps[key] === null) {
+                        // This case has already been handled above and
+                        // we don't want to track the pending count for it in case of rollback
+                        continue;
+                    }
                     if (this.pendingKeyUpdateCount?.[key] === undefined) {
                         this.pendingKeyUpdateCount[key] = 0;
                     }

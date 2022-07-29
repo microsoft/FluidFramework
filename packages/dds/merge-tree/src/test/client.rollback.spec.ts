@@ -141,6 +141,24 @@ describe("client.rollback", () => {
         assert.equal(properties?.foo, "bar");
         assert.equal(properties?.abc, undefined);
     });
+    it("Should rollback annotate rewrite with explicit null", async () => {
+        client.insertMarkerLocal(
+            0,
+            ReferenceType.Simple,
+            {
+                [reservedMarkerIdKey]: "markerId",
+                foo: "bar",
+            },
+        );
+        const marker = client.getMarkerFromId("markerId") as Marker;
+        client.annotateMarker(marker, { abc: "def", foo: null }, { name: "rewrite" });
+        client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE, combiningOp: { name: "rewrite" } },
+            client.peekPendingSegmentGroups());
+
+        const properties = marker.getProperties();
+        assert.equal(properties?.foo, "bar");
+        assert.equal(properties?.abc, undefined);
+    });
     it("Should rollback annotate causes split string", async () => {
         client.insertTextLocal(0, "abcdefg");
         client.annotateRangeLocal(1, 3, { foo: "bar" }, undefined);
