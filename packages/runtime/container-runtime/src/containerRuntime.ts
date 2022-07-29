@@ -1069,7 +1069,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
-    private readonly _aliasingEnabled: boolean;
     private readonly _maxOpSizeInBytes: number;
 
     private readonly maxConsecutiveReconnects: number;
@@ -1262,10 +1261,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-
-        this._aliasingEnabled =
-            (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
-            (runtimeOptions.useDataStoreAliasing ?? false);
 
         this._maxOpSizeInBytes = (this.mc.config.getNumber(maxOpSizeInBytesKey) ?? defaultMaxOpSizeInBytes);
         this.maxConsecutiveReconnects =
@@ -2144,76 +2139,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.mc.logger);
     }
 
-    /**
-     * Creates a root datastore directly with a user generated id and attaches it to storage.
-     * It is vulnerable to name collisions and should not be used.
-     *
-     * This method will be removed. See #6465.
-     */
-    private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        fluidDataStore.makeVisibleAndAttachGraph();
-        return fluidDataStore;
-    }
-
-    /**
-     * @deprecated - will be removed in an upcoming release. See #9660.
-     */
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        if (rootDataStoreId.includes("/")) {
-            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
-        }
-        return this._aliasingEnabled === true ?
-            this.createAndAliasDataStore(pkg, rootDataStoreId) :
-            this.createRootDataStoreLegacy(pkg, rootDataStoreId);
-    }
-
-    /**
-     * Creates a data store then attempts to alias it.
-     * If aliasing fails, it will raise an exception.
-     *
-     * This method will be removed. See #6465.
-     *
-     * @param pkg - Package name of the data store
-     * @param alias - Alias to be assigned to the data store
-     * @param props - Properties for the data store
-     * @returns - An aliased data store which can can be found / loaded by alias.
-     */
-    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
-        const internalId = uuid();
-
-        try {
-            // A similar call may have been initiated by the same client, so we should try to get
-            // a possible existing aliased datastore first.
-            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
-            return channelToDataStore(
-                existingDataStore,
-                internalId,
-                this,
-                this.dataStores,
-                this.mc.logger,
-                true, // AlreadyAliased. This will block further alias attempts for the datastore
-            );
-        } catch (err) {
-            const newChannel = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-            const newDataStore = channelToDataStore(newChannel, internalId, this, this.dataStores, this.mc.logger);
-            const aliasResult = await newDataStore.trySetAlias(alias);
-            if (aliasResult === "Success") {
-                return newDataStore;
-            }
-
-            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
-            return channelToDataStore(
-                existingDataStore,
-                internalId,
-                this,
-                this.dataStores,
-                this.mc.logger,
-                true, // AlreadyAliased. This will block further alias attempts for the datastore
-            );
-        }
-    }
-
     public createDetachedRootDataStore(
         pkg: Readonly<string[]>,
         rootDataStoreId: string): IFluidDataStoreContextDetached {
@@ -2227,39 +2152,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.createDetachedDataStoreCore(pkg, false);
     }
 
-    /**
-     * Creates a possibly root datastore directly with a possibly user generated id and attaches it to storage.
-     * It is vulnerable to name collisions if both aforementioned conditions are true, and should not be used.
-     *
-     * This method will be removed. See #6465.
-     */
-    private async _createDataStoreWithPropsLegacy(
-        pkg: string | string[],
-        props?: any,
-        id = uuid(),
-        isRoot = false,
-    ): Promise<IDataStore> {
-        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
-            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
-        if (isRoot) {
-            fluidDataStore.makeVisibleAndAttachGraph();
-            this.logger.sendTelemetryEvent({
-                eventName: "Root datastore with props",
-                hasProps: props !== undefined,
-            });
-        }
-        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
-    }
-
     public async _createDataStoreWithProps(
         pkg: string | string[],
         props?: any,
         id = uuid(),
         isRoot = false,
     ): Promise<IDataStore> {
-        return this._aliasingEnabled === true && isRoot ?
-            this.createAndAliasDataStore(pkg, id, props) :
-            this._createDataStoreWithPropsLegacy(pkg, props, id, isRoot);
+        if (isRoot) {
+            throw new UsageError("Creating root datastores is not supported. Use datastore aliasing instead");
+        }
+
+        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
+            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
+        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
 
     private async _createDataStore(

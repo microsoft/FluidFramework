@@ -151,17 +151,6 @@ export interface IContainerRuntimeBase extends
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, #3631
-     * @internal
-     */
-    _createDataStoreWithProps(
-        pkg: string | string[],
-        props?: any,
-        id?: string,
-        isRoot?: boolean,
-    ): Promise<IDataStore>;
-
-    /**
      * Creates data store. Returns router of data store. Data store is not bound to container,
      * store in such state is not persisted to storage (file). Storing a handle to this store
      * (or any of its parts, like DDS) into already attached DDS (or non-attached DDS that will eventually
