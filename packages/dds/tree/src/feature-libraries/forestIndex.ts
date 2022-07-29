@@ -35,9 +35,9 @@ const schemaBlobKey = "ForestSchema";
  * Used to capture snapshots of document for summaries.
  */
 export class ForestIndex implements Index<unknown>, SummaryElement {
-    readonly key: string = "Forest";
+    public readonly key = "Forest";
 
-    readonly summaryElement?: SummaryElement = this;
+    public readonly summaryElement?: SummaryElement = this;
 
     private readonly cursor: ITreeSubscriptionCursor;
 
@@ -101,7 +101,6 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
      */
      private getSchemaString(): string {
         const { treeSchema, globalFieldSchema } = this.forest.schema;
-        throw new Error("Method not implemented.");
         return `TODO: actual format ${treeSchema}, ${globalFieldSchema}`;
     }
 
