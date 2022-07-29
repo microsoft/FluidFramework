@@ -746,7 +746,6 @@ export class PartialSequenceLengths {
             partialLength.overlapRemoveClients.map((oc: Property<number, IOverlapClient>) => {
                 // Original client entry was handled above
                 if (partialLength.clientId !== oc.data.clientId) {
-                    // tweak logic here to special-case local client? (should also include localSeq of overlap)
                     this.addClientSeqNumber(oc.data.clientId, partialLength.seq, oc.data.seglen);
                 }
                 return true;
