@@ -41,7 +41,7 @@ export class CounterTestDataObject extends DataObject {
     }
 
     public static get Name(): string {
-        return "@fluid-example/test-data-object-2";
+        return "@fluid-example/counter-test-data-object";
     }
 
     public static readonly factory = new DataObjectFactory(
