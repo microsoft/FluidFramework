@@ -11,8 +11,7 @@ import chalk from "chalk";
 import * as semver from "semver";
 import { BaseCommand } from "../../base";
 import { bumpTypeFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
-// eslint-disable-next-line import/no-internal-modules
-import { bumpPackageDependencies, PackageWithRangeSpec } from "../../lib/bump";
+import { bumpPackageDependencies, PackageWithRangeSpec } from "../../lib";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -112,7 +111,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
         const args = this.processedArgs;
         const flags = this.processedFlags;
 
-        const context = await this.getContext(flags.verbose);
+        const context = await this.getContext();
         const shouldInstall = flags.install && !flags.skipChecks;
         const shouldCommit = flags.commit && !flags.skipChecks;
 

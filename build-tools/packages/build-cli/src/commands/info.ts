@@ -31,7 +31,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand.flags> {
 
     async run(): Promise<void> {
         const flags = this.processedFlags;
-        const context = await this.getContext(flags.verbose);
+        const context = await this.getContext();
         let packages =
             flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)
                 ? context.packagesInReleaseGroup(flags.releaseGroup)

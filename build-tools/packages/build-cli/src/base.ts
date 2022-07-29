@@ -10,7 +10,7 @@ import { FlagInput, OutputFlags, ParserOutput } from "@oclif/core/lib/interfaces
 import chalk from "chalk";
 import { rootPathFlag } from "./flags";
 
-// This is needed to get type safety working in derived classes
+// This is needed to get type safety working in derived classes.
 // https://github.com/oclif/oclif.github.io/pull/142
 export type InferredFlagsType<T> = T extends FlagInput<infer F>
     ? F & {
@@ -38,16 +38,19 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
 
     protected parsedOutput?: ParserOutput<any, any>;
 
+    /** The processed arguments that were passed to the CLI. */
     get processedArgs(): { [name: string]: any } {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.parsedOutput?.args ?? {};
     }
 
+    /** The processed flags that were passed to the CLI. */
     get processedFlags(): InferredFlagsType<T> {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return this.parsedOutput?.flags ?? {};
     }
 
+    /** The flags defined on the base class. */
     private get baseFlags() {
         return this.processedFlags as Partial<OutputFlags<typeof BaseCommand.flags>>;
     }
@@ -97,12 +100,11 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
      * The repo {@link Context}. The context is retrieved and cached the first time this method is called. Subsequent
      * calls will return the cached context.
      *
-     * @param verboseLogging - Enable verbose logging if true.
      * @returns The repo {@link Context}.
      */
-    async getContext(verboseLogging = false): Promise<Context> {
+    async getContext(): Promise<Context> {
         if (this._context === undefined) {
-            this._verboseLogging = verboseLogging;
+            this._verboseLogging = this.baseFlags.verbose;
             const resolvedRoot = await getResolvedFluidRoot();
             const gitRepo = new GitRepo(resolvedRoot);
             const branch = await gitRepo.getCurrentBranchName();
@@ -128,7 +130,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
     }
 
     public verbose(message: string | Error): string | Error {
-        if (this._verboseLogging) {
+        if (this.baseFlags.verbose === true) {
             if (typeof message === "string") {
                 this.log(chalk.grey(`VERBOSE: ${message}`));
             } else {
@@ -139,6 +141,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
         return message;
     }
 
+    /** Output a horizontal rule. */
     public logHr() {
         this.log("=".repeat(72));
     }
@@ -148,6 +151,7 @@ export abstract class BaseCommand<T extends typeof BaseCommand.flags> extends Co
         this.exit();
     }
 
+    /** Log a message with an indent. */
     public logIndent(input: string, indent = 2) {
         this.log(`${" ".repeat(indent)}${input}`);
     }
