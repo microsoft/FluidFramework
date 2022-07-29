@@ -4,3 +4,5 @@
  */
 
 export * from "./FocusTracker";
+export * from "./MouseTracker";
+export * from "./app";

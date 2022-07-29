@@ -26,20 +26,20 @@ const containerSchema: ContainerSchema = {
     },
 };
 
-function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
+export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
     const wrapperDiv = document.createElement("div");
     wrapperDiv.style.textAlign = "left";
     wrapperDiv.style.margin = "70px";
     div.appendChild(wrapperDiv);
 
     const focusDiv = document.createElement("div");
+    focusDiv.id = "focus-div";
     focusDiv.style.fontSize = "14px";
 
     const onFocusChanged = () => {
-        focusDiv.innerHTML = `
-            Current user: ${(focusTracker.audience.getMyself() as TinyliciousMember)?.userName}</br>
-            ${getFocusPresencesString("</br>", focusTracker)}
-        `;
+        focusDiv.innerHTML =
+            `Current user: ${(focusTracker.audience.getMyself() as TinyliciousMember)?.userName}</br>
+            ${getFocusPresencesString("</br>", focusTracker)}`;
     };
 
     onFocusChanged();
@@ -64,11 +64,13 @@ function getFocusPresencesString(newLineSeparator: string = "\n", focusTracker: 
     return focusString.join(newLineSeparator);
 }
 
-function renderMousePresence(mouseTracker: MouseTracker, focusTracker: FocusTracker, div: HTMLDivElement) {
+export function renderMousePresence(mouseTracker: MouseTracker, focusTracker: FocusTracker, div: HTMLDivElement) {
     const onPositionChanged = () => {
       div.innerHTML = "";
       mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
           const posDiv = document.createElement("div");
+          posDiv.className = "posDiv";
+          posDiv.id = userName;
           posDiv.textContent = userName;
           posDiv.style.position = "absolute";
           posDiv.style.left = `${mousePosition.x}px`;
@@ -84,7 +86,7 @@ function renderMousePresence(mouseTracker: MouseTracker, focusTracker: FocusTrac
     mouseTracker.on("mousePositionChanged", onPositionChanged);
   }
 
-async function start(): Promise<void> {
+export async function start(): Promise<void> {
     // Get or create the document depending if we are running through the create new flow
     const client = new TinyliciousClient();
     let container: IFluidContainer;
