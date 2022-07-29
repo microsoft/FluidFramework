@@ -114,11 +114,12 @@ export function getArrayStatistics(array: number[]): Benchmark.Stats {
 
     const variance = array.map((x) => (x - mean) ** 2).reduce((a, b) => a + b) / n;
     const deviation = Math.sqrt(variance);
-    const sem = deviation / Math.sqrt(n);
-    const df = n - 1;
-    const critical = tTable[Math.round(df) || "1"] ?? tTable.infinity;
-    const moe = sem * critical;
-    const rme = (moe / mean) * 100 || 0;
+    const sem = deviation / Math.sqrt(n); // Standard Error of the Mean
+    const df = n - 1; // Degrees of Freedom
+    const propName = df === 0 ? "1" : df.toString();
+    const critical = tTable[propName] ?? tTable.infinity;
+    const moe = sem * critical; // Margin of Error
+    const rme = (moe / Math.abs(mean)) * 100 || 0; // Relative Margin of Error
 
     return { mean, variance, deviation, moe, sem, sample: array, rme };
 }

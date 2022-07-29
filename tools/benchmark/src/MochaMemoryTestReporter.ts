@@ -143,7 +143,9 @@ class MochaMemoryTestReporter {
                             const heapUsedStats = getArrayStatistics(heapUsedArray);
                             table.cell("Heap Used Avg", prettyNumber(heapUsedStats.mean, 2), Table.padLeft);
                             table.cell("Heap Used StdDev", prettyNumber(heapUsedStats.deviation, 2), Table.padLeft);
-                            table.cell("Root Mean Error", `±${prettyNumber(heapUsedStats.rme, 2)}%`, Table.padLeft);
+                            table.cell("Margin of Error", `±${prettyNumber(heapUsedStats.moe, 2)}`, Table.padLeft);
+                            table.cell("Relative Margin of Error",
+                                `±${prettyNumber(heapUsedStats.rme, 2)}%`, Table.padLeft);
                             table.cell("Samples", testData.runs.toString(), Table.padLeft);
                         }
                         table.newRow();

@@ -69,13 +69,13 @@ export interface MemoryTestArguments extends MochaExclusiveOptions, HookArgument
 
     /**
      * The benchmark will iterate the test as many times as necessary to try to get the absolute value of
-     * the root mean error below this number. Specify as an integer (e.g. 5 means RME below 5%). Defaults
-     * to 2.5.
+     * the relative margin of error below this number. Specify as an integer (e.g. 5 means RME below 5%).
+     * Defaults to 2.5.
      *
      * @remarks {@link MemoryTestArguments.maxBenchmarkDurationSeconds} takes precedence over this, since a
      * benchmark with a very high measurement variance might never get a low enough RME.
      */
-    maxRootMeanError?: number;
+    maxRelativeMarginOfError?: number;
 
     /**
 	 * The kind of benchmark.
@@ -87,7 +87,7 @@ export function benchmarkMemory(args: MemoryTestArguments): Test {
     const options: Required<MemoryTestArguments> = {
         maxBenchmarkDurationSeconds: args.maxBenchmarkDurationSeconds ?? 10,
         minSampleCount: args.minSampleCount ?? 5,
-        maxRootMeanError: args.maxRootMeanError ?? 2.5,
+        maxRelativeMarginOfError: args.maxRelativeMarginOfError ?? 2.5,
         only: args.only ?? false,
         before: args.before ?? (() => {}),
         after: args.after ?? (() => {}),
@@ -222,7 +222,8 @@ export function benchmarkMemory(args: MemoryTestArguments): Test {
                                         - benchmarkStats.samples.before.memoryUsage[i].heapUsed);
                 }
                 heapUsedStats = getArrayStatistics(heapUsedArray);
-            } while (benchmarkStats.runs < options.minSampleCount || heapUsedStats.rme > options.maxRootMeanError);
+            } while (benchmarkStats.runs < options.minSampleCount
+                || heapUsedStats.rme > options.maxRelativeMarginOfError);
         } catch (error) {
             benchmarkStats.aborted = true;
             benchmarkStats.error = error as Error;
