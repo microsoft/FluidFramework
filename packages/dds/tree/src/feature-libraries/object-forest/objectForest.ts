@@ -275,6 +275,8 @@ type ObjectField = JsonableTree[];
 
 /**
  * TODO: track observations.
+ * When doing observation tracking, it might make more sense to have this wrap a RootedTextCursor
+ * (which can be undefined when cleared), instead of sub-classing it.
  */
 class Cursor extends RootedTextCursor implements ITreeSubscriptionCursor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Cleared;
