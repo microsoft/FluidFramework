@@ -79,17 +79,17 @@ const content = [nodeX];
 const moveId = brandOpaque<Delta.MoveId>(0);
 const moveId2 = brandOpaque<Delta.MoveId>(1);
 
-function test(editor: (builder: SequenceEditBuilder) => void, expected: Delta.Root[]): void {
-    const deltas: Delta.Root[] = [];
-    const receiver = (delta: Delta.Root) => deltas.push(delta);
-    const anchors = new AnchorSet();
-    const builder = new SequenceEditBuilder(receiver, anchors);
-    editor(builder);
-    assert.deepStrictEqual(deltas, expected);
-}
-
 describe("SequenceEditBuilder", () => {
+    it("Does not produces deltas if no editing calls are made to it", () => {
+        const deltas: Delta.Root[] = [];
+        const _builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
+        assert.deepEqual(deltas, []);
+    });
+
     it("Can set the root node value", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
+        builder.setValue(root, 42);
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -97,13 +97,12 @@ describe("SequenceEditBuilder", () => {
                 setValue: 42,
             }],
         ]]);
-        test(
-            (builder) => { builder.setValue(root, 42); },
-            [expected],
-        );
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can set a child node value", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -129,13 +128,13 @@ describe("SequenceEditBuilder", () => {
                 ]]),
             }],
         ]]);
-        test(
-            (builder) => { builder.setValue(root_foo2_foo5, 42); },
-            [expected],
-        );
+        builder.setValue(root_foo2_foo5, 42);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can insert a root node", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -143,13 +142,12 @@ describe("SequenceEditBuilder", () => {
                 content,
             }],
         ]]);
-        test(
-            (builder) => { builder.insert(root, new TextCursor(nodeX)); },
-            [expected],
-        );
+        builder.insert(root, new TextCursor(nodeX));
     });
 
     it("Can insert a child node", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -175,13 +173,13 @@ describe("SequenceEditBuilder", () => {
                 ]]),
             }],
         ]]);
-        test(
-            (builder) => { builder.insert(root_foo2_foo5, new TextCursor(nodeX)); },
-            [expected],
-        );
+        builder.insert(root_foo2_foo5, new TextCursor(nodeX));
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can delete a root node", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -189,13 +187,13 @@ describe("SequenceEditBuilder", () => {
                 count: 1,
             }],
         ]]);
-        test(
-            (builder) => { builder.delete(root, 1); },
-            [expected],
-        );
+        builder.delete(root, 1);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can delete child nodes", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -221,13 +219,13 @@ describe("SequenceEditBuilder", () => {
                 ]]),
             }],
         ]]);
-        test(
-            (builder) => { builder.delete(root_foo2_foo5, 10); },
-            [expected],
-        );
+        builder.delete(root_foo2_foo5, 10);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes to the right within a field", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -250,13 +248,13 @@ describe("SequenceEditBuilder", () => {
                 ]]),
             }],
         ]]);
-        test(
-            (builder) => { builder.move(root_foo2, 10, root_foo17); },
-            [expected],
-        );
+        builder.move(root_foo2, 10, root_foo17);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes to the left within a field", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -279,13 +277,13 @@ describe("SequenceEditBuilder", () => {
                 ]]),
             }],
         ]]);
-        test(
-            (builder) => { builder.move(root_foo17, 10, root_foo2); },
-            [expected],
-        );
+        builder.move(root_foo17, 10, root_foo2);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes into their own midst", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -316,13 +314,13 @@ describe("SequenceEditBuilder", () => {
                 ]]),
             }],
         ]]);
-        test(
-            (builder) => { builder.move(root_foo2, 20, root_foo17); },
-            [expected],
-        );
+        builder.move(root_foo2, 20, root_foo17);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes across fields of the same parent", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -352,13 +350,13 @@ describe("SequenceEditBuilder", () => {
                 ]),
             }],
         ]]);
-        test(
-            (builder) => { builder.move(root_foo2, 10, root_bar2); },
-            [expected],
-        );
+        builder.move(root_foo2, 10, root_bar2);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes to the right across subtrees of the same field", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -405,13 +403,13 @@ describe("SequenceEditBuilder", () => {
                 ]),
             }],
         ]]);
-        test(
-            (builder) => { builder.move(root_foo2_foo5, 3, root_foo17_foo5); },
-            [expected],
-        );
+        builder.move(root_foo2_foo5, 3, root_foo17_foo5);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes to the left across subtrees of the same field", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -458,13 +456,13 @@ describe("SequenceEditBuilder", () => {
                 ]),
             }],
         ]]);
-        test(
-            (builder) => { builder.move(root_foo17_foo5, 3, root_foo2_foo5); },
-            [expected],
-        );
+        builder.move(root_foo17_foo5, 3, root_foo2_foo5);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes across subtrees of different fields", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -516,13 +514,13 @@ describe("SequenceEditBuilder", () => {
                 ]),
             }],
         ]]);
-        test(
-            (builder) => { builder.move(root_foo2_foo5, 3, root_bar2_bar5); },
-            [expected],
-        );
+        builder.move(root_foo2_foo5, 3, root_bar2_bar5);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes across deep subtrees of different fields", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([[
             rootKey,
             [{
@@ -596,13 +594,13 @@ describe("SequenceEditBuilder", () => {
                 ]),
             }],
         ]]);
-        test(
-            (builder) => { builder.move(root_foo2_foo5_foo7, 3, root_bar2_bar5_bar7); },
-            [expected],
-        );
+        builder.move(root_foo2_foo5_foo7, 3, root_bar2_bar5_bar7);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes to a detached tree", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([
             [
                 rootKey,
@@ -633,13 +631,13 @@ describe("SequenceEditBuilder", () => {
                 ],
             ],
         ]);
-        test(
-            (builder) => { builder.move(root_foo2, 10, detached); },
-            [expected],
-        );
+        builder.move(root_foo2, 10, detached);
+        assert.deepEqual(deltas, [expected]);
     });
 
     it("Can move nodes from a detached tree", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
         const expected: Delta.Root = new Map([
             [
                 rootKey,
@@ -670,9 +668,43 @@ describe("SequenceEditBuilder", () => {
                 ],
             ],
         ]);
-        test(
-            (builder) => { builder.move(detached, 10, root_foo2); },
-            [expected],
-        );
+        builder.move(detached, 10, root_foo2);
+        assert.deepEqual(deltas, [expected]);
+    });
+
+    it("Produces one delta for each editing call made to it", () => {
+        const deltas: Delta.Root[] = [];
+        const builder = new SequenceEditBuilder(deltas.push.bind(deltas), new AnchorSet());
+        const expected: Delta.Root[] = [];
+
+        builder.setValue(root, 42);
+        expected.push(new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                setValue: 42,
+            }],
+        ]]));
+        assert.deepEqual(deltas, expected);
+
+        builder.setValue(root, 43);
+        expected.push(new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                setValue: 43,
+            }],
+        ]]));
+        assert.deepEqual(deltas, expected);
+
+        builder.setValue(root, 44);
+        expected.push(new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                setValue: 44,
+            }],
+        ]]));
+        assert.deepEqual(deltas, expected);
     });
 });
