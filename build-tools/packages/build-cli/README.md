@@ -129,7 +129,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.3.0 linux-x64 node-v14.20.0
+@fluid-tools/build-cli/0.3.1000 win32-x64 node-v14.19.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -143,8 +143,6 @@ USAGE
 * [`flub commands`](#flub-commands)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
-* [`flub release`](#flub-release)
-* [`flub release prep`](#flub-release-prep)
 * [`flub version VERSION`](#flub-version-version)
 
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
@@ -153,8 +151,8 @@ Update the dependency version of a specified package or release group. That is, 
 
 ```
 USAGE
-  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-v] [-n <value> | -t major|minor|patch|current] [-p ]
-    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit]
+  $ flub bump deps [PACKAGE_OR_RELEASE_GROUP] [-n <value> | -t major|minor|patch|current] [-p ]
+    [--onlyBumpPrerelease] [-g client|server|azure|build-tools] [-x | --install | --commit] [-v]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group. Dependencies on these packages will be bumped.
@@ -272,7 +270,7 @@ Get info about the repo, release groups, and packages.
 
 ```
 USAGE
-  $ flub info [-v] [-g client|server|azure|build-tools] [-p]
+  $ flub info [-g client|server|azure|build-tools] [-p] [-v]
 
 FLAGS
   -g, --releaseGroup=<option>  release group
@@ -284,71 +282,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/info.ts)_
-
-## `flub release`
-
-Release a release group and any dependencies.
-
-```
-USAGE
-  $ flub release -S semver|internal|virtualPatch [-v] [-x | --install | --commit | --branchCheck |
-    --updateCheck | --policyCheck] [-g client|server|azure|build-tools | -p <value>]
-
-FLAGS
-  -S, --versionScheme=<option>  (required) Version scheme to use.
-                                <options: semver|internal|virtualPatch>
-  -g, --releaseGroup=<option>   release group
-                                <options: client|server|azure|build-tools>
-  -p, --package=<value>         Name of package.
-  -v, --verbose                 Verbose logging.
-  -x, --skipChecks              Skip all checks.
-  --[no-]branchCheck            Check that the current branch is correct.
-  --[no-]commit                 Commit changes to a new branch.
-  --[no-]install                Update lockfiles by running 'npm install' automatically.
-  --[no-]policyCheck            Check that the local repo complies with all policy.
-  --[no-]updateCheck            Check that the local repo is up to date with the remote.
-
-DESCRIPTION
-  Release a release group and any dependencies.
-
-EXAMPLES
-  $ flub release
-```
-
-_See code: [dist/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/release.ts)_
-
-## `flub release prep`
-
-Prepares the repo for a major or minor release. Helps pre-bump to the next major/minor so release branches can be created.
-
-```
-USAGE
-  $ flub release prep -S semver|internal|virtualPatch -g client|server|azure|build-tools -t major|minor [-v] [-x |
-    --install | --commit | --branchCheck | --updateCheck | --policyCheck]
-
-FLAGS
-  -S, --versionScheme=<option>  (required) Version scheme to use.
-                                <options: semver|internal|virtualPatch>
-  -g, --releaseGroup=<option>   (required) release group
-                                <options: client|server|azure|build-tools>
-  -t, --bumpType=<option>       (required) Version bump type.
-                                <options: major|minor>
-  -v, --verbose                 Verbose logging.
-  -x, --skipChecks              Skip all checks.
-  --[no-]branchCheck            Check that the current branch is correct.
-  --[no-]commit                 Commit changes to a new branch.
-  --[no-]install                Update lockfiles by running 'npm install' automatically.
-  --[no-]policyCheck            Check that the local repo complies with all policy.
-  --[no-]updateCheck            Check that the local repo is up to date with the remote.
-
-DESCRIPTION
-  Prepares the repo for a major or minor release. Helps pre-bump to the next major/minor so release branches can be
-  created.
-
-EXAMPLES
-  $ flub release prep
-```
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.1000/dist/commands/info.ts)_
 
 ## `flub version VERSION`
 
@@ -390,7 +324,7 @@ EXAMPLES
     $ flub version ^1.0.0
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.1000/dist/commands/version.ts)_
 <!-- commandsstop -->
 
 ## Trademark

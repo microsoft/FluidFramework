@@ -148,7 +148,7 @@ EXAMPLES
     $ fluv version ^1.0.0
 ```
 
-_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
+_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.1000/dist/commands/version.ts)_
 <!-- commandsstop -->
 
 ## Trademark
