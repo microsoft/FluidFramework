@@ -502,18 +502,19 @@ export class MergeTree {
 
         assert(refSeq !== undefined, "localSeq provided for local length without refSeq");
         assert(segment.seq !== undefined, "segment with no seq in mergeTree");
-        if (segment.seq !== UnassignedSequenceNumber) {
+        const { seq, removedSeq, localRemovedSeq } = segment;
+        if (seq !== UnassignedSequenceNumber) {
             // inserted remotely
-            if (segment.seq > refSeq
-                    || (segment.removedSeq !== undefined && segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= refSeq)
-                    || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
+            if (seq > refSeq
+                    || (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= refSeq)
+                    || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq)) {
                 return 0;
             }
             return segment.cachedLength;
         } else {
             assert(segment.localSeq !== undefined, "unacked segment with undefined localSeq");
             // inserted locally, still un-acked
-            if (segment.localSeq > localSeq || (segment.localRemovedSeq !== undefined && segment.localRemovedSeq <= localSeq)) {
+            if (segment.localSeq > localSeq || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq)) {
                 return 0;
             }
             return segment.cachedLength;
@@ -966,11 +967,15 @@ export class MergeTree {
                 if (!this.localPartialsComputed) {
                     const rebaseCollabWindow = new CollaborationWindow();
                     rebaseCollabWindow.loadFrom(this.collabWindow);
-                    // TODO: Determine if this is required by production codepaths.
                     if (refSeq < this.collabWindow.minSeq) {
                         rebaseCollabWindow.minSeq = refSeq;
                     }
-                    this.root.partialLengths = PartialSequenceLengths.combine(this.root, rebaseCollabWindow, true, true);
+                    this.root.partialLengths = PartialSequenceLengths.combine(
+                        this.root,
+                        rebaseCollabWindow,
+                        true,
+                        true,
+                    );
                     this.localPartialsComputed = true;
                 }
                 // Local client should see all segments except those after localSeq.
@@ -1125,8 +1130,15 @@ export class MergeTree {
     }
 
     private searchBlock<TClientData>(
-        block: IMergeBlock, pos: number, segpos: number, refSeq: number, clientId: number,
-        actions: SegmentActions<TClientData> | undefined, clientData: TClientData, localSeq?: number): ISegment | undefined {
+        block: IMergeBlock,
+        pos: number,
+        segpos: number,
+        refSeq: number,
+        clientId: number,
+        actions: SegmentActions<TClientData> | undefined,
+        clientData: TClientData,
+        localSeq?: number,
+    ): ISegment | undefined {
         let _pos = pos;
         let _segpos = segpos;
         const children = block.children;

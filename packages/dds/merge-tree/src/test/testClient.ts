@@ -297,11 +297,9 @@ export class TestClient extends Client {
             (seg.seq !== undefined && seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom)
             || (seg.localSeq !== undefined && seg.localSeq <= localSeq);
 
-        const isRemovedFromView = (segment: ISegment) => {
-            const { removedSeq, localRemovedSeq } = segment;
-            return (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
-            || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq)
-        }
+        const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment) =>
+            (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
+            || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
 
         this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
             assert(seg.seq !== undefined || seg.localSeq !== undefined, "either seq or localSeq should be defined");
@@ -341,8 +339,9 @@ export class TestClient extends Client {
 
         let segmentPosition = 0;
         const isInsertedInView = (seg: ISegment) => seg.localSeq === undefined || seg.localSeq <= localSeq;
-        const isRemovedFromView = (seg: ISegment) => seg.removedSeq !== undefined &&
-            (seg.removedSeq !== UnassignedSequenceNumber || seg.localRemovedSeq! <= localSeq);
+        const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment) => removedSeq !== undefined &&
+            (removedSeq !== UnassignedSequenceNumber || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq));
+
         /*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
@@ -366,7 +365,8 @@ export class TestClient extends Client {
             return true;
         });
 
-        assert(fasterComputedPosition === segmentPosition, "Expected fast-path computation to match result from walk all segments");
+        assert(fasterComputedPosition === segmentPosition,
+            "Expected fast-path computation to match result from walk all segments");
         return segmentPosition;
     }
 }

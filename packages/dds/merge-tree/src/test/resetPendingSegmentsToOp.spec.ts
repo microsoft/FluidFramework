@@ -60,22 +60,23 @@ describe("resetPendingSegmentsToOp", () => {
             // This test verifies that local partial length information only gets computed once when regenerating
             // a number of ops for reconnection.
             let localPartialsComputeCount = 0;
-            const spiedMergeTree = client.mergeTree as unknown as { localPartialsComputed: boolean; _localPartialsComputed: boolean };
+            const spiedMergeTree =
+                client.mergeTree as unknown as { localPartialsComputed: boolean; _localPartialsComputed: boolean; };
             spiedMergeTree._localPartialsComputed = spiedMergeTree.localPartialsComputed;
             Object.defineProperty(
-                client.mergeTree as unknown as { localPartialsComputed: boolean },
-                'localPartialsComputed',
+                client.mergeTree as unknown as { localPartialsComputed: boolean; },
+                "localPartialsComputed",
                 {
                     get() {
-                        return this._localPartialsComputed;
+                        return this._localPartialsComputed as boolean;
                     },
                     set(newValue) {
                         if (newValue) {
                             localPartialsComputeCount++;
                         }
                         this._localPartialsComputed = newValue;
-                    }
-                }
+                    },
+                },
             );
             const oldops = opList;
             opList = oldops.map((op) => client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first()!));
