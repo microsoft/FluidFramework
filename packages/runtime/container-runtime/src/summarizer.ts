@@ -390,7 +390,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                     ).catch(async (error) => {
                         // If the error is 404, so maybe the fetched version no longer exists on server. We retry to
                         // refresh with the latest version one time.
-                        if (isFluidError(error) && error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
+                        if (isFluidError(error)
+                            && error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
                             summaryLogger.sendTelemetryEvent({
                                 eventName: "HandleSummaryAckErrorRetry",
                                 referenceSequenceNumber: refSequenceNumber,
@@ -407,7 +408,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                         } else {
                             throw error;
                         }
-                    })
+                    }),
                 );
             } catch (error) {
                 summaryLogger.sendErrorEvent({
