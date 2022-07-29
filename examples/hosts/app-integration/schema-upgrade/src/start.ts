@@ -108,6 +108,12 @@ async function start(): Promise<void> {
         console.error(`Tried to migrate to version ${version} which is not supported by the current ModelLoader`);
     });
 
+    // Could do some migration loop here -- repeat this until no further migration needed
+    // const versionToPropose = await getMaximumMigratableVersionFromSomeService(model.version); // string | undefined
+    // if (versionToPropose !== undefined) {
+    //     model.proposeVersion(versionToPropose);
+    // }
+
     // TODO: here I proceed to rendering without checking the migration state, but instead we could decline to render
     // if we're going to immediately load a new container.  Consider whether this would be better.
     render(model);
