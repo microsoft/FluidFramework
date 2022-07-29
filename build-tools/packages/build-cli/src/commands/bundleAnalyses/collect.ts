@@ -16,8 +16,12 @@ export default class BundleAnalysesCollect extends BaseCommand {
             required: false,
         }),
         hasSmallAssetError: Flags.boolean({
-            description: "",
             default: false,
+            required: false,
+        }),
+        smallestAssetSize: Flags.integer({
+            description: `The smallest asset size that we deems to be correct. Adjust if we are testing for assets that are smaller.`,
+            default: 100,
             required: false,
         }),
         ...super.flags,
@@ -25,9 +29,6 @@ export default class BundleAnalysesCollect extends BaseCommand {
 
     public async run(): Promise<void> {
         const { flags } = await this.parse(BundleAnalysesCollect);
-
-        // The smallest asset size that we deems to be correct. Adjust if we are testing for assets that are smaller.
-        const smallestAssetSize = 100;
 
         if (!Array.isArray(flags.lernaOutput)) {
             this.error("failed to get package information");
@@ -67,7 +68,7 @@ export default class BundleAnalysesCollect extends BaseCommand {
                         continue;
                     }
 
-                    if (asset.size < smallestAssetSize) {
+                    if (asset.size < flags.smallestAssetSize) {
                         this.warn(`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`);
                         flags.hasSmallAssetError = true;
                     }
@@ -81,7 +82,7 @@ export default class BundleAnalysesCollect extends BaseCommand {
 
         if (flags.hasSmallAssetError) {
             this.error(
-                `Found assets are too small (<${smallestAssetSize} bytes). Webpack bundle analysis is probably not correct.`,
+                `Found assets are too small (<${flags.smallestAssetSize} bytes). Webpack bundle analysis is probably not correct.`,
             );
         }
     }

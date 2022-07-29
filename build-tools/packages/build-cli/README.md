@@ -163,12 +163,14 @@ Find all bundle analysis artifacts and copy them into a central location to uplo
 
 ```
 USAGE
-  $ flub bundleAnalyses collect [--lernaOutput <value>] [--hasSmallAssetError] [-v]
+  $ flub bundleAnalyses collect [--lernaOutput <value>] [--hasSmallAssetError] [--smallestAssetSize <value>] [-v]
 
 FLAGS
-  -v, --verbose          Verbose logging.
+  -v, --verbose                Verbose logging.
   --hasSmallAssetError
-  --lernaOutput=<value>  [default: npx lerna list --all --json] Lerna Output
+  --lernaOutput=<value>        [default: npx lerna list --all --json] Lerna Output
+  --smallestAssetSize=<value>  [default: 100] The smallest asset size that we deems to be correct. Adjust if we are
+                               testing for assets that are smaller.
 
 DESCRIPTION
   Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
