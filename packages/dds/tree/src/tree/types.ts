@@ -5,7 +5,7 @@
 
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema";
-import { Brand, Opaque } from "../util";
+import { brand, Brand, extractFromOpaque, Opaque } from "../util";
 
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
 export type TreeType = TreeSchemaIdentifier;
@@ -14,7 +14,7 @@ export type TreeType = TreeSchemaIdentifier;
  * The empty key ("") is used for unnamed relationships, such as the indexer
  * of an explicit array node.
  */
-export const EmptyKey = "" as const as FieldKey;
+export const EmptyKey: FieldKey = brand("");
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
@@ -55,6 +55,25 @@ export type ChildCollection = FieldKey | RootField;
  * to simplify the APIs and implementation.
  */
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {}
+
+/**
+ * Some code abstracts the root as a node with detached fields as its fields.
+ * This maps detached field to field keys for thus use.
+ *
+ * @returns `field` as a {@link LocalFieldKey} usable on a special root node serving as a parent of detached fields.
+ */
+export function detachedFieldAsKey(field: DetachedField): LocalFieldKey {
+    return brand(extractFromOpaque(field));
+}
+
+/**
+ * The inverse of {@link detachedFieldAsKey}.
+ * Thus must only be used on {@link LocalFieldKey}s which were produced via {@link detachedFieldAsKey},
+ * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
+ */
+export function keyAsDetachedField(key: FieldKey): DetachedField {
+    return brand(extractFromOpaque(key));
+}
 
 /**
  * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.

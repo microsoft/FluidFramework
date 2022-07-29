@@ -25,6 +25,7 @@ import {
     UniversalSequenceNumber,
 } from "./constants";
 import {
+    assertLocalReferences,
      LocalReferenceCollection,
      LocalReferencePosition,
 } from "./localReference";
@@ -875,7 +876,8 @@ export class MergeTree {
         } else {
             for (const ref of refsToSlide) {
                 ref.callbacks?.beforeSlide?.();
-                segment.localRefs.removeLocalRef(ref);
+                assertLocalReferences(ref);
+                ref.link(undefined, 0, undefined);
                 ref.callbacks?.afterSlide?.();
             }
         }
@@ -1861,7 +1863,6 @@ export class MergeTree {
                     // keep first removal at the head.
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
-                    segment.localRemovedSeq = undefined;
                     if (segment.localRefs?.empty === false) {
                         localOverlapWithRefs.push(segment);
                     }

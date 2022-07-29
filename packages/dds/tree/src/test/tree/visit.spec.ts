@@ -53,8 +53,8 @@ function testTreeVisit(marks: Delta.MarkList, expected: Readonly<VisitScript>): 
     testVisit(new Map([[rootKey, marks]]), [["enterField", rootKey], ...expected, ["exitField", rootKey]]);
 }
 
-const rootKey = brand<FieldKey>("root");
-const fooKey = brand<FieldKey>("foo");
+const rootKey: FieldKey = brand("root");
+const fooKey: FieldKey = brand("foo");
 const nodeX = { type: jsonString.name, value: "X" };
 const content = [nodeX];
 
