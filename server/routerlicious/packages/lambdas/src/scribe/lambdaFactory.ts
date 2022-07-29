@@ -103,9 +103,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 const errMsg =
                     `Received attempt to connect to invalid session: ${JSON.stringify(document.session)}`;
                 context.log?.error(errMsg, { messageMetaData });
-                // This can/will prevent any users from creating a valid session in this location
-                // for the liftime of this NoOpLambda. This is not ideal.
-                return new NoOpLambda(context);
+                if (this.serviceConfiguration.enforceDiscoveryFlow) {
+                    // This can/will prevent any users from creating a valid session in this location
+                    // for the liftime of this NoOpLambda. This is not ideal; however, throwing an error
+                    // to prevent lambda creation would mark the document as corrupted, which is worse.
+                    return new NoOpLambda(context);
+                }
             }
 
             // Fetch pending ops from scribeDeltas collection

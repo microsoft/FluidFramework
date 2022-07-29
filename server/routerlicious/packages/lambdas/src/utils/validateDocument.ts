@@ -16,8 +16,8 @@ export function isDocumentValid(document: IDocument): boolean {
  * Whether a document's active session aligns with the service's location.
  */
 export function isDocumentSessionValid(document: IDocument, serviceConfiguration: IServiceConfiguration): boolean {
-    if (!serviceConfiguration.enforceDiscoveryFlow || !serviceConfiguration.externalOrdererUrl || !document.session) {
-        // Not enforcing session discovery flow, or no session location to validate.
+    if (!serviceConfiguration.externalOrdererUrl || !document.session) {
+        // No session location to validate.
         return true;
     }
     if (!document.session.isSessionAlive) {
