@@ -405,6 +405,56 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         });
 
         /*
+         * Validates that we can detect references that were added and removed via new aliased data stores.
+         * 1. Summary 1 at t1. V = [A*, C]. E = []. C has unreferenced time t1.
+         * 2. Root data store B is created. E = [].
+         * 3. Op adds reference from A to B. E = [A -> B].
+         * 4. Op adds reference from B to C. E = [A -> B, B -> C].
+         * 5. Op removes reference from B to C. E = [A -> B].
+         * 6. Summary 2 at t2. V = [A*, B, C]. E = [A -> B]. C has unreferenced time t2.
+         * Validates that the unreferenced time for C is t2 which is > t1.
+         *
+         * The difference from the previous tests is that the new data stores is a root data store. So, this validates
+         * that we can detect new root data stores and outbound references from them.
+         */
+        it(`Scenario 5 - Reference added via new root nodes and removed`, async () => {
+            const summarizer = await createSummarizer(provider, mainContainer);
+
+            // Create data store C and mark it referenced by storing its handle in data store A.
+            const dataStoreC = await requestFluidObject<ITestDataObject>(
+                await containerRuntime.createDataStore(TestDataObjectType), "");
+            dataStoreA._root.set("dataStoreC", dataStoreC.handle);
+
+            // Remove the reference to C to make it unreferenced.
+            dataStoreA._root.delete("dataStoreC");
+
+            // 1. Get summary 1 and validate that C is has unreferenced timestamp. E = [].
+            await provider.ensureSynchronized();
+            const summaryResult1 = await summarizeNow(summarizer);
+            const timestamps1 = await getUnreferencedTimestamps(summaryResult1.summaryTree);
+            const dsCTime1 = timestamps1.get(dataStoreC._context.id);
+            assert(dsCTime1 !== undefined, `C should have unreferenced timestamp`);
+
+            // 2. Create data store B. E = [].
+            const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+            await dataStore.trySetAlias("dataStoreA");
+            const dataStoreB = await requestFluidObject<ITestDataObject>(dataStore, "");
+
+            // 4. Add reference from B to C. E = [A -> B, B -> C].
+            dataStoreB._root.set("dataStoreC", dataStoreC.handle);
+
+            // 5. Remove reference from B to C. E = [A -> B].
+            dataStoreB._root.delete("dataStoreC");
+
+            // 6. Get summary 2 and validate that C's unreferenced timestamps updated. E = [A -> B].
+            await provider.ensureSynchronized();
+            const summaryResult2 = await summarizeNow(summarizer);
+            const timestamps2 = await getUnreferencedTimestamps(summaryResult2.summaryTree);
+            const dsCTime2 = timestamps2.get(dataStoreC._context.id);
+            assert(dsCTime2 !== undefined && dsCTime2 > dsCTime1, `C's timestamp should have updated`);
+        });
+
+        /*
          * Validates that we can detect references that were added via new data stores before they are referenced
          * themselves, and then the reference from the new data store is removed.
          * 1. Summary 1 at t1. V = [A*, C]. E = []. C has unreferenced time t1.
