@@ -371,7 +371,7 @@ export class Client {
      */
     public rollback?(op: any, localOpMetadata: unknown) {
         if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
-            const pendingSegmentGroup = this.mergeTree.pendingSegments?.pop?.();
+            const pendingSegmentGroup = this._mergeTree.pendingSegments?.pop?.();
             if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
                 || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
                 throw new Error("Rollback op doesn't match last edit");
@@ -385,7 +385,7 @@ export class Client {
                 const segWindow = this.getCollabWindow();
                 if (op.type === MergeTreeDeltaType.INSERT) {
                     const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
-                    this.mergeTree.markRangeRemoved(
+                    this._mergeTree.markRangeRemoved(
                         start,
                         start + segment.cachedLength,
                         UniversalSequenceNumber,
@@ -398,7 +398,7 @@ export class Client {
                     const rollbackType = (op.combiningOp && op.combiningOp.name === "rewrite") ?
                         PropertiesRollback.Rewrite : PropertiesRollback.Rollback;
                     const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props, undefined);
-                    this.mergeTree.annotateRange(
+                    this._mergeTree.annotateRange(
                         start,
                         start + segment.cachedLength,
                         props,
