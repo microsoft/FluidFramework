@@ -38,7 +38,7 @@ function getName(name: string): string {
  * mocha's --reporter option.
  *
  * This reporter takes output from mocha events and prints a user-friendly version of the results, in addition
- * to writing them to a file. The path of the output file can be controlled with --reporterOption reportDir=<path>.
+ * to writing them to a file. The path of the output file can be controlled with --reporterOptions reportDir=<path>.
  * This logic is coupled to MemoryTestRunner, and depends on how it emits the actual benchmark data.
  *
  * See https://mochajs.org/api/tutorial-custom-reporter.html for more information about custom mocha reporters.
@@ -47,10 +47,10 @@ class MochaMemoryTestReporter {
     private readonly inProgressSuites: Map<string, [string, MemoryBenchmarkStats][]> = new Map();
     private readonly outputDirectory: string;
 
-    public constructor(runner: Runner, options?: { reporterOption?: { reportDir?: string; }; }) {
+    public constructor(runner: Runner, options?: { reporterOptions?: { reportDir?: string; }; }) {
         // If changing this or the result file logic in general,
         // be sure to update the glob used to look for output files in the perf pipeline.
-        const reportDir = options?.reporterOption?.reportDir ?? "";
+        const reportDir = options?.reporterOptions?.reportDir ?? "";
         this.outputDirectory = reportDir !== "" ? path.resolve(reportDir) : path.join(__dirname, ".output");
         if (!fs.existsSync(this.outputDirectory)) {
             fs.mkdirSync(this.outputDirectory, { recursive: true });

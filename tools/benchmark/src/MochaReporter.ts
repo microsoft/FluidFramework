@@ -32,6 +32,7 @@ function getName(name: string): string {
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).
+ * The path of the output file can be controlled with --reporterOptions reportDir=<path>.
  * Mocha expects the `exports` of the reporter module to be a constructor accepting a `Mocha.Runner`, so we
  * match that here.
  *
@@ -42,8 +43,8 @@ function getName(name: string): string {
  */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 module.exports = class {
-    public constructor(runner: Runner, options?: ReporterOptions) {
-        const benchmarkReporter = new BenchmarkReporter(options?.reportDir);
+    public constructor(runner: Runner, options?: { reporterOptions?: ReporterOptions; }) {
+        const benchmarkReporter = new BenchmarkReporter(options?.reporterOptions?.reportDir);
         const data: Map<Test, BenchmarkData> = new Map();
         runner
             .on(Runner.constants.EVENT_TEST_BEGIN, (test: Test) => {
