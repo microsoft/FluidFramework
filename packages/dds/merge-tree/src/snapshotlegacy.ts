@@ -37,7 +37,6 @@ interface SnapshotHeader {
 }
 
 /**
- * @deprecated  for internal use only. public export will be removed.
  * @internal
  */
 export class SnapshotLegacy {

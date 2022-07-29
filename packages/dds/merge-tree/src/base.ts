@@ -4,8 +4,6 @@
  */
 
 /**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
  * A range [start, end)
  */
 export interface IIntegerRange {
