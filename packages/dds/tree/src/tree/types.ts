@@ -71,7 +71,7 @@ export function detachedFieldAsKey(field: DetachedField): LocalFieldKey {
  * Thus must only be used on {@link LocalFieldKey}s which were produced via {@link detachedFieldAsKey},
  * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
  */
-export function keyAsDetachedField(key: DetachedField): DetachedField {
+export function keyAsDetachedField(key: FieldKey): DetachedField {
     return brand(extractFromOpaque(key));
 }
 

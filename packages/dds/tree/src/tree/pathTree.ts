@@ -32,3 +32,26 @@ export interface UpPath {
      */
      readonly parentIndex: number; // TODO: field index branded type?
 }
+
+/**
+ * @returns a deep copy of the provided path as simple javascript objects.
+ * This is safe to hold onto and use deep object comparisons on.
+ */
+export function clonePath(path: UpPath): UpPath;
+
+/**
+ * @returns a deep copy of the provided path as simple javascript objects.
+ * This is safe to hold onto and use deep object comparisons on.
+ */
+export function clonePath(path: UpPath | undefined): UpPath | undefined;
+
+export function clonePath(path: UpPath | undefined): UpPath | undefined {
+    if (path === undefined) {
+        return undefined;
+    }
+    return {
+        parent: clonePath(path.parent),
+        parentField: path.parentField,
+        parentIndex: path.parentIndex,
+    };
+}
