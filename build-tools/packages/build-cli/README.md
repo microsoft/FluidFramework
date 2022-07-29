@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.3.1000 win32-x64 node-v14.18.1
+@fluid-tools/build-cli/0.3.2000 win32-x64 node-v14.18.1
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -104,6 +104,7 @@ USAGE
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
 * [`flub bundleAnalyses collect`](#flub-bundleanalyses-collect)
 * [`flub bundleAnalyses run`](#flub-bundleanalyses-run)
+* [`flub check layers`](#flub-check-layers)
 * [`flub commands`](#flub-commands)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
@@ -194,6 +195,25 @@ DESCRIPTION
   repo as this better isolates its usage and dependencies
 ```
 
+## `flub check layers`
+
+Checks that the dependencies between Fluid Framework packages are properly layered.
+
+```
+USAGE
+  $ flub check layers [--md <value>] [--dot <value>] [--info <value>] [--logtime] [-v]
+
+FLAGS
+  -v, --verbose   Verbose logging.
+  --dot=<value>   Generate *.dot for GraphViz
+  --info=<value>  Path to the layer graph json file
+  --logtime       Display the current time on every status message for logging
+  --md=<value>    [default: .] Generate PACKAGES.md file at this path relative to repo root
+
+DESCRIPTION
+  Checks that the dependencies between Fluid Framework packages are properly layered.
+```
+
 ## `flub commands`
 
 list all the commands
@@ -264,7 +284,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.1000/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/info.ts)_
 
 ## `flub version VERSION`
 
@@ -306,7 +326,7 @@ EXAMPLES
     $ flub version ^1.0.0
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.1000/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/version.ts)_
 <!-- commandsstop -->
 
 ## Trademark
