@@ -12,11 +12,11 @@ const packagesMdFileName = "PACKAGES.md";
 
 export class CheckLayers extends BaseCommand {
     static description =
-        "Make sure the dependencies between Fluid Framework packages are properly layered";
+        "Checks that the dependencies between Fluid Framework packages are properly layered.";
 
     static flags = {
         md: Flags.string({
-            description: `Generate ${packagesMdFileName} file for human consumption at path relative to repo root`,
+            description: `Generate ${packagesMdFileName} file at this path relative to repo root`,
             required: false,
             default: ".", // default is repo root (relative path to repo root)
         }),
@@ -47,37 +47,33 @@ export class CheckLayers extends BaseCommand {
 
         timer.time("Package scan completed");
 
-        try {
-            const layerGraph = LayerGraph.load(resolvedRoot, packages, flags.info);
+        const layerGraph = LayerGraph.load(resolvedRoot, packages, flags.info);
 
-            // Write human-readable package list organized by layer
-            if (flags.md !== undefined) {
-                const packagesMdFilePath: string = path.join(
-                    resolvedRoot,
-                    flags.md,
-                    packagesMdFileName,
-                );
-                await writeFileAsync(
-                    packagesMdFilePath,
-                    layerGraph.generatePackageLayersMarkdown(resolvedRoot),
-                );
-            }
-
-            // Write machine-readable dot file used to render a dependency graph
-            if (flags.dot !== undefined) {
-                await writeFileAsync(flags.dot, layerGraph.generateDotGraph());
-            }
-
-            const success: boolean = layerGraph.verify();
-            timer.time("Layer check completed");
-
-            if (!success) {
-                this.error("Layer check not succesful");
-            }
-
-            this.log(`Layer check passed (${packages.packages.length} packages)`);
-        } catch (error_: unknown) {
-            this.error(error_ as string);
+        // Write human-readable package list organized by layer
+        if (flags.md !== undefined) {
+            const packagesMdFilePath: string = path.join(
+                resolvedRoot,
+                flags.md,
+                packagesMdFileName,
+            );
+            await writeFileAsync(
+                packagesMdFilePath,
+                layerGraph.generatePackageLayersMarkdown(resolvedRoot),
+            );
         }
+
+        // Write machine-readable dot file used to render a dependency graph
+        if (flags.dot !== undefined) {
+            await writeFileAsync(flags.dot, layerGraph.generateDotGraph());
+        }
+
+        const success: boolean = layerGraph.verify();
+        timer.time("Layer check completed");
+
+        if (!success) {
+            this.error("Layer check not succesful");
+        }
+
+        this.log(`Layer check passed (${packages.packages.length} packages)`);
     }
 }

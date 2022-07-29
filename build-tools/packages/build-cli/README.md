@@ -158,7 +158,7 @@ EXAMPLES
 
 ## `flub check layers`
 
-Make sure the dependencies between Fluid Framework packages are properly layered
+Checks that the dependencies between Fluid Framework packages are properly layered.
 
 ```
 USAGE
@@ -169,10 +169,10 @@ FLAGS
   --dot=<value>   Generate *.dot for GraphViz
   --info=<value>  Path to the layer graph json file
   --logtime       Display the current time on every status message for logging
-  --md=<value>    [default: .] Generate PACKAGES.md file for human consumption at path relative to repo root
+  --md=<value>    [default: .] Generate PACKAGES.md file at this path relative to repo root
 
 DESCRIPTION
-  Make sure the dependencies between Fluid Framework packages are properly layered
+  Checks that the dependencies between Fluid Framework packages are properly layered.
 ```
 
 ## `flub commands`
