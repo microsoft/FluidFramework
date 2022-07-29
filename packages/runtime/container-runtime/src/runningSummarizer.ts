@@ -473,9 +473,9 @@ export class RunningSummarizer implements IDisposable {
                     await delay(delaySeconds * 1000);
                 }
 
-                if (this.refreshSummaryAckLock !== undefined) {
-                    await this.refreshSummaryAckLock;
-                }
+                // Make sure the refresh Summary Ack is not being executed.
+                await this.refreshSummaryAckLock;
+
                 // Note: no need to account for cancellationToken.waitCancelled here, as
                 // this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
                 const resultSummarize = this.generator.summarize(summarizeProps, options, cancellationToken);
