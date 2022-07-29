@@ -76,6 +76,23 @@ describe('revert', () => {
 		expect(revertedChange.source.start.referenceSibling).to.deep.equal(firstNode.identifier);
 	});
 
+    /** This is a regression test for a bug where we make sure that any built/detached nodes are cleared when any
+     *  empty insert/detach change is skipped once encountered. The expected outcome is undefined, as during the second
+     *  empty insert (with the same DetachSequenceId), there should be no such node in the builtNodes.
+    */
+    it('handles reverting the insert of empty nodes, with subsequent empty nodes of same DetachedSequenceId', () => {
+		const emptyTraitNodeId = 0 as DetachedSequenceId;
+		const emptyTraitBuild = ChangeInternal.build([], emptyTraitNodeId);
+		const emptyTraitInsert = ChangeInternal.insert(emptyTraitNodeId,
+			StablePlaceInternal.atStartOf(testTree.left.traitLocation)
+		);
+		const result = revert(
+            [emptyTraitBuild, emptyTraitInsert, emptyTraitInsert],
+            testTree.view
+        );
+		expect(result).to.be.undefined;
+	});
+
 	it('handles reverting the detach of an empty trait', () => {
 		const insertedNodeId = 0 as DetachedSequenceId;
 		const result = expectDefined(
