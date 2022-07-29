@@ -113,6 +113,16 @@ interface UnsequencedPartialLengthInfo {
      * the refSeq exceeds the seq of the remote remove AND the localSeq exceeds the localSeq of the local remove.
      */
     overlappingRemoves: LocalPartialSequenceLength[];
+
+    /**
+     * Cached keyed on refSeq which stores length information for the total overlap of removed segments at
+     * that refSeq.
+     * This information is derivable from the entries of `overlappingRemoves`.
+     *
+     * Like the `partialLengths` field, `seq` on each entry is actually the local seq.
+     * See `computeOverlappingLocalRemoves` for more information.
+     */
+    cachedOverlappingByRefSeq: Map<number, PartialSequenceLength[]>;
 }
 
 interface LocalPartialSequenceLength extends PartialSequenceLength {
@@ -239,6 +249,7 @@ export class PartialSequenceLengths {
                 combinedPartialLengths.unsequencedRecords = {
                     partialLengths: mergePartialLengths(childUnsequencedPartialLengths),
                     overlappingRemoves: Array.from(mergeSortedListsBySeq(childOverlapRemoves)),
+                    cachedOverlappingByRefSeq: new Map(),
                 };
             }
 
@@ -542,6 +553,7 @@ export class PartialSequenceLengths {
                 this.unsequencedRecords = {
                     partialLengths: [],
                     overlappingRemoves: [],
+                    cachedOverlappingByRefSeq: new Map(),
                 };
             }
         }
@@ -649,23 +661,60 @@ export class PartialSequenceLengths {
 
                 // Lastly, we must subtract out any double-counted removes, which occur if a currently un-acked local
                 // remove overlaps with a remote client's remove that occurred at sequence number <=refSeq.
-                // Note that the overlappingRemoves field's lengths aren't pre-computed, so we actually need to
-                // iterate in this case.
-                // If this ever becomes a problem, a simple cache of these values should bring the asymptotics to match
-                // the rest of the length computation, since reconnect only ever needs to compute for O(1) values of
-                // refSeq.
-                for (const partialLength of this.unsequencedRecords.overlappingRemoves) {
-                    if (partialLength.seq > refSeq) {
-                        break;
-                    }
-
-                    if (partialLength.localSeq <= localSeq) {
-                        pLen -= partialLength.seglen;
-                    }
-                }
+                pLen -= this.computeOverlappingLocalRemoves(refSeq, localSeq);
             }
         }
         return pLen;
+    }
+
+    /**
+     * Computes the seglen for the double-counted removed overlap at (refSeq, localSeq). This logic is equivalent
+     * to the following:
+     *
+     * ```typescript
+     *   let total = 0;
+     *   for (const partialLength of this.unsequencedRecords!.overlappingRemoves) {
+     *       if (partialLength.seq > refSeq) {
+     *           break;
+     *       }
+     *
+     *      if (partialLength.localSeq <= localSeq) {
+     *          total += partialLength.seglen;
+     *      }
+     *   }
+     *
+     *   return total;
+     * ```
+     *
+     * Reconnect happens to only need to compute these lengths for two refSeq values: before and
+     * after the rebase. Since these lists potentially scale with O(collab window * number of local edits)
+     * and potentially need to be queried for each local op that gets rebased,
+     * we cache the results for a given refSeq in `this.unsequencedRecords.cachedOverlappingByRefSeq` so
+     * that they can be binary-searched the same way the usual partialLengths lists are.
+     */
+    private computeOverlappingLocalRemoves(refSeq: number, localSeq: number): number {
+        if (this.unsequencedRecords === undefined) {
+            return 0;
+        }
+
+        let cachedOverlapPartials = this.unsequencedRecords.cachedOverlappingByRefSeq.get(refSeq);
+        if (!cachedOverlapPartials) {
+            const partials: PartialSequenceLength[] = [];
+            for (const partial of this.unsequencedRecords.overlappingRemoves) {
+                if (partial.seq > refSeq) {
+                    break;
+                }
+
+                partials.push({ ...partial, seq: partial.localSeq, len: 0 });
+            }
+            partials.sort((a, b) => a.seq - b.seq);
+            // This coalesces entries with the same localSeq as well as computes overall lengths.
+            cachedOverlapPartials = mergePartialLengths([partials]);
+            this.unsequencedRecords.cachedOverlappingByRefSeq.set(refSeq, cachedOverlapPartials);
+        }
+
+        const overlapIndex = latestLEQ(cachedOverlapPartials, localSeq);
+        return overlapIndex >= 0 ? cachedOverlapPartials[overlapIndex].len : 0;
     }
 
     public toString(glc?: (id: number) => string, indentCount = 0) {

@@ -2073,12 +2073,12 @@ export class MergeTree {
 
     private blockUpdateLength(node: IMergeBlock, seq: number, clientId: number) {
         this.blockUpdate(node);
+        this.localPartialsComputed = false;
         if (
             this.collabWindow.collaborating
             && seq !== UnassignedSequenceNumber
             && seq !== TreeMaintenanceSequenceNumber
         ) {
-            this.localPartialsComputed = false;
             if (
                 node.partialLengths !== undefined
                 && MergeTree.options.incrementalUpdate
