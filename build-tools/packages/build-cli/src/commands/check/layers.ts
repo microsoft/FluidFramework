@@ -10,7 +10,7 @@ import { BaseCommand } from "../../base";
 
 const packagesMdFileName = "PACKAGES.md";
 
-export class CheckLayers extends BaseCommand {
+export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
     static description =
         "Checks that the dependencies between Fluid Framework packages are properly layered.";
 
@@ -32,14 +32,14 @@ export class CheckLayers extends BaseCommand {
             description: "Display the current time on every status message for logging",
             required: false,
         }),
-        ...super.flags,
+        ...BaseCommand.flags,
     };
 
     async run() {
-        const { flags } = await this.parse(CheckLayers);
+        const flags = this.processedFlags;
         const timer = new Timer(flags.timer);
 
-        const context = await this.getContext(flags.verbose);
+        const context = await this.getContext();
         const resolvedRoot = context.repo.resolvedRoot;
 
         // Load the package
