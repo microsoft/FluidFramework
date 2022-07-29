@@ -533,4 +533,126 @@ describe("AzureClient", () => {
             await assert.rejects(resources, () => true, "We should not be able to copy container.");
         });
     });
+
+    describe("Fluid audience", () => {
+        /**
+         * Scenario: Find original member/self
+         *
+         * Expected behavior: container should have a single member upon creation.
+         */
+        it("can find original member", async () => {
+            const { container, services } = await client.createContainer(schema);
+            const containerId = await container.attach();
+            await new Promise<void>((resolve) => {
+                container.on("connected", () => {
+                    resolve();
+                });
+            });
+
+            assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+            assert.strictEqual(
+                container.attachState,
+                AttachState.Attached,
+                "Container is not attached after attach is called",
+            );
+
+            /* This is a workaround for a known bug, we should have one member (self) upon container connection */
+            if (services.audience.getMembers().size === 0) {
+                await new Promise<void>((resolve) => {
+                    services.audience.on("memberAdded", () => {
+                        resolve();
+                    });
+                });
+            }
+
+            const members = services.audience.getMembers();
+            assert.strictEqual(members.size, 1, "We should have only one member at this point.");
+
+            const myself = services.audience.getMyself();
+            assert.notStrictEqual(myself, undefined, "We should have myself at this point.");
+        });
+
+        /**
+         * Scenario: Find partner member
+         *
+         * Expected behavior: upon resolving container, the partner member should be able
+         * to resolve original member.
+         */
+        it("can find partner member", async () => {
+            const { container, services } = await client.createContainer(schema);
+            const containerId = await container.attach();
+            await new Promise<void>((resolve) => {
+                container.on("connected", () => {
+                    resolve();
+                });
+            });
+
+            assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
+            assert.strictEqual(
+                container.attachState,
+                AttachState.Attached,
+                "Container is not attached after attach is called",
+            );
+
+            /* This is a workaround for a known bug, we should have one member (self) upon container connection */
+            if (services.audience.getMembers().size === 0) {
+                await new Promise<void>((resolve) => {
+                    services.audience.on("memberAdded", () => {
+                        resolve();
+                    });
+                });
+            }
+
+            const originalSelf = services.audience.getMyself();
+            assert.notStrictEqual(originalSelf, undefined, "We should have myself at this point.");
+
+            const client2 = createAzureClient("test-id-2", "test-user-name-2");
+            const { services: servicesGet } = await client2.getContainer(containerId, schema);
+
+            const members = servicesGet.audience.getMembers();
+            assert.strictEqual(members.size, 2, "We should have two members at this point.");
+
+            const partner = servicesGet.audience.getMyself();
+            assert.notStrictEqual(partner, undefined, "We should have other-self at this point.");
+
+            assert.notStrictEqual(
+                partner?.userId,
+                originalSelf?.userId,
+                "Self and partner should have different IDs",
+            );
+        });
+
+        /**
+         * Scenario: Partner should be able to observe change in audience
+         *
+         * Expected behavior: upon 1 partner leaving, other parther should observe
+         * memberRemoved event and have correct partner count.
+         */
+        it("can observe member leaving", async () => {
+            const { container } = await client.createContainer(schema);
+            const containerId = await container.attach();
+            await new Promise<void>((resolve) => {
+                container.on("connected", () => {
+                    resolve();
+                });
+            });
+
+            const client2 = createAzureClient("test-id-2", "test-user-name-2");
+            const { services: servicesGet } = await client2.getContainer(containerId, schema);
+
+            let members = servicesGet.audience.getMembers();
+            assert.strictEqual(members.size, 2, "We should have two members at this point.");
+
+            container.disconnect();
+
+            await new Promise<void>((resolve) => {
+                servicesGet.audience.on("memberRemoved", () => {
+                    resolve();
+                });
+            });
+
+            members = servicesGet.audience.getMembers();
+            assert.strictEqual(members.size, 1, "We should have one member left at this point.");
+        });
+    });
 });
