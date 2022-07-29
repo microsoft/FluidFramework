@@ -52,7 +52,7 @@ releasegroup1 dependencies to `~1.4.0-0`:
 }
 ```
 
-### Bumping based on current dependency range
+## Bumping based on current dependency range
 
 It is very helpful to bump a dependency based on its current value and a bump type, such as "major" or "minor". The
 following command yields the same results as the above command:
@@ -63,7 +63,7 @@ flub bump deps releasegroup1 --bumpType minor --prerelease
 
 To bump to a release version instead, omit the `--prerelease` argument.
 
-### Bumping standalone dependencies
+## Bumping standalone dependencies
 
 Some packages are versioned independently from other release groups. In the example above, we could bump to the next
 major version of the eslint-config package across the whole repo using the following command:
@@ -85,43 +85,6 @@ That command will update the package.json like so:
 
 For more detailed usage information see the [command reference](#flub-bump-deps-package_or_release_group);
 
-## release prep
-
-The `release prep` command is used to prepare the repo to create release branches. It helps ensure that the main branch
-is ready for a release branch to be created -- that is, it checks policy, ensures that there are no pre-release
-dependencies that need to be updated, etc.
-
-### Release prep for minor versions
-
-Releasing minor versions requires creating a `release/*` branch for the release, and bumping the release groups to the
-_next_ minor version after the fork.
-
-1. Check policy. If policy changes are needed, they must be merged before continuing.
-1. Check for prerelease dependencies on released packages. If found, they must be updated and merged before continuing.
-1. Bump the release group to the next MINOR version, PR and merge the changes.
-1. Prompt the user to create the release branch at the commit just before the merged PR from the previous step. Also
-   tells them the command to run on the release branch in order to kick off the release.
-
-Release prep is done. Now you can switch to the release branch and run the [release command](#release) to complete the
-release.
-
-### Release prep for major versions
-
-Releasing major versions requires merging the next branch into main, then
-
-1. Check that next branch has been merged into main. If it has not, it must be before continuing.
-1. Check policy. If policy changes are needed, they must be merged before continuing.
-1. Check for prerelease dependencies on released packages. If found, they must be updated and merged before continuing.
-1. Bump the release group to the next MAJOR version, PR and merge the changes.
-1. Prompt the user to create the release branch at the commit just before the merged PR from the previous step.
-1. Still on the main branch, bump the release group to the next MINOR version, PR and merge the changes.
-
-## release
-
-The `release` command is used to release packages and release groups from release branches. By default, the `release`
-command will only run on release branches.
-
-### Releasing independent packages
 # Usage
 <!-- usage -->
 ```sh-session
