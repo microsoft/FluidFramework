@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     ITreeCursor,
     TreeNavigationResult,
@@ -18,6 +19,7 @@ import {
     getGenericTreeFieldMap,
     JsonableTree,
     TreeType,
+    UpPath,
     Value,
 } from "../tree";
 import { fail } from "../util";
@@ -60,14 +62,14 @@ export function singleTextCursor(root: JsonableTree): TextCursor {
  */
 export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     // Indices traversed to visit this node: does not include current level (which is stored in `index`).
-    private readonly indexStack: number[] = [];
+    protected readonly indexStack: number[] = [];
     // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
-    private readonly siblingStack: JsonableTree[][] = [];
+    protected readonly siblingStack: JsonableTree[][] = [];
     // Keys traversed to visit this node, including detached field at the beginning if there is one.
-    private readonly keyStack: FieldKey[] = [];
+    protected readonly keyStack: FieldKey[] = [];
 
-    private siblings: JsonableTree[];
-    private index: number;
+    protected siblings: JsonableTree[];
+    protected index: number;
 
     public constructor(root: JsonableTree[], index: number, field?: DetachedField) {
         this.index = index;
@@ -84,7 +86,7 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
         return this.keyStack.length === this.siblingStack.length + 1;
     }
 
-    private getNode(): JsonableTree {
+    protected getNode(): JsonableTree {
         return this.siblings[this.index];
     }
 
@@ -139,6 +141,44 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
 
     length(key: FieldKey): number {
         return getGenericTreeField(this.getNode(), key, false).length;
+    }
+}
+
+export class RootedTextCursor extends TextCursor {
+    public constructor(root: JsonableTree[], index: number, field: DetachedField) {
+        super(root, index, field);
+    }
+
+    getParentFieldKey(): FieldKey {
+        return this.keyStack[this.keyStack.length - 1];
+    }
+
+    getPath(): UpPath {
+        // Perf Note:
+        // This is O(depth) in tree.
+        // If many different anchors are created, this could be optimized to amortize the costs.
+        // For example, the cursor could cache UpPaths from the anchorSet when creating an anchor,
+        // then reuse them as a starting point when making another.
+        // Could cache this at one depth, and remember the depth.
+        // When navigating up, adjust cached anchor if present.
+
+        let path: UpPath | undefined;
+        const length = this.indexStack.length;
+        assert(this.siblingStack.length === length, "Unexpected siblingStack.length");
+        assert(this.keyStack.length === length + 1, "Unexpected keyStack.length");
+        for (let height = 0; height < length; height++) {
+            path = {
+                parent: path,
+                parentIndex: this.indexStack[height],
+                parentField: this.keyStack[height],
+            };
+        }
+        path = {
+            parent: path,
+            parentIndex: this.index,
+            parentField: this.keyStack[length],
+        };
+        return path;
     }
 }
 

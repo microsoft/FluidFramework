@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
+import { jsonableTreeFromCursor, RootedTextCursor, singleTextCursor } from "../treeTextCursor";
 import {
     DisposingDependee, ObservingDependent, recordDependency, SimpleDependee, SimpleObservingDependent,
 } from "../../dependency-tracking";
@@ -15,8 +15,8 @@ import {
 } from "../../forest";
 import { StoredSchemaRepository } from "../../schema";
 import {
-    FieldKey, TreeType, DetachedField, AnchorSet, detachedFieldAsKey, keyAsDetachedField,
-    Value, Delta, JsonableTree, getGenericTreeField, UpPath, Anchor, visitDelta, getGenericTreeFieldMap,
+    FieldKey, DetachedField, AnchorSet, detachedFieldAsKey, keyAsDetachedField,
+    Value, Delta, JsonableTree, getGenericTreeField, UpPath, Anchor, visitDelta,
 } from "../../tree";
 import { brand, fail } from "../../util";
 
@@ -268,25 +268,14 @@ type ObjectField = JsonableTree[];
 
 /**
  * TODO: track observations.
- *
- * TODO: TextCursor is mostly a subset of this functionality.
- * Maybe do a refactoring to deduplicate this.
  */
-class Cursor implements ITreeSubscriptionCursor {
+class Cursor extends RootedTextCursor implements ITreeSubscriptionCursor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Cleared;
-    public constructor(public readonly forest: ObjectForest) { }
+    public constructor(public readonly forest: ObjectForest) {
+        super([], -1, forest.rootField);
+    }
 
     observer?: ObservingDependent | undefined;
-
-    // Indices traversed to visit this node: does not include current level (which is stored in `index`).
-    private readonly indexStack: number[] = [];
-    // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
-    private readonly siblingStack: JsonableTree[][] = [];
-    // Keys traversed to visit this node, including detached field at the beginning.
-    private readonly keyStack: FieldKey[] = [];
-
-    private siblings: JsonableTree[] = [];
-    private index: number = -1;
 
     // TODO: tests for clear when not at root.
     public clear(): void {
@@ -314,21 +303,6 @@ class Cursor implements ITreeSubscriptionCursor {
         return this.siblings[this.index];
     }
 
-    getParentFieldKey(): FieldKey {
-        return this.keyStack[this.keyStack.length - 1];
-    }
-
-    get value(): Value {
-        return this.getNode().value;
-    }
-
-    get type(): TreeType {
-        return this.getNode().type;
-    }
-    get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(getGenericTreeFieldMap(this.getNode(), false)) as Iterable<FieldKey>;
-    }
-
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor {
         const other = this.forest.allocateCursor();
         const path = this.getPath();
@@ -341,78 +315,9 @@ class Cursor implements ITreeSubscriptionCursor {
         this.state = ITreeSubscriptionCursorState.Freed;
     }
 
-    getPath(): UpPath {
-        // Perf Note:
-        // This is O(depth) in tree.
-        // If many different anchors are created, this could be optimized to amortize the costs.
-        // For example, the cursor could cache UpPaths from the anchorSet when creating an anchor,
-        // then reuse them as a starting point when making another.
-        // Could cache this at one depth, and remember the depth.
-        // When navigating up, adjust cached anchor if present.
-
-        let path: UpPath | undefined;
-        const length = this.indexStack.length;
-        assert(this.siblingStack.length === length, "Unexpected siblingStack.length");
-        assert(this.keyStack.length === length + 1, "Unexpected keyStack.length");
-        for (let height = 0; height < length; height++) {
-            path = {
-                parent: path,
-                parentIndex: this.indexStack[height],
-                parentField: this.keyStack[height],
-            };
-        }
-        path = {
-            parent: path,
-            parentIndex: this.index,
-            parentField: this.keyStack[length],
-        };
-        return path;
-    }
-
     buildAnchor(): Anchor {
+        assert(this.state === ITreeSubscriptionCursorState.Current, "Cursor must be current to be used");
         return this.forest.anchors.track(this.getPath());
-    }
-
-    down(key: FieldKey, index: number): TreeNavigationResult {
-        const siblings = getGenericTreeField(this.getNode(), key, false);
-        const child = siblings[index];
-        if (child !== undefined) {
-            this.indexStack.push(this.index);
-            this.siblingStack.push(this.siblings);
-            this.keyStack.push(key);
-            this.siblings = siblings;
-            this.index = index;
-            return TreeNavigationResult.Ok;
-        }
-        return TreeNavigationResult.NotFound;
-    }
-
-    seek(offset: number): TreeNavigationResult {
-        assert(this.siblings !== undefined, 0x340 /* Cursor must be current to be used */);
-        const index = offset + this.index;
-        const child = this.siblings[index];
-        if (child !== undefined) {
-            this.index = index;
-            return TreeNavigationResult.Ok;
-        }
-        return TreeNavigationResult.NotFound;
-    }
-
-    up(): TreeNavigationResult {
-        const index = this.indexStack.pop();
-        if (index === undefined) {
-            // At root already (and made no changes to current location)
-            return TreeNavigationResult.NotFound;
-        }
-
-        this.index = index;
-        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-        this.keyStack.pop();
-        return TreeNavigationResult.Ok;
-    }
-
-    length(key: FieldKey): number {
-        return getGenericTreeField(this.getNode(), key, false).length;
     }
 }
 
