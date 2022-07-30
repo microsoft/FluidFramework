@@ -14,7 +14,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, Trace, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
-import { ListRemoveEntry, RedBlackTree } from "./collections";
+import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition } from "./localReference";
 import {
@@ -48,6 +48,7 @@ import {
     ReferenceType,
 } from "./ops";
 import { PropertySet } from "./properties";
+import { PropertiesRollback } from "./segmentPropertiesManager";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
@@ -369,34 +370,49 @@ export class Client {
      * Revert an op
      */
     public rollback?(op: any, localOpMetadata: unknown) {
-        if (op.type !== MergeTreeDeltaType.INSERT) {
+        if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
+            const pendingSegmentGroup = this._mergeTree.pendingSegments?.pop?.();
+            if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
+                || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
+                throw new Error("Rollback op doesn't match last edit");
+            }
+            let i = 0;
+            for (const segment of pendingSegmentGroup.segments) {
+                const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
+                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+
+                const start = this.findRollbackPosition(segment);
+                const segWindow = this.getCollabWindow();
+                if (op.type === MergeTreeDeltaType.INSERT) {
+                    const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
+                    this._mergeTree.markRangeRemoved(
+                        start,
+                        start + segment.cachedLength,
+                        UniversalSequenceNumber,
+                        segWindow.clientId,
+                        UniversalSequenceNumber,
+                        false,
+                        { op: removeOp });
+                } else {
+                    const props = pendingSegmentGroup.previousProps![i];
+                    const rollbackType = (op.combiningOp && op.combiningOp.name === "rewrite") ?
+                        PropertiesRollback.Rewrite : PropertiesRollback.Rollback;
+                    const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props, undefined);
+                    this._mergeTree.annotateRange(
+                        start,
+                        start + segment.cachedLength,
+                        props,
+                        undefined,
+                        UniversalSequenceNumber,
+                        segWindow.clientId,
+                        UniversalSequenceNumber,
+                        { op: annotateOp },
+                        rollbackType);
+                    i++;
+                }
+            }
+        } else {
             throw new Error("Unsupported op type for rollback");
-        }
-
-        const lastList = this._mergeTree.pendingSegments?.prev;
-        if (!lastList) {
-            throw new Error("No pending segments");
-        }
-        ListRemoveEntry(lastList);
-        const pendingSegmentGroup = lastList.data;
-        if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
-            throw new Error("Rollback op doesn't match last edit");
-        }
-        for (const segment of pendingSegmentGroup.segments) {
-            const segmentSegmentGroup = segment.segmentGroups.dequeue();
-            assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
-
-            const start = this.findRollbackPosition(segment);
-            const segWindow = this.getCollabWindow();
-            const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
-            this._mergeTree.markRangeRemoved(
-                start,
-                start + segment.cachedLength,
-                UniversalSequenceNumber,
-                segWindow.clientId,
-                UniversalSequenceNumber,
-                false,
-                { op: removeOp });
         }
     }
 
@@ -839,7 +855,7 @@ export class Client {
         // We need to sort the segments by ordinal, as the segments are not sorted in the segment group.
         // The reason they need them sorted, as they have the same local sequence number and which means
         // farther segments will  take into account nearer segments when calculating their position.
-        // By sorting we ensure the nearer segment will be applied and sequenced before the father segments
+        // By sorting we ensure the nearer segment will be applied and sequenced before the farther segments
         // so their recalculated positions will be correct.
         for (const segment of segmentGroup.segments.sort((a, b) => a.ordinal < b.ordinal ? -1 : 1)) {
             const segmentSegGroup = segment.segmentGroups.dequeue();
