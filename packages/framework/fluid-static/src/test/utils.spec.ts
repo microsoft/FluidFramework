@@ -88,8 +88,8 @@ describe("parseDataObjectsFromSharedObjects", () => {
         );
         assert.strictEqual(
             sharedObjects.length,
-            3,
-            "We should have 3 shared objects",
+            2,
+            "We should have 2 shared objects",
         );
 
         const types = sharedObjects.map((item) => item.type);
@@ -102,11 +102,6 @@ describe("parseDataObjectsFromSharedObjects", () => {
             types[1],
             SharedStringFactory.Type,
             "SharedString should be included",
-        );
-        assert.strictEqual(
-            types[2],
-            SharedStringFactory.Type,
-            "Second SharedString should be included",
         );
     });
 

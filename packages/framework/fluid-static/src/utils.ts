@@ -38,36 +38,26 @@ export const parseDataObjectsFromSharedObjects = (
 ): [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
     const registryEntries: Set<NamedFluidDataStoreRegistryEntry> = new Set();
     const sharedObjects: Set<IChannelFactory> = new Set();
-    const usedDataObjTypes: Set<string> = new Set();
 
     const tryAddObject = (obj: LoadableObjectClass<any>) => {
         if (isSharedObjectClass(obj)) {
             sharedObjects.add(obj.getFactory());
         } else if (isDataObjectClass(obj)) {
-            const dataObjType = obj.factory.type;
-            if (!usedDataObjTypes.has(dataObjType)) {
-                registryEntries.add([
-                    dataObjType,
-                    Promise.resolve(obj.factory),
-                ]);
-                usedDataObjTypes.add(dataObjType);
-            }
+            registryEntries.add([
+                obj.factory.type,
+                Promise.resolve(obj.factory),
+            ]);
         } else {
             throw new Error(`Entry is neither a DataObject or a SharedObject`);
         }
     };
 
     // Add the object types that will be initialized
-    Object.values(schema.initialObjects).forEach((obj) => {
-        tryAddObject(obj);
-    });
-
-    // If there are dynamic object types we will add them now
-    if (schema.dynamicObjectTypes) {
-        for (const obj of schema.dynamicObjectTypes) {
-            tryAddObject(obj);
-        }
-    }
+    const dedupedObjects = new Set([
+        ...Object.values(schema.initialObjects),
+        ...(schema.dynamicObjectTypes ?? []),
+    ]);
+    dedupedObjects.forEach(tryAddObject);
 
     if (registryEntries.size === 0 && sharedObjects.size === 0) {
         throw new Error(
