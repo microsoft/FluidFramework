@@ -4,9 +4,8 @@
  */
 
 import { StoredSchemaRepository } from "../schema";
-import { AnchorSet, FieldKey, DetachedField, Delta, JsonableTree } from "../tree";
-import { brand } from "../util";
-import { IForestSubscription, ITreeSubscriptionCursor, ForestAnchor } from "./forest";
+import { AnchorSet, FieldKey, DetachedField, Delta, JsonableTree, detachedFieldAsKey, Anchor } from "../tree";
+import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
 /**
  * Editing APIs.
@@ -35,8 +34,7 @@ export interface IEditableForest extends IForestSubscription {
 export function initializeForest(forest: IEditableForest, content: JsonableTree[]): void {
     // TODO: maybe assert forest is empty?
     const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-    // TODO: make type-safe
-    const rootField = brand<FieldKey>(forest.rootField as unknown as string);
+    const rootField = detachedFieldAsKey(forest.rootField);
     forest.applyDelta(new Map([[rootField, [insert]]]));
 }
 
@@ -45,7 +43,7 @@ export function initializeForest(forest: IEditableForest, content: JsonableTree[
 /**
  * Ways to refer to a node in an IEditableForest.
  */
- export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
+ export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 export interface TreeLocation {
     readonly range: FieldLocation | DetachedField;

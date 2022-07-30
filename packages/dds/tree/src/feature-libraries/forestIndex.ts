@@ -35,9 +35,9 @@ const schemaBlobKey = "ForestSchema";
  * Used to capture snapshots of document for summaries.
  */
 export class ForestIndex implements Index<unknown>, SummaryElement {
-    readonly key: string = "Forest";
+    public readonly key = "Forest";
 
-    readonly summaryElement?: SummaryElement = this;
+    public readonly summaryElement?: SummaryElement = this;
 
     private readonly cursor: ITreeSubscriptionCursor;
 
@@ -81,10 +81,10 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         // (since we don't save them, and they should not exist outside transactions).
         const rootAnchor = this.forest.root(this.forest.rootField);
         const roots: JsonableTree[] = [];
-        let result = this.forest.tryGet(rootAnchor, this.cursor);
+        let result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
         while (result === TreeNavigationResult.Ok) {
             roots.push(jsonableTreeFromCursor(this.cursor));
-            result = this.cursor.seek(1).result;
+            result = this.cursor.seek(1);
         }
         this.cursor.clear();
         assert(result === TreeNavigationResult.NotFound, "Unsupported navigation result");
@@ -101,7 +101,6 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
      */
      private getSchemaString(): string {
         const { treeSchema, globalFieldSchema } = this.forest.schema;
-        throw new Error("Method not implemented.");
         return `TODO: actual format ${treeSchema}, ${globalFieldSchema}`;
     }
 

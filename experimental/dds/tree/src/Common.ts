@@ -577,3 +577,20 @@ export function hasLength<T, Len extends TakeWholeNumbers<16>>(
 ): array is [...ArrayOfLength<T, Len>, ...T[]] {
 	return array.length >= length;
 }
+
+/**
+ * Type for a rest parameter which can accept many values, or a single array.
+ * Since a callee cannot modify an array passed as a rest parameter with the spread operator,
+ * an array passed directly should be readonly for consistency (caller retains ownership).
+ */
+export type RestOrArray<T> = readonly T[] | [readonly T[]];
+
+/**
+ * When value is a one-element array containing another array, unwraps and returns the inner array.
+ * Otherwise, returns the provided array.
+ * Useful for implementing functions with a `RestOrArray` parameter.
+ * T must not be implemented with an array (`Array.isArray(t)` must return false)
+ */
+export function unwrapRestOrArray<T>(value: [any[]] extends [T] ? never : RestOrArray<T>): readonly T[] {
+	return value.length === 1 && Array.isArray(value[0]) ? value[0] : (value as T[]);
+}

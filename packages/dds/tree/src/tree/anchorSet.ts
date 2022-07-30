@@ -38,6 +38,17 @@ export class AnchorSet {
     private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
 
     /**
+     * Check if there are currently no anchors tracked.
+     * Mainly for testing anchor cleanup.
+     */
+    public isEmpty(): boolean {
+        return this.root.children.size === 0;
+    }
+
+    /**
+     * Get the current location of an Anchor.
+     * The returned value should not be used after an edit has occurred.
+     *
      * TODO: support extra/custom return types for specific/custom anchor types:
      * for now caller must rely on data in anchor + returned node location
      * (not ideal for anchors for places or ranges instead of nodes).
@@ -61,7 +72,7 @@ export class AnchorSet {
      */
     public track(path: UpPath): Anchor {
         const foundPath = this.trackInner(path);
-        const anchor = brand<Anchor>(this.anchorCounter++);
+        const anchor: Anchor = brand(this.anchorCounter++);
         this.anchorToPath.set(anchor, foundPath);
         return anchor;
     }

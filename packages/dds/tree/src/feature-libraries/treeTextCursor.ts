@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
     ITreeCursor,
     TreeNavigationResult,
     mapCursorField,
+    SynchronousNavigationResult,
 } from "../forest";
 import {
     FieldKey,
     FieldMap,
     getGenericTreeField,
+    getGenericTreeFieldMap,
     JsonableTree,
     TreeType,
     Value,
 } from "../tree";
+import { fail } from "../util";
 
 /**
  * This modules provides support for reading and writing a human readable (and editable) tree format.
@@ -47,37 +49,22 @@ import {
  * TODO: object-forest's cursor is mostly a superset of this functionality.
  * Maybe do a refactoring to deduplicate this.
  */
-export class TextCursor implements ITreeCursor {
-    // Ancestors traversed to visit this node (including this node and the root).
-    private readonly nodeStack: JsonableTree[] = [];
-    // Keys traversed to visit this node
-    private readonly keyStack: FieldKey[] = [];
-    // Indices traversed to visit this node
+export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
+    // Indices traversed to visit this node: does not include current level (which is stored in `index`).
     private readonly indexStack: number[] = [];
+    // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
+    private readonly siblingStack: JsonableTree[][] = [];
 
-    private siblings: readonly JsonableTree[];
-    private readonly root: readonly JsonableTree[];
+    private siblings: JsonableTree[];
+    private index: number;
 
     public constructor(root: JsonableTree) {
-        this.root = [root];
-        this.indexStack.push(0);
-        this.siblings = this.root;
-        this.nodeStack.push(root);
+        this.index = 0;
+        this.siblings = [root];
     }
 
-    getNode(): JsonableTree {
-        return this.nodeStack[this.nodeStack.length - 1];
-    }
-
-    getFields(): Readonly<FieldMap<JsonableTree>> {
-        return this.getNode().fields ?? {};
-    }
-
-    getField(key: FieldKey): readonly JsonableTree[] {
-        // Save result to a constant to work around linter bug:
-        // https://github.com/typescript-eslint/typescript-eslint/issues/5014
-        const field: readonly JsonableTree[] = this.getFields()[key as string] ?? [];
-        return field;
+    private getNode(): JsonableTree {
+        return this.siblings[this.index];
     }
 
     get value(): Value {
@@ -89,65 +76,46 @@ export class TextCursor implements ITreeCursor {
     }
 
     get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(this.getFields()) as Iterable<FieldKey>;
+        return Object.getOwnPropertyNames(getGenericTreeFieldMap(this.getNode(), false)) as Iterable<FieldKey>;
     }
 
-    down(key: FieldKey, index: number): TreeNavigationResult {
-        const siblings = this.getField(key);
+    down(key: FieldKey, index: number): SynchronousNavigationResult {
+        const siblings = getGenericTreeField(this.getNode(), key, false);
         const child = siblings[index];
         if (child !== undefined) {
-            this.nodeStack.push(child);
-            this.indexStack.push(index);
-            this.keyStack.push(key);
+            this.indexStack.push(this.index);
+            this.siblingStack.push(this.siblings);
             this.siblings = siblings;
+            this.index = index;
             return TreeNavigationResult.Ok;
         }
         return TreeNavigationResult.NotFound;
     }
 
-    seek(offset: number): { result: TreeNavigationResult; moved: number; } {
-        const index = offset + this.indexStack[this.indexStack.length - 1];
+    seek(offset: number): SynchronousNavigationResult {
+        const index = offset + this.index;
         const child = this.siblings[index];
         if (child !== undefined) {
-            this.indexStack[this.indexStack.length - 1] = index;
-            this.nodeStack[this.nodeStack.length - 1] = child;
-            return { result: TreeNavigationResult.Ok, moved: offset };
+            this.index = index;
+            return TreeNavigationResult.Ok;
         }
-        // TODO: Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: 0 };
+        return TreeNavigationResult.NotFound;
     }
 
-    up(): TreeNavigationResult {
-        const length = this.nodeStack.length;
-        assert(this.indexStack.length === length, "Unexpected indexStack.length");
-        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
-
-        // If nodeStack (which includes the current node) contains only one item,
-        // then the current node is the root, and we can not navigate up.
-        if (length === 1) {
+    up(): SynchronousNavigationResult {
+        const index = this.indexStack.pop();
+        if (index === undefined) {
+            // At root already (and made no changes to current location)
             return TreeNavigationResult.NotFound;
         }
 
-        assert(length > 1, "Unexpected nodeStack.length");
-        this.nodeStack.pop();
-        this.indexStack.pop();
-        this.keyStack.pop();
-        // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        if (length === 2) {
-            // Before navigation, cursor was one below the root (height 2), so now it's at the root.
-            // At the root it cannot get the sibling list by looking at the parent (since there is none),
-            // so use the saved root array.
-            this.siblings = this.root;
-        } else {
-            const newParent = this.nodeStack[this.nodeStack.length - 2];
-            const key = this.keyStack[this.keyStack.length - 1];
-            this.siblings = getGenericTreeField(newParent, key, false);
-        }
+        this.index = index;
+        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
         return TreeNavigationResult.Ok;
     }
 
     length(key: FieldKey): number {
-        return this.getField(key).length;
+        return getGenericTreeField(this.getNode(), key, false).length;
     }
 }
 
