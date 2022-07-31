@@ -53,7 +53,7 @@ It's position is defined to be `LocalReference.DetachedPosition` (-1).
 
 LocalReferences may reference removed segments:
 
-* SlideOnRemove references may reference a removed segment which is pending (not acknoweldged)
+* SlideOnRemove references may reference a removed segment which is pending (not acknowledged)
 * StayOnRemove references may reference removed segments
 * Transient references may reference removed segments
 
@@ -70,7 +70,7 @@ For example, SharedIntervals are built using LocalReferences.
 
 ### Implementing Eventually Consistent LocalReferences
 
-To implement an operation which creates LocalReferences which will be have an eventually consistent position:
+To implement an operation which creates LocalReferences which will have an eventually consistent position:
 
 1. Locally create the reference as StayOnRemove
 2. Send the reference numerical position in an op
