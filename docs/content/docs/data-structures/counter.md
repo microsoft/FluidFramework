@@ -24,7 +24,12 @@ It provides two separate fields for establishing an initial roster of objects an
 
 The following example illustrates how you can use the `ContainerSchema` with `SharedCounter`.
 
-It loads a `SharedCounter` as part of the initial roster of objects you have available in the container.
+There are two key workflows to consider here.
+
+1. Creating a new Fluid Container.
+2. Connecting to an existing Fluid Container.
+
+In either case, you will first define the schema.
 
 ```javascript
 const schema = {
@@ -32,7 +37,13 @@ const schema = {
         sharedCounter: SharedCounter,
     }
 }
+```
 
+### Creating a new Fluid Container
+
+Here, you will generate a new  `SharedCounter` as part of the initial roster of objects you have available in the container, using the schema defined above.
+
+```javascript
 const { container, services } = await client.createContainer(schema);
 
 const counter = container.initialObjects.sharedCounter;
@@ -41,21 +52,19 @@ const counter = container.initialObjects.sharedCounter;
 At this point, you can directly start using the `counter` object within your application.
 Including the `SharedCounter` as part of initial objects ensures that the DDS is available the moment the async call to `createContainer` finishes.
 
-Similarly, if you are loading an existing container, the process stays largely identical with the only difference being that you use `getContainer` instead of `createContainer`.
+### Connecting to an existing Fluid Container
+
+Similarly, if you are connecting to an existing container, the process stays largely identical with the only difference being that you use `getContainer` instead of `createContainer`.
 
 ```javascript
-const schema = {
-    initialObjects: {
-        sharedCounter: SharedCounter,
-    }
-}
-
 const { container, services } = await client.getContainer(id, schema);
 
 const counter = container.initialObjects.sharedCounter;
 ```
 
-Finally, if you'd like to dynamically create `SharedCounter` instances as part of the application lifecycle (i.e. if there are user interactions in the applications that require a new `SharedCounter` instance to be created at runtime), you can add the `SharedCounter` type to the `dynamicObjectTypes` field in the schema and call the container's `create` function.
+### Dynamically Creating `SharedCounter`s
+
+Finally, if you would like to dynamically create `SharedCounter` instances as part of the application lifecycle (i.e. if there are user interactions in the applications that require a new `SharedCounter` instance to be created at runtime), you can add the `SharedCounter` type to the `dynamicObjectTypes` field in the schema and call the container's `create` function.
 
 ```javascript
 const schema = {
