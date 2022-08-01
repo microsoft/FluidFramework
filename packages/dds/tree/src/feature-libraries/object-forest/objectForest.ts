@@ -77,7 +77,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     add(nodes: Iterable<ITreeCursor>): DetachedField {
         this.beforeChange();
         const range = this.newRange();
-        assert(!this.roots.has(range), "new range must not already exist");
+        assert(!this.roots.has(range), 0x357 /* new range must not already exist */);
         const field: ObjectField = Array.from(nodes, jsonableTreeFromCursor);
         this.roots.set(range, field);
         return range;
@@ -87,7 +87,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         const children = this.roots.get(toAttach) ?? fail("Can not attach non-existent range");
         this.roots.delete(toAttach);
         const destRange = destination.range;
-        assert(toAttach !== destRange, "can not attach range to itself");
+        assert(toAttach !== destRange, 0x358 /* can not attach range to itself */);
         if (children.length === 0) {
             return; // Prevent creating 0 sized fields when inserting empty into empty.
         }
@@ -110,7 +110,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         const field: ObjectField = this.lookupField(range, false);
         assertValidIndex(startIndex, field, true);
         assertValidIndex(endIndex, field, true);
-        assert(startIndex <= endIndex, "detached range's end must be after it's start");
+        assert(startIndex <= endIndex, 0x359 /* detached range's end must be after it's start */);
         const newRange = this.newRange();
         const newField = field.splice(startIndex, endIndex - startIndex);
         this.roots.set(newRange, newField);
@@ -124,16 +124,16 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     delete(range: DetachedField): void {
         this.beforeChange();
         // TODO: maybe define this to leave the forest with an empty root field?
-        assert(range !== this.rootField, "root field can not be deleted");
+        assert(range !== this.rootField, 0x35a /* root field can not be deleted */);
         const deleted = this.roots.delete(range);
-        assert(deleted, "deleted range must exist in forest");
+        assert(deleted, 0x35b /* deleted range must exist in forest */);
     }
     allocateCursor(): Cursor {
         return new Cursor(this);
     }
 
     private beforeChange(): void {
-        assert(this.currentCursors.size === 0, "No cursors can be current when modifying forest");
+        assert(this.currentCursors.size === 0, 0x35c /* No cursors can be current when modifying forest */);
         this.invalidateDependents();
     }
 
@@ -173,7 +173,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
         // TODO: this could be much more efficient (and not use cursor)
         const cursor = this.allocateCursor();
         const result = this.tryGet(id, cursor);
-        assert(result === TreeNavigationResult.Ok, "Expected to find anchor");
+        assert(result === TreeNavigationResult.Ok, 0x35d /* Expected to find anchor */);
         const node = cursor.getNode();
         cursor.free();
 
@@ -206,12 +206,12 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
 }
 
 function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: boolean = false) {
-    assert(Number.isInteger(index), "index must be an integer");
-    assert(index >= 0, "index must be non-negative");
+    assert(Number.isInteger(index), 0x35e /* index must be an integer */);
+    assert(index >= 0, 0x35f /* index must be non-negative */);
     if (allowOnePastEnd) {
-        assert(index <= array.length, "index must be less than or equal to length");
+        assert(index <= array.length, 0x360 /* index must be less than or equal to length */);
     } else {
-        assert(index < array.length, "index must be less than length");
+        assert(index < array.length, 0x361 /* index must be less than length */);
     }
 }
 
@@ -358,8 +358,8 @@ class Cursor implements ITreeSubscriptionCursor {
 
         let path: UpPath | undefined;
         const length = this.parentStack.length;
-        assert(this.indexStack.length === length, "Unexpected indexStack.length");
-        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
+        assert(this.indexStack.length === length, 0x362 /* Unexpected indexStack.length */);
+        assert(this.keyStack.length === length - 1, 0x363 /* Unexpected keyStack.length */);
         for (let height = 0; height < length; height++) {
             path = {
                 parent: path,

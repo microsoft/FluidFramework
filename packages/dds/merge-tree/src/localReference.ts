@@ -256,7 +256,7 @@ export class LocalReferenceCollection {
             !refTypeIncludesFlag(lref, ReferenceType.Transient),
             0x2df /* "transient references cannot be bound to segments" */);
         assertLocalReferences(lref);
-        assert(offset < this.segment.cachedLength, "offset cannot be beyond segment length");
+        assert(offset < this.segment.cachedLength, 0x348 /* offset cannot be beyond segment length */);
         const refsAtOffset = this.refsByOffset[offset] =
             this.refsByOffset[offset]
             ?? { at: ListMakeHead() };
