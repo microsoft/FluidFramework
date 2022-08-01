@@ -25,6 +25,7 @@ export type {
     ITaggedTelemetryPropertyType,
     ITelemetryBaseEvent,
     ITelemetryBaseLogger,
+    ITelemetryBaseProperties,
     ITelemetryErrorEvent,
     ITelemetryGenericEvent,
     ITelemetryLogger,
