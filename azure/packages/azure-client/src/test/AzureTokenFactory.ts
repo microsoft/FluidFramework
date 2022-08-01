@@ -5,10 +5,13 @@
 
 import { AzureFunctionTokenProvider } from "..";
 
-export function createAzureTokenProvider(): AzureFunctionTokenProvider {
+export function createAzureTokenProvider(
+    userID?: string,
+    userName?: string,
+): AzureFunctionTokenProvider {
     const fnUrl = process.env.azure__fluid__relay__service__function__url as string;
     return new AzureFunctionTokenProvider(`${fnUrl}/api/GetFrsToken`, {
-        userId: "foo",
-        userName: "bar",
+        userId: userID ?? "foo",
+        userName: userName ?? "bar",
     });
 }
