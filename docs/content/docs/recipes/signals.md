@@ -1,7 +1,6 @@
 ---
 title: Using Signals in Fluid
 menuPosition: 5
-draft: true
 ---
 
 In this article, we will go over the `PresenceTracker` example to learn how the [`Signaler`](https://github.com/microsoft/FluidFramework/tree/main/experimental/framework/data-objects/src/signaler) DataObject is used in a Fluid application to share user presence information between collaborators. We'll cover how the `Signaler` DataObject is used in both the `MouseTracker` and `FocusTracker` classes to share mouse position and focus state. You can find the completed code for this example in the Fluid Repo [here](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker).
