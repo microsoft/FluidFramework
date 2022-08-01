@@ -93,6 +93,6 @@ testCursor("object-forest cursor", (data): ITreeCursor => {
     const forest = new ObjectForest();
     initializeForest(forest, [data]);
     const cursor = forest.allocateCursor();
-    assert.equal(forest.tryGet(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
+    assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
     return cursor;
 });
