@@ -51,7 +51,10 @@ export class Deferred<T> {
 export const delay: (timeMs: number) => Promise<void>;
 
 // @public
-export function doIfNotDisposed<T>(disposable: IDisposable, f: (...args: any[]) => T): (...args: any[]) => T;
+export function doIfNotDisposed<T>(
+disposable: IDisposable,
+f: (...args: any[]) => T,
+): (...args: any[]) => T;
 
 // @public
 export type EventEmitterEventType = EventEmitter extends {
@@ -150,7 +153,8 @@ export const IsoBuffer: typeof Buffer;
 export type IsoBuffer = Buffer;
 
 // @public
-export type IsomorphicPerformance = Partial<Performance> & Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
+export type IsomorphicPerformance = Partial<Performance> &
+Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
 
 // @public (undocumented)
 export interface ITimer {
@@ -179,11 +183,16 @@ export class LazyPromise<T> implements Promise<T> {
     get [Symbol.toStringTag](): string;
     constructor(execute: () => Promise<T>);
     // (undocumented)
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined): Promise<T | TResult>;
+    catch<TResult = never>(
+    onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined,
+    ): Promise<T | TResult>;
     // (undocumented)
     finally(onfinally?: (() => void) | null | undefined): Promise<T>;
     // (undocumented)
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined): Promise<TResult1 | TResult2>;
+    then<TResult1 = T, TResult2 = never>(
+    onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
+    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined,
+    ): Promise<TResult1 | TResult2>;
 }
 
 // @public
@@ -195,7 +204,7 @@ export { performance_2 as performance }
 
 // @public
 export class PromiseCache<TKey, TResult> {
-    constructor({ expiry, removeOnError, }?: PromiseCacheOptions);
+    constructor({ expiry, removeOnError }?: PromiseCacheOptions);
     add(key: TKey, asyncFn: () => Promise<TResult>): boolean;
     addOrGet(key: TKey, asyncFn: () => Promise<TResult>): Promise<TResult>;
     addValue(key: TKey, value: TResult): boolean;
@@ -206,9 +215,11 @@ export class PromiseCache<TKey, TResult> {
 }
 
 // @public
-export type PromiseCacheExpiry = {
+export type PromiseCacheExpiry =
+| {
     policy: "indefinite";
-} | {
+}
+| {
     policy: "absolute" | "sliding";
     durationMs: number;
 };
