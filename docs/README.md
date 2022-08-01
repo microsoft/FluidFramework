@@ -134,8 +134,7 @@ The steps are as follows:
 1. `/docs`: `start`
     1. Run the hugo server to host the site at <http://localhost:1313>.
 
-To investigate incorrect output, you can check the intermediate outputs (JSON, Markdown, HTML) at these locations
-to narrow down where the error is occurring.
+To investigate incorrect output, you can check the intermediate outputs (JSON, Markdown, HTML) at these locations to narrow down where the error is occurring.
 
 ## Creating new content
 
