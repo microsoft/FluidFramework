@@ -187,7 +187,7 @@ export class LZ4PropertyTreeFactory extends CompressedPropertyTreeFactory {
         attributes: IChannelAttributes,
         url?: string,
     ): Promise<LZ4PropertyTree> {
-        return await super.load(runtime, id, services, attributes, url) as DeflatedPropertyTree;
+        return await super.load(runtime, id, services, attributes, url) as LZ4PropertyTree;
     }
 
     public create(document: IFluidDataStoreRuntime, id: string, requestUrl?: string): LZ4PropertyTree {
@@ -195,11 +195,11 @@ export class LZ4PropertyTreeFactory extends CompressedPropertyTreeFactory {
     }
 
     public get type() {
-        return DeflatedPropertyTreeFactory.Type;
+        return LZ4PropertyTreeFactory.Type;
     }
 
     public get attributes() {
-        return DeflatedPropertyTreeFactory.Attributes;
+        return LZ4PropertyTreeFactory.Attributes;
     }
 
     public getEncodeFce() { return compress; }

@@ -23,7 +23,7 @@ export class DeflatedPropertyTree extends SharedPropertyTree {
 
 export class LZ4PropertyTree extends SharedPropertyTree {
     public static create(runtime: IFluidDataStoreRuntime, id?: string, queryString?: string) {
-        return runtime.createChannel(id, DeflatedPropertyTreeFactory.Type) as LZ4PropertyTree;
+        return runtime.createChannel(id, LZ4PropertyTreeFactory.Type) as LZ4PropertyTree;
     }
 
     public static getFactory(): IChannelFactory {
