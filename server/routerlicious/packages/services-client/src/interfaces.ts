@@ -16,6 +16,8 @@ export interface ISession {
      * Orderer url of the session.
      */
     ordererUrl: string;
+    // WebSocket server url of the session
+    socketServerUrl?: string;
     /**
      * Historian url of the session.
      */

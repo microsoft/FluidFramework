@@ -346,6 +346,8 @@ export interface ISession {
     isSessionActive: boolean;
     isSessionAlive: boolean;
     ordererUrl: string;
+    // (undocumented)
+    socketServerUrl?: string;
 }
 
 // @public (undocumented)

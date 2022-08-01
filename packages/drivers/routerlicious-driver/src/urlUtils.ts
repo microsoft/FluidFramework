@@ -36,6 +36,7 @@ export const getDiscoveredFluidResolvedUrl = (resolvedUrl: IFluidResolvedUrl, se
                 deltaStorageUrl: deltaStorageUrl.toString(),
                 ordererUrl: session.ordererUrl,
                 storageUrl: storageUrl.toString(),
+                socketServerUrl: session.socketServerUrl || session.ordererUrl,
             },
             id: resolvedUrl.id,
             tokens: resolvedUrl.tokens,
