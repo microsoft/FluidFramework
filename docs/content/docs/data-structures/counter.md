@@ -14,6 +14,41 @@ In this way, it avoids the pitfalls of DDSes with simpler merge strategies, in w
 
 Note that the `SharedCounter` only operates on integer values.
 
+### Why a specialized DDS?
+
+You may be asking yourself, why not just store the shared integer value directly in another DDS like a [SharedMap][]?
+Why incur the overhead of another runtime type?
+
+The key to the answer here is that DDSes with simpler merge strategies (like `SharedMap`) take a somewhat brute-force approach to merging concurrent edits.
+For a semantic data type like a counter, this can result in undesirable behavior.
+
+#### SharedMap Example
+
+Let's illustrate the issue with an example.
+
+Here, we will use a `SharedMap` to store our shared integer value.
+For simplicity, it will be stored under a static key: `counter-key`.
+
+Let's say that two users are collaborating on an app with a counter widget.
+We will refer to these users as User A and User B.
+The current value of that widget is 42.
+
+What if User A and User B both simultaneously press the `+` button in their UI to increment the current value by 1?
+Behind the scenes, this increment is implemented by writing the updated value to the map.
+That edit is then sequenced and broadcast to other collaborators.
+
+Here, we would expect that, after both users have processed all incoming edits, the resulting value of the counter would be 44.
+Each user pressed the `+` button once.
+42 + 1 + 1 = 44, right?
+
+In fact, because `SharedMap` employs a _last-write-wins_ merge strategy, if User A and User B make their edits at the same time, one of the two updates will be sequnced after the other, and that value will win.
+So in this case, both users would see the value 43, rather than 44.
+
+This is a problem!
+If this shared counter value was being used to track store inventory, for example, that inventory would now be incorrect!
+
+The solution to this problem is a specialized DDS that tracks changes to the shared value as _increments_ and _decrements_, which can be summed together in any order and still reach eventual consistency.
+
 ## Creation
 
 The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it.
