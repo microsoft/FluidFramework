@@ -145,7 +145,7 @@ Signature:
 (event: "incremented", listener: (incrementAmount: number, newValue: number) => void)
 ```
 
-By registering with this event, you can receive and apply the changes coming from other collaborators.
+By listening to this event, you can receive and apply the changes coming from other collaborators.
 Consider the following code example for configuring a Counter widget:
 
 ```javascript
@@ -179,7 +179,7 @@ sharedCounter.on("incremented", updateCounterValueLabel);
 In the code above, whenever a user presses either the Increment or Decrement button, the `sharedCounter.increment` is called with +/- 1.
 This causes the `incremented` event to be sent to all of the clients who have this container open.
 
-Since `updateCounterValueLabel` is registered for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
+Since `updateCounterValueLabel` is listening for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
 
 ## API Documentation
 
