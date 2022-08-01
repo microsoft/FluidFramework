@@ -4,6 +4,7 @@
  */
 import { execSync } from "child_process";
 import { Flags } from "@oclif/core";
+import { dangerfile } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 
 export default class BundleAnalysesRun extends BaseCommand<typeof BundleAnalysesRun.flags> {
@@ -18,7 +19,7 @@ export default class BundleAnalysesRun extends BaseCommand<typeof BundleAnalyses
         const { flags } = await this.parse(BundleAnalysesRun);
 
         try {
-            execSync(`npx danger ci -d ${__dirname}/dangerfile.js`, { stdio: "inherit" });
+            execSync(`npx danger ci -d ${dangerfile}`, { stdio: "inherit" });
         } catch (error_: unknown) {
             this.exit(-1);
             this.error(error_ as string);
