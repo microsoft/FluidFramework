@@ -2,6 +2,8 @@
 
 This is the code and content for <https://fluidframework.com>.
 
+The site is generated using [Hugo](https://gohugo.io/).
+
 ## Previewing the documentation site locally
 
 Open the docs folder in a terminal and install the dependencies using npm.
@@ -46,17 +48,50 @@ Run the `build` script to build the site. The output will be in the `public/` fo
 npm run build
 ```
 
-### Drafts and future content
+### Drafts
 
-By default the `build` script won't build content with a future published date or draft flag.
+Work-in-progress documents that are not ready for public consumption can be safely added by annotatting them with the `draft` flag in their frontmatter.
+
+Example:
+
+```markdown
+---
+title: "Foo"
+draft: true
+---
+```
+
+Such documents will be disregarded by the build (by default) and will not be published.
+
+Drafts are a good option for making incremental progress on a document via pull requests before being ready to actually publish for the world to see.
+
+#### Previewing drafts locally.
+
+As noted above, the `build` script won't build `draft` content.
+To build this content and preview it locally, you can run the build with the `--buildDrafts` flag.
+
+```bash
+npm run build -- --buildDrafts
+```
+
+For more documentation on this Hugo feature, see [here](https://gohugo.io/getting-started/usage/#draft-future-and-expired-content).
+
+### Future Content
+
+TODO
+
+
+### TODO: old text, remove before committing
+
+By default the `build` script won't build content with a future published date or `draft` flag.
 To build this content, use the `--buildDrafts` and `--buildFuture` flags.
 
 ```bash
 npm run build -- --buildDrafts --buildFuture
 ```
 
-Content with a future published date won't automatically publish on that date.  You'll
-need to run the build process.
+Content with a future published date won't automatically publish on that date.
+You'll need to run the build process.
 
 ### API documentation
 
@@ -105,8 +140,7 @@ to narrow down where the error is occurring.
 
 ## Creating new content
 
-You need to generate new content manually by creating new files by hand or by
-generating them using the `hugo` command as shown below:
+You need to generate new content manually by creating new files by hand or by generating them using the `hugo` command as shown below:
 
 ### Static doc
 
@@ -122,13 +156,12 @@ npm run hugo -- new posts/fluid-everywhere.md
 
 ### Content guidelines
 
-Try to use Markdown as much as possible. You can embed HTML in Markdown, but we
-recommended sticking to Markdown and shortcodes/partials.
+Try to use Markdown as much as possible.
+You can embed HTML in Markdown, but we recommended sticking to Markdown and shortcodes/partials.
 
 ## Menus
 
-Menus are mainly managed in `config.yml` but depending on the menu, the sub
-headers might be driven by the content in the repo (pages or data files).
+Menus are mainly managed in `config.yml` but depending on the menu, the sub headers might be driven by the content in the repo (pages or data files).
 
 ### Main menu (top menu)
 
@@ -150,9 +183,7 @@ menu:
 
 ### Docs menu
 
-The docs menu is implemented in the theme's `_partial/docNav.html` and is using the
-`config.yml` to find the headers and then uses the area attribute of each sub section (sub
-folders in the content folder) to populate the pages displayed in the menu.
+The docs menu is implemented in the theme's `_partial/docNav.html` and is using the `config.yml` to find the headers and then uses the area attribute of each sub section (sub folders in the content folder) to populate the pages displayed in the menu.
 
 Here is an example of what `config.yml` could contain:
 
@@ -171,34 +202,29 @@ menu:
     weight: -100
 ```
 
-Those are headers for the Docs menu, they each have a `name` field which is used to
-display the header in the menu. They also have an `identifier` key which is used to map
-content with matching `area` field (often set to cascade within a sub folder). Finally,
-you have a `weight` field that is used to decide the positioning of each item in the menu.
+Those are headers for the Docs menu, they each have a `name` field which is used to display the header in the menu.
+They also have an `identifier` key which is used to map content with matching `area` field (often set to cascade within a sub folder).
+Finally, you have a `weight` field that is used to decide the positioning of each item in the menu.
 The lighter an item is, the higher it goes in order (closer to the top).
 
 ### API menu
 
-The API menu is a bit more complex since it's driven by content. The left menu (API
-overview) is a list of grouped packages, the grouping comes from a yaml file in the `data`
-folder (`packages.yaml`). The API documentation is being generated with metadata which
-allows the template to link pages and load the right information.
+The API menu is a bit more complex since it's driven by content.
+The left menu (API overview) is a list of grouped packages, the grouping comes from a yaml file in the `data` folder (`packages.yaml`).
+The API documentation is being generated with metadata which allows the template to link pages and load the right information.
 
 ### Table of Contents
 
-Some template pages include a TOC of the page. This is generated on the fly by reading the
-headers.
+Some template pages include a TOC of the page. This is generated on the fly by reading the headers.
 
 ### Social action
 
-There is a menu with actions such as tweeting the page, subscribing to the feed, asking
-questions etc... This is driven from the theme and the information for the accounts should
-be in the config.
+There is a menu with actions such as tweeting the page, subscribing to the feed, asking questions etc...
+This is driven from the theme and the information for the accounts should be in the config.
 
 ## Shortcodes
 
-[Shortcodes](https://gohugo.io/content-management/shortcodes/) are custom functions that
-can be called from within the Markdown to insert specific content.
+[Shortcodes](https://gohugo.io/content-management/shortcodes/) are custom functions that can be called from within the Markdown to insert specific content.
 
 ## Working on the template
 
