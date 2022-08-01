@@ -307,6 +307,9 @@ export function createMap<T>(): MapLike<T>;
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
 
 // @public (undocumented)
+export function debugMarkerToString(marker: Marker): string;
+
+// @public (undocumented)
 export const DetachedReferencePosition = -1;
 
 // Warning: (ae-internal-missing-underscore) The name "Dictionary" should be prefixed with an underscore because the declaration is marked as @internal
