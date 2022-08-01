@@ -113,7 +113,7 @@ Typical scenarios require the connected clients to "agree" on some course of act
 
 <!-- Links -->
 [SharedCounter]: {{< relref "counter.md" >}}
-[SharedDirectory]: https://fluidframework.com/docs/apis/map/shareddirectory/
-[SharedMap]: https://fluidframework.com/docs/apis/map/sharedmap/
-[SharedString]: https://fluidframework.com/docs/apis/sequence/sharedstring/
+[SharedDirectory]: {{< relref "directory.md" >}}
+[SharedMap]: {{< relref "map.md" >}}
+[SharedString]: {{< relref "string.md" >}}
 [TaskManager]: {{< relref "task-manager.md" >}}
