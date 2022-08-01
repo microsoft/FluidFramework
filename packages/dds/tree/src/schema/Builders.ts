@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { brand, brandOpaque } from "../util";
 import {
     FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "./Schema";
@@ -28,14 +29,14 @@ export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
  * LocalFieldKey to use for when there is a collection of items under a tree node
  * that makes up the logical primary significant of that tree.
  */
-export const itemsKey = "items" as LocalFieldKey;
+export const itemsKey: LocalFieldKey = brand("items");
 
 /**
  * GlobalFieldKey to use for the root of documents.
  * TODO: if we do want to standardize on a single value for this,
  * it likely should be namespaced or a UUID to avoid risk of collisions.
  */
-export const rootFieldKey = "rootFieldKey" as GlobalFieldKey;
+export const rootFieldKey = brandOpaque<GlobalFieldKey>("rootFieldKey");
 
 /**
  * Default field which only permits emptiness.
@@ -70,7 +71,7 @@ export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
     // eslint-disable-next-line no-restricted-syntax
     for (const key in local) {
         if (Object.prototype.hasOwnProperty.call(local, key)) {
-            localFields.set(key as LocalFieldKey, local[key]);
+            localFields.set(brand(key), local[key]);
         }
     }
 

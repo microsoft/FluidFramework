@@ -1,0 +1,1435 @@
+{
+    "id": "bBwAAAAAHAAAA",
+    "latestSequenceNumber": 75,
+    "trees": [
+      {
+        "id": "bBwAAAAAHAAAA",
+        "sequenceNumber": 0,
+        "entries": [
+          {
+            "path": ".protocol",
+            "type": "tree"
+          },
+          {
+            "id": "bARCTBK4PQiMLVK2gR5hPRkId",
+            "path": ".protocol/attributes",
+            "type": "blob"
+          },
+          {
+            "id": "bARBkx1nses1pHL1vKnmFUfIC",
+            "path": ".protocol/quorumMembers",
+            "type": "blob"
+          },
+          {
+            "id": "bARBkx1nses1pHL1vKnmFUfIC",
+            "path": ".protocol/quorumProposals",
+            "type": "blob"
+          },
+          {
+            "id": "bARB0ElGO96g+fJ44NXOCaHN+",
+            "path": ".protocol/quorumValues",
+            "type": "blob"
+          },
+          {
+            "path": ".app",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/_scheduler",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/_scheduler/.channels",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/_scheduler/.channels/root",
+            "type": "tree"
+          },
+          {
+            "id": "bARDmHTem3GvjY5whJQfAaTLh",
+            "path": ".app/.channels/_scheduler/.channels/root/header",
+            "type": "blob"
+          },
+          {
+            "id": "bARDYJi5bHS55jcuiZ+Ut62Wq",
+            "path": ".app/.channels/_scheduler/.channels/root/.attributes",
+            "type": "blob"
+          },
+          {
+            "path": ".app/.channels/_scheduler/.channels/17c68c49-43de-409a-a3d6-4d48b8a8baed",
+            "type": "tree"
+          },
+          {
+            "id": "bARAXVMN3sXY0EWFDLS1Iy0dW",
+            "path": ".app/.channels/_scheduler/.channels/17c68c49-43de-409a-a3d6-4d48b8a8baed/header",
+            "type": "blob"
+          },
+          {
+            "id": "bARDUxXcdiIC4V3HSCmwScEFi",
+            "path": ".app/.channels/_scheduler/.channels/17c68c49-43de-409a-a3d6-4d48b8a8baed/.attributes",
+            "type": "blob"
+          },
+          {
+            "id": "bARAWgNwwMAtEWFX6f8eXjarD",
+            "path": ".app/.channels/_scheduler/.component",
+            "type": "blob"
+          },
+          {
+            "path": ".app/.channels/defaultComponent",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/defaultComponent/.channels",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/defaultComponent/.channels/root",
+            "type": "tree"
+          },
+          {
+            "id": "bARDSVGmtxpZG8lYwTBKu0pLI",
+            "path": ".app/.channels/defaultComponent/.channels/root/header",
+            "type": "blob"
+          },
+          {
+            "id": "bARCcZyp5L3WhlkAlUXwCWq5B",
+            "path": ".app/.channels/defaultComponent/.channels/root/.attributes",
+            "type": "blob"
+          },
+          {
+            "id": "bARCBnzMy4FNE7kexVfsvTEs0",
+            "path": ".app/.channels/defaultComponent/.component",
+            "type": "blob"
+          },
+          {
+            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/root",
+            "type": "tree"
+          },
+          {
+            "id": "bARC+4Flw_Mti3K8S1oZRODxX",
+            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/root/header",
+            "type": "blob"
+          },
+          {
+            "id": "bARCcZyp5L3WhlkAlUXwCWq5B",
+            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/root/.attributes",
+            "type": "blob"
+          },
+          {
+            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/38e04bc1-f2d7-480d-bfba-4307c6af52b7",
+            "type": "tree"
+          },
+          {
+            "id": "bARD99s5nn1u26Ioy6UHqiNaV",
+            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/38e04bc1-f2d7-480d-bfba-4307c6af52b7/header",
+            "type": "blob"
+          },
+          {
+            "id": "bARCUYcDsMiTBpD4TZDswXFhG",
+            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.channels/38e04bc1-f2d7-480d-bfba-4307c6af52b7/.attributes",
+            "type": "blob"
+          },
+          {
+            "id": "bARBYcCCUS7Lb_xtKa+7jXKzn",
+            "path": ".app/.channels/9938ffed-746e-46b7-8e05-db82e3b13f9b/.component",
+            "type": "blob"
+          },
+          {
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/root",
+            "type": "tree"
+          },
+          {
+            "id": "bARAAHLFtsr47SFHnEf5mbi0Q",
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/root/header",
+            "type": "blob"
+          },
+          {
+            "id": "bARCcZyp5L3WhlkAlUXwCWq5B",
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/root/.attributes",
+            "type": "blob"
+          },
+          {
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d",
+            "type": "tree"
+          },
+          {
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d/content",
+            "type": "tree"
+          },
+          {
+            "id": "bARAH44VdSF7E5yr_douyiSnB",
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d/content/header",
+            "type": "blob"
+          },
+          {
+            "id": "bARBlKh6S7ReMYdSzHtwA2nM2",
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.channels/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d/.attributes",
+            "type": "blob"
+          },
+          {
+            "id": "bARCIoud0OQOX1fRpt1aSLf7c",
+            "path": ".app/.channels/00ee3ad1-7b9f-4361-b477-a449de0d3f66/.component",
+            "type": "blob"
+          },
+          {
+            "id": "bARB0HSTx3gM9gnkd2TWUvTs9",
+            "path": ".app/.metadata",
+            "type": "blob"
+          },
+          {
+            "id": "bARAtiTVBfW1Kdghc+3muF4h4",
+            "path": ".app/.electedSummarizer",
+            "type": "blob"
+          }
+        ]
+      }
+    ],
+    "blobs": [
+      {
+        "id": "bARBkx1nses1pHL1vKnmFUfIC",
+        "content": "[]",
+        "size": 2
+      },
+      {
+        "id": "bARD99s5nn1u26Ioy6UHqiNaV",
+        "content": "{}",
+        "size": 2
+      },
+      {
+        "id": "bARAtiTVBfW1Kdghc+3muF4h4",
+        "content": "{\"electionSequenceNumber\":0}",
+        "size": 28
+      },
+      {
+        "id": "bARCTBK4PQiMLVK2gR5hPRkId",
+        "content": "{\"minimumSequenceNumber\":0,\"sequenceNumber\":0,\"term\":1}",
+        "size": 55
+      },
+      {
+        "id": "bARAWgNwwMAtEWFX6f8eXjarD",
+        "content": "{\"pkg\":\"[\\\"_scheduler\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":true}",
+        "size": 74
+      },
+      {
+        "id": "bARCIoud0OQOX1fRpt1aSLf7c",
+        "content": "{\"pkg\":\"[\\\"@ms/scriptor\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":false}",
+        "size": 77
+      },
+      {
+        "id": "bARCBnzMy4FNE7kexVfsvTEs0",
+        "content": "{\"pkg\":\"[\\\"OfficeRootComponent\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":true}",
+        "size": 83
+      },
+      {
+        "id": "bARDYJi5bHS55jcuiZ+Ut62Wq",
+        "content": "{\"type\":\"https://graph.microsoft.com/types/map\",\"snapshotFormatVersion\":\"0.2\",\"packageVersion\":\"0.58.2002\"}",
+        "size": 107
+      },
+      {
+        "id": "bARBYcCCUS7Lb_xtKa+7jXKzn",
+        "content": "{\"pkg\":\"[\\\"OfficeRootComponent\\\",\\\"LastEditedComponent\\\"]\",\"summaryFormatVersion\":2,\"isRootDataStore\":false}",
+        "size": 108
+      },
+      {
+        "id": "bARCcZyp5L3WhlkAlUXwCWq5B",
+        "content": "{\"type\":\"https://graph.microsoft.com/types/directory\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
+        "size": 113
+      },
+      {
+        "id": "bARBlKh6S7ReMYdSzHtwA2nM2",
+        "content": "{\"type\":\"https://graph.microsoft.com/types/mergeTree\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
+        "size": 113
+      },
+      {
+        "id": "bARCUYcDsMiTBpD4TZDswXFhG",
+        "content": "{\"type\":\"https://graph.microsoft.com/types/shared-summary-block\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
+        "size": 124
+      },
+      {
+        "id": "bARB0HSTx3gM9gnkd2TWUvTs9",
+        "content": "{\"createContainerRuntimeVersion\":\"0.58.2002\",\"createContainerTimestamp\":1652216614928,\"summaryFormatVersion\":1,\"gcFeature\":1}",
+        "size": 125
+      },
+      {
+        "id": "bARDUxXcdiIC4V3HSCmwScEFi",
+        "content": "{\"type\":\"https://graph.microsoft.com/types/consensus-register-collection\",\"snapshotFormatVersion\":\"0.1\",\"packageVersion\":\"0.58.2002\"}",
+        "size": 133
+      },
+      {
+        "id": "bARDmHTem3GvjY5whJQfAaTLh",
+        "content": "{\"blobs\":[],\"content\":{\"scheduler\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/_scheduler/17c68c49-43de-409a-a3d6-4d48b8a8baed\"}}}}",
+        "size": 146
+      },
+      {
+        "id": "bARC+4Flw_Mti3K8S1oZRODxX",
+        "content": "{\"blobs\":[],\"content\":{\"storage\":{\"lastEditedSharedSummaryBlockKey\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/9938ffed-746e-46b7-8e05-db82e3b13f9b/38e04bc1-f2d7-480d-bfba-4307c6af52b7\"}}}}}",
+        "size": 206
+      },
+      {
+        "id": "bARAXVMN3sXY0EWFDLS1Iy0dW",
+        "content": "{\"leader\":{\"atomic\":{\"sequenceNumber\":0,\"value\":{\"type\":\"Plain\",\"value\":\"ed16f62f-b10e-4639-8ba6-5ec9e11c5ff7_unattached\"}},\"versions\":[{\"sequenceNumber\":0,\"value\":{\"type\":\"Plain\",\"value\":\"ed16f62f-b10e-4639-8ba6-5ec9e11c5ff7_unattached\"}}]}}",
+        "size": 242
+      },
+      {
+        "id": "bARB0ElGO96g+fJ44NXOCaHN+",
+        "content": "[[\"code\",{\"key\":\"code\",\"value\":{\"package\":{\"name\":\"@ms/office-fluid-container\",\"version\":\"0.0.1\",\"fluid\":{\"browser\":{\"umd\":{\"files\":[\"DynamicallyGeneratedWithCodeLoaderLogic\"],\"library\":\"officeContainer\"}}}},\"config\":{\"blueprintId\":\"paragraph\"}},\"approvalSequenceNumber\":0,\"commitSequenceNumber\":0,\"sequenceNumber\":0}]]",
+        "size": 319
+      },
+      {
+        "id": "bARAAHLFtsr47SFHnEf5mbi0Q",
+        "content": "{\"blobs\":[],\"content\":{\"storage\":{\"text\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66/4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\"}},\"text:nodeType\":{\"type\":\"Plain\",\"value\":\"StoryNode\"},\"defaultContentLocale\":{\"type\":\"Plain\",\"value\":\"en-us\"},\"defaultContentDirection\":{\"type\":\"Plain\",\"value\":\"ltr\"}}}}",
+        "size": 345
+      },
+      {
+        "id": "bARDSVGmtxpZG8lYwTBKu0pLI",
+        "content": "{\"blobs\":[],\"content\":{\"storage\":{\"rootComponentConfig\":{\"type\":\"Plain\",\"value\":{\"canvasComponentType\":\"@ms/scriptor\",\"canvasComponentConfig\":{\"configurationType\":\"blueprint.Paragraph\"}}},\"lastEditedId\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/9938ffed-746e-46b7-8e05-db82e3b13f9b\"}},\"defaultViewId\":{\"type\":\"Plain\",\"value\":{\"type\":\"__fluid_handle__\",\"url\":\"/00ee3ad1-7b9f-4361-b477-a449de0d3f66\"}}}}}",
+        "size": 419
+      },
+      {
+        "id": "bARAH44VdSF7E5yr_douyiSnB",
+        "content": "{\"chunkStartSegmentIndex\":0,\"chunkSegmentCount\":3,\"chunkLengthChars\":3,\"totalLengthChars\":3,\"totalSegmentCount\":3,\"chunkSequenceNumber\":0,\"segmentTexts\":[{\"marker\":{\"refType\":1},\"props\":{\"nodeType\":\"Paragraph\",\"markerId\":\"299bbc33-3f0c-4a99-902a-85508e500ec3\",\"paragraph!writingMode\":false,\"paragraph!textAlignment\":\"left\",\"style!reference\":\"Heading 1\",\"placeholder!attributeText\":\"placeholder!addTitle\"}},{\"marker\":{\"refType\":1},\"props\":{\"placeholder!attributeText\":\"placeholder!paragraph\",\"nodeType\":\"Paragraph\",\"markerId\":\"9ab83912-5a40-4870-baca-579427d55950\"}},{\"marker\":{\"refType\":1},\"props\":{\"markerId\":\"cc15d675-a511-4777-a557-afbeb825f0a8\",\"nodeType\":\"Paragraph\"}}],\"headerMetadata\":{\"orderedChunkMetadata\":[{\"id\":\"header\"}],\"sequenceNumber\":0,\"totalLength\":3,\"totalSegmentCount\":3}}",
+        "size": 792
+      }
+    ],
+    "ops": [
+      {
+        "sequenceNumber": 1,
+        "op": {
+          "clientId": null,
+          "clientSequenceNumber": -1,
+          "contents": null,
+          "minimumSequenceNumber": 0,
+          "referenceSequenceNumber": -1,
+          "sequenceNumber": 1,
+          "term": 1,
+          "timestamp": 1652216619309,
+          "type": "join",
+          "data": "{\"clientId\":\"b52ef4d0-4473-438a-9541-e70f43e40567\",\"detail\":{\"user\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true},\"environment\":\"; loaderVersion:0.58.2001\"},\"timestamp\":1652216619307,\"mode\":\"write\"}}"
+        }
+      },
+      {
+        "sequenceNumber": 2,
+        "op": {
+          "clientId": "b52ef4d0-4473-438a-9541-e70f43e40567",
+          "clientSequenceNumber": 1,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"9938ffed-746e-46b7-8e05-db82e3b13f9b\",\"contents\":{\"content\":{\"address\":\"root\",\"contents\":{\"key\":\"lastEditCreatorKey\",\"path\":\"/\",\"type\":\"set\",\"value\":{\"type\":\"Plain\",\"value\":{\"user\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"timestamp\":1652216616975}}}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 1,
+          "referenceSequenceNumber": 1,
+          "sequenceNumber": 2,
+          "term": 1,
+          "timestamp": 1652216619453,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 3,
+        "op": {
+          "clientId": "b52ef4d0-4473-438a-9541-e70f43e40567",
+          "clientSequenceNumber": 2,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"_scheduler\",\"contents\":{\"content\":{\"address\":\"17c68c49-43de-409a-a3d6-4d48b8a8baed\",\"contents\":{\"key\":\"leader\",\"type\":\"write\",\"serializedValue\":\"null\",\"refSeq\":1}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 1,
+          "referenceSequenceNumber": 1,
+          "sequenceNumber": 3,
+          "term": 1,
+          "timestamp": 1652216619454,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 4,
+        "op": {
+          "clientId": "b52ef4d0-4473-438a-9541-e70f43e40567",
+          "clientSequenceNumber": 3,
+          "contents": "{\"key\":\"code\",\"value\":{\"package\":{\"name\":\"@ms/office-fluid-container\",\"version\":\"20220505014\",\"fluid\":{\"browser\":{\"umd\":{\"files\":[\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/runtime.5bea0728ffd241800282-2.js\",\"https://cdn.fluidpreview.office.net/fluid/df/container/hashed/officeContainer.9653d667963dcbbce59a-2.js\"],\"library\":\"officeContainer\"}}}},\"config\":{\"blueprintId\":\"paragraph\"}}}",
+          "minimumSequenceNumber": 1,
+          "referenceSequenceNumber": 1,
+          "sequenceNumber": 4,
+          "term": 1,
+          "timestamp": 1652216619454,
+          "type": "propose"
+        }
+      },
+      {
+        "sequenceNumber": 5,
+        "op": {
+          "clientId": "b52ef4d0-4473-438a-9541-e70f43e40567",
+          "clientSequenceNumber": 4,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"_scheduler\",\"contents\":{\"content\":{\"address\":\"17c68c49-43de-409a-a3d6-4d48b8a8baed\",\"contents\":{\"key\":\"leader\",\"type\":\"write\",\"serializedValue\":\"\\\"b52ef4d0-4473-438a-9541-e70f43e40567\\\"\",\"refSeq\":3}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 3,
+          "referenceSequenceNumber": 3,
+          "sequenceNumber": 5,
+          "term": 1,
+          "timestamp": 1652216619558,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 6,
+        "op": {
+          "clientId": "b52ef4d0-4473-438a-9541-e70f43e40567",
+          "clientSequenceNumber": 5,
+          "contents": "\"\"",
+          "minimumSequenceNumber": 4,
+          "referenceSequenceNumber": 4,
+          "sequenceNumber": 6,
+          "term": 1,
+          "timestamp": 1652216619558,
+          "type": "noop"
+        }
+      },
+      {
+        "sequenceNumber": 7,
+        "op": {
+          "clientId": null,
+          "clientSequenceNumber": -1,
+          "contents": null,
+          "minimumSequenceNumber": 7,
+          "referenceSequenceNumber": -1,
+          "sequenceNumber": 7,
+          "term": 1,
+          "timestamp": 1652216621299,
+          "type": "leave",
+          "data": "\"b52ef4d0-4473-438a-9541-e70f43e40567\""
+        }
+      },
+      {
+        "sequenceNumber": 8,
+        "op": {
+          "clientId": null,
+          "clientSequenceNumber": -1,
+          "contents": null,
+          "minimumSequenceNumber": 8,
+          "referenceSequenceNumber": 8,
+          "sequenceNumber": 8,
+          "term": 1,
+          "timestamp": 1652216621371,
+          "type": "noClient"
+        }
+      },
+      {
+        "sequenceNumber": 9,
+        "op": {
+          "clientId": null,
+          "clientSequenceNumber": -1,
+          "contents": null,
+          "minimumSequenceNumber": 8,
+          "referenceSequenceNumber": -1,
+          "sequenceNumber": 9,
+          "term": 1,
+          "timestamp": 1652216625675,
+          "type": "join",
+          "data": "{\"clientId\":\"5d281acb-967d-45e4-ae57-2a7734e38fe4\",\"detail\":{\"user\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":true},\"environment\":\"; loaderVersion:0.58.2001\"},\"timestamp\":1652216625673,\"mode\":\"write\"}}"
+        }
+      },
+      {
+        "sequenceNumber": 10,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 1,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":1,\"seg\":{\"text\":\"/\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 9,
+          "referenceSequenceNumber": 9,
+          "sequenceNumber": 10,
+          "term": 1,
+          "timestamp": 1652216625792,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 11,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 2,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"_scheduler\",\"contents\":{\"content\":{\"address\":\"17c68c49-43de-409a-a3d6-4d48b8a8baed\",\"contents\":{\"key\":\"leader\",\"type\":\"write\",\"serializedValue\":\"null\",\"refSeq\":9}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 9,
+          "referenceSequenceNumber": 9,
+          "sequenceNumber": 11,
+          "term": 1,
+          "timestamp": 1652216625792,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 12,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 3,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":2,\"seg\":{\"text\":\"/\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 9,
+          "referenceSequenceNumber": 9,
+          "sequenceNumber": 12,
+          "term": 1,
+          "timestamp": 1652216625795,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 13,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 4,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"_scheduler\",\"contents\":{\"content\":{\"address\":\"17c68c49-43de-409a-a3d6-4d48b8a8baed\",\"contents\":{\"key\":\"leader\",\"type\":\"write\",\"serializedValue\":\"\\\"5d281acb-967d-45e4-ae57-2a7734e38fe4\\\"\",\"refSeq\":11}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 11,
+          "referenceSequenceNumber": 11,
+          "sequenceNumber": 13,
+          "term": 1,
+          "timestamp": 1652216625907,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 14,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 5,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":2,\"pos2\":3,\"type\":1}},\"type\":\"op\"}}}",
+          "metadata": {
+            "batch": true
+          },
+          "minimumSequenceNumber": 13,
+          "referenceSequenceNumber": 13,
+          "sequenceNumber": 14,
+          "term": 1,
+          "timestamp": 1652216626957,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 15,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 6,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":1,\"pos2\":2,\"type\":1}},\"type\":\"op\"}}}",
+          "minimumSequenceNumber": 13,
+          "referenceSequenceNumber": 13,
+          "sequenceNumber": 15,
+          "term": 1,
+          "timestamp": 1652216626957,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 16,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 7,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":1,\"seg\":{\"text\":\"💬 [John Doe]: \",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "minimumSequenceNumber": 13,
+          "referenceSequenceNumber": 13,
+          "sequenceNumber": 16,
+          "term": 1,
+          "timestamp": 1652216626957,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 17,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 8,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":3,\"pos2\":19,\"props\":{\"format!italic\":true},\"type\":2}},\"type\":\"op\"}}}",
+          "metadata": {
+            "batch": false
+          },
+          "minimumSequenceNumber": 13,
+          "referenceSequenceNumber": 13,
+          "sequenceNumber": 17,
+          "term": 1,
+          "timestamp": 1652216626957,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 18,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 9,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":21,\"seg\":{\"text\":\"h\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 17,
+          "referenceSequenceNumber": 17,
+          "sequenceNumber": 18,
+          "term": 1,
+          "timestamp": 1652216628346,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 19,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 10,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":22,\"seg\":{\"text\":\"e\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 17,
+          "referenceSequenceNumber": 17,
+          "sequenceNumber": 19,
+          "term": 1,
+          "timestamp": 1652216628459,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 20,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 11,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":23,\"seg\":{\"text\":\"y\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 19,
+          "referenceSequenceNumber": 19,
+          "sequenceNumber": 20,
+          "term": 1,
+          "timestamp": 1652216628563,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 21,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 12,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":23,\"pos2\":24,\"type\":1}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 20,
+          "referenceSequenceNumber": 20,
+          "sequenceNumber": 21,
+          "term": 1,
+          "timestamp": 1652216629391,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 22,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 13,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":22,\"pos2\":23,\"type\":1}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 21,
+          "referenceSequenceNumber": 21,
+          "sequenceNumber": 22,
+          "term": 1,
+          "timestamp": 1652216629549,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 23,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 14,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":22,\"seg\":{\"text\":\"t\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 22,
+          "referenceSequenceNumber": 22,
+          "sequenceNumber": 23,
+          "term": 1,
+          "timestamp": 1652216629754,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 24,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 15,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":22,\"pos2\":23,\"type\":1}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 23,
+          "referenceSequenceNumber": 23,
+          "sequenceNumber": 24,
+          "term": 1,
+          "timestamp": 1652216629989,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 25,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 16,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":21,\"pos2\":22,\"type\":1}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 24,
+          "referenceSequenceNumber": 24,
+          "sequenceNumber": 25,
+          "term": 1,
+          "timestamp": 1652216630109,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 26,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 17,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":21,\"seg\":{\"text\":\"t\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 24,
+          "referenceSequenceNumber": 24,
+          "sequenceNumber": 26,
+          "term": 1,
+          "timestamp": 1652216630191,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 27,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 18,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":22,\"seg\":{\"text\":\"e\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 25,
+          "referenceSequenceNumber": 25,
+          "sequenceNumber": 27,
+          "term": 1,
+          "timestamp": 1652216630263,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 28,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 19,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":23,\"seg\":{\"text\":\"s\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 27,
+          "referenceSequenceNumber": 27,
+          "sequenceNumber": 28,
+          "term": 1,
+          "timestamp": 1652216630463,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 29,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 20,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":24,\"seg\":{\"text\":\"t\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 28,
+          "sequenceNumber": 29,
+          "term": 1,
+          "timestamp": 1652216630590,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 30,
+        "op": {
+          "clientId": null,
+          "clientSequenceNumber": -1,
+          "contents": null,
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": -1,
+          "sequenceNumber": 30,
+          "term": 1,
+          "timestamp": 1652216630814,
+          "type": "join",
+          "data": "{\"clientId\":\"7cfd6ca4-c526-4cf3-9ae1-135e04727e59\",\"detail\":{\"user\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"oid\":\"ef9355e8-e3cb-4107-bc7b-496c1579a599\"},\"scopes\":[\"doc:read\",\"doc:write\",\"summary:write\"],\"permission\":[],\"details\":{\"capabilities\":{\"interactive\":false},\"type\":\"summarizer\",\"environment\":\"; loaderVersion:0.58.2001\"},\"timestamp\":1652216630811,\"mode\":\"write\"}}"
+        }
+      },
+      {
+        "sequenceNumber": 31,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 21,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":25,\"seg\":{\"text\":\" \",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 30,
+          "sequenceNumber": 31,
+          "term": 1,
+          "timestamp": 1652216631696,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 32,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 22,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":26,\"seg\":{\"text\":\"(\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 31,
+          "sequenceNumber": 32,
+          "term": 1,
+          "timestamp": 1652216631997,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 33,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 23,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":27,\"seg\":{\"text\":\"y\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 32,
+          "sequenceNumber": 33,
+          "term": 1,
+          "timestamp": 1652216632513,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 34,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 24,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":28,\"seg\":{\"text\":\"o\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 33,
+          "sequenceNumber": 34,
+          "term": 1,
+          "timestamp": 1652216632624,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 35,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 25,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":29,\"seg\":{\"text\":\"u\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 33,
+          "sequenceNumber": 35,
+          "term": 1,
+          "timestamp": 1652216632693,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 36,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 26,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":30,\"seg\":{\"text\":\" \",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 35,
+          "sequenceNumber": 36,
+          "term": 1,
+          "timestamp": 1652216632939,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 37,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 27,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":31,\"seg\":{\"text\":\"d\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 36,
+          "sequenceNumber": 37,
+          "term": 1,
+          "timestamp": 1652216633117,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 38,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 28,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":32,\"seg\":{\"text\":\"o\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 36,
+          "sequenceNumber": 38,
+          "term": 1,
+          "timestamp": 1652216633167,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 39,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 29,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":33,\"seg\":{\"text\":\" \",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 38,
+          "sequenceNumber": 39,
+          "term": 1,
+          "timestamp": 1652216633360,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 40,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 30,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":34,\"seg\":{\"text\":\"\\\"\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 28,
+          "referenceSequenceNumber": 39,
+          "sequenceNumber": 40,
+          "term": 1,
+          "timestamp": 1652216633565,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 41,
+        "op": {
+          "clientId": "7cfd6ca4-c526-4cf3-9ae1-135e04727e59",
+          "clientSequenceNumber": 1,
+          "contents": "null",
+          "minimumSequenceNumber": 39,
+          "referenceSequenceNumber": 40,
+          "sequenceNumber": 41,
+          "term": 1,
+          "timestamp": 1652216633826,
+          "type": "noop"
+        }
+      },
+      {
+        "sequenceNumber": 42,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 31,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":35,\"seg\":{\"text\":\"/\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 40,
+          "referenceSequenceNumber": 41,
+          "sequenceNumber": 42,
+          "term": 1,
+          "timestamp": 1652216634159,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 43,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 32,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":36,\"seg\":{\"text\":\"/\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 40,
+          "referenceSequenceNumber": 41,
+          "sequenceNumber": 43,
+          "term": 1,
+          "timestamp": 1652216634285,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 44,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 33,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":37,\"seg\":{\"text\":\"\\\"\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 40,
+          "referenceSequenceNumber": 43,
+          "sequenceNumber": 44,
+          "term": 1,
+          "timestamp": 1652216634682,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 45,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 34,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":38,\"seg\":{\"text\":\" \",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 40,
+          "referenceSequenceNumber": 44,
+          "sequenceNumber": 45,
+          "term": 1,
+          "timestamp": 1652216635148,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 46,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 35,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":39,\"seg\":{\"text\":\"f\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 40,
+          "referenceSequenceNumber": 45,
+          "sequenceNumber": 46,
+          "term": 1,
+          "timestamp": 1652216636123,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 47,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 36,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":40,\"seg\":{\"text\":\"o\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 40,
+          "referenceSequenceNumber": 46,
+          "sequenceNumber": 47,
+          "term": 1,
+          "timestamp": 1652216636250,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 48,
+        "op": {
+          "clientId": "7cfd6ca4-c526-4cf3-9ae1-135e04727e59",
+          "clientSequenceNumber": 2,
+          "contents": "null",
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 46,
+          "sequenceNumber": 48,
+          "term": 1,
+          "timestamp": 1652216636300,
+          "type": "noop"
+        }
+      },
+      {
+        "sequenceNumber": 49,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 37,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":41,\"seg\":{\"text\":\"r\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 46,
+          "sequenceNumber": 49,
+          "term": 1,
+          "timestamp": 1652216636323,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 50,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 38,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":42,\"seg\":{\"text\":\" \",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 49,
+          "sequenceNumber": 50,
+          "term": 1,
+          "timestamp": 1652216636468,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 51,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 39,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":43,\"seg\":{\"text\":\"c\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 49,
+          "sequenceNumber": 51,
+          "term": 1,
+          "timestamp": 1652216636563,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 52,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 40,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":44,\"seg\":{\"text\":\"o\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 50,
+          "sequenceNumber": 52,
+          "term": 1,
+          "timestamp": 1652216636667,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 53,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 41,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":45,\"seg\":{\"text\":\"m\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 52,
+          "sequenceNumber": 53,
+          "term": 1,
+          "timestamp": 1652216636816,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 54,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 42,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":46,\"seg\":{\"text\":\"m\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 53,
+          "sequenceNumber": 54,
+          "term": 1,
+          "timestamp": 1652216636932,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 55,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 43,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":47,\"seg\":{\"text\":\"e\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 53,
+          "sequenceNumber": 55,
+          "term": 1,
+          "timestamp": 1652216637013,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 56,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 44,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":48,\"seg\":{\"text\":\"n\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 55,
+          "sequenceNumber": 56,
+          "term": 1,
+          "timestamp": 1652216637123,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 57,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 45,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":49,\"seg\":{\"text\":\"t\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 55,
+          "sequenceNumber": 57,
+          "term": 1,
+          "timestamp": 1652216637180,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 58,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 46,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":50,\"seg\":{\"text\":\"s\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 57,
+          "sequenceNumber": 58,
+          "term": 1,
+          "timestamp": 1652216637379,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 59,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 47,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":51,\"seg\":{\"text\":\" \",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 58,
+          "sequenceNumber": 59,
+          "term": 1,
+          "timestamp": 1652216637524,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 60,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 48,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":52,\"seg\":{\"text\":\"l\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 58,
+          "sequenceNumber": 60,
+          "term": 1,
+          "timestamp": 1652216637629,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 61,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 49,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":53,\"seg\":{\"text\":\"i\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 59,
+          "sequenceNumber": 61,
+          "term": 1,
+          "timestamp": 1652216637700,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 62,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 50,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":54,\"seg\":{\"text\":\"k\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 61,
+          "sequenceNumber": 62,
+          "term": 1,
+          "timestamp": 1652216637898,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 63,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 51,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":55,\"seg\":{\"text\":\"e\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 62,
+          "sequenceNumber": 63,
+          "term": 1,
+          "timestamp": 1652216638061,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 64,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 52,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":56,\"seg\":{\"text\":\" \",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 63,
+          "sequenceNumber": 64,
+          "term": 1,
+          "timestamp": 1652216638188,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 65,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 53,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":57,\"seg\":{\"text\":\"t\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 46,
+          "referenceSequenceNumber": 63,
+          "sequenceNumber": 65,
+          "term": 1,
+          "timestamp": 1652216638276,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 66,
+        "op": {
+          "clientId": "7cfd6ca4-c526-4cf3-9ae1-135e04727e59",
+          "clientSequenceNumber": 3,
+          "contents": "null",
+          "minimumSequenceNumber": 63,
+          "referenceSequenceNumber": 64,
+          "sequenceNumber": 66,
+          "term": 1,
+          "timestamp": 1652216638363,
+          "type": "noop"
+        }
+      },
+      {
+        "sequenceNumber": 67,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 54,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":58,\"seg\":{\"text\":\"h\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 64,
+          "referenceSequenceNumber": 65,
+          "sequenceNumber": 67,
+          "term": 1,
+          "timestamp": 1652216638401,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 68,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 55,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":59,\"seg\":{\"text\":\"i\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 64,
+          "referenceSequenceNumber": 65,
+          "sequenceNumber": 68,
+          "term": 1,
+          "timestamp": 1652216638475,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 69,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 56,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":60,\"seg\":{\"text\":\"s\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 64,
+          "referenceSequenceNumber": 67,
+          "sequenceNumber": 69,
+          "term": 1,
+          "timestamp": 1652216638558,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 70,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 57,
+          "contents": "{\"type\":\"component\",\"contents\":{\"address\":\"00ee3ad1-7b9f-4361-b477-a449de0d3f66\",\"contents\":{\"content\":{\"address\":\"4cdd4c7a-180f-4ec0-8057-8eff7ba81c7d\",\"contents\":{\"pos1\":61,\"seg\":{\"text\":\")\",\"props\":{\"attribution\":{\"id\":\"sampleemail@microsoft.com\",\"name\":\"John Doe\",\"email\":\"sampleemail@microsoft.com\",\"timestamp\":1652216400000}}},\"type\":0}},\"type\":\"op\"}}}",
+          "metadata": {},
+          "minimumSequenceNumber": 64,
+          "referenceSequenceNumber": 69,
+          "sequenceNumber": 70,
+          "term": 1,
+          "timestamp": 1652216638742,
+          "type": "op"
+        }
+      },
+      {
+        "sequenceNumber": 71,
+        "op": {
+          "clientId": "7cfd6ca4-c526-4cf3-9ae1-135e04727e59",
+          "clientSequenceNumber": 4,
+          "contents": "null",
+          "minimumSequenceNumber": 69,
+          "referenceSequenceNumber": 70,
+          "sequenceNumber": 71,
+          "term": 1,
+          "timestamp": 1652216640394,
+          "type": "noop"
+        }
+      },
+      {
+        "sequenceNumber": 72,
+        "op": {
+          "clientId": "5d281acb-967d-45e4-ae57-2a7734e38fe4",
+          "clientSequenceNumber": 58,
+          "contents": "null",
+          "minimumSequenceNumber": 70,
+          "referenceSequenceNumber": 71,
+          "sequenceNumber": 72,
+          "term": 1,
+          "timestamp": 1652216640861,
+          "type": "noop"
+        }
+      },
+      {
+        "sequenceNumber": 73,
+        "op": {
+          "clientId": null,
+          "clientSequenceNumber": -1,
+          "contents": null,
+          "minimumSequenceNumber": 70,
+          "referenceSequenceNumber": -1,
+          "sequenceNumber": 73,
+          "term": 1,
+          "timestamp": 1652216642694,
+          "type": "leave",
+          "data": "\"5d281acb-967d-45e4-ae57-2a7734e38fe4\""
+        }
+      },
+      {
+        "sequenceNumber": 74,
+        "op": {
+          "clientId": null,
+          "clientSequenceNumber": -1,
+          "contents": null,
+          "minimumSequenceNumber": 74,
+          "referenceSequenceNumber": -1,
+          "sequenceNumber": 74,
+          "term": 1,
+          "timestamp": 1652216642698,
+          "type": "leave",
+          "data": "\"7cfd6ca4-c526-4cf3-9ae1-135e04727e59\""
+        }
+      },
+      {
+        "sequenceNumber": 75,
+        "op": {
+          "clientId": null,
+          "clientSequenceNumber": -1,
+          "contents": null,
+          "minimumSequenceNumber": 75,
+          "referenceSequenceNumber": 75,
+          "sequenceNumber": 75,
+          "term": 1,
+          "timestamp": 1652216642760,
+          "type": "noClient"
+        }
+      }
+    ]
+  }

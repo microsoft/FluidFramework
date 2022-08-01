@@ -37,9 +37,8 @@ const guidRNG = {
      *                           local time and Math.random() is used.
      * @param in_enforceReInitialization - Optionally enforce re-initialization with another seed
      *
-     * @returns  The seed used to initialize the RNG;
-     *          If re-initialization is not enforced,
-     *          a zero indicates that the RNG was not re-seeded.
+     * @returns The seed used to initialize the RNG;
+     * If re-initialization is not enforced, a zero indicates that the RNG was not re-seeded.
      * @alias property-common.initializeGUIDGenerator
      */
     initialize(in_seed?: number, in_enforceReInitialization: boolean = false): number {

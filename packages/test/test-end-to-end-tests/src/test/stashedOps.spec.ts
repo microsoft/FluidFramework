@@ -255,6 +255,25 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(cell2.get(), testValue);
     });
 
+    it("resends delete op and can set after", async function() {
+        const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
+            map.delete("clear");
+        });
+
+        // load container with pending ops, which should resend the op not sent by previous container
+        const container2 = await loader.resolve({ url }, pendingOps);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+        await ensureContainerConnected(container2);
+        await provider.ensureSynchronized();
+        assert.strictEqual(map1.has("clear"), false);
+        assert.strictEqual(map2.has("clear"), false);
+        map1.set("clear", "test1");
+        await provider.ensureSynchronized();
+        assert.strictEqual(map1.get("clear"), "test1");
+        assert.strictEqual(map2.get("clear"), "test1");
+    });
+
     it("resends a lot of ops", async function() {
         const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
             [...Array(lots).keys()].map((i) => map.set(i.toString(), i));
@@ -535,18 +554,18 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         const simpleMarker1 = string1.getMarkerFromId("markerId");
-        assert.strictEqual(simpleMarker1.type, "Marker", "Could not get simple marker");
-        assert.strictEqual(simpleMarker1.properties?.markerId, "markerId", "markerId is incorrect");
-        assert.strictEqual(simpleMarker1.properties?.markerSimpleType, "markerKeyValue");
+        assert.strictEqual(simpleMarker1?.type, "Marker", "Could not get simple marker");
+        assert.strictEqual(simpleMarker1?.properties?.markerId, "markerId", "markerId is incorrect");
+        assert.strictEqual(simpleMarker1?.properties?.markerSimpleType, "markerKeyValue");
         const parallelMarkers1 = getTextAndMarkers(string1, "tileLabel");
         const parallelMarker1 = parallelMarkers1.parallelMarkers[0];
         assert.strictEqual(parallelMarker1.type, "Marker", "Could not get tile marker");
         assert.strictEqual(parallelMarker1.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
 
         const simpleMarker2 = string2.getMarkerFromId("markerId");
-        assert.strictEqual(simpleMarker2.type, "Marker", "Could not get simple marker");
-        assert.strictEqual(simpleMarker2.properties?.markerId, "markerId", "markerId is incorrect");
-        assert.strictEqual(simpleMarker2.properties?.markerSimpleType, "markerKeyValue");
+        assert.strictEqual(simpleMarker2?.type, "Marker", "Could not get simple marker");
+        assert.strictEqual(simpleMarker2?.properties?.markerId, "markerId", "markerId is incorrect");
+        assert.strictEqual(simpleMarker2?.properties?.markerSimpleType, "markerKeyValue");
         const parallelMarkers2 = getTextAndMarkers(string2, "tileLabel");
         const parallelMarker2 = parallelMarkers2.parallelMarkers[0];
         assert.strictEqual(parallelMarker2.type, "Marker", "Could not get tile marker");
@@ -757,14 +776,20 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
             .then(async (c) => c.closeAndGetPendingLocalState());
         const container = await loadOffline(provider, { url }, offlineState);
         const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
+        const map = await dataStore.getSharedObject<SharedMap>(mapId);
 
-        // calling uploadBlob() will not resolve while offline, but should not result in an error
-        const blobHandleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+        const handle = await dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+        assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+        map.set("blob handle", handle);
 
         container.connect();
-        // blob handle should resolve now we're connected
-        const handle = await blobHandleP;
-        assert.strictEqual(bufferToString(await handle.get(), "utf8"), "blob contents");
+
+        const container2 = await provider.loadTestContainer(testContainerConfig);
+        const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+        const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+        await provider.ensureSynchronized();
+        assert.strictEqual(bufferToString(await map2.get("blob handle").get(), "utf8"), "blob contents");
     });
 
     it("offline attach", async function() {

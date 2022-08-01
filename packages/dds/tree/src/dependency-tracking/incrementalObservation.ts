@@ -48,7 +48,7 @@ export interface ObservingDependent extends Dependent {
 	registerDependee(dependee: Dependee): void;
 
 	/**
-	 * {@inheritdoc Dependent.listDependees}
+	 * {@inheritdoc NamedComputation.listDependees}
      *
      * @override
 	 */

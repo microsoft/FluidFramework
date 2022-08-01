@@ -6,15 +6,16 @@
 import { Context } from "./context";
 import { ReferenceVersionBag } from "./versionBag";
 import { fatal } from "./utils";
-import { MonoRepo, MonoRepoKind } from "../common/monoRepo";
+import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
 import { strict as assert } from "assert";
 
-export async function showVersions(context: Context, name: string, publishedVersion?: semver.SemVer) {
+// TODO: Validate and document this function.
+export async function showVersions(context: Context, releaseGroup: MonoRepoKind | string, publishedVersion?: semver.SemVer) {
     let versions: ReferenceVersionBag;
     if (!publishedVersion) {
-        versions = await context.collectVersionInfo(name);
+        versions = await context.collectVersionInfo(releaseGroup);
     } else {
         const processMonoRepo = async (monoRepo: MonoRepo) => {
             await Promise.all(monoRepo.packages.map(pkg => {
@@ -23,19 +24,19 @@ export async function showVersions(context: Context, name: string, publishedVers
         };
         const depVersions = new ReferenceVersionBag(context.repo.resolvedRoot, context.fullPackageMap, context.collectVersions());
         let pkg: Package | undefined;
-        if (name === MonoRepoKind[MonoRepoKind.Client]) {
-            await processMonoRepo(context.repo.clientMonoRepo);
-        } else if (name === MonoRepoKind[MonoRepoKind.Server]) {
-            assert(context.repo.serverMonoRepo, "Attempted show server versions on a Fluid repo with no server directory");
-            await processMonoRepo(context.repo.serverMonoRepo!);
+        if (isMonoRepoKind(releaseGroup)) {
+            if (releaseGroup === MonoRepoKind.Server) {
+                assert(context.repo.serverMonoRepo, "Attempted show server versions on a Fluid repo with no server directory");
+            }
+            await processMonoRepo(context.repo.monoRepos.get(releaseGroup)!);
         } else {
-            pkg = context.fullPackageMap.get(name);
+            pkg = context.fullPackageMap.get(releaseGroup);
             if (!pkg) {
-                fatal(`Package ${name} not in repo`);
+                fatal(`Package ${releaseGroup} not in repo`);
             }
         }
         versions = depVersions;
     }
 
-    versions.printPublished(name);
+    versions.printPublished(releaseGroup);
 }

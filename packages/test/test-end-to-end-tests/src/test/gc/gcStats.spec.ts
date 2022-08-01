@@ -5,14 +5,22 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluidframework/common-utils";
+import { Container } from "@fluidframework/container-loader";
 import { ContainerRuntime, IGCStats } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
-import { waitForContainerConnection } from "./gcTestSummaryUtils";
+
+const ensureContainerConnectedWriteMode = async (container: Container) => {
+    const resolveIfActive = (res: () => void) => { if (container.deltaManager.active) { res(); } };
+    if (!container.deltaManager.active) {
+        await new Promise<void>((resolve) => container.on("connected", () => resolveIfActive(resolve)));
+        container.off("connected", resolveIfActive);
+    }
+};
 
 /**
  * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
@@ -20,6 +28,7 @@ import { waitForContainerConnection } from "./gcTestSummaryUtils";
  */
 describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
+    let container: Container;
     let containerRuntime: ContainerRuntime;
     let mainDataStore: ITestDataObject;
 
@@ -55,7 +64,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         if (provider.driver.type !== "local") {
             this.skip();
         }
-        const container = await provider.makeTestContainer(defaultGCConfig);
+        container = await provider.makeTestContainer(defaultGCConfig) as Container;
         mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
         containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
         await waitForContainerConnection(container);
@@ -92,6 +101,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
+        // Blob stats will be different if we upload while not connected
+        await ensureContainerConnectedWriteMode(container);
         const blob1Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         mainDataStore._root.set("blob1", blob1Handle);
@@ -131,6 +142,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
+        // Blob stats will be different if we upload while not connected
+        await ensureContainerConnectedWriteMode(container);
         const blob1Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         mainDataStore._root.set("blob1", blob1Handle);
@@ -217,6 +230,8 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
         // Upload 2 attachment blobs and store their handles to mark them referenced.
         const blob1Contents = "Blob contents 1";
         const blob2Contents = "Blob contents 2";
+        // Blob stats will be different if we upload while not connected
+        await ensureContainerConnectedWriteMode(container);
         const blob1Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob1Contents, "utf-8"));
         const blob2Handle = await mainDataStore._context.uploadBlob(stringToBuffer(blob2Contents, "utf-8"));
         mainDataStore._root.set("blob1", blob1Handle);

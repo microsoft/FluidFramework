@@ -40,7 +40,14 @@ import { Utils } from "./typeUtils";
 import { expandAll, fillExpanded, getReferenceValue, IInspectorSearchControls, isPrimitive, search, showNextResult,
   toTableRows } from "./utils";
 
-const defaultSort = { key: "name", order: SortOrder.ASC };
+// @TODO Figure out why SortOrder is not resolved as value after
+// updating the table version.
+enum TableSortOrder {
+  ASC = "asc",
+  DSC = "dsc",
+}
+
+const defaultSort = { key: "name", order: TableSortOrder.ASC } as { key: React.Key; order: SortOrder; };
 
 const footerHeight = 32;
 
@@ -160,7 +167,7 @@ const styles = (theme: Theme) => createStyles({
  */
 const themedSkeleton = (inSkeleton: JSX.Element) => {
   return (
-    <SkeletonTheme color="#C4C4C4">
+    <SkeletonTheme baseColor="#C4C4C4">
       {inSkeleton}
     </SkeletonTheme>
   );
@@ -265,15 +272,18 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     private readonly dataCreation: boolean;
     private columns: any;
     private readonly debouncedSearchChange: (searchExpression: string) => void;
-    private readonly table = React.createRef();
+    private readonly table;
     private toTableRowOptions;
 
     public constructor(props) {
       super(props);
+
+      this.table = React.createRef<BaseTable>();
+
       const { followReferences } = props;
       this.dataCreation = !!this.props.dataCreationHandler && !!this.props.dataCreationOptionGenerationHandler;
       this.columns = this.generateColumns(props.width);
-      this.toTableRowOptions = { addDummy: true, ascending: defaultSort.order === SortOrder.ASC,
+      this.toTableRowOptions = { addDummy: true, ascending: defaultSort.order === TableSortOrder.ASC,
         depth: 0, followReferences };
 
       this.debouncedSearchChange = debounce((searchExpression: string) => {
@@ -462,7 +472,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
         Object.keys(rest).length === 0 ? null : themedSkeleton(circleSkeleton);
       const components = this.props.checkoutInProgress ? { ExpandIcon: skeletonExpandIcon } : {};
       const fakeRows = Array.from(Array(getRandomRowsNum()), (x, i) => ({ id: i.toString() }));
-      const rowsData = this.props.checkoutInProgress ? fakeRows : rows;
+      const rowsData = this.props.checkoutInProgress ? fakeRows as any : rows;
       this.columns = this.generateColumns(width);
       const getHeader = ({ cells, headerIndex }) => {
         if (headerIndex === 1) {
@@ -912,8 +922,8 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
      * Maps the expanded row to either the filteredExpanded list or the whole dataset expanded list. This
      * allows the user to come back to the state before performing the filtering
      */
-    // eslint-disable-next-line max-len
-    private readonly handleRowExpanded = ({ rowData, expanded: newExpandedFlag }: { rowData: IInspectorRow; expanded: boolean; }) => {
+    private readonly handleRowExpanded = ({ expanded: newExpandedFlag, rowData }:
+       { expanded: boolean; rowData: IInspectorRow; }) => {
       const newExpanded = { ...this.state.expanded };
       const idInExpanded = rowData.id in newExpanded;
       if (newExpandedFlag && !idInExpanded) {
@@ -968,7 +978,11 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
     };
 
     private readonly forceUpdateBaseTable = () => {
-      (this.table.current as any).table.bodyRef.recomputeGridSize();
+      // @TODO Revisit this logic.
+      // With the new table it may not need force render if the
+      // right events handlers are used.
+      this.table.current.columnManager.resetCache();
+      this.table.current.forceUpdate();
     };
   }
 

@@ -410,7 +410,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
         if (prefetchType !== "none") {
             const cacheOnly = prefetchType === "cached";
-            await this.fetchMissingDeltasCore("DocumentOpen", cacheOnly, this.lastQueuedSequenceNumber);
+            await this.fetchMissingDeltasCore(`DocumentOpen_${prefetchType}`, cacheOnly);
 
             // Keep going with fetching ops from storage once we have all cached ops in.
             // But do not block load and make this request async / not blocking this api.
@@ -418,7 +418,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // (which in most cases will happen when we are done processing cached ops)
             if (cacheOnly) {
                 // fire and forget
-                this.fetchMissingDeltas("DocumentOpen");
+                this.fetchMissingDeltas("PostDocumentOpen");
             }
         }
 
@@ -453,6 +453,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private async getDeltas(
         from: number, // inclusive
         to: number | undefined, // exclusive
+        fetchReason: string,
         callback: (messages: ISequencedDocumentMessage[]) => void,
         cacheOnly: boolean) {
         const docService = this.serviceProvider();
@@ -473,7 +474,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             // received through delta stream. Validate that before moving forward.
             if (this.lastQueuedSequenceNumber >= lastExpectedOp) {
                 this.logger.sendPerformanceEvent({
-                    reason: this.fetchReason,
+                    reason: fetchReason,
                     eventName: "ExtraStorageCall",
                     early: true,
                     from,
@@ -521,7 +522,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                 to, // exclusive
                 controller.signal,
                 cacheOnly,
-                this.fetchReason);
+                fetchReason);
 
             // eslint-disable-next-line no-constant-condition
             while (true) {
@@ -721,11 +722,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
                     const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
                     const message2 = this.comparableMessagePayload(message);
                     if (message1 !== message2) {
-                        // This looks like a data corruption but the culprit has been found instead
-                        // to be the file being overwritten in storage.  See PR #5882.
                         const error = new NonRetryableError(
+                            // This looks like a data corruption but the culprit was that the file was overwritten
+                            // in storage.  See PR #5882.
+                            // Likely to be an issue with Fluid Services. Content does not match previous client
+                            // knowledge about this file. If the file is overwritten for any reason, this error can be
+                            // hit. One example is that some clients could be submitting ops to two different service
+                            // instances such that the same sequence number is reused for two different ops.
                             // pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
-                            "Found two messages with the same sequenceNumber but different payloads",
+                            "Found two messages with the same sequenceNumber but different payloads. Likely to be a "
+                            + "service issue",
                             DriverErrorType.fileOverwrittenInStorage,
                             {
                                 clientId: this.connectionManager.clientId,
@@ -871,6 +877,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             await this.getDeltas(
                 from,
                 to,
+                fetchReason,
                 (messages) => {
                     this.refreshDelayInfo(this.deltaStorageDelayId);
                     this.enqueueMessages(messages, fetchReason);

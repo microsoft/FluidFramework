@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Context, VersionBumpType } from "./context";
+import { VersionBumpType } from "@fluid-tools/version-tools";
+import { Context } from "./context";
 import { bumpDependencies } from "./bumpDependencies";
 import { bumpVersion } from "./bumpVersion";
 import { runPolicyCheckWithFix } from "./policyCheck";
@@ -25,7 +26,15 @@ export function getPackageShortName(pkgName: string) {
  *
  * If --commit or --release is specified, the bumpped version changes will be committed and a release branch will be created
  */
-export async function releaseVersion(context: Context, releaseName: string, updateLock: boolean, virtualPatch: boolean, releaseVersion?: VersionBumpType) {
+export async function releaseVersion(
+    context: Context,
+    releaseName: MonoRepoKind | string,
+    updateLock: boolean,
+    virtualPatch: boolean,
+    releaseVersion?: VersionBumpType,
+    skipPolicyCheck = false,
+    skipUpToDateCheck = false,
+    ) {
 
     // run policy check before releasing a version.
     // right now this only does assert short codes
@@ -124,8 +133,8 @@ async function releasePackages(context: Context, packages: Package[], updateLock
 }
 
 async function releaseMonoRepo(context: Context, monoRepo: MonoRepo, updateLock: boolean, virtualPatch: boolean) {
-    const kind = MonoRepoKind[monoRepo.kind];
-    const kindLowerCase = MonoRepoKind[monoRepo.kind].toLowerCase();
+    const kind = monoRepo.kind;
+    const kindLowerCase = monoRepo.kind.toLowerCase();
     const tagName = `${kindLowerCase}_v${monoRepo.version}`;
     await context.gitRepo.fetchTags();
     if ((await context.gitRepo.getTags(tagName)).trim() !== tagName) {
@@ -151,7 +160,7 @@ async function postRelease(context: Context, tagNames: string, packageNames: str
 
     // Fix the pre-release dependency and update package lock
     const fixPrereleaseCommitMessage = `Also remove pre-release dependencies for ${packageNames}`;
-    const message = await bumpDependencies(context, fixPrereleaseCommitMessage, bumpDep, updateLock, false, true);
+    const message = await bumpDependencies(context, bumpDep, updateLock, false, fixPrereleaseCommitMessage, true);
     await bumpVersion(context, [...bumpDep.keys()], "patch", packageNames, virtualPatch, message ?
         `\n\n${fixPrereleaseCommitMessage}\n${message}` : "");
 
