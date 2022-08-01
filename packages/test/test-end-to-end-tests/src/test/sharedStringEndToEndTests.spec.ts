@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
+import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
@@ -15,7 +16,6 @@ import {
     ITestFluidObject,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
-import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];

@@ -67,16 +67,19 @@ export type ITreeEntry = {
      */
     mode: FileMode;
 } & (
-{
-    type: TreeEntry.Blob;
-    value: IBlob;
-} | {
-    type: TreeEntry.Tree;
-    value: ITree;
-} | {
-    type: TreeEntry.Attachment;
-    value: IAttachment;
-});
+    | {
+          type: TreeEntry.Blob;
+          value: IBlob;
+      }
+    | {
+          type: TreeEntry.Tree;
+          value: ITree;
+      }
+    | {
+          type: TreeEntry.Attachment;
+          value: IAttachment;
+      }
+);
 
 /**
  * Type of entries that can be stored in a tree
@@ -104,8 +107,9 @@ export interface ITree {
 
 export interface ISnapshotTree {
     id?: string;
-    blobs: { [path: string]: string; };
-    trees: { [path: string]: ISnapshotTree; };
+    blobs: { [path: string]: string };
+    trees: { [path: string]: ISnapshotTree };
+
     /**
      * Indicates that this tree is unreferenced. If this is not present, the tree is considered referenced.
      */
@@ -114,7 +118,7 @@ export interface ISnapshotTree {
 
 export interface ISnapshotTreeEx extends ISnapshotTree {
     id: string;
-    trees: { [path: string]: ISnapshotTreeEx; };
+    trees: { [path: string]: ISnapshotTreeEx };
 }
 
 /**

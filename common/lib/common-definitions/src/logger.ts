@@ -66,7 +66,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  * Error telemetry event.
  * Maps to category = "error"
  */
- export interface ITelemetryErrorEvent extends ITelemetryProperties {
+export interface ITelemetryErrorEvent extends ITelemetryProperties {
     eventName: string;
 }
 

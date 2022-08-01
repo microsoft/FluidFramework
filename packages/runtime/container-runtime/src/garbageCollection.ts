@@ -63,7 +63,7 @@ export const gcBlobPrefix = "__gc";
 // Feature gate key to turn GC on / off.
 const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Feature gate key to turn GC sweep on / off.
-const runSweepKey = "Fluid.GarbageCollection.RunSweep";
+// const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to turn GC test mode on / off.
 const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to write GC data at the root of the summary tree.
@@ -486,7 +486,7 @@ export class GarbageCollector implements IGarbageCollector {
 
             // Set the Session Expiry only if the flag is enabled or the test option is set.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
-                this.sessionExpiryTimeoutMs = defaultSessionExpiryDurationMs;
+                this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
             }
         }
 
@@ -503,14 +503,19 @@ export class GarbageCollector implements IGarbageCollector {
                 (timer) => { this.sessionExpiryTimer = timer; },
             );
 
+            // TEMPORARY: Hardcode a default of 2 days which is the value used in the ODSP driver.
+            // This unblocks the Sweep Log (see logSweepEvents function).
+            // This will be removed before sweep is fully implemented.
+            const snapshotCacheExpiryMs = createParams.snapshotCacheExpiryMs ?? 2 * 24 * 60 * 60 * 1000;
+
             /**
              * Sweep timeout is the time after which unreferenced content can be swept.
              * Sweep timeout = session expiry timeout + snapshot cache expiry timeout + one day buffer. The buffer is
              * added to account for any clock skew. We use server timestamps throughout so the skew should be minimal
              * but make it one day to be safe.
              */
-            if (createParams.snapshotCacheExpiryMs !== undefined) {
-                this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + createParams.snapshotCacheExpiryMs + oneDayMs;
+            if (snapshotCacheExpiryMs !== undefined) {
+                this.sweepTimeoutMs = this.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs;
             }
         }
 
@@ -538,9 +543,10 @@ export class GarbageCollector implements IGarbageCollector {
          * 3. Sweep should be enabled for this container (this.sweepEnabled). This can be overridden via runSweep
          *    feature flag.
          */
-        this.shouldRunSweep = this.shouldRunGC
-            && this.sweepTimeoutMs !== undefined
-            && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
+        this.shouldRunSweep = false; // disable while TEMPORARY measure hardcoding snapshotCacheExpiryMs is here
+            // this.shouldRunGC
+            // && this.sweepTimeoutMs !== undefined
+            // && (this.mc.config.getBoolean(runSweepKey) ?? this.sweepEnabled);
 
         this.trackGCState = this.mc.config.getBoolean(trackGCStateKey) === true;
 

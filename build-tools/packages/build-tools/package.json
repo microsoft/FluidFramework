@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/build-tools",
-  "version": "0.3.0",
+  "version": "0.3.2000",
   "description": "Fluid Build tools",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -49,6 +49,7 @@
     "tsc": "tsc -b"
   },
   "dependencies": {
+    "@fluid-tools/version-tools": "^0.3.2000",
     "@fluidframework/bundle-size-tools": "^0.0.8505",
     "async": "^3.2.0",
     "chalk": "^2.4.2",
@@ -88,6 +89,7 @@
     "@types/webpack": "^4.41.22",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
+    "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
     "eslint-plugin-eslint-comments": "~3.2.0",
     "eslint-plugin-import": "~2.25.4",

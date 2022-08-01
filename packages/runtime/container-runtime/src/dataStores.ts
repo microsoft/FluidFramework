@@ -12,6 +12,7 @@ import {
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
+    AliasResult,
     channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
@@ -82,6 +83,7 @@ export class DataStores implements IDisposable {
     // The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
     // the container runtime to other nodes.
     private readonly containerRuntimeHandle: IFluidHandle;
+    private readonly pendingAliasMap: Map<string, Promise<AliasResult>> = new Map<string, Promise<AliasResult>>();
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
@@ -173,8 +175,17 @@ export class DataStores implements IDisposable {
         };
     }
 
-    public aliases(): ReadonlyMap<string, string> {
+    public get aliases(): ReadonlyMap<string, string> {
         return this.aliasMap;
+    }
+
+    public get pendingAliases(): Map<string, Promise<AliasResult>> {
+        return this.pendingAliasMap;
+    }
+
+    public async waitIfPendingAlias(maybeAlias: string): Promise<AliasResult> {
+        const pendingAliasPromise = this.pendingAliases.get(maybeAlias);
+        return pendingAliasPromise === undefined ? "Success" : pendingAliasPromise;
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
