@@ -77,7 +77,7 @@ function bench(name: string, getJson: () => any) {
             const forest = buildForest();
             initializeForest(forest, [encodedTree]);
             const cursor = forest.allocateCursor();
-            assert.equal(forest.tryGet(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
+            assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
             return cursor;
         }],
     ];

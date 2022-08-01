@@ -7,7 +7,7 @@ import { existsSync, copySync, readJSONSync } from "fs-extra";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
 
-export default class BundleAnalysesCollect extends BaseCommand {
+export default class BundleAnalysesCollect extends BaseCommand<typeof BundleAnalysesCollect.flags> {
     static description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
     static flags = {
         lernaOutput: Flags.string({
@@ -24,7 +24,7 @@ export default class BundleAnalysesCollect extends BaseCommand {
             default: 100,
             required: false,
         }),
-        ...super.flags,
+        ...BaseCommand.flags,
     };
 
     public async run(): Promise<void> {

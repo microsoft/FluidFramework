@@ -14,6 +14,7 @@ export {
     Value,
     TreeValue,
     detachedFieldAsKey,
+    keyAsDetachedField,
 } from "./types";
 
 export * from "./pathTree";

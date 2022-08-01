@@ -14,6 +14,7 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 export class AnchorSet {
     // (undocumented)
     forget(anchor: Anchor): void;
+    isEmpty(): boolean;
     locate(anchor: Anchor): UpPath | undefined;
     moveChildren(count: number, src: undefined | {
         path: UpPath;
@@ -100,6 +101,7 @@ declare namespace Delta {
     export {
         inputLength,
         Root,
+        empty,
         Mark,
         OuterMark,
         InnerModify,
@@ -142,6 +144,9 @@ export interface Dependent extends NamedComputation {
 // @public
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
+
+// @public (undocumented)
+const empty: Root;
 
 // @public
 export const emptyField: FieldSchema;
@@ -197,13 +202,7 @@ export interface FieldSchema {
 export type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, infer TFinal, any> ? TFinal : never;
 
 // @public
-export interface ForestAnchor {
-    free(): void;
-    readonly state: ITreeSubscriptionCursorState;
-}
-
-// @public
-export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
+export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @public
 export interface GenericTreeNode<TChild> extends NodeData {
@@ -226,11 +225,11 @@ export interface IEditableForest extends IForestSubscription {
 // @public
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
-    root(range: DetachedField): ForestAnchor;
+    root(range: DetachedField): Anchor;
     // (undocumented)
     readonly rootField: DetachedField;
     readonly schema: SchemaRepository & Dependee;
-    tryGet(destination: ForestAnchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
+    tryMoveCursorTo(destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
 }
 
 // @public
@@ -290,7 +289,7 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
 
 // @public
 export interface ITreeSubscriptionCursor extends ITreeCursor {
-    buildAnchor(): ForestAnchor;
+    buildAnchor(): Anchor;
     clear(): void;
     // (undocumented)
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
