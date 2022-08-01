@@ -79,11 +79,25 @@ export interface IMigratableModel
 }
 
 export interface IMigratorEvents extends IEvent {
-    (event: "migrated", listener: (newModel: IMigratableModel, newModelId: string) => void);
-    (event: "migrating", listener: () => void);
+    (event: "migrated" | "migrating", listener: () => void);
     (event: "migrationNotSupported", listener: (version: string) => void);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IMigrator extends IEventProvider<IMigratorEvents> {
+    /**
+     * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new
+     * migrated model and emit a "migrated" event.
+     */
+    readonly currentModel: IMigratableModel;
+
+    /**
+     * The container id of the current model.
+     */
+    readonly currentModelId: string;
+
+    /**
+     * The migration state of the current model.  Note that since we swap out for the new model as soon as migration
+     * completes, we'll only ever see this as collaborating or migrating, never migrated.
+     */
+    readonly migrationState: MigrationState;
 }

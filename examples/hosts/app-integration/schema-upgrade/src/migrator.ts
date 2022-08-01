@@ -9,26 +9,40 @@ import { IMigratableModel, IMigrator, IMigratorEvents, MigrationState } from "./
 import { IModelLoader } from "./modelLoading";
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
-    private _currentMigratable: IMigratableModel;
+    private _currentModel: IMigratableModel;
+    public get currentModel(): IMigratableModel {
+        return this._currentModel;
+    }
+
+    private _currentModelId: string;
+    public get currentModelId(): string {
+        return this._currentModelId;
+    }
+
+    public get migrationState(): MigrationState {
+        return this._currentModel.getMigrationState();
+    }
+
     /**
      * If migration is in progress, the promise that will resolve when it completes.  Mutually exclusive with
      * _migratedLoadP promise.
      */
     private _migrationP: Promise<void> | undefined;
+
     /**
      * If loading the migrated container is in progress, the promise that will resolve when it completes.  Mutually
      * exclusive with _migrationP promise.
      */
     private _migratedLoadP: Promise<void> | undefined;
 
-    // TODO: Maybe also have a prop for the id and the current MigrationState?
-
     public constructor(
         private readonly modelLoader: IModelLoader<IMigratableModel>,
         initialMigratable: IMigratableModel,
+        initialId: string,
     ) {
         super();
-        this._currentMigratable = initialMigratable;
+        this._currentModel = initialMigratable;
+        this._currentModelId = initialId;
         this.takeAppropriateActionForCurrentMigratable();
     }
 
@@ -39,13 +53,13 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
      * that a freshly-loaded migrated container is in collaborating state.
      */
     private readonly takeAppropriateActionForCurrentMigratable = () => {
-        const migrationState = this._currentMigratable.getMigrationState();
+        const migrationState = this._currentModel.getMigrationState();
         if (migrationState === MigrationState.migrating) {
             this.ensureMigrating();
         } else if (migrationState === MigrationState.migrated) {
             this.ensureLoading();
         } else {
-            this._currentMigratable.once("migrating", this.takeAppropriateActionForCurrentMigratable);
+            this._currentModel.once("migrating", this.takeAppropriateActionForCurrentMigratable);
         }
     };
 
@@ -58,7 +72,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             throw new Error("Cannot perform migration, we are currently trying to load");
         }
 
-        const migratable = this._currentMigratable;
+        const migratable = this._currentModel;
         const acceptedVersion = migratable.acceptedVersion;
         if (acceptedVersion === undefined) {
             throw new Error("Expect an accepted version before migration starts");
@@ -140,7 +154,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             throw new Error("Cannot start loading the migrated before migration is complete");
         }
 
-        const migratable = this._currentMigratable;
+        const migratable = this._currentModel;
         const acceptedVersion = migratable.acceptedVersion;
         if (acceptedVersion === undefined) {
             throw new Error("Expect an accepted version before migration starts");
@@ -163,7 +177,8 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             // of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
             // migratable).  It could also be fine to close here, just need to have an explicit contract to clarify
             // who is responsible for managing that.
-            this._currentMigratable = migrated;
+            this._currentModel = migrated;
+            this._currentModelId = migratedId;
             this.emit("migrated", migrated, migratedId);
             this._migratedLoadP = undefined;
 
