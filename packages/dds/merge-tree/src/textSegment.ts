@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BaseSegment, ISegment, Marker } from "./mergeTreeNodes";
+import { BaseSegment, ISegment } from "./mergeTreeNodes";
 import { IJSONSegment } from "./ops";
 import { PropertySet } from "./properties";
 import { LocalReferenceCollection } from "./localReference";
