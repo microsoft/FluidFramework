@@ -4,18 +4,11 @@ The version-tools package provides APIs and a CLI to parse and transform version
 Fluid Framework.
 
 <!-- toc -->
-- [@fluid-tools/version-tools](#fluid-toolsversion-tools)
-- [Version schemes](#version-schemes)
-  - [internal version scheme](#internal-version-scheme)
-    - [API](#api)
-  - [virtualPatch version scheme](#virtualpatch-version-scheme)
-    - [API](#api-1)
-- [General API](#general-api)
-- [CLI Usage](#cli-usage)
-- [Commands](#commands)
-  - [`fluv help [COMMAND]`](#fluv-help-command)
-  - [`fluv version VERSION`](#fluv-version-version)
-  - [Trademark](#trademark)
+* [@fluid-tools/version-tools](#fluid-toolsversion-tools)
+* [Version schemes](#version-schemes)
+* [General API](#general-api)
+* [CLI Usage](#cli-usage)
+* [Commands](#commands)
 <!-- tocstop -->
 
 # Version schemes
@@ -81,7 +74,7 @@ $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version)
-@fluid-tools/version-tools/0.3.2000 win32-x64 node-v14.19.0
+@fluid-tools/version-tools/0.3.2000 win32-x64 node-v14.18.1
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND

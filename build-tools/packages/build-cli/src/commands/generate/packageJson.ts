@@ -11,19 +11,19 @@ import {
 import { BaseCommand } from "../../base";
 import { releaseGroupFlag } from "../../flags";
 
-export class GeneratePackageJson extends BaseCommand {
+export class GeneratePackageJson extends BaseCommand<typeof GeneratePackageJson.flags> {
     static description = `Generate mono repo package json`;
 
     static flags = {
         releaseGroup: releaseGroupFlag({ required: true }),
-        ...super.flags,
+        ...BaseCommand.flags,
     };
 
     async run() {
         const { flags } = await this.parse(GeneratePackageJson);
         const timer = new Timer(flags.timer);
 
-        const context = await this.getContext(flags.verbose);
+        const context = await this.getContext();
 
         // Load the package
         const repo = context.repo;
