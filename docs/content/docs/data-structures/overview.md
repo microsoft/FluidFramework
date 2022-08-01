@@ -103,7 +103,7 @@ Consensus data structures have one or both of these characteristics:
 These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
 must acknowledge the change.
 
-- [TaskManager]({{< relref "task-manager.md" >}}) -- Tracks queues of clients that want to exclusively run a task.
+- [TaskManager][] -- Tracks queues of clients that want to exclusively run a task.
 
 ### Consensus scenarios
 
@@ -117,3 +117,4 @@ Typical scenarios require the connected clients to "agree" on some course of act
 [SharedDirectory]: https://fluidframework.com/docs/apis/map/shareddirectory/
 [SharedMap]: https://fluidframework.com/docs/apis/map/sharedmap/
 [SharedString]: https://fluidframework.com/docs/apis/sequence/sharedstring/
+[TaskManager]: {{< relref "task-manager.md" >}}
