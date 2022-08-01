@@ -8,7 +8,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { DriverErrorType, DriverHeader, FetchSource } from "@fluidframework/driver-definitions";
+import { DriverErrorType, DriverHeader } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ChildLogger,
@@ -388,23 +388,20 @@ export class Summarizer extends EventEmitter implements ISummarizer {
                         refSequenceNumber,
                         summaryLogger,
                     ).catch(async (error) => {
-                        // If the error is 404, so maybe the fetched version no longer exists on server. We retry to
-                        // refresh with the latest version one time.
+                        // If the error is 404, so maybe the fetched version no longer exists on server. We just
+                        // ignore this error in that case, as that means we will have another summaryAck for the
+                        // latest version with which we will refresh the state. However in case of single commit
+                        // summary, we might me missing a summary ack, so in that case we are still fine as the
+                        // code in `submitSummary` function in container runtime, will refresh the latest state
+                        // by calling `refreshLatestSummaryAckFromServer` and we will be fine.
                         if (isFluidError(error)
                             && error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
                             summaryLogger.sendTelemetryEvent({
-                                eventName: "HandleSummaryAckErrorRetry",
+                                eventName: "HandleSummaryAckErrorIgnored",
                                 referenceSequenceNumber: refSequenceNumber,
                                 proposalHandle: summaryOpHandle,
                                 ackHandle: summaryAckHandle,
                             }, error);
-                            await this.internalsProvider.refreshLatestSummaryAck(
-                                summaryOpHandle,
-                                summaryAckHandle,
-                                refSequenceNumber,
-                                summaryLogger,
-                                FetchSource.noCache,
-                            );
                         } else {
                             throw error;
                         }
