@@ -4,24 +4,31 @@
  */
 
 /**
- * TODO
+ * Base interface for event emitters.
  */
 export interface IEvent {
-    // the event emitter polyfill and the node event emitter have different event types:
-    // string | symbol vs. string | number
-    // so for our typing we'll contrain to string, so we work with both
+    /**
+     * Base event emitter signature.
+     *
+     * @remarks The event emitter polyfill and the node event emitter have different event types:
+     * `string | symbol` vs. `string | number`.
+     *
+     * So for our typing we'll contrain to string, that way we work with both.
+     *
+     * @eventProperty
+     */
     (event: string, listener: (...args: any[]) => void);
 }
 
 /**
- * TODO
+ * Base interface for error event emitters.
  */
 export interface IErrorEvent extends IEvent {
     (event: "error", listener: (message: any) => void);
 }
 
 /**
- * TODO
+ * Base interface for event providers.
  */
 export interface IEventProvider<TEvent extends IEvent> {
     /**

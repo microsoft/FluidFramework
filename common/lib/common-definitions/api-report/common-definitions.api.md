@@ -21,7 +21,7 @@ export interface IErrorEvent extends IEvent {
 
 // @public
 export interface IEvent {
-    // (undocumented)
+    // @eventProperty
     (event: string, listener: (...args: any[]) => void): any;
 }
 
