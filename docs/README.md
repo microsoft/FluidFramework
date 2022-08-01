@@ -214,7 +214,7 @@ The site theme/template lives in `themes/thxvscode`.
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
 | `hugo` | Run the local copy of Hugo. |
-| `linkcheck` | `npm run linkcheck:site` |
+| `linkcheck` | `npm run linkcheck:fast -- --external` |
 | `linkcheck:fast` | `linkcheck http://localhost:1313 --skip-file skipped-urls.txt` |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
