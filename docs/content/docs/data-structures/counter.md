@@ -5,7 +5,7 @@ menuPosition: 5
 
 ## Introduction
 
-The `SharedCounter` distributed data structure (DDS) is use to store an integer counter value that can be modified collaboratively.
+The `SharedCounter` distributed data structure (DDS) is used to store an integer counter value that can be modified collaboratively.
 The data structure affords incrementing and decrementing the shared value via its `increment` method. Decrements are done by providing a negative value.
 
 The `SharedCounter` is a specialized [optimistic DDS]({{< relref "dds.md#optimistic-data-structures" >}}).
