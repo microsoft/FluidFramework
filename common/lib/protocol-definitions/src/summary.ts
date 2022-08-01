@@ -48,6 +48,9 @@ export namespace SummaryType {
     export const Attachment: Attachment = 4 as const;
 }
 
+/**
+ * {@inheritDoc (SummaryType:namespace)}
+ */
 export type SummaryType =
     | SummaryType.Attachment
     | SummaryType.Blob
