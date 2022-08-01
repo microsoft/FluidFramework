@@ -112,7 +112,7 @@ export interface ITokenService {
  */
 export interface ITokenProvider {
     /**
-     * TODO
+     * Whether or not the token is still valid to use.
      */
     isValid(): boolean;
 }
