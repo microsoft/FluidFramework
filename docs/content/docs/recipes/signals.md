@@ -341,6 +341,6 @@ function renderMousePresence(mouseTracker: MouseTracker, focusTracker: FocusTrac
 ```
 
 ## Next Steps
-- You can find the completed code for this example in the Fluid GitHub repository [here]((https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker).
+- You can find the completed code for this example in the Fluid GitHub repository [here](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker).
 - Try extending the `PresenceTracker` to track some other form of presence using signals!
 
