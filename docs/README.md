@@ -107,8 +107,8 @@ npm run build:fast -- -s build -s build:docs --nolint --all
 
 You can then build or preview the docs using the steps described earlier.
 
-Note that this will leave the fluid-build tool in full-symlink mode.  To return to the default isolated
-mode (e.g. for typical development) run:
+Note that this will leave the fluid-build tool in full-symlink mode.
+To return to the default isolated mode (e.g. for typical development) run:
 
 ```bash
 npm run build:fast -- --symlink
@@ -116,21 +116,20 @@ npm run build:fast -- --symlink
 
 ### Understanding the API documentation build pipeline
 
-If you encounter problems updating or building the API docs, it can be helpful to have a high-level
-understanding of how it gets built. The steps are as follows:
+If you encounter problems updating or building the API docs, it can be helpful to have a high-level understanding of how it gets built.
+The steps are as follows:
 
 1. Root: `build:fast`
     1. Compile the code, generating TypeScript definitions, etc.
 1. Root: `build:docs`
     1. Run the @microsoft/api-extractor (using Lerna) in each package to extract documentation info in a JSON format.
        The output is placed in a folder `_api-extractor-temp` in each package's directory.
-    1. The JSON is also copied from each package up to a shared `_api-extractor-temp` directory under the repository
-       root.
+    1. The JSON is also copied from each package up to a shared `_api-extractor-temp` directory under the repository root.
 1. `/docs`: `build`
     1. Run markdown-magic to update some shared content in the source Markdown files.
-    1. Run the @mattetti/api-extractor tool to transform the JSON format into Markdown.  The generated Markdown is
-       placed at `/docs/content/apis`. We maintain this fork of @microsoft/api-extractor
-       [here](https://github.com/mattetti/custom-api-documenter).
+    1. Run the @mattetti/api-extractor tool to transform the JSON format into Markdown.
+       The generated Markdown is placed at `/docs/content/apis`.
+       We maintain this fork of @microsoft/api-extractor [here](https://github.com/mattetti/custom-api-documenter).
     1. Run hugo to build the site itself. The generated output is placed at `/docs/public/apis`.
 1. `/docs`: `start`
     1. Run the hugo server to host the site at <http://localhost:1313>.
