@@ -6,9 +6,9 @@ menuPosition: 5
 ## Introduction
 
 The `SharedCounter` distributed data structure (DDS) is use to store an integer counter value that can be modified collaboratively.
-The data structure affords incrementing and decrementing the shared value via its `increment` method (decrements are handled by providing a negative delta value).
+The data structure affords incrementing and decrementing the shared value via its `increment` method. Decrements are done by providing a negative value.
 
-The `SharedCounter` is a specialized, [Optimistic DDS]({{< relref "dds.md#optimistic-data-structures" >}}).
+The `SharedCounter` is a specialized [optimistic DDS]({{< relref "dds.md#optimistic-data-structures" >}}).
 It operates on communicated deltas, rather than direct changes to the shared value.
 In this way, it avoids the pitfalls of DDSes with simpler merge strategies, in which one user's edit may clobber another's.
 
@@ -22,12 +22,12 @@ Because `SharedCounter` is an Optimistic DDS, it cannot support floating point v
 The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it.
 It provides two separate fields for establishing an initial roster of objects and dynamically creating new ones.
 
-- For general guidance on using the `ContainerSchema`, please see [Data modeling]({{< relref "data-modeling.md" >}}).
-- For guidance on how to create/load a container using a service-specific client, please see [Containers - Creating and loading]({{< relref "containers.md#creating--loading" >}}).
+- For general guidance on using the `ContainerSchema`, see [Data modeling]({{< relref "data-modeling.md" >}}).
+- For guidance on how to create and load a Fluid container using a service-specific client, see [Containers - Creating and loading]({{< relref "containers.md#creating--loading" >}}).
 
-Let's take a look at how you would specifically use the `ContainerSchema` for `SharedCounter`.
+The following example illustrates how you can use the `ContainerSchema` with `SharedCounter`.
 
-The following example loads a `SharedCounter` as part of the initial roster of objects you have available in the container.
+It loads a `SharedCounter` as part of the initial roster of objects you have available in the container.
 
 ```javascript
 const schema = {
@@ -72,7 +72,7 @@ const newCounter = await container.create(SharedCounter); // Create a new Shared
 ```
 
 Once the async call to `create` returns, you can treat it the same as you were using the `SharedCounter` instances from your initial objects above.
-The only caveat here is that you will need to maintain a pointer to your newly created object.
+The only caveat here is that you will need to maintain a handle to your newly created object.
 To store it in another DDS like a `SharedMap`, please see [Storing shared objects]({{< relref "map.md#storing-shared-objects" >}}).
 For general guidance on storing DDS references as handles, please see [Using handles to store and retrieve shared objects]({{< relref "data-modeling.md#using-handles-to-store-and-retrieve-shared-objects" >}}).
 
@@ -81,14 +81,13 @@ For general guidance on storing DDS references as handles, please see [Using han
 The `SharedCounter` object provides a simple API surface for managing a shared integer whose value may be incremented and decremented by collaborators.
 
 A new `SharedCounter` value will be initialized with its value set to `0`.
-If you wish to initialize the counter to a different value, you may [modify the value](#incrementing--decrementing-the-value) before attaching the Container, or before inserting it into an existing shared object like a `SharedMap`.
+If you wish to initialize the counter to a different value, you may [modify the value](#incrementing--decrementing-the-value) before attaching the container, or before storing it in another shared object like a `SharedMap`.
 
 ### Incrementing / decrementing the value
 
-Once you have created your `SharedCounter`, making changes to the value is as simple as calling its [increment]({{< relref "isharedcounter.md#increment-MethodSignature" >}}) method.
-This method accepts a positive or negative *integer* delta to be applied to the shared value.
+Once you have created your `SharedCounter`, you can change its value using the [increment]({{< relref "isharedcounter.md#increment-MethodSignature" >}}) method.
+This method accepts a positive or negative *integer* to be applied to the shared value.
 
-- Note:
 
 ```javascript
 sharedCounter.increment(3); // Adds 3 to the current value
@@ -105,7 +104,7 @@ Signature:
 (event: "incremented", listener: (incrementAmount: number, newValue: number) => void)
 ```
 
-By registering with this event, you can receive and apply the necessary deltas coming from other collaborators.
+By registering with this event, you can receive and apply the changes coming from other collaborators.
 Consider the following code example for configuring a Counter widget:
 
 ```javascript
@@ -136,11 +135,11 @@ const updateCounterValueLabel = (delta) => {
 sharedCounter.on("incremented", updateCounterValueLabel);
 ```
 
-In the code above, whenever a user presses either the `Increment` or `Decrement` button, the `sharedCounter.increment` is called with +/- 1.
+In the code above, whenever a user presses either the Increment or Decrement button, the `sharedCounter.increment` is called with +/- 1.
 This causes the `incremented` event to be sent to all of the clients who have this container open.
 
 Since `updateCounterValueLabel` is registered for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
 
 ## API Documentation
 
-For a comprehensive view of the `counter` package's API documentation, see [here]({{< ref "docs/apis/counter.md" >}}).
+For a comprehensive view of the `counter` package's API documentation, see [the SharedCounter API docs]({{< ref "docs/apis/counter.md" >}}).
