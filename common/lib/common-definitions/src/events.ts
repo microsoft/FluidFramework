@@ -24,6 +24,11 @@ export interface IEvent {
  * Base interface for error event emitters.
  */
 export interface IErrorEvent extends IEvent {
+    /**
+     * Base error event emitter signature.
+     *
+     * @eventProperty
+     */
     (event: "error", listener: (message: any) => void);
 }
 

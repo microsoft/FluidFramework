@@ -15,7 +15,7 @@ export interface IDisposable {
 
 // @public
 export interface IErrorEvent extends IEvent {
-    // (undocumented)
+    // @eventProperty
     (event: "error", listener: (message: any) => void): any;
 }
 
