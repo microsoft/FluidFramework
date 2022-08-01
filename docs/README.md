@@ -21,14 +21,22 @@ Open <http://localhost:1313> to preview the site.
 
 ### API documentation and Playground
 
-The steps above won't include API documentation (the TSDoc JSON files) or the Playground by default.  You can
-download the latest API docs and Playground files with the `download` script.
+The steps above won't include API documentation (the TSDoc JSON files) or the Playground by default.
+
+To include generated API documentation in your local preview, you can run a complete build from the repo root.
+
+Alternatively, you can skip the complete repo build by downloading the latest API docs and Playground files with the `download` script.
+Note that this script will **overwrite any locally built API docs.**
 
 ```bash
 npm run download
 ```
 
-Note that this script will **overwrite any locally built API docs.**
+Finally, run the `build:api` script from this directory.
+
+```bash
+npm run build:api
+```
 
 ## Building the documentation
 
