@@ -1,12 +1,9 @@
 ---
 title: Signals and Signaler
 menuPosition: 6
-status: discussion
-discussion: 5469
 aliases:
   - "/docs/advanced/signals/"
   - "/docs/deep/signals/"
-draft: true
 ---
 
 When using DDSes, data is sequenced and stored within the Fluid container to achieve synchronized shared state. For scenarios that involve shared persisted data, DDSes provide an effective way to communicate data so that it is retained in the container. However, there could be many scenarios where we need to communicate data that is short-lived, in which the ordering and storage of said information would be wasteful and unnecessary. For instance, displaying the currently selected object of each user is an example of short-lived information in which the past data is mostly irrelevant.
