@@ -74,6 +74,8 @@ describe("Runtime", () => {
             [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
                     let containerRuntime: ContainerRuntime;
+                    let mockContext: Partial<IContainerContext>;
+                    const submittedOpsMetdata: any[] = [];
                     const containerErrors: ICriticalContainerError[] = [];
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
@@ -87,6 +89,11 @@ describe("Runtime", () => {
                                 }
                             },
                             updateDirtyContainerState: (_dirty: boolean) => { },
+                            submitFn: (_type: MessageType, _contents: any, _batch: boolean, appData?: any) => {
+                                submittedOpsMetdata.push(appData);
+                                return 1;
+                            },
+                            connected: true,
                         };
                     });
 
@@ -98,8 +105,9 @@ describe("Runtime", () => {
                     const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
 
                     beforeEach(async () => {
+                        mockContext = getMockContext();
                         containerRuntime = await ContainerRuntime.load(
-                            getMockContext() as IContainerContext,
+                            mockContext as IContainerContext,
                             [],
                             undefined, // requestHandler
                             {
@@ -112,6 +120,7 @@ describe("Runtime", () => {
                             },
                         );
                         containerErrors.length = 0;
+                        submittedOpsMetdata.length = 0;
                     });
 
                     it("Can't call flush() inside orderSequentially's callback", () => {
@@ -173,10 +182,23 @@ describe("Runtime", () => {
                         assert.strictEqual(error.message, expectedOrderSequentiallyErrorMessage);
                         assert.strictEqual(error.error.message, "Any");
                     });
+
+                    it("Batching property set properly", () => {
+                        containerRuntime.orderSequentially(() => {
+                            containerRuntime.submitDataStoreOp("1", "test");
+                            containerRuntime.submitDataStoreOp("2", "test");
+                        });
+
+                        assert.strictEqual(submittedOpsMetdata.length, 2, "2 messages should be sent");
+                        assert.strictEqual(submittedOpsMetdata[0].batch, true,
+                            "first message should be the batch start");
+                        assert.strictEqual(submittedOpsMetdata[1], undefined,
+                            "second message should not hold batch info");
+                    });
                 });
             }));
 
-            describe("orderSequentially with rollback", () =>
+        describe("orderSequentially with rollback", () =>
             [FlushMode.TurnBased, FlushMode.Immediate].forEach((flushMode: FlushMode) => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
                     let containerRuntime: ContainerRuntime;
