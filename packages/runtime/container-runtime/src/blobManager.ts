@@ -164,7 +164,7 @@ export class BlobManager {
 
         // Begin uploading stashed blobs from previous container instance
         Object.entries(stashedBlobs).forEach(([localId, entry]) => {
-            const blob = stringToBuffer(entry.blob, "utf8");
+            const blob = stringToBuffer(entry.blob, "base64");
             this.pendingBlobs.set(localId, {
                 blob,
                 status: PendingBlobStatus.OfflinePendingUpload,
@@ -580,7 +580,7 @@ export class BlobManager {
     public getPendingBlobs(): IPendingBlobs {
         const blobs = {};
         for (const [key, entry] of this.pendingBlobs) {
-            blobs[key] = { blob: bufferToString(entry.blob, "utf8") };
+            blobs[key] = { blob: bufferToString(entry.blob, "base64") };
         }
         return blobs;
     }
