@@ -796,7 +796,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    public closeAndGetPendingLocalState(): string {
+    public closeAndGetPendingLocalState(reason?: string): string {
         // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
         // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
@@ -813,6 +813,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             term: this._protocolHandler.attributes.term,
             clientId: this.clientId,
         };
+
+        this.mc.logger.send(
+            {
+                eventName: "CloseAndGetPendingLocalState",
+                category: reason === undefined ? "generic" : reason,
+            },
+        );
 
         this.close();
 
