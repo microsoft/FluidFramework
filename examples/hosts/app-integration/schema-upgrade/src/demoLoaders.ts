@@ -4,6 +4,7 @@
  */
 
 import {
+    ICodeDetailsLoader,
     IContainer,
     IFluidCodeDetails,
     IFluidModuleWithDetails,
@@ -31,7 +32,9 @@ const v2ModuleWithDetails: IFluidModuleWithDetails = {
     details: { package: "two" },
 };
 
-export const demoCodeLoader = {
+// This ICodeDetailsLoader specifically supports versions one and two.  Other approaches might have network calls to
+// dynamically load in the appropriate code for unknown versions.
+export const demoCodeLoader: ICodeDetailsLoader = {
     load: async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
         const version = source.package;
         if (typeof version !== "string") {
