@@ -87,7 +87,7 @@ export interface IHierBlock extends IMergeBlock {
 
 export interface IRemovalInfo {
     removedSeq: number;
-    removedClientIds: number[]; // (number | { localRemovedSeq: number; clientId: number })[];
+    removedClientIds: number[];
 }
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
     if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {

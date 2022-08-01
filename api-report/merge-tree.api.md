@@ -1021,7 +1021,7 @@ export class MergeTree {
     // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number): {
+    getContainingSegment<T extends ISegment>(pos: number, refSeq: number, clientId: number, localSeq?: number): {
         segment: T | undefined;
         offset: number | undefined;
     };
@@ -1030,7 +1030,7 @@ export class MergeTree {
     // (undocumented)
     getMarkerFromId(id: string): ISegment | undefined;
     // (undocumented)
-    getPosition(node: MergeNode, refSeq: number, clientId: number): number;
+    getPosition(node: MergeNode, refSeq: number, clientId: number, localSeq?: number): number;
     _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined;
     // @deprecated (undocumented)
     getStackContext(startPos: number, clientId: number, rangeLabels: string[]): RangeStackMap;
@@ -1043,8 +1043,7 @@ export class MergeTree {
     // (undocumented)
     insertSegments(pos: number, segments: ISegment[], refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs | undefined): void;
     get length(): number;
-    // (undocumented)
-    localNetLength(segment: ISegment): number;
+    localNetLength(segment: ISegment, refSeq?: number, localSeq?: number): number;
     // (undocumented)
     map<TClientData>(actions: SegmentActions<TClientData>, refSeq: number, clientId: number, accum: TClientData): void;
     // (undocumented)
