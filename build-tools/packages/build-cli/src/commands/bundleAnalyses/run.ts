@@ -8,7 +8,7 @@ import { dangerfile } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 
 export default class BundleAnalysesRun extends BaseCommand<typeof BundleAnalysesRun.flags> {
-    static description = `Run to report the bundle analysis. Donot run Danger directly at the root of the
+    static description = `Run to report the bundle analysis. Do not run Danger directly at the root of the
     repo as this better isolates its usage and dependencies`;
 
     static flags = {

@@ -180,7 +180,7 @@ DESCRIPTION
 
 ## `flub bundleAnalyses run`
 
-Run to report the bundle analysis. Donot run Danger directly at the root of the
+Run to report the bundle analysis. Do not run Danger directly at the root of the
 
 ```
 USAGE
@@ -190,7 +190,7 @@ FLAGS
   -v, --verbose  Verbose logging.
 
 DESCRIPTION
-  Run to report the bundle analysis. Donot run Danger directly at the root of the
+  Run to report the bundle analysis. Do not run Danger directly at the root of the
 
   repo as this better isolates its usage and dependencies
 ```
