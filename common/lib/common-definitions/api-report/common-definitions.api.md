@@ -195,6 +195,14 @@ export interface ILoggingError extends Error {
     getTelemetryProperties(): ITelemetryProperties;
 }
 
+// @public (undocumented)
+export interface ITaggedBasePropertyType {
+    // (undocumented)
+    tag: string;
+    // (undocumented)
+    value: TelemetryBasePropertyType;
+}
+
 // @public
 export interface ITaggedTelemetryPropertyType {
     // (undocumented)
@@ -204,7 +212,7 @@ export interface ITaggedTelemetryPropertyType {
 }
 
 // @public
-export interface ITelemetryBaseEvent extends ITelemetryProperties {
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
     // (undocumented)
     category: string;
     // (undocumented)
@@ -215,6 +223,12 @@ export interface ITelemetryBaseEvent extends ITelemetryProperties {
 export interface ITelemetryBaseLogger {
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public (undocumented)
+export interface ITelemetryBaseProperties {
+    // (undocumented)
+    [index: string]: TelemetryBasePropertyType | ITaggedBasePropertyType;
 }
 
 // @public
@@ -257,10 +271,13 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 } : L;
 
 // @public
+export type TelemetryBasePropertyType = string | number | boolean | undefined;
+
+// @public
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @public
-export type TelemetryEventPropertyType = string | number | boolean | undefined;
+export type TelemetryEventPropertyType = string | number | boolean | undefined | (string | number | boolean)[];
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
