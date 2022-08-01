@@ -20,6 +20,7 @@ export interface ITokenResponse {
 
     /**
      * Flag indicating whether token was obtained from local cache.
+     * Undefined indicates that the source of the token could not be determined.
      */
     fromCache?: boolean;
 }
