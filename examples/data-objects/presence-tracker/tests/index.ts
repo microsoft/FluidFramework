@@ -12,7 +12,9 @@ import {
     TinyliciousClient,
     TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
-import { FocusTracker, MouseTracker, renderFocusPresence, renderMousePresence } from "../src";
+import { FocusTracker } from "../src/FocusTracker";
+import { MouseTracker } from "../src/MouseTracker";
+import { renderFocusPresence, renderMousePresence } from "../src/app";
 
 const containerSchema: ContainerSchema = {
     initialObjects: {
