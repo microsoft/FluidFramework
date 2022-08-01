@@ -56,7 +56,7 @@ Key-value data structures are the most common choice for many scenarios.
 
 ### Common issues and best practices for key-value DDSes
 
-- Storing a counter in a map will have unexpected behavior. Use the [SharedCounter]({{< relref "counter.md" >}}) instead.
+- Storing a counter in a map will have unexpected behavior. Use the [SharedCounter][] instead.
 - Storing arrays, lists, or logs in a key-value entry may lead to unexpected behavior because users can't
   collaboratively modify parts of one entry. Try storing the array or list data in a SharedSequence or SharedInk.
 - Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
