@@ -14,7 +14,6 @@ import {
     IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
-import { FetchSource } from "@fluidframework/driver-definitions";
 import {
     ISequencedDocumentMessage,
     ISummaryTree,
@@ -67,7 +66,6 @@ export interface ISummarizerInternalsProvider {
         ackHandle: string,
         summaryRefSeq: number,
         summaryLogger: ITelemetryLogger,
-        fetchSource?: FetchSource,
     ): Promise<void>;
 }
 

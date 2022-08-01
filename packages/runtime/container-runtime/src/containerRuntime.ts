@@ -3138,13 +3138,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         ackHandle: string,
         summaryRefSeq: number,
         summaryLogger: ITelemetryLogger,
-        fetchSource?: FetchSource,
     ) {
-        // If we don't want to use cache and fetch latest from network, then just use the update from server flow.
-        if (fetchSource === FetchSource.noCache) {
-            await this.refreshLatestSummaryAckFromServer(summaryLogger);
-            return;
-        }
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const { snapshotTree } = await this.fetchSnapshotFromStorage(
             ackHandle,
@@ -3155,7 +3149,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryRefSeq,
                 fetchLatest: false,
             },
-            fetchSource,
         );
         const result = await this.summarizerNode.refreshLatestSummary(
             proposalHandle,
