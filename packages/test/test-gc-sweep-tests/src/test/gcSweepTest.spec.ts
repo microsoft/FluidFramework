@@ -254,7 +254,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
         if (childObject instanceof DataObjectManyDDSes) {
             unreferenceDataStore(childObject, dataStore);
         } else {
-            throw new Error(`Got a fluid handle to a typeof ${typeof childObject}`);
+            throw new Error(`Got a IFluidHandle to a typeof ${typeof childObject}`);
         }
     };
 
