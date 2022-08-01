@@ -103,7 +103,9 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             }
 
             // TODO: Support retry
-            // TODO: Use TaskManager here to reduce container noise.
+            // TODO: Use TaskManager here to reduce container noise.  Specifically -- all clients should race up to
+            // this point (so they're all prepared to do the migration) but should wait for the task lock before
+            // attempting the attach() to minimize the chance that multiple containers are created on the service.
             const containerId = await createResponse.attach();
 
             // Again, it could be the case that someone else finished the migration during our attach.
