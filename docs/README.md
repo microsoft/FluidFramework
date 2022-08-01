@@ -129,7 +129,7 @@ The steps are as follows:
     1. Run markdown-magic to update some shared content in the source Markdown files.
     1. Run the @mattetti/api-extractor tool to transform the JSON format into Markdown.
        The generated Markdown is placed at `/docs/content/apis`.
-       We maintain this fork of @microsoft/api-extractor [here](https://github.com/mattetti/custom-api-documenter).
+       We maintain this fork of @microsoft/api-extractor [here](https://github.com/tylerbutler/custom-api-documenter/tree/dev).
     1. Run hugo to build the site itself. The generated output is placed at `/docs/public/apis`.
 1. `/docs`: `start`
     1. Run the hugo server to host the site at <http://localhost:1313>.
