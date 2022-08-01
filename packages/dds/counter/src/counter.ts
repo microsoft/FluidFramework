@@ -35,7 +35,7 @@ interface ICounterSnapshotFormat {
 const snapshotFileName = "header";
 
 /**
- * A shared object which holds a number that can be incremented or decremented.
+ * A shared object that holds a number that can be incremented or decremented.
  *
  * @remarks
  * ### Creation
