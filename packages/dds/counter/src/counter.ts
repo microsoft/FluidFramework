@@ -68,6 +68,8 @@ const snapshotFileName = "header";
  * });
  * ```
  *
+ * Note that SharedCounter only operates on integer values. This is validated at runtime.
+ *
  * @public
  */
 export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
