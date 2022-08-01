@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { delay, performance } from "@fluidframework/common-utils";
-import { canRetryOnError } from "@fluidframework/driver-utils";
+import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
 import { Odsp409Error } from "./epochTracker";
 
@@ -54,8 +54,8 @@ export async function runWithRetry<T>(
             if (attempts === 5) {
                 logger.sendErrorEvent(
                     {
-                        eventName: coherencyError ?
-                            "CoherencyErrorTooManyRetries" : "ServiceReadonlyErrorTooManyRetries",
+                        eventName: coherencyError ? "CoherencyErrorTooManyRetries" :
+                            serviceReadonlyError ? "ServiceReadonlyErrorTooManyRetries" : "TooManyRetries",
                         callName,
                         attempts,
                         duration: performance.now() - start, // record total wait time.
@@ -66,6 +66,7 @@ export async function runWithRetry<T>(
                 throw error;
             }
 
+            retryAfter = getRetryDelayFromError(error) ?? retryAfter;
             await delay(Math.floor(retryAfter));
             retryAfter += retryAfter / 4 * (1 + Math.random());
             lastError = error;
