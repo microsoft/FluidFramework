@@ -9,11 +9,13 @@ import {
     IMergeTreeRemoveMsg,
     IRelativePosition,
     ISegment,
+    ISegmentAction,
     Marker,
     MergeTreeTextHelper,
     PropertySet,
     ReferencePosition,
     ReferenceType,
+    refHasTileLabel,
     TextSegment,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
@@ -223,11 +225,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.client.findTile(startPos, tileLabel, preceding);
     }
 
-    public getTextAndMarkers(label: string) {
-        const segmentWindow = this.client.getCollabWindow();
-        return this.mergeTreeTextHelper.getTextAndMarkers(segmentWindow.currentSeq, segmentWindow.clientId, label);
-    }
-
     /**
      * Retrieve text from the SharedString in string format.
      * @param start - The starting index of the text to retrieve, or 0 if omitted.
@@ -242,12 +239,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     /**
      * Adds spaces for markers and handles, so that position calculations account for them.
      */
-    public getTextWithPlaceholders() {
-        const segmentWindow = this.client.getCollabWindow();
-        return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ");
-    }
-
-    public getTextRangeWithPlaceholders(start: number, end: number) {
+    public getTextWithPlaceholders(start?: number, end?: number) {
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
     }
@@ -261,3 +253,108 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.client.getMarkerFromId(id);
     }
 }
+
+interface ITextAndMarkerAccumulator {
+    parallelText: string[];
+    parallelMarkers: Marker[];
+    parallelMarkerLabel: string;
+    placeholder?: string;
+    tagsInProgress: string[];
+    textSegment: TextSegment;
+}
+
+export function getTextAndMarkers(sharedString: SharedString, label: string, start?: number, end?: number): {
+    parallelText: string[];
+    parallelMarkers: Marker[];
+} {
+    const accum: ITextAndMarkerAccumulator = {
+        parallelMarkerLabel: label,
+        parallelMarkers: [],
+        parallelText: [],
+        tagsInProgress: [],
+        textSegment: new TextSegment(""),
+    };
+
+    sharedString.walkSegments(gatherTextAndMarkers, start, end, accum);
+    return { parallelText: accum.parallelText, parallelMarkers: accum.parallelMarkers };
+}
+
+const gatherTextAndMarkers: ISegmentAction<ITextAndMarkerAccumulator> = (
+    segment: ISegment,
+    pos: number,
+    refSeq: number,
+    clientId: number,
+    start: number,
+    end: number,
+    accumText: ITextAndMarkerAccumulator,
+) => {
+    const { placeholder, tagsInProgress, textSegment } = accumText;
+    if (TextSegment.is(segment)) {
+        let beginTags = "";
+        let endTags = "";
+        // TODO: let clients pass in function to get tag
+        const tags = [] as string[];
+        const initTags = [] as string[];
+
+        if (segment.properties?.["font-weight"]) {
+            tags.push("b");
+        }
+        if (segment.properties?.["text-decoration"]) {
+            tags.push("u");
+        }
+        const remTags = [] as string[];
+        if (tags.length > 0) {
+            for (const tag of tags) {
+                if (!tagsInProgress.includes(tag)) {
+                    beginTags += `<${tag}>`;
+                    initTags.push(tag);
+                }
+            }
+            for (const accumTag of tagsInProgress) {
+                if (!tags.includes(accumTag)) {
+                    endTags += `</${accumTag}>`;
+                    remTags.push(accumTag);
+                }
+            }
+            for (const initTag of initTags.reverse()) {
+                tagsInProgress.push(initTag);
+            }
+        } else {
+            for (const accumTag of tagsInProgress) {
+                endTags += `</${accumTag}>`;
+                remTags.push(accumTag);
+            }
+        }
+        for (const remTag of remTags) {
+            const remdex = tagsInProgress.indexOf(remTag);
+            if (remdex >= 0) {
+                tagsInProgress.splice(remdex, 1);
+            }
+        }
+        textSegment.text += endTags;
+        textSegment.text += beginTags;
+        if ((start <= 0) && (end >= segment.text.length)) {
+            textSegment.text += segment.text;
+        } else {
+            const seglen = segment.text.length;
+            const _start = start < 0 ? 0 : start;
+            const _end = end >= seglen ? undefined : end;
+            textSegment.text += segment.text.substring(_start, _end);
+        }
+    } else {
+        if (placeholder && (placeholder.length > 0)) {
+            const placeholderText = placeholder === "*" ?
+                `\n${segment.toString()}` : placeholder.repeat(segment.cachedLength);
+            textSegment.text += placeholderText;
+        } else {
+            const marker = segment as Marker;
+            if (refHasTileLabel(marker, accumText.parallelMarkerLabel)) {
+                accumText.parallelMarkers.push(marker);
+                accumText.parallelText.push(textSegment.text);
+                textSegment.text = "";
+            }
+        }
+    }
+
+    return true;
+};

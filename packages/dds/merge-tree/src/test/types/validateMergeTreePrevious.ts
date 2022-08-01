@@ -2408,6 +2408,7 @@ declare function get_current_ClassDeclaration_MergeTreeTextHelper():
 declare function use_old_ClassDeclaration_MergeTreeTextHelper(
     use: TypeOnly<old.MergeTreeTextHelper>);
 use_old_ClassDeclaration_MergeTreeTextHelper(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MergeTreeTextHelper());
 
 /*

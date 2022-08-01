@@ -129,7 +129,7 @@
       "ClassDeclaration_MergeNode": {"forwardCompat": false},
       "InterfaceDeclaration_IMergeNodeCommon": {"forwardCompat": false},
       "ClassDeclaration_TextSegment": {"forwardCompat": false},
-      "InterfaceDeclaration_LocalReferencePosition": {"backCompat": false}
+      "ClassDeclaration_MergeTreeTextHelper": {"backCompat": false}
     }
   }
 }
