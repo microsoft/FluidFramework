@@ -17,6 +17,7 @@ import {
     LocalCodeLoader,
     SupportedExportInterfaces,
     TestFluidObjectFactory,
+    ensureContainerConnected,
 } from "@fluidframework/test-utils";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { Deferred, TelemetryNullLogger } from "@fluidframework/common-utils";
@@ -94,11 +95,11 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
         if (container.getSpecifiedCodeDetails !== undefined) {
             assert.strictEqual(container.getSpecifiedCodeDetails()?.package, provider.defaultCodeDetails.package,
-            "Specified package should be same as provided");
+                "Specified package should be same as provided");
         }
         if (container.getLoadedCodeDetails !== undefined) {
             assert.strictEqual(container.getLoadedCodeDetails()?.package, provider.defaultCodeDetails.package,
-            "Loaded package should be same as provided");
+                "Loaded package should be same as provided");
         }
         assert.strictEqual((container as Container).clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
@@ -160,10 +161,6 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
     });
 
     it("can create DDS in detached container and attach / update it", async function() {
-        // GitHub issue: #9534
-        if (provider.driver.type === "tinylicious") {
-            this.skip();
-        }
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
         const dsClient1 = await requestFluidObject<ITestFluidObject>(container, "/");
 
@@ -174,9 +171,11 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         // Attach the container and validate that the DDS is attached.
         await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
         assert(mapClient1.isAttached(), "The map should be attached after the container attaches.");
-
+        await ensureContainerConnected(container as Container);
+        provider.updateDocumentId(container.resolvedUrl);
+        const url: any = await container.getAbsoluteUrl("");
         // Load a second container and validate it can load the DDS.
-        const container2 = await provider.loadTestContainer();
+        const container2 = await loader.resolve({ url });
         const dsClient2 = await requestFluidObject<ITestFluidObject>(container2, "/");
         const mapClient2 = await dsClient2.root.get<IFluidHandle<SharedMap>>("map")?.get();
         assert(mapClient2 !== undefined, "Map is not available in the second client");
@@ -320,7 +319,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         await defPromise.promise;
     });
 
-    it.skip("Fire dataStore attach ops during container attach", async () => {
+    it("Fire dataStore attach ops during container attach", async () => {
         const testDataStoreType = "default";
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);

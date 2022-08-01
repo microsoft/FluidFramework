@@ -7,6 +7,27 @@ import { EventEmitter } from "events";
 import { IClient } from "@fluidframework/protocol-definitions";
 
 /**
+ * Manages the state and the members for {@link IAudience}
+ */
+export interface IAudienceOwner extends IAudience {
+    /**
+     * Adds a new client to the audience
+     */
+     addMember(clientId: string, details: IClient);
+
+     /**
+     * Removes a client from the audience. Only emits an event if a client is actually removed
+     * @returns if a client was removed from the audience
+     */
+     removeMember(clientId: string): boolean;
+
+     /**
+      * Clears the audience
+      */
+     clear();
+}
+
+/**
  * Audience represents all clients connected to the op stream, both read-only and read/write.
  *
  * See {@link https://nodejs.org/api/events.html#class-eventemitter | here} for an overview of the `EventEmitter`

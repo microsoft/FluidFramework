@@ -8,6 +8,7 @@ import {
     ICache,
     IClientManager,
     ICollection,
+    IDeltaService,
     IDocument,
     IDocumentStorage,
     IOrdererManager,
@@ -18,7 +19,6 @@ import {
     IThrottleAndUsageStorageManager,
     IWebServer,
     IWebServerFactory,
-    MongoManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -46,11 +46,13 @@ export class AlfredRunner implements IRunner {
         private readonly storage: IDocumentStorage,
         private readonly clientManager: IClientManager,
         private readonly appTenants: IAlfredTenant[],
-        private readonly operationsDbMongoManager: MongoManager,
+        private readonly deltaService: IDeltaService,
         private readonly producer: IProducer,
         private readonly metricClientConfig: any,
         private readonly documentsCollection: ICollection<IDocument>,
-        private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager) {
+        private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
+        private readonly verifyMaxMessageSize?: boolean,
+    ) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -65,7 +67,7 @@ export class AlfredRunner implements IRunner {
             this.singleUseTokenCache,
             this.storage,
             this.appTenants,
-            this.operationsDbMongoManager,
+            this.deltaService,
             this.producer,
             this.documentsCollection);
         alfred.set("port", this.port);
@@ -75,6 +77,7 @@ export class AlfredRunner implements IRunner {
         const httpServer = this.server.httpServer;
 
         const maxNumberOfClientsPerDocument = this.config.get("alfred:maxNumberOfClientsPerDocument");
+        const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
         const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
@@ -89,6 +92,7 @@ export class AlfredRunner implements IRunner {
             createMetricClient(this.metricClientConfig),
             winston,
             maxNumberOfClientsPerDocument,
+            numberOfMessagesPerTrace,
             maxTokenLifetimeSec,
             isTokenExpiryEnabled,
             isClientConnectivityCountingEnabled,
@@ -96,7 +100,9 @@ export class AlfredRunner implements IRunner {
             this.socketConnectThrottler,
             this.socketSubmitOpThrottler,
             this.socketSubmitSignalThrottler,
-            this.throttleAndUsageStorageManager);
+            this.throttleAndUsageStorageManager,
+            this.verifyMaxMessageSize,
+        );
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);

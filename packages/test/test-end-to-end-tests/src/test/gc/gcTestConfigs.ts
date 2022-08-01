@@ -3,17 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { ITestContainerConfig } from "@fluidframework/test-utils";
-
-export const mockConfigProvider = ((settings: Record<string, ConfigTypes> = {}): IConfigProviderBase => {
-    settings["Fluid.ContainerRuntime.UseDataStoreAliasing"] = "true";
-    settings["Fluid.GarbageCollection.TrackGCState"] = "true";
-    settings["Fluid.GarbageCollection.WriteDataAtRoot"] = "true";
-    return {
-        getRawConfig: (name: string): ConfigTypes => settings[name],
-    };
-});
+import { ITestContainerConfig, mockConfigProvider } from "@fluidframework/test-utils";
 
 /**
  * Default test container configs used by GC tests to create / load containers.

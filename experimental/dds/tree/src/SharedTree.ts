@@ -25,7 +25,15 @@ import {
 import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { assert, assertNotUndefined, fail, copyPropertyIfDefined, noop } from './Common';
+import {
+	assert,
+	assertNotUndefined,
+	fail,
+	copyPropertyIfDefined,
+	noop,
+	RestOrArray,
+	unwrapRestOrArray,
+} from './Common';
 import { EditHandle, EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditSet } from './EditLog';
 import {
 	EditId,
@@ -454,7 +462,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return this.cachingLogViewer;
 	}
 
-	protected readonly logger: ITelemetryLogger;
+	/**
+	 * logger for SharedTree events.
+	 */
+	public readonly logger: ITelemetryLogger;
 	private readonly sequencedEditAppliedLogger: ITelemetryLogger;
 
 	private readonly encoder_0_0_2: SharedTreeEncoder_0_0_2;
@@ -800,7 +811,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @internal
 	 */
 	public saveSerializedSummary(options?: { serializer?: IFluidSerializer }): string {
-		const { serializer } = options || {};
+		const { serializer } = options ?? {};
 		return serialize(this.saveSummary(), serializer ?? this.serializer, this.handle);
 	}
 
@@ -1331,10 +1342,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * should be used instead.
 	 * @public
 	 */
-	public applyEdit(...changes: Change[]): Edit<InternalizedChange>;
-	public applyEdit(changes: Change[]): Edit<InternalizedChange>;
-	public applyEdit(headOrChanges: Change | Change[], ...tail: Change[]): Edit<InternalizedChange> {
-		const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
+	public applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
+	public applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
+	public applyEdit(...changesOrArray: RestOrArray<Change>): Edit<InternalizedChange> {
+		const changes = unwrapRestOrArray(changesOrArray);
 		const id = newEditId();
 		const internalEdit: Edit<ChangeInternal> = {
 			id,

@@ -6,6 +6,10 @@
 export {
     ITreeCursor,
     TreeNavigationResult,
+    mapCursorField,
+    SynchronousNavigationResult,
 } from "./cursor";
 export * from "./forest";
-export { IEditableForest, FieldLocation, TreeLocation, isFieldLocation } from "./editableForest";
+export {
+    IEditableForest, FieldLocation, TreeLocation, isFieldLocation, ForestLocation, initializeForest,
+} from "./editableForest";

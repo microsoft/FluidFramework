@@ -22,7 +22,7 @@ const { ValueProperty } = require('./valueProperty');
  */
 export class ReferenceProperty extends ValueProperty {
     /**
-    * @param {Object=} in_params - the parameters
+    * @param {Object=} in_params - The parameters
     *
     * @constructor
     * @protected
@@ -38,7 +38,7 @@ export class ReferenceProperty extends ValueProperty {
 
     /**
      * Evaluates Reference properties as primitives.
-     * @return {boolean} true since Reference properties are primitives.
+     * @returns {boolean} true since Reference properties are primitives.
      */
     isPrimitiveType() {
         return true;
@@ -50,7 +50,7 @@ export class ReferenceProperty extends ValueProperty {
      * Note: This is the type that is specified in the typeid of this reference and not the actual type
      * of the referenced object, which might inherit from that typeid.
      *
-     * @return {string} The typeid of the nodes this reference may point to
+     * @returns {string} The typeid of the nodes this reference may point to
      */
     getReferenceTargetTypeId() {
         return TypeIdHelper.extractReferenceTargetTypeIdFromReference(this.getTypeid());
@@ -59,16 +59,15 @@ export class ReferenceProperty extends ValueProperty {
     /**
      * Resolves the referenced property
      *
-     * @param  {string|number|array<string|number>} in_ids the ID of the property or an array of IDs
-     *     if an array is passed, the .get function will be performed on each id in sequence
-     *     for example .get(['position','x']) is equivalent to .get('position').get('x').
-     *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
-     *     refers to.
+     * @param {string|number|array<string|number>} in_ids - The ID of the property or an array of IDs if an array is
+     * passed, the .get function will be performed on each id in sequence for example .get(['position','x']) is
+     * equivalent to .get('position').get('x'). If .get resolves to a ReferenceProperty, it will return the property
+     * that the ReferenceProperty refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
-     *     How should this function behave during reference resolution?
-     * @return {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if it
-     *    could not be resolved
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
+     * should this function behave during reference resolution?
+     * @returns {property-properties.BaseProperty|undefined} The property object the reference points to or undefined if
+     *    it could not be resolved
      */
     get(in_ids, in_options) {
         in_options = in_options || {};
@@ -106,11 +105,11 @@ export class ReferenceProperty extends ValueProperty {
     /**
      * Expand a path returning the value or property at the end.
      *
-     * @param {string} in_path the path
-     * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
-     *     How should this function behave during reference resolution?
-     * @return {property-properties.BaseProperty|undefined} resolved path
+     * @param {string} in_path - The path
+     * @param {Object} in_options - Parameter object
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
+     * should this function behave during reference resolution?
+     * @returns {property-properties.BaseProperty|undefined} resolved path
      * @throws if the path resolves to a primitive value
      * @throws if in_path is not a valid path
      */
@@ -126,7 +125,7 @@ export class ReferenceProperty extends ValueProperty {
      * Checks whether the reference is valid. This is either the case when it is empty or when the referenced
      * property exists.
      *
-     * @return {boolean} True if the reference is valid, otherwise false.
+     * @returns {boolean} True if the reference is valid, otherwise false.
      */
     isReferenceValid() {
         return this.value === '' || this.ref !== undefined;
@@ -186,10 +185,10 @@ export class ReferenceProperty extends ValueProperty {
     /**
      * Validates the input and does as much as possible to return a string representing a path.
      *
-     * @param {property-properties.BaseProperty|undefined|String} in_value  - contains the property to be set or
+     * @param {property-properties.BaseProperty|undefined|String} in_value - Contains the property to be set or
      *  the path to this property. If undefined is passed, the reference will be set to an empty string to
      *  indicate an empty reference.
-     * @return {string} the path
+     * @returns {string} The path
      * @throws if in_value is defined, but is not a property or a string.
      */
     static _convertInputToPath(in_value) {

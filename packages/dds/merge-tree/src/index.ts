@@ -12,8 +12,10 @@ export {
     LocalReferencePosition,
     LocalReferenceCollection,
  } from "./localReference";
-export * from "./mergeTree";
+ export * from "./mergeTree";
+export * from "./mergeTreeNodes";
 export * from "./mergeTreeDeltaCallback";
+export * from "./MergeTreeTextHelper";
 export * from "./mergeTreeTracking";
 export * from "./opBuilder";
 export * from "./ops";

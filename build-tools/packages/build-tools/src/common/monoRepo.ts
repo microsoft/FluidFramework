@@ -5,6 +5,7 @@
 
 import * as path from "path";
 import { fatal } from "../bumpVersion/utils";
+import { defaultLogger, Logger } from "./logging";
 import { Package, Packages } from "./npmPackage";
 import { execWithErrorAsync, existsSync, readJsonSync, rimrafWithErrorAsync } from "./utils";
 
@@ -22,7 +23,9 @@ export enum MonoRepoKind {
 /**
  * A type guard used to determine if a string is a MonoRepoKind.
  */
-export function isMonoRepoKind(str: string): str is MonoRepoKind {
+export function isMonoRepoKind(str: string | undefined): str is MonoRepoKind {
+    if(str === undefined) { return false; }
+
     const list = Object.values<string>(MonoRepoKind);
     const isMonoRepoValue = list.includes(str);
     return isMonoRepoValue;
@@ -60,6 +63,7 @@ export function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
 export class MonoRepo {
     public readonly packages: Package[] = [];
     public readonly version: string;
+    public readonly workspaceGlobs: string[];
 
     /**
      * Creates a new monorepo.
@@ -73,7 +77,7 @@ export class MonoRepo {
         public readonly kind: MonoRepoKind,
         public readonly repoPath: string,
         ignoredDirs?: string[],
-        logVerbose = false) {
+        private readonly logger: Logger = defaultLogger,) {
         this.version = "";
         const lernaPath = path.join(repoPath, "lerna.json");
         const packagePath = path.join(repoPath, "package.json");
@@ -82,22 +86,20 @@ export class MonoRepo {
         if (existsSync(lernaPath)) {
             const lerna = readJsonSync(lernaPath);
             if (lerna.version !== undefined) {
-                if (logVerbose) {
-                    console.log(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
-                }
+                    logger.logVerbose(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
                 this.version = lerna.version;
                 versionFromLerna = true;
             }
 
             if (lerna.packages !== undefined) {
-                if (logVerbose) {
-                    console.log(`${kind}: Loading packages from ${lernaPath}`);
-                }
+                    logger.logVerbose(`${kind}: Loading packages from ${lernaPath}`);
+
                 for (const dir of lerna.packages as string[]) {
                     // TODO: other glob pattern?
                     const loadDir = dir.endsWith("/**") ? dir.substr(0, dir.length - 3) : dir;
                     this.packages.push(...Packages.loadDir(path.join(this.repoPath, loadDir), MonoRepoKind[kind], ignoredDirs, this));
                 }
+                this.workspaceGlobs = lerna.packages;
                 return;
             }
         }
@@ -108,18 +110,15 @@ export class MonoRepo {
         const pkgJson = readJsonSync(packagePath);
         if (pkgJson.version === undefined && !versionFromLerna) {
             this.version = pkgJson.version;
-            if (logVerbose) {
-                console.log(`${kind}: Loading version (${pkgJson.version}) from ${packagePath}`);
-            }
+            logger.logVerbose(`${kind}: Loading version (${pkgJson.version}) from ${packagePath}`);
         }
 
         if (pkgJson.workspaces !== undefined) {
-            if (logVerbose) {
-                console.log(`${kind}: Loading packages from ${packagePath}`);
-            }
+            logger.logVerbose(`${kind}: Loading packages from ${packagePath}`);
             for (const dir of pkgJson.workspaces as string[]) {
                 this.packages.push(...Packages.loadGlob(dir, kind, ignoredDirs, this));
             }
+            this.workspaceGlobs = pkgJson.workspaces;
             return;
         }
         fatal(`Couldn't find lerna.json or package.json, or they were missing expected properties.`);
@@ -134,7 +133,7 @@ export class MonoRepo {
     }
 
     public async install() {
-        console.log(`${this.kind}: Installing - npm i`);
+        this.logger.log(`${this.kind}: Installing - npm i`);
         const installScript = "npm i";
         return execWithErrorAsync(installScript, { cwd: this.repoPath }, this.repoPath);
     }
