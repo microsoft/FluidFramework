@@ -26,7 +26,7 @@ For a semantic data type like a counter, this can result in undesirable behavior
 
 Let's illustrate the issue with an example.
 
-Here, we will use a `SharedMap` to store our shared integer value.
+Here, we will use a [SharedMap][] to store our shared integer value.
 For simplicity, it will be stored under a static key: `counter-key`.
 
 Let's say that two users are collaborating on an app with a counter widget.
@@ -35,13 +35,20 @@ The current value of that widget is 42.
 
 What if User A and User B both simultaneously press the `+` button in their UI to increment the current value by 1?
 Behind the scenes, this increment is implemented by writing the updated value to the map.
-That edit is then sequenced and broadcast to other collaborators.
+Each edit is then sequenced and broadcast to other collaborators.
+
+For the purpose of this example, we are ignoring the fact that two operations will never really occur at exactly the same time.
+This is intentional.
+Since increments and decrements are [commutative](https://en.wikipedia.org/wiki/Commutative_property), it shouldn't matter in what order two nearly concurrent increment operations occur; the result _should_ be the same.
 
 Here, we would expect that, after both users have processed all incoming edits, the resulting value of the counter would be 44.
 Each user pressed the `+` button once.
-42 + 1 + 1 = 44, right?
+42 + 1 + 1 = **44**, right?
+Again, note that we are ignoring which `+ 1` came from which user, as the order should not matter.
 
-In fact, because `SharedMap` employs a _last-write-wins_ merge strategy, if User A and User B make their edits at the same time, one of the two updates will be sequnced after the other, and that value will win.
+Unfortunately, because `SharedMap` employs a _last-write-wins_ merge strategy, if User A and User B make their edits at the same time, one of the two updates will be sequnced after the other, and that value will win.
+Regardless of which user's edit was sequenced first and which was sequenced last, each user's client will update their map entry to be 42 (the current value they see) + 1 = **43**, and the latter of the two operations to be sequenced will clobber the first.
+
 So in this case, both users would see the value 43, rather than 44.
 
 This is a problem!
@@ -184,3 +191,6 @@ Since `updateCounterValueLabel` is listening for all `incremented` events, the v
 ## API Documentation
 
 For a comprehensive view of the `counter` package's API documentation, see [the SharedCounter API docs]({{< ref "docs/apis/counter.md" >}}).
+
+<!-- Links -->
+[SharedMap]: {{< relref "map.md" >}}
