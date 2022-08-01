@@ -44,7 +44,7 @@ export async function runWithRetry<T>(
             const coherencyError = error?.[Odsp409Error] === true;
             const serviceReadonlyError = error?.errorType === OdspErrorType.serviceReadOnly;
             // Retry for retriable 409 coherency errors or serviceReadOnly errors.
-            if (!(coherencyError || serviceReadonlyError || canRetry)) {
+            if (!((coherencyError || serviceReadonlyError) && canRetry)) {
                 throw error;
             }
 
@@ -55,7 +55,7 @@ export async function runWithRetry<T>(
                 logger.sendErrorEvent(
                     {
                         eventName: coherencyError ? "CoherencyErrorTooManyRetries" :
-                            serviceReadonlyError ? "ServiceReadonlyErrorTooManyRetries" : "TooManyRetries",
+                            "ServiceReadonlyErrorTooManyRetries",
                         callName,
                         attempts,
                         duration: performance.now() - start, // record total wait time.
