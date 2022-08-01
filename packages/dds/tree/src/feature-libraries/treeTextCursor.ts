@@ -119,8 +119,8 @@ export class TextCursor implements ITreeCursor {
 
     up(): TreeNavigationResult {
         const length = this.parentStack.length;
-        assert(this.indexStack.length === length, 0x34b /* Unexpected indexStack.length */);
-        assert(this.keyStack.length === length - 1, 0x34c /* Unexpected keyStack.length */);
+        assert(this.indexStack.length === length, "Unexpected indexStack.length");
+        assert(this.keyStack.length === length - 1, "Unexpected keyStack.length");
 
         if (length === 0) {
             return TreeNavigationResult.NotFound;

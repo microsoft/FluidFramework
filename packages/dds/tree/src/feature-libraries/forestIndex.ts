@@ -86,7 +86,7 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
             result = this.cursor.seek(1).result;
         }
         this.cursor.clear();
-        assert(result === TreeNavigationResult.NotFound, 0x34a /* Unsupported navigation result */);
+        assert(result === TreeNavigationResult.NotFound, "Unsupported navigation result");
 
         return JSON.stringify(roots);
     }

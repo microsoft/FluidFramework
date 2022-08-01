@@ -1829,8 +1829,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // ensure we don't submit ops referencing a blob that has not been uploaded
         const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
         if (connecting && this.blobManager.hasPendingOfflineUploads) {
-            assert(!this.delayConnectClientId, 0x37b /* Connect event delay must be canceled before subsequent connect event */);
-            assert(!!clientId, 0x37c /* Must have clientId when connecting */);
+            assert(!this.delayConnectClientId, "Connect event delay must be canceled before subsequent connect event");
+            assert(!!clientId, "Must have clientId when connecting");
             this.delayConnectClientId = clientId;
             this.blobManager.onConnected().then(() => {
                 // make sure we didn't reconnect before the promise resolved
@@ -1846,7 +1846,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private setConnectionStateCore(connected: boolean, clientId?: string) {
-        assert(!this.delayConnectClientId, 0x37d /* connect event delay must be cleared before propagating connect event */);
+        assert(!this.delayConnectClientId, "connect event delay must be cleared before propagating connect event");
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -2683,7 +2683,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     };
                 }
                 assert(summaryRefSeqNum === this.deltaManager.lastMessage?.sequenceNumber,
-                    0x37e /* it's one and the same thing */);
+                    "it's one and the same thing");
 
                 if (lastAck !== this.summaryCollection.latestAck) {
                     return {

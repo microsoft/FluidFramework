@@ -53,7 +53,7 @@ export class AnchorSet {
 
     public forget(anchor: Anchor): void {
         const path = this.anchorToPath.get(anchor);
-        assert(path !== undefined, 0x34f /* cannot forget unknown Anchor */);
+        assert(path !== undefined, "cannot forget unknown Anchor");
         path.removeRef();
         this.anchorToPath.delete(anchor);
     }
@@ -196,7 +196,7 @@ class PathNode implements UpPath {
 
     public get parent(): UpPath | undefined {
         assert(this.parentPath !== undefined,
-            0x350 /* PathNode.parent is an UpPath API and thus should never be called on the root PathNode. */);
+            "PathNode.parent is an UpPath API and thus should never be called on the root PathNode.");
         // Root PathNode corresponds to the undefined root for UpPath API.
         if (this.parentPath.isRoot()) {
             return undefined;
@@ -211,7 +211,7 @@ class PathNode implements UpPath {
     public removeRef(count = 1): void {
         this.refCount -= count;
         if (this.refCount < 1) {
-            assert(this.refCount === 0, 0x351 /* PathNode Refcount should not be negative. */);
+            assert(this.refCount === 0, "PathNode Refcount should not be negative.");
 
             if (this.children.size === 0) {
                 this.deleteThis();
@@ -261,7 +261,7 @@ class PathNode implements UpPath {
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
         // Note that this is the index in the list of child paths, not the index within the field
         const childIndex = field?.indexOf(child);
-        assert(childIndex !== undefined, 0x352 /* child must be parented to be removed */);
+        assert(childIndex !== undefined, "child must be parented to be removed");
         field?.splice(childIndex, 1);
         if (field?.length === 0) {
             this.children.delete(key);
