@@ -88,7 +88,7 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 - [SharedCounter][] -- a counter.
   - `SharedCounter` is useful to keep track of increments/decrements of integer values.
-    While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues]({{< relref "counter.md/why-a-specialized-dds" >}}).
+    While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues]({{< relref "counter.md/#why-a-specialized-dds" >}}).
     By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.
     It is optimistic.
 
@@ -113,7 +113,6 @@ Typical scenarios require the connected clients to "agree" on some course of act
 
 <!-- Links -->
 [SharedCounter]: {{< relref "counter.md" >}}
-[SharedDirectory]: {{< relref "directory.md" >}}
 [SharedMap]: {{< relref "map.md" >}}
 [SharedString]: {{< relref "string.md" >}}
 [TaskManager]: {{< relref "task-manager.md" >}}
