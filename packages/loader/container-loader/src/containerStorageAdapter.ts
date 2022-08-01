@@ -6,6 +6,7 @@
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
+    FetchSource,
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     ISummaryContext,
@@ -65,8 +66,13 @@ export class ContainerStorageAdapter implements IDocumentStorageService {
         return this.storageGetter().readBlob(id);
     }
 
-    public async getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]> {
-        return this.storageGetter().getVersions(versionId, count, scenarioName);
+    public async getVersions(
+        versionId: string | null,
+        count: number,
+        scenarioName?: string,
+        fetchSource?: FetchSource,
+    ): Promise<IVersion[]> {
+        return this.storageGetter().getVersions(versionId, count, scenarioName, fetchSource);
     }
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {

@@ -32,5 +32,17 @@ describe("Properties", () => {
         it("complex properties don't match", () => {
             assert(!matchProperties({ c: { a: "a" } }, { c: { a: "b" } }));
         });
+        it("undefined properties match", () => {
+            assert(matchProperties(undefined, undefined));
+        });
+        it("empty properties match", () => {
+            assert(matchProperties({}, {}));
+        });
+        it("undefined and empty properties don't match", () => {
+            assert(!matchProperties(undefined, {}));
+        });
+        it("empty and undefined properties don't match", () => {
+            assert(!matchProperties({}, undefined));
+        });
     });
 });

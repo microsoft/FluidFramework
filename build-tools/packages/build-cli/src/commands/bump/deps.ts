@@ -3,19 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { incRange, isVersionBumpTypeExtended } from "@fluid-tools/version-tools";
-import {
-    FluidRepo,
-    isMonoRepoKind,
-    MonoRepo,
-    Package,
-    VersionBag,
-} from "@fluidframework/build-tools";
+import { FluidRepo, isMonoRepoKind, VersionBag } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+// eslint-disable-next-line import/no-internal-modules
+import { ArgInput } from "@oclif/core/lib/interfaces";
 import chalk from "chalk";
 import * as semver from "semver";
 import { BaseCommand } from "../../base";
 import { bumpTypeFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
+import { bumpPackageDependencies, PackageWithRangeSpec } from "../../lib";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -26,11 +22,11 @@ import { bumpTypeFlag, releaseGroupFlag, semverRangeFlag } from "../../flags";
  *
  * This command is roughly equivalent to `fluid-bump-version --dep`.
  */
-export default class DepsCommand extends BaseCommand {
+export default class DepsCommand extends BaseCommand<typeof DepsCommand.flags> {
     static description =
         "Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.";
 
-    static args = [
+    static args: ArgInput = [
         {
             name: "package_or_release_group",
             required: true,
@@ -77,7 +73,7 @@ export default class DepsCommand extends BaseCommand {
             description: "Skip all checks.",
             exclusive: ["install", "commit"],
         }),
-        ...super.flags,
+        ...BaseCommand.flags,
     };
 
     static examples = [
@@ -112,8 +108,10 @@ export default class DepsCommand extends BaseCommand {
      */
     // eslint-disable-next-line complexity
     public async run(): Promise<void> {
-        const { args, flags } = await this.parse(DepsCommand);
-        const context = await this.getContext(flags.verbose);
+        const args = this.processedArgs;
+        const flags = this.processedFlags;
+
+        const context = await this.getContext();
         const shouldInstall = flags.install && !flags.skipChecks;
         const shouldCommit = flags.commit && !flags.skipChecks;
 
@@ -137,7 +135,7 @@ export default class DepsCommand extends BaseCommand {
         if (isMonoRepoKind(args.package_or_release_group)) {
             // if the package argument is a release group name, then constrain the list of packages to those in the
             // release group.
-            for (const pkg of context.packagesForReleaseGroup(args.package_or_release_group)) {
+            for (const pkg of context.packagesInReleaseGroup(args.package_or_release_group)) {
                 packagesToBump.set(pkg.name, versionToSet);
             }
         } else {
@@ -153,7 +151,7 @@ export default class DepsCommand extends BaseCommand {
 
         /** An array of packages on which to enumerate and update dependencies. */
         const packagesToCheckAndUpdate = isMonoRepoKind(flags.releaseGroup)
-            ? context.packagesForReleaseGroup(flags.releaseGroup)
+            ? context.packagesInReleaseGroup(flags.releaseGroup)
             : context.repo.packages.packages;
 
         /** A Map of package name strings to {@link PackageWithRangeSpec} that contains a {@link Package} and the
@@ -177,10 +175,10 @@ export default class DepsCommand extends BaseCommand {
         );
 
         const changedPackages = new VersionBag();
-        for (const p of packagesToCheckAndUpdate) {
+        for (const pkg of packagesToCheckAndUpdate) {
             // eslint-disable-next-line no-await-in-loop
             await bumpPackageDependencies(
-                p,
+                pkg,
                 packageNewVersionMap,
                 flags.prerelease,
                 flags.onlyBumpPrerelease,
@@ -194,7 +192,7 @@ export default class DepsCommand extends BaseCommand {
                     this.error("Install failed.");
                 }
             } else {
-                this.logWarn(`Skipping installation. Lockfiles might be outdated.`);
+                this.warn(`Skipping installation. Lockfiles might be outdated.`);
             }
 
             const changedVersionsString: string[] = [];
@@ -214,7 +212,7 @@ export default class DepsCommand extends BaseCommand {
                     `You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
                 );
             } else {
-                this.logWarn(`Skipping commit. You'll need to manually commit changes.`);
+                this.warn(`Skipping commit. You'll need to manually commit changes.`);
             }
 
             this.finalMessages.push(
@@ -226,77 +224,10 @@ export default class DepsCommand extends BaseCommand {
         }
 
         if (this.finalMessages.length > 0) {
-            this.log("=".repeat(72));
+            this.logHr();
             for (const msg of this.finalMessages) {
                 this.log(msg);
             }
         }
     }
-}
-
-/** A mapping of {@link Package} to a version range string or a bump type. This interface is used for convenience. */
-interface PackageWithRangeSpec {
-    pkg: Package;
-    rangeOrBumpType: string;
-}
-
-/**
- * Bump the dependencies of a package according to the provided map of packages to bump types.
- *
- * @param pkg - The package whose dependencies should be bumped.
- * @param bumpPackageMap - A Map of package names to a {@link PackageWithRangeSpec} which contains the package and a
- * string that is either a range string or a bump type. If it is a range string, the dependency will be set to that
- * value. If it is a bump type, the dependency range will be bumped according to that type.
- * @param prerelease - If true, will bump to the next pre-release version given the bump type.
- * @param onlyBumpPrerelease - If true, only dependencies on pre-release packages will be bumped.
- * @param changedVersions - If provided, the changed packages will be put into this {@link VersionBag}.
- * @returns True if the packages dependencies were changed; false otherwise.
- */
-// eslint-disable-next-line max-params
-async function bumpPackageDependencies(
-    pkg: Package,
-    bumpPackageMap: Map<string, PackageWithRangeSpec>,
-    prerelease: boolean,
-    onlyBumpPrerelease: boolean,
-    changedVersions?: VersionBag,
-) {
-    let changed = false;
-    let newRangeString: string;
-    for (const { name, dev } of pkg.combinedDependencies) {
-        const dep = bumpPackageMap.get(name);
-        if (
-            dep !== undefined &&
-            // ignore dependencies that are a part of the same release group (monorepo)
-            !MonoRepo.isSame(dep.pkg.monoRepo, pkg.monoRepo)
-        ) {
-            const dependencies = dev
-                ? pkg.packageJson.devDependencies
-                : pkg.packageJson.dependencies;
-            const verString = dependencies[name];
-            const depIsPrerelease = (semver.minVersion(verString)?.prerelease?.length ?? 0) > 0;
-
-            const depNewRangeOrBumpType = dep.rangeOrBumpType;
-            // eslint-disable-next-line unicorn/prefer-ternary
-            if (isVersionBumpTypeExtended(depNewRangeOrBumpType)) {
-                // bump the current range string
-                newRangeString = incRange(verString, depNewRangeOrBumpType, prerelease);
-            } else {
-                newRangeString = depNewRangeOrBumpType;
-            }
-
-            // If we're only bumping prereleases, check if the dep is a pre-release. Otherwise bump all packages whose
-            // range doesn't match the current value.
-            if ((onlyBumpPrerelease && depIsPrerelease) || dependencies[name] !== newRangeString) {
-                changed = true;
-                dependencies[name] = newRangeString;
-                changedVersions?.add(dep.pkg, newRangeString);
-            }
-        }
-    }
-
-    if (changed) {
-        await pkg.savePackageJson();
-    }
-
-    return changed;
 }

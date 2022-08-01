@@ -1,25 +1,28 @@
 {
   "name": "@fluid-tools/version-tools",
-  "version": "0.3.0",
+  "version": "0.3.2000",
   "description": "Versioning tools for Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": ""
+    "directory": "build-tools/packages/version-tools"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
   "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "fluv": "./bin/run"
+  },
   "files": [
     "/bin",
     "/dist",
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "npm run build:genver && npm run build:compile && npm run lint",
+    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
     "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
     "build:commonjs": "npm run build:clean && npm run tsc",
     "build:compile": "npm run build:commonjs",
@@ -28,8 +31,7 @@
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
     "build:readme": "oclif readme",
-    "build:test": "tsc --project ./test/tsconfig.json",
-    "clean": "rimraf dist oclif.manifest.json lib *.tsbuildinfo *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log oclif.manifest.json",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
@@ -40,26 +42,6 @@
     "test": "npm run test:mocha",
     "test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
     "tsc": "tsc"
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
     "@oclif/core": "^1.9.5",
@@ -84,15 +66,19 @@
     "copyfiles": "^2.1.0",
     "cross-env": "^7.0.2",
     "eslint": "~8.6.0",
+    "eslint-config-oclif": "^4",
+    "eslint-config-oclif-typescript": "^1.0.2",
+    "eslint-config-prettier": "~8.5.0",
     "mocha": "^10.0.0",
-    "nyc": "^15.0.0",
     "oclif": "^3",
     "prettier": "~2.6.2",
     "rimraf": "^2.6.2",
-    "shx": "^0.3.3",
     "ts-node": "^10.2.1",
     "tslib": "^2.3.1",
     "typescript": "~4.5.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "oclif": {
     "bin": "fluv",
