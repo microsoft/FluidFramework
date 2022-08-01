@@ -286,10 +286,7 @@ class InspectorTable<
     const { expanded } = this.state;
     if (data) {
       const updatedTableRows = this.props.toTableRows!({ data, id: "" }, this.props, this.toTableRowOptions);
-      if (fillExpanded) {
-        fillExpanded(expanded,
-          updatedTableRows, this.props, this.toTableRowOptions);
-      }
+      fillExpanded(expanded, updatedTableRows, this.props, this.toTableRowOptions);
       this.setState({ tableRows: updatedTableRows });
     }
   }
