@@ -75,7 +75,7 @@ describe("Runtime", () => {
                 describe(`orderSequentially with flush mode: ${FlushMode[flushMode]}`, () => {
                     let containerRuntime: ContainerRuntime;
                     let mockContext: Partial<IContainerContext>;
-                    const appDatas: any[] = [];
+                    const submittedOpsMetdata: any[] = [];
                     const containerErrors: ICriticalContainerError[] = [];
                     const getMockContext = ((): Partial<IContainerContext> => {
                         return {
@@ -90,7 +90,7 @@ describe("Runtime", () => {
                             },
                             updateDirtyContainerState: (_dirty: boolean) => { },
                             submitFn: (_type: MessageType, _contents: any, _batch: boolean, appData?: any) => {
-                                appDatas.push(appData);
+                                submittedOpsMetdata.push(appData);
                                 return 1;
                             },
                             connected: true,
@@ -120,7 +120,7 @@ describe("Runtime", () => {
                             },
                         );
                         containerErrors.length = 0;
-                        appDatas.length = 0;
+                        submittedOpsMetdata.length = 0;
                     });
 
                     it("Can't call flush() inside orderSequentially's callback", () => {
@@ -189,9 +189,11 @@ describe("Runtime", () => {
                             containerRuntime.submitDataStoreOp("2", "test");
                         });
 
-                        assert.strictEqual(appDatas.length, 2, "2 messages should be sent");
-                        assert.strictEqual(appDatas[0].batch, true, "first message should be the batch start");
-                        assert.strictEqual(appDatas[1], undefined, "second message should not hold batch info");
+                        assert.strictEqual(submittedOpsMetdata.length, 2, "2 messages should be sent");
+                        assert.strictEqual(submittedOpsMetdata[0].batch, true,
+                            "first message should be the batch start");
+                        assert.strictEqual(submittedOpsMetdata[1], undefined,
+                            "second message should not hold batch info");
                     });
                 });
             }));
