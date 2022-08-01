@@ -201,11 +201,11 @@ The site theme/template lives in `themes/thxvscode`.
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
 | Script | Description |
 |--------|-------------|
-| `build` | Build the site; outputs to `public/` by default. |
-| `build:api` | `npm run build:uber-package && npm run build:api-documenter` |
-| `build:api-documenter` | Convert API JSON into Markdown. |
-| `build:api-documenter:default` | --- |
-| `build:api-documenter:win32` | --- |
+| `build` | Builds the site. Outputs to `public/` by default. |
+| `build:api` | `npm run build:api-rollup && npm run build:api-documenter` |
+| `build:api-documenter` | Converts package API reports (foo.api.json) into Markdown for presentation on the site. |
+| `build:api-documenter:default` | DO NOT RUN THIS DIRECTLY. This will be run for `build:api-documenter` on the correct platforms. |
+| `build:api-documenter:win32` | DO NOT RUN THIS DIRECTLY. This will be run for `build:api-documenter` on the correct platforms. |
 | `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
 | `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
