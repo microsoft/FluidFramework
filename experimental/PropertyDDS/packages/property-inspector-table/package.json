@@ -96,7 +96,7 @@
     "jest-transform-file": "^1.1.1",
     "jsdoc": "3.6.7",
     "lighthouse": "^5.2.0",
-    "react-dom": "16.10.2",
+    "react-dom": "^16.10.2",
     "rimraf": "^2.6.2",
     "source-map-loader": "^2.0.0",
     "source-map-support": "^0.5.16",
