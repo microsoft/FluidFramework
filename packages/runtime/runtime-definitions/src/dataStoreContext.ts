@@ -158,7 +158,6 @@ export interface IContainerRuntimeBase extends
         pkg: string | string[],
         props?: any,
         id?: string,
-        isRoot?: boolean,
     ): Promise<IDataStore>;
 
     /**

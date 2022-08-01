@@ -426,12 +426,6 @@ export interface IContainerRuntimeOptions {
      */
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     /**
-     * Should the runtime use data store aliasing for creating root datastores.
-     * In case of aliasing conflicts, the runtime will raise an exception which does
-     * not effect the status of the container.
-     */
-    readonly useDataStoreAliasing?: boolean;
-    /**
      * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
      * send all operations to the driver layer, while in TurnBased the operations will be buffered
      * and then sent them as a single batch at the end of the turn.
@@ -902,7 +896,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions = {},
             gcOptions = {},
             loadSequenceNumberVerification = "close",
-            useDataStoreAliasing = false,
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
         } = runtimeOptions;
@@ -978,7 +971,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryOptions,
                 gcOptions,
                 loadSequenceNumberVerification,
-                useDataStoreAliasing,
                 flushMode,
                 enableOfflineLoad,
             },
@@ -2131,7 +2123,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
         const internalId = uuid();
         return channelToDataStore(
-            await this._createDataStore(pkg, false /* isRoot */, internalId),
+            await this._createDataStore(pkg, internalId),
             internalId,
             this,
             this.dataStores,
@@ -2155,25 +2147,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         pkg: string | string[],
         props?: any,
         id = uuid(),
-        isRoot = false,
     ): Promise<IDataStore> {
-        if (isRoot) {
-            throw new UsageError("Creating root datastores is not supported. Use datastore aliasing instead");
-        }
-
         const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
-            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
+            Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
         return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
 
     private async _createDataStore(
         pkg: string | string[],
-        isRoot: boolean,
         id = uuid(),
         props?: any,
     ): Promise<IFluidDataStoreChannel> {
         return this.dataStores
-            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props)
+            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
             .realize();
     }
 

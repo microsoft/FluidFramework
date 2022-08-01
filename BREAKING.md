@@ -119,7 +119,7 @@ See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluid
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
 
 ### Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported
-The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use aliasing instead. See [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated). Also, `IContainerRuntimeBase._createDataStoreWithProps` will throw a `UsageError` if the `isRoot` parameter is set to `true`.
+The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use aliasing instead. See [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated). The `isRoot` parameter from `IContainerRuntimeBase._createDataStoreWithProps` has also been removed. Additionally, the feature gate which would switch to using aliasing behind the aforementioned deleted APIs, `Fluid.ContainerRuntime.UseDataStoreAliasing` will no longer be observed by the runtime. As aliasing is the default behavior for creating such datastores, the `useDataStoreAliasing` property from `IContainerRuntimeOptions` has been removed.
 
 # 1.2.0
 

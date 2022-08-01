@@ -95,7 +95,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IDataStore>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     // (undocumented)
@@ -333,7 +333,6 @@ export interface IContainerRuntimeOptions {
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
-    readonly useDataStoreAliasing?: boolean;
 }
 
 // @public

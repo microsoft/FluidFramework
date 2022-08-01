@@ -90,8 +90,8 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
     const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime =>
         dataObject.context.containerRuntime as IContainerRuntime;
 
-    const createDataStoreWithProps = async (dataObject: ITestFluidObject, id: string, root: boolean) =>
-        runtimeOf(dataObject)._createDataStoreWithProps(packageName, {}, id, root);
+    const createDataStoreWithProps = async (dataObject: ITestFluidObject, id: string) =>
+        runtimeOf(dataObject)._createDataStoreWithProps(packageName, {}, id);
 
     const getRootDataStore = async (dataObject: ITestFluidObject, id: string, wait = true) =>
         runtimeOf(dataObject).getRootDataStore(id, wait);
@@ -112,22 +112,11 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         beforeEach(async () => setupContainers(testContainerConfig));
         afterEach(async () => reset());
 
-        it("Datastore creation with aliasing turned off and legacy API returns datastore which can be aliased", async () => {
-            await createDataStoreWithProps(dataObject1, "1", false /* root */);
+        it("Datastore creation with legacy API returns datastore which can be aliased", async () => {
+            await createDataStoreWithProps(dataObject1, "1");
             const ds = await runtimeOf(dataObject1).createDataStore(packageName);
             const aliasResult = await ds.trySetAlias("2");
             assert.equal(aliasResult, "Success");
-        });
-
-        it("Attempting to create a root datastore fails ", async () => {
-            let error: Error | undefined;
-            try {
-                await createDataStoreWithProps(dataObject1, "1", true /* root */);
-            } catch (err) {
-                error = err as Error;
-            }
-
-            assert.ok(error instanceof UsageError);
         });
     });
 
