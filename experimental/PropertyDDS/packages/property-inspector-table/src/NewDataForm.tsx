@@ -205,7 +205,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
     const parentTypeId = selectedTypeOption.value;
     const parentTypes = PropertyFactory.getAllParentsForTemplate(parentTypeId);
     // sets can be created only for properties inheriting from NamedProperty
-    if (rowData.parent!.getContext() === "single" &&
+    if (rowData.parent && rowData.parent.getContext() === "single" &&
       (selectedTypeOption.value === "NamedProperty" || parentTypes.includes("NamedProperty"))) {
       setIsNamedProp(true);
     } else {
@@ -251,7 +251,8 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
       color="primary"
       style={{ minWidth: "0px" }}
       className={classNames(classes.button, classes.createButton)}
-      disabled={isSiblingFound || (!notNamedCollections.includes(rowData.parent!.getContext()) && !inputName.trim())}
+      disabled={isSiblingFound || rowData.parent &&
+         (!notNamedCollections.includes(rowData.parent.getContext()) && !inputName.trim())}
       onClick={handleCreateData}
     >
       {isCreating ? "Creating" : "Create"}

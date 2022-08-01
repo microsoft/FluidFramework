@@ -235,7 +235,7 @@ export interface IInspectorTableProps<T extends IRowData<T> = any> extends BaseT
   /**
    * A transformation function from raw data to table rows
    */
-  toTableRows: (row: any, props: IToTableRowsProps,
+  toTableRows?: (row: any, props: IToTableRowsProps,
     options?: Partial<IToTableRowsOptions>, pathPrefix?: string) => T[];
   columnsRenderers?: Record<string, (...props: any) => any>;
 }

@@ -10,8 +10,9 @@ import { defaultInspectorTableChildGetter, defaultInspectorTableNameGetter } fro
 import { IColumns, IInspectorRow, IInspectorSearchMatch } from '../src/InspectorTableTypes';
 import { search, showNextResult } from '../src/utils';
 
-import { findRow, getExpandedMap, getHash, initializeWorkspace, uniqueIdentifier, getAllMatchesFromRows } from './testUtils';
+import { findRow, getExpandedMap, getHash, initializeWorkspace, getAllMatchesFromRows } from './testUtils';
 import { toTableRows, dummyChild, fillExpanded, expandAll, sanitizePath } from '../src/propertyInspectorUtils';
+import { uniqueIdentifier } from './common';
 
 describe('InspectorTable', () => {
   let workspace;
