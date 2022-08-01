@@ -33,6 +33,8 @@ const isInventoryListContainer2 = (model: IVersionedModel): model is InventoryLi
     return model.version === "two";
 };
 
+const getUrlForContainerId = (containerId: string) => `/#${containerId}`;
+
 const render = (model: IVersionedModel) => {
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
@@ -54,6 +56,7 @@ const render = (model: IVersionedModel) => {
     ReactDOM.render(
         React.createElement(DebugView, {
             model,
+            getUrlForContainerId,
         }),
         debugDiv,
     );
