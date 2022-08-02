@@ -5,4 +5,5 @@
 
 export * from "./sequenceChangeFamily";
 export * from "./sequenceChangeRebaser";
+export * from "./sequenceChangeset";
 export * from "./sequenceEditBuilder";

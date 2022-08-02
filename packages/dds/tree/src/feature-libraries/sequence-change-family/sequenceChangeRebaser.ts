@@ -6,12 +6,9 @@
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { SequenceChangeset } from "./sequenceChangeset";
+import { compose } from "./compose";
 
 export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset, SequenceChangeset, SequenceChangeset>;
-
-function compose(...changes: SequenceChangeset[]): SequenceChangeset {
-    throw Error("Not implemented"); // TODO
-}
 
 function invert(changes: SequenceChangeset): SequenceChangeset {
     throw Error("Not implemented"); // TODO

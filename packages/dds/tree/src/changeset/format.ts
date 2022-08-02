@@ -53,6 +53,10 @@ export namespace Transposed {
 	export type MarkList<TMark = Mark> = TMark[];
 
 	export type Mark =
+		| SizedMark
+		| AttachGroup;
+
+	export type SizedMark =
 		| Skip
 		| Tomb
 		| Modify
@@ -60,8 +64,7 @@ export namespace Transposed {
 		| Reattach
 		| ModifyReattach
 		| ModifyDetach
-		| GapEffectSegment
-		| AttachGroup;
+		| GapEffectSegment;
 
 	export type AttachGroup = Attach[];
 
@@ -164,9 +167,9 @@ export namespace Transposed {
 	}
 
 	/**
-	 * Represents the precise location of a concurrent slice-move-in.
+	 * Represents the precise location of a concurrent slice-move-in within the same gap.
 	 * This is needed so we can tell where concurrent sliced-inserts (that this changeset has yet to be rebased over)
-	 * may land in the field. Without this, we would need to be able to retain information about the relative order in
+	 * may land in the gap. Without this, we would need to be able to retain information about the relative order in
 	 * time of any number of concurrent slice-moves. See scenario N.
 	 */
 	export interface Intake extends PriorOp {

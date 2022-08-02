@@ -9,3 +9,4 @@
 
 export * from "./format";
 export * from "./toDelta";
+export * from "./utils";
