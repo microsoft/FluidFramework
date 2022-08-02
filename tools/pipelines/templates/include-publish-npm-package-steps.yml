@@ -86,8 +86,7 @@ steps:
       for packageName in $sortedPackages
       do
           f=$(find -name "${packageName}-[0-9]*.tgz")
-          if $f != null
-          then
+          if [[ $f != null ]]; then
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
