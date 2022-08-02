@@ -51,6 +51,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
 - [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
+- [Remove deprecated data structures from `@fluidframework/sequence`](#remove-deprecated-data-structures-from-fluidframeworksequence)
 
 ###  Update to React 17
 The following packages use React and thus were impacted:
@@ -148,6 +149,9 @@ The functions affected are:
 
 ### Remove `IContainerRuntimeBase.setFlushMode`
 The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
+
+### Remove deprecated data structures from `@fluidframework/sequence`
+`SharedNumberSequence`, `SharedObjectSequence`, and `SharedMatrix` have been removed from `@fluidframework/sequence`. They are currently still available in `@fluid-experimental/sequence-deprecated.
 
 # 1.2.0
 
