@@ -26,6 +26,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
+- [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
 
 ### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
 
@@ -69,6 +70,12 @@ to be `string | undefined`.
 
 ### MergeTree class is deprecated
     The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
+
+### `getTextAndMarkers` changed to be a free function
+
+`SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
+To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
+The corresponding method on `IMergeTreeTexHelper` will also be removed.
 
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)

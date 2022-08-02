@@ -608,7 +608,7 @@ describe("Map", () => {
                     map1.set("testKey", "testValue");
                     map1.set("testKey2", "testValue2");
                     assert.equal(map1.get("testKey"), "testValue", "could not retrieve set key 1 after delete");
-                    assert.equal(map1.get("testKey2"), "testValue2", "could not retreive set key 2 after delete");
+                    assert.equal(map1.get("testKey2"), "testValue2", "could not retrieve set key 2 after delete");
                 });
             });
 

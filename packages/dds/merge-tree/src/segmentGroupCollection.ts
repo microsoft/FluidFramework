@@ -30,6 +30,10 @@ export class SegmentGroupCollection {
         return this.segmentGroups.dequeue();
     }
 
+    public pop?(): SegmentGroup | undefined {
+        return this.segmentGroups.pop ? this.segmentGroups.pop() : undefined;
+    }
+
     public clear() {
         this.segmentGroups.clear();
     }

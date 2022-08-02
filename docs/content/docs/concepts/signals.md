@@ -1,12 +1,9 @@
 ---
 title: Signals and Signaler
 menuPosition: 6
-status: discussion
-discussion: 5469
 aliases:
   - "/docs/advanced/signals/"
   - "/docs/deep/signals/"
-draft: true
 ---
 
 When using DDSes, data is sequenced and stored within the Fluid container to achieve synchronized shared state. For scenarios that involve shared persisted data, DDSes provide an effective way to communicate data so that it is retained in the container. However, there could be many scenarios where we need to communicate data that is short-lived, in which the ordering and storage of said information would be wasteful and unnecessary. For instance, displaying the currently selected object of each user is an example of short-lived information in which the past data is mostly irrelevant.
@@ -21,12 +18,12 @@ By sending signals, you avoid the storage and sequencing of data that will not b
 Signals are the most appropriate data channel in many user presence scenarios, where each user has the responsibility of sharing their current presence state to other connected users. In these scenarios, current presence data is short-lived, past presence state is irrelevant, and the shared data is not persisted on disconnect.
 
 ## How can I use signals in Fluid?
-The [`Signaler`](https://github.com/microsoft/FluidFramework/tree/main/experimental/framework/data-objects/src/signaler) DataObject can be used to send communications via signals in a Fluid application. `Signaler` allows clients to send signals to other connected clients and add/remove listeners for specified signal types.
+The [Signaler](https://github.com/microsoft/FluidFramework/tree/main/experimental/framework/data-objects/src/signaler) DataObject can be used to send communications via signals in a Fluid application. `Signaler` allows clients to send signals to other connected clients and add/remove listeners for specified signal types.
 
 # Signaler
 
 ## Creation
-Just like with DDSes, you can include `Signaler` as a shared object you would like to load in your [`FluidContainer`](https://fluidframework.com/docs/build/containers/) schema.
+Just like with DDSes, you can include `Signaler` as a shared object you would like to load in your [FluidContainer](https://fluidframework.com/docs/build/containers/) schema.
 
 Here is a look at how you would go about loading `Signaler` as part of the initial objects of the container:
 
@@ -96,7 +93,7 @@ this.signaler.onSignal("currentlySelectedObject", (clientId, local, payload) => 
 });
 ```
 
-Each of the _N_ connected clients would then respond with 3 signals as well (3_N_ signals total).  To bring this down to _N_ signals total, we can group these requests into a single request that captures all the required information:
+Each of the _N_ connected clients would then respond with 3 signals as well (3*N* signals total).  To bring this down to _N_ signals total, we can group these requests into a single request that captures all the required information:
 
 ```typescript
 container.on("connected", () => {
@@ -104,7 +101,7 @@ container.on("connected", () => {
 });
 ```
 ```typescript
-this.signaler.onSignal("all", (clientId, local, payload) => {
+this.signaler.onSignal("connectRequest", (clientId, local, payload) => {
     /*...*/
 });
 ```

@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.3.0 win32-x64 node-v14.18.1
+@fluid-tools/build-cli/0.3.2000 win32-x64 node-v14.19.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -245,7 +245,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/info.ts)_
 
 ## `flub version VERSION`
 
@@ -287,7 +287,7 @@ EXAMPLES
     $ flub version ^1.0.0
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/version.ts)_
 <!-- commandsstop -->
 
 ## Trademark
