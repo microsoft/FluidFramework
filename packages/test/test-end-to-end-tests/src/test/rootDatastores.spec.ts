@@ -113,8 +113,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
         afterEach(async () => reset());
 
         it("Datastore creation with legacy API returns datastore which can be aliased", async () => {
-            await createDataStoreWithProps(dataObject1, "1");
-            const ds = await runtimeOf(dataObject1).createDataStore(packageName);
+            const ds = await createDataStoreWithProps(dataObject1, "1");
             const aliasResult = await ds.trySetAlias("2");
             assert.equal(aliasResult, "Success");
         });
