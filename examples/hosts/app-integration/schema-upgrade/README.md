@@ -1,6 +1,6 @@
 # @fluid-example/app-integration-schema-upgrade
 
-This demo experiments with an approach for migrating data from an existing Fluid container into a new Fluid container which may have a different schema or code running on it.
+This example experiments with an approach for migrating data from an existing Fluid container into a new Fluid container which may have a different schema or code running on it.
 
 Please note that the ideas explored here are experimental and under development.  They are not yet recommended for broad use in production.
 
@@ -9,7 +9,7 @@ Please note that the ideas explored here are experimental and under development.
 Once a Fluid container has been created, it will contain some set of persisted data in the form of the summary as well as any unsummarized ops.  This persisted data can only be correctly interpreted by a compatible container code (typically the same one that created it, or a newer backwards-compatible one).  This container code knows the appropriate data stores to load to interpret the summary and process the outstanding ops, as well as provides public access to those data stores for use.
 
 However, suppose you want to change your application's schema in a manner that is not backwards compatible.  Examples of this might include:
-- Changing a DDS type used to store some data (e.g. Cell -> Map as this demo demonstrates)
+- Changing a DDS type used to store some data (e.g. Cell -> Map as this example demonstrates)
 - Removing a piece of the data that is no longer relevant (e.g. for an app feature that has been removed)
 - Reorganize data (e.g. split Directory data into subdirectories, or change the key used for a value in a Map)
 
@@ -41,6 +41,19 @@ With the exported and transformed data in hand, we can create a new container us
 ### Redirect clients to the new container
 
 As clients observe the migration complete, they load the new container and swap it in for the old one.  This includes loading in the approporate new container code, model code, and view code if necessary.  Once complete, the client can begin collaborating on the new container.
+
+## Other concepts
+
+This example also explores other concepts that are new but not core to the migration process.
+
+### Container model
+TODO
+
+### Model loading
+TODO
+
+### View loading
+TODO
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 <!-- The getting started instructions are automatically generated.
