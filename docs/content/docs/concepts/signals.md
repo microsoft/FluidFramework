@@ -20,9 +20,7 @@ Signals are the most appropriate data channel in many user presence scenarios, w
 ## How can I use signals in Fluid?
 The [Signaler](https://github.com/microsoft/FluidFramework/tree/main/experimental/framework/data-objects/src/signaler) DataObject can be used to send communications via signals in a Fluid application. `Signaler` allows clients to send signals to other connected clients and add/remove listeners for specified signal types.
 
-# Signaler
-
-## Creation
+### Creation
 Just like with DDSes, you can include `Signaler` as a shared object you would like to load in your [FluidContainer](https://fluidframework.com/docs/build/containers/) schema.
 
 Here is a look at how you would go about loading `Signaler` as part of the initial objects of the container:
@@ -42,14 +40,14 @@ const signaler = container.initialObjects.signaler as Signaler;
 
 For more information on using `ContainerSchema` to create objects please see [Data modeling](https://fluidframework.com/docs/build/data-modeling/).
 
-## API
+### API
 `Signaler` provides a few simple methods to send signals and add/remove listeners to specific signals as well:
 - `submitSignal(signalName: string, payload?: Jsonable)` - Sends a signal with a payload to its connected listeners
 - `onSignal(signalName: string, listener: SignalListener)` - Adds a listener for the specified signal. Similar behavior as EventEmitter's `on` method.
 - `offSignal(signalName: string, listener: SignalListener)` - Removes a listener for the specified signal. Similar behavior as EventEmitter's `off` method.
 
-## Common Patterns
-### Signal Request
+### Common Patterns
+#### Signal Request
 When a client joins a collaboration session, they may need to receive information about the current state immediately after connecting the container.  To support this, they can request a specific signal be sent to them from other connected clients. For example, in the [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) example we define a "focusRequest" signal type that a newly joining client uses to request the focus-state of each currently connected client:
 
 ```typescript
@@ -70,7 +68,7 @@ this.signaler.onSignal(FocusTracker.focusRequestType, () => {
 });
 ```
 This pattern adds cost however, as it forces every connected client to generate a signal.  Consider whether your scenario can be satisfied by receiving the signals naturally over time instead of requesting the information up-front. The mouse tracking in [PresenceTracker](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/presence-tracker) is an example where a newly connecting client does not request current state. Since mouse movements are frequent, the newly connecting client can instead simply wait to receive other users' mouse positions on their next mousemove event.
-### Grouping Signal Types
+#### Grouping Signal Types
 
 Rather than submitting multiple signals in response to an event, it is more cost-effective to submit one combined signal for that event and listen to that single signal instead. For example, imagine an application using the `Signal Request` pattern where a newly connected client requests the color, focus state, and currently selected object of every other connected client on the page. If you submit a signal for each type of data requested, it would look something like this:
 
