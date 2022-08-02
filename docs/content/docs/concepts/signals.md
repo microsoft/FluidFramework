@@ -93,7 +93,7 @@ this.signaler.onSignal("currentlySelectedObject", (clientId, local, payload) => 
 });
 ```
 
-Each of the _N_ connected clients would then respond with 3 signals as well (3_N_ signals total).  To bring this down to _N_ signals total, we can group these requests into a single request that captures all the required information:
+Each of the _N_ connected clients would then respond with 3 signals as well (3*N* signals total).  To bring this down to _N_ signals total, we can group these requests into a single request that captures all the required information:
 
 ```typescript
 container.on("connected", () => {
@@ -101,7 +101,7 @@ container.on("connected", () => {
 });
 ```
 ```typescript
-this.signaler.onSignal("all", (clientId, local, payload) => {
+this.signaler.onSignal("connectRequest", (clientId, local, payload) => {
     /*...*/
 });
 ```
