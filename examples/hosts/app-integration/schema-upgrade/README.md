@@ -23,19 +23,24 @@ This example explores one technique to permit these types of changes.  It employ
 1. Redirect clients to the new container
 
 ### Reach consensus amongst connected clients to perform the migration
-TODO
+
+At any given moment, connected clients may have data in flight - ops that are unsequenced or that not all other clients are aware of.  To avoid losing this data during the migration, we use a Quorum DDS to partition the op stream and establish the version we are migrating to.  Ops sent before the Quorum value acceptance will be included, and clients are expected to stop generating ops after observing the proposal.  After the Quorum value is accepted, we know there are no more ops in flight that should be included in the migration, and that the version we are migrating to is the one specified in the Quorum.
 
 ### Extract the data from the existing container
-TODO
+
+The container model is expected to provide a mechanism to extract the data from within for migration purposes.  The format of the extracted data is up to the model - it could be a string, JSON, some well known file format like .csv, etc.  Complex Javascript objects could even be used (since we will be performing the data import locally), but some serializable format is probably the most durable option.
 
 ### Transform the data as needed
-TODO
+
+If the new model is incapable of importing the export format of the old model, the format should be transformed accordingly.  This can be skipped if the exported format is directly consumable by the new model.
 
 ### Create a new container with the new code and import the transformed data
-TODO
+
+With the exported and transformed data in hand, we can create a new container using the new container code and import the data.  We ideally only upload (attach) a single migrated container, since duplicative containers are wasted storage.  We use a TaskManager to select a single volunteer for this purpose.  Once the container is attached, we write the new container's id into the old container (using a ConsensusRegisterCollection) to finalize the migration - all clients can now know the migration is complete and the data has been migrated to the specified container.
 
 ### Redirect clients to the new container
-TODO
+
+As clients observe the migration complete, they load the new container and swap it in for the old one.  This includes loading in the approporate new container code, model code, and view code if necessary.  Once complete, the client can begin collaborating on the new container.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 <!-- The getting started instructions are automatically generated.
