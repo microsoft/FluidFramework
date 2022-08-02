@@ -20,7 +20,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public
+// @public @deprecated (undocumented)
 export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
     // (undocumented)
     attachState: AttachState;
@@ -32,7 +32,7 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
     getQuorum(): IQuorumClients;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IOldestClientObservableEvents extends IEvent {
     // (undocumented)
     (event: "connected", listener: () => void): any;
@@ -40,13 +40,13 @@ export interface IOldestClientObservableEvents extends IEvent {
     (event: "disconnected", listener: () => void): any;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
     // (undocumented)
     isOldest(): boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IOldestClientObserverEvents extends IEvent {
     // (undocumented)
     (event: "becameOldest" | "lostOldest", listener: () => void): any;
@@ -65,12 +65,12 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
     (event: "assigned" | "lost", listener: (taskId: string) => void): any;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserverEvents> implements IOldestClientObserver {
     constructor(observable: IOldestClientObservable);
     // (undocumented)
     isOldest(): boolean;
-    }
+}
 
 // @public
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
@@ -101,8 +101,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected reSubmitCore(): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
-    }
-
+}
 
 // (No @packageDocumentation comment for this package)
 

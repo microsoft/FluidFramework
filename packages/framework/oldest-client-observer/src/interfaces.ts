@@ -6,52 +6,7 @@
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IQuorumClients } from "@fluidframework/protocol-definitions";
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
-export interface ITaskManagerEvents extends ISharedObjectEvents {
-    /**
-     * Notifies when the local client has reached or left the front of the queue.  Does not account for known pending
-     * ops, but instead only reflects the current state.
-     */
-    (event: "assigned" | "lost", listener: (taskId: string) => void);
-}
-
-/**
- * Task manager interface
- */
-
-export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
-    /**
-     * Try to lock the task.  Promise resolves when the lock is acquired, or rejects if we are removed from the
-     * queue without acquiring the lock for any reason.
-     * @param taskId - Identifier for the task
-     */
-    lockTask(taskId: string): Promise<void>;
-
-    /**
-     * Exit the queue, releasing the task if currently locked.
-     * @param taskId - Identifier for the task
-     */
-    abandon(taskId: string): void;
-
-    /**
-     * Check whether this client is the current assignee for the task and there is no outstanding abandon op that
-     * would release the lock.
-     * @param taskId - Identifier for the task
-     */
-    haveTaskLock(taskId: string): boolean;
-
-    /**
-     * Check whether this client is either the current assignee for the task or is waiting in line or we expect they
-     * will be in line after outstanding ops have been ack'd.
-     * @param taskId - Identifier for the task
-     */
-    queued(taskId: string): boolean;
-}
-
-/**
- * @deprecated - Import {@link @fluid-experimental/oldest-client-observer#IOldestClientObservableEvents } instead
- */
 export interface IOldestClientObservableEvents extends IEvent {
     (event: "connected", listener: () => void);
     // Typescript won't convert IFluidDataStoreRuntime and ContainerRuntime if we unify these,
@@ -61,8 +16,6 @@ export interface IOldestClientObservableEvents extends IEvent {
 }
 
 /**
- * * @deprecated - Import {@link @fluid-experimental/oldest-client-observer#IOldestClientObservable } instead
- *
  * This is to make OldestClientObserver work with either a ContainerRuntime or an IFluidDataStoreRuntime
  * (both expose the relevant API surface and eventing).  However, really this info probably shouldn't live on either,
  * since neither is really the source of truth (they are just the only currently-available plumbing options).
@@ -80,16 +33,10 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
     clientId: string | undefined;
 }
 
-/**
- * @deprecated - Import {@link @fluid-experimental/oldest-client-observer#IOldestClientObserverEvents } instead
- */
 export interface IOldestClientObserverEvents extends IEvent {
     (event: "becameOldest" | "lostOldest", listener: () => void);
 }
 
-/**
- * @deprecated - Import {@link @fluid-experimental/oldest-client-observer#IOldestClientObserver } instead
- */
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
     isOldest(): boolean;
 }

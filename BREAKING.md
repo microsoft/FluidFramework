@@ -26,6 +26,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
+- [OldestClientObserver moved to @fluid-experimental/oldest-client-observer](#oldestclientobserver-moved-to-@fluid-experimental/oldest-client-observer)
 
 ### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
 
@@ -69,6 +70,10 @@ to be `string | undefined`.
 
 ### MergeTree class is deprecated
     The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
+
+### OldestClientObserver moved to @fluid-experimental/oldest-client-observer
+The `OldestClientObserver` class and its associated interfaces have been deprecated from @fluid-experimental/task-manager and moved to @fluid-experimental/oldest-client-observer. It will be removed from @fluid-experimental/task-manager in a future release. Please migrate all imports to @fluid-experimental/oldest-client-observer.
+
 
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)

@@ -9,8 +9,6 @@ import { IQuorumClients } from "@fluidframework/protocol-definitions";
 import { IOldestClientObservable, IOldestClientObserverEvents, IOldestClientObserver } from "./interfaces";
 
 /**
- * @deprecated - Import {@link @fluid-experimental/oldest-client-observer#OldestClientObserver } instead
- *
  * The `OldestClientObserver` is a utility inspect if the local client is the oldest amongst connected clients (in
  * terms of when they connected) and watch for changes.
  *
