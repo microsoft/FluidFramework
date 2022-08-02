@@ -30,7 +30,7 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "npm run test:types",
+    "test": "echo \"Error: no test script specified\" && exit 1",
     "tsc": "tsc",
     "tsc:watch": "tsc --watch",
     "tsfmt": "tsfmt --verify",
