@@ -33,7 +33,7 @@
     "test": "npm run test:mocha",
     "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
     "test:memory": "mocha --config src/test/memory/.mocharc.js",
-    "test:mocha": "mocha --recursive 'dist/test/**/*.spec.js' --exclude 'dist/test/memory/**/*' -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+    "test:mocha": "mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
     "testfarm": "node dist/test/testFarm.js",
