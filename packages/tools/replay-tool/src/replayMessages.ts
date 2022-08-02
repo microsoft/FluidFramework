@@ -815,8 +815,8 @@ export class ReplayTool {
     }
 }
 
-async function assertDdsEqual(d1: ITreeEntry, d2: ITreeEntry): Promise<void> {
-    if (d1.type !== TreeEntry.Tree || d2.type !== TreeEntry.Tree) {
+async function assertDdsEqual(d1: ITreeEntry | undefined, d2: ITreeEntry | undefined): Promise<void> {
+    if (d1?.type !== TreeEntry.Tree || d2?.type !== TreeEntry.Tree) {
         strict.deepStrictEqual(d1, d2);
         return;
     }
@@ -825,9 +825,9 @@ async function assertDdsEqual(d1: ITreeEntry, d2: ITreeEntry): Promise<void> {
         (entry) => entry.type === TreeEntry.Blob && entry.path === ".attributes",
     );
 
-    assert(attributes.type === TreeEntry.Blob, "verified by previous check");
-
-    const parsed: { type?: string; } = JSON.parse(attributes?.value.contents);
+    const parsed: { type?: string; } = attributes?.type === TreeEntry.Blob
+                                            ? JSON.parse(attributes?.value.contents)
+                                            : {};
 
     if (parsed.type !== SharedMatrixFactory.Type) {
         assert(d1.value.entries.length === d2.value.entries.length, "");
