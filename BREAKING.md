@@ -47,6 +47,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Marker.toString simplified](#markertostring-simplified)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
 - [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [OldestClientObserver moved to @fluid-experimental/oldest-client-observer](#oldestclientobserver-moved-to-@fluid-experimental/oldest-client-observer)
 
 ###  Update to React 17
 The following packages use React and thus were impacted:
@@ -156,6 +157,10 @@ The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is n
 `SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
 To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
 The corresponding method on `IMergeTreeTexHelper` will also be removed.
+
+
+### OldestClientObserver moved to @fluid-experimental/oldest-client-observer
+The `OldestClientObserver` class and its associated interfaces have been removed from @fluid-experimental/task-manager and moved to the new package @fluid-experimental/oldest-client-observer. Please migrate all imports to @fluid-experimental/oldest-client-observer.
 
 # 1.2.0
 
