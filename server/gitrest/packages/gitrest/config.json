@@ -9,7 +9,8 @@
     "requestSizeLimit": "1gb",
     "storageDir": {
         "baseDir": "/home/node/documents",
-        "useRepoOwner": true
+        "useRepoOwner": true,
+        "suffixPath": "summaries"
     },
     "externalStorage": {
         "enabled": false,
@@ -17,9 +18,9 @@
     },
     "git": {
         "lib": {
-            "name": "nodegit"
+            "name": "isomorphic-git"
         },
         "persistLatestFullSummary": false,
-        "repoPerDocEnabled": false
+        "repoPerDocEnabled": true
     }
 }

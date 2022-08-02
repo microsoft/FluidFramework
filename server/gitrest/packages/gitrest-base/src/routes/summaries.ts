@@ -32,6 +32,7 @@ import {
     IRepoManagerParams,
     getLumberjackBasePropertiesFromRepoManagerParams,
     getRepoManagerFromWriteAPI,
+    checkSoftDeleted,
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
@@ -227,6 +228,7 @@ export function create(
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        console.log("[DEBUG] Summaries GET repoManagerParams: ", JSON.stringify(repoManagerParams));
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
@@ -235,14 +237,17 @@ export function create(
             return;
         }
         const resultP = repoManagerFactory.open(repoManagerParams)
-            .then(async (repoManager) => getSummary(
-                repoManager,
-                fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
-                request.params.sha,
-                repoManagerParams,
-                getExternalWriterParams(request.query?.config as string | undefined),
-                persistLatestFullSummary,
-            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return getSummary(
+                    repoManager,
+                    fsManager,
+                    request.params.sha,
+                    repoManagerParams,
+                    getExternalWriterParams(request.query?.config as string | undefined),
+                    persistLatestFullSummary);
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
@@ -251,6 +256,7 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        console.log("[DEBUG] Summaries POST repoManagerParams: ", JSON.stringify(repoManagerParams));
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
@@ -260,14 +266,17 @@ export function create(
         }
         const wholeSummaryPayload: IWholeSummaryPayload = request.body;
         const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
-            .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => createSummary(
-                repoManager,
-                fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
-                wholeSummaryPayload,
-                repoManagerParams,
-                getExternalWriterParams(request.query?.config as string | undefined),
-                persistLatestFullSummary,
-            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager): Promise<IWriteSummaryResponse | IWholeFlatSummary> => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return createSummary(
+                    repoManager,
+                    fsManager,
+                    wholeSummaryPayload,
+                    repoManagerParams,
+                    getExternalWriterParams(request.query?.config as string | undefined),
+                    persistLatestFullSummary);
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
@@ -277,6 +286,7 @@ export function create(
      */
     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
+        console.log("[DEBUG] Summaries DELETE repoManagerParams: ", JSON.stringify(repoManagerParams));
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
@@ -286,14 +296,17 @@ export function create(
         }
         const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
         const resultP = repoManagerFactory.open(repoManagerParams)
-            .then(async (repoManager) => deleteSummary(
-                repoManager,
-                fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams),
-                repoManagerParams,
-                softDelete,
-                repoPerDocEnabled,
-                getExternalWriterParams(request.query?.config as string | undefined),
-            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return deleteSummary(
+                    repoManager,
+                    fsManager,
+                    repoManagerParams,
+                    softDelete,
+                    repoPerDocEnabled,
+                    getExternalWriterParams(request.query?.config as string | undefined));
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 204);
     });
 
