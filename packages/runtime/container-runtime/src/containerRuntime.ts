@@ -2245,21 +2245,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
+        let latestSnapshotVersionId: string | undefined;
         if (refreshLatestAck) {
-            const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
+            const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
                 ChildLogger.create(summaryNumberLogger, undefined, { all: { safeSummary: true } }));
+            const latestSnapshotRefSeq = latestSnapshotInfo.latestSnapshotRefSeq;
+            latestSnapshotVersionId = latestSnapshotInfo.latestSnapshotVersionId;
 
-            if (latestSummaryRefSeq > this.deltaManager.lastSequenceNumber) {
+            if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
                 // We need to catch up to the latest summary's reference sequence number before pausing.
                 await PerformanceEvent.timedExecAsync(
                     summaryNumberLogger,
                     {
                         eventName: "WaitingForSeq",
                         lastSequenceNumber: this.deltaManager.lastSequenceNumber,
-                        targetSequenceNumber: latestSummaryRefSeq,
+                        targetSequenceNumber: latestSnapshotRefSeq,
                         lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
                     },
-                    async () => waitForSeq(this.deltaManager, latestSummaryRefSeq),
+                    async () => waitForSeq(this.deltaManager, latestSnapshotRefSeq),
                     { start: true, end: true, cancel: "error" }, // definitely want start event
                 );
             }
@@ -2384,19 +2387,33 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "generate", ...generateSummaryData, error: continueResult.error };
             }
 
+            // It may happen that the lastAck it not correct due to missing summaryAck in case of single commit
+            // summary. So if the previous summarizer closes just after submitting the summary and before
+            // submitting the summaryOp then we can't rely on summaryAck. So in case we have
+            // latestSnapshotVersionId from storage and it does not match with the lastAck ackHandle, then use
+            // the one fetched from storage as parent as that is the latest.
             const lastAck = this.summaryCollection.latestAck;
-            const summaryContext: ISummaryContext =
-                lastAck === undefined
-                ? {
+            let summaryContext: ISummaryContext;
+            if (lastAck?.summaryAck.contents.handle !== latestSnapshotVersionId
+                && latestSnapshotVersionId !== undefined) {
+                summaryContext = {
+                    proposalHandle: undefined,
+                    ackHandle: latestSnapshotVersionId,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                };
+            } else if (lastAck === undefined) {
+                summaryContext = {
                     proposalHandle: undefined,
                     ackHandle: this.context.getLoadedFromVersion()?.id,
                     referenceSequenceNumber: summaryRefSeqNum,
-                }
-                : {
+                };
+            } else {
+                summaryContext = {
                     proposalHandle: lastAck.summaryOp.contents.handle,
                     ackHandle: lastAck.summaryAck.contents.handle,
                     referenceSequenceNumber: summaryRefSeqNum,
                 };
+            }
 
             let handle: string;
             try {
@@ -2737,15 +2754,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        const result = await this.summarizerNode.refreshLatestSummary(
-            proposalHandle,
-            summaryRefSeq,
-            async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
+        const { snapshotTree } = await this.fetchSnapshotFromStorage(
+            ackHandle,
+            summaryLogger,
+            {
                 eventName: "RefreshLatestSummaryGetSnapshot",
                 ackHandle,
                 summaryRefSeq,
                 fetchLatest: false,
-            }),
+            },
+        );
+        const result = await this.summarizerNode.refreshLatestSummary(
+            proposalHandle,
+            summaryRefSeq,
+            async () => snapshotTree,
             readAndParseBlob,
             summaryLogger,
         );
@@ -2760,19 +2782,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param summaryLogger - logger to use when fetching snapshot from storage
      * @returns downloaded snapshot's reference sequence number
      */
-    private async refreshLatestSummaryAckFromServer(summaryLogger: ITelemetryLogger): Promise<number> {
-        const snapshot = await this.fetchSnapshotFromStorage(null, summaryLogger, {
-            eventName: "RefreshLatestSummaryGetSnapshot",
-            fetchLatest: true,
-        });
+    private async refreshLatestSummaryAckFromServer(
+        summaryLogger: ITelemetryLogger,
+    ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined; }> {
+        const { snapshotTree, versionId } = await this.fetchSnapshotFromStorage(null, summaryLogger, {
+                eventName: "RefreshLatestSummaryGetSnapshot",
+                fetchLatest: true,
+            },
+        );
 
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        const snapshotRefSeq = await seqFromTree(snapshot, readAndParseBlob);
+        const latestSnapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
 
         const result = await this.summarizerNode.refreshLatestSummary(
             undefined,
-            snapshotRefSeq,
-            async () => snapshot,
+            latestSnapshotRefSeq,
+            async () => snapshotTree,
             readAndParseBlob,
             summaryLogger,
         );
@@ -2780,11 +2805,14 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
 
-        return snapshotRefSeq;
+        return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
     }
 
     private async fetchSnapshotFromStorage(
-        versionId: string | null, logger: ITelemetryLogger, event: ITelemetryGenericEvent) {
+        versionId: string | null,
+        logger: ITelemetryLogger,
+        event: ITelemetryGenericEvent,
+    ): Promise<{ snapshotTree: ISnapshotTree; versionId: string; }> {
         return PerformanceEvent.timedExecAsync(
             logger, event, async (perfEvent: {
                 end: (arg0: {
@@ -2803,7 +2831,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     stats.getSnapshotDuration = trace.trace().duration;
 
                     perfEvent.end(stats);
-                    return maybeSnapshot;
+                    return { snapshotTree: maybeSnapshot, versionId: versions[0].id };
         });
     }
 
