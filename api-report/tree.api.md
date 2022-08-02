@@ -12,14 +12,19 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @public
 export class AnchorSet {
-    constructor();
-    // (undocumented)
-    readonly anchorsToPath: Map<Anchor, PathShared>;
     // (undocumented)
     forget(anchor: Anchor): void;
+    isEmpty(): boolean;
     locate(anchor: Anchor): UpPath | undefined;
-    // (undocumented)
-    readonly paths: PathCollection;
+    moveChildren(count: number, src: undefined | {
+        path: UpPath;
+        field: FieldKey;
+        start: number;
+    }, dst: undefined | {
+        path: UpPath;
+        field: FieldKey;
+        start: number;
+    }): void;
     track(path: UpPath): Anchor;
 }
 
@@ -96,6 +101,7 @@ declare namespace Delta {
     export {
         inputLength,
         Root,
+        empty,
         Mark,
         OuterMark,
         InnerModify,
@@ -138,6 +144,9 @@ export interface Dependent extends NamedComputation {
 // @public
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
+
+// @public (undocumented)
+const empty: Root;
 
 // @public
 export const emptyField: FieldSchema;
@@ -193,13 +202,7 @@ export interface FieldSchema {
 export type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, infer TFinal, any> ? TFinal : never;
 
 // @public
-export interface ForestAnchor {
-    free(): void;
-    readonly state: ITreeSubscriptionCursorState;
-}
-
-// @public
-export type ForestLocation = ITreeSubscriptionCursor | ForestAnchor;
+export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
 // @public
 export interface GenericTreeNode<TChild> extends NodeData {
@@ -222,11 +225,11 @@ export interface IEditableForest extends IForestSubscription {
 // @public
 export interface IForestSubscription extends Dependee {
     allocateCursor(): ITreeSubscriptionCursor;
-    root(range: DetachedField): ForestAnchor;
+    root(range: DetachedField): Anchor;
     // (undocumented)
     readonly rootField: DetachedField;
     readonly schema: SchemaRepository & Dependee;
-    tryGet(destination: ForestAnchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
+    tryMoveCursorTo(destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
 }
 
 // @public
@@ -272,24 +275,21 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public
-export interface ITreeCursor {
-    down(key: FieldKey, index: number): TreeNavigationResult;
+export interface ITreeCursor<TResult = TreeNavigationResult> {
+    down(key: FieldKey, index: number): TResult;
     // (undocumented)
     keys: Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
-    seek(offset: number): {
-        result: TreeNavigationResult;
-        moved: number;
-    };
+    seek(offset: number): TResult;
     readonly type: TreeType;
-    up(): TreeNavigationResult;
+    up(): TResult;
     readonly value: Value;
 }
 
 // @public
 export interface ITreeSubscriptionCursor extends ITreeCursor {
-    buildAnchor(): ForestAnchor;
+    buildAnchor(): Anchor;
     clear(): void;
     // (undocumented)
     fork(observer?: ObservingDependent): ITreeSubscriptionCursor;
@@ -319,23 +319,20 @@ export const jsonArray: NamedTreeSchema;
 export const jsonBoolean: NamedTreeSchema;
 
 // @public
-export class JsonCursor<T> implements ITreeCursor {
+export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: Jsonable<T>);
     // (undocumented)
-    down(key: FieldKey, index: number): TreeNavigationResult;
+    down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
     get keys(): Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
     // (undocumented)
-    seek(offset: number): {
-        result: TreeNavigationResult;
-        moved: number;
-    };
+    seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
     get type(): TreeType;
     // (undocumented)
-    up(): TreeNavigationResult;
+    up(): SynchronousNavigationResult;
     // (undocumented)
     get value(): Value;
 }
@@ -515,36 +512,6 @@ export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueTy
 type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
 
 // @public
-export class PathCollection extends PathShared<RootField> {
-    constructor();
-    // (undocumented)
-    delete(range: DetachedField): void;
-}
-
-// @public (undocumented)
-export class PathNode extends PathShared<FieldKey> {
-    constructor(parentPath: PathShared<FieldKey>, location: ChildLocation);
-    // (undocumented)
-    parentPath: PathShared<FieldKey>;
-}
-
-// @public
-export class PathShared<TParent extends ChildCollection = ChildCollection> implements UpPath {
-    // (undocumented)
-    protected readonly children: Map<TParent, PathNode[]>;
-    // (undocumented)
-    detach(start: number, length: number, destination: DetachedField): void;
-    // (undocumented)
-    insert(start: number, paths: PathNode, length: number): void;
-    // (undocumented)
-    parent(): UpPath | undefined;
-    // (undocumented)
-    parentField(): FieldKey;
-    // (undocumented)
-    parentIndex(): number;
-}
-
-// @public
 export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
 
 // @public
@@ -633,29 +600,23 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaRepo
 }
 
 // @public
-export class TextCursor implements ITreeCursor {
+export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
+
+// @public
+export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     constructor(root: JsonableTree);
     // (undocumented)
-    down(key: FieldKey, index: number): TreeNavigationResult;
-    // (undocumented)
-    getField(key: FieldKey): readonly JsonableTree[];
-    // (undocumented)
-    getFields(): Readonly<FieldMap<JsonableTree>>;
-    // (undocumented)
-    getNode(): JsonableTree;
+    down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
     get keys(): Iterable<FieldKey>;
     // (undocumented)
     length(key: FieldKey): number;
     // (undocumented)
-    seek(offset: number): {
-        result: TreeNavigationResult;
-        moved: number;
-    };
+    seek(offset: number): SynchronousNavigationResult;
     // (undocumented)
     get type(): TreeType;
     // (undocumented)
-    up(): TreeNavigationResult;
+    up(): SynchronousNavigationResult;
     // (undocumented)
     get value(): Value;
 }
@@ -697,9 +658,9 @@ export interface TreeValue extends Serializable {
 // @public
 export interface UpPath {
     // (undocumented)
-    parent(): UpPath | undefined;
-    parentField(): FieldKey;
-    parentIndex(): number;
+    readonly parent: UpPath | undefined;
+    readonly parentField: FieldKey;
+    readonly parentIndex: number;
 }
 
 // @public

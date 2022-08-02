@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brand, clone, fail, OffsetListFactory } from "../util";
+import { brand, brandOpaque, clone, fail, OffsetListFactory } from "../util";
 import { FieldKey, Value, Delta } from "../tree";
 import { ProtoNode, Transposed as T } from "./format";
 
@@ -55,7 +55,14 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
                         }
                         break;
                     }
-                    case "MoveIn":
+                    case "MoveIn": {
+                        const moveMark: Delta.MoveIn = {
+                            type: Delta.MarkType.MoveIn,
+                            moveId: brandOpaque<Delta.MoveId>(attach.id),
+                        };
+                        out.pushContent(moveMark);
+                        break;
+                    }
                     case "MMoveIn":
                         fail(ERR_NOT_IMPLEMENTED);
                     case "Bounce":
@@ -103,7 +110,15 @@ function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
                     }
                     break;
                 }
-                case "MoveOut":
+                case "MoveOut": {
+                    const moveMark: Delta.MoveOut = {
+                        type: Delta.MarkType.MoveOut,
+                        moveId: brandOpaque<Delta.MoveId>(mark.id),
+                        count: mark.count,
+                    };
+                    out.pushContent(moveMark);
+                    break;
+                }
                 case "MMoveOut":
                 case "Revive":
                 case "MRevive":
@@ -201,7 +216,7 @@ function applyOrCollectModifications(
         const protoFields = node.fields ?? {};
         const modifyFields = modify.fields;
         for (const key of Object.keys(modifyFields)) {
-            const brandedKey = brand<FieldKey>(key);
+            const brandedKey: FieldKey = brand(key);
             const outNodes = protoFields[key] ?? fail(ERR_MOD_ON_MISSING_FIELD);
             const outMarks = new OffsetListFactory<InsertedFieldsMark>();
             let index = 0;
@@ -362,7 +377,7 @@ function convertFieldMarks<TMarks>(fields: T.FieldMarks): Delta.FieldMarks<TMark
     const outFields: Delta.FieldMarks<TMarks> = new Map();
     for (const key of Object.keys(fields)) {
         const marks = convertMarkList<TMarks>(fields[key]);
-        const brandedKey = brand<FieldKey>(key);
+        const brandedKey: FieldKey = brand(key);
         outFields.set(brandedKey, marks);
     }
     return outFields;

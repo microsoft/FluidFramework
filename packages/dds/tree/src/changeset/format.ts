@@ -52,7 +52,7 @@ export namespace Transposed {
 
 	export type MarkList<TMark = Mark> = TMark[];
 
-	type Mark =
+	export type Mark =
 		| Skip
 		| Tomb
 		| Modify
@@ -75,7 +75,8 @@ export namespace Transposed {
 
 	export interface SetValue {
 		type: "Set";
-		value: Value;
+		/** Can be left unset to represent the value being cleared. */
+		value?: Value;
 	}
 
 	export interface RevertValue {

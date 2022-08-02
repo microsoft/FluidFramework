@@ -13,6 +13,8 @@ export {
     RootField,
     Value,
     TreeValue,
+    detachedFieldAsKey,
+    keyAsDetachedField,
 } from "./types";
 
 export * from "./pathTree";
