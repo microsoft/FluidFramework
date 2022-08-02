@@ -101,7 +101,7 @@ container.on("connected", () => {
 });
 ```
 ```typescript
-this.signaler.onSignal("all", (clientId, local, payload) => {
+this.signaler.onSignal("connectRequest", (clientId, local, payload) => {
     /*...*/
 });
 ```
