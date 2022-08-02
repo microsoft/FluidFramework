@@ -554,6 +554,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         await provider.ensureSynchronized();
 
         const simpleMarker1 = string1.getMarkerFromId("markerId");
+
         assert.strictEqual(simpleMarker1?.type, "Marker", "Could not get simple marker");
         assert.strictEqual(simpleMarker1?.properties?.markerId, "markerId", "markerId is incorrect");
         assert.strictEqual(simpleMarker1?.properties?.markerSimpleType, "markerKeyValue");

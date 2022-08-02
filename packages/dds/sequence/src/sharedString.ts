@@ -244,6 +244,13 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, " ", start, end);
     }
 
+    /**
+     * @deprecated - use `getTextWithPlaceholders` instead.
+     */
+    public getTextRangeWithPlaceholders(start: number, end: number) {
+        return this.getTextWithPlaceholders(start, end);
+    }
+
     public getTextRangeWithMarkers(start: number, end: number) {
         const segmentWindow = this.client.getCollabWindow();
         return this.mergeTreeTextHelper.getText(segmentWindow.currentSeq, segmentWindow.clientId, "*", start, end);
@@ -274,6 +281,21 @@ interface ITextAndMarkerAccumulator {
     textSegment: TextSegment;
 }
 
+/**
+ * Splits the text into regions ending with markers with the given `label`.
+ * @param sharedString - String to retrieve text and markers from
+ * @param label - label to split on
+ * @returns Two parallel lists of text and markers, split by markers with the provided `label`.
+ *
+ * For example:
+ * ```typescript
+ * // Say sharedstring has contents "hello<paragraph marker 1>world<paragraph marker 2>missing".
+ * const { parallelText, parallelMarkers } = getTextAndMarkers(sharedString, "paragraph");
+ * // parallelText === ["hello", "world"]
+ * // parallelMarkers === [<paragraph marker 1 object>, <paragraph marker 2 object>]
+ * // Note parallelText does not include "missing".
+ * ```
+ */
 export function getTextAndMarkers(sharedString: SharedString, label: string, start?: number, end?: number): {
     parallelText: string[];
     parallelMarkers: Marker[];

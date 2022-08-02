@@ -56,6 +56,12 @@ export type CompressedSerializedInterval = [number, number, number, IntervalType
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
+// @public
+export function getTextAndMarkers(sharedString: SharedString, label: string): {
+    parallelText: string[];
+    parallelMarkers: Marker[];
+};
+
 // @public (undocumented)
 export function getTextAndMarkers(sharedString: SharedString, label: string, start?: number, end?: number): {
     parallelText: string[];
