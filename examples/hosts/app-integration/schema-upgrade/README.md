@@ -47,7 +47,12 @@ As clients observe the migration complete, they load the new container and swap 
 This example also explores other concepts that are new but not core to the migration process.
 
 ### Container model
-TODO
+
+In many other examples, we use a "root/default data object" concept (Spaces is a good example, pretty much all of the /examples/data-objects examples as well).  The root/default data object exposes the API that the container wants to expose to the app (host).  However, accessing this API is indirect, as the app must first retrieve this data object from the IContainer using `container.request()`.
+
+The container model concept introduced in this example serves a similar purpose of exposing an API for the app, but does so by wrapping the IContainer rather than living inside it as a data object.  This removes a layer of indirection for the app, who can load this model directly (see next section).  The app can then start using the API surface immediately without the extra step of going through the request pattern.
+
+When the container API surface has been externalized from the container, this can also open up new options for how the data might be represented and organized.  There's no longer a need to craft a data object that holds references to all the container's contents if it's not required for the scenario.  In this example, the model code knows how to access both the inventory list as well as the killbit, but these two objects remain completely separate from each other in the data schema.
 
 ### Model loading
 TODO
