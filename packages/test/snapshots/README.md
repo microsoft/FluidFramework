@@ -38,7 +38,7 @@ For submitting changes to the snapshot test content, follow these steps:
     - [Updating existing snapshots](#Updating-existing-snapshots-in-the-repo) - If you updating existing snapshots.
   - Create a commit and push the new branch.
   - Create a PR against `main` branch in the [FluidFrameworkTestData](https://github.com/microsoft/FluidFrameworkTestData) repo. Ensure the build passes, get the changes approved and merge the PR.
-  - Checkout `main` branch in the content/ folder and run `git pull` to ensure it has your new changes.
+  - Checkout `main` branch of FluidFrameworkTestData repo, i.e., in the `content/` folder and run `git pull` to ensure it has your new changes.
 - Updating FluidFramework repo to point to the new content:
   - Go to the FluidFramework repo root. Now you can run `git submodule update --init --recursive` in repo root to sync your changes with the newly updated test repo.
   - `git status` should show changes under `packages/test/snapshots/content`. For example:
@@ -120,8 +120,10 @@ Whenever the snapshot format changes in the runtime, the existing snapshots in t
   This will save the current snapshots in the `src_snapshots\<current_snapshots_version>` directory. It will then update the current snapshots under the `current_snapshots` directory to the new format.
 - However, there is a chance that not all the snapshots will be updated. You will see this as a failure in the Azure build, which will indicate which files contain snapshots that were not updated. The failures might have to do with the same property/value and is likely present in all the files within that subdirectory. To solve this, do the following:
   -  Note the files in which the snapshot tests were failing and manually update them to reflect the expected assertion.
-  -  Commit and push your changes.
-  -  Ensure the test stages in the Azure build pipeline passes.
+  -  Commit your changes in a new branch and push your changes.
+  -  Ensure the CI test stages in the Azure build pipeline passes.
+     -  To do this, temporarily change the branch in the `.gitmodules` file to point to the new branch in `FluidFrameworkTestData` you just pushed.
+     -  Navigate to the root folder of the FluidFramework repo and run `npm run ci:test`.
 - Run the tests to validate that all the tests pass with the new snapshots.
   - Don't forget to always stay updated with main and reinstall and build if necessary.
 - Submit the changes by following the steps [here](#Submit-changes-to-test-content).
