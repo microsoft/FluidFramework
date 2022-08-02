@@ -15,7 +15,7 @@ import { performance } from "@fluidframework/common-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import * as types from "@fluidframework/map";
 import * as MergeTree from "@fluidframework/merge-tree";
-import { refHasRangeLabel, refHasTileLabel } from "@fluidframework/merge-tree";
+import { debugMarkerToString, Marker, refHasRangeLabel, refHasTileLabel } from "@fluidframework/merge-tree";
 import { IClient, ISequencedDocumentMessage, IUser } from "@fluidframework/protocol-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import * as Sequence from "@fluidframework/sequence";
@@ -629,6 +629,7 @@ function showCell(pos: number, flowView: FlowView) {
         const start = getPosition(flowView.sharedString, cellMarker);
         const endMarker = cellMarker.cell!.endMarker;
         const end = getPosition(flowView.sharedString, endMarker) + 1;
+        setLongStringRepresentationOnMarkers(flowView);
         // eslint-disable-next-line max-len
         console.log(`cell ${cellMarker.getId()} seq ${cellMarker.seq} clid ${cellMarker.clientId} at [${start},${end})`);
         console.log(`cell contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
@@ -642,9 +643,19 @@ function showTable(pos: number, flowView: FlowView) {
         const start = getPosition(flowView.sharedString, tableMarker);
         const endMarker = tableMarker.table!.endTableMarker;
         const end = getPosition(flowView.sharedString, endMarker) + 1;
+        setLongStringRepresentationOnMarkers(flowView);
         console.log(`table ${tableMarker.getId()} at [${start},${end})`);
         console.log(`table contents: ${flowView.sharedString.getTextRangeWithMarkers(start, end)}`);
     }
+}
+
+function setLongStringRepresentationOnMarkers(flowView: FlowView) {
+    flowView.sharedString.walkSegments((segment) => {
+        if (Marker.is(segment)) {
+            segment.toString = () => debugMarkerToString(segment);
+        }
+        return true;
+    });
 }
 
 function renderTree(

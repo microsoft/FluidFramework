@@ -44,6 +44,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
 - [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
+- [Marker.toString simplified](#markertostring-simplified)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
 - [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
 
@@ -140,6 +141,12 @@ The functions affected are:
 
 ### MergeTree class no longer exported
     The MergeTree class was deprecated and is no longer be exported. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
+
+### Marker.toString simplified
+
+In merge-tree, Marker's string representation returned by `toString` was simplified.
+This new representation is used in the return value of `SharedString.getTextRangeWithMarkers`.
+The previous logic was moved to the public export `debugMarkerToString`.
 
 ### Remove `IContainerRuntimeBase.setFlushMode`
 The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
