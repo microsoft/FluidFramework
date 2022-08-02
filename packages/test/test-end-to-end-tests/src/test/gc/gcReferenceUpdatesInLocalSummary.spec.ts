@@ -18,10 +18,9 @@ import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merg
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedString } from "@fluidframework/sequence";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluidframework/test-version-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
-import { waitForContainerConnection } from "./gcTestSummaryUtils";
 
 class TestDataObject extends DataObject {
     public get _root() {

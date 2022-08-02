@@ -42,7 +42,7 @@ import {
     refGetTileLabels,
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
-import { PropertiesManager } from "./segmentPropertiesManager";
+import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
@@ -106,6 +106,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
         op?: ICombiningOp,
         seq?: number,
         collabWindow?: CollaborationWindow,
+        rollback?: PropertiesRollback,
     ): PropertySet | undefined;
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
@@ -223,6 +224,7 @@ export interface MergeTreeStats {
 
 export interface SegmentGroup {
     segments: ISegment[];
+    previousProps?: PropertySet[];
     localSeq: number;
 }
 
@@ -312,7 +314,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public localSeq?: number;
     public localRemovedSeq?: number;
 
-    public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
+    public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number,
+        collabWindow?: CollaborationWindow, rollback: PropertiesRollback = PropertiesRollback.None) {
         if (!this.propertyManager) {
             this.propertyManager = new PropertiesManager();
         }
@@ -325,6 +328,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             op,
             seq,
             collabWindow && collabWindow.collaborating,
+            rollback,
         );
     }
 

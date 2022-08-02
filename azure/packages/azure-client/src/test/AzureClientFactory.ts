@@ -12,7 +12,7 @@ import { createAzureTokenProvider } from "./AzureTokenFactory";
 // This function will determine if local or remote mode is required (based on FLUID_CLIENT),
 // and return a new AzureClient instance based on the mode by setting the Connection config
 // accordingly.
-export function createAzureClient(): AzureClient {
+export function createAzureClient(userID?: string, userName?: string): AzureClient {
     const useAzure = process.env.FLUID_CLIENT === "azure";
     const tenantId = useAzure
         ? (process.env.azure__fluid__relay__service__tenantId as string)
@@ -24,7 +24,7 @@ export function createAzureClient(): AzureClient {
     const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
         ? {
               tenantId,
-              tokenProvider: createAzureTokenProvider(),
+              tokenProvider: createAzureTokenProvider(userID, userName),
               endpoint: "https://alfred.westus2.fluidrelay.azure.com",
               type: "remote",
           }
