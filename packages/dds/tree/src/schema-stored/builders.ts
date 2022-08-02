@@ -6,7 +6,7 @@
 import { brand, brandOpaque } from "../util";
 import {
     FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
-} from "./Schema";
+} from "./schema";
 
 /**
  * APIs to help build schema.

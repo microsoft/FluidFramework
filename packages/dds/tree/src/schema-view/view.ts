@@ -4,11 +4,10 @@
  */
 
 import { fail } from "../util";
-import { allowsRepoSuperset, isNeverTree } from "./Comparison";
 import {
-    FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, SchemaRepository, TreeSchema, TreeSchemaIdentifier,
-} from "./Schema";
-import { StoredSchemaRepository } from "./StoredSchemaRepository";
+    FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, SchemaRepository, TreeSchema,
+    TreeSchemaIdentifier, StoredSchemaRepository, allowsRepoSuperset, isNeverTree,
+} from "../schema-stored";
 
 /**
  * APIs for applying `view schema` to documents.

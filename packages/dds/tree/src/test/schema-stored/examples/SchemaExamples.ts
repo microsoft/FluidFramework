@@ -20,7 +20,7 @@
     emptyField,
     emptyMap,
     emptySet,
-} from "../../../schema";
+} from "../../../schema-stored";
 import { brand } from "../../../util";
 
 export const codePoint: NamedTreeSchema = {

@@ -4,18 +4,18 @@
  */
 
 import { Dependee, SimpleDependee } from "../dependency-tracking";
-import { allowsFieldSuperset, allowsTreeSuperset } from "./Comparison";
+import { allowsFieldSuperset, allowsTreeSuperset } from "./comparison";
 import {
     SchemaRepository,
     GlobalFieldKey,
     FieldSchema,
     TreeSchemaIdentifier,
     TreeSchema,
-} from "./Schema";
+} from "./schema";
 import {
     neverField,
     neverTree,
-} from "./SpecialSchema";
+} from "./specialSchema";
 
 /**
  * Example in memory SchemaRepository showing how stored schema could work.

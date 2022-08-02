@@ -31,7 +31,7 @@ export {
     emptyField, neverTree,
     SchemaRepository, StoredSchemaRepository,
     rootFieldKey,
-} from "./schema";
+} from "./schema-stored";
 
 export {
     Brand,
