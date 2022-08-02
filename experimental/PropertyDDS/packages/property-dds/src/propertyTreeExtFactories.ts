@@ -20,81 +20,55 @@ import {
     from "./propertyTree";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "./propertyTreeExt";
 
-/**
- * This class contains builders of the compression methods used to compress
- * of summaries and messages with the plugable compression algorithm.
- */
-class CompressionMethods {
-    public constructor(private readonly encodeFn, private readonly decodeFn) { }
-
-    private buildEncodeSummary() {
-        return (snapshotSummary: ISnapshotSummary): Buffer => {
-            const summaryStr = JSON.stringify(snapshotSummary);
-            const unzipped = new TextEncoder().encode(summaryStr);
-            const serializedSummary: Buffer = this.encodeFn(unzipped);
-            return serializedSummary;
-        };
-    }
-
-    private buildDecodeSummary() {
-        return (serializedSummary): ISnapshotSummary => {
-            const unzipped = this.decodeFn(serializedSummary);
-            const summaryStr = new TextDecoder().decode(unzipped);
-            const snapshotSummary: ISnapshotSummary = JSON.parse(summaryStr);
-            return snapshotSummary;
-        };
-    }
-
-    private buildEncodeMessage() {
-        return (change: IPropertyTreeMessage) => {
-            const changeSetStr = JSON.stringify(change.changeSet);
-            const unzipped = new TextEncoder().encode(changeSetStr);
-            const zipped: Buffer = this.encodeFn(unzipped);
-            const zippedStr = bufferToString(zipped, "base64");
-            if (zippedStr.length < changeSetStr.length) {
-                // eslint-disable-next-line @typescript-eslint/dot-notation
-                change["isZipped"] = "1";
-                change.changeSet = zippedStr;
-            }
-            return change;
-        };
-    }
-
-    private buildDecodeMessage() {
-        return (transferChange: IPropertyTreeMessage) => {
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            if (transferChange["isZipped"]) {
-                const zipped = new Uint8Array(stringToBuffer(transferChange.changeSet, "base64"));
-                const unzipped = this.decodeFn(zipped);
-                const changeSetStr = new TextDecoder().decode(unzipped);
-                transferChange.changeSet = JSON.parse(changeSetStr);
-            }
-            return transferChange;
-        };
-    }
-
-    public buildEncDec(): ISharedPropertyTreeEncDec {
-        return {
-            messageEncoder: {
-                encode: this.buildEncodeMessage(),
-                decode: this.buildDecodeMessage(),
-            },
-            summaryEncoder: {
-                encode: this.buildEncodeSummary(),
-                decode: this.buildDecodeSummary(),
-            },
-        };
-    }
-}
-
 export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
     public abstract get attributes();
     public abstract get type();
     public abstract getEncodeFce();
     public abstract getDecodeFce();
+    private createCompressionMethods(encodeFn, decodeFn): ISharedPropertyTreeEncDec {
+        return {
+            messageEncoder: {
+                encode: (change: IPropertyTreeMessage) => {
+                    const changeSetStr = JSON.stringify(change.changeSet);
+                    const unzipped = new TextEncoder().encode(changeSetStr);
+                    const zipped: Buffer = encodeFn(unzipped);
+                    const zippedStr = bufferToString(zipped, "base64");
+                    if (zippedStr.length < changeSetStr.length) {
+                        // eslint-disable-next-line @typescript-eslint/dot-notation
+                        change["isZipped"] = "1";
+                        change.changeSet = zippedStr;
+                    }
+                    return change;
+                },
+                decode: (transferChange: IPropertyTreeMessage) => {
+                    // eslint-disable-next-line @typescript-eslint/dot-notation
+                    if (transferChange["isZipped"]) {
+                        const zipped = new Uint8Array(stringToBuffer(transferChange.changeSet, "base64"));
+                        const unzipped = decodeFn(zipped);
+                        const changeSetStr = new TextDecoder().decode(unzipped);
+                        transferChange.changeSet = JSON.parse(changeSetStr);
+                    }
+                    return transferChange;
+                },
+            },
+            summaryEncoder: {
+                encode: (snapshotSummary: ISnapshotSummary): Buffer => {
+                    const summaryStr = JSON.stringify(snapshotSummary);
+                    const unzipped = new TextEncoder().encode(summaryStr);
+                    const serializedSummary: Buffer = encodeFn(unzipped);
+                    return serializedSummary;
+                },
+                decode: (serializedSummary): ISnapshotSummary => {
+                    const unzipped = decodeFn(serializedSummary);
+                    const summaryStr = new TextDecoder().decode(unzipped);
+                    const snapshotSummary: ISnapshotSummary = JSON.parse(summaryStr);
+                    return snapshotSummary;
+                },
+            },
+        };
+    }
     public getEncDec(): ISharedPropertyTreeEncDec {
-        const compressionMeths = new CompressionMethods(this.getEncodeFce(), this.getDecodeFce());
-        return compressionMeths.buildEncDec();
+        return this.createCompressionMethods(this.getEncodeFce(), this.getDecodeFce());
     }
     public abstract newPropertyTree(
         id: string,
