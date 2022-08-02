@@ -83,6 +83,7 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -468,6 +469,7 @@ declare function get_current_InterfaceDeclaration_IConnectableRuntime():
 declare function use_old_InterfaceDeclaration_IConnectableRuntime(
     use: TypeOnly<old.IConnectableRuntime>);
 use_old_InterfaceDeclaration_IConnectableRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectableRuntime());
 
 /*
@@ -715,26 +717,14 @@ use_old_InterfaceDeclaration_IPendingFlush(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingFlushMode": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IPendingFlushMode": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IPendingFlushMode():
-    TypeOnly<old.IPendingFlushMode>;
-declare function use_current_InterfaceDeclaration_IPendingFlushMode(
-    use: TypeOnly<current.IPendingFlushMode>);
-use_current_InterfaceDeclaration_IPendingFlushMode(
-    get_old_InterfaceDeclaration_IPendingFlushMode());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingFlushMode": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IPendingFlushMode": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IPendingFlushMode():
-    TypeOnly<current.IPendingFlushMode>;
-declare function use_old_InterfaceDeclaration_IPendingFlushMode(
-    use: TypeOnly<old.IPendingFlushMode>);
-use_old_InterfaceDeclaration_IPendingFlushMode(
-    get_current_InterfaceDeclaration_IPendingFlushMode());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -746,6 +736,7 @@ declare function get_old_InterfaceDeclaration_IPendingLocalState():
 declare function use_current_InterfaceDeclaration_IPendingLocalState(
     use: TypeOnly<current.IPendingLocalState>);
 use_current_InterfaceDeclaration_IPendingLocalState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IPendingLocalState());
 
 /*
@@ -794,6 +785,7 @@ declare function get_old_InterfaceDeclaration_IPendingRuntimeState():
 declare function use_current_InterfaceDeclaration_IPendingRuntimeState(
     use: TypeOnly<current.IPendingRuntimeState>);
 use_current_InterfaceDeclaration_IPendingRuntimeState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IPendingRuntimeState());
 
 /*
@@ -818,6 +810,7 @@ declare function get_old_TypeAliasDeclaration_IPendingState():
 declare function use_current_TypeAliasDeclaration_IPendingState(
     use: TypeOnly<current.IPendingState>);
 use_current_TypeAliasDeclaration_IPendingState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_IPendingState());
 
 /*
@@ -1119,6 +1112,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>);
 use_old_InterfaceDeclaration_ISummarizerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*

@@ -20,13 +20,96 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
+- [Remove `ConnectionState.Connecting`](#remove-connectionstateconnecting)
+- [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
+
+### Remove `ConnectionState.Connecting`
+`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
+
+### `IContainerRuntime.flush` is deprecated
+`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
+
+## 2.0.0 Breaking changes
+- [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
+- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
+- [IntervalCollection event semantics changed](#IntervalCollection-event-semantics-changed)
+- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
+- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
+- [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
 - [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
 - [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
-- [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
-- [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
-- [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
+- [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
+- [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
+- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
+- [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
+- [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
+- [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
 - [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+
+###  Update to React 17
+The following packages use React and thus were impacted:
+- @fluidframework/view-adapters
+- @fluid-tools/webpack-fluid-loader
+- @fluid-experimental/react-inputs
+- @fluid-experimental/property-inspector-table
+
+Users of these packages may need to update to React 17, and/or take other action to ensure compatibility.
+
+### Remove `documentId` field from `MockFluidDataStoreContext`
+This field has been deprecated and will be removed in a future breaking change.
+
+### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
+`clientId` can only ever be of type `string`, so it is superfluous for the type
+to be `string | undefined`.
+
+### Deprecate ISummaryConfigurationHeuristics.idleTime
+`ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
+Please migrate all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
+
+### Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels
+`ISummaryRuntimeOptions.disableIsolatedChannels` has been deprecated and will be removed in a future release.
+There will be no replacement for this property.
+
+### LocalReference class and method deprecations removed
+In 0.59.0 the [LocalReference class and it's related methods were deprecated](#LocalReference-class-and-method-deprecations)
+
+The deprecated and now removed LocalReference class is replaced with LocalReferencePosition.
+The following deprecated methods are  now removed from sequence and merge-tree. Their replacements should be used instead.
+ - createPositionReference to createLocalReferencePosition
+ - addLocalReference to createLocalReferencePosition
+ - localRefToPos to localReferencePositionToPosition
+ - removeLocalReference to removeLocalReferencePosition
+
+### IntervalCollection event semantics changed
+
+The semantics of events emitted by IntervalCollection were changed to be more consistent:
+
+- propertyChanged events receive the same "isLocal" and op information that other events received
+- changeInterval events will no longer take place for changes that impact an interval's properties only. Clients that need to perform work on such changes should listen to "propertyChanged" events instead.
+- For local changes, changeInterval events will only be emitted on initial application of the change (as opposed to the
+  previous behavior, which fired an event on the local application of a change as well as on server ack of that change))
+- changeInterval events now receive information about the interval's previous position.
+- addInterval and deleteInterval event handler now properly reflects that the `op` argument can be undefined. This was true
+  before, but not reflected in the type system.
+
+More details can be found on `IIntervalCollectionEvent`'s doc comment.
+
+### Remove TelemetryDataTag.PackageData
+`TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
+
+### Remove ConnectionState.Connecting
+`ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
+
+### Remove ISummaryAuthor and ISummaryCommitter
+`ISummaryAuthor` and`ISummaryCommitter` have been removed in this release. See [#10456](https://github.com/microsoft/FluidFramework/issues/10456) for details.
+
+### Remove IFluidDataStoreChannel.bindToContext and related types
+`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
+See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
+
+### Remove `aliasing` return value from `AliasResult`
+The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
 
 ### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
 
@@ -55,74 +138,17 @@ The functions affected are:
  - `SubSequence.createSplitSegmentAt`
  - `SubSequence.fromJSONObject`
 
-### Remove `documentId` field from `MockFluidDataStoreContext`
-This field has been deprecated and will be removed in a future breaking change.
+### MergeTree class no longer exported
+    The MergeTree class was deprecated and is no longer be exported. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
-### Narrow type of `clientId` field on `MockFluidDataStoreRuntime`
-`clientId` can only ever be of type `string`, so it is superfluous for the type
-to be `string | undefined`.
-
-### Remove `ConnectionState.Connecting`
-`ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
-
-### `IContainerRuntime.flush` is deprecated
-`IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
-
-### MergeTree class is deprecated
-    The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
+### Remove `IContainerRuntimeBase.setFlushMode`
+The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
 
 ### `getTextAndMarkers` changed to be a free function
 
 `SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
 To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
 The corresponding method on `IMergeTreeTexHelper` will also be removed.
-
-## 2.0.0 Breaking changes
-- [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
-- [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
-- [Remove TelemetryDataTag.PackageData](#Remove-TelemetryDataTagPackageData)
-- [Remove ICodeLoader from @fluidframework/container-definitions](#Remove-ICodeLoader-from-@fluidframework/container-definitions)
-- [Deprecate ISummaryRuntimeOptions.disableIsolatedChannels](#Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels)
-- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
-- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
-- [Remove ConnectionState.Connecting](#Remove-ConnectionState.Connecting)
-- [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
-- [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
-- [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
-
-### Deprecate ISummaryConfigurationHeuristics.idleTime
-`ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
-Please migrate all usage to the new `minIdleTime` and `maxIdleTime` properties in `ISummaryConfigurationHeuristics`.
-
-### Deprecate-ISummaryRuntimeOptionsdisableIsolatedChannels
-`ISummaryRuntimeOptions.disableIsolatedChannels` has been deprecated and will be removed in a future release.
-There will be no replacement for this property.
-
-### LocalReference class and method deprecations removed
-In 0.59.0 the [LocalReference class and it's related methods were deprecated](#LocalReference-class-and-method-deprecations)
-
-The deprecated and now removed LocalReference class is replaced with LocalReferencePosition.
-The following deprecated methods are  now removed from sequence and merge-tree. Their replacements should be used instead.
- - createPositionReference to createLocalReferencePosition
- - addLocalReference to createLocalReferencePosition
- - localRefToPos to localReferencePositionToPosition
- - removeLocalReference to removeLocalReferencePosition
-
-### Remove TelemetryDataTag.PackageData
-`TelemetryDataTag.PackageData` has been removed. Migrate all usage to `TelemetryDataTag.CodeArtifact` instead.
-
-### Remove ConnectionState.Connecting
-`ConnectionState.Connecting` has been removed. Migrate all usage to `ConnectionState.CatchingUp` instead.
-
-### Remove ISummaryAuthor and ISummaryCommitter
-`ISummaryAuthor` and`ISummaryCommitter` have been removed in this release. See [#10456](https://github.com/microsoft/FluidFramework/issues/10456) for details.
-
-### Remove IFluidDataStoreChannel.bindToContext and related types
-`bindToContext` has been removed from `IFluidDataStoreChannel`, along with enum `BindState` and the interface `IDataStoreWithBindToContext_Deprecated`.
-See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluidDataStoreChannel) for info on how this removal was staged.
-
-### Remove `aliasing` return value from `AliasResult`
-The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
 
 # 1.2.0
 

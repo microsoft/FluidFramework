@@ -3,19 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
  export interface TSTResult<T> {
     key: string;
     val: T;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export interface TSTNode<T> {
     c: string;
     left?: TSTNode<T>;
@@ -28,20 +20,12 @@ interface TSTPrefix {
     text: string;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export interface ProxString<T> {
     text: string;
     invDistance: number;
     val: T;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export class TST<T> {
     private n = 0;
     private root: TSTNode<T> | undefined;
