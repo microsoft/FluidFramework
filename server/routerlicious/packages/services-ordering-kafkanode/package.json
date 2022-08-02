@@ -28,6 +28,7 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
+    "@fluidframework/server-services-client": "^0.1037.1000-0",
     "@fluidframework/server-services-core": "^0.1037.1000-0",
     "@fluidframework/server-services-ordering-zookeeper": "^0.1037.1000-0",
     "kafka-node": "^5.0.0",

@@ -11,14 +11,16 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { gcTreeKey } from "@fluidframework/container-runtime";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 import {
-    createSummarizer,
     getGCStateFromSummary,
-    summarizeNow,
-    waitForContainerConnection,
 } from "./gcTestSummaryUtils";
 
 /**

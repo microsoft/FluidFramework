@@ -9,6 +9,7 @@ import { FieldKey } from "../../../tree";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
+import { brand } from "../../../util";
 
 describe("JsonCursor", () => {
     // This tests that test data roundtrips via extract.
@@ -79,7 +80,7 @@ describe("JsonCursor", () => {
     describe("seek()", () => {
         describe("with map-like node", () => {
             const tests: [string, FieldKey][] = [
-                ["non-empty", "key" as const as FieldKey],
+                ["non-empty", brand("key")],
                 ["empty", EmptyKey],
             ];
 
@@ -88,7 +89,7 @@ describe("JsonCursor", () => {
                     const cursor = new JsonCursor({ [key as string]: 0 });
                     assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
-                    assert.deepEqual(cursor.seek(0), { result: TreeNavigationResult.Ok, moved: 0 });
+                    assert.deepEqual(cursor.seek(0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
                 });
 
@@ -96,9 +97,9 @@ describe("JsonCursor", () => {
                     const cursor = new JsonCursor({ [key as string]: 0 });
                     assert.equal(cursor.down(key, 0), TreeNavigationResult.Ok);
                     assert.equal(cursor.value, 0);
-                    assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                    assert.deepEqual(cursor.seek(1), TreeNavigationResult.NotFound);
                     assert.equal(cursor.value, 0);
-                    assert.deepEqual(cursor.seek(-1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                    assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
                     assert.equal(cursor.value, 0);
                 });
             });
@@ -109,7 +110,7 @@ describe("JsonCursor", () => {
                 const cursor = new JsonCursor([0, 1]);
                 assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 0);
-                assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.Ok, moved: 1 });
+                assert.deepEqual(cursor.seek(1), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 1);
             });
 
@@ -117,7 +118,7 @@ describe("JsonCursor", () => {
                 const cursor = new JsonCursor([0, 1]);
                 assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 1);
-                assert.deepEqual(cursor.seek(-1), { result: TreeNavigationResult.Ok, moved: -1 });
+                assert.deepEqual(cursor.seek(-1), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 0);
             });
 
@@ -125,7 +126,7 @@ describe("JsonCursor", () => {
                 const cursor = new JsonCursor([0, 1]);
                 assert.equal(cursor.down(EmptyKey, 1), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 1);
-                assert.deepEqual(cursor.seek(1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                assert.deepEqual(cursor.seek(1), TreeNavigationResult.NotFound);
                 assert.equal(cursor.value, 1);
             });
 
@@ -133,15 +134,15 @@ describe("JsonCursor", () => {
                 const cursor = new JsonCursor([0, 1]);
                 assert.equal(cursor.down(EmptyKey, 0), TreeNavigationResult.Ok);
                 assert.equal(cursor.value, 0);
-                assert.deepEqual(cursor.seek(-1), { result: TreeNavigationResult.NotFound, moved: 0 });
+                assert.deepEqual(cursor.seek(-1), TreeNavigationResult.NotFound);
                 assert.equal(cursor.value, 0);
             });
         });
     });
 
     describe("TreeNavigationResult", () => {
-        const notFoundKey = "notFound" as FieldKey;
-        const foundKey = "found" as FieldKey;
+        const notFoundKey: FieldKey = brand("notFound");
+        const foundKey: FieldKey = brand("found");
 
         function expectFound(cursor: ITreeCursor, key: FieldKey, index = 0) {
             assert(0 <= index && index < cursor.length(key),

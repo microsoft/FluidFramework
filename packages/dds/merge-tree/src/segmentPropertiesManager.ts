@@ -6,7 +6,7 @@
  /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/common-utils";
-import { UnassignedSequenceNumber } from "./constants";
+import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
 import {
     combine,
@@ -14,6 +14,17 @@ import {
     MapLike,
     PropertySet,
 } from "./properties";
+
+export enum PropertiesRollback {
+    /** Not in a rollback */
+    None,
+
+    /** Rollback */
+    Rollback,
+
+    /** Rollback of a rewrite */
+    Rewrite,
+}
 
 export class PropertiesManager {
     private pendingKeyUpdateCount: MapLike<number> | undefined;
@@ -24,11 +35,20 @@ export class PropertiesManager {
     }
 
     public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg) {
-        if (annotateOp.combiningOp && annotateOp.combiningOp.name === "rewrite") {
+        const rewrite = !!annotateOp.combiningOp && annotateOp.combiningOp.name === "rewrite";
+        this.decrementPendingCounts(rewrite, annotateOp.props);
+    }
+
+    private decrementPendingCounts(rewrite: boolean, props: PropertySet) {
+        if (rewrite) {
             this.pendingRewriteCount--;
         }
-        for (const key of Object.keys(annotateOp.props)) {
+        for (const key of Object.keys(props)) {
             if (this.pendingKeyUpdateCount?.[key] !== undefined) {
+                if (rewrite && props[key] === null) {
+                    // We don't track the pending count for this redundant case
+                    continue;
+                }
                 assert(this.pendingKeyUpdateCount[key] > 0,
                     0x05c /* "Trying to update more annotate props than do exist!" */);
                 this.pendingKeyUpdateCount[key]--;
@@ -45,14 +65,27 @@ export class PropertiesManager {
         newProps: PropertySet,
         op?: ICombiningOp,
         seq?: number,
-        collaborating: boolean = false): PropertySet | undefined {
+        collaborating: boolean = false,
+        rollback: PropertiesRollback = PropertiesRollback.None): PropertySet | undefined {
         if (!this.pendingKeyUpdateCount) {
             this.pendingKeyUpdateCount = createMap<number>();
         }
 
         // There are outstanding local rewrites, so block all non-local changes
-        if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && collaborating) {
+        if (this.pendingRewriteCount > 0 && seq !== UnassignedSequenceNumber && seq !== UniversalSequenceNumber
+            && collaborating) {
             return undefined;
+        }
+
+        // Clean up counts for rolled back edits before modifying oldProps
+        if (collaborating) {
+            if (rollback === PropertiesRollback.Rollback) {
+                this.decrementPendingCounts(false, newProps);
+            } else if (rollback === PropertiesRollback.Rewrite) {
+                // oldProps is the correct props for tracking counts on rewrite because the ones in newProps include
+                // those that were implicitly cleared by the rewrite for which we don't track pending counts.
+                this.decrementPendingCounts(true, oldProps);
+            }
         }
 
         const rewrite = (op && op.name === "rewrite");
@@ -60,6 +93,7 @@ export class PropertiesManager {
 
         const shouldModifyKey = (key: string): boolean => {
             if (seq === UnassignedSequenceNumber
+                || seq === UniversalSequenceNumber
                 || this.pendingKeyUpdateCount?.[key] === undefined
                 || combiningOp) {
                 return true;
@@ -87,6 +121,11 @@ export class PropertiesManager {
         for (const key of Object.keys(newProps)) {
             if (collaborating) {
                 if (seq === UnassignedSequenceNumber) {
+                    if (rewrite && newProps[key] === null) {
+                        // This case has already been handled above and
+                        // we don't want to track the pending count for it in case of rollback
+                        continue;
+                    }
                     if (this.pendingKeyUpdateCount?.[key] === undefined) {
                         this.pendingKeyUpdateCount[key] = 0;
                     }
@@ -97,7 +136,7 @@ export class PropertiesManager {
             }
 
             const previousValue: any = oldProps[key];
-            // The delta should be null if undefined, as thats how we encode delete
+            // The delta should be null if undefined, as that's how we encode delete
             deltas[key] = (previousValue === undefined) ? null : previousValue;
             let newValue: any;
             if (combiningOp) {

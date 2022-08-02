@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { VersionScheme, VersionChangeType, VersionChangeTypeExtended } from "./versionSchemes";
+import { VersionScheme, VersionChangeType, VersionChangeTypeExtended, adjustVersion, isVersionBumpTypeExtended } from "@fluid-tools/version-tools";
 import { Context } from "./context";
 import { getRepoStateChange, VersionBag } from "./versionBag";
-import { fatal, exec, adjustVersion } from "./utils";
+import { fatal, exec } from "./utils";
 import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import { getPackageShortName } from "./releaseVersion";
@@ -31,12 +31,12 @@ export async function bumpVersionCommand(context: Context, bump: string, version
 /**
  * Functions and utilities to update the package versions
  */
-export async function bumpVersion(context: Context, bump: string[], version: VersionChangeType, packageShortNames: string, virtualPatch: boolean, commit?: string) {
+export async function bumpVersion(context: Context, packagesToBump: string[], version: VersionChangeType, packageShortNames: string, virtualPatch: boolean, commit?: string) {
     console.log(`Bumping ${packageShortNames} to ${version}`);
 
     const monoRepoNeedsBump = new Set<MonoRepoKind>();
     const packageNeedBump = new Set<Package>();
-    for (const name of bump) {
+    for (const name of packagesToBump) {
         if (isMonoRepoKind(name)) {
             monoRepoNeedsBump.add(name);
             const repo = context.repo.monoRepos.get(name);
@@ -121,7 +121,8 @@ export async function bumpRepo(
         // Translate the versionBump into the appropriate change for virtual patch versioning
         const ver = getVersion(monoRepo);
         assert(ver, "ver is missing");
-        const adjVer = await adjustVersion(ver, versionBump, scheme);
+        assert(isVersionBumpTypeExtended(versionBump), `${versionBump} is not a valid bump type.`)
+        const adjVer = adjustVersion(ver, versionBump, scheme);
         const toBump = context.repo.monoRepos.get(monoRepo);
         assert(toBump !== undefined, `No monorepo with name '${toBump}'`);
         if (toBump !== undefined) {
@@ -132,8 +133,9 @@ export async function bumpRepo(
 
     for (const pkg of packageNeedBump) {
         console.log(`  Bumping ${pkg.name}${vPatchLogString}...`);
+        assert(isVersionBumpTypeExtended(versionBump), `${versionBump} is not a valid bump type.`)
         // Translate the versionBump into the appropriate change for virtual patch versioning
-        const translatedVersionBump = await adjustVersion(getVersion(pkg.name), versionBump, scheme);
+        const translatedVersionBump = adjustVersion(getVersion(pkg.name), versionBump, scheme);
         let cmd = `npm version ${translatedVersionBump}`;
         if (pkg.getScript("build:genver")) {
             cmd += " && npm run build:genver";

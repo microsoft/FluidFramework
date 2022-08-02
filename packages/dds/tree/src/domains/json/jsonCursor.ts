@@ -7,7 +7,9 @@ import { assert } from "@fluidframework/common-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import {
     ITreeCursor,
+    mapCursorField,
     TreeNavigationResult,
+    SynchronousNavigationResult,
 } from "../../forest";
 import {
     EmptyKey,
@@ -23,7 +25,7 @@ import {
 /**
  * An ITreeCursor implementation used to read a Jsonable tree for testing and benchmarking.
  */
-export class JsonCursor<T> implements ITreeCursor {
+export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     // PERF: JsonCursor maintains a stack of nodes/edges traversed.  This stack is
     //       partitioned across 3 arrays, with the top of the stack stored in fields.
     //       This design was advantageous in a similar tree visitor, but should
@@ -46,9 +48,9 @@ export class JsonCursor<T> implements ITreeCursor {
         this.currentIndex = -1;
     }
 
-    public seek(offset: number): { result: TreeNavigationResult; moved: number; } {
+    public seek(offset: number): SynchronousNavigationResult {
         if (offset === 0) {
-            return { result: TreeNavigationResult.Ok, moved: 0 };
+            return TreeNavigationResult.Ok;
         }
 
         // TODO: Measure if maintaining immediate parent in a field improves seek
@@ -57,7 +59,7 @@ export class JsonCursor<T> implements ITreeCursor {
 
         // The only seekable key is the 'EmptyKey' of an array.
         if (this.currentKey !== EmptyKey || !Array.isArray(parent)) {
-            return { result: TreeNavigationResult.NotFound, moved: 0 };
+            return TreeNavigationResult.NotFound;
         }
 
         const newIndex = this.currentIndex + offset;
@@ -69,16 +71,15 @@ export class JsonCursor<T> implements ITreeCursor {
             assert(0 > newIndex || newIndex >= (parent as unknown as []).length,
                 "JSON arrays must be dense / contain no 'undefined' items.");
 
-            return { result: TreeNavigationResult.NotFound, moved: 0 };
+            return TreeNavigationResult.NotFound;
         } else {
-            const moved = newIndex - this.currentIndex;
             this.currentNode = newChild;
             this.currentIndex = newIndex;
-            return { result: TreeNavigationResult.Ok, moved };
+            return TreeNavigationResult.Ok;
         }
     }
 
-    public down(key: FieldKey, index: number): TreeNavigationResult {
+    public down(key: FieldKey, index: number): SynchronousNavigationResult {
         const parentNode = this.currentNode;
         let childNode: any;
 
@@ -107,7 +108,7 @@ export class JsonCursor<T> implements ITreeCursor {
         return TreeNavigationResult.Ok;
     }
 
-    public up(): TreeNavigationResult {
+    public up(): SynchronousNavigationResult {
         // TODO: Should benchmark vs. detecting via returned 'undefined' from 'pop()'.
         if (this.parentStack.length < 1) {
             return TreeNavigationResult.NotFound;
@@ -197,15 +198,7 @@ export function cursorToJsonObject(reader: ITreeCursor): unknown {
         case jsonString.name:
             return reader.value;
         case jsonArray.name: {
-            const length = reader.length(EmptyKey);
-            const result = new Array(length);
-            for (let index = 0; index < result.length; index++) {
-                assert(reader.down(EmptyKey, index) === TreeNavigationResult.Ok, "expected navigation ok");
-                result[index] = cursorToJsonObject(reader);
-                assert(reader.up() === TreeNavigationResult.Ok, "expected navigation ok");
-            }
-
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            const result = mapCursorField(reader, EmptyKey, cursorToJsonObject);
             return result;
         }
         case jsonObject.name: {

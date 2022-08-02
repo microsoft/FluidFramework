@@ -50,7 +50,9 @@ export class AlfredRunner implements IRunner {
         private readonly producer: IProducer,
         private readonly metricClientConfig: any,
         private readonly documentsCollection: ICollection<IDocument>,
-        private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager) {
+        private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
+        private readonly verifyMaxMessageSize?: boolean,
+    ) {
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -75,6 +77,7 @@ export class AlfredRunner implements IRunner {
         const httpServer = this.server.httpServer;
 
         const maxNumberOfClientsPerDocument = this.config.get("alfred:maxNumberOfClientsPerDocument");
+        const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
         const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
         const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
         const isClientConnectivityCountingEnabled = this.config.get("usage:clientConnectivityCountingEnabled");
@@ -89,6 +92,7 @@ export class AlfredRunner implements IRunner {
             createMetricClient(this.metricClientConfig),
             winston,
             maxNumberOfClientsPerDocument,
+            numberOfMessagesPerTrace,
             maxTokenLifetimeSec,
             isTokenExpiryEnabled,
             isClientConnectivityCountingEnabled,
@@ -96,7 +100,9 @@ export class AlfredRunner implements IRunner {
             this.socketConnectThrottler,
             this.socketSubmitOpThrottler,
             this.socketSubmitSignalThrottler,
-            this.throttleAndUsageStorageManager);
+            this.throttleAndUsageStorageManager,
+            this.verifyMaxMessageSize,
+        );
 
         // Listen on provided port, on all network interfaces.
         httpServer.listen(this.port);
