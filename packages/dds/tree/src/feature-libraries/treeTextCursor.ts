@@ -144,6 +144,10 @@ export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
     }
 }
 
+/**
+ * TextCursor for a tree that is rooted in a DetachedField.
+ * Like with {@link UpPath} the highest key in the tree is the {@link DetachedField}.
+ */
 export class RootedTextCursor extends TextCursor {
     public constructor(root: JsonableTree[], index: number, field: DetachedField) {
         super(root, index, field);

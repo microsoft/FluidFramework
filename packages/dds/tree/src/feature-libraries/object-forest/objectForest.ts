@@ -281,6 +281,12 @@ type ObjectField = JsonableTree[];
 class Cursor extends RootedTextCursor implements ITreeSubscriptionCursor {
     state: ITreeSubscriptionCursorState = ITreeSubscriptionCursorState.Cleared;
     public constructor(public readonly forest: ObjectForest) {
+        // Unlike RootedTextCursor, ITreeSubscriptionCursor can be in a "cleared" state,
+        // where they are not at a location in the tree.
+        // This makes a ITreeSubscriptionCursor not really a logical subtype of ITreeCursor and makes
+        // reusing an ITreeCursor implementation as a base type questionable.
+        // Despite this, using this base type is a handy way to reduce code duplication,
+        // and we can put the base type into an invalid state with a negative index to represent the cleared state.
         super([], -1, forest.rootField);
     }
 
