@@ -518,6 +518,26 @@ describe("Runtime", () => {
                     assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
                 });
 
+                it("Op send fails while processing another op", async () => {
+                    const clientId: string = "test-client";
+                    const message: Partial<ISequencedDocumentMessage> = {
+                        clientId,
+                        type: MessageType.Operation,
+                    };
+
+                    await deltaManager.inbound.pause();
+                    pushOp(message);
+                    pushOp(message);
+                    pushOp(message);
+                    await processOps();
+
+                    pushOp(message);
+                    pushOp(message);
+
+                    await processOps();
+                    assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
+                });
+
                 it("non-batched ops followed by batch", async () => {
                     const clientId: string = "test-client";
                     const batchBeginMessage: Partial<ISequencedDocumentMessage> = {

@@ -90,8 +90,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private pending: ISequencedDocumentMessage[] = [];
     private fetchReason: string | undefined;
 
-    // A counter used to assert that ops are not being sent while processing another op.
-    private opsCurrentlyProcessing: number = 0;
+    // A boolean used to assert that ops are not being sent while processing another op.
+    private opsCurrentlyProcessing: boolean = false;
 
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
@@ -190,8 +190,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
-        if (this.opsCurrentlyProcessing > 0) {
-            this.close(new UsageError("Currently processing ops: Container closed"));
+        if (this.opsCurrentlyProcessing) {
+            this.close(new UsageError("Making changes to data model is disallowed while processing ops."));
         }
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
             contents: JSON.stringify(contents),
@@ -768,7 +768,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
-        this.opsCurrentlyProcessing++;
+        assert(this.opsCurrentlyProcessing === false, "Currently processing ops.");
+        this.opsCurrentlyProcessing = true;
         this.lastProcessedMessage = message;
 
         // All non-system messages are coming from some client, and should have clientId
@@ -823,8 +824,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
             throw new Error("Attempted to process an inbound message without a handler attached");
         }
         this.handler.process(message);
-        this.opsCurrentlyProcessing--;
-
+        this.opsCurrentlyProcessing = false;
         const endTime = Date.now();
 
         // Should be last, after changing this.lastProcessedSequenceNumber above, as many callers

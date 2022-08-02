@@ -332,12 +332,6 @@ describe("Loader", () => {
                     deltaManager.connectionManager.forceReadonly(true);
                 });
             });
-
-            describe("Concurrent Op Processing", () => {
-                it("Should process op if not currently processing op", async () => {
-
-                });
-            });
         });
     });
 });

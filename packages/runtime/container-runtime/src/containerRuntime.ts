@@ -442,6 +442,11 @@ export interface IContainerRuntimeOptions {
      * Save enough runtime state to be able to serialize upon request and load to the same state in a new container.
      */
     readonly enableOfflineLoad?: boolean;
+    /**
+     * Toggles assertion to prevent sending of ops while processing an op. When true, the container will close
+     * if it attempts to send an op while processing another op.
+     */
+    readonly preventConcurrentOpSend?: boolean;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -906,6 +911,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             useDataStoreAliasing = false,
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
+            preventConcurrentOpSend = true,
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -982,6 +988,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 useDataStoreAliasing,
                 flushMode,
                 enableOfflineLoad,
+                preventConcurrentOpSend,
             },
             containerScope,
             logger,
@@ -1071,7 +1078,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
     private readonly _aliasingEnabled: boolean;
     private readonly _maxOpSizeInBytes: number;
-    private opsCurrentlyProcessing: number = 0;
+
+    // A counter used to assert that ops are not being sent while processing another op.
+    private opsCurrentlyProcessing: boolean = false;
+
     private readonly maxConsecutiveReconnects: number;
     private readonly defaultMaxConsecutiveReconnects = 15;
 
@@ -1890,10 +1900,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
     public process(messageArg: ISequencedDocumentMessage, local: boolean) {
         this.verifyNotClosed();
-        if (this.opsCurrentlyProcessing !== 0) {
-            this.closeFn(new UsageError("Currently processing ops: Container closed"));
-        }
-        this.opsCurrentlyProcessing++;
+        this.opsCurrentlyProcessing = true;
 
         // If it's not message for runtime, bail out right away.
         if (!isUnpackedRuntimeMessage(messageArg)) {
@@ -1955,6 +1962,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
             this.emit("op", message);
             this.scheduleManager.afterOpProcessing(undefined, message);
+            this.opsCurrentlyProcessing = false;
 
             if (local) {
                 // If we have processed a local op, this means that the container is
@@ -1964,9 +1972,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             }
         } catch (e) {
             this.scheduleManager.afterOpProcessing(e, message);
+            this.opsCurrentlyProcessing = false;
             throw e;
         }
-        this.opsCurrentlyProcessing--;
     }
 
     private processAliasMessage(
@@ -2914,7 +2922,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         opMetadata: Record<string, unknown> | undefined = undefined,
     ): void {
         this.verifyNotClosed();
-
+        if (this.opsCurrentlyProcessing && this.runtimeOptions.preventConcurrentOpSend) {
+            this.closeFn(new UsageError("Currently processing ops: Container closed"));
+        }
         // There should be no ops in detached container state!
         assert(this.attachState !== AttachState.Detached, 0x132 /* "sending ops in detached container" */);
 
