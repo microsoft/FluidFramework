@@ -1,12 +1,12 @@
 {
-  "name": "@fluid-experimental/task-manager",
+  "name": "@fluid-experimental/oldest-client-observer",
   "version": "2.0.0-internal.1.0.0",
-  "description": "Distributed data structure for queueing exclusive tasks",
+  "description": "Data object to determine if the local client is the oldest amongst connected clients",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "packages/dds/task-manager"
+    "directory": "packages/framework/oldest-client-observer"
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
@@ -30,10 +30,6 @@
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "test": "npm run test:mocha",
-    "test:coverage": "nyc npm test -- --reporter mocha-junit-reporter --reporter-options mochaFile=nyc/junit-report.xml",
-    "test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
     "tsc": "tsc",
     "tsfmt": "tsfmt --verify",
     "tsfmt:fix": "tsfmt --replace",
@@ -62,16 +58,10 @@
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
     "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/container-runtime-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/driver-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
-    "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/shared-object-base": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/container-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-definitions": "^0.1029.1000-0"
   },
   "devDependencies": {
-    "@fluid-experimental/task-manager-previous": "npm:@fluid-experimental/task-manager@1.1.0",
     "@fluid-internal/test-dds-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/build-tools": "^0.3.0-0",
@@ -95,12 +85,6 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {
-      "RemovedInterfaceDeclaration_IOldestClientObservable": {"backCompat": false, "forwardCompat": false},
-      "RemovedInterfaceDeclaration_IOldestClientObservableEvents":  {"backCompat": false, "forwardCompat": false},
-      "RemovedInterfaceDeclaration_IOldestClientObserver": {"backCompat": false, "forwardCompat": false},
-      "RemovedInterfaceDeclaration_IOldestClientObserverEvents": {"backCompat": false, "forwardCompat": false},
-      "RemovedClassDeclaration_OldestClientObserver": {"backCompat": false, "forwardCompat": false}
-    }
+    "broken": {}
   }
 }
