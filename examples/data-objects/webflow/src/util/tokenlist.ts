@@ -26,6 +26,7 @@ export function findToken(tokenList: string, token: string) {
     return undefined;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace TokenList {
     export function set(tokenList: string | undefined, token: string | undefined) {
         return !tokenList                       // If the list is empty
