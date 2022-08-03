@@ -9,6 +9,9 @@ import * as distribution from "./distributions";
 import { IRandom } from "./types";
 import { XSadd } from "./xsadd";
 
+// Constructs a compliant UUID version 4 from four 32b integers.  UUID version 4 contains
+// 6 predetermined bits (bits 48..51 for the version and bits 64..65 for the variant).
+// Consequently, only 122 of the provided 128 bits are used.
 export function makeUuid4(u32_0: number, u32_1: number, u32_2: number, u32_3: number) {
     const hex = (value: number, digits: number) => value.toString(16).padStart(digits, "0");
 
@@ -17,13 +20,13 @@ export function makeUuid4(u32_0: number, u32_1: number, u32_2: number, u32_3: nu
     }-${
         hex(u32_1 >>> 16, 4)
     }-${
-        // Discard weak low 4 bits and insert version '0b100'.
+        // Discard low 4 bits and insert version '0b100'.
         hex(((u32_1 << 16) >>> 20) | 0x4000, 4)
     }-${
-        // Insert variant '0b10' discarding the low 2 bits.
+        // Insert variant '0b10', discarding the low 2 bits.
         hex((u32_2 >>> 18) | 0x8000, 4)
     }-${
-        // Use the 2 bits discarded above and instead discard weak low bits.
+        // Use the 2 bits that were discarded above and instead discard weak low bits.
         hex((u32_2 << 14) >>> 16, 4)
     }${
         hex(u32_3, 8)
@@ -38,6 +41,9 @@ export function makeRandom(
     ...seed: [] | [number] | [number, number] | [number, number, number] | [number, number, number, number]
 ): IRandom {
     const engine = new XSadd(...seed);
+
+    // RATIONALE: These methods are already bound.  (Technically, XSadd is  constructed to avoid use
+    //            of 'this' for a minor perf win, but the end result is the same.)
 
     /* eslint-disable @typescript-eslint/unbound-method */
     const real = (min: number, max: number) => distribution.real(engine.float64, min, max)();

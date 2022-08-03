@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-// Map uniform distribution in the range [0..1) to a normal distribution with
-// mean 'mu' and standard deviation 'sigma'.
+// Map uniform distribution in the range [0..1) to a
 //
 // https://en.wikipedia.org/wiki/Marsaglia_polar_method
-export const normal = (float64Source: () => number, mu = 0, sigma = 1) => {
+/**
+ * Normal distribution with the given 'mean' and 'standardDeviation'.
+ */
+export const normal = (float64Source: () => number, mean = 0, standardDeviation = 1) => {
     return () => {
         let x: number;
         let y: number;
@@ -19,6 +21,6 @@ export const normal = (float64Source: () => number, mu = 0, sigma = 1) => {
             r = x * x + y * y;
         } while (r > 1 || r === 0);
 
-        return mu + sigma * y * Math.sqrt(-2 * Math.log(r) / r);
+        return mean + standardDeviation * y * Math.sqrt(-2 * Math.log(r) / r);
     };
 };

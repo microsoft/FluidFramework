@@ -10,6 +10,7 @@ import { makeRandom } from "..";
 import { makeUuid4 } from "../random";
 import { computeChiSquared, Counter, parseUuid } from "./utils";
 
+// For stochastic tests, we use the following predetermined seeds.
 const testSeeds: [number, number, number, number][] = [
     [0x00000000, 0x00000000, 0x00000000, 0x00000000],
     [0x55e98b47, 0x4a704f04, 0x197cb00d, 0xabb28df1],
@@ -20,6 +21,7 @@ const testSeeds: [number, number, number, number][] = [
 
 describe("Random", () => {
     describe("makeRandom()", () => {
+        // Sanity check that we've plumbed XSadd's overloaded ctor.
         it("Seed is randomly initialized if not specified", () => {
             assert.notEqual(makeRandom().real(0, 1), makeRandom().real(0, 1));
         });
@@ -39,9 +41,6 @@ describe("Random", () => {
     });
 
     describe("distribution", () => {
-        /**
-         * Invokes the generator
-         */
         function assert_chi2<T>(generator: () => T, weights: [T, number][], criticalValue: number, numSamples = 10000) {
             assert(weights.length > 0);
 
@@ -165,6 +164,9 @@ describe("Random", () => {
         });
 
         describe("uuid4", () => {
+            // Predetermined bit patterns to verify that UUIDs are correctly constructed from four uint32s.
+
+            // RATIONALE: Improves readability, even if it's a couple characters over 'max-len'.
             /* eslint-disable max-len */
             for (const { u32x4, expected } of [
                 { u32x4: [0x00000000, 0x00000000, 0x00000000, 0x00000000], expected: "00000000-0000-4000-8000-000000000000" },
