@@ -92,13 +92,9 @@ function composeMarks(newMark: T.SizedMark, baseMark: T.ObjectMark | T.AttachGro
                     }]];
                 } else if (attach.type === "MInsert") {
                     updateModifyLike(newMark, attach);
-                    return [[{
-                        ...newMark,
-                        type: "MInsert",
-                        id: attach.id,
-                        content: attach.content,
-                    }]];
+                    return [[attach]];
                 }
+                fail("Not implemented");
             }
             case "Delete": {
                 // The insertion of the previous change is subsequently deleted.
