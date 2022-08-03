@@ -311,8 +311,7 @@ export interface IClientSummaryWatcher extends IDisposable {
 
 // @public
 export interface ICompressionRuntimeOptions {
-    readonly compressionEnabled: boolean;
-    readonly minimumSize: number;
+    readonly minimumSize?: number;
 }
 
 // @public (undocumented)

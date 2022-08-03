@@ -80,7 +80,7 @@ export function generateRuntimeOptions(
         useDataStoreAliasing: [undefined],
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
-        compressionOptions: [undefined],
+        compressionOptions: [{ minimumSize: 500 }],
     };
 
     return generatePairwiseOptions<IContainerRuntimeOptions>(

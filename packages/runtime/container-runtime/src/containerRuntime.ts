@@ -414,22 +414,14 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
+ * @experimental - Not ready for use
  */
 export interface ICompressionRuntimeOptions {
     /**
-     * On/off switch for compression. Telemetry is still collected while off.
+     * The minimum size the content payload must exceed before it is compressed. Undefined if compression is disabled.
      */
-    readonly compressionEnabled: boolean;
-    /**
-     * The minimum size the content payload must exceed before it is compressed.
-     */
-    readonly minimumSize: number;
+    readonly minimumSize?: number;
 }
-
-const DefaultCompressionRuntimeOptions: ICompressionRuntimeOptions = {
-    compressionEnabled: false,
-    minimumSize: 2000,
-};
 
 /**
  * Options for container runtime.
@@ -929,7 +921,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             useDataStoreAliasing = false,
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
-            compressionOptions = DefaultCompressionRuntimeOptions,
+            compressionOptions = {},
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -1110,6 +1102,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private baseSnapshotBlobs?: ISerializedBaseSnapshotBlobs;
 
     private consecutiveReconnects = 0;
+    private compressedOpCount = 0;
 
     /**
      * Used to delay transition to "connected" state while we upload
@@ -2978,6 +2971,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                                                  content,
                                                  batch,
                                                  serializedContent?.length ?? 0,
+                                                 serializedContent,
                                                  opMetadataInternal);
             }
 
@@ -2997,7 +2991,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Chunking enabled, fallback on the server's max message size
         // and split the content accordingly
         if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
-            return this.submitRuntimeMessage(type, content, batch, serializedContent?.length ?? 0, opMetadataInternal);
+            return this.submitRuntimeMessage(type,
+                                   content,
+                                             batch,
+                                             serializedContent?.length ?? 0,
+                                             serializedContent,
+                                             opMetadataInternal);
         }
 
         return this.submitChunkedMessage(type, serializedContent, serverMaxOpSize);
@@ -3020,7 +3019,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ContainerMessageType.ChunkedOp,
                 chunkedOp,
                 false,
-                maxOpSize);
+                chunkedOp.contents.length,
+                chunkedOp.contents);
         }
         return clientSequenceNumber;
     }
@@ -3050,36 +3050,39 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         contents: any,
         batch: boolean,
         contentLength: number,
+        serializedContent?: string,
         appData?: any,
     ) {
         this.verifyNotClosed();
         assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
 
-        if (contentLength > this.runtimeOptions.compressionOptions?.minimumSize) {
-            const originalContentLength = IsoBuffer.from(JSON.stringify(contents)).toString("base64").length;
+        if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
+            serializedContent &&
+            contentLength > this.runtimeOptions.compressionOptions.minimumSize
+        ) {
+            this.compressedOpCount++;
 
             const compressionStart = Date.now();
-            const stringifiedContent = JSON.stringify(contents);
-            const contentsAsBuffer = new TextEncoder().encode(stringifiedContent);
+            const contentsAsBuffer = new TextEncoder().encode(serializedContent);
             const compressedContents = compress(contentsAsBuffer);
-            const compressionTime = Date.now() - compressionStart;
             const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+            const duration = Date.now() - compressionStart;
 
-            this.logger.sendPerformanceEvent({
-                eventName: "compressedOp",
-                compressionTime,
-                sizeBeforeCompression: originalContentLength,
-                sizeAfterCompression: compressedContent.length,
-            });
-
-            if (this.runtimeOptions.compressionOptions?.compressionEnabled) {
-                const compressedPayload: ContainerRuntimeMessage = { type, contents: compressedContent };
-                return this.context.submitFn(
-                    MessageType.Operation,
-                    compressedPayload,
-                    batch,
-                    { ...appData, compressed: true });
+            if (this.compressedOpCount % 100) {
+                this.mc.logger.sendPerformanceEvent({
+                    eventName: "compressedOp",
+                    duration,
+                    sizeBeforeCompression: Math.ceil(contentLength / 3.0) * 4, // Cost of base64 encoding
+                    sizeAfterCompression: compressedContent.length,
+                });
             }
+
+            const compressedPayload: ContainerRuntimeMessage = { type, contents: compressedContent };
+            return this.context.submitFn(
+                MessageType.Operation,
+                compressedPayload,
+                batch,
+                { ...appData, compressed: true });
         }
 
         const payload: ContainerRuntimeMessage = { type, contents };
