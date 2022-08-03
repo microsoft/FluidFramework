@@ -5,16 +5,13 @@
 
 import {
     CallSignatureDeclaration,
-    ClassDeclaration,
     ConstructorDeclaration,
-    DiagnosticCategory,
     GetAccessorDeclaration,
     IndexSignatureDeclaration,
     MethodDeclaration,
     MethodSignature,
     ModifierableNode,
     Node,
-    Project,
     PropertyDeclaration,
     PropertySignature,
     Scope,
@@ -23,7 +20,6 @@ import {
     TypeChecker,
 } from "ts-morph";
 import { decomposeType, decomposeTypes, GenericsInfo, typeToString } from "./typeDecomposition";
-import { BreakingIncrement, IValidator, log } from "./validatorUtils";
 
 function mergeIntoSet<T>(into: Set<T>, from: Set<T>) {
     from.forEach((v) => into.add(v));
@@ -181,7 +177,7 @@ export function getConstructorReplacements(
     const replacedMembers: string[] = [];
 
     // Handle modifiers
-    const [modifiers, propNamePrefix] = getModifiersAndPrefix(member);
+    const [modifiers] = getModifiersAndPrefix(member);
 
     // Handle parameters
     let paramsString = "";

@@ -78,6 +78,7 @@ function format(n: number) {
     return n.toString().padStart(4);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJson: any) {
     // Patching the package-lock file
     const repoPackageLockJson = await readJsonAsync(path.join(monoRepo.repoPath, "lerna-package-lock.json"));
@@ -85,6 +86,7 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
     let totalDevCount = 0;
     let topLevelDevCount = 0;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const setDev = (item: any) => {
         totalDevCount++;
         item.dev = true;

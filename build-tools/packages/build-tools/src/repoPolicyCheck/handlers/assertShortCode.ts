@@ -42,7 +42,7 @@ function getAssertMessageParams(sourceFile: SourceFile): (StringLiteralLike | Nu
                     case SyntaxKind.StringLiteral:
                     case SyntaxKind.NumericLiteral:
                     case SyntaxKind.NoSubstitutionTemplateLiteral:
-                        messageArgs.push(args[1] as any);
+                        messageArgs.push(args[1] as NumericLiteral | StringLiteralLike);
                         break;
                     case SyntaxKind.TemplateExpression:
                         throw new Error(`Template expressions are not supported in assertions (they'll be replaced by a short code anyway). ` +
@@ -162,7 +162,7 @@ export const handler: Handler = {
 };
 
 function writeShortCodeMappingFile() {
-    const mapContents = Array.from(codeToMsgMap.entries()).sort().reduce((accum, current) => { accum[current[0]] = current[1]; return accum; }, {} as any);
+    const mapContents = Array.from(codeToMsgMap.entries()).sort().reduce((accum, current) => { accum[current[0]] = current[1]; return accum; }, {});
     const targetFolder = "packages/runtime/test-runtime-utils/src";
 
     if (!fs.existsSync(targetFolder)) {

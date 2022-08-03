@@ -63,7 +63,7 @@ if (parentPort) {
         console.error(`ERROR: Uncaught exception. ${error.message}\n${error.stack}`);
         process.exit(-1);
     });
-    process.on("unhandledRejection", (reason, promise) => {
+    process.on("unhandledRejection", (reason) => {
         console.error(`ERROR: Unhandled promise rejection. ${reason}`);
         process.exit(-1);
     });

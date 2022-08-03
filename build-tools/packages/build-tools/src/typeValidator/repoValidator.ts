@@ -124,7 +124,7 @@ export async function validateRepo(options?: IValidationOptions): Promise<RepoVa
     // Get all the repo packages in topological order
     const repoRoot = await getResolvedFluidRoot();
     const repo = new FluidRepoBuild(repoRoot, false);
-    repo.setMatched({all: true, match: [], dirs: [] } as any);
+    repo.setMatched({all: true, match: [], dirs: [], server: false, azure: false });
     const buildGraph = repo.createBuildGraph({symlink: true, fullSymlink: false}, ["build"]);
     const packages = buildGraph.buildPackages;
 
