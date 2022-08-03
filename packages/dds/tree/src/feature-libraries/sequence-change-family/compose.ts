@@ -8,26 +8,26 @@ import { clone, fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
 export function compose(...changes: SequenceChangeset[]): SequenceChangeset {
-    const total: SequenceChangeset = { marks: {} };
+    const base: SequenceChangeset = { marks: {} };
     for (const change of changes) {
-        foldInChangeset(change, total);
+        foldInChangeset(change, base);
     }
-    return total;
+    return base;
 }
 
-function foldInChangeset(change: SequenceChangeset, totalChange: SequenceChangeset): void {
-    const totalFieldMarks = totalChange.marks;
-    const fieldMarks = change.marks;
-    foldInFieldMarks(fieldMarks, totalFieldMarks);
+function foldInChangeset(newChange: SequenceChangeset, baseChange: SequenceChangeset): void {
+    const baseFieldMarks = baseChange.marks;
+    const newFieldMarks = newChange.marks;
+    foldInFieldMarks(newFieldMarks, baseFieldMarks);
 }
 
-function foldInFieldMarks(fieldMarks: T.FieldMarks, totalFieldMarks: T.FieldMarks) {
-    for (const key of Object.keys(fieldMarks)) {
-        const markList = fieldMarks[key];
-        if (key in totalFieldMarks) {
-            foldInMarkList(markList, totalFieldMarks[key]);
+function foldInFieldMarks(newFieldMarks: T.FieldMarks, baseFieldMarks: T.FieldMarks) {
+    for (const key of Object.keys(newFieldMarks)) {
+        const newMarkList = newFieldMarks[key];
+        if (key in baseFieldMarks) {
+            foldInMarkList(newMarkList, baseFieldMarks[key]);
         } else {
-            totalFieldMarks[key] = clone(markList);
+            baseFieldMarks[key] = clone(newMarkList);
         }
     }
 }
