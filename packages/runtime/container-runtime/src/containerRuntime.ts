@@ -1372,7 +1372,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 rollback: this.rollback.bind(this),
                 orderSequentially: this.orderSequentially.bind(this),
             },
-            this.flushMode,
             pendingRuntimeState?.pending);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -2052,7 +2051,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Note that this should happen before the `this.needsFlush` check below because in the scenario where we are
         // not connected, `this.needsFlush` will be false but the PendingStateManager might have pending messages and
         // hence needs to track this.
-        this.pendingStateManager.onFlush(isImmediateBatch);
+        if (this.flushMode !== FlushMode.Immediate || isImmediateBatch) {
+            this.pendingStateManager.onFlush();
+        }
 
         // If flush has already been called then exit early
         if (!this.needsFlush) {
