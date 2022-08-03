@@ -118,6 +118,7 @@ export interface IContainerEvents extends IEvent {
  * Namespace for the different connection states a container can be in
  * PLEASE NOTE: The sequence of the numerical values does no correspond to the typical connection state progression
  */
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ConnectionState {
     /**
      * The container is not connected to the delta server
