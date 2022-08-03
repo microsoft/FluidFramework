@@ -141,19 +141,14 @@ export async function fetchHelper(
         // It could contain PII, like URI in message itself, or token in properties.
         // It is also non-serializable object due to circular references.
         //
-        if (online === OnlineStatus.Offline) {
-            throw new RetryableError(
+        const error_ = online === OnlineStatus.Offline ? new RetryableError(
                 // pre-0.58 error message prefix: Offline
                 `ODSP fetch failure (Offline): ${redactedErrorText}`,
                 DriverErrorType.offlineError,
                 {
                     driverVersion,
                     rawErrorMessage: { value: errorText, tag: TelemetryDataTag.UserData },
-                });
-        } else {
-            // It is perhaps still possible that this is due to being offline, the error does not reveal enough
-            // information to conclude.  Could also be DNS errors, malformed fetch request, CSP violation, etc.
-            throw new RetryableError(
+                }) : new RetryableError(
                 // pre-0.58 error message prefix: Fetch error
                 `ODSP fetch failure: ${redactedErrorText}`,
                 DriverErrorType.fetchFailure,
@@ -161,7 +156,7 @@ export async function fetchHelper(
                     driverVersion,
                     rawErrorMessage: { value: errorText, tag: TelemetryDataTag.UserData },
                 });
-        }
+        throw error_;
     });
 }
 
