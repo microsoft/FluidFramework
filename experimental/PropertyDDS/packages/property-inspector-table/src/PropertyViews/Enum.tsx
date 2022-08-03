@@ -25,11 +25,11 @@ type GetOptionsType = (
 ) => string[];
 
 const getOptions: GetOptionsType = (rowData) => {
-  const enumObj = Utils.isEnumArrayProperty(rowData.parent!)
+  const enumObj: any = Utils.isEnumArrayProperty(rowData.parent!)
     ? rowData.parent
     : (rowData.parent! as ContainerProperty).get(rowData.name);
 
-  return Object.keys(enumObj._enumDictionary.enumEntriesById);
+  return Object.keys(enumObj!._enumDictionary.enumEntriesById);
 };
 
 export const EnumView: React.FunctionComponent<EnumProps> = (props) => {
