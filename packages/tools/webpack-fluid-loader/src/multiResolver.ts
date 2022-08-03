@@ -90,11 +90,7 @@ export class MultiUrlResolver implements IUrlResolver {
         private readonly options: RouteOptions,
         private readonly useLocalResolver: boolean = false,
     ) {
-        if (this.useLocalResolver) {
-            this.urlResolver = new LocalResolver();
-        } else {
-            this.urlResolver = getUrlResolver(options);
-        }
+        this.urlResolver = this.useLocalResolver ? new LocalResolver() : getUrlResolver(options);
     }
 
     async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
