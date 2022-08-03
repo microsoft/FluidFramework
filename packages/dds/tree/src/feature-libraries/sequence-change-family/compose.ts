@@ -90,7 +90,12 @@ function composeMarks(mark: T.SizedMark, totalMark: T.SizedMark): T.SizedMark {
         case "Modify": {
             switch (markType) {
                 case "Modify": {
-                    foldInFieldMarks(mark.fields ?? {}, totalMark.fields ?? {});
+                    if (mark.fields !== undefined) {
+                        if (totalMark.fields === undefined) {
+                            totalMark.fields = {};
+                        }
+                        foldInFieldMarks(mark.fields, totalMark.fields);
+                    }
                     if (mark.value !== undefined) {
                         // Later values override earlier ones
                         totalMark.value = clone(mark.value);

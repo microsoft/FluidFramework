@@ -64,6 +64,54 @@ describe("SequenceChangeFamily - Compose", () => {
     });
 
     it("set root | set child", () => {
+        const set1 = setRootValueTo(1);
+        const set2 = setChildValueTo(2);
+        const actual = compose(set1, set2);
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [{
+                    type: "Modify",
+                    value: { type: "Set", value: 1 },
+                    fields: {
+                        foo: [
+                            42,
+                            {
+                                type: "Modify",
+                                value: { type: "Set", value: 2 },
+                            },
+                        ],
+                    },
+                }],
+            },
+        };
+        assert.deepEqual(actual, expected);
+    });
+
+    it("set child | set root", () => {
+        const set1 = setChildValueTo(1);
+        const set2 = setRootValueTo(2);
+        const actual = compose(set1, set2);
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [{
+                    type: "Modify",
+                    value: { type: "Set", value: 2 },
+                    fields: {
+                        foo: [
+                            42,
+                            {
+                                type: "Modify",
+                                value: { type: "Set", value: 1 },
+                            },
+                        ],
+                    },
+                }],
+            },
+        };
+        assert.deepEqual(actual, expected);
+    });
+
+    it("set child | set child", () => {
         const set1 = setChildValueTo(1);
         const set2 = setChildValueTo(2);
         const actual = compose(set1, set2);
@@ -199,5 +247,19 @@ describe("SequenceChangeFamily - Compose", () => {
             },
         };
         assert.deepEqual(actual, expected);
+    });
+
+    it("set | delete", () => {
+        const set = setRootValueTo(1);
+        // Deletes ABCD--GHIJK
+        const deletion: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Delete", id: 3, count: 1 },
+                ],
+            },
+        };
+        const actual = compose(set, deletion);
+        assert.deepEqual(actual, deletion);
     });
 });
