@@ -90,6 +90,7 @@ steps:
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
             then
+                echo "some npm err"
                 if ! grep -q "You cannot publish over the previously published versions" "publish_log"
                 then
                   let t1+=1
@@ -109,9 +110,14 @@ steps:
                   rm "$f"
                   mv "$local_f" "$f"
                 fi
+            else
+              echo "Published package successfully"
             fi
           fi
           rm publish_log
       done
+      echo "Failed after loop"
       rm ~/.npmrc
+      rm $(Pipeline.Workspace)/pack/packagePublishOrder.txt
+      echo "Failed after removing npmrc and publish order text"
       exit $t1
