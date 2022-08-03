@@ -5,7 +5,6 @@
 
 import { fail, strict as assert } from "assert";
 import { ChangeFamily } from "../../change-family";
-import { SeqNumber } from "../../changeset";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
@@ -571,8 +570,8 @@ type ScenarioStep =
  * State needed by the scenario builder.
  */
 interface ScenarioBuilderState {
-    clientData: { pulled: SeqNumber; numLocal: number; }[];
-    seq: SeqNumber;
+    clientData: { pulled: number; numLocal: number; }[];
+    seq: number;
 }
 
 function* buildScenario(
@@ -628,9 +627,9 @@ function* buildScenario(
 interface ClientData {
     manager: TestEditManager;
     /** The local changes in their original form */
-    localChanges: { change: TestChangeset; ref: SeqNumber; }[];
+    localChanges: { change: TestChangeset; ref: number; }[];
     /** The last sequence number received by the client */
-    ref: SeqNumber;
+    ref: number;
     /** Intentions that the client should be aware of */
     intentions: Set<number>;
 }
