@@ -19,126 +19,130 @@ function invert(change: SequenceChangeset): SequenceChangeset {
 
 const tag = "TestTag";
 
-function asInputForest(markList: T.MarkList): SequenceChangeset {
-    return {
-        opRanges: [{ min: 0, tag }],
-        marks: { root: markList },
-    };
-}
-
-function asOutputForest(markList: T.MarkList): SequenceChangeset {
-    return {
-        opRanges: [{ min: 0, tag: `-${tag}` }],
-        marks: { root: markList },
-    };
-}
-
 describe("SequenceChangeFamily - Invert", () => {
-    it("no changes", () => {
-        const input = asInputForest([]);
-        const expected = asOutputForest([]);
-        const actual = invert(input);
-        assert.deepEqual(actual, expected);
-    });
+    for (const nest of [false, true]) {
+        describe(nest ? "Nested" : "Root", () => {
+            function asInputForest(markList: T.MarkList): SequenceChangeset {
+                return {
+                    opRanges: [{ min: 0, tag }],
+                    marks: { root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList },
+                };
+            }
 
-    it("set value => revert value", () => {
-        const input = asInputForest([
-            { type: "Modify", value: { type: "Set", id: 1, value: 42 } },
-        ]);
-        const expected = asOutputForest([
-            { type: "Modify", value: { type: "Revert", id: 1, change: tag } },
-        ]);
-        const actual = invert(input);
-        assert.deepEqual(actual, expected);
-    });
+            function asOutputForest(markList: T.MarkList): SequenceChangeset {
+                return {
+                    opRanges: [{ min: 0, tag: `-${tag}` }],
+                    marks: { root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList },
+                };
+            }
 
-    it("revert value => revert value", () => {
-        const input = asInputForest([
-            { type: "Modify", value: { type: "Revert", id: 1, change: "OtherTag" } },
-        ]);
-        const expected = asOutputForest([
-            { type: "Modify", value: { type: "Revert", id: 1, change: tag } },
-        ]);
-        const actual = invert(input);
-        assert.deepEqual(actual, expected);
-    });
+            it("no changes", () => {
+                const input = asInputForest([]);
+                const expected = asOutputForest([]);
+                const actual = invert(input);
+                assert.deepEqual(actual, expected);
+            });
 
-    it("insert => delete", () => {
-        const input = asInputForest([
-            [{
-                type: "Insert",
-                id: 1,
-                content: [{ type, value: 42 }, { type, value: 43 }],
-            }],
-        ]);
-        const expected = asOutputForest([
-            {
-                type: "Delete",
-                id: 1,
-                count: 2,
-            },
-        ]);
-        const actual = invert(input);
-        assert.deepEqual(actual, expected);
-    });
+            it("set value => revert value", () => {
+                const input = asInputForest([
+                    { type: "Modify", value: { type: "Set", id: 1, value: 42 } },
+                ]);
+                const expected = asOutputForest([
+                    { type: "Modify", value: { type: "Revert", id: 1, change: tag } },
+                ]);
+                const actual = invert(input);
+                assert.deepEqual(actual, expected);
+            });
 
-    it("modified insert => delete", () => {
-        const input = asInputForest([
-            [{
-                type: "MInsert",
-                id: 1,
-                content: { type, value: 42 },
-                fields: { foo: [{ type: "Modify", value: { type: "Set", id: 1, value: 42 } }] },
-            }],
-        ]);
-        const expected = asOutputForest([
-            {
-                type: "Delete",
-                id: 1,
-                count: 1,
-            },
-        ]);
-        const actual = invert(input);
-        assert.deepEqual(actual, expected);
-    });
+            it("revert value => revert value", () => {
+                const input = asInputForest([
+                    { type: "Modify", value: { type: "Revert", id: 1, change: "OtherTag" } },
+                ]);
+                const expected = asOutputForest([
+                    { type: "Modify", value: { type: "Revert", id: 1, change: tag } },
+                ]);
+                const actual = invert(input);
+                assert.deepEqual(actual, expected);
+            });
 
-    it("delete => revive", () => {
-        const input = asInputForest([
-            {
-                type: "Delete",
-                id: 1,
-                count: 2,
-            },
-        ]);
-        const expected = asOutputForest([
-            {
-                type: "Revive",
-                id: 1,
-                count: 2,
-                tomb: tag,
-            },
-        ]);
-        const actual = invert(input);
-        assert.deepEqual(actual, expected);
-    });
+            it("insert => delete", () => {
+                const input = asInputForest([
+                    [{
+                        type: "Insert",
+                        id: 1,
+                        content: [{ type, value: 42 }, { type, value: 43 }],
+                    }],
+                ]);
+                const expected = asOutputForest([
+                    {
+                        type: "Delete",
+                        id: 1,
+                        count: 2,
+                    },
+                ]);
+                const actual = invert(input);
+                assert.deepEqual(actual, expected);
+            });
 
-    it("revive => delete", () => {
-        const input = asInputForest([
-            {
-                type: "Revive",
-                id: 1,
-                count: 2,
-                tomb: tag,
-            },
-        ]);
-        const expected = asOutputForest([
-            {
-                type: "Delete",
-                id: 1,
-                count: 2,
-            },
-        ]);
-        const actual = invert(input);
-        assert.deepEqual(actual, expected);
-    });
+            it("modified insert => delete", () => {
+                const input = asInputForest([
+                    [{
+                        type: "MInsert",
+                        id: 1,
+                        content: { type, value: 42 },
+                        fields: { foo: [{ type: "Modify", value: { type: "Set", id: 1, value: 42 } }] },
+                    }],
+                ]);
+                const expected = asOutputForest([
+                    {
+                        type: "Delete",
+                        id: 1,
+                        count: 1,
+                    },
+                ]);
+                const actual = invert(input);
+                assert.deepEqual(actual, expected);
+            });
+
+            it("delete => revive", () => {
+                const input = asInputForest([
+                    {
+                        type: "Delete",
+                        id: 1,
+                        count: 2,
+                    },
+                ]);
+                const expected = asOutputForest([
+                    {
+                        type: "Revive",
+                        id: 1,
+                        count: 2,
+                        tomb: tag,
+                    },
+                ]);
+                const actual = invert(input);
+                assert.deepEqual(actual, expected);
+            });
+
+            it("revive => delete", () => {
+                const input = asInputForest([
+                    {
+                        type: "Revive",
+                        id: 1,
+                        count: 2,
+                        tomb: tag,
+                    },
+                ]);
+                const expected = asOutputForest([
+                    {
+                        type: "Delete",
+                        id: 1,
+                        count: 2,
+                    },
+                ]);
+                const actual = invert(input);
+                assert.deepEqual(actual, expected);
+            });
+        });
+    }
 });
