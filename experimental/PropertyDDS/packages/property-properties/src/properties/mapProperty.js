@@ -53,11 +53,9 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection = false) {
-        if (in_hideCollection) {
-            return this._typeid;
-        } else {
-            return TypeIdHelper.createSerializationTypeId(this._typeid, 'map');
-        }
+        return in_hideCollection
+            ? this._typeid
+            : TypeIdHelper.createSerializationTypeId(this._typeid, 'map');
     }
 
     /**
@@ -211,14 +209,12 @@ export class MapProperty extends IndexedCollectionBaseProperty {
      * @protected
      */
     _resolvePathSegment(in_segment, in_segmentType) {
-        if (in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN) {
-            return this._dynamicChildren[in_segment];
-        } else {
-            return AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(
+        return in_segmentType === PathHelper.TOKEN_TYPES.ARRAY_TOKEN
+            ? this._dynamicChildren[in_segment]
+            : AbstractStaticCollectionProperty.prototype._resolvePathSegment.call(
                 this,
                 in_segment,
                 in_segmentType);
-        }
     }
 
     /**
@@ -334,14 +330,21 @@ export class MapProperty extends IndexedCollectionBaseProperty {
                     in_options.referenceResolutionMode;
 
             var prop = this;
-            if (in_ids === PATH_TOKENS.ROOT) {
-                prop = prop.getRoot();
-            } else if (in_ids === PATH_TOKENS.UP) {
-                prop = prop.getParent();
-            } else if (in_ids === PATH_TOKENS.REF) {
-                throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
-            } else {
-                prop = prop._dynamicChildren[in_ids];
+            switch (in_ids) {
+                case PATH_TOKENS.ROOT: {
+                    prop = prop.getRoot();
+                    break;
+                }
+                case PATH_TOKENS.UP: {
+                    prop = prop.getParent();
+                    break;
+                }
+                case PATH_TOKENS.REF: {
+                    throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+                }
+                default: {
+                    prop = prop._dynamicChildren[in_ids];
+                }
             }
 
             // Handle automatic reference resolution
@@ -398,11 +401,7 @@ export class MapProperty extends IndexedCollectionBaseProperty {
     _getScope() {
         var scope = IndexedCollectionBaseProperty.prototype._getScope.call(this);
 
-        if (scope !== undefined) {
-            return scope;
-        } else {
-            return this._scope;
-        }
+        return scope !== undefined ? scope : this._scope;
     }
 
     /**
