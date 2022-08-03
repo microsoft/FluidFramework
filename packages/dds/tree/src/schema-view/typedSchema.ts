@@ -4,15 +4,15 @@
  */
 
 import { Invariant } from "../util";
-import { fieldSchema, treeSchema, TreeSchemaBuilder } from "./Builders";
 import {
+    fieldSchema, treeSchema, TreeSchemaBuilder,
     FieldSchema,
     LocalFieldKey,
     FieldKind,
     TreeSchema,
     ValueSchema,
     TreeSchemaIdentifier,
-} from "./Schema";
+} from "../schema-stored";
 
 /**
  * APIs for building typescript types and schema together.

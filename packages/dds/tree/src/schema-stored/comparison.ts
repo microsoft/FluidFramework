@@ -10,8 +10,8 @@ import {
     ValueSchema,
     FieldSchema,
     FieldKind,
-} from "./Schema";
-import { emptyField } from "./Builders";
+} from "./schema";
+import { emptyField } from "./builders";
 
 /**
  * @returns true iff `superset` is a superset of `original`.

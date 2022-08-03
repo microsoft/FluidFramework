@@ -7,15 +7,17 @@ import { strict as assert } from "assert";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { StoredSchemaRepository } from "../../schema/StoredSchemaRepository";
+import { StoredSchemaRepository } from "../../schema-stored/storedSchemaRepository";
 
 import {
 	treeSchema, fieldSchema, emptyField, rootFieldKey,
-	Adapters, adaptRepo, checkCompatibility, Compatibility, MissingFieldAdapter, TreeAdapter,
 	isNeverField, isNeverTree,
 	FieldSchema,
 	GlobalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
-} from "../../schema";
+} from "../../schema-stored";
+import {
+	Adapters, adaptRepo, checkCompatibility, Compatibility, MissingFieldAdapter, TreeAdapter,
+} from "../../schema-view";
 import { brand } from "../../util";
 
 // Allow importing specific example files:
