@@ -124,7 +124,7 @@ describe("SequenceChangeFamily - Compose", () => {
                 root: [
                     [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
                     2,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }, { type, value: 3 }] }],
                 ],
             },
         };
@@ -132,13 +132,12 @@ describe("SequenceChangeFamily - Compose", () => {
             marks: {
                 root: [
                     [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
-                    5,
+                    4,
                     [{ type: "Insert", id: 4, content: [{ type, value: 4 }] }],
                 ],
             },
         };
         const actual = compose(insertA, insertB);
-        // TODO: test tiebreak policy as well.
         const expected: SequenceChangeset = {
             marks: {
                 root: [
@@ -146,8 +145,8 @@ describe("SequenceChangeFamily - Compose", () => {
                     [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
                     2,
                     [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
-                    3,
                     [{ type: "Insert", id: 4, content: [{ type, value: 4 }] }],
+                    [{ type: "Insert", id: 2, content: [{ type, value: 3 }] }],
                 ],
             },
         };
@@ -261,5 +260,41 @@ describe("SequenceChangeFamily - Compose", () => {
         };
         const actual = compose(set, deletion);
         assert.deepEqual(actual, deletion);
+    });
+
+    it("insert | delete", () => {
+        const insert: SequenceChangeset = {
+            marks: {
+                root: [
+                    [{ type: "Insert", id: 1, content: [
+                        { type, value: 1 },
+                        { type, value: 2 },
+                        { type, value: 3 },
+                    ] }],
+                ],
+            },
+        };
+        const deletion: SequenceChangeset = {
+            marks: {
+                root: [
+                    1,
+                    { type: "Delete", id: 2, count: 1 },
+                ],
+            },
+        };
+        const actual = compose(insert, deletion);
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [
+                    [{ type: "Insert", id: 1, content: [
+                        { type, value: 1 },
+                    ] }],
+                    [{ type: "Insert", id: 1, content: [
+                        { type, value: 3 },
+                    ] }],
+                ],
+            },
+        };
+        assert.deepEqual(actual, expected);
     });
 });

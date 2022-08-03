@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getMarkInputLength, isAttachGroup, splitMark, Transposed as T } from "../../changeset";
+import { getMarkLength, isAttachGroup, splitMark, Transposed as T } from "../../changeset";
 import { clone, fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
@@ -44,14 +44,10 @@ function foldInMarkList(markList: T.MarkList<T.Mark>, totalMarkList: T.MarkList<
             totalMarkList.push(mark);
         } else {
             if (isAttachGroup(mark)) {
-                // TODO: deal with the fact that the attach group may have a merge-right policy
-                totalMarkList.splice(iTotal, 0, mark);
-            } else if (isAttachGroup(totalMark)) {
-                // Skip the AttachGroup in the base mark list
-                nextMark = mark;
+                totalMarkList.splice(iTotal, 0, clone(mark));
             } else {
-                const markLength = getMarkInputLength(mark);
-                const totalMarkLength = getMarkInputLength(totalMark);
+                const markLength = getMarkLength(mark);
+                const totalMarkLength = getMarkLength(totalMark);
                 if (markLength < totalMarkLength) {
                     const totalMarkPair = splitMark(totalMark, markLength);
                     totalMark = totalMarkPair[0];
@@ -61,7 +57,11 @@ function foldInMarkList(markList: T.MarkList<T.Mark>, totalMarkList: T.MarkList<
                 }
                 // Passed this point, we are guaranteed that mark and total mark have the same length
                 const composedMark = composeMarks(mark, totalMark);
-                totalMarkList.splice(iTotal, 1, composedMark);
+                if (composedMark !== 0) {
+                    totalMarkList.splice(iTotal, 1, composedMark);
+                } else {
+                    totalMarkList.splice(iTotal, 1);
+                }
             }
         }
         if (nextMark === undefined) {
@@ -72,7 +72,7 @@ function foldInMarkList(markList: T.MarkList<T.Mark>, totalMarkList: T.MarkList<
     }
 }
 
-function composeMarks(mark: T.SizedMark, totalMark: T.SizedMark): T.SizedMark {
+function composeMarks(mark: T.SizedMark, totalMark: T.Mark): T.Mark {
     if (typeof mark === "number") {
         return totalMark;
     }
@@ -80,6 +80,35 @@ function composeMarks(mark: T.SizedMark, totalMark: T.SizedMark): T.SizedMark {
         return clone(mark);
     }
     const markType = mark.type;
+    if (isAttachGroup(totalMark)) {
+        switch (markType) {
+            case "Modify": {
+                const attach = totalMark[0];
+                if (attach.type === "Insert") {
+                    return [{
+                        ...mark,
+                        type: "MInsert",
+                        id: attach.id,
+                        content: attach.content[0],
+                    }];
+                } else if (attach.type === "MInsert") {
+                    updateModifyLike(mark, attach);
+                    return [{
+                        ...mark,
+                        type: "MInsert",
+                        id: attach.id,
+                        content: attach.content,
+                    }];
+                }
+            }
+            case "Delete": {
+                // The insertion of the previous change is subsequently deleted.
+                // TODO: preserve the insertion as muted
+                return 0;
+            }
+            default: fail("Not implemented");
+        }
+    }
     const totalType = totalMark.type;
     if (markType === "MDelete" || totalType === "MDelete") {
         // This should not occur yet because we discard all modifications to deleted subtrees
@@ -90,16 +119,7 @@ function composeMarks(mark: T.SizedMark, totalMark: T.SizedMark): T.SizedMark {
         case "Modify": {
             switch (markType) {
                 case "Modify": {
-                    if (mark.fields !== undefined) {
-                        if (totalMark.fields === undefined) {
-                            totalMark.fields = {};
-                        }
-                        foldInFieldMarks(mark.fields, totalMark.fields);
-                    }
-                    if (mark.value !== undefined) {
-                        // Later values override earlier ones
-                        totalMark.value = clone(mark.value);
-                    }
+                    updateModifyLike(mark, totalMark);
                     return totalMark;
                 }
                 case "Delete": {
@@ -125,5 +145,17 @@ function composeMarks(mark: T.SizedMark, totalMark: T.SizedMark): T.SizedMark {
             }
         }
         default: fail("Not implemented");
+    }
+}
+function updateModifyLike(curr: T.Modify, base: T.ModifyInsert | T.Modify) {
+    if (curr.fields !== undefined) {
+        if (base.fields === undefined) {
+            base.fields = {};
+        }
+        foldInFieldMarks(curr.fields, base.fields);
+    }
+    if (curr.value !== undefined) {
+        // Later values override earlier ones
+        base.value = clone(curr.value);
     }
 }
