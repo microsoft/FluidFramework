@@ -12,7 +12,7 @@ import { fatal } from "./utils";
 import { isMonoRepoKind, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
 import * as semver from "semver";
-import { VersionBumpType } from "./versionSchemes";
+import { VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
 
 /**
  * Create release bump branch based on the repo state for either main or next branches,bump minor version immediately

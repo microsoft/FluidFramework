@@ -3,18 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     ITreeCursor,
     TreeNavigationResult,
     mapCursorField,
+    SynchronousNavigationResult,
 } from "../forest";
 import {
+    DetachedField,
+    detachedFieldAsKey,
     FieldKey,
     FieldMap,
-    PlaceholderTree,
+    getGenericTreeField,
+    getGenericTreeFieldMap,
+    JsonableTree,
     TreeType,
+    UpPath,
     Value,
 } from "../tree";
+import { fail } from "../util";
 
 /**
  * This modules provides support for reading and writing a human readable (and editable) tree format.
@@ -35,47 +43,51 @@ import {
  * Note:
  * Currently a lot of Tree's codebase is using json for serialization.
  * Because putting json strings inside json works poorly (adds lots of escaping),
- * for now this library actually outputs and inputs the Json compatible type PlaceholderTree
+ * for now this library actually outputs and inputs the Json compatible type JsonableTree
  * rather than actual strings.
  */
 
 /**
- * An ITreeCursor implementation for PlaceholderTree.
+ * @returns a TextCursor for a single JsonableTree.
+ */
+export function singleTextCursor(root: JsonableTree): TextCursor {
+    return new TextCursor([root], 0);
+}
+
+/**
+ * An ITreeCursor implementation for JsonableTree.
  *
  * TODO: object-forest's cursor is mostly a superset of this functionality.
  * Maybe do a refactoring to deduplicate this.
  */
-export class TextCursor implements ITreeCursor {
-    // Ancestors traversed to visit this node (including this node).
-    private readonly parentStack: PlaceholderTree[] = [];
-    // Keys traversed to visit this node
-    private readonly keyStack: FieldKey[] = [];
-    // Indices traversed to visit this node
-    private readonly indexStack: number[] = [];
+export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
+    // Indices traversed to visit this node: does not include current level (which is stored in `index`).
+    protected readonly indexStack: number[] = [];
+    // Siblings into which indexStack indexes: does not include current level (which is stored in `siblings`).
+    protected readonly siblingStack: JsonableTree[][] = [];
+    // Keys traversed to visit this node, including detached field at the beginning if there is one.
+    protected readonly keyStack: FieldKey[] = [];
 
-    private siblings: readonly PlaceholderTree[];
-    private readonly root: readonly PlaceholderTree[];
+    protected siblings: JsonableTree[];
+    protected index: number;
 
-    public constructor(root: PlaceholderTree) {
-        this.root = [root];
-        this.indexStack.push(0);
-        this.siblings = this.root;
-        this.parentStack.push(root);
+    public constructor(root: JsonableTree[], index: number, field?: DetachedField) {
+        this.index = index;
+        this.siblings = root;
+        if (field) {
+            this.keyStack.push(detachedFieldAsKey(field));
+        }
     }
 
-    getNode(): PlaceholderTree {
-        return this.parentStack[this.parentStack.length - 1];
+    /**
+     * @returns true iff this cursor is rooted in a detached field.
+     */
+    public isRooted(): boolean {
+        return this.keyStack.length === this.siblingStack.length + 1;
     }
 
-    getFields(): Readonly<FieldMap<PlaceholderTree>> {
-        return this.getNode().fields ?? {};
-    }
-
-    getField(key: FieldKey): readonly PlaceholderTree[] {
-        // Save result to a constant to work around linter bug:
-        // https://github.com/typescript-eslint/typescript-eslint/issues/5014
-        const field: readonly PlaceholderTree[] = this.getFields()[key as string] ?? [];
-        return field;
+    protected getNode(): JsonableTree {
+        return this.siblings[this.index];
     }
 
     get value(): Value {
@@ -87,66 +99,105 @@ export class TextCursor implements ITreeCursor {
     }
 
     get keys(): Iterable<FieldKey> {
-        return Object.getOwnPropertyNames(this.getFields()) as Iterable<FieldKey>;
+        return Object.getOwnPropertyNames(getGenericTreeFieldMap(this.getNode(), false)) as Iterable<FieldKey>;
     }
 
-    down(key: FieldKey, index: number): TreeNavigationResult {
-        const siblings = this.getField(key);
+    down(key: FieldKey, index: number): SynchronousNavigationResult {
+        const siblings = getGenericTreeField(this.getNode(), key, false);
         const child = siblings[index];
         if (child !== undefined) {
-            this.parentStack.push(child);
-            this.indexStack.push(index);
+            this.indexStack.push(this.index);
+            this.siblingStack.push(this.siblings);
             this.keyStack.push(key);
             this.siblings = siblings;
+            this.index = index;
             return TreeNavigationResult.Ok;
         }
         return TreeNavigationResult.NotFound;
     }
 
-    seek(offset: number): { result: TreeNavigationResult; moved: number; } {
-        const index = offset + this.indexStack[this.indexStack.length - 1];
+    seek(offset: number): SynchronousNavigationResult {
+        const index = offset + this.index;
         const child = this.siblings[index];
         if (child !== undefined) {
-            this.indexStack[this.indexStack.length - 1] = index;
-            this.parentStack[this.parentStack.length - 1] = child;
-            return { result: TreeNavigationResult.Ok, moved: offset };
+            this.index = index;
+            return TreeNavigationResult.Ok;
         }
-        // TODO: Maybe truncate move, and move to end?
-        return { result: TreeNavigationResult.NotFound, moved: 0 };
+        return TreeNavigationResult.NotFound;
     }
 
-    up(): TreeNavigationResult {
-        if (this.parentStack.length === 0) {
+    up(): SynchronousNavigationResult {
+        const index = this.indexStack.pop();
+        if (index === undefined) {
+            // At root already (and made no changes to current location)
             return TreeNavigationResult.NotFound;
         }
-        this.parentStack.pop();
-        this.indexStack.pop();
+
+        this.index = index;
+        this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
         this.keyStack.pop();
-        // TODO: maybe compute siblings lazily or store in stack? Store instead of keyStack?
-        this.siblings = this.parentStack.length === 0 ?
-            this.root :
-            (this.parentStack[this.parentStack.length - 1].fields ?? {}
-                )[this.keyStack[this.keyStack.length - 1] as string];
         return TreeNavigationResult.Ok;
     }
 
     length(key: FieldKey): number {
-        return this.getField(key).length;
+        return getGenericTreeField(this.getNode(), key, false).length;
     }
 }
 
 /**
- * Extract a PlaceholderTree from the contents of the given ITreeCursor's current node.
+ * TextCursor for a tree that is rooted in a DetachedField.
+ * Like with {@link UpPath} the highest key in the tree is the {@link DetachedField}.
  */
-export function placeholderTreeFromCursor(cursor: ITreeCursor): PlaceholderTree {
-    let fields: FieldMap<PlaceholderTree> | undefined;
+export class RootedTextCursor extends TextCursor {
+    public constructor(root: JsonableTree[], index: number, field: DetachedField) {
+        super(root, index, field);
+    }
+
+    getParentFieldKey(): FieldKey {
+        return this.keyStack[this.keyStack.length - 1];
+    }
+
+    getPath(): UpPath {
+        // Perf Note:
+        // This is O(depth) in tree.
+        // If many different anchors are created, this could be optimized to amortize the costs.
+        // For example, the cursor could cache UpPaths from the anchorSet when creating an anchor,
+        // then reuse them as a starting point when making another.
+        // Could cache this at one depth, and remember the depth.
+        // When navigating up, adjust cached anchor if present.
+
+        let path: UpPath | undefined;
+        const length = this.indexStack.length;
+        assert(this.siblingStack.length === length, "Unexpected siblingStack.length");
+        assert(this.keyStack.length === length + 1, "Unexpected keyStack.length");
+        for (let height = 0; height < length; height++) {
+            path = {
+                parent: path,
+                parentIndex: this.indexStack[height],
+                parentField: this.keyStack[height],
+            };
+        }
+        path = {
+            parent: path,
+            parentIndex: this.index,
+            parentField: this.keyStack[length],
+        };
+        return path;
+    }
+}
+
+/**
+ * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
+ */
+export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
+    let fields: FieldMap<JsonableTree> | undefined;
     for (const key of cursor.keys) {
         fields ??= {};
-        const field: PlaceholderTree[] = mapCursorField(cursor, key, placeholderTreeFromCursor);
+        const field: JsonableTree[] = mapCursorField(cursor, key, jsonableTreeFromCursor);
         fields[key as string] = field;
     }
 
-    const node: PlaceholderTree = {
+    const node: JsonableTree = {
         type: cursor.type,
         value: cursor.value,
         fields,

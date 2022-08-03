@@ -4,7 +4,7 @@
  */
 
 import { TreeSchemaIdentifier } from "../schema";
-import { TreeValue } from "./types";
+import { FieldKey, TreeValue } from "./types";
 
 /**
  * This modules provides a simple human readable (and editable) tree format.
@@ -73,3 +73,46 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
  * Can be passed to `JSON.stringify()` to produce a human-readable/editable JSON tree.
  */
 export interface JsonableTree extends PlaceholderTree {}
+
+/**
+ * Get a field from `node`, optionally modifying the tree to create it if missing.
+ */
+export function getGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, createIfMissing: boolean): T[] {
+    const children = getGenericTreeFieldMap(node, createIfMissing);
+
+    const field = children[key as string];
+    if (field !== undefined) {
+        return field;
+    }
+    // Handle missing field:
+    if (createIfMissing === false) {
+        return [];
+    }
+    const newField: T[] = [];
+    children[key as string] = newField;
+    return newField;
+}
+
+/**
+ * Get a FieldMap from `node`, optionally modifying the tree to create it if missing.
+ */
+ export function getGenericTreeFieldMap<T>(node: GenericTreeNode<T>, createIfMissing: boolean): FieldMap<T> {
+    let children = node.fields;
+    if (children === undefined) {
+        children = {};
+        // Handle missing fields:
+        if (createIfMissing) {
+            node.fields = children;
+        }
+    }
+
+    return children;
+}
+
+/**
+ * Sets a field on `node`.
+ */
+export function setGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, content: T[]): void {
+    const children = getGenericTreeFieldMap(node, true);
+    children[key as string] = content;
+}

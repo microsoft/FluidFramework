@@ -129,8 +129,17 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
      * @param count - Number of the versions to be fetched.
      * @param scenarioName - scenario in which this api is called. This will be recorded by server and would help
      *  in debugging purposes to see why this call was made.
+     * @param fetchSource - Callers can specify the source of the response. For ex. Driver may choose to cache
+     *  requests and serve data from cache. That will result in stale info returned. Callers can disable this
+     *  functionality by passing fetchSource = noCache and ensuring that driver will return latest information
+     *  from storage.
      */
-    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
+    getVersions(
+        versionId: string | null,
+        count: number,
+        scenarioName?: string,
+        fetchSource?: FetchSource,
+    ): Promise<IVersion[]>;
 
     /**
      * Creates a blob out of the given buffer
@@ -354,4 +363,9 @@ export interface ISummaryContext {
     readonly ackHandle: string | undefined;
 
     readonly referenceSequenceNumber: number;
+}
+
+export enum FetchSource {
+    default = "default",
+    noCache = "noCache",
 }

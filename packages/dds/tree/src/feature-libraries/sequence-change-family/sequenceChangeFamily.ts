@@ -4,8 +4,8 @@
  */
 
 import { ChangeFamily } from "../../change-family";
-import { Delta } from "../../changeset";
-import { AnchorSet } from "../../tree";
+import { toDelta } from "../../changeset";
+import { AnchorSet, Delta } from "../../tree";
 import { sequenceChangeRebaser } from "./sequenceChangeRebaser";
 import { SequenceChangeset } from "./sequenceChangeset";
 import { SequenceEditBuilder } from "./sequenceEditBuilder";
@@ -14,14 +14,10 @@ function buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: Anch
     return new SequenceEditBuilder(deltaReceiver, anchorSet);
 }
 
-function intoDelta(change: SequenceChangeset): Delta.Root {
-    throw Error("Not implemented"); // TODO
-}
-
 export type SequenceChangeFamily = ChangeFamily<SequenceEditBuilder, SequenceChangeset>;
 
 export const sequenceChangeFamily: SequenceChangeFamily = {
     rebaser: sequenceChangeRebaser,
     buildEditor,
-    intoDelta,
+    intoDelta: toDelta,
 };

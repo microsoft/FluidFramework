@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Delta } from "../changeset";
 import { ChangeRebaser } from "../rebase";
-import { AnchorSet } from "../tree";
+import { AnchorSet, Delta } from "../tree";
 
 export interface ChangeFamily<TEditor, TChange> {
     buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): TEditor;
