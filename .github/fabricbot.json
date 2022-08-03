@@ -712,19 +712,19 @@
         "requireAllStatuses": false,
         "conditionalMergeTypes": [
           {
-            "mergeType": "squash",
-            "condition": {
-              "placeholder": "labels",
-              "operator": "contains",
-              "label_name": "msftbot: merge-next"
-            }
-          },
-          {
             "mergeType": "merge",
             "condition": {
               "placeholder": "labels",
               "operator": "contains",
               "label_name": "main-next-integrate"
+            }
+          },
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "labels",
+              "operator": "contains",
+              "label_name": "msftbot: merge-next"
             }
           }
         ]
@@ -1915,19 +1915,19 @@
       "version": "1.0",
       "config": {
         "conditions": {
-          "operator": "and",
+          "operator": "or",
           "operands": []
         },
         "eventType": "pull_request",
         "eventNames": [
           "issue_comment"
         ],
-        "taskName": "Merge pull request after a comment is added",
+        "taskName": "Approve pull request after a comment is added",
         "actions": [
           {
             "name": "approvePullRequest",
             "parameters": {
-              "comment": "#sign-off main next integration"
+              "comment": "#sign-off"
             }
           },
           {
