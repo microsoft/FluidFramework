@@ -117,12 +117,10 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
             params.storageRoutingId.tenantId,
             params.storageRoutingId.documentId,
             this.storageDirectoryConfig.useRepoOwner ? params.repoOwner : undefined);
-        console.log("[DEBUG] Generated repoPath: ", repoPath);
         const directoryPath = helpers.getGitDirectory(
             repoPath,
             this.storageDirectoryConfig.baseDir,
             this.storageDirectoryConfig.suffixPath);
-        console.log("[DEBUG] Generated directoryPath: ", directoryPath);
         const repoName = `${params.storageRoutingId.tenantId}/${params.storageRoutingId.documentId}`;
 
         return this.internalHandlerCore(

@@ -43,7 +43,7 @@ export function create(
             .then(async (repoManager) => {
                 const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
                 await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
-                return repoManager.getCommit(request.params.sha)
+                return repoManager.getCommit(request.params.sha);
             }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response);

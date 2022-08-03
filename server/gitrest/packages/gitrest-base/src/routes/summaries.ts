@@ -33,6 +33,7 @@ import {
     getLumberjackBasePropertiesFromRepoManagerParams,
     getRepoManagerFromWriteAPI,
     checkSoftDeleted,
+    getSoftDeletedMarkerPath,
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
@@ -185,14 +186,17 @@ async function deleteSummary(
     const summaryFolderPath = repoManager.path;
     Lumberjack.info(`Deleting summary`, lumberjackProperties);
 
-    if (softDelete) {
-        // Currently, we ignore the softDelete header and always implement hard delete. Soft delete will come next.
-        Lumberjack.info(`Skipping soft delete as it will be implemented later.`, lumberjackProperties);
-        return;
-    }
-
     try {
+        if (softDelete) {
+            const softDeletedMarkerPath = getSoftDeletedMarkerPath(summaryFolderPath);
+            await fileSystemManager.promises.writeFile(softDeletedMarkerPath, "");
+            Lumberjack.info(`Successfully marked summary data as soft-deleted.`, lumberjackProperties);
+            return;
+        }
+
+        // Hard delete
         await fileSystemManager.promises.rm(summaryFolderPath, { recursive: true });
+        Lumberjack.info(`Successfully hard-deleted summary data.`, lumberjackProperties);
     } catch (error: any) {
         if (error?.code === "ENOENT" ||
                 (error instanceof NetworkError &&
@@ -228,7 +232,6 @@ export function create(
      */
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        console.log("[DEBUG] Summaries GET repoManagerParams: ", JSON.stringify(repoManagerParams));
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
@@ -256,7 +259,6 @@ export function create(
      */
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        console.log("[DEBUG] Summaries POST repoManagerParams: ", JSON.stringify(repoManagerParams));
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
@@ -286,7 +288,6 @@ export function create(
      */
     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
-        console.log("[DEBUG] Summaries DELETE repoManagerParams: ", JSON.stringify(repoManagerParams));
         if (!repoManagerParams.storageRoutingId?.tenantId ||
             !repoManagerParams.storageRoutingId?.documentId) {
             handleResponse(
