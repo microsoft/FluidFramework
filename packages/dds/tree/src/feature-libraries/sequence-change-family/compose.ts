@@ -8,7 +8,11 @@ import { clone, fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
 export function compose(...changes: SequenceChangeset[]): SequenceChangeset {
-    const base: SequenceChangeset = { marks: {} };
+    const base: SequenceChangeset = {
+        // TODO: populate opRanges
+        // opRanges: [],
+        marks: {},
+    };
     for (const change of changes) {
         foldInChangeset(change, base);
     }

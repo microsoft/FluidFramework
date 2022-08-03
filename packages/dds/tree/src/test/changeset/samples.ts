@@ -261,9 +261,9 @@ export namespace ScenarioA {
             fields: {
                 foo: [
                     1,
-                    { type: "Tomb", seq: 1, count: 1 }, // B
+                    { type: "Tomb", change: 1, count: 1 }, // B
                     [{ type: "Insert", id: 0, content: [nodeX], heed: Effects.All }],
-                    { type: "Tomb", seq: 1, count: 1 }, // C
+                    { type: "Tomb", change: 1, count: 1 }, // C
                 ],
             },
         }],
@@ -279,9 +279,9 @@ export namespace ScenarioA {
             fields: {
                 foo: [
                     1,
-                    { type: "Tomb", seq: 1, count: 1 }, // B
+                    { type: "Tomb", change: 1, count: 1 }, // B
                     [{ type: "Bounce", id: 0, heed: Effects.All }],
-                    { type: "Tomb", seq: 1, count: 1 }, // C
+                    { type: "Tomb", change: 1, count: 1 }, // C
                 ],
                 bar: [
                     [

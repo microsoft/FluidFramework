@@ -18,19 +18,23 @@ export namespace Transposed {
 		 * The reference sequence number of the transaction that this transaction was originally
 		 * issued after.
 		 */
-		ref: SeqNumber;
+		ref: ChangesetTag;
 		/**
 		 * The reference sequence number of the transaction that this transaction has been
 		 * transposed over.
 		 * Omitted on changesets that have not been transposed.
 		 */
-		newRef?: SeqNumber;
+		newRef?: ChangesetTag;
+	}
+
+	export interface ChangesetBase {
+		opRanges?: { min: OpId; tag: ChangesetTag; }[];
 	}
 
 	/**
 	 * Represents changes to a document forest.
 	 */
-	export interface LocalChangeset {
+	export interface LocalChangeset extends ChangesetBase {
 		marks: FieldMarks;
 		moves?: MoveEntry<TreeForestPath>[];
 	}
@@ -38,7 +42,7 @@ export namespace Transposed {
 	/**
 	 * Represents changes to a document tree.
 	 */
-	export interface PeerChangeset {
+	export interface PeerChangeset extends ChangesetBase {
 		marks: MarkList;
 		moves?: MoveEntry[];
 	}
@@ -73,7 +77,7 @@ export namespace Transposed {
 
 	export interface Tomb {
 		type: "Tomb";
-		seq: SeqNumber;
+		change: ChangesetTag;
 		count: number;
 	}
 
@@ -87,12 +91,12 @@ export namespace Transposed {
 
 	export interface RevertValue {
 		type: "Revert";
-		seq: SeqNumber;
+		change: ChangesetTag;
 	}
 
 	export interface Modify {
 		type: "Modify";
-		tomb?: SeqNumber;
+		tomb?: ChangesetTag;
 		value?: ValueMark;
 		fields?: FieldMarks;
 	}
@@ -200,7 +204,7 @@ export namespace Transposed {
 	export type GapEffectType = GapEffect["type"];
 
 	export interface GapEffectSegment {
-		tombs?: SeqNumber;
+		tombs?: ChangesetTag;
 		type: "Gap";
 		count: GapCount;
 		/**
@@ -228,7 +232,7 @@ export namespace Transposed {
 	export type NodeMark = Detach | Reattach;
 
 	export interface Detach extends HasOpId {
-		tomb?: SeqNumber;
+		tomb?: ChangesetTag;
 		gaps?: GapEffect[];
 		type: "Delete" | "MoveOut";
 		count: NodeCount;
@@ -236,19 +240,19 @@ export namespace Transposed {
 
 	export interface ModifyDetach extends HasOpId {
 		type: "MDelete" | "MMoveOut";
-		tomb?: SeqNumber;
+		tomb?: ChangesetTag;
 		value?: ValueMark;
 		fields?: FieldMarks;
 	}
 
 	export interface Reattach extends HasOpId {
 		type: "Revive" | "Return";
-		tomb: SeqNumber;
+		tomb: ChangesetTag;
 		count: NodeCount;
 	}
 	export interface ModifyReattach extends HasOpId {
 		type: "MRevive" | "MReturn";
-		tomb: SeqNumber;
+		tomb: ChangesetTag;
 		value?: ValueMark;
 		fields?: FieldMarks;
 	}
@@ -281,12 +285,12 @@ export namespace Transposed {
 	 * these tombstones represent. This can be read as "tombstones from the effect of `seq[0]`
 	 * on `seq[1]`".
 	 */
-	export type PriorSeq = SeqNumber | [SeqNumber, SeqNumber];
+	export type PriorSeq = ChangesetTag | [ChangesetTag, ChangesetTag];
 }
 
 export namespace Sequenced {
 	export interface Transaction extends Transposed.Transaction {
-		seq: SeqNumber;
+		seq: ChangesetTag;
 	}
 }
 
@@ -317,14 +321,6 @@ export enum RangeType {
  */
 export type OpId = number;
 
-export interface HasSeqNumber {
-	/**
-	 * Included in a mark to indicate the transaction it was part of.
-	 * This number is assigned by the Fluid service.
-	 */
-	seq: SeqNumber;
-}
-
 export interface HasOpId {
 	/**
 	 * The sequential ID assigned to a change within a transaction.
@@ -340,7 +336,7 @@ export type ProtoNode = JsonableTree;
 export type NodeCount = number;
 export type GapCount = number;
 export type Skip = number;
-export type SeqNumber = number;
+export type ChangesetTag = number | string;
 export type Value = number | string | boolean;
 export type ClientId = number;
 export enum Tiebreak { Left, Right }
