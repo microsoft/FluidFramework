@@ -48,6 +48,10 @@ export interface ITelemetryLoggerPropertyBags{
     error?: ITelemetryLoggerPropertyBag;
 }
 
+export type TelemetryEventTypes =
+    | ITelemetryBaseEvent
+    | ITelemetryGenericEvent
+    | ITelemetryPerformanceEvent;
 /**
  * TelemetryLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
@@ -559,5 +563,40 @@ export class PerformanceEvent {
         console.error(message);
         console.error(error);
         throw error;
+    }
+}
+
+/**
+     * Take in a event object, stringify any fields that are non-primitives, and return the new event object.
+     * @param event - Event with fields you want to stringify.
+     */
+function stringifyEventFields(event: TelemetryEventTypes): void {
+    for (const key of Object.keys(event)) {
+        const filteredEventVal = filterValidTelemetryProps(event[key]);
+        if (filteredEventVal !== null) {
+            event[key] = filteredEventVal;
+        }
+    }
+}
+/**
+ * Takes in parameter, if parameter is of primitive type, return the original value.
+ * If parameter is an array, stringify then return the result.
+ * @param x - parameter passed to validate/filter
+ */
+function filterValidTelemetryProps(x: any): TelemetryEventPropertyType | null {
+    switch (typeof x) {
+        case "string":
+        case "number":
+        case "boolean":
+        case "undefined":
+            return x;
+        default:
+            if (!Array.isArray(x)) {
+                return null;
+            }
+            if (x.every((val) => typeof val === "boolean" || typeof val === "string" || typeof val === "number")) {
+                return JSON.stringify(x);
+            }
+            return null;
     }
 }
