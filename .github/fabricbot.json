@@ -701,17 +701,33 @@
       "version": "1.0",
       "config": {
         "taskName": "Automatically squash-merge pull requests in next",
-        "label": "msftbot: merge-next",
+        "label": "",
         "silentMode": false,
         "minMinutesOpen": "5",
-        "mergeType": "squash",
         "deleteBranches": true,
         "allowAutoMergeInstructionsWithoutLabel": true,
         "enforceDMPAsStatus": true,
         "removeLabelOnPush": true,
         "usePrDescriptionAsCommitMessage": true,
         "requireAllStatuses": false,
-        "conditionalMergeTypes": []
+        "conditionalMergeTypes": [
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "labels",
+              "operator": "contains",
+              "label_name": "msftbot: merge-next"
+            }
+          },
+          {
+            "mergeType": "merge",
+            "condition": {
+              "placeholder": "labels",
+              "operator": "contains",
+              "label_name": "main-next-integrate"
+            }
+          }
+        ]
       },
       "disabled": false
     },
@@ -1887,6 +1903,37 @@
             "name": "addLabel",
             "parameters": {
               "label": "triage"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "taskType": "trigger",
+      "capabilityId": "IssueResponder",
+      "subCapability": "PullRequestCommentResponder",
+      "version": "1.0",
+      "config": {
+        "conditions": {
+          "operator": "and",
+          "operands": []
+        },
+        "eventType": "pull_request",
+        "eventNames": [
+          "issue_comment"
+        ],
+        "taskName": "Merge pull request after a comment is added",
+        "actions": [
+          {
+            "name": "approvePullRequest",
+            "parameters": {
+              "comment": "#sign-off main next integration"
+            }
+          },
+          {
+            "name": "addLabel",
+            "parameters": {
+              "label": "main-next-integrate"
             }
           }
         ]
