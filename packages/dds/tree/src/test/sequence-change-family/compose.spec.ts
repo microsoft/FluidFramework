@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ProtoNode, Transposed as T, Value } from "../../changeset";
+import { Transposed as T, Value } from "../../changeset";
 import { sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema";
 import { brand } from "../../util";
@@ -70,7 +70,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, set2);
     });
 
-    it("insert root | insert root", () => {
+    it("insert | insert", () => {
         const insertA: SequenceChangeset = {
             marks: {
                 root: [
@@ -106,63 +106,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("insert child | insert child", () => {
-        const insertA: SequenceChangeset = {
-            marks: {
-                root: [{
-                    type: "Modify",
-                    fields: {
-                        foo: [
-                            [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
-                        ],
-                        bar: [
-                            [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
-                        ],
-                    },
-                }],
-            },
-        };
-        const insertB: SequenceChangeset = {
-            marks: {
-                root: [{
-                    type: "Modify",
-                    fields: {
-                        bar: [
-                            1,
-                            [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
-                        ],
-                        baz: [
-                            [{ type: "Insert", id: 4, content: [{ type, value: 4 }] }],
-                        ],
-                    },
-                }],
-            },
-        };
-        const actual = compose(insertA, insertB);
-        const expected: SequenceChangeset = {
-            marks: {
-                root: [{
-                    type: "Modify",
-                    fields: {
-                        foo: [
-                            [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
-                        ],
-                        bar: [
-                            [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
-                            1,
-                            [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
-                        ],
-                        baz: [
-                            [{ type: "Insert", id: 4, content: [{ type, value: 4 }] }],
-                        ],
-                    },
-                }],
-            },
-        };
-        assert.deepEqual(actual, expected);
-    });
-
-    it("delete root | delete root", () => {
+    it("delete | delete", () => {
         // Deletes ABC-----IJKLM
         const deleteA: SequenceChangeset = {
             marks: {
@@ -197,6 +141,61 @@ describe("SequenceChangeFamily - Compose", () => {
                     { type: "Delete", id: 2, count: 3 },
                     { type: "Delete", id: 2, count: 2 },
                 ],
+            },
+        };
+        assert.deepEqual(actual, expected);
+    });
+
+    it("modify | modify", () => {
+        const insertA: SequenceChangeset = {
+            marks: {
+                root: [{
+                    type: "Modify",
+                    fields: {
+                        foo: [
+                            [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                        ],
+                        bar: [
+                            { type: "Delete", id: 2, count: 1 },
+                        ],
+                    },
+                }],
+            },
+        };
+        const insertB: SequenceChangeset = {
+            marks: {
+                root: [{
+                    type: "Modify",
+                    fields: {
+                        bar: [
+                            1,
+                            [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                        ],
+                        baz: [
+                            { type: "Delete", id: 4, count: 1 },
+                        ],
+                    },
+                }],
+            },
+        };
+        const actual = compose(insertA, insertB);
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [{
+                    type: "Modify",
+                    fields: {
+                        foo: [
+                            [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                        ],
+                        bar: [
+                            { type: "Delete", id: 2, count: 1 },
+                            [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                        ],
+                        baz: [
+                            { type: "Delete", id: 4, count: 1 },
+                        ],
+                    },
+                }],
             },
         };
         assert.deepEqual(actual, expected);
