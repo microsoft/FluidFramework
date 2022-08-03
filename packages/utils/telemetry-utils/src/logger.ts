@@ -133,6 +133,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any) {
+        stringifyEventFields(event);
         this.sendTelemetryEventCore({ ...event, category: event.category ?? "generic" }, error);
     }
 
@@ -154,7 +155,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
         if (typeof newEvent.duration === "number") {
             newEvent.duration = TelemetryLogger.formatTick(newEvent.duration);
         }
-
+        stringifyEventFields(newEvent);
         this.send(newEvent);
     }
 
@@ -165,6 +166,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
      * @param error - optional error object to log
      */
     public sendErrorEvent(event: ITelemetryErrorEvent, error?: any) {
+        stringifyEventFields(event);
         this.sendTelemetryEventCore({
             // ensure the error field has some value,
             // this can and will be overridden by event, or error
@@ -185,7 +187,7 @@ export abstract class TelemetryLogger implements ITelemetryLogger {
             ...event,
             category: event.category ?? "performance",
         };
-
+        stringifyEventFields(perfEvent);
         this.sendTelemetryEventCore(perfEvent, error);
     }
 
