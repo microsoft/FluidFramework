@@ -83,13 +83,13 @@ export namespace Transposed {
 
 	export type ValueMark = SetValue | RevertValue;
 
-	export interface SetValue {
+	export interface SetValue extends HasOpId {
 		type: "Set";
 		/** Can be left unset to represent the value being cleared. */
 		value?: Value;
 	}
 
-	export interface RevertValue {
+	export interface RevertValue extends HasOpId {
 		type: "Revert";
 		change: ChangesetTag;
 	}

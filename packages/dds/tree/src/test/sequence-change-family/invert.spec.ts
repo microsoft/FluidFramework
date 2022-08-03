@@ -41,45 +41,23 @@ describe("SequenceChangeFamily - Invert", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("set root", () => {
+    it("set value => revert value", () => {
         const input = asInputForest([
-            { type: "Modify", value: { type: "Set", value: 42 } },
+            { type: "Modify", value: { type: "Set", id: 1, value: 42 } },
         ]);
         const expected = asOutputForest([
-            { type: "Modify", value: { type: "Revert", change: tag } },
+            { type: "Modify", value: { type: "Revert", id: 1, change: tag } },
         ]);
         const actual = invert(input);
         assert.deepEqual(actual, expected);
     });
 
-    it("set child", () => {
+    it("revert value => revert value", () => {
         const input = asInputForest([
-            {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        10,
-                        {
-                            type: "Modify",
-                            value: { type: "Set", value: 42 },
-                        },
-                    ],
-                },
-            },
+            { type: "Modify", value: { type: "Revert", id: 1, change: "OtherTag" } },
         ]);
         const expected = asOutputForest([
-            {
-                type: "Modify",
-                fields: {
-                    foo: [
-                        10,
-                        {
-                            type: "Modify",
-                            value: { type: "Revert", change: tag },
-                        },
-                    ],
-                },
-            },
+            { type: "Modify", value: { type: "Revert", id: 1, change: tag } },
         ]);
         const actual = invert(input);
         assert.deepEqual(actual, expected);
@@ -110,7 +88,7 @@ describe("SequenceChangeFamily - Invert", () => {
                 type: "MInsert",
                 id: 1,
                 content: { type, value: 42 },
-                fields: { foo: [{ type: "Modify", value: { type: "Set", value: 42 } }] },
+                fields: { foo: [{ type: "Modify", value: { type: "Set", id: 1, value: 42 } }] },
             }],
         ]);
         const expected = asOutputForest([

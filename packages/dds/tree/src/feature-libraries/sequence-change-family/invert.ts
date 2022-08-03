@@ -87,9 +87,8 @@ function invertMarkList(markList: T.MarkList, opIdToTag: (id: OpId) => Changeset
                     if (mark.value !== undefined) {
                         modify.value = {
                             type: "Revert",
-                            // Revert to before the earliest tag for now.
-                            // TODO: handle the case where the changeset is a squash
-                            change: opIdToTag(0),
+                            id: mark.value.id,
+                            change: opIdToTag(mark.value.id),
                         };
                     }
                     if (mark.fields !== undefined) {
