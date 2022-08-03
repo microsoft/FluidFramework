@@ -72,6 +72,14 @@ function invertMarkList(markList: T.MarkList, opIdToTag: (id: OpId) => Changeset
                     });
                     break;
                 }
+                case "Revive": {
+                    inverseMarkList.push({
+                        type: "Delete",
+                        id: mark.id,
+                        count: mark.count,
+                    });
+                    break;
+                }
                 case "Modify": {
                     const modify: T.Modify = {
                         type: "Modify",
@@ -87,6 +95,7 @@ function invertMarkList(markList: T.MarkList, opIdToTag: (id: OpId) => Changeset
                     if (mark.fields !== undefined) {
                         modify.fields = invertFieldMarks(mark.fields, opIdToTag);
                     }
+                    inverseMarkList.push(modify);
                     break;
                 }
                 default: fail("Not implemented");
