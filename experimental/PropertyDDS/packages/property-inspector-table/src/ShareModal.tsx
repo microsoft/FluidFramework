@@ -190,8 +190,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
   private readonly renderShareButton = () => {
     const { classes } = this.props;
 
-    if (this.isPublic) {
-      return (
+    return this.isPublic ? (
         <Button
           color="primary"
           className={classes.shareButton}
@@ -200,9 +199,7 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
         >
           Disable Public Access
         </Button>
-      );
-    } else {
-      return (
+      ) : (
         <Button
           color="primary"
           className={classes.shareButton}
@@ -212,7 +209,6 @@ class ShareModal extends React.Component<IShareModalProps & WithStyles<typeof st
           Enable Public Access
         </Button>
       );
-    }
   };
 
   private renderPublicSharingStatus() {

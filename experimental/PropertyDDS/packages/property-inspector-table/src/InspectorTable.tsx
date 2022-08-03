@@ -487,8 +487,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
 
       const getEmptyPanel = (repoIsExpired: boolean = false) => {
         const modalEnabled = !!repositoryUrn && !!currentUrn && !isV1Urn;
-        if (repoIsExpired) {
-          return (
+        return repoIsExpired ? (
             <Empty
               description={
                 <div className={classes.expiredNotice}>
@@ -533,9 +532,7 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
               iconSize={computeIconSize(width)}
               message={"This repository is expired"}
             />
-          );
-        } else {
-          return (
+          ) : (
             <Empty
               description={emptyDescription}
               iconId={"no-data"}
@@ -543,7 +540,6 @@ class InspectorTable extends React.Component<WithStyles<typeof styles> & IInspec
               message={"There is no data to show"}
             />
           );
-        }
       };
 
       return (
