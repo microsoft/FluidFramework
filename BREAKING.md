@@ -18,6 +18,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
 # 3.0.0
+
 ## 3.0.0 Upcoming changes
 - [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
 - [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
