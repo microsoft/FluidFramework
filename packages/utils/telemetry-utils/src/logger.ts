@@ -51,6 +51,7 @@ export interface ITelemetryLoggerPropertyBags{
 export type TelemetryEventTypes =
     | ITelemetryBaseEvent
     | ITelemetryGenericEvent
+    | ITelemetryErrorEvent
     | ITelemetryPerformanceEvent;
 /**
  * TelemetryLogger class contains various helper telemetry methods,
