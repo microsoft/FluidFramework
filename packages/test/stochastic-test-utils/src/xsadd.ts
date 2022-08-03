@@ -5,7 +5,17 @@
 
 /* eslint-disable no-bitwise */
 
-import { RandomCtor, Random } from "best-random";
+import { Random } from "best-random";
+
+// Perf: We avoid the use of an ES6 'class' for a modest performance gain, but allow the use
+//       of the 'new' keyword using a ctor interface (node 12? x64).
+
+/**
+ * Construct a new instance of the XSadd random number generator, seeding it with up to
+ * four 32b integers.  If no seeds are provided, the PRNG is non-deterministically seeded
+ * using Math.random().
+ */
+export type XSaddCtor = new (seed0?: number, seed1?: number, seed2?: number, seed3?: number) => Random;
 
 /**
  * XORSHIFT-ADD (XSadd) is a non-cryptographic PRNG that is tiny, fast, seedable, and has
@@ -16,7 +26,7 @@ import { RandomCtor, Random } from "best-random";
  *
  * See: http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/XSADD/
  */
-export const XSadd: RandomCtor =
+export const XSadd: XSaddCtor =
     function(...seed: number[]): Random {
         // eslint-disable-next-line no-param-reassign
         seed = seed.length
