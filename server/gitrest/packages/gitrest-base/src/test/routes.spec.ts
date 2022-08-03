@@ -33,12 +33,11 @@ import * as testUtils from "./utils";
 const commitEmail = "kurtb@microsoft.com";
 const commitName = "Kurt Berglund";
 
-async function createRepo(supertest: request.SuperTest<request.Test>, owner: string, name: string, docId: string) {
+async function createRepo(supertest: request.SuperTest<request.Test>, owner: string, name: string) {
     return supertest
         .post(`/${owner}/repos`)
         .set("Accept", "application/json")
         .set("Content-Type", "application/json")
-        .set(Constants.StorageRoutingIdHeader, getStorageRoutingHeaderValue(name, docId))
         .send({ name })
         .expect(201);
 }
@@ -112,7 +111,7 @@ async function initBaseRepo(
     testTree: ICreateTreeParams,
     testCommit: ICreateCommitParams,
     testRef: ICreateRefParams) {
-    await createRepo(supertest, owner, repoName, documentId);
+    await createRepo(supertest, owner, repoName);
     await createBlob(supertest, owner, repoName, documentId, testBlob);
     await createTree(supertest, owner, repoName, documentId, testTree);
     await createCommit(supertest, owner, repoName, documentId, testCommit);
@@ -239,12 +238,9 @@ testModes.forEach((mode) => {
             describe("Git", () => {
                 describe("Repos", () => {
                     it("Can create and get a new repo", async () => {
-                        await createRepo(supertest, testOwnerName, testRepoName, testDocId);
+                        await createRepo(supertest, testOwnerName, testRepoName);
                         return supertest
                             .get(`/repos/${testOwnerName}/${testRepoName}`)
-                            .set(
-                                Constants.StorageRoutingIdHeader,
-                                getStorageRoutingHeaderValue(testRepoName, testDocId))
                             .expect(200);
                     });
 
@@ -252,9 +248,6 @@ testModes.forEach((mode) => {
                         it("Returns 400 for an unknown repo", async () => {
                             return supertest
                                 .get(`/repos/${testOwnerName}/${testRepoName}`)
-                                .set(
-                                    Constants.StorageRoutingIdHeader,
-                                    getStorageRoutingHeaderValue(testRepoName, testDocId))
                                 .expect(400);
                         });
 
@@ -263,9 +256,6 @@ testModes.forEach((mode) => {
                                 .post(`/${testOwnerName}/repos`)
                                 .set("Accept", "application/json")
                                 .set("Content-Type", "application/json")
-                                .set(
-                                    Constants.StorageRoutingIdHeader,
-                                    getStorageRoutingHeaderValue(testRepoName, testDocId))
                                 .send({ name: "../evilrepo" })
                                 .expect(400);
                         });
@@ -273,9 +263,6 @@ testModes.forEach((mode) => {
                         it("Rejects missing repo names", async () => {
                             return supertest
                                 .post(`/${testOwnerName}/repos`)
-                                .set(
-                                    Constants.StorageRoutingIdHeader,
-                                    getStorageRoutingHeaderValue(testRepoName, testDocId))
                                 .expect(400);
                         });
                     }
@@ -283,7 +270,7 @@ testModes.forEach((mode) => {
 
                 describe("Blobs", () => {
                     it("Can create and retrieve a blob", async () => {
-                        await createRepo(supertest, testOwnerName, testRepoName, testDocId);
+                        await createRepo(supertest, testOwnerName, testRepoName);
                         const result = await createBlob(
                             supertest,
                             testOwnerName,
@@ -304,7 +291,7 @@ testModes.forEach((mode) => {
                     });
 
                     it("Can create an existing blob without error", async () => {
-                        await createRepo(supertest, testOwnerName, testRepoName, testDocId);
+                        await createRepo(supertest, testOwnerName, testRepoName);
                         await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
                         await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
                     });
@@ -312,7 +299,7 @@ testModes.forEach((mode) => {
 
                 describe("Trees", () => {
                     it("Can create and retrieve a tree", async () => {
-                        await createRepo(supertest, testOwnerName, testRepoName, testDocId);
+                        await createRepo(supertest, testOwnerName, testRepoName);
                         await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
                         const tree = await createTree(supertest, testOwnerName, testRepoName, testDocId, testTree);
                         assert.strictEqual(tree.body.sha, "bf4db183cbd07f48546a5dde098b4510745d79a1");
@@ -330,7 +317,7 @@ testModes.forEach((mode) => {
 
                     it("Can recursively retrieve a tree", async () => {
                         // Create a tree with a single sub directory
-                        await createRepo(supertest, testOwnerName, testRepoName, testDocId);
+                        await createRepo(supertest, testOwnerName, testRepoName);
                         await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
                         await createTree(supertest, testOwnerName, testRepoName, testDocId, testTree);
                         const parentBlob = await createBlob(
@@ -380,7 +367,7 @@ testModes.forEach((mode) => {
 
                 describe("Commits", () => {
                     it("Can create and retrieve a commit", async () => {
-                        await createRepo(supertest, testOwnerName, testRepoName, testDocId);
+                        await createRepo(supertest, testOwnerName, testRepoName);
                         await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
                         await createTree(supertest, testOwnerName, testRepoName, testDocId, testTree);
                         const commit = await createCommit(supertest, testOwnerName, testRepoName, testDocId, testCommit);
@@ -400,7 +387,7 @@ testModes.forEach((mode) => {
 
                 describe("Refs", () => {
                     it("Can create and retrieve a reference", async () => {
-                        await createRepo(supertest, testOwnerName, testRepoName, testDocId);
+                        await createRepo(supertest, testOwnerName, testRepoName);
                         await createBlob(supertest, testOwnerName, testRepoName, testDocId, testBlob);
                         await createTree(supertest, testOwnerName, testRepoName, testDocId, testTree);
                         await createCommit(supertest, testOwnerName, testRepoName, testDocId, testCommit);
