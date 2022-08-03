@@ -32,7 +32,7 @@ const registryEntries = new Map([
 
 // Just a little helper, since we're going to create multiple coordinates.
 const createAndAttachCoordinate = async (runtime: IContainerRuntime, name: string) => {
-    const dataStore = await runtime.createDataStore(Coordinate.ComponentName);
+    const dataStore = await runtime.createDataStore(Coordinate.getFactory().type);
     const aliasResult = await dataStore.trySetAlias(name);
     const simpleCoordinateComponentRuntime =
         aliasResult === "Success" ? dataStore : await runtime.getRootDataStore(name);
