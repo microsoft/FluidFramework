@@ -17,6 +17,7 @@ They are not presented in any particular order.
     It is the public face of our product and is home to high-level overviews, samples, etc. to get users up-and-running on the framework.
 - [Github Wiki](https://github.com/microsoft/FluidFramework/wiki)
   - This is the contributor-facing wiki for the [fluid-framework](https://github.com/microsoft/FluidFramework) repository.
+  - It primarily contains documentation relevant to the open-source community, including contribution guidelines.
 - (Microsoft Internal) [EngHub Wiki](https://eng.ms/docs/experiences-devices/oxo/office-shared/wacbohemia/fluid-framework-platform-internal/ff-platform-docs/docs/overview)
   - This is our Microsoft-internal only wiki.
     It is used to house documentation that is confidential or irrelevant to our open-source community.
