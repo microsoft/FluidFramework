@@ -20,7 +20,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
+    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
@@ -274,6 +274,9 @@ export function createMap<T>(): MapLike<T>;
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
 
 // @public (undocumented)
+export function debugMarkerToString(marker: Marker): string;
+
+// @public (undocumented)
 export const DetachedReferencePosition = -1;
 
 // Warning: (ae-internal-missing-underscore) The name "Dictionary" should be prefixed with an underscore because the declaration is marked as @internal
@@ -518,11 +521,6 @@ export interface IMergeTreeSegmentDelta {
 export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
-    // (undocumented)
-    getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number): {
-        parallelText: string[];
-        parallelMarkers: Marker[];
-    };
 }
 
 // @public (undocumented)
@@ -636,7 +634,7 @@ export interface IRemovalInfo {
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
+    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)
@@ -908,11 +906,18 @@ export class PropertiesManager {
     // (undocumented)
     ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
     // (undocumented)
-    addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean): PropertySet | undefined;
+    addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
     hasPendingProperties(): boolean;
+}
+
+// @public (undocumented)
+export enum PropertiesRollback {
+    None = 0,
+    Rewrite = 2,
+    Rollback = 1
 }
 
 // Warning: (ae-internal-missing-underscore) The name "Property" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1138,6 +1143,8 @@ export interface SegmentGroup {
     // (undocumented)
     localSeq: number;
     // (undocumented)
+    previousProps?: PropertySet[];
+    // (undocumented)
     segments: ISegment[];
 }
 
@@ -1154,6 +1161,8 @@ export class SegmentGroupCollection {
     get empty(): boolean;
     // (undocumented)
     enqueue(segmentGroup: SegmentGroup): void;
+    // (undocumented)
+    pop?(): SegmentGroup | undefined;
     // (undocumented)
     get size(): number;
 }

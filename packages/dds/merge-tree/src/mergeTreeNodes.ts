@@ -42,7 +42,7 @@ import {
     refGetTileLabels,
  } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
-import { PropertiesManager } from "./segmentPropertiesManager";
+import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
 
 export interface IMergeNodeCommon {
     parent?: IMergeBlock;
@@ -106,6 +106,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
         op?: ICombiningOp,
         seq?: number,
         collabWindow?: CollaborationWindow,
+        rollback?: PropertiesRollback,
     ): PropertySet | undefined;
     clone(): ISegment;
     canAppend(segment: ISegment): boolean;
@@ -223,6 +224,7 @@ export interface MergeTreeStats {
 
 export interface SegmentGroup {
     segments: ISegment[];
+    previousProps?: PropertySet[];
     localSeq: number;
 }
 
@@ -312,7 +314,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     public localSeq?: number;
     public localRemovedSeq?: number;
 
-    public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow) {
+    public addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number,
+        collabWindow?: CollaborationWindow, rollback: PropertiesRollback = PropertiesRollback.None) {
         if (!this.propertyManager) {
             this.propertyManager = new PropertiesManager();
         }
@@ -325,6 +328,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
             op,
             seq,
             collabWindow && collabWindow.collaborating,
+            rollback,
         );
     }
 
@@ -507,71 +511,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
     }
 
     toString() {
-        let bbuf = "";
-        if (refTypeIncludesFlag(this, ReferenceType.Tile)) {
-            bbuf += "Tile";
-        }
-        if (refTypeIncludesFlag(this, ReferenceType.NestBegin)) {
-            if (bbuf.length > 0) {
-                bbuf += "; ";
-            }
-            bbuf += "RangeBegin";
-        }
-        if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
-            if (bbuf.length > 0) {
-                bbuf += "; ";
-            }
-            bbuf += "RangeEnd";
-        }
-        let lbuf = "";
-        const id = this.getId();
-        if (id) {
-            bbuf += ` (${id}) `;
-        }
-        const tileLabels = refGetTileLabels(this);
-        if (tileLabels) {
-            lbuf += "tile -- ";
-            for (let i = 0, len = tileLabels.length; i < len; i++) {
-                const tileLabel = tileLabels[i];
-                if (i > 0) {
-                    lbuf += "; ";
-                }
-                lbuf += tileLabel;
-            }
-        }
-        const rangeLabels = refGetRangeLabels(this);
-        if (rangeLabels) {
-            let rangeKind = "begin";
-            if (refTypeIncludesFlag(this, ReferenceType.NestEnd)) {
-                rangeKind = "end";
-            }
-            if (tileLabels) {
-                lbuf += " ";
-            }
-            lbuf += `range ${rangeKind} -- `;
-            const labels = rangeLabels;
-            for (let i = 0, len = labels.length; i < len; i++) {
-                const rangeLabel = labels[i];
-                if (i > 0) {
-                    lbuf += "; ";
-                }
-                lbuf += rangeLabel;
-            }
-        }
-        let pbuf = "";
-        if (this.properties) {
-            pbuf += JSON.stringify(this.properties, (key, value) => {
-                // Avoid circular reference when stringifying makers containing handles.
-                // (Substitute a debug string instead.)
-                const handle = !!value && value.IFluidHandle;
-
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                return handle
-                    ? `#Handle(${handle.routeContext.path}/${handle.path})`
-                    : value;
-            });
-        }
-        return `M ${bbuf}: ${lbuf} ${pbuf}`;
+        return `M${this.getId()}`;
     }
 
     protected createSplitSegmentAt(pos: number) {
@@ -653,4 +593,72 @@ export interface SegmentAccumulator {
 export interface MinListener {
     minRequired: number;
     onMinGE(minSeq: number): void;
+}
+
+export function debugMarkerToString(marker: Marker): string {
+    let bbuf = "";
+    if (refTypeIncludesFlag(marker, ReferenceType.Tile)) {
+        bbuf += "Tile";
+    }
+    if (refTypeIncludesFlag(marker, ReferenceType.NestBegin)) {
+        if (bbuf.length > 0) {
+            bbuf += "; ";
+        }
+        bbuf += "RangeBegin";
+    }
+    if (refTypeIncludesFlag(marker, ReferenceType.NestEnd)) {
+        if (bbuf.length > 0) {
+            bbuf += "; ";
+        }
+        bbuf += "RangeEnd";
+    }
+    let lbuf = "";
+    const id = marker.getId();
+    if (id) {
+        bbuf += ` (${id}) `;
+    }
+    const tileLabels = refGetTileLabels(marker);
+    if (tileLabels) {
+        lbuf += "tile -- ";
+        for (let i = 0, len = tileLabels.length; i < len; i++) {
+            const tileLabel = tileLabels[i];
+            if (i > 0) {
+                lbuf += "; ";
+            }
+            lbuf += tileLabel;
+        }
+    }
+    const rangeLabels = refGetRangeLabels(marker);
+    if (rangeLabels) {
+        let rangeKind = "begin";
+        if (refTypeIncludesFlag(marker, ReferenceType.NestEnd)) {
+            rangeKind = "end";
+        }
+        if (tileLabels) {
+            lbuf += " ";
+        }
+        lbuf += `range ${rangeKind} -- `;
+        const labels = rangeLabels;
+        for (let i = 0, len = labels.length; i < len; i++) {
+            const rangeLabel = labels[i];
+            if (i > 0) {
+                lbuf += "; ";
+            }
+            lbuf += rangeLabel;
+        }
+    }
+    let pbuf = "";
+    if (marker.properties) {
+        pbuf += JSON.stringify(marker.properties, (key, value) => {
+            // Avoid circular reference when stringifying makers containing handles.
+            // (Substitute a debug string instead.)
+            const handle = !!value && value.IFluidHandle;
+
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+            return handle
+                ? `#Handle(${handle.routeContext.path}/${handle.path})`
+                : value;
+        });
+    }
+    return `M ${bbuf}: ${lbuf} ${pbuf}`;
 }

@@ -8,29 +8,26 @@ Breaking changes include anything that a consumer upgrading to the specified ver
 
 ## Writing a change note
 
-There are a few steps you can take to write a good change note and avoid needing to followup for clarification.
-- Provide a concise title.  It should make clear what the topic of the change is.
+It's important to communicate breaking changes to our stakeholders. To write a good change note, use the below guidelines. For more information, check our [wiki](https://github.com/microsoft/FluidFramework/wiki/Communicating-breaking-changes).
+
+- Provide a concise title. It should be clear what the topic of the change is.
 - Ensure the affected packages are named or clearly identifiable within the body.
 - Provide guidance on how the change should be consumed if applicable, such as by specifying replacement APIs.
 - Consider providing code examples as part of guidance for non-trivial changes.
+- Avoid using code formatting in the title (it's fine to use in the body).
+- To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
-- [Remove `documentId` field from `MockFluidDataStoreContext`](#Remove-documentId-field-from-MockFluidDataStoreContext)
-- [Narrow type of `clientId` field on `MockFluidDataStoreRuntime`](#Narrow-type-of-clientId-field-on-MockFluidDataStoreRuntime)
-- [Remove `ConnectionState.Connecting`](#Remove-ConnectionState.Connecting)
+- [Remove `ConnectionState.Connecting`](#remove-connectionstateconnecting)
 - [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
-- [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
 
 ### Remove `ConnectionState.Connecting`
 `ConnectionState.Connecting` will be removed. Migrate all usage to `ConnectionState.CatchingUp`.
 
 ### `IContainerRuntime.flush` is deprecated
 `IContainerRuntime.flush` is deprecated and will be removed in a future release. If a more manual flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
-
-### MergeTree class is deprecated
-    The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
@@ -47,7 +44,10 @@ There are a few steps you can take to write a good change note and avoid needing
 - [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
 - [MergeTree class no longer exported](#MergeTree-class-no-longer-exported)
+- [Marker.toString simplified](#markertostring-simplified)
 - [Remove `IContainerRuntimeBase.setFlushMode`](#remove-icontainerruntimebasesetflushmode)
+- [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
+- [OldestClientObserver moved to @fluid-experimental/oldest-client-observer](#oldestclientobserver-moved-to-@fluid-experimental/oldest-client-observer)
 
 ###  Update to React 17
 The following packages use React and thus were impacted:
@@ -143,8 +143,24 @@ The functions affected are:
 ### MergeTree class no longer exported
     The MergeTree class was deprecated and is no longer be exported. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
+### Marker.toString simplified
+
+In merge-tree, Marker's string representation returned by `toString` was simplified.
+This new representation is used in the return value of `SharedString.getTextRangeWithMarkers`.
+The previous logic was moved to the public export `debugMarkerToString`.
+
 ### Remove `IContainerRuntimeBase.setFlushMode`
 The `setFlushMode` has been removed from `IContainerRuntimeBase`. FlushMode is now an immutable property for the container runtime, optionally provided at creation time via the `IContainerRuntimeOptions` interface. Instead, batching when in `FlushMode.Immediate` should be done through usage of the `IContainerRuntimeBase.orderSequentially`. See [#9480](https://github.com/microsoft/FluidFramework/issues/9480#issuecomment-1084790977).
+
+### `getTextAndMarkers` changed to be a free function
+
+`SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
+To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
+The corresponding method on `IMergeTreeTexHelper` will also be removed.
+
+
+### OldestClientObserver moved to @fluid-experimental/oldest-client-observer
+The `OldestClientObserver` class and its associated interfaces have been removed from @fluid-experimental/task-manager and moved to the new package @fluid-experimental/oldest-client-observer. Please migrate all imports to @fluid-experimental/oldest-client-observer.
 
 # 1.2.0
 
@@ -1116,6 +1132,7 @@ bindToContext in IFluidDataStoreChannel has been deprecated. This should not be 
 - [Container class protected function resumeInternal made private](#resumeinternal-made-private)
 - [url removed from ICreateBlobResponsee](#url-removed-from-ICreateBlobResponse)
 - [encoding type change](#encoding-type-change)
+- [IContainer.connectionState yields finer-grained ConnectionState values](#icontainerconnectionstate-yields-finer-grained-connectionstate-values)
 
 ### Deprecated dirty document events and property removed from ContainerRuntime
 The `isDocumentDirty()` method, `"dirtyDocument"` and `"savedDocument"` events that were deprecated in 0.35 have now been removed.  For more information on replacements, see [DirtyDocument events and property](#DirtyDocument-events-and-property).
@@ -1136,6 +1153,7 @@ The `encoding` property of `IBlob` in `@fluidframework/protocol-definitions` has
 - [client-api package removed](#client-api-package-removed)
 - [SignalManager removed from fluid-framework export](#signalmanager-removed-from-fluid-framework-export)
 - [MockLogger removed from @fluidframework/test-runtime-utils](#mocklogger-removed-from-fluidframeworktest-runtime-utils)
+- [IProxyLoader interface to be removed](#IProxyLoader-interface-to-be-removed)
 
 ### client-api package removed
 The `@fluid-internal/client-api` package was deprecated in 0.20 and has now been removed.  Usage of this package should be replaced with direct usage of the `Loader`, `FluidDataStoreRuntime`, `ContainerRuntime`, and other supported functionality.
@@ -1145,6 +1163,21 @@ The `SignalManager` and `Signaler` classes have been removed from the `@fluid-fr
 
 ### MockLogger removed from @fluidframework/test-runtime-utils
 MockLogger is only used internally, so it's removed from @fluidframework/test-runtime-utils.
+
+### IContainer.connectionState yields finer-grained ConnectionState values
+The `ConnectionState` types have been updated to include a new state which previously was
+encompassed by the `Disconnected` state. The new state is `EstablishingConnection` and indicates that the container is
+attempting to connect to the ordering service, but is not yet connected.
+
+Any logic based on the `Disconnected` state (e.g. checking the value of `IContainer.connectionState`)
+should be updated depending on how you want to treat this new `EstablishingConnection` state.
+
+Additionally, please note that the `Connecting` state is being renamed to `CatchingUp`.
+`ConnectionState.Connecting` is marked as deprecated, please use `ConnectionState.CatchingUp` instead.
+`ConnectionState.Connecting` will be removed in the following major release.
+
+### IProxyLoader interface to be removed
+The `IProxyLoader` interface has been deprecated in 0.48 and will be removed in an upcoming release.
 
 ## 0.47 Breaking changes
 - [Property removed from IFluidDataStoreContext](#Property-removed-from-IFluidDataStoreContext)
@@ -1313,6 +1346,7 @@ const { fluidContainer, containerServices }= await client.getContainer(container
 - [Loggers without tag support now deprecated in ContainerContext](#loggers-without-tag-support-now-deprecated-in-containercontext)
 - [Creating new containers with Container.load is no longer supported](#Creating-new-containers-with-Containerload-is-no-longer-supported)
 - [getHashedDocumentId is now async](#gethasheddocumentid-is-now-async)
+- [ContainerErrorType.clientSessionExpiredError added](#ContainerErrorType.clientSessionExpiredError-added)
 
 ### Changes to local testing in insecure environments and associated bundle size increase
 Previously the `@fluidframework/common-utils` package exposed a `setInsecureContextHashFn` function so users could set an override when testing locally in insecure environments because the `crypto.subtle` library is not available.  This is now done automatically as a fallback and the function is removed.  The fallback exists as a dynamic import of our equivalent Node platform implementation, and will show as a chunk named "FluidFramework-HashFallback" and be up to ~25KB parsed in size.  It will not be served when running normally in a modern browser.
@@ -1345,6 +1379,9 @@ The `logger` property of `ContainerContext` has been marked deprecated. Loggers 
 
 ### getHashedDocumentId is now async
 `@fluidframework/odsp-driver`'s `getHashedDocumentId` function is now async to take advantage of shared hashing functionality.  It drops its dependency on the `sha.js` package as a result, which contributed ~37KB to the parsed size of the `odsp-driver` bundle.
+
+### ContainerErrorType.clientSessionExpiredError added
+We have session expiry for GC purposes. Once the session has expired, we want to throw this new clientSessionExpiredError to clear out any stale in-memory data that may still be on the container.
 
 ## 0.44 Breaking changes
 - [Property removed from ContainerRuntime class](#Property-removed-from-the-ContainerRuntime-class)
@@ -1447,6 +1484,8 @@ IContainerContext and Container now will always have storage even in Detached mo
 - [ITelemetryProperties may be tagged for privacy purposes](#itelemetryproperties-may-be-tagged-for-privacy-purposes)
 - [IContainerRuntimeDirtyable removed](#IContainerRuntimeDirtyable-removed)
 - [Most RouterliciousDocumentServiceFactory params removed](#Most-RouterliciousDocumentServiceFactory-params-removed)
+- [IErrorBase.sequenceNumber removed](#IErrorBase.sequenceNumber-removed)
+- [IContainerContext.logger deprecated](#IContainerContext.logger-deprecated)
 
 ### AgentScheduler removed by default
 In 0.38, the `IContainerRuntimeOptions` option `addGlobalAgentSchedulerAndLeaderElection` was added (on by default), which could be explicitly disabled to remove the built-in `AgentScheduler` and leader election functionality.  This flag has now been turned off by default.  If you still depend on this functionality, you can re-enable it by setting the flag to `true`, though this option will be removed in a future release.
@@ -1469,6 +1508,16 @@ The `IContainerRuntimeDirtyable` interface and `isMessageDirtyable()` method wer
 ### Most RouterliciousDocumentServiceFactory params removed
 
 The `RouterliciousDocumentServiceFactory` constructor no longer accepts the following params: `useDocumentService2`, `disableCache`, `historianApi`, `gitCache`, and `credentials`. Please open an issue if these flags/params were important to your project so that they can be re-incorporated into the upcoming `IRouterliciousDriverPolicies` param.
+
+### IErrorBase.sequenceNumber removed
+This field was used for logging and this was probably not the right abstraction for it to live in.
+But practically speaking, the only places it was set have been updated to log not just sequenceNumber
+but a large number of useful properties off the offending message, via `CreateProcessingError`.
+
+### IContainerContext.logger deprecated
+Use `IContainerContext.taggedLogger` instead if present. If it's missing and you must use `logger`,
+be sure to handle tagged data before sending events to it.
+`logger` won't be removed for a very long time since old loaders could remain in production for quite some time.
 
 ## 0.39 Breaking changes
 - [connect event removed from Container](#connect-event-removed-from-Container)
@@ -2480,6 +2529,7 @@ Attaching is introduced in regards to Detached container where there is a time w
 -   [isLocal api removed](#isLocal-api-removed)
 -   [register/attach api renames on handles, components and dds](#register/attach-api-rename-on-handles,-components-and-dds)
 -   [Error handling changes](#Error-handling-changes)
+-   [ITelemetryBaseLogger.supportsTags deleted](#ITelemetryBaseLogger.supportstags-deleted)
 
 ### Removed `@fluidframework/local-test-utils`
 
@@ -2514,6 +2564,11 @@ ErrorType enum has been broken into 3 distinct enums / layers:
 ### Sequence snapshot format change
 
 Due to a change in the sequence's snapshot format clients running a version less than 0.19 will not be able to load snapshots generated in 0.21. This will affect all sequence types includes shared string, and sparse matrix. If you need to support pre-0.19 clients please contact us for mitigations.
+
+### ITelemetryBaseLogger.supportsTags deleted
+
+Proper support for tagged events will be assumed going forward. Only at the loader-runtime boundary do we retain
+a concession for backwards compatibility, but that's done outside of this interface.
 
 ## 0.20 Breaking Changes
 

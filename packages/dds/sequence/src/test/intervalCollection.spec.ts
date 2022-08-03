@@ -360,6 +360,29 @@ describe("SharedString interval collections", () => {
             ], false);
         });
 
+        it("remains consistent after changing only one end of a detached interval", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            const collection2 = sharedString2.getIntervalCollection("test");
+            const assertAllIntervals = (expected: readonly { start: number; end: number; }[]) => {
+                assertIntervals(sharedString, collection1, expected, false);
+                assertIntervals(sharedString2, collection2, expected, false);
+            };
+
+            sharedString.insertText(0, "ABCD");
+            const interval = collection1.add(1, 3, IntervalType.SlideOnRemove);
+            sharedString.removeRange(0, 4);
+            sharedString.insertText(0, "012");
+            containerRuntimeFactory.processAllMessages();
+
+            assertAllIntervals([{ start: -1, end: -1 }]);
+
+            const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
+            collection2.change(id, undefined, 2);
+            containerRuntimeFactory.processAllMessages();
+
+            assertAllIntervals([{ start: -1, end: 2 }]);
+        });
+
         it("can slide intervals on remove ack", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             sharedString.insertText(0, "ABCD");

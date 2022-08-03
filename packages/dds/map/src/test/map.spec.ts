@@ -13,7 +13,14 @@ import {
     MockSharedObjectServices,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IValueChanged } from "../interfaces";
+import { ISerializableValue,
+         IValueChanged } from "../interfaces";
+import { IMapSetOperation,
+         IMapDeleteOperation,
+         IMapClearOperation,
+         IMapKeyEditLocalOpMetadata,
+         IMapClearLocalOpMetadata,
+         MapLocalOpMetadata } from "../internalInterfaces";
 import { MapFactory, SharedMap } from "../map";
 
 function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory) {
@@ -31,6 +38,12 @@ function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFact
 function createLocalMap(id: string) {
     const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
     return map;
+}
+
+class TestSharedMap extends SharedMap {
+    public testApplyStashedOp(content: any): MapLocalOpMetadata {
+        return this.applyStashedOp(content) as MapLocalOpMetadata;
+    }
 }
 
 describe("Map", () => {
@@ -313,6 +326,36 @@ describe("Map", () => {
                 assert.equal(map1.get(key), newValue, "The first map did not get the new value");
                 assert.equal(map2.get(key), newValue, "The second map did not get the new value");
             });
+
+            it("metadata op", async () => {
+                const serializable: ISerializableValue = { type: "Plain", value: "value" };
+                const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+                const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
+                const map1 = new TestSharedMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
+                let metadata = map1.testApplyStashedOp(op);
+                assert.equal(metadata.type, "add");
+                assert.equal(metadata.pendingMessageId, 0);
+                const editmetadata = map1.testApplyStashedOp(op) as IMapKeyEditLocalOpMetadata;
+                assert.equal(editmetadata.type, "edit");
+                assert.equal(editmetadata.pendingMessageId, 1);
+                assert.equal(editmetadata.previousValue.value, "value");
+                const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
+                const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
+                metadata = map1.testApplyStashedOp(op2);
+                assert.equal(metadata.type, "add");
+                assert.equal(metadata.pendingMessageId, 2);
+                const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
+                metadata = map1.testApplyStashedOp(op3) as IMapKeyEditLocalOpMetadata;
+                assert.equal(metadata.type, "edit");
+                assert.equal(metadata.pendingMessageId, 3);
+                assert.equal(metadata.previousValue.value, "value2");
+                const op4: IMapClearOperation = { type: "clear" };
+                metadata = map1.testApplyStashedOp(op4) as IMapClearLocalOpMetadata;
+                assert.equal(metadata.pendingMessageId, 4);
+                assert.equal(metadata.type, "clear");
+                assert.equal(metadata.previousMap?.get("key")?.value, "value");
+                assert.equal(metadata.previousMap?.has("key2"), false);
+            });
         });
     });
 
@@ -551,6 +594,21 @@ describe("Map", () => {
                     // Verify the SharedMap gets updated from remote
                     assert.equal(map1.has("test"), true, "could not find the set key");
                     assert.equal(map1.get("test"), "map1value4", "could not get the set key");
+                });
+            });
+
+            describe(".delete()", () => {
+                it("Can set and delete map key", async () => {
+                    map1.set("testKey", "testValue");
+                    map1.set("testKey2", "testValue2");
+                    map1.delete("testKey");
+                    map1.delete("testKey2");
+                    assert.equal(map1.has("testKey"), false, "could not delete key 1");
+                    assert.equal(map1.has("testKey2"), false, "could not delete key 2");
+                    map1.set("testKey", "testValue");
+                    map1.set("testKey2", "testValue2");
+                    assert.equal(map1.get("testKey"), "testValue", "could not retrieve set key 1 after delete");
+                    assert.equal(map1.get("testKey2"), "testValue2", "could not retrieve set key 2 after delete");
                 });
             });
 
