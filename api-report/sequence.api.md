@@ -53,6 +53,12 @@ export type CompressedSerializedInterval = [number, number, number, IntervalType
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
+// @public
+export function getTextAndMarkers(sharedString: SharedString, label: string, start?: number, end?: number): {
+    parallelText: string[];
+    parallelMarkers: Marker[];
+};
+
 // @public (undocumented)
 export interface IInterval {
     // (undocumented)
@@ -511,15 +517,10 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
     // (undocumented)
-    getTextAndMarkers(label: string): {
-        parallelText: string[];
-        parallelMarkers: Marker[];
-    };
-    // (undocumented)
     getTextRangeWithMarkers(start: number, end: number): string;
-    // (undocumented)
+    // @deprecated (undocumented)
     getTextRangeWithPlaceholders(start: number, end: number): string;
-    getTextWithPlaceholders(): string;
+    getTextWithPlaceholders(start?: number, end?: number): string;
     // (undocumented)
     id: string;
     insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg | undefined;

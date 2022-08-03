@@ -4,7 +4,7 @@
  */
 
 import { Serializable } from "@fluidframework/datastore-definitions";
-import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema";
+import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema-stored";
 import { brand, Brand, extractFromOpaque, Opaque } from "../util";
 
 export type FieldKey = LocalFieldKey | GlobalFieldKey;

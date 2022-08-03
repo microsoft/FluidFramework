@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { OldestClientObserver } from "@fluid-experimental/task-manager";
+import { OldestClientObserver } from "@fluid-experimental/oldest-client-observer";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 
