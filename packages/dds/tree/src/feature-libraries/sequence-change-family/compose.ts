@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getMarkLength, isAttachGroup, splitMark, Transposed as T } from "../../changeset";
+import { getMarkLength, isAttachGroup, isDetachMark, splitMark, Transposed as T } from "../../changeset";
 import { clone, fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
@@ -32,84 +32,83 @@ function foldInFieldMarks(fieldMarks: T.FieldMarks, totalFieldMarks: T.FieldMark
     }
 }
 
-function foldInMarkList(markList: T.MarkList<T.Mark>, totalMarkList: T.MarkList<T.Mark>): void {
+function foldInMarkList(newMarkList: T.MarkList<T.Mark>, baseMarkList: T.MarkList<T.Mark>): void {
     let iTotal = 0;
     let iIn = 0;
-    let nextMark: T.Mark | undefined = markList[iIn];
-    while (nextMark !== undefined) {
-        let mark: T.Mark = nextMark;
-        nextMark = undefined;
-        let totalMark = totalMarkList[iTotal];
-        if (totalMark === undefined) {
-            totalMarkList.push(mark);
+    let nextNewMark: T.Mark | undefined = newMarkList[iIn];
+    while (nextNewMark !== undefined) {
+        let newMark: T.Mark = nextNewMark;
+        nextNewMark = undefined;
+        let baseMark = baseMarkList[iTotal];
+        if (baseMark === undefined) {
+            baseMarkList.push(newMark);
+        } else if (isAttachGroup(newMark)) {
+            baseMarkList.splice(iTotal, 0, clone(newMark));
+        } else if (isDetachMark(baseMark)) {
+            // TODO: match base detaches to tombs and reattach in the newMarkList
+            nextNewMark = newMark;
         } else {
-            if (isAttachGroup(mark)) {
-                totalMarkList.splice(iTotal, 0, clone(mark));
+            const newMarkLength = getMarkLength(newMark);
+            const baseMarkLength = getMarkLength(baseMark);
+            if (newMarkLength < baseMarkLength) {
+                const totalMarkPair = splitMark(baseMark, newMarkLength);
+                baseMark = totalMarkPair[0];
+                baseMarkList.splice(iTotal, 1, ...totalMarkPair);
+            } else if (newMarkLength > baseMarkLength) {
+                [newMark, nextNewMark] = splitMark(newMark, baseMarkLength);
+            }
+            // Passed this point, we are guaranteed that mark and total mark have the same length
+            if (typeof baseMark === "number") {
+                // TODO: insert new tombs and reattaches without replacing the offset
+                baseMarkList.splice(iTotal, 1, newMark);
             } else {
-                const markLength = getMarkLength(mark);
-                const totalMarkLength = getMarkLength(totalMark);
-                if (markLength < totalMarkLength) {
-                    const totalMarkPair = splitMark(totalMark, markLength);
-                    totalMark = totalMarkPair[0];
-                    totalMarkList.splice(iTotal, 1, ...totalMarkPair);
-                } else if (markLength > totalMarkLength) {
-                    [mark, nextMark] = splitMark(mark, totalMarkLength);
-                }
-                // Passed this point, we are guaranteed that mark and total mark have the same length
-                const composedMark = composeMarks(mark, totalMark);
-                if (composedMark !== 0) {
-                    totalMarkList.splice(iTotal, 1, composedMark);
-                } else {
-                    totalMarkList.splice(iTotal, 1);
-                }
+                const composedMark = composeMarks(newMark, baseMark);
+                baseMarkList.splice(iTotal, 1, ...composedMark);
             }
         }
-        if (nextMark === undefined) {
+        if (nextNewMark === undefined) {
             iIn += 1;
-            nextMark = markList[iIn];
+            nextNewMark = newMarkList[iIn];
         }
         iTotal += 1;
     }
 }
 
-function composeMarks(mark: T.SizedMark, totalMark: T.Mark): T.Mark {
-    if (typeof mark === "number") {
-        return totalMark;
+function composeMarks(newMark: T.SizedMark, baseMark: T.ObjectMark | T.AttachGroup): T.Mark[] {
+    if (typeof newMark === "number") {
+        return [baseMark];
     }
-    if (typeof totalMark === "number") {
-        return clone(mark);
-    }
-    const markType = mark.type;
-    if (isAttachGroup(totalMark)) {
+    const markType = newMark.type;
+    if (isAttachGroup(baseMark)) {
         switch (markType) {
             case "Modify": {
-                const attach = totalMark[0];
+                const attach = baseMark[0];
                 if (attach.type === "Insert") {
-                    return [{
-                        ...mark,
+                    return [[{
+                        ...newMark,
                         type: "MInsert",
                         id: attach.id,
                         content: attach.content[0],
-                    }];
+                    }]];
                 } else if (attach.type === "MInsert") {
-                    updateModifyLike(mark, attach);
-                    return [{
-                        ...mark,
+                    updateModifyLike(newMark, attach);
+                    return [[{
+                        ...newMark,
                         type: "MInsert",
                         id: attach.id,
                         content: attach.content,
-                    }];
+                    }]];
                 }
             }
             case "Delete": {
                 // The insertion of the previous change is subsequently deleted.
                 // TODO: preserve the insertion as muted
-                return 0;
+                return [];
             }
             default: fail("Not implemented");
         }
     }
-    const totalType = totalMark.type;
+    const totalType = baseMark.type;
     if (markType === "MDelete" || totalType === "MDelete") {
         // This should not occur yet because we discard all modifications to deleted subtrees
         // In the long run we want to preserve them.
@@ -119,27 +118,13 @@ function composeMarks(mark: T.SizedMark, totalMark: T.Mark): T.Mark {
         case "Modify": {
             switch (markType) {
                 case "Modify": {
-                    updateModifyLike(mark, totalMark);
-                    return totalMark;
+                    updateModifyLike(newMark, baseMark);
+                    return [baseMark];
                 }
                 case "Delete": {
                     // For now the deletion obliterates all other modifications.
                     // In the long run we want to preserve them.
-                    return clone(mark);
-                }
-                default: fail("Not implemented");
-            }
-        }
-        case "Delete": {
-            switch (markType) {
-                case "Delete": {
-                    // For now we discard double deletions instead of marking them as muted
-                    return totalMark;
-                }
-                case "Modify": {
-                    // For now the deletion obliterates all other modifications.
-                    // In the long run we want to preserve them.
-                    return totalMark;
+                    return [clone(newMark)];
                 }
                 default: fail("Not implemented");
             }

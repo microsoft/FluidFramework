@@ -164,29 +164,27 @@ describe("SequenceChangeFamily - Compose", () => {
                 ],
             },
         };
-        // Deletes ABCD--GHIJK
+        // Deletes DEFG--OP
         const deleteB: SequenceChangeset = {
             marks: {
                 root: [
                     { type: "Delete", id: 3, count: 4 },
                     2,
-                    { type: "Delete", id: 4, count: 5 },
+                    { type: "Delete", id: 4, count: 2 },
                 ],
             },
         };
         const actual = compose(deleteA, deleteB);
-        // TODO: test tiebreak policy as well.
-        // TODO: expect the last two marks to be merged.
-        // Deletes ABCD--GHIJKLM
+        // Deletes ABCDEFG-IJKLMNOP
         const expected: SequenceChangeset = {
             marks: {
                 root: [
                     { type: "Delete", id: 1, count: 3 },
-                    { type: "Delete", id: 3, count: 1 },
-                    2,
+                    { type: "Delete", id: 3, count: 4 },
+                    1,
+                    { type: "Delete", id: 2, count: 5 },
+                    1,
                     { type: "Delete", id: 4, count: 2 },
-                    { type: "Delete", id: 2, count: 3 },
-                    { type: "Delete", id: 2, count: 2 },
                 ],
             },
         };
@@ -236,6 +234,7 @@ describe("SequenceChangeFamily - Compose", () => {
                         ],
                         bar: [
                             { type: "Delete", id: 2, count: 1 },
+                            1,
                             [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
                         ],
                         baz: [
@@ -296,5 +295,18 @@ describe("SequenceChangeFamily - Compose", () => {
             },
         };
         assert.deepEqual(actual, expected);
+    });
+
+    it("modify | delete", () => {
+        const modify: SequenceChangeset = setChildValueTo(1);
+        const deletion: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Delete", id: 2, count: 1 },
+                ],
+            },
+        };
+        const actual = compose(modify, deletion);
+        assert.deepEqual(actual, deletion);
     });
 });

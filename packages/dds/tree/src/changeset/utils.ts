@@ -107,3 +107,11 @@ function splitAttachMark<TAttach extends T.Attach>(attach: TAttach, length: numb
         default: unreachableCase(type);
     }
 }
+
+export function isDetachMark(mark: T.Mark | undefined): mark is T.Detach | T.ModifyDetach {
+    if (typeof mark === "object" && "type" in mark) {
+        const type = mark.type;
+        return type === "Delete" || type === "MDelete" || type === "MoveOut" || type === "MMoveOut";
+    }
+    return false;
+}
