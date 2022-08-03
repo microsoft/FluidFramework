@@ -5,10 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { brand, Brand } from "../util";
-import {
-    FieldKey,
-    EmptyKey,
- } from "../tree";
+import { FieldKey, EmptyKey } from "../tree";
 import { UpPath } from "./pathTree";
 
 /**
@@ -41,6 +38,17 @@ export class AnchorSet {
     private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
 
     /**
+     * Check if there are currently no anchors tracked.
+     * Mainly for testing anchor cleanup.
+     */
+    public isEmpty(): boolean {
+        return this.root.children.size === 0;
+    }
+
+    /**
+     * Get the current location of an Anchor.
+     * The returned value should not be used after an edit has occurred.
+     *
      * TODO: support extra/custom return types for specific/custom anchor types:
      * for now caller must rely on data in anchor + returned node location
      * (not ideal for anchors for places or ranges instead of nodes).
@@ -64,7 +72,7 @@ export class AnchorSet {
      */
     public track(path: UpPath): Anchor {
         const foundPath = this.trackInner(path);
-        const anchor = brand<Anchor>(this.anchorCounter++);
+        const anchor: Anchor = brand(this.anchorCounter++);
         this.anchorToPath.set(anchor, foundPath);
         return anchor;
     }
@@ -80,7 +88,10 @@ export class AnchorSet {
         const parent = path.parent ?? this.root;
         const parentPath = this.trackInner(parent);
 
-        const child = parentPath.getOrCreateChild(path.parentField, path.parentIndex);
+        const child = parentPath.getOrCreateChild(
+            path.parentField,
+            path.parentIndex,
+        );
 
         // Now that child is added (if needed), remove the extra ref that we added in the recursive call.
         parentPath.removeRef();
@@ -104,43 +115,130 @@ export class AnchorSet {
 
     /**
      * Updates paths for a range move (including re-parenting path items and updating indexes).
+     * @param count - number of siblings to insert/delete/move.
+     * @param src - where the siblings are removed from. If undefined the operation is an insert.
+     * @param dst - where the siblings are moved to. If undefined the operation is a delete.
+     *
+     * TODO:
+     * How should anchors that become invalid, then valid again (ex: into content that was deleted, then undone) work?
+     * Add an API to resurrect them? Store them in special detached fields? Store them in special non-detached fields?
+     *
+     * TODO:
+     * Now should custom anchors work (ex: ones not just tied to a specific Node)?
+     * This design assumes they can be expressed in terms of a Node anchor + some extra stuff,
+     * but we don't have an API for the extra stuff yet.
+     *
+     * TODO: tests
      */
     public moveChildren(
-        src: UpPath, srcField: FieldKey, start: number, count: number,
-        dst: UpPath, dstField: FieldKey, dstIndex: number): void {
-            const srcPath = this.find(src);
-            // Sorted list of PathNodes to move from src to dst.
-            let toMove: PathNode[];
-            if (srcPath !== undefined) {
-                // TODO: set toMove
-                // Remove items from src.
-                // Fix indexes in src after moved items (subtract count).
-                toMove = [];
-            } else {
-                toMove = [];
+        count: number,
+        src: undefined | { path: UpPath; field: FieldKey; start: number; },
+        dst: undefined | { path: UpPath; field: FieldKey; start: number; },
+    ): void {
+        assert(
+            src !== undefined || dst !== undefined,
+            "moveChildren is a no-op and should not be called if there is no src or dst",
+        );
+
+        const srcParent = src === undefined ? undefined : this.find(src.path);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const srcChildren = srcParent?.children?.get(src!.field);
+        // Sorted list of PathNodes to move from src to dst.
+        let toMove: PathNode[];
+
+        // Update src
+        if (srcChildren !== undefined) {
+            let numberBeforeMove = 0;
+            let numberToMove = 0;
+            let index = 0;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            while (index < srcChildren.length && srcChildren[index].parentIndex < src!.start) {
+                numberBeforeMove++;
+                index++;
             }
-            let dstPath: PathNode | undefined;
-            if (toMove.length > 0) {
-                // There are anchors which are getting moved,
-                // therefor the destination needs to be created if it does not yet exist.
-                dstPath = this.trackInner(dst);
-            } else {
-                // There are no anchors to move,
-                // therefor we want to avoid creating the destination if it does not already exist.
-                dstPath = this.find(dst);
-                if (dstPath !== undefined) {
-                    // Since we need a remove ref below to handle the `toMove.length > 0` case above,
-                    // add a ref here so that does not break this case.
-                    dstPath.addRef();
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            while (index < srcChildren.length && srcChildren[index].parentIndex < src!.start + count) {
+                numberToMove++;
+                index++;
+            }
+            while (index < srcChildren.length) {
+                // Fix indexes in src after moved items (subtract count).
+                srcChildren[index].parentIndex -= count;
+                index++;
+            }
+            toMove = srcChildren.splice(numberBeforeMove, numberToMove);
+            if (srcChildren.length === 0) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                srcParent!.afterEmptyField(src!.field);
+            }
+        } else {
+            toMove = [];
+        }
+
+        if (dst === undefined) {
+            // Change is a delete.
+            // Moved items have already been un-parented, so just mark them as deleted.
+            for (const moved of toMove) {
+                assert(!moved.deleted, "PathNode must not be deleted");
+                moved.deleted = true;
+            }
+            return;
+        }
+
+        // Get dst (and set parent for moved items)
+        let dstPath: PathNode | undefined;
+        if (toMove.length > 0) {
+            // There are anchors which are getting moved,
+            // therefor the destination needs to be created if it does not yet exist.
+            dstPath = this.trackInner(dst.path);
+
+            // Update moved items for new parent.
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const offset = dst.start - src!.start;
+            for (const moved of toMove) {
+                moved.parentIndex += offset;
+                moved.parentPath = dstPath;
+                moved.parentField = dst.field;
+            }
+        } else {
+            // There are no anchors to move,
+            // therefor we want to avoid creating the destination if it does not already exist.
+            dstPath = this.find(dst.path);
+            if (dstPath !== undefined) {
+                // Since we need a remove ref below to handle the `toMove.length > 0` case above,
+                // add a ref here so that does not break this case.
+                dstPath.addRef();
+            }
+        }
+
+        // Update dst
+        if (dstPath !== undefined) {
+            // Update new parent to add moved children
+            const field = dstPath.children.get(dst.field);
+            if (field === undefined) {
+                if (toMove.length > 0) {
+                    dstPath.children.set(dst.field, toMove);
                 }
+            } else {
+                // Update existing field contents
+                let numberBeforeMove = 0;
+                let index = 0;
+                while (index < field.length && field[index].parentIndex < dst.start) {
+                    numberBeforeMove++;
+                    index++;
+                }
+                while (index < field.length) {
+                    // Fix indexes in dst after moved items (add count).
+                    field[index].parentIndex += count;
+                    index++;
+                }
+                // Insert toMove items into dstPath
+                // TODO: this will fail for very large numbers of anchors due to argument limits.
+                field.splice(numberBeforeMove, 0, ...toMove);
             }
 
-            if (dstPath !== undefined) {
-                // TODO: Fixup indexes for items in toMove (add dstIndex - start)
-                // TODO: Fixup indexes for items in dstPath after insertion (add count)
-                // TODO: insert toMove items into dstPath
-                dstPath.removeRef();
-            }
+            dstPath.removeRef();
+        }
     }
 }
 
@@ -171,8 +269,20 @@ class PathNode implements UpPath {
      */
     private refCount = 1;
 
-    // PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
-    protected readonly children: Map<FieldKey, PathNode[]> = new Map();
+    public deleted = false;
+
+    /**
+     * PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
+     * Users of this field must take care to maintain invariants (correct parent pointers, not empty child arrays etc.)
+     *
+     * Performance Note:
+     * Large child lists could be updated more efficiently here using a data-structure optimized
+     * for efficient prefix sum updates, such as a Fenwick tree or Finger tree.
+     * This would be complicated by the need for parent pointers (including indexes),
+     * but is possible to do.
+     */
+    public readonly children: Map<FieldKey, PathNode[]> = new Map();
+
     /**
      * Construct a PathNode with refcount 1.
      * @param anchorSet - used to determine if this PathNode is already part of a specific anchorSet
@@ -182,7 +292,8 @@ class PathNode implements UpPath {
         public readonly anchorSet: AnchorSet,
         public parentField: FieldKey,
         public parentIndex: number,
-        public parentPath: PathNode | undefined) {}
+        public parentPath: PathNode | undefined,
+    ) {}
 
     /**
      * @returns true iff this PathNode is the special root node that sits above all the detached fields.
@@ -195,8 +306,11 @@ class PathNode implements UpPath {
     }
 
     public get parent(): UpPath | undefined {
-        assert(this.parentPath !== undefined,
-            "PathNode.parent is an UpPath API and thus should never be called on the root PathNode.");
+        assert(!this.deleted, "PathNode must not be deleted");
+        assert(
+            this.parentPath !== undefined,
+            "PathNode.parent is an UpPath API and thus should never be called on the root PathNode.",
+        );
         // Root PathNode corresponds to the undefined root for UpPath API.
         if (this.parentPath.isRoot()) {
             return undefined;
@@ -205,13 +319,18 @@ class PathNode implements UpPath {
     }
 
     public addRef(count = 1): void {
+        assert(!this.deleted, "PathNode must not be deleted");
         this.refCount += count;
     }
 
     public removeRef(count = 1): void {
+        assert(!this.deleted, "PathNode must not be deleted");
         this.refCount -= count;
         if (this.refCount < 1) {
-            assert(this.refCount === 0, "PathNode Refcount should not be negative.");
+            assert(
+                this.refCount === 0,
+                "PathNode Refcount should not be negative.",
+            );
 
             if (this.children.size === 0) {
                 this.deleteThis();
@@ -224,6 +343,7 @@ class PathNode implements UpPath {
      * Creates child (with 1 ref) if needed.
      */
     public getOrCreateChild(key: FieldKey, index: number): PathNode {
+        assert(!this.deleted, "PathNode must not be deleted");
         let field = this.children.get(key);
         if (field === undefined) {
             field = [];
@@ -235,7 +355,7 @@ class PathNode implements UpPath {
             child = new PathNode(this.anchorSet, key, index, this);
             field.push(child);
             // Keep list sorted by index.
-            field.sort((a, b) => a.parentIndex = b.parentIndex);
+            field.sort((a, b) => a.parentIndex - b.parentIndex);
         } else {
             child.addRef();
         }
@@ -247,6 +367,7 @@ class PathNode implements UpPath {
      * Does NOT add a ref.
      */
     public tryGetChild(key: FieldKey, index: number): PathNode | undefined {
+        assert(!this.deleted, "PathNode must not be deleted");
         const field = this.children.get(key);
         if (field === undefined) {
             return undefined;
@@ -255,25 +376,48 @@ class PathNode implements UpPath {
         return field.find((c) => c.parentIndex === index);
     }
 
+    /**
+     * Removes reference from this to `child`.
+     * Since PathNodes are doubly linked,
+     * the caller must ensure that the reference from child to parent is also removed (or the child is no longer used).
+     */
     public removeChild(child: PathNode): void {
+        assert(!this.deleted, "PathNode must not be deleted");
         const key = child.parentField;
         const field = this.children.get(key);
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
         // Note that this is the index in the list of child paths, not the index within the field
         const childIndex = field?.indexOf(child);
-        assert(childIndex !== undefined, "child must be parented to be removed");
+        assert(
+            childIndex !== undefined,
+            "child must be parented to be removed",
+        );
         field?.splice(childIndex, 1);
         if (field?.length === 0) {
-            this.children.delete(key);
-            if (this.refCount === 0 && this.children.size === 0) {
-                this.deleteThis();
-            }
+            this.afterEmptyField(key);
         }
     }
 
+    /**
+     * Call this after directly editing the child array for a field to be empty.
+     * Handles cleaning up unneeded data
+     * (like the field in the map, and possibly this entire PathNode and its parents if they are no longer needed.)
+     */
+    public afterEmptyField(key: FieldKey): void {
+        assert(!this.deleted, "PathNode must not be deleted");
+        this.children.delete(key);
+        if (this.refCount === 0 && this.children.size === 0) {
+            this.deleteThis();
+        }
+    }
+
+    /**
+     * Removes this from parent, and sets this to deleated.
+     */
     private deleteThis(): void {
-        // TODO: set some deleted state so operations on detached/deleted PathNodes/UpPaths
-        // error instead of behaving unexpectedly.
+        assert(!this.deleted, "must not double delete PathNode");
         this.parentPath?.removeChild(this);
+
+        this.deleted = true;
     }
 }

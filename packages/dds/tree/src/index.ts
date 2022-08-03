@@ -21,8 +21,8 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     FieldLocation,
     ForestLocation,
     ITreeSubscriptionCursor,
-    ForestAnchor,
     ITreeSubscriptionCursorState,
+    SynchronousNavigationResult,
 } from "./forest";
 
 export {
@@ -31,7 +31,7 @@ export {
     emptyField, neverTree,
     SchemaRepository, StoredSchemaRepository,
     rootFieldKey,
-} from "./schema";
+} from "./schema-stored";
 
 export {
     Brand,
@@ -66,4 +66,5 @@ export {
     buildForest,
     TextCursor,
     jsonableTreeFromCursor,
+    singleTextCursor,
 } from "./feature-libraries";

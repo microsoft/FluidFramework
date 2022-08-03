@@ -238,19 +238,19 @@ async function fetchLatestSnapshotCore(
                 const odspResponse = response.odspResponse;
                 const contentType = odspResponse.headers.get("content-type");
 
-                // Measure how much time we spend processing payload
-                const snapshotParseEvent = PerformanceEvent.start(logger, {
-                    eventName: "SnapshotParse",
-                    driverVersion: pkgVersion,
-                    contentType,
-                });
-
                 const propsToLog: DriverErrorTelemetryProps = {
                     ...odspResponse.propsToLog,
                     contentType,
                     accept: response.requestHeaders.accept,
                     driverVersion: pkgVersion,
                 };
+
+                // Measure how much time we spend processing payload
+                const snapshotParseEvent = PerformanceEvent.start(logger, {
+                    eventName: "SnapshotParse",
+                    ...propsToLog,
+                });
+
                 let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
 
                 try {
