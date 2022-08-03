@@ -98,12 +98,9 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             },
             onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
                 assert(currentField !== undefined, "must be in field to onMoveOut");
-                let srcField: ObjectField;
-                if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
-                    srcField = this.getRoot(keyAsDetachedField(currentField));
-                } else {
-                    srcField = getGenericTreeField(currentNode, currentField, false);
-                }
+                const srcField: ObjectField = currentNode.state === ITreeSubscriptionCursorState.Cleared
+                    ? this.getRoot(keyAsDetachedField(currentField))
+                    : getGenericTreeField(currentNode, currentField, false);
                 const field = this.detachRangeOfChildren(srcField, index, index + count);
                 if (id !== undefined) {
                     moves.set(id, field);
@@ -129,12 +126,9 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
             },
             enterNode: (index: number): void => {
                 assert(currentField !== undefined, "must be in field to enterNode");
-                let result: TreeNavigationResult;
-                if (currentNode.state === ITreeSubscriptionCursorState.Cleared) {
-                    result = this.tryMoveCursorTo(this.root(keyAsDetachedField(currentField), index), currentNode);
-                } else {
-                    result = currentNode.down(currentField, index);
-                }
+                const result: TreeNavigationResult = currentNode.state === ITreeSubscriptionCursorState.Cleared
+                    ? this.tryMoveCursorTo(this.root(keyAsDetachedField(currentField), index), currentNode)
+                    : currentNode.down(currentField, index);
                 assert(result === TreeNavigationResult.Ok, "can only enter existing nodes");
                 currentField = undefined;
             },

@@ -15,7 +15,6 @@
     TreeSchema,
     FieldKind,
     ValueSchema,
-    TreeSchemaIdentifier,
     NamedTreeSchema,
     emptyField,
     emptyMap,
