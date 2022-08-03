@@ -58,6 +58,9 @@ export namespace Transposed {
 
 	export type SizedMark =
 		| Skip
+		| ObjectMark;
+
+	export type ObjectMark =
 		| Tomb
 		| Modify
 		| Detach

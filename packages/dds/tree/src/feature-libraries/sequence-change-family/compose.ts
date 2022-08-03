@@ -39,7 +39,7 @@ function foldInMarkList(markList: T.MarkList<T.Mark>, totalMarkList: T.MarkList<
     while (nextMark !== undefined) {
         let mark: T.Mark = nextMark;
         nextMark = undefined;
-        const totalMark = totalMarkList[iTotal];
+        let totalMark = totalMarkList[iTotal];
         if (totalMark === undefined) {
             totalMarkList.push(mark);
         } else {
@@ -50,19 +50,17 @@ function foldInMarkList(markList: T.MarkList<T.Mark>, totalMarkList: T.MarkList<
                 // Skip the AttachGroup in the base mark list
                 nextMark = mark;
             } else {
-                // The linter seems to think this cast is not needed, which seem correct, but the compiled disagrees.
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-                const markNoAttach = mark as T.SizedMark;
                 const markLength = getMarkInputLength(mark);
                 const totalMarkLength = getMarkInputLength(totalMark);
-                    if (markLength < totalMarkLength) {
-                    const totalMarkPair = splitMark(mark, totalMarkLength);
+                if (markLength < totalMarkLength) {
+                    const totalMarkPair = splitMark(totalMark, markLength);
+                    totalMark = totalMarkPair[0];
                     totalMarkList.splice(iTotal, 1, ...totalMarkPair);
                 } else if (markLength > totalMarkLength) {
                     [mark, nextMark] = splitMark(mark, totalMarkLength);
                 }
                 // Passed this point, we are guaranteed that mark and total mark have the same length
-                const composedMark = composeMarks(markNoAttach, totalMark);
+                const composedMark = composeMarks(mark, totalMark);
                 totalMarkList.splice(iTotal, 1, composedMark);
             }
         }
@@ -110,8 +108,8 @@ function composeMarks(mark: T.SizedMark, totalMark: T.SizedMark): T.SizedMark {
         case "Delete": {
             switch (markType) {
                 case "Delete": {
-                    // This should not occur yet because we discard double deletions instead of marking them as muted
-                    fail("TODO: support muted deletes");
+                    // For now we discard double deletions instead of marking them as muted
+                    return totalMark;
                 }
                 case "Modify": {
                     // For now the deletion obliterates all other modifications.

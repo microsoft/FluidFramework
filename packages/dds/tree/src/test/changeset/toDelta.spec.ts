@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { TreeSchemaIdentifier } from "../..";
 import {
     ProtoNode,
     toDelta as toDeltaImpl,
     Transposed as T,
 } from "../../changeset";
+import { TreeSchemaIdentifier } from "../../schema";
 import { FieldKey, Delta } from "../../tree";
 import { brand, brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";

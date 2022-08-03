@@ -20,17 +20,20 @@ export function getMarkInputLength(mark: T.Mark): number {
     return "count" in mark ? mark.count : 1;
 }
 
-export function splitMark(mark: T.Mark, length: number): [T.Mark, T.Mark] {
+export function splitMark<TMark extends T.SizedMark>(mark: TMark, length: number): [TMark, TMark] {
     const markLength = getMarkInputLength(mark);
     const remainder = markLength - length;
     if (length < 1 || markLength <= length) {
         fail(`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`);
     }
     if (typeof mark === "number") {
-        return [length, remainder];
+        return [length, remainder] as [TMark, TMark];
     }
+    // The linter seems to think this cast is not needed, which seems correct, but the compiled disagrees.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    const markObj = mark as T.ObjectMark;
     if ("count" in mark) {
-        return [{ ...mark, count: length }, { ...mark, count: remainder }];
+        return [{ ...markObj, count: length }, { ...markObj, count: remainder }] as [TMark, TMark];
     }
     fail("Unable to split mark");
 }
