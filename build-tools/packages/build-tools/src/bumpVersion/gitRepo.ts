@@ -183,6 +183,14 @@ export class GitRepo {
         return exec(`git ${command}`, this.resolvedRoot, error, pipeStdIn);
     }
 
+    public async mergeBase(source: string, target: string) {
+        return this.exec(`merge-base ${source} ${target}`, `merge base ${source} ${target}`);
+    }
+
+    public async revList(commitId: string, head: string) {
+        return this.exec(`rev-list ${commitId}...${head}`, `list of new commits between ${commitId} and ${head}`);
+    }
+
     /**
      * Execute git command
      *
