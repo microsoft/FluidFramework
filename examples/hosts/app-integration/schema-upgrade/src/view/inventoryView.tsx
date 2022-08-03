@@ -7,7 +7,7 @@ import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import type { IInventoryItem, IInventoryList } from "./interfaces";
+import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 
 export interface IInventoryItemViewProps {
     inventoryItem: IInventoryItem;
@@ -40,7 +40,7 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (props: IInv
             <CollaborativeInput
                 sharedString={ inventoryItem.name }
                 style={{ width: "200px" }}
-                // disabled={ disabled }
+                disabled={ disabled }
             ></CollaborativeInput>
             <input
                 ref={ quantityRef }

@@ -4,20 +4,22 @@
  */
 
 import { EventEmitter } from "events";
-import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import type { IEventProvider } from "@fluidframework/common-definitions";
 import { SharedString } from "@fluidframework/sequence";
+import { IMigratableModel, IMigratableModelEvents } from "./migrationInterfaces";
 
-export interface IContainerKillBitEvents extends IEvent {
-    (event: "markedForDestruction" | "dead", listener: () => void);
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IInventoryListContainerEvents extends IMigratableModelEvents { }
 
-export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvents> {
-    dead: boolean;
-    setDead(): Promise<void>;
-    markedForDestruction: boolean;
-    markForDestruction(): Promise<void>;
-    volunteerForDestruction(): Promise<void>;
-    haveDestructionTask(): boolean;
+/**
+ * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
+ * for the application to run.
+ */
+export interface IInventoryListContainer extends IMigratableModel, IEventProvider<IInventoryListContainerEvents> {
+    /**
+     * An inventory tracker list.
+     */
+    inventoryList: IInventoryList;
 }
 
 export interface IInventoryItem extends EventEmitter {
