@@ -5,9 +5,9 @@
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo } from "../../schema/typedSchema";
+import { typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo } from "../../schema-view/typedSchema";
 
-import { FieldKind, ValueSchema } from "../../schema";
+import { FieldKind, ValueSchema } from "../../schema-stored";
 import { requireTrue } from "../../util";
 
 // These tests currently just cover the type checking, so its all compile time.

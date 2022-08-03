@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { StoredSchemaRepository } from "../schema";
+import { StoredSchemaRepository } from "../schema-stored";
 import { AnchorSet, FieldKey, DetachedField, Delta, JsonableTree, detachedFieldAsKey, Anchor } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 

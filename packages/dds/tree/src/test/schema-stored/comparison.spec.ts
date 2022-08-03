@@ -9,7 +9,7 @@ import {
 	allowsFieldSuperset, allowsTreeSuperset, allowsValueSuperset, isNeverField, isNeverTree,
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-} from "../../schema/Comparison";
+} from "../../schema-stored/comparison";
 import {
 	FieldSchema,
 	GlobalFieldKey,
@@ -20,7 +20,7 @@ import {
 	TreeSchemaIdentifier,
 	ValueSchema,
 	emptyField, emptyMap, emptySet, fieldSchema, anyField, anyTree, neverField, neverTree, StoredSchemaRepository,
-} from "../../schema";
+} from "../../schema-stored";
 import { brand, brandOpaque } from "../../util";
 
 describe("Schema Comparison", () => {

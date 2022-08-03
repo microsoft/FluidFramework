@@ -4,7 +4,7 @@
  */
 
 import { Dependee, ObservingDependent } from "../dependency-tracking";
-import { SchemaRepository } from "../schema";
+import { SchemaRepository } from "../schema-stored";
 import { Anchor, DetachedField } from "../tree";
 import { ITreeCursor, TreeNavigationResult } from "./cursor";
 

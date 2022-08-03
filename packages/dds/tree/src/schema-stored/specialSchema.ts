@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FieldSchema, FieldKind, TreeSchema, ValueSchema } from "./Schema";
-import { emptySet, emptyMap } from "./Builders";
+import { FieldSchema, FieldKind, TreeSchema, ValueSchema } from "./schema";
+import { emptySet, emptyMap } from "./builders";
 
 /**
  * Some special schema for edge cases that are used by the schema system itself.
