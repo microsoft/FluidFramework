@@ -95,13 +95,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IDataStore>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     // (undocumented)
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     // (undocumented)
     createDetachedRootDataStore(pkg: Readonly<string[]>, rootDataStoreId: string): IFluidDataStoreContextDetached;
-    // @deprecated (undocumented)
-    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
     createSummary(blobRedirectTable?: Map<string, string>, telemetryContext?: ITelemetryContext): ISummaryTree;
     deleteUnusedRoutes(unusedRoutes: string[]): void;
     // (undocumented)
@@ -335,7 +333,6 @@ export interface IContainerRuntimeOptions {
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
-    readonly useDataStoreAliasing?: boolean;
 }
 
 // @public
