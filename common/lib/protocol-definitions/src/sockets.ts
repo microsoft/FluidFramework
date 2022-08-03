@@ -60,6 +60,8 @@ export interface IConnect {
      * Features supported might be service specific.
      * If we have standardized features across all services, they need to be exposed in more structured way.
      */
+    // TODO: we should consider using `unknown` instead of `any` in here in the future.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supportedFeatures?: Record<string, any>;
 
     /**
@@ -153,6 +155,8 @@ export interface IConnected {
      * Features supported might be service specific.
      * If we have standardized features across all services, they need to be exposed in more structured way.
      */
+    // TODO: we should consider using `unknown` instead of `any` in here in the future.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     supportedFeatures?: Record<string, any>;
 
     /**
