@@ -17,20 +17,30 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - Avoid using code formatting in the title (it's fine to use in the body).
 - To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
-# 2.1.0
-## 2.1.0 Breaking changes
+# 3.0.0
+## 3.0.0 Upcoming changes
 - [Remove `type` field from `ShareLinkInfoType`](#Remove-type-field-from-ShareLinkInfoType)
 - [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
 - [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
 ### Remove `type` field from `ShareLinkInfoType`
-This field has been deprecated and will be removed in a future breaking change.
+This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
 
-### Remove `ShareLinkTypes` field from `ShareLinkInfoType`
-This interface has been deprecated and will be removed in a future breaking change. Functions impacted are:
-- `createOdspCreateContainerRequest`
+### Remove `ShareLinkTypes` interface
+`ShareLinkTypes` interface has been deprecated and will be removed in a future breaking change. Singnature of `createOdspCreateContainerRequest` has been updated to now accept `ISharingLinkKind` property instead.
+```diff
+    function createOdspCreateContainerRequest(
+        siteUrl: string,
+        driveId: string,
+        filePath: string,
+        fileName: string,
+-       createShareLinkType?: ShareLinkTypes,
++       createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
+    ): 
+```
+
 
 ### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
-This field has been deprecated and will be removed in a future breaking change.
+`enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest`  function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`.
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
