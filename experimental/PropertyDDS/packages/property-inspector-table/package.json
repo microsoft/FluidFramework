@@ -19,10 +19,9 @@
   ],
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "concurrently npm:tsc npm:build:webpack",
-    "build:full": "npm run build",
-    "build:full:compile": "npm run build:compile",
-    "build:webpack": "npm run webpack",
+    "build:compile": "npm run tsc",
+    "build:full": "concurrently npm:build npm:webpack",
+    "build:full:compile": "concurrently npm:build:compile npm:webpack",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -34,7 +33,8 @@
     "test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit",
     "test:jest": "jest",
     "tsc": "tsc",
-    "webpack": "webpack --config webpack.prod.js --env production --color --no-stats"
+    "webpack": "webpack --config webpack.prod.js --env production --color --no-stats",
+    "webpack:dev": "webpack --env.clean"
   },
   "dependencies": {
     "@hig/fonts": "^1.0.2",
