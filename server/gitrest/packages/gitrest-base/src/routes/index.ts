@@ -41,16 +41,16 @@ export function create(
 ): IRoutes {
     return {
         git: {
-            blobs: blobs.create(store, repoManagerFactory),
-            commits: commits.create(store, repoManagerFactory),
-            refs: refs.create(store, repoManagerFactory),
+            blobs: blobs.create(store, fileSystemManagerFactory, repoManagerFactory),
+            commits: commits.create(store, fileSystemManagerFactory, repoManagerFactory),
+            refs: refs.create(store, fileSystemManagerFactory, repoManagerFactory),
             repos: repos.create(store, repoManagerFactory),
-            tags: tags.create(store, repoManagerFactory),
-            trees: trees.create(store, repoManagerFactory),
+            tags: tags.create(store, fileSystemManagerFactory, repoManagerFactory),
+            trees: trees.create(store, fileSystemManagerFactory, repoManagerFactory),
         },
         repository: {
-            commits: repositoryCommits.create(store, repoManagerFactory),
-            contents: contents.create(store, repoManagerFactory),
+            commits: repositoryCommits.create(store, fileSystemManagerFactory, repoManagerFactory),
+            contents: contents.create(store, fileSystemManagerFactory, repoManagerFactory),
         },
         summaries: summaries.create(store, fileSystemManagerFactory, repoManagerFactory),
     };
