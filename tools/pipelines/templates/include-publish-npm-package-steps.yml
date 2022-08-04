@@ -85,7 +85,9 @@ steps:
       sortedPackages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
       for packageName in $sortedPackages
       do
+          echo $packageName
           f=$(find -name "${packageName}-[0-9]*.tgz")
+          echo $f
           if [[ $f != null ]]; then
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
             if grep -q "npm ERR!" "publish_log"
