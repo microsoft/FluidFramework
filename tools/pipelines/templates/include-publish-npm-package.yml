@@ -18,6 +18,9 @@ parameters:
   type: object
   default: Small
 
+- name: buildDirectory
+  type: string
+
 stages:
 - stage: publish_npm_internal_test
   dependsOn: build
@@ -75,5 +78,5 @@ stages:
         displayName: Common Generated Files
         inputs:
           targetType: 'inline'
-          workingDirectory: $(Pipeline.Workspace)/pack/
+          workingDirectory: ${{ parameters.buildDirectory }}/pack/
           script: rm packagePublishOrder.txt
