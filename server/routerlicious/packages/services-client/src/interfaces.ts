@@ -17,10 +17,8 @@ export interface ISession {
      */
     ordererUrl: string;
     // WebSocket server url of the session
-    socketServerUrl?: string;
-    /**
-     * Historian url of the session.
-     */
+    deltaStreamServerUrl?: string;
+    // Historian url of the session
     historianUrl: string;
     /**
      * Whether session is "alive".

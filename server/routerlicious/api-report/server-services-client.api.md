@@ -347,7 +347,7 @@ export interface ISession {
     isSessionAlive: boolean;
     ordererUrl: string;
     // (undocumented)
-    socketServerUrl?: string;
+    deltaStreamServerUrl?: string;
 }
 
 // @public (undocumented)

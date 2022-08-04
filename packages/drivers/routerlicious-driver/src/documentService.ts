@@ -193,8 +193,8 @@ export class DocumentService implements api.IDocumentService {
                 refreshToken,
             );
 
-            const socketServerUrl = this.resolvedUrl.type === "fluid" ?
-                this.resolvedUrl.endpoints.socketServerUrl : this.ordererUrl;
+            const deltaStreamServerUrl = this.resolvedUrl.type === "fluid" ?
+                this.resolvedUrl.endpoints.deltaStreamServerUrl : this.ordererUrl;
 
             return R11sDocumentDeltaConnection.create(
                 this.tenantId,
@@ -202,7 +202,7 @@ export class DocumentService implements api.IDocumentService {
                 ordererToken.jwt,
                 io,
                 client,
-                socketServerUrl,
+                deltaStreamServerUrl,
                 this.logger,
             );
         };
