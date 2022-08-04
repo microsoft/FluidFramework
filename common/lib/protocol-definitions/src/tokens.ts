@@ -67,48 +67,30 @@ export interface ITokenClaims {
 }
 
 /**
- * TODO
+ * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
  */
 export interface ISummaryTokenClaims {
-    /**
-     * TODO
-     */
     sub: string;
-
-    /**
-     * TODO
-     */
     act: IActorClient;
-
-    /**
-     * TODO
-     */
     claims: ITokenClaims;
 }
 
 /**
- * TODO
+ * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
  */
 export interface IActorClient {
-    /**
-     * TODO
-     */
     sub: string;
 }
 
 /**
- * Abstracts the discovery of claims contained within a token.
+ * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
  */
 export interface ITokenService {
-    /**
-     * TODO
-     */
     extractClaims(token: string): ITokenClaims;
 }
 
 /**
- * Abstracts the token fetching mechanism for a hosting application.
- * The hosting application is responsible for providing an implementation.
+ * @deprecated Please use client-specific types instead. E.g. from `@fluidframework/routerlicious-driver`.
  */
 export interface ITokenProvider {
     /**
