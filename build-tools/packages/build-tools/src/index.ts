@@ -29,3 +29,11 @@ export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/gen
 export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
 export { execAsync, execWithErrorAsync, readJsonAsync, readFileAsync, writeFileAsync } from "./common/utils";
+export { handler as assertShortCode} from "./repoPolicyCheck/handlers/assertShortCode";
+export { handlers as copyrightFileHeader} from "./repoPolicyCheck/handlers/copyrightFileHeader";
+export { handler as dockerfilePackages} from "./repoPolicyCheck/handlers/dockerfilePackages";
+export { handler as fluidCase} from "./repoPolicyCheck/handlers/fluidCase";
+export { handlers as lockfiles} from "./repoPolicyCheck/handlers/lockfiles";
+export { handlers as npmPackages} from "./repoPolicyCheck/handlers/npmPackages";
+export { Handler } from "./repoPolicyCheck/common";
+export { default as exclusions } from "../data/exclusions.json";
