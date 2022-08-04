@@ -133,12 +133,6 @@ export interface IContainerRuntimeBase extends
     orderSequentially(callback: () => void): void;
 
     /**
-     * Sets the flush mode for operations on the document.
-     * @deprecated - Will be removed in 0.60. See #9480.
-     */
-    setFlushMode(mode: FlushMode): void;
-
-    /**
      * Executes a request against the container runtime
      */
     request(request: IRequest): Promise<IResponse>;
