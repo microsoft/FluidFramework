@@ -18,7 +18,6 @@ import {
     lockfilesHandlers,
     assertShortCodeHandler,
     Handler,
-    exclusions,
 } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 
@@ -72,7 +71,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     async run() {
         const { flags } = await this.parse(CheckPolicy);
-        const exclusionsRegex: RegExp[] = exclusions.map((e: string) => new RegExp(e, "i"));
+        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, unicorn/prefer-module
+        const exclusions: RegExp[] = require("../../data/exclusions.json").map(
+            (e: string) => new RegExp(e, "i"),
+        );
         const handlerRegex =
             typeof flags.handler === "string" ? new RegExp(flags.handler, "i") : /.?/;
         const pathRegex = typeof flags.path === "string" ? new RegExp(flags.path, "i") : /.?/;
@@ -158,7 +160,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
             if (pathRegex.test(line) && fs.existsSync(filePath)) {
                 count++;
-                if (exclusionsRegex.every((value) => !value.test(line))) {
+                if (exclusions.every((value) => !value.test(line))) {
                     routeToHandlers(filePath);
                     processed++;
                 } else {
