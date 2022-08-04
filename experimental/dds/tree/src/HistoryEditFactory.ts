@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers';
 import { assert, fail } from './Common';
 import { rangeFromStableRange } from './TreeViewUtilities';
@@ -28,14 +29,19 @@ import { getChangeNodeFromViewNode } from './SerializationUtilities';
  * @param changes - the changes for which to produce an inverse.
  * @param before - a view of the tree state before `changes` are/were applied - used as a basis for generating the inverse.
  * @returns if the changes could be reverted, a sequence of changes _r_ that will produce `before` if applied to a view _A_, where _A_ is the result of
- * applying `changes` to `before`. Applying _r_ to views other than _A_ is legal but may cause the changes to fail to apply or may
- * not be a true semantic inverse. If the changes could not be reverted given the state of `before`, returns undefined.
+ * applying `changes` to `before`. Note that the size of the array of reverted changes may not be the same as the input array, and may even be empty in cases where
+ * the view did not change. Applying _r_ to views other than _A_ is legal but may cause the changes to fail to apply or may not be a true semantic inverse.
+ * If the changes could not be reverted given the state of `before`, returns undefined.
  *
  * TODO: what should this do if `changes` fails to apply to `before`?
  * TODO:#68574: Pass a view that corresponds to the appropriate Fluid reference sequence number rather than the view just before
  * @internal
  */
-export function revert(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
+export function revert(
+	changes: readonly ChangeInternal[],
+	before: RevisionView,
+	logger?: ITelemetryLogger
+): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];
 
 	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
@@ -74,9 +80,19 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 				const nodesDetached = detachedNodes.get(source);
 
 				if (nodesBuilt !== undefined) {
+					if (nodesBuilt.length === 0) {
+						builtNodes.delete(source);
+						logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
+						continue;
+					}
 					result.unshift(createInvertedInsert(change, nodesBuilt));
 					builtNodes.delete(source);
 				} else if (nodesDetached !== undefined) {
+					if (nodesDetached.length === 0) {
+						detachedNodes.delete(source);
+						logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
+						continue;
+					}
 					result.unshift(createInvertedInsert(change, nodesDetached, true));
 					detachedNodes.delete(source);
 				} else {
@@ -95,6 +111,11 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 					return undefined;
 				}
 				const { invertedDetach, detachedNodeIds } = invert;
+
+				if (detachedNodeIds.length === 0) {
+					logger?.sendTelemetryEvent({ eventName: 'reverting detachment of empty traits' });
+					continue;
+				}
 
 				if (destination !== undefined) {
 					if (builtNodes.has(destination) || detachedNodes.has(destination)) {
