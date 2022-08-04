@@ -64,9 +64,12 @@ stages:
       publishFlags: --access public
       tagName: ${{ parameters.tagName }}
 
-- task: Bash@3
-  displayName: Remove Common Generated Files
-  inputs:
-    targetType: 'inline'
-    workingDirectory: $(Pipeline.Workspace)/pack/
-    script: rm packagePublishOrder.txt
+- stage: clean_up
+  displayName: Clean Up
+  jobs:
+    - task: Bash@3
+      displayName: Remove Common Generated Files
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(Pipeline.Workspace)/pack/
+        script: rm packagePublishOrder.txt
