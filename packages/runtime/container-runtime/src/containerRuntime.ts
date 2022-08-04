@@ -3009,7 +3009,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // and split the content accordingly
         if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
             return this.submitRuntimeMessage(type,
-                                   content,
+                                             content,
                                              batch,
                                              serializedContent?.length ?? 0,
                                              serializedContent,
