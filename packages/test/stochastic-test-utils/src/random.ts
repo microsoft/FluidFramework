@@ -15,6 +15,9 @@ import { XSadd } from "./xsadd";
 export function makeUuid4(u32_0: number, u32_1: number, u32_2: number, u32_3: number) {
     const hex = (value: number, digits: number) => value.toString(16).padStart(digits, "0");
 
+    // This implementation discards the four low bits from u32_1 and two low bits from
+    // u32_2.  While we prefer to discard low bits due to the known weakness in XSadd,
+    // the choice of which bits to discard was largely driven by convenience.
     return `${
         hex(u32_0, 8)
     }-${
@@ -42,8 +45,8 @@ export function makeRandom(
 ): IRandom {
     const engine = new XSadd(...seed);
 
-    // RATIONALE: These methods are already bound.  (Technically, XSadd is constructed to avoid use
-    //            of 'this' for a minor perf win, but the end result is the same.)
+    // RATIONALE: These methods are already bound.  (Technically, XSadd is constructed to avoid
+    //            using 'this' for a minor perf win, but the end result is the same.)
 
     /* eslint-disable @typescript-eslint/unbound-method */
     const real = distribution.real(engine.float64);
