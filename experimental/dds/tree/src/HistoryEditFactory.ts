@@ -82,9 +82,7 @@ export function revert(
 				if (nodesBuilt !== undefined) {
 					if (nodesBuilt.length === 0) {
 						builtNodes.delete(source);
-						if (logger) {
-							logger.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
-						}
+						logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
 						continue;
 					}
 					result.unshift(createInvertedInsert(change, nodesBuilt));
@@ -92,9 +90,7 @@ export function revert(
 				} else if (nodesDetached !== undefined) {
 					if (nodesDetached.length === 0) {
 						detachedNodes.delete(source);
-						if (logger) {
-							logger.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
-						}
+						logger?.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
 						continue;
 					}
 					result.unshift(createInvertedInsert(change, nodesDetached, true));
@@ -117,9 +113,7 @@ export function revert(
 				const { invertedDetach, detachedNodeIds } = invert;
 
 				if (detachedNodeIds.length === 0) {
-					if (logger) {
-						logger.sendTelemetryEvent({ eventName: 'reverting detachment of empty traits' });
-					}
+					logger?.sendTelemetryEvent({ eventName: 'reverting detachment of empty traits' });
 					continue;
 				}
 
