@@ -279,6 +279,9 @@ function filterValidTelemetryProps(x: any, key: string): TelemetryEventPropertyT
     if (isTelemetryEventPropertyValue(x)) {
         return x;
     }
+    if (x === null) {
+        return String(x);
+    }
     // We don't support logging arbitrary objects
     console.error(`UnSupported Format of Logging Error Property for key ${key}:`, x);
     return "REDACTED (arbitrary object)";
