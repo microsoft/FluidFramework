@@ -105,3 +105,5 @@ export const TypeColumn: React.FunctionComponent<ITypeColumn> = ({ rowData }) =>
     </Tooltip>
   );
 };
+
+export const useChipStyles = useStyles;
