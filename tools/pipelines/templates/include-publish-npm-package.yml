@@ -67,10 +67,12 @@ stages:
 - stage: clean_up
   displayName: Clean Up
   jobs:
-    steps:
-    - task: Bash@3
-      displayName: Remove Common Generated Files
-      inputs:
-        targetType: 'inline'
-        workingDirectory: $(Pipeline.Workspace)/pack/
-        script: rm packagePublishOrder.txt
+    - job: build
+      displayName: Remove
+      steps:
+      - task: Bash@3
+        displayName: Common Generated Files
+        inputs:
+          targetType: 'inline'
+          workingDirectory: $(Pipeline.Workspace)/pack/
+          script: rm packagePublishOrder.txt
