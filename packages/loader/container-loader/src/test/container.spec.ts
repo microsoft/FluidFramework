@@ -134,12 +134,5 @@ describe("Container", () => {
             // Should resolve immediately, otherwise test will time out
             await waitP;
         });
-
-        it.only("Should throw if getter is used before context is defined", async () => {
-            const container = new Container({ services: { options: {} } } as Loader, {});
-            // const mockContainer = new MockContainer();
-            // const context = mockContainer.context();
-            assert.throws(container.context(), "Accessing an undefined  context should throw");
-        });
     });
 });
