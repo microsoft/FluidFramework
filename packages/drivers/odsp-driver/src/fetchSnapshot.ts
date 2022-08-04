@@ -252,9 +252,18 @@ async function fetchLatestSnapshotCore(
                 });
 
                 let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
-
+                const splittedContentType = contentType?.split(";");
+                let contentTypeToRead: string | undefined;
+                if (splittedContentType !== undefined) {
+                    for (let type in splittedContentType) {
+                        if (type === "application/json" || type === "application/ms-fluid") {
+                            contentTypeToRead = type;
+                            break;
+                        }
+                    }
+                }
                 try {
-                    switch (contentType) {
+                    switch (contentTypeToRead) {
                         case "application/json": {
                             const text = await odspResponse.content.text();
                             propsToLog.bodySize = text.length;
@@ -556,7 +565,8 @@ export async function downloadSnapshot(
             headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
             break;
         default:
-            headers.accept = "application/json";
+            // By default ask both versions and let the server decide the format.
+            headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
     }
 
     const odspResponse = await (epochTracker?.fetch(url, fetchOptions, "treesLatest", true, scenarioName) ??
