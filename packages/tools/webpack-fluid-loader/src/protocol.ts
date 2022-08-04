@@ -62,13 +62,16 @@ class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
                 user: {
                     id: actualClientId,
                 },
-                scopes: [],
+                scopes: [
+                    "doc:read",
+                    "doc:write",
+                ],
                 details: {
-                    type: "local",
                     capabilities: {
                         interactive: true,
                     },
                 },
+                timestamp: Date.now(),
             },
         };
         this.members.set(actualClientId, sequencedClient);
