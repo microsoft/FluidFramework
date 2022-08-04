@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { default as Random } from "random-js";
-import { buildForest, ITreeCursor, jsonableTreeFromCursor, TextCursor } from "../../..";
+import { buildForest, ITreeCursor, jsonableTreeFromCursor, singleTextCursor } from "../../..";
 import { initializeForest, TreeNavigationResult } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
@@ -72,7 +72,7 @@ function bench(name: string, getJson: () => any) {
 
     const cursorFactories: [string, () => ITreeCursor][] = [
         ["JsonCursor", () => new JsonCursor(json)],
-        ["TextCursor", () => new TextCursor(encodedTree)],
+        ["TextCursor", () => singleTextCursor(encodedTree)],
         ["object-forest Cursor", () => {
             const forest = buildForest();
             initializeForest(forest, [encodedTree]);
