@@ -25,7 +25,15 @@ import {
 import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { assert, assertNotUndefined, fail, copyPropertyIfDefined, noop } from './Common';
+import {
+	assert,
+	assertNotUndefined,
+	fail,
+	copyPropertyIfDefined,
+	noop,
+	RestOrArray,
+	unwrapRestOrArray,
+} from './Common';
 import { EditHandle, EditLog, getNumberOfHandlesFromEditLogSummary, OrderedEditSet } from './EditLog';
 import {
 	EditId,
@@ -1334,10 +1342,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * should be used instead.
 	 * @public
 	 */
-	public applyEdit(...changes: Change[]): Edit<InternalizedChange>;
-	public applyEdit(changes: Change[]): Edit<InternalizedChange>;
-	public applyEdit(headOrChanges: Change | Change[], ...tail: Change[]): Edit<InternalizedChange> {
-		const changes = Array.isArray(headOrChanges) ? headOrChanges : [headOrChanges, ...tail];
+	public applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
+	public applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
+	public applyEdit(...changesOrArray: RestOrArray<Change>): Edit<InternalizedChange> {
+		const changes = unwrapRestOrArray(changesOrArray);
 		const id = newEditId();
 		const internalEdit: Edit<ChangeInternal> = {
 			id,
@@ -1509,7 +1517,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @internal
 	 */
 	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
-		return revert(changes as unknown as readonly ChangeInternal[], before);
+		return revert(changes as unknown as readonly ChangeInternal[], before, this.logger);
 	}
 
 	/**

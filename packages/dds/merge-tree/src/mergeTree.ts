@@ -84,6 +84,7 @@ import {
 	refGetTileLabels,
 	refHasTileLabel,
  } from "./referencePositions";
+import { PropertiesRollback } from "./segmentPropertiesManager";
 
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
@@ -1219,12 +1220,23 @@ export class MergeTree {
         }
     }
 
-    private addToPendingList(segment: ISegment, segmentGroup?: SegmentGroup, localSeq?: number) {
+    private addToPendingList(segment: ISegment, segmentGroup?: SegmentGroup, localSeq?: number,
+        previousProps?: PropertySet) {
         let _segmentGroup = segmentGroup;
         if (_segmentGroup === undefined) {
             // TODO: review the cast
             _segmentGroup = { segments: [], localSeq } as SegmentGroup;
+            if (previousProps) {
+                _segmentGroup.previousProps = [];
+            }
             this.pendingSegments!.enqueue(_segmentGroup);
+        }
+        if ((!_segmentGroup.previousProps && previousProps) ||
+            (_segmentGroup.previousProps && !previousProps)) {
+            throw new Error("All segments in group should have previousProps or none");
+        }
+        if (previousProps) {
+            _segmentGroup.previousProps!.push(previousProps);
         }
         segment.segmentGroups.enqueue(_segmentGroup);
         return _segmentGroup;
@@ -1793,10 +1805,12 @@ export class MergeTree {
      * @param clientId - The id of the client making the annotate
      * @param seq - The sequence number of the annotate operation
      * @param opArgs - The op args for the annotate op. this is passed to the merge tree callback if there is one
+     * @param rollback - Whether this is for a local rollback and what kind
      */
     public annotateRange(
         start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined, refSeq: number,
-        clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs) {
+        clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs,
+        rollback: PropertiesRollback = PropertiesRollback.None) {
         this.ensureIntervalBoundary(start, refSeq, clientId);
         this.ensureIntervalBoundary(end, refSeq, clientId);
         const deltaSegments: IMergeTreeSegmentDelta[] = [];
@@ -1804,11 +1818,12 @@ export class MergeTree {
         let segmentGroup: SegmentGroup | undefined;
 
         const annotateSegment = (segment: ISegment) => {
-            const propertyDeltas = segment.addProperties(props, combiningOp, seq, this.collabWindow);
+            const propertyDeltas = segment.addProperties(props, combiningOp, seq, this.collabWindow, rollback);
             deltaSegments.push({ segment, propertyDeltas });
             if (this.collabWindow.collaborating) {
                 if (seq === UnassignedSequenceNumber) {
-                    segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq);
+                    segmentGroup = this.addToPendingList(segment, segmentGroup, localSeq,
+                        propertyDeltas ? propertyDeltas : {});
                 } else {
                     if (MergeTree.options.zamboniSegments) {
                         this.addToLRUSet(segment, seq);
@@ -1863,7 +1878,6 @@ export class MergeTree {
                     // keep first removal at the head.
                     existingRemovalInfo.removedClientIds.unshift(clientId);
                     existingRemovalInfo.removedSeq = seq;
-                    segment.localRemovedSeq = undefined;
                     if (segment.localRefs?.empty === false) {
                         localOverlapWithRefs.push(segment);
                     }

@@ -426,12 +426,6 @@ export interface IContainerRuntimeOptions {
      */
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     /**
-     * Should the runtime use data store aliasing for creating root datastores.
-     * In case of aliasing conflicts, the runtime will raise an exception which does
-     * not effect the status of the container.
-     */
-    readonly useDataStoreAliasing?: boolean;
-    /**
      * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
      * send all operations to the driver layer, while in TurnBased the operations will be buffered
      * and then sent them as a single batch at the end of the turn.
@@ -509,7 +503,6 @@ export interface IPendingRuntimeState {
     savedOps: ISequencedDocumentMessage[];
 }
 
-const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
 // Feature gate for the max op size. If the value is negative, chunking is enabled
@@ -903,7 +896,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions = {},
             gcOptions = {},
             loadSequenceNumberVerification = "close",
-            useDataStoreAliasing = false,
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
         } = runtimeOptions;
@@ -979,7 +971,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryOptions,
                 gcOptions,
                 loadSequenceNumberVerification,
-                useDataStoreAliasing,
                 flushMode,
                 enableOfflineLoad,
             },
@@ -1069,7 +1060,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
-    private readonly _aliasingEnabled: boolean;
     private readonly _maxOpSizeInBytes: number;
 
     private readonly maxConsecutiveReconnects: number;
@@ -1262,10 +1252,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.summarizerClientElectionEnabled = this.isSummarizerClientElectionEnabled();
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-
-        this._aliasingEnabled =
-            (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
-            (runtimeOptions.useDataStoreAliasing ?? false);
 
         this._maxOpSizeInBytes = (this.mc.config.getNumber(maxOpSizeInBytesKey) ?? defaultMaxOpSizeInBytes);
         this.maxConsecutiveReconnects =
@@ -1870,11 +1856,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         "Runtime detected too many reconnects with no progress syncing local ops",
                         "setConnectionState",
                         undefined,
-                       {
-                        dataLoss: 1,
-                        attempts: this.consecutiveReconnects,
-                        pendingMessages: this.pendingStateManager.pendingMessagesCount,
-                    }));
+                        {
+                            dataLoss: 1,
+                            attempts: this.consecutiveReconnects,
+                            pendingMessages: this.pendingStateManager.pendingMessagesCount,
+                        }));
                 return;
             }
         }
@@ -2137,81 +2123,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
         const internalId = uuid();
         return channelToDataStore(
-            await this._createDataStore(pkg, false /* isRoot */, internalId),
+            await this._createDataStore(pkg, internalId),
             internalId,
             this,
             this.dataStores,
             this.mc.logger);
-    }
-
-    /**
-     * Creates a root datastore directly with a user generated id and attaches it to storage.
-     * It is vulnerable to name collisions and should not be used.
-     *
-     * This method will be removed. See #6465.
-     */
-    private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        fluidDataStore.makeVisibleAndAttachGraph();
-        return fluidDataStore;
-    }
-
-    /**
-     * @deprecated - will be removed in an upcoming release. See #9660.
-     */
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        if (rootDataStoreId.includes("/")) {
-            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
-        }
-        return this._aliasingEnabled === true ?
-            this.createAndAliasDataStore(pkg, rootDataStoreId) :
-            this.createRootDataStoreLegacy(pkg, rootDataStoreId);
-    }
-
-    /**
-     * Creates a data store then attempts to alias it.
-     * If aliasing fails, it will raise an exception.
-     *
-     * This method will be removed. See #6465.
-     *
-     * @param pkg - Package name of the data store
-     * @param alias - Alias to be assigned to the data store
-     * @param props - Properties for the data store
-     * @returns - An aliased data store which can can be found / loaded by alias.
-     */
-    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
-        const internalId = uuid();
-
-        try {
-            // A similar call may have been initiated by the same client, so we should try to get
-            // a possible existing aliased datastore first.
-            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
-            return channelToDataStore(
-                existingDataStore,
-                internalId,
-                this,
-                this.dataStores,
-                this.mc.logger,
-                true, // AlreadyAliased. This will block further alias attempts for the datastore
-            );
-        } catch (err) {
-            const newChannel = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-            const newDataStore = channelToDataStore(newChannel, internalId, this, this.dataStores, this.mc.logger);
-            const aliasResult = await newDataStore.trySetAlias(alias);
-            if (aliasResult === "Success") {
-                return newDataStore;
-            }
-
-            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
-            return channelToDataStore(
-                existingDataStore,
-                internalId,
-                this,
-                this.dataStores,
-                this.mc.logger,
-                true, // AlreadyAliased. This will block further alias attempts for the datastore
-            );
-        }
     }
 
     public createDetachedRootDataStore(
@@ -2227,49 +2143,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.createDetachedDataStoreCore(pkg, false);
     }
 
-    /**
-     * Creates a possibly root datastore directly with a possibly user generated id and attaches it to storage.
-     * It is vulnerable to name collisions if both aforementioned conditions are true, and should not be used.
-     *
-     * This method will be removed. See #6465.
-     */
-    private async _createDataStoreWithPropsLegacy(
-        pkg: string | string[],
-        props?: any,
-        id = uuid(),
-        isRoot = false,
-    ): Promise<IDataStore> {
-        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
-            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
-        if (isRoot) {
-            fluidDataStore.makeVisibleAndAttachGraph();
-            this.logger.sendTelemetryEvent({
-                eventName: "Root datastore with props",
-                hasProps: props !== undefined,
-            });
-        }
-        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
-    }
-
     public async _createDataStoreWithProps(
         pkg: string | string[],
         props?: any,
         id = uuid(),
-        isRoot = false,
     ): Promise<IDataStore> {
-        return this._aliasingEnabled === true && isRoot ?
-            this.createAndAliasDataStore(pkg, id, props) :
-            this._createDataStoreWithPropsLegacy(pkg, props, id, isRoot);
+        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
+            Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
+        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
 
     private async _createDataStore(
         pkg: string | string[],
-        isRoot: boolean,
         id = uuid(),
         props?: any,
     ): Promise<IFluidDataStoreChannel> {
         return this.dataStores
-            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props)
+            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
             .realize();
     }
 
@@ -2626,21 +2516,24 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             },
         );
 
+        let latestSnapshotVersionId: string | undefined;
         if (refreshLatestAck) {
-            const latestSummaryRefSeq = await this.refreshLatestSummaryAckFromServer(
+            const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
                 ChildLogger.create(summaryNumberLogger, undefined, { all: { safeSummary: true } }));
+            const latestSnapshotRefSeq = latestSnapshotInfo.latestSnapshotRefSeq;
+            latestSnapshotVersionId = latestSnapshotInfo.latestSnapshotVersionId;
 
-            if (latestSummaryRefSeq > this.deltaManager.lastSequenceNumber) {
+            if (latestSnapshotRefSeq > this.deltaManager.lastSequenceNumber) {
                 // We need to catch up to the latest summary's reference sequence number before pausing.
                 await PerformanceEvent.timedExecAsync(
                     summaryNumberLogger,
                     {
                         eventName: "WaitingForSeq",
                         lastSequenceNumber: this.deltaManager.lastSequenceNumber,
-                        targetSequenceNumber: latestSummaryRefSeq,
+                        targetSequenceNumber: latestSnapshotRefSeq,
                         lastKnownSeqNumber: this.deltaManager.lastKnownSeqNumber,
                     },
-                    async () => waitForSeq(this.deltaManager, latestSummaryRefSeq),
+                    async () => waitForSeq(this.deltaManager, latestSnapshotRefSeq),
                     { start: true, end: true, cancel: "error" }, // definitely want start event
                 );
             }
@@ -2765,18 +2658,32 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 return { stage: "generate", ...generateSummaryData, error: continueResult.error };
             }
 
-            const summaryContext: ISummaryContext =
-                lastAck === undefined
-                    ? {
-                        proposalHandle: undefined,
-                        ackHandle: this.context.getLoadedFromVersion()?.id,
-                        referenceSequenceNumber: summaryRefSeqNum,
-                    }
-                    : {
-                        proposalHandle: lastAck.summaryOp.contents.handle,
-                        ackHandle: lastAck.summaryAck.contents.handle,
-                        referenceSequenceNumber: summaryRefSeqNum,
-                    };
+            // It may happen that the lastAck it not correct due to missing summaryAck in case of single commit
+            // summary. So if the previous summarizer closes just after submitting the summary and before
+            // submitting the summaryOp then we can't rely on summaryAck. So in case we have
+            // latestSnapshotVersionId from storage and it does not match with the lastAck ackHandle, then use
+            // the one fetched from storage as parent as that is the latest.
+            let summaryContext: ISummaryContext;
+            if (lastAck?.summaryAck.contents.handle !== latestSnapshotVersionId
+                && latestSnapshotVersionId !== undefined) {
+                summaryContext = {
+                    proposalHandle: undefined,
+                    ackHandle: latestSnapshotVersionId,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                };
+            } else if (lastAck === undefined) {
+                summaryContext = {
+                    proposalHandle: undefined,
+                    ackHandle: this.context.getLoadedFromVersion()?.id,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                };
+            } else {
+                summaryContext = {
+                    proposalHandle: lastAck.summaryOp.contents.handle,
+                    ackHandle: lastAck.summaryAck.contents.handle,
+                    referenceSequenceNumber: summaryRefSeqNum,
+                };
+            }
 
             let handle: string;
             try {
@@ -3123,15 +3030,20 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         summaryLogger: ITelemetryLogger,
     ) {
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        const result = await this.summarizerNode.refreshLatestSummary(
-            proposalHandle,
-            summaryRefSeq,
-            async () => this.fetchSnapshotFromStorage(ackHandle, summaryLogger, {
+        const { snapshotTree } = await this.fetchSnapshotFromStorage(
+            ackHandle,
+            summaryLogger,
+            {
                 eventName: "RefreshLatestSummaryGetSnapshot",
                 ackHandle,
                 summaryRefSeq,
                 fetchLatest: false,
-            }),
+            },
+        );
+        const result = await this.summarizerNode.refreshLatestSummary(
+            proposalHandle,
+            summaryRefSeq,
+            async () => snapshotTree,
             readAndParseBlob,
             summaryLogger,
         );
@@ -3146,21 +3058,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
      * @param summaryLogger - logger to use when fetching snapshot from storage
      * @returns downloaded snapshot's reference sequence number
      */
-    private async refreshLatestSummaryAckFromServer(summaryLogger: ITelemetryLogger): Promise<number> {
-        const snapshot = await this.fetchSnapshotFromStorage(null, summaryLogger, {
-                eventName: "RefreshLatestSummaryGetSnapshot",
-                fetchLatest: true,
-            },
+    private async refreshLatestSummaryAckFromServer(
+        summaryLogger: ITelemetryLogger,
+    ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined; }> {
+        const { snapshotTree, versionId } = await this.fetchSnapshotFromStorage(null, summaryLogger, {
+            eventName: "RefreshLatestSummaryGetSnapshot",
+            fetchLatest: true,
+        },
             FetchSource.noCache,
         );
 
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
-        const snapshotRefSeq = await seqFromTree(snapshot, readAndParseBlob);
+        const latestSnapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
 
         const result = await this.summarizerNode.refreshLatestSummary(
             undefined,
-            snapshotRefSeq,
-            async () => snapshot,
+            latestSnapshotRefSeq,
+            async () => snapshotTree,
             readAndParseBlob,
             summaryLogger,
         );
@@ -3168,7 +3082,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Notify the garbage collector so it can update its latest summary state.
         await this.garbageCollector.latestSummaryStateRefreshed(result, readAndParseBlob);
 
-        return snapshotRefSeq;
+        return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
     }
 
     private async fetchSnapshotFromStorage(
@@ -3176,7 +3090,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         logger: ITelemetryLogger,
         event: ITelemetryGenericEvent,
         fetchSource?: FetchSource,
-    ) {
+    ): Promise<{ snapshotTree: ISnapshotTree; versionId: string; }> {
         return PerformanceEvent.timedExecAsync(
             logger, event, async (perfEvent: {
                 end: (arg0: {
@@ -3197,7 +3111,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             stats.getSnapshotDuration = trace.trace().duration;
 
             perfEvent.end(stats);
-            return maybeSnapshot;
+            return { snapshotTree: maybeSnapshot, versionId: versions[0].id };
         });
     }
 
