@@ -78,5 +78,4 @@ stages:
         displayName: Common Generated Files
         inputs:
           targetType: 'inline'
-          workingDirectory: ${{ parameters.buildDirectory }}/pack/
-          script: rm packagePublishOrder.txt
+          script: rm ${{ parameters.buildDirectory }}/pack/packagePublishOrder.txt
