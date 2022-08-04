@@ -703,7 +703,7 @@
         "taskName": "Automatically squash-merge pull requests in next",
         "label": "msftbot: merge-next",
         "silentMode": false,
-        "minMinutesOpen": 480,
+        "minMinutesOpen": "5",
         "mergeType": "squash",
         "deleteBranches": true,
         "allowAutoMergeInstructionsWithoutLabel": true,
