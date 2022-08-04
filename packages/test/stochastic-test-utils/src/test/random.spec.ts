@@ -8,7 +8,7 @@
 import { strict as assert } from "assert";
 import { makeRandom } from "..";
 import { makeUuid4 } from "../random";
-import { computeChiSquared, Counter, parseUuid } from "./utils";
+import { computeChiSquared, chiSquaredCriticalValues, Counter, parseUuid } from "./utils";
 
 // For stochastic tests, we use the following predetermined seeds.
 const testSeeds: [number, number, number, number][] = [
@@ -41,7 +41,11 @@ describe("Random", () => {
     });
 
     describe("distribution", () => {
-        function assert_chi2<T>(generator: () => T, weights: [T, number][], criticalValue: number, numSamples = 10000) {
+        function assert_chi2<T>(
+            generator: () => T,
+            weights: [T, number][],
+            numSamples = 10000,
+        ) {
             assert(weights.length > 0);
 
             const counts = new Counter<T>();
@@ -52,6 +56,8 @@ describe("Random", () => {
 
             const chi2 = computeChiSquared(weights, counts);
 
+            const criticalValue = chiSquaredCriticalValues[weights.length - 1];
+
             assert(chi2 <= criticalValue,
                 `Chi^2 expected result <= ${criticalValue}, but got ${chi2}`);
         }
@@ -59,22 +65,17 @@ describe("Random", () => {
         function assert_chi2_uniform<T>(
             generator: () => T,
             choices: T[],
-            criticalValue: number,
-            numSamples = 10000,
         ) {
             assert_chi2(
                 generator,
-                choices.map((choice) => [choice, 1 / choices.length]),
-                criticalValue,
-                numSamples);
+                choices.map((choice) => [choice, 1 / choices.length]));
         }
 
         function assert_chi2_uniform_range(
             generator: () => number,
             min: number,
             max: number,
-            criticalValue: number,
-            numSamples = 10000,
+            numSamples?: number,
         ) {
             const range = max - min + 1;
 
@@ -83,7 +84,6 @@ describe("Random", () => {
                 new Array(range)
                     .fill(0)
                     .map<[number, number]>((_, index) => [index + min, 1 / range]),
-                criticalValue,
                 numSamples);
         }
 
@@ -93,7 +93,6 @@ describe("Random", () => {
                     assert_chi2_uniform(
                         /* generator: */ () => makeRandom().bool(p),
                         /* choices: */ [false],
-                        /* critical: */ 0,
                     );
                 });
             }
@@ -103,7 +102,6 @@ describe("Random", () => {
                     assert_chi2_uniform(
                         /* generator: */ () => makeRandom().bool(p),
                         /* choices: */ [true],
-                        /* critical: */ 0,
                     );
                 });
             }
@@ -114,7 +112,6 @@ describe("Random", () => {
                     assert_chi2_uniform(
                         /* generator: */ random.bool,
                         /* choices: */ [true, false],
-                        /* critical: */ 4.39,
                     );
                 }
             });
@@ -127,8 +124,7 @@ describe("Random", () => {
                         /* weights: */ [
                             [true, 1 / 3],
                             [false, 2 / 3],
-                        ],
-                        /* critical: */ 4.33);
+                        ]);
                 }
             });
         });
@@ -144,9 +140,9 @@ describe("Random", () => {
                 });
             }
 
-            for (const [min, max, critical] of [
-                [0, 1, 4.39],
-                [-1, 1, 3.38],
+            for (const [min, max] of [
+                [0, 1],
+                [-1, 1],
             ]) {
                 it(`in range [${min}..${max}] must have uniform distribution.`, () => {
                     for (const seeds of testSeeds) {
@@ -156,11 +152,25 @@ describe("Random", () => {
                             /* generator: */ () => random.integer(min, max),
                             min,
                             max,
-                            critical,
                         );
                     }
                 });
             }
+
+            // Construct the worst case scenario where 'integer()' will reject ~50% of samples.
+            it("encounters rejection case", () => {
+                for (const seeds of testSeeds) {
+                    const random = makeRandom(...seeds);
+
+                    const min = 0;
+                    const max = 2 ** 52;
+
+                    assert_chi2_uniform_range(
+                        /* generator: */ () => random.integer(min, max) & 0xF,
+                        /* min: */ 0,
+                        /* max: */ 15);
+                }
+            });
         });
 
         describe("uuid4", () => {
@@ -216,22 +226,21 @@ describe("Random", () => {
                     const random = makeRandom(...seeds);
                     assert_chi2_uniform(
                         /* generator: */ () => random.string(1),
-                        /* choices: */ base58.split(""),
-                        /* critical: */ 59.48);
+                        /* choices: */ base58.split(""));
                 }
             });
         });
 
         describe("pick", () => {
-            for (const { choices, critical } of [
-                { choices: [1], critical: 0 },
-                { choices: [1, 2], critical: 4.39 },
-                { choices: [1, 2, 3], critical: 3.38 },
+            for (const choices of [
+                [1],
+                [1, 2],
+                [1, 2, 3],
             ]) {
                 it(`of choices ${JSON.stringify(choices)} must have uniform distribution`, () => {
                     for (const seeds of testSeeds) {
                         const random = makeRandom(...seeds);
-                        assert_chi2_uniform(() => random.pick(choices), choices, critical);
+                        assert_chi2_uniform(() => random.pick(choices), choices);
                     }
                 });
             }
@@ -245,27 +254,74 @@ describe("Random", () => {
                 assert.deepEqual(items, []);
             });
 
-            for (const { items, critical } of [
-                { items: [0], critical: 0 },
-                { items: [0, 1], critical: 10.04 },
-                { items: [0, 1, 2], critical: 7.06 },
+            for (const items of [
+                [0],
+                [0, 1],
+                [0, 1, 2],
             ]) {
-                for (let i = 0; i < items.length; i++) {
-                    it(`each item of ${JSON.stringify(items)} may appears at each position ${i}`, () => {
+                for (let pos = 0; pos < items.length; pos++) {
+                    it(`each item of ${JSON.stringify(items)} may appears at each position ${pos}`, () => {
                         for (const seeds of testSeeds) {
                             const random = makeRandom(...seeds);
 
                             assert_chi2_uniform(
                                 /* generator: */ () => {
-                                    random.shuffle(items);
-                                    return items[0];
+                                    const array = [...items];
+                                    random.shuffle(array);
+                                    return array[pos];
                                 },
-                                /* choices: */ items,
-                                critical);
+                                /* choices: */ items);
                         }
                     });
                 }
             }
+        });
+
+        describe("normal", () => {
+            describe("produces normal distribution", () => {
+                it("with μ = 0, σ = 1 (default)", () => {
+                    const clamp = (min, value, max) => Math.min(Math.max(value, min), max);
+
+                    for (const seeds of testSeeds) {
+                        const random = makeRandom(...seeds);
+
+                        assert_chi2(
+                            /* generator: */ () => clamp(-3, Math.round(random.normal()), 3),
+                            /* weights: */ [
+                                [-3, 0.0062],
+                                [-2, 0.0606],
+                                [-1, 0.2417],
+                                [0, 0.3829],
+                                [1, 0.2417],
+                                [2, 0.0606],
+                                [3, 0.0062],
+                            ]);
+                    }
+                });
+
+                it("with μ = -0.5, σ = 1.5", () => {
+                    const clamp = (min, value, max) => Math.min(Math.max(value, min), max);
+
+                    for (const seeds of testSeeds) {
+                        const random = makeRandom(...seeds);
+
+                        assert_chi2(
+                            /* generator: */ () => clamp(-5, Math.round(random.normal(-0.5, 1.5)), 4),
+                            /* weights: */ [
+                                [-5, 0.0038],
+                                [-4, 0.0189],
+                                [-3, 0.0685],
+                                [-2, 0.1613],
+                                [-1, 0.2475],
+                                [0, 0.2475],
+                                [1, 0.1613],
+                                [2, 0.0685],
+                                [3, 0.0189],
+                                [4, 0.0038],
+                            ]);
+                    }
+                });
+            });
         });
     });
 });

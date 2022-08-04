@@ -11,7 +11,8 @@
  * @param max - Smallest number greater than min that is excluded in this distribution.
  * @returns A number 'n' where 'min &lt;= n &lt; max'.
  */
-export const real = (float64Source: () => number, min: number, max: number) => {
-    const delta = max - min;
-    return () => float64Source() * delta + min;
-};
+export const real = (float64Source: () => number) =>
+    (min: number, max: number) => {
+        const delta = max - min;
+        return float64Source() * delta + min;
+    };

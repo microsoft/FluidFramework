@@ -42,13 +42,13 @@ export function makeRandom(
 ): IRandom {
     const engine = new XSadd(...seed);
 
-    // RATIONALE: These methods are already bound.  (Technically, XSadd is  constructed to avoid use
+    // RATIONALE: These methods are already bound.  (Technically, XSadd is constructed to avoid use
     //            of 'this' for a minor perf win, but the end result is the same.)
 
     /* eslint-disable @typescript-eslint/unbound-method */
-    const real = (min: number, max: number) => distribution.real(engine.float64, min, max)();
-    const integer = (min: number, max: number) => distribution.integer(engine.uint53, min, max)();
-    const normal = (mu: number, sigma: number) => distribution.normal(engine.float64, mu, sigma)();
+    const real = distribution.real(engine.float64);
+    const integer = distribution.integer(engine.uint53);
+    const normal = distribution.normal(engine.float64);
     /* eslint-enable @typescript-eslint/unbound-method */
 
     return {

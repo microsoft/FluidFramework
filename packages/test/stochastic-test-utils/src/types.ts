@@ -72,7 +72,7 @@ export interface IRandom {
      * Returns a pseudorandomly chosen float64 from the normal distribution with the given
      * 'mean' and 'standardDeviation'.
      */
-    normal(mean: number, standardDeviation: number): number;
+    normal(mean?: number, standardDeviation?: number): number;
 
     /**
      * Returns a pseudorandomly chosen item from the set of provided 'items'.
