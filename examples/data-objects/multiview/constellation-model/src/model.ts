@@ -14,13 +14,12 @@ import { IConstellation, ICoordinate } from "@fluid-example/multiview-coordinate
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 
 const starListKey = "stars";
+const constellationName = "@fluid-example/constellation";
 
 /**
  * The Constellation is our implementation of the IConstellation interface.
  */
 export class Constellation extends DataObject implements IConstellation {
-    public static get ComponentName() { return "@fluid-example/constellation"; }
-
     private _stars: ICoordinate[] = [];
 
     public static getFactory() {
@@ -28,7 +27,7 @@ export class Constellation extends DataObject implements IConstellation {
     }
 
     private static readonly factory = new DataObjectFactory(
-        Constellation.ComponentName,
+        constellationName,
         Constellation,
         [],
         {},

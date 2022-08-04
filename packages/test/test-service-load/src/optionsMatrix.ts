@@ -43,10 +43,10 @@ export function applyOverrides<T>(options: OptionsMatrix<T>, optionsOverrides: P
 
 export const generateLoaderOptions =
     (seed: number, overrides: Partial<OptionsMatrix<ILoaderOptions>> | undefined): ILoaderOptions[] => {
-    return generatePairwiseOptions<ILoaderOptions>(
-        applyOverrides(loaderOptionsMatrix, overrides),
-        seed);
-};
+        return generatePairwiseOptions<ILoaderOptions>(
+            applyOverrides(loaderOptionsMatrix, overrides),
+            seed);
+    };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
     disableGC: booleanCases,
@@ -77,7 +77,6 @@ export function generateRuntimeOptions(
         gcOptions: [undefined, ...gcOptions],
         summaryOptions: [undefined, ...summaryOptions],
         loadSequenceNumberVerification: [undefined],
-        useDataStoreAliasing: [undefined],
         enableOfflineLoad: [undefined],
         flushMode: [undefined],
     };
