@@ -4,7 +4,21 @@
 
 ```ts
 
+import { JsonSchema } from '@rushstack/node-core-library';
+import { NewlineKind } from '@rushstack/node-core-library';
+
+// @public
+export interface MarkdownDocumenterConfig {
+    readonly jsonSchema: JsonSchema;
+    readonly newlineKind: NewlineKind;
+}
+
 
 export * from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";
+export * from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
+export * from "@microsoft/api-documenter/lib/nodes/DocHeading";
+export * from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
+export * from "@microsoft/api-documenter/lib/nodes/DocTable";
+export * from "@microsoft/api-documenter/lib/nodes/DocTableCell";
 
 ```

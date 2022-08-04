@@ -33,7 +33,8 @@
     "tsc": "tsc --pretty"
   },
   "dependencies": {
-    "@microsoft/api-documenter": "7.19.2"
+    "@microsoft/api-documenter": "7.19.2",
+    "@rushstack/node-core-library": "^3.50.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
