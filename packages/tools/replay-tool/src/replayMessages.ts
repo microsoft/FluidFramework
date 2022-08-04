@@ -28,6 +28,7 @@ import {
     TreeEntry,
     MessageType,
     ITreeEntry,
+    ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
@@ -842,31 +843,22 @@ async function assertDdsEqual(d1: ITreeEntry | undefined, d2: ITreeEntry | undef
     dataStoreRuntime.local = true;
     const deltaConnection = new MockEmptyDeltaConnection();
 
-    const objectStorage1 = MockStorage.createFromSummary(
-        convertToSummaryTreeWithStats(d1.value).summary,
-    );
-    const matrix1 = new SharedMatrix(
-        dataStoreRuntime as any,
-        "123",
-        SharedMatrixFactory.Attributes,
-    );
-    await matrix1.load({
-        deltaConnection,
-        objectStorage: objectStorage1,
-    });
+    async function newMatrix(summary: ISummaryTree): Promise<SharedMatrix> {
+        const objectStorage = MockStorage.createFromSummary(summary);
+        const matrix = new SharedMatrix(
+            dataStoreRuntime as any,
+            "1",
+            SharedMatrixFactory.Attributes,
+        );
+        await matrix.load({
+            deltaConnection,
+            objectStorage,
+        });
+        return matrix;
+    }
 
-    const objectStorage2 = MockStorage.createFromSummary(
-        convertToSummaryTreeWithStats(d2.value).summary,
-    );
-    const matrix2 = new SharedMatrix(
-        dataStoreRuntime as any,
-        "123",
-        SharedMatrixFactory.Attributes,
-    );
-    await matrix2.load({
-        deltaConnection,
-        objectStorage: objectStorage2,
-    });
+    const matrix1 = await newMatrix(convertToSummaryTreeWithStats(d1.value).summary);
+    const matrix2 = await newMatrix(convertToSummaryTreeWithStats(d2.value).summary);
 
     strict.deepStrictEqual(matrix1.rowCount, matrix2.rowCount);
     strict.deepStrictEqual(matrix1.colCount, matrix2.colCount);
