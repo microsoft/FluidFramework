@@ -4,8 +4,20 @@
  */
 
 export * from "./heap";
-export * from "./intervalTree";
 export * from "./list";
-export * from "./rbTree";
+export {
+	ConflictAction,
+	Dictionary,
+	IRBAugmentation,
+	IRBMatcher,
+	KeyComparer,
+	Property,
+	PropertyAction,
+	QProperty,
+	RBColor,
+	RBNode,
+	RBNodeActions,
+	RedBlackTree,
+	SortedDictionary,
+} from "./rbTree";
 export * from "./stack";
-export * from "./tst";
