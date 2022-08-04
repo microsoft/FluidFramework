@@ -26,6 +26,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
+- [`getTextAndMarkers` changed to be a free function](#gettextandmarkers-changed-to-be-a-free-function)
 
 ### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
 
@@ -70,6 +71,12 @@ to be `string | undefined`.
 ### MergeTree class is deprecated
     The MergeTree class is deprecated and will no longer be exported in the next release. This should not affect usage as MergeTree is an internal class, and the public API exists on the Client class, which will continue to be exported and supported.
 
+### `getTextAndMarkers` changed to be a free function
+
+`SharedString.getTextAndMarkers` involves a sizeable amount of model-specific logic.
+To improve bundle size, it will be converted to a free function so that this logic is tree-shakeable.
+The corresponding method on `IMergeTreeTexHelper` will also be removed.
+
 ## 2.0.0 Breaking changes
 - [Deprecate ISummaryConfigurationHeuristics.idleTime](#Deprecate-ISummaryConfigurationHeuristicsidleTime)
 - [LocalReference class and method deprecations removed](#LocalReference-class-and-method-deprecations-removed)
@@ -82,6 +89,7 @@ to be `string | undefined`.
 - [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
 - [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
 - [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
+- [Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -116,6 +124,9 @@ See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluid
 
 ### Remove `aliasing` return value from `AliasResult`
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
+
+### Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported
+The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use aliasing instead. See [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated). The `isRoot` parameter from `IContainerRuntimeBase._createDataStoreWithProps` has also been removed. Additionally, the feature gate which would switch to using aliasing behind the aforementioned deleted APIs, `Fluid.ContainerRuntime.UseDataStoreAliasing` will no longer be observed by the runtime. As aliasing is the default behavior for creating such datastores, the `useDataStoreAliasing` property from `IContainerRuntimeOptions` has been removed.
 
 # 1.2.0
 
