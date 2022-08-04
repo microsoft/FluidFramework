@@ -60,6 +60,7 @@ import {
     MergeTreeMaintenanceCallback,
     MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
+import { createInsertSegmentOp } from "./opBuilder";
 import {
     ICombiningOp,
     IRelativePosition,
@@ -1941,6 +1942,51 @@ export class MergeTree {
                 this.zamboniSegments();
             }
         }
+    }
+
+    /**
+     * Perform local rollback of previously deleted segments
+     */
+    public rollbackRemovedSegment(segments: ISegment[]) {
+        for (const segment of segments) {
+            segment.removedClientIds = undefined;
+            segment.removedSeq = undefined;
+            segment.localRemovedSeq = undefined;
+
+            if (this.mergeTreeDeltaCallback) {
+                const insertOp = createInsertSegmentOp(this.findRollbackPosition(segment), segment);
+                this.mergeTreeDeltaCallback(
+                    { op: insertOp },
+                    {
+                        operation: MergeTreeDeltaType.INSERT,
+                        deltaSegments: [{ segment }],
+                    });
+            }
+        }
+
+        this.blockUpdate(this.root);
+    }
+
+    /**
+     *  Walk the segments up to the current segment and calculate its position
+     */
+    public findRollbackPosition(segment: ISegment) {
+        let segmentPosition = 0;
+        this.walkAllSegments(this.root, (seg) => {
+            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
+            if (seg === segment) {
+                return false;
+            }
+
+            // If not removed, increase position
+            if (seg.removedSeq === undefined) {
+                segmentPosition += seg.cachedLength;
+            }
+
+            return true;
+        });
+
+        return segmentPosition;
     }
 
     private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {

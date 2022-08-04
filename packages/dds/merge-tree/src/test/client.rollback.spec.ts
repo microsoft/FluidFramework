@@ -221,4 +221,52 @@ describe("client.rollback", () => {
 
         assert.equal(segment.parent, undefined);
     });
+    it("Should rollback delete on single segment", async () => {
+        client.insertTextLocal(0, "abcd");
+        client.removeRangeLocal(0, 4);
+        client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+
+        assert.equal(client.getText(), "abcd");
+    });
+    it("Should rollback delete which causes split segments", async () => {
+        client.insertTextLocal(0, "abcde");
+        client.removeRangeLocal(1, 4);
+        client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+
+        assert.equal(client.getText(), "abcde");
+    });
+    it("Should rollback delete across split segments", async () => {
+        client.insertTextLocal(0, "abcde");
+        client.annotateRangeLocal(2, 3, { foo: "bar" }, undefined);
+        client.removeRangeLocal(1, 4);
+        client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+
+        assert.equal(client.getText(), "abcde");
+    });
+    it("Should zamboni rolled back remove", async () => {
+        client.applyMsg(
+            client.makeOpMessage(
+                client.insertTextLocal(0, "abcde", { color: "red" }),
+                client.getCurrentSeq() + 1,
+                client.getCurrentSeq(),
+                undefined,
+                client.getCurrentSeq()));
+        client.removeRangeLocal(1, 4);
+        const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
+        const segment = segmentGroup.segments[0];
+        client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, segmentGroup);
+
+        // do some work and move the client's min seq forward, so zamboni runs
+        for (const c of "hello world") {
+            client.applyMsg(
+                client.makeOpMessage(
+                    client.insertTextLocal(client.getLength(), c),
+                    client.getCurrentSeq() + 1,
+                    client.getCurrentSeq(),
+                    undefined,
+                    client.getCurrentSeq()));
+        }
+
+        assert.equal(segment.parent, undefined);
+    });
 });

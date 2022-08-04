@@ -356,7 +356,18 @@ export class Client {
      * Revert an op
      */
     public rollback?(op: any, localOpMetadata: unknown) {
-        if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
+        if (op.type === MergeTreeDeltaType.REMOVE) {
+            const pendingSegmentGroup = this.mergeTree.pendingSegments?.pop?.();
+            if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
+                || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
+                throw new Error("Rollback op doesn't match last edit");
+            }
+            for (const segment of pendingSegmentGroup.segments) {
+                const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
+                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+            }
+            this.mergeTree.rollbackRemovedSegment(pendingSegmentGroup.segments);
+        } else if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
             const pendingSegmentGroup = this.mergeTree.pendingSegments?.pop?.();
             if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
                 || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
@@ -367,7 +378,7 @@ export class Client {
                 const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
                 assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
 
-                const start = this.findRollbackPosition(segment);
+                const start = this.mergeTree.findRollbackPosition(segment);
                 const segWindow = this.getCollabWindow();
                 if (op.type === MergeTreeDeltaType.INSERT) {
                     const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
@@ -379,7 +390,7 @@ export class Client {
                         UniversalSequenceNumber,
                         false,
                         { op: removeOp });
-                } else {
+                } else /* if (op.type === MergeTreeDeltaType.ANNOTATE) */ {
                     const props = pendingSegmentGroup.previousProps![i];
                     const rollbackType = (op.combiningOp && op.combiningOp.name === "rewrite") ?
                         PropertiesRollback.Rewrite : PropertiesRollback.Rollback;
@@ -400,28 +411,6 @@ export class Client {
         } else {
             throw new Error("Unsupported op type for rollback");
         }
-    }
-
-    /**
-     *  Walk the segments up to the current segment and calculate its position
-     */
-    private findRollbackPosition(segment: ISegment) {
-        let segmentPosition = 0;
-        this.mergeTree.walkAllSegments(this.mergeTree.root, (seg) => {
-            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
-            if (seg === segment) {
-                return false;
-            }
-
-            // If not removed, increase position
-            if (seg.removedSeq === undefined) {
-                segmentPosition += seg.cachedLength;
-            }
-
-            return true;
-        });
-
-        return segmentPosition;
     }
 
     /**
