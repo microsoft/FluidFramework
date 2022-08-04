@@ -11,6 +11,9 @@ export const normal = (float64Source: () => number) => {
     // Marsaglia polar method
     // See: https://en.wikipedia.org/wiki/Marsaglia_polar_method
 
+    // PERF: Caching and using the 'v' coordinate on alternating calls yields an
+    //       ~16% speed improvement (node 14 x64).
+
     let cache = 0;
     let hasCache = true;
 
