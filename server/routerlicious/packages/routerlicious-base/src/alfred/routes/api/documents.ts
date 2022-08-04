@@ -36,8 +36,9 @@ export function create(
     tenantManager: ITenantManager,
     documentsCollection: ICollection<IDocument>): Router {
     const router: Router = Router();
-    const externalOrdererUrl = config.get("worker:serverUrl");
-    const externalHistorianUrl = config.get("worker:blobStorageUrl");
+    const externalOrdererUrl: string = config.get("worker:serverUrl");
+    const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
+    const sessionStickinessDurationMs: number | undefined = config.get("alfred:sessionStickinessDurationMs");
     // Whether to enforce server-generated document ids in create doc flow
     const enforceServerGeneratedDocumentId: boolean = config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
 
@@ -126,6 +127,7 @@ export function create(
                     const session: ISession = {
                         ordererUrl: externalOrdererUrl,
                         historianUrl: externalHistorianUrl,
+                        // Indicate to consumer that session was newly created.
                         isSessionAlive: false,
                         isSessionActive: false,
                     };
@@ -148,7 +150,12 @@ export function create(
             const documentId = getParam(request.params, "id");
             const tenantId = getParam(request.params, "tenantId");
             const session = getSession(
-                externalOrdererUrl, externalHistorianUrl, tenantId, documentId, documentsCollection,
+                externalOrdererUrl,
+                externalHistorianUrl,
+                tenantId,
+                documentId,
+                documentsCollection,
+                sessionStickinessDurationMs,
             );
             handleResponse(session, response, false);
         });

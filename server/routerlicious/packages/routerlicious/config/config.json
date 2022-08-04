@@ -107,7 +107,8 @@
         "enforceServerGeneratedDocumentId": false,
         "socketIo": {
             "perMessageDeflate": true
-        }
+        },
+        "sessionStickinessDurationMs": 3600000
     },
     "client": {
         "type": "browser",
