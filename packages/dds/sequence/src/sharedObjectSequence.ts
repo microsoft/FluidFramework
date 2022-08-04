@@ -49,7 +49,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
      * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
      */
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
-        super(document, id, attributes, SharedObjectSequenceFactory.segmentFromSpec);
+        super(document, id, attributes, SharedObjectSequenceFactory.segmentFromSpec as any);
     }
 
     /**
