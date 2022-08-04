@@ -556,6 +556,15 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
+    if (message.metadata?.compressed) {
+        const contents = IsoBuffer.from(message.contents.contents, "base64");
+        const decompressedMessage = decompress(contents);
+        const intoString = new TextDecoder().decode(decompressedMessage);
+        const asObj = JSON.parse(intoString);
+        message.contents.contents = asObj;
+        message.metadata.compressed = false;
+    }
+
     if (message.type === MessageType.Operation) {
         // legacy op format?
         if (message.contents.address !== undefined && message.contents.type === undefined) {
@@ -1921,15 +1930,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // We do not need to make deep copy, as each layer will just replace message.content itself,
         // but would not modify contents details
         let message = { ...messageArg };
-
-        if (message.metadata?.compressed) {
-            const contents = IsoBuffer.from(message.contents.contents, "base64");
-            const decompressedMessage = decompress(contents);
-            const intoString = new TextDecoder().decode(decompressedMessage);
-            const asObj = JSON.parse(intoString);
-            message.contents.contents = asObj;
-            message.metadata.compressed = false;
-        }
 
         // Surround the actual processing of the operation with messages to the schedule manager indicating
         // the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
