@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers';
 import { assert, fail } from './Common';
 import { rangeFromStableRange } from './TreeViewUtilities';
@@ -35,7 +36,11 @@ import { getChangeNodeFromViewNode } from './SerializationUtilities';
  * TODO:#68574: Pass a view that corresponds to the appropriate Fluid reference sequence number rather than the view just before
  * @internal
  */
-export function revert(changes: readonly ChangeInternal[], before: RevisionView): ChangeInternal[] | undefined {
+export function revert(
+	changes: readonly ChangeInternal[],
+	before: RevisionView,
+	logger?: ITelemetryLogger
+): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];
 
 	const builtNodes = new Map<DetachedSequenceId, NodeId[]>();
@@ -76,6 +81,9 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 				if (nodesBuilt !== undefined) {
 					if (nodesBuilt.length === 0) {
 						builtNodes.delete(source);
+						if (logger) {
+							logger.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
+						}
 						continue;
 					}
 					result.unshift(createInvertedInsert(change, nodesBuilt));
@@ -83,6 +91,9 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 				} else if (nodesDetached !== undefined) {
 					if (nodesDetached.length === 0) {
 						detachedNodes.delete(source);
+						if (logger) {
+							logger.sendTelemetryEvent({ eventName: 'reverting insertion of empty traits' });
+						}
 						continue;
 					}
 					result.unshift(createInvertedInsert(change, nodesDetached, true));
@@ -105,6 +116,9 @@ export function revert(changes: readonly ChangeInternal[], before: RevisionView)
 				const { invertedDetach, detachedNodeIds } = invert;
 
 				if (detachedNodeIds.length === 0) {
+					if (logger) {
+						logger.sendTelemetryEvent({ eventName: 'reverting detachment of empty traits' });
+					}
 					continue;
 				}
 
