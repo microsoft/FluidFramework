@@ -3032,12 +3032,18 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 totalChunks: chunkN,
             };
             offset += maxOpSize;
-            const serializedChunkedOp = JSON.stringify(chunkedOp);
+
+            let serializedChunkedOp: string | undefined;
+            if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
+                maxOpSize > this.runtimeOptions.compressionOptions.minimumSize) {
+                serializedChunkedOp = JSON.stringify(chunkedOp);
+            }
+
             clientSequenceNumber = this.submitRuntimeMessage(
                 ContainerMessageType.ChunkedOp,
                 chunkedOp,
                 false,
-                serializedChunkedOp.length,
+                serializedChunkedOp !== undefined ? serializedChunkedOp.length : chunkedOp.contents.length,
                 serializedChunkedOp);
         }
         return clientSequenceNumber;
