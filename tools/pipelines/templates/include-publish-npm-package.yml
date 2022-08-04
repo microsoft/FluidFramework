@@ -67,6 +67,7 @@ stages:
 - stage: clean_up
   displayName: Clean Up
   jobs:
+    steps:
     - task: Bash@3
       displayName: Remove Common Generated Files
       inputs:
