@@ -18,9 +18,6 @@ parameters:
   type: object
   default: Small
 
-- name: buildDirectory
-  type: string
-
 stages:
 - stage: publish_npm_internal_test
   dependsOn: build
@@ -66,16 +63,3 @@ stages:
       customEndPoint: npmjs
       publishFlags: --access public
       tagName: ${{ parameters.tagName }}
-
-- stage: clean_up
-  dependsOn: build
-  displayName: Clean Up
-  jobs:
-    - job: build
-      displayName: Remove
-      steps:
-      - task: Bash@3
-        displayName: Common Generated Files
-        inputs:
-          targetType: 'inline'
-          script: rm ${{ parameters.buildDirectory }}/pack/packagePublishOrder.txt
