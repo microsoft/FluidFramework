@@ -131,7 +131,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                             this.exit(1);
                         }
                     } else {
-                        process.exitCode = 1;
+                        this.exit(1);
                     }
 
                     console.log(output);
@@ -216,6 +216,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                 this.log(pipeString);
             }
         }
+
+        runPolicyCheck()
+        logStats()
     }
 }
 
