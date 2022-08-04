@@ -23,8 +23,9 @@ export enum FileMode {
     Symlink = "120000"
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface IActorClient {
+    // (undocumented)
     sub: string;
 }
 
@@ -456,10 +457,13 @@ export interface ISummaryProposal {
     summarySequenceNumber: number;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ISummaryTokenClaims {
+    // (undocumented)
     act: IActorClient;
+    // (undocumented)
     claims: ITokenClaims;
+    // (undocumented)
     sub: string;
 }
 
@@ -486,13 +490,14 @@ export interface ITokenClaims {
     ver: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITokenProvider {
     isValid(): boolean;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITokenService {
+    // (undocumented)
     extractClaims(token: string): ITokenClaims;
 }
 
