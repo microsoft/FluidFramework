@@ -74,6 +74,14 @@
       },
       "InterfaceDeclaration_IContainerRuntimeBase": {
         "backCompat": false
+      },
+      "RemovedTypeAliasDeclaration_IGarbageCollectionSummaryDetails": {
+        "backCompat": false,
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_ISummarizerNodeWithGC": {
+        "backCompat": false,
+        "forwardCompat": false
       }
     }
   }

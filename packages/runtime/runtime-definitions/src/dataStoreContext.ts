@@ -31,7 +31,6 @@ import { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry";
 import {
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 import { IInboundSignalMessage } from "./protocol";
 import {
@@ -293,7 +292,7 @@ export interface IFluidDataStoreChannel extends
 export type CreateChildSummarizerNodeFn = (
     summarizeInternal: SummarizeInternalFn,
     getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-    getInitialGCSummaryDetailsFn: () => Promise<IGarbageCollectionSummaryDetails>,
+    getBaseGCDetailsFn: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
 
 export interface IFluidDataStoreContextEvents extends IEvent {
@@ -408,15 +407,10 @@ export interface IFluidDataStoreContext extends
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
 
     /**
-     * @deprecated - Renamed to getBaseGCDetails.
-     */
-    getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
-
-    /**
      * Returns the GC details in the initial summary of this data store. This is used to initialize the data store
      * and its children with the GC details from the previous summary.
      */
-    getBaseGCDetails?(): Promise<IGarbageCollectionDetailsBase>;
+    getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
     /**
      * Called when a new outbound reference is added to another node. This is used by garbage collection to identify
