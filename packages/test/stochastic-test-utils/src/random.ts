@@ -9,30 +9,32 @@ import * as distribution from "./distributions";
 import { IRandom } from "./types";
 import { XSadd } from "./xsadd";
 
+// The base58 alphabet contains upper and lower case Latin letters and Arabic numerals,
+// excluding 0 (zero) / O (capital O) and l (lowercase L) / I (uppercase I) for improved
+// legibility.
+const base58 = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+
 // Constructs a compliant UUID version 4 from four 32b integers.  UUID version 4 contains
 // 6 predetermined bits (bits 48..51 for the version and bits 64..65 for the variant).
 // Consequently, only 122 of the provided 128 bits are used.
 export function makeUuid4(u32_0: number, u32_1: number, u32_2: number, u32_3: number) {
-    const hex = (value: number, digits: number) => value.toString(16).padStart(digits, "0");
+    const hex = (value: number, digits: number) => (value >>> 0).toString(16).padStart(digits, "0");
 
-    // This implementation discards the four low bits from u32_1 and two low bits from
-    // u32_2.  While we prefer to discard low bits due to the known weakness in XSadd,
-    // the choice of which bits to discard was largely driven by convenience.
-    return `${
-        hex(u32_0, 8)
+    // Note: We prefer to discard low bits as low bits are weaker with the XSadd engine.
+    //       (We discard bit 0 of u32[0..1] and bits 0..1 of u32[2..3]).
+
+    return `${                                              // u32_0   u32_1   u32_2   u32_3
+        hex(((u32_0 >>> 1) << 1) | (u32_1 >>> 31), 8)       // 31..1  31..31
     }-${
-        hex(u32_1 >>> 16, 4)
+        hex((u32_1 << 1) >>> 16, 4)                         //        30..15
     }-${
-        // Discard low 4 bits and insert version '0b100'.
-        hex(((u32_1 << 16) >>> 20) | 0x4000, 4)
+        hex(((u32_1 << 17) >>> 20) | 0x4000, 4)             //        14..3
     }-${
-        // Insert variant '0b10', discarding the low 2 bits.
-        hex((u32_2 >>> 18) | 0x8000, 4)
+        hex((u32_2 >>> 18) | 0x8000, 4)                     //                 31..18
     }-${
-        // Use the 2 bits that were discarded above and instead discard weak low bits.
-        hex((u32_2 << 14) >>> 16, 4)
+        hex((u32_2 << 14) >>> 16, 4)                        //                 18..2
     }${
-        hex(u32_3, 8)
+        hex(((u32_1 >>> 1) << 30) | (u32_3 >>> 2), 8)       //         2..1            31..2
     }`;
 }
 
@@ -70,7 +72,7 @@ export function makeRandom(
                 items[j] = tmp;
             }
         },
-        string: (length: number, alphabet = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ") => {
+        string: (length: number, alphabet = base58) => {
             let result = "";
 
             for (let i = 0; i < length; i++) {

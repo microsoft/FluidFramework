@@ -174,46 +174,82 @@ describe("Random", () => {
         });
 
         describe("uuid4", () => {
+            const validate = (uuid: string) => {
+                const bytes = parseUuid(uuid);
+
+                const version = bytes[6] >>> 4;
+                assert.equal(version, 0b100,
+                    `UUID v4 must be version 4, but got '${version}' for bits [48..51].`);
+
+                const variant = bytes[8] >>> 6;
+                assert.equal(variant, 0b10,
+                    `UUID v4 must be variant 2, but got '${variant}' for bits [64..65].`);
+
+                const re = /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89a-f][\da-f]{3}-[\da-f]{12}$/;
+                assert(re.test(uuid),
+                    `UUID must be in the form 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', but got '${uuid}'.`);
+            }
+
             // Predetermined bit patterns to verify that UUIDs are correctly constructed from four uint32s.
 
             // RATIONALE: Improves readability, even if it's a couple characters over 'max-len'.
             /* eslint-disable max-len */
             for (const { u32x4, expected } of [
+                // Validate that the 2 predetermined on bits are correctly set.
                 { u32x4: [0x00000000, 0x00000000, 0x00000000, 0x00000000], expected: "00000000-0000-4000-8000-000000000000" },
+
+                // Validate that the 4 predetermined off bits are correctly cleared.
                 { u32x4: [0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff], expected: "ffffffff-ffff-4fff-bfff-ffffffffffff" },
-                { u32x4: [0x00000000, 0x00000007, 0x00000003, 0x00000000], expected: "00000000-0000-4000-8000-000000000000" },
-                { u32x4: [0x12345678, 0x00000000, 0x00000000, 0x00000000], expected: "12345678-0000-4000-8000-000000000000" },
-                { u32x4: [0x00000000, 0x12345678, 0x00000000, 0x00000000], expected: "00000000-1234-4567-8000-000000000000" },
-                { u32x4: [0x00000000, 0x00000000, 0x12345678, 0x00000000], expected: "00000000-0000-4000-848d-159e00000000" },
-                { u32x4: [0x00000000, 0x00000000, 0x00000000, 0x12345678], expected: "00000000-0000-4000-8000-000012345678" },
-                { u32x4: [0x0f1e2d3c, 0x4b5a6978, 0x8796a5b4, 0xc3d2e1f0], expected: "0f1e2d3c-4b5a-4697-a1e5-a96dc3d2e1f0" },
+
+                // Validate that the 6 discarded bits have no effect.
+                { u32x4: [0x00000001, 0x00000001, 0x00000003, 0x00000003], expected: "00000000-0000-4000-8000-000000000000" },
+
+                // Set each bit of each u32 individually and check that the expected bits are 1 in the UUID.
+                { u32x4: [0x80000000, 0x80000000, 0x80000000, 0x80000000], expected: "80000001-0000-4000-a000-000020000000" },
+                { u32x4: [0x40000000, 0x40000000, 0x40000000, 0x40000000], expected: "40000000-8000-4000-9000-000010000000" },
+                { u32x4: [0x20000000, 0x20000000, 0x20000000, 0x20000000], expected: "20000000-4000-4000-8800-000008000000" },
+                { u32x4: [0x10000000, 0x10000000, 0x10000000, 0x10000000], expected: "10000000-2000-4000-8400-000004000000" },
+                { u32x4: [0x08000000, 0x08000000, 0x08000000, 0x08000000], expected: "08000000-1000-4000-8200-000002000000" },
+                { u32x4: [0x04000000, 0x04000000, 0x04000000, 0x04000000], expected: "04000000-0800-4000-8100-000001000000" },
+                { u32x4: [0x02000000, 0x02000000, 0x02000000, 0x02000000], expected: "02000000-0400-4000-8080-000000800000" },
+                { u32x4: [0x01000000, 0x01000000, 0x01000000, 0x01000000], expected: "01000000-0200-4000-8040-000000400000" },
+                { u32x4: [0x00800000, 0x00800000, 0x00800000, 0x00800000], expected: "00800000-0100-4000-8020-000000200000" },
+                { u32x4: [0x00400000, 0x00400000, 0x00400000, 0x00400000], expected: "00400000-0080-4000-8010-000000100000" },
+                { u32x4: [0x00200000, 0x00200000, 0x00200000, 0x00200000], expected: "00200000-0040-4000-8008-000000080000" },
+                { u32x4: [0x00100000, 0x00100000, 0x00100000, 0x00100000], expected: "00100000-0020-4000-8004-000000040000" },
+                { u32x4: [0x00080000, 0x00080000, 0x00080000, 0x00080000], expected: "00080000-0010-4000-8002-000000020000" },
+                { u32x4: [0x00040000, 0x00040000, 0x00040000, 0x00040000], expected: "00040000-0008-4000-8001-000000010000" },
+                { u32x4: [0x00020000, 0x00020000, 0x00020000, 0x00020000], expected: "00020000-0004-4000-8000-800000008000" },
+                { u32x4: [0x00010000, 0x00010000, 0x00010000, 0x00010000], expected: "00010000-0002-4000-8000-400000004000" },
+                { u32x4: [0x00008000, 0x00008000, 0x00008000, 0x00008000], expected: "00008000-0001-4000-8000-200000002000" },
+                { u32x4: [0x00004000, 0x00004000, 0x00004000, 0x00004000], expected: "00004000-0000-4800-8000-100000001000" },
+                { u32x4: [0x00002000, 0x00002000, 0x00002000, 0x00002000], expected: "00002000-0000-4400-8000-080000000800" },
+                { u32x4: [0x00001000, 0x00001000, 0x00001000, 0x00001000], expected: "00001000-0000-4200-8000-040000000400" },
+                { u32x4: [0x00000800, 0x00000800, 0x00000800, 0x00000800], expected: "00000800-0000-4100-8000-020000000200" },
+                { u32x4: [0x00000400, 0x00000400, 0x00000400, 0x00000400], expected: "00000400-0000-4080-8000-010000000100" },
+                { u32x4: [0x00000200, 0x00000200, 0x00000200, 0x00000200], expected: "00000200-0000-4040-8000-008000000080" },
+                { u32x4: [0x00000100, 0x00000100, 0x00000100, 0x00000100], expected: "00000100-0000-4020-8000-004000000040" },
+                { u32x4: [0x00000080, 0x00000080, 0x00000080, 0x00000080], expected: "00000080-0000-4010-8000-002000000020" },
+                { u32x4: [0x00000040, 0x00000040, 0x00000040, 0x00000040], expected: "00000040-0000-4008-8000-001000000010" },
+                { u32x4: [0x00000020, 0x00000020, 0x00000020, 0x00000020], expected: "00000020-0000-4004-8000-000800000008" },
+                { u32x4: [0x00000010, 0x00000010, 0x00000010, 0x00000010], expected: "00000010-0000-4002-8000-000400000004" },
+                { u32x4: [0x00000008, 0x00000008, 0x00000008, 0x00000008], expected: "00000008-0000-4001-8000-000200000002" },
+                { u32x4: [0x00000004, 0x00000004, 0x00000004, 0x00000004], expected: "00000004-0000-4000-8000-000180000001" },
+                { u32x4: [0x00000002, 0x00000002, 0x00000002, 0x00000002], expected: "00000002-0000-4000-8000-000040000000" },
             ]) {
             /* eslint-enable max-len */
                 it(`[${u32x4.map((u32) => u32.toString(16).padStart(8, "0"))}] -> ${expected}`, () => {
                     const [a, b, c, d] = u32x4;
                     const actual = makeUuid4(a, b, c, d);
                     assert.equal(actual, expected);
+                    validate(actual);
                 });
             }
 
             it("produces compliant variant 4 UUIDs", () => {
-                for (const seeds of testSeeds) {
-                    const random = makeRandom(...seeds);
-                    const uuid = random.uuid4();
-                    const bytes = parseUuid(uuid);
-
-                    const version = bytes[6] >>> 4;
-                    assert.equal(version, 0b100,
-                        `UUID v4 must be version 4, but got '${version}' for bits [48..51].`);
-
-                    const variant = bytes[8] >>> 6;
-                    assert.equal(variant, 0b10,
-                        `UUID v4 must be variant 2, but got '${variant}' for bits [64..65].`);
-
-                    // eslint-disable-next-line unicorn/no-unsafe-regex
-                    const re = /^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/;
-                    assert(re.test(uuid),
-                        `UUID must be in the form 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', but got '${uuid}'.`);
+                const random = makeRandom();
+                for (let i = 0; i < 100; i++) {
+                    validate(random.uuid4());
                 }
             });
         });
