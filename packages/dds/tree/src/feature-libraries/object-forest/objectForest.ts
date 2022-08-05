@@ -13,7 +13,7 @@ import {
     ITreeSubscriptionCursorState,
     TreeNavigationResult,
 } from "../../forest";
-import { StoredSchemaRepository } from "../../schema";
+import { StoredSchemaRepository } from "../../schema-stored";
 import {
     FieldKey, DetachedField, AnchorSet, detachedFieldAsKey, keyAsDetachedField,
     Value, Delta, JsonableTree, getGenericTreeField, UpPath, Anchor, visitDelta,

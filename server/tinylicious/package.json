@@ -37,7 +37,7 @@
     "@fluidframework/common-utils": "^0.32.1",
     "@fluidframework/gitresources": "^0.1036.5000-0",
     "@fluidframework/protocol-base": "^0.1036.5000-0",
-    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
+    "@fluidframework/protocol-definitions": "^1.0.0-83669",
     "@fluidframework/server-lambdas": "^0.1036.5000-0",
     "@fluidframework/server-local-server": "^0.1036.5000-0",
     "@fluidframework/server-memory-orderer": "^0.1036.5000-0",

@@ -1517,7 +1517,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @internal
 	 */
 	public revertChanges(changes: readonly InternalizedChange[], before: RevisionView): ChangeInternal[] | undefined {
-		return revert(changes as unknown as readonly ChangeInternal[], before);
+		return revert(changes as unknown as readonly ChangeInternal[], before, this.logger);
 	}
 
 	/**

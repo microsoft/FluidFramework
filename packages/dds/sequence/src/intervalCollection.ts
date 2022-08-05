@@ -191,11 +191,7 @@ export class Interval implements ISerializableInterval {
     }
 
     public serialize(client: Client): ISerializedInterval {
-        let seq = 0;
-        if (client) {
-            seq = client.getCurrentSeq();
-        }
-
+        const seq = client?.getCurrentSeq() ?? 0;
         const serializedInterval: ISerializedInterval = {
             end: this.end,
             intervalType: 0,
@@ -1063,7 +1059,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     private savedSerializedIntervals?: ISerializedInterval[];
     private localCollection: LocalIntervalCollection<TInterval>;
     private onDeserialize: DeserializeCallback | undefined;
-    private client: Client;
+    private client: Client | undefined;
     private readonly pendingChangesStart: Map<string, ISerializedInterval[]> = new Map<string, ISerializedInterval[]>();
     private readonly pendingChangesEnd: Map<string, ISerializedInterval[]> = new Map<string, ISerializedInterval[]>();
 
@@ -1126,7 +1122,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
      * Gets the next local sequence number, modifying this client's collab window in doing so.
      */
     private getNextLocalSeq(): number {
-        return ++this.client.getCollabWindow().localSeq;
+        if (this.client) {
+            return ++this.client.getCollabWindow().localSeq;
+        }
+
+        return 0;
     }
 
     public getIntervalById(id: string) {
@@ -1414,6 +1414,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         serializedInterval: ISerializedInterval,
         localSeq: number,
     ) {
+        if (!this.client) {
+            // If there's no associated mergeTree client, the originally submitted op is still correct.
+            return serializedInterval;
+        }
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
         }
@@ -1455,7 +1459,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
     }
 
     private ackInterval(interval: TInterval, op: ISequencedDocumentMessage) {
-        // in current usage, interval is always a SequenceInterval
+        // Only SequenceIntervals need potential sliding
         if (!(interval instanceof SequenceInterval)) {
             return;
         }

@@ -8,13 +8,18 @@ import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
 import {
+    checkSoftDeleted,
     getRepoManagerFromWriteAPI,
     getRepoManagerParamsFromRequest,
+    IFileSystemManagerFactory,
     IRepositoryManagerFactory,
     logAndThrowApiError,
 } from "../../utils";
 
-export function create(store: nconf.Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
+export function create(
+    store: nconf.Provider,
+    fileSystemManagerFactory: IFileSystemManagerFactory,
+    repoManagerFactory: IRepositoryManagerFactory): Router {
     const router: Router = Router();
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
@@ -23,8 +28,11 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     router.post("/repos/:owner/:repo/git/commits", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
-            .then(async (repoManager) => repoManager.createCommit(request.body as ICreateCommitParams))
-            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return repoManager.createCommit(request.body as ICreateCommitParams);
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response, undefined, undefined, 201);
     });
@@ -32,8 +40,11 @@ export function create(store: nconf.Provider, repoManagerFactory: IRepositoryMan
     router.get("/repos/:owner/:repo/git/commits/:sha", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
-            .then(async (repoManager) => repoManager.getCommit(request.params.sha))
-            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return repoManager.getCommit(request.params.sha);
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 
         handleResponse(resultP, response);
     });
