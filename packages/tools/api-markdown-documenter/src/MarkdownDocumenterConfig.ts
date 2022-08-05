@@ -14,4 +14,10 @@ export interface MarkdownDocumenterConfig {
      * The JSON Schema for API Documenter config file (api-documenter.schema.json).
      */
     readonly jsonSchema: JsonSchema;
+
+    /**
+     * Callback to be invoked when the Documenter recommends writing output to a file.
+     * The consumer is responsible for actually writing the file as they need.
+     */
+    writeFile: (contents: string, entityName: string, relativePath: string) => Promise<void>;
 }
