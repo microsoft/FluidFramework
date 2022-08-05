@@ -227,12 +227,11 @@ export class SummaryManager implements IDisposable {
                     this.state = SummaryManagerState.Starting;
                     summarizer.stop(shouldSummarizeState.stopReason);
                     return `early exit after starting summarizer ${shouldSummarizeState.stopReason}`;
-                } else {
-                    this.logger.sendTelemetryEvent({
-                        eventName: "LastAttemptToSummarize",
-                        startWithInitialDelay,
-                    });
                 }
+                this.logger.sendTelemetryEvent({
+                    eventName: "LastAttemptToSummarize",
+                    startWithInitialDelay,
+                });
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
