@@ -22,7 +22,7 @@ export type XSaddCtor = new (seed0?: number, seed1?: number, seed2?: number, see
  * acceptable statistical properties for most test applications.
  *
  * In particular, uint32 output from XSadd passes the BigCrush suite of TestU01, but fails
- * if the bits are reversed due to weaknesses in the lower bits.
+ * if the bits are reversed due to weakness in the lower bits.
  *
  * See: http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/XSADD/
  */
@@ -34,11 +34,14 @@ export const XSadd: XSaddCtor =
             : [...new Array(4)].map(() => (Math.random() * 0x100000000) | 0);
 
         // Scramble the seeds using an LCG w/Borosh-Niederreiter multiplier.  This reduces correlation
-        // between similar initial seeds.  Continue scrambling until at least one seed is non-zero
-        // to avoid the fixed point at state { 0, 0, 0, 0 }.
+        // between similar initial seeds.  This also helps to avoid unintentionally encountering low bit
+        // counts with simple seeds like { 0, 0, 0, 0 }.
+        //
+        // To avoid a fixed point at state { x: 0, y: 0, z: 0, w: 0 }, continue scrambling until at least
+        // one seed is non-zero.
         for (let i = 1; (i < 8) || (seed[0] | seed[1] | seed[2] | seed[3]) === 0; i++) {
             const seed_i = seed[(i - 1) & 3];
-            seed[i & 3] ^= i + Math.imul(0x6C078965, (seed_i ^ (seed_i >>> 30)) >>> 0) >>> 0;
+            seed[i & 3] ^= i + Math.imul(0x6C078965, (seed_i ^ (seed_i >>> 30)));
         }
 
         const s = {
