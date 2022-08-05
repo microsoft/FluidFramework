@@ -50,9 +50,9 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^1.0.0-83614",
+    "@fluidframework/common-utils": "^1.0.0",
     "@fluidframework/gitresources": "^0.1037.1000-0",
-    "@fluidframework/protocol-definitions": "^1.0.0-83669",
+    "@fluidframework/protocol-definitions": "^1.0.0",
     "@fluidframework/server-kafka-orderer": "^0.1037.1000-0",
     "@fluidframework/server-lambdas": "^0.1037.1000-0",
     "@fluidframework/server-lambdas-driver": "^0.1037.1000-0",

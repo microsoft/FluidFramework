@@ -52,10 +52,10 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^1.0.0-83614",
+    "@fluidframework/common-utils": "^1.0.0",
     "@fluidframework/gitresources": "^0.1037.1000-0",
     "@fluidframework/protocol-base": "^0.1037.1000-0",
-    "@fluidframework/protocol-definitions": "^1.0.0-83669",
+    "@fluidframework/protocol-definitions": "^1.0.0",
     "@fluidframework/server-lambdas-driver": "^0.1037.1000-0",
     "@fluidframework/server-services-client": "^0.1037.1000-0",
     "@fluidframework/server-services-core": "^0.1037.1000-0",
