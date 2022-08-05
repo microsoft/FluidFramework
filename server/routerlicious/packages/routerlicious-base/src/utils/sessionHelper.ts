@@ -26,14 +26,19 @@ async function createNewSession(
         isSessionAlive: true,
         isSessionActive: false,
     };
-    await documentsCollection.upsert(
-        {
-            documentId,
-        },
-        {
-            session: newSession,
-        },
-        {});
+    try {
+        await documentsCollection.upsert(
+            {
+                documentId,
+            },
+            {
+                session: newSession,
+            },
+            null);
+    } catch (error) {
+        Lumberjack.error("Error persisting new document session to DB", lumberjackProperties, error);
+        throw new NetworkError(500, "Failed to persist new document session");
+    }
     Lumberjack.info(
         `The Session ${JSON.stringify(newSession)} was inserted into the document collection`,
         lumberjackProperties,
@@ -102,16 +107,21 @@ async function updateExistingSession(
         // If session was not alive, it cannot be "active"
         isSessionActive: false,
     };
-    await documentsCollection.upsert(
-        {
-            documentId,
-        },
-        {
-            deli: updatedDeli ?? document.deli,
-            scribe: updatedScribe ?? document.scribe,
-            session: updatedSession,
-        },
-        {});
+    try {
+        await documentsCollection.upsert(
+            {
+                documentId,
+            },
+            {
+                deli: updatedDeli ?? document.deli,
+                scribe: updatedScribe ?? document.scribe,
+                session: updatedSession,
+            },
+            null);
+    } catch (error) {
+        Lumberjack.error("Error persisting update to existing document session", lumberjackProperties, error);
+        throw new NetworkError(500, "Failed to persist update to document session");
+    }
     return updatedSession;
 }
 
