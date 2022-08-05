@@ -92,7 +92,13 @@ We need to consider the above for different application profiles.
 Indeed some applications may not want to support undo at all,
 while some other application may wish to support undo of arbitrarily old operations.
 We generalize this by introducing the concept of an "undo window".
-An application can define how far back (either in time, number of edits, or memory buffer) past operations should be undoable.
+An application can define how far back past operations should be undoable.
+Note that this could be defined in a number of ways:
+ * A number of local edits made by each client
+ * A number of edits across all clients
+ * A time window
+ * A maximum memory buffer
+ * Some combination of the above
 
 For a given application profile,
 our system may have different requirements depending on different undo scenarios.
@@ -191,9 +197,9 @@ This is necessary because changes are often destructive:
  * Deleting a subtree loses information about the contents of that subtree.
 
 Such data cannot be derived from the sole original changeset to be undone.
-We refer to the information that is needed in addition the original changeset as "restoration data".
+We refer to the information that is needed in addition the original changeset as "repair data".
 
-Some DDSes address the need for restoration data by including it in all changesets:
+Some DDSes address the need for repair data by including it in all changesets:
 * Each set-value operation carries with it the value being overwritten.
 * Each delete operation carries with it the contents of the subtrees being deleted.
 
@@ -203,13 +209,13 @@ would therefore use that additional information in the changeset in order to pro
 This scheme is unfortunately not directly applicable to SharedTree:
 a move operation that is concurrent with (and sequenced prior to) a delete operation
 may move a subtree under the deleted subtree.
-The restoration data included in the delete operation would not contain that subtree.
+The repair data included in the delete operation would not contain that subtree.
 In order for a client to produce an concrete inverse change,
 it would need to know the contents of the subtree that was moved.
 This could be resolved by including the contents of moved subtrees in all move operations,
 but doing so would make moves prohibitively expensive.
 Even without move operations (which some applications may be happy not to use),
-this scheme still bloats normal (i.e., non-inverse) operations with restoration data that may never be used.
+this scheme still bloats normal (i.e., non-inverse) operations with repair data that may never be used.
 This bloat has a negative impact on the size of the document change history
 as well as the performance of the broadcast system (increasing latency and server costs).
 
@@ -218,9 +224,15 @@ is to keep past revisions of the document available so long as they lie within t
 Even with the use of persistent data structures, this could be a lot of data.
 Moreover, since we will only need to recover whatever information we cannot derive from the original change,
 it seems wasteful to include other data.
-We could keep some arbitrary amount of restoration data on clients locally,
+We could keep some arbitrary amount of repair data on clients locally,
 but resort to requesting it from a document state history service in cases where it isn't.
 This would however make the obtention of this data asynchronous.
+
+Restoration data is available to peers when all the changes that last contributed state
+to the portions of the document being deleted or overwritten by a change that is being undone
+are still within the collaboration window.
+This is likely to be rare in practice because collaboration windows tend to be much shorter
+than the lifetime of document contents.
 
 ### Rebasing Over Original and Inverse Changes
 
@@ -252,8 +264,8 @@ or require that they query the Fluid service to fetch such data.
 
 
 During the rebasing of the inverse change,
-some of the restoration data may stop being relevant.
-Doing the rebasing before we pay the cost of fetching restoration data may be more efficient.
+some of the repair data may stop being relevant.
+Doing the rebasing before we pay the cost of fetching repair data may be more efficient.
 
 ### Rebasing Over Concurrent Interim Changes
 
@@ -262,9 +274,15 @@ As stated earlier
 the issuer of an undo cannot in principle know about all the interim changes that be may be sequenced
 between the original change and the undo.
 This means that either...
-* Peers must be able to further rebase whatever inverse change is sent over the wire.
-* Peers only accepts inverses with a reference sequence number that matches the tip of the history,
-thereby forcing the client issuing the undo to re-try.
+ * Peers only accepts inverses with a reference sequence number that matches the tip of the history,
+thereby forcing the client issuing the undo to resend an updated inverse.
+ * Peers accept an outdated undo and attempt to apply it nonetheless.
+ * Peers must be able to further rebase whatever inverse change is sent over the wire.
+   * Requires peers to preserve repair data for edits that are within both the collab window and the undo window
+   (i.e., within whichever window is shorter).
+   This must be the repair data for the most rebased version of the edit.
+   This may need to include repair data for concurrent edits applied after
+   (e.g., an insert or move into the subtree being deleted by any edit being undone)
 
 ### Ideas
 
@@ -276,10 +294,42 @@ but the broadcasting service could include those blobs with the changeset when i
 ## Choosing a Design
 
 Generally speaking we strive for the following design goals:
- * Allow applications not to incur computational costs for features they do not wish to use.
- * For features that are used more rarely, prefer pay-as-you-go computational cost as opposed to a ubiquitous overhead
-(e.g., if a client want to use the feature then we prefer for that client to bear more of the computational cost as opposed to having peers bear it).
- * The needs of one client should not adversely affect the experience of peers.
+ * Allow applications not to incur computational costs (whether on the service or on clients)
+  for features they do not wish to use.
+ * Given the choice to put a computational burden on the service or on the clients,
+  put it on the clients.
+ * Given the choice to put a computational burden on a specific client that wishes to use a feature,
+  or on all peers of such client, put it on the specific client.
+  (Note: this is true even when all participants are running the same client application
+  but even more so when they are not).
+
+Proposed design:
+
+* Don't preemptively include repair data in ops.
+* The client that wants to issue an undo is forced to compute the repair data.
+  * Client may preemptively store repair data for a portion of their undo window.
+  * If a client needs to undo a change that falls outside of this portion,
+   then they may need to recover the missing repair data from either:
+    * V1: a new (partial) checkout
+    * V2: a document state history service
+* The on-wire changeset includes the repair data.
+  * V1: inlined plain data as though it was seen for the first time
+  * V2: as references to new blobs of plain data
+  * V3: as references to a mix of new blobs and old blobs
+  * V3.1: consider not reusing old blobs if the amount of data reused from them is small enough
+  * V4: as references to parts of the document in space-time (queried by peers from a history server)
+  * V2+.1: consider inlining the repair data in the changeset when it is small enough
+* When receiving the inverse, peers apply it as is if no concurrent interim changes occurred,
+ otherwise they either:
+  * A: reject the changeset, forcing the issuing client to try again
+  * B: attempt to apply outdated inverse
+  * C: supplement any missing repair data by either
+    * C1: leveraging a local store that they maintain for the span of min(collab window, undo window)
+    * C2: requesting repair data from the service
+
+Note that any scheme that relies on blobs or other independently fetched data to represent repair data in over the wire changesets
+requires clients to fetch this data before they can apply such incoming changesets.
+This not something that the Fluid runtime currently supports but is a capability needed in the more general case of large inserts.
 
 ## Undo Recognition
 
