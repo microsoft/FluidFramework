@@ -77,7 +77,7 @@
     "@fluid-example/example-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/aqueduct": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/common-utils": "^1.0.0-83614",
     "@fluidframework/core-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/data-object-base": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/map": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",

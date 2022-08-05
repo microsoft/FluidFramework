@@ -10,6 +10,7 @@ trigger:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
@@ -35,6 +36,7 @@ resources:
         - releases/*
         - main
         - next
+        - lts
 
 variables:
 - group: prague-key-vault
