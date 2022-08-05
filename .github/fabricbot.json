@@ -701,10 +701,9 @@
       "version": "1.0",
       "config": {
         "taskName": "Automatically squash-merge pull requests in next",
-        "label": "msftbot: merge-next",
+        "label": "",
         "silentMode": false,
         "minMinutesOpen": "5",
-        "mergeType": "squash",
         "deleteBranches": true,
         "allowAutoMergeInstructionsWithoutLabel": true,
         "enforceDMPAsStatus": true,
@@ -715,17 +714,25 @@
           {
             "mergeType": "squash",
             "condition": {
-              "placeholder": "branch",
-              "operator": "notEquals",
-              "value": "main-next-"
+              "placeholder": "labels",
+              "operator": "contains",
+              "label_name": "msftbot: merge-next"
             }
           },
           {
             "mergeType": "squash",
             "condition": {
               "placeholder": "labels",
-              "operator": "contains",
-              "label_name": "msftbot: merge-next"
+              "operator": "notContains",
+              "label_name": "do-not-squash-merge"
+            }
+          },
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "labels",
+              "operator": "notContains",
+              "label_name": "main-next-integrate"
             }
           }
         ]
