@@ -52,16 +52,19 @@ To borrow a term from source-control systems, the "tip" change
 is the state that needs to be undone.
 We call systems that works under these assumptions "tip undo" systems.
 
-In a collaborative application, there are two complicating factors to consider:
+In a collaborative application, there are three complicating factors to consider:
 
 1. The change that resulted from the local user's last edit may not be the last change that was applied.
 This is because other users can contribute changes.
 Note that this can occur even without any concurrency.
-Concurrency does however ensures that,
-short of locking other clients out of editing the document,
-a client that wishes to undo a change had no way to ensuring that it is aware of all such later changes.
 
-2. The change that resulted from the local user's last edit may have been rebased before being applied to the document.
+2. Concurrency,
+short of locking other clients out of editing the document,
+means that a client that wishes to undo a change
+has no way of ensuring it knows about all the changes that may be applied between the change to be undone
+and the inverse change that it intends to issue.
+
+3. The change that resulted from the local user's last edit may have been rebased before being applied to the document.
 This means that the matching undo needs to account for the effects of the rebased change.
 Note that if a client wishes to issue an undo for an operation that has yet to be sequenced by the collaboration service,
 then they cannot yet know the final rebased form of the change they are trying to produce the inverse for.
@@ -144,6 +147,12 @@ In practice, this means the change we construct for the tip state is equivalent 
 * Applying the inverse change rebased over the interim changes
 
 For both Patch Undo and Retroactive Undo,
+it seems preferable if a change that is concurrent to
+(and sequenced after)
+both the original change and its inverse,
+would end up behaving as though neither the original nor the inverse were ever issued.
+
+For both Patch Undo and Retroactive Undo,
 we could potentially consider whether the interim change could successfully be applied if rebased over the inverse change.
 If not, we could only prune the inverse to make it so.
 This would have the effect of only undoing changes that no other change since depends on.
@@ -174,6 +183,8 @@ At a high level, we want to derive an inverse changeset from the changeset being
 then reconcile it with interim changes (see [Undo Semantics](#Undo-Semantics)),
 and finally derive the Delta from that.
 
+### Restoration Data
+
 At some point in that process we may need to recover information about the state of the document before the change that we wish to undo.
 This is necessary because changes are often destructive:
  * Setting the value on a node loses information about the prior value of that node.
@@ -181,13 +192,6 @@ This is necessary because changes are often destructive:
 
 Such data cannot be derived from the sole original changeset to be undone.
 We refer to the information that is needed in addition the original changeset as "restoration data".
-
-The most trivial way to ensure we can recover this information
-is to keep past revisions of the document available so long as they lie within the undo window.
-Even with the use of persistent data structures, this could be a lot of data.
-Moreover, since we will only need to recover whatever information we cannot derive from the original change,
-it seems wasteful to include other data.
-Generally speaking,
 
 Some DDSes address the need for restoration data by including it in all changesets:
 * Each set-value operation carries with it the value being overwritten.
@@ -204,9 +208,31 @@ In order for a client to produce an concrete inverse change,
 it would need to know the contents of the subtree that was moved.
 This could be resolved by including the contents of moved subtrees in all move operations,
 but doing so would make moves prohibitively expensive.
+Even without move operations (which some applications may be happy not to use),
+this scheme still bloats normal (i.e., non-inverse) operations with restoration data that may never be used.
+This bloat has a negative impact on the size of the document change history
+as well as the performance of the broadcast system (increasing latency and server costs).
 
+The most trivial way to ensure we can recover this information
+is to keep past revisions of the document available so long as they lie within the undo window.
+Even with the use of persistent data structures, this could be a lot of data.
+Moreover, since we will only need to recover whatever information we cannot derive from the original change,
+it seems wasteful to include other data.
+We could keep some arbitrary amount of restoration data on clients locally,
+but resort to requesting it from a document state history service in cases where it isn't.
+This would however make the obtention of this data asynchronous.
 
+### Rebasing Over Original and Inverse Changes
 
+If the original change being undone is still within the collaboration window,
+then it's possible that some later changes may be concurrent to both the original change and the inverse.
+This is important because the original change may have an impact on these later concurrent changes,
+and a change that is being rebased over both the original change and the inverse change
+should in the end not be affected by the pair of them.
+For example, if the original change was a slice-delete and the rebased change was an insert that would commute with the slice,
+then the final rebased change should not be affected by the slice delete.
+This requires that inverse changes are able to counter the effects of
+the change they seek to counteract in changes that are sequenced after that inverse.
 
 ## Abstract vs. Concrete Over the Wire Representation
 
@@ -225,6 +251,22 @@ we would indeed be forced to ensure that peers have access to the relevant data 
 or require that they query the Fluid service to fetch such data.
 
 
+During the rebasing of the inverse change,
+some of the restoration data may stop being relevant.
+Doing the rebasing before we pay the cost of fetching restoration data may be more efficient.
+
+### Rebasing Over Concurrent Interim Changes
+
+As stated earlier
+(see complicating factor #2 in [Tip Undo vs. Collaborative Undo](#tip-undo-vs-collaborative-undo)),
+the issuer of an undo cannot in principle know about all the interim changes that be may be sequenced
+between the original change and the undo.
+This means that either...
+* Peers must be able to further rebase whatever inverse change is sent over the wire.
+* Peers only accepts inverses with a reference sequence number that matches the tip of the history,
+thereby forcing the client issuing the undo to re-try.
+
+### Ideas
 
 Service-augmented changeset:
 Changesets that refer to content blobs could be sent to service without those blobs,
