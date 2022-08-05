@@ -6,19 +6,18 @@
 import { strict as assert } from "assert";
 
 import {
-	allowsFieldSuperset, allowsTreeSuperset, allowsValueSuperset, isNeverField, isNeverTree,
+	allowsFieldSuperset, allowsTreeSuperset, allowsTypesSuperset, allowsValueSuperset, isNeverField, isNeverTree,
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 } from "../../schema-stored/comparison";
 import {
 	FieldSchema,
 	GlobalFieldKey,
-	LocalFieldKey,
 	FieldKind,
 	NamedTreeSchema,
 	TreeSchema,
-	TreeSchemaIdentifier,
 	ValueSchema,
+	TreeTypeSet,
 	emptyField, emptyMap, emptySet, fieldSchema, anyField, anyTree, neverField, neverTree, StoredSchemaRepository,
 } from "../../schema-stored";
 import { brand, brandOpaque } from "../../util";
@@ -133,6 +132,27 @@ describe("Schema Comparison", () => {
 		);
 	});
 
+	it("allowsTypesSuperset", () => {
+		testOrder(
+			allowsTypesSuperset,
+			[new Set(), new Set([brand("1")]), new Set([brand("1"), brand("2")]), undefined],
+		);
+		const neverSet: TreeTypeSet = new Set();
+		const neverSet2: TreeTypeSet = new Set();
+		testPartialOrder(
+			allowsTypesSuperset,
+			[
+				neverSet,
+				neverSet2,
+				new Set([brand("1")]),
+				new Set([brand("2")]),
+				new Set([brand("1"), brand("2")]),
+				undefined,
+			],
+			[[neverSet, neverSet2]],
+		);
+	});
+
 	it("allowsFieldSuperset", () => {
 		const repo = new StoredSchemaRepository();
 		repo.tryUpdateTreeSchema(brand("never"), neverTree);
@@ -200,7 +220,7 @@ function testPartialOrder<T>(
 	// Antisymmetry: if a ≤ b and b ≤ a then a = b
 	// Transitivity: if a ≤ b  and  b ≤ c  then  a ≤ c
 
-	// This can is brute forced in O(n^3) time below:
+	// This is brute forced in O(n^3) time below:
 	// Violations:
 	const reflexivity: T[] = [];
 	const antisymmetry: [boolean, T, T][] = [];
