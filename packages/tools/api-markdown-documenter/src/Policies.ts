@@ -57,7 +57,7 @@ export type FileNamePolicy = (apiItem: ApiItem) => string;
  * @returns `true` if child items should be written under a sub-directory named for the API item. `false` if not
  * (i.e. they should be placed adjacent to the item's document).
  */
-export type FileHierarchyPolicy = (apiItem: ApiItem) => string;
+export type FileHierarchyPolicy = (apiItem: ApiItem) => boolean;
 
 /**
  * Policy configuration options
@@ -188,3 +188,15 @@ export namespace DefaultPolicies {
         }
     }
 }
+
+/**
+ * Default {@link PolicyOptions} configuration
+ */
+export const defaultPolicyOptions: Required<PolicyOptions> = {
+    documentBoundaryPolicy: DefaultPolicies.defaultDocumentBoundaryPolicy,
+    filterContentsPolicy: DefaultPolicies.defaultFilterContentsPolicy,
+    uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
+    linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
+    fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,
+    fileHierarchyPolicy: DefaultPolicies.defaultFileHierarchyPolicy,
+};

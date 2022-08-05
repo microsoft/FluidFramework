@@ -1,6 +1,6 @@
 import { JsonSchema, NewlineKind } from "@rushstack/node-core-library";
 
-import { PolicyOptions } from "./Policies";
+import { PolicyOptions, defaultPolicyOptions } from "./Policies";
 
 // TODOs:
 // - Define "document" in terms of stream output, since we aren't necessarily writing files.
@@ -24,4 +24,13 @@ export interface MarkdownDocumenterConfig extends PolicyOptions {
      * The JSON Schema for API Documenter config file (api-documenter.schema.json).
      */
     readonly jsonSchema: JsonSchema;
+}
+
+export function markdownDocumenterConfigurationWithDefaults(
+    partialConfig: MarkdownDocumenterConfig,
+): Required<MarkdownDocumenterConfig> {
+    return {
+        ...defaultPolicyOptions,
+        ...partialConfig,
+    };
 }
