@@ -38,7 +38,6 @@ class EmptyAudience extends EventEmitter implements IAudienceOwner {
 
 class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
     disposed: boolean = false;
-    private static readonly noClientId = "local";
 
     private readonly proposals = new Map<string, any>();
     private readonly members: Map<string, ISequencedClient> = new Map<string, ISequencedClient>();
@@ -68,7 +67,7 @@ class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
                 mode: "write",
                 permission: [],
                 user: {
-                    id: actualClientId,
+                    id: clientId,
                 },
                 scopes: [
                     "doc:read",
