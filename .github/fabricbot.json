@@ -734,6 +734,14 @@
               "operator": "notContains",
               "label_name": "main-next-integrate"
             }
+          },
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "author",
+              "operator": "notEquals",
+              "value": "github-actions"
+            }
           }
         ]
       },
