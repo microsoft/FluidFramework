@@ -12,7 +12,7 @@
  * @returns A number 'n' where 'min &lt;= n &lt; max'.
  */
 export const real = (float64Source: () => number) =>
-    (min: number, max: number) => {
+    (min = 0, max = 1) => {
         const delta = max - min;
         return float64Source() * delta + min;
     };

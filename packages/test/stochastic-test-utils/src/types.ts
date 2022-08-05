@@ -81,8 +81,10 @@ export interface IRandom {
 
     /**
      * Return a pseudorandomly chosen float64 in the range [min..max) (inclusive min, exclusive max).
+     *
+     * If 'min' and 'max' are unspecified, defaults to [0..1).
      */
-    real(min: number, max: number): number;
+    real(min?: number, max?: number): number;
 
     /**
      * Pseudorandomly shuffles the order of the items in the given array (array is modified in place.)

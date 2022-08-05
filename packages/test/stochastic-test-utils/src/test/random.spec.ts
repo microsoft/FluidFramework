@@ -129,6 +129,18 @@ describe("Random", () => {
             });
         });
 
+        describe("real", () => {
+            it(`has default range of [0..1).`, () => {
+                const random = makeRandom();
+
+                for (let i = 0; i < 100; i++) {
+                    const sample = random.real();
+                    assert(0 <= sample && sample < 1,
+                        `Must be in range [0..1), but got ${sample}.`);
+                }
+            });
+        });
+
         describe("integer", () => {
             for (const [min, max] of [
                 [0, 0],
