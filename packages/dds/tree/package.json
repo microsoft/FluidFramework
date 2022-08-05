@@ -63,10 +63,10 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/common-utils": "^1.0.0-83614",
     "@fluidframework/core-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/datastore-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
+    "@fluidframework/protocol-definitions": "^1.0.0-83669",
     "@fluidframework/runtime-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/shared-object-base": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
