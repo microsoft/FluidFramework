@@ -4,14 +4,113 @@
 
 ```ts
 
+import { ApiItem } from '@microsoft/api-extractor-model';
+import { ApiModel } from '@microsoft/api-extractor-model';
+import { DocParagraph } from '@microsoft/tsdoc';
+import { DocSection } from '@microsoft/tsdoc';
 import { JsonSchema } from '@rushstack/node-core-library';
 import { NewlineKind } from '@rushstack/node-core-library';
+import { TSDocConfiguration } from '@microsoft/tsdoc';
+
+// @public (undocumented)
+export function appendAndMergeSection(output: DocSection, docSection: DocSection): void;
+
+// @public (undocumented)
+export function appendSection(output: DocSection | DocParagraph, docSection: DocSection): void;
+
+// @public (undocumented)
+export namespace DefaultPolicies {
+    export function defaultDocumentBoundaryPolicy(apiItem: ApiItem): boolean;
+    export function defaultFileHierarchyPolicy(apiItem: ApiItem): boolean;
+    export function defaultFileNamePolicy(apiItem: ApiItem): string;
+    export function defaultFilterContentsPolicy(apiItem: ApiItem): boolean;
+    export function defaultLinkTextPolicy(apiItem: ApiItem): string;
+    export function defaultUriBaseOverridePolicy(): string | undefined;
+}
 
 // @public
-export interface MarkdownDocumenterConfig {
+export type DocumentBoundaryPolicy = (apiItem: ApiItem) => boolean;
+
+// @public
+export type FileHierarchyPolicy = (apiItem: ApiItem) => string;
+
+// @public
+export type FileNamePolicy = (apiItem: ApiItem) => string;
+
+// @public
+export type FilterContentsPolicy = (apiItem: ApiItem) => boolean;
+
+// @public
+export function getDocumentItems(apiItem: ApiItem, documentBoundaryPolicy: DocumentBoundaryPolicy): ApiItem[];
+
+// @public
+export function getFirstAncestorWithOwnPage(apiItem: ApiItem, documentBoundaryPolicy: DocumentBoundaryPolicy): ApiItem;
+
+// @public (undocumented)
+export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfig>): string | undefined;
+
+// @public (undocumented)
+export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfig>): Link;
+
+// @public
+export function getQualifiedApiItemName(apiItem: ApiItem): string;
+
+// @public
+export function getRelativeFilePathForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfig>): string;
+
+// @public (undocumented)
+export interface Link {
+    // (undocumented)
+    headingId?: string;
+    // (undocumented)
+    relativeFilePath: string;
+    // (undocumented)
+    text: string;
+    // (undocumented)
+    uriBase: string;
+}
+
+// @public
+export type LinkTextPolicy = (apiItem: ApiItem) => string;
+
+// @public
+export interface MarkdownDocument {
+    apiItemName: string;
+    contents: string;
+}
+
+// @public
+export class MarkdownDocumenter {
+    constructor(apiModel: ApiModel, config: MarkdownDocumenterConfig);
+    readonly apiModel: ApiModel;
+    readonly config: MarkdownDocumenterConfig;
+}
+
+// @public
+export interface MarkdownDocumenterConfig extends PolicyOptions {
     readonly jsonSchema: JsonSchema;
     readonly newlineKind: NewlineKind;
+    readonly uriRoot: string;
 }
+
+// @public
+export interface PolicyOptions {
+    documentBoundaryPolicy?: DocumentBoundaryPolicy;
+    fileHierarchyPolicy?: FileHierarchyPolicy;
+    fileNamePolicy?: FileNamePolicy;
+    filterContentsPolicy?: FilterContentsPolicy;
+    linkTextPolicy?: LinkTextPolicy;
+    uriBaseOverridePolicy?: UriBaseOverridePolicy;
+}
+
+// @public (undocumented)
+export function renderBreadcrumb(apiItem: ApiItem, output: DocSection, documenterConfiguration: Required<MarkdownDocumenterConfig>, tsdocConfiguration: TSDocConfiguration): void;
+
+// @public
+export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
+
+// @public
+export function urlFromLink(link: Link): string;
 
 
 export * from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";

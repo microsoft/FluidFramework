@@ -5,6 +5,10 @@
  */
 
 export * from "./MarkdownDocumenterConfig";
+export * from "./Policies";
+export * from "./Interfaces";
+export * from "./MarkdownDocumenter";
+export * from "./Utilities";
 
 // #region Convenience re-exports of Doc builder types from api-documenter
 export * from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";

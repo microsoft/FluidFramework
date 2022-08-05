@@ -1,9 +1,13 @@
 import { JsonSchema, NewlineKind } from "@rushstack/node-core-library";
+import { PolicyOptions } from "./Policies";
+
+// TODOs:
+// - Define "document" in terms of stream output, since we aren't necessarily writing files.
 
 /**
  * Configuration options for the Markdown documenter.
  */
-export interface MarkdownDocumenterConfig {
+export interface MarkdownDocumenterConfig extends PolicyOptions {
     /**
      * Specifies what type of newlines API Documenter should use when writing output files.
      * By default, the output files will be written with Windows-style newlines.
@@ -11,13 +15,12 @@ export interface MarkdownDocumenterConfig {
     readonly newlineKind: NewlineKind;
 
     /**
+     * Default root uri used when generating content links.
+     */
+    readonly uriRoot: string;
+
+    /**
      * The JSON Schema for API Documenter config file (api-documenter.schema.json).
      */
     readonly jsonSchema: JsonSchema;
-
-    /**
-     * Callback to be invoked when the Documenter recommends writing output to a file.
-     * The consumer is responsible for actually writing the file as they need.
-     */
-    writeFile: (contents: string, entityName: string, relativePath: string) => Promise<void>;
 }
