@@ -137,7 +137,7 @@ interface IPendingConnection {
 /**
  * Implementation of IConnectionManager, used by Container class
  * Implements constant connectivity to relay service, by reconnecting in case of lost connection or error.
- * Exposes various controls to influenced this process, including manual reconnects, forced read-only mode, etc.
+ * Exposes various controls to influence this process, including manual reconnects, forced read-only mode, etc.
  */
 export class ConnectionManager implements IConnectionManager {
     /** Connection mode used when reconnecting on error or disconnect. */
