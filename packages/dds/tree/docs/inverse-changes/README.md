@@ -84,7 +84,7 @@ there really are only two central questions to consider:
 
 Before we describe the technical choices associated with undo,
 we should clarify the net effect we expect undo operations to have.
-In other words, we need to define the possible semantics of undo in a collaborative system.
+In other words, we need to define the possible semantics of undo in our collaborative system.
 
 Due to the collaborative nature of the system in which we operate,
 it's possible for some interim changes to occur between the change to be undone and the tip of the document history
@@ -99,7 +99,6 @@ Should the state of the document after the undo operation is applied be...
 2. The same as what it would have been if the undone operation had not been performed in the first place
 (but interim operations were)?
 3. The result of applying the inverse of the undone operation to the current state (which includes the effect of interim changes)?
-
 
 Option #1 is what we refer to as "Rewind Undo".
 It discards the effects of interim changes.
@@ -118,12 +117,24 @@ We adopt the interim changes as a given and derive their knock-on effects on the
 In practice, this means the change we construct for the tip state is equivalent to:
 * Applying the inverse change rebased over the interim changes
 
+For both Patch Undo and Retroactive Undo,
+we could potentially consider whether the interim change could successfully be applied if rebased over the inverse change.
+If not, we could only prune the inverse to make it so.
+This would have the effect of only undoing changes that no other change since depends on.
+For example, if the original change to be undone inserted a subtree,
+then the final inverse would only delete that subtree if no interim changes had performed operations within this subtree.
+
 ### Which Semantics to Support
 
-We consider the "Retroactive" semantics to be .
-Application authors can decide which to leverage in a given scenario.
-This means that when reconciling inverse and interim changes,
+There is still some debate as to which semantics are preferable.
+One relevant fact to consider is that the commanding system's support for undo,
+which would roll back interim change and the change to be undone then re-run the commands for the interim edits,
+is closest in spirit to Retroactive Undo.
+
+We currently aim to build a system that could support them all and let application authors decide which to leverage in a given scenario.
+The practical impact is that when reconciling inverse and interim changes,
 we need to support rebasing an inverse change over its interim changes as well as rebasing interim changes over the inverse change.
+We must therefore ensure that the relevant information to do is available.
 
 ## 
 
