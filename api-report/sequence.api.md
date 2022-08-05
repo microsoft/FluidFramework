@@ -141,7 +141,7 @@ export class Interval implements ISerializableInterval {
     // (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
-    serialize(client: Client): ISerializedInterval;
+    serialize(): ISerializedInterval;
     // (undocumented)
     start: number;
     // (undocumented)
@@ -243,7 +243,7 @@ export interface ISerializableInterval extends IInterval {
     // (undocumented)
     propertyManager: PropertiesManager;
     // (undocumented)
-    serialize(client: Client): ISerializedInterval;
+    serialize(): ISerializedInterval;
 }
 
 // @public (undocumented)
@@ -439,7 +439,7 @@ export class SequenceInterval implements ISerializableInterval {
     // @internal
     removePositionChangeListeners(): void;
     // (undocumented)
-    serialize(client: Client): ISerializedInterval;
+    serialize(): ISerializedInterval;
     // (undocumented)
     start: LocalReferencePosition;
     // (undocumented)

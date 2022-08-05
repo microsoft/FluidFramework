@@ -126,7 +126,7 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 export interface ISerializableInterval extends IInterval {
     properties: PropertySet;
     propertyManager: PropertiesManager;
-    serialize(client: Client): ISerializedInterval;
+    serialize(): ISerializedInterval;
     addProperties(props: PropertySet, collaborating?: boolean, seq?: number):
         PropertySet | undefined;
     getIntervalId(): string | undefined;
@@ -192,12 +192,11 @@ export class Interval implements ISerializableInterval {
         this.auxProps.push(props);
     }
 
-    public serialize(client: Client): ISerializedInterval {
-        const seq = client?.getCurrentSeq() ?? 0;
+    public serialize(): ISerializedInterval {
         const serializedInterval: ISerializedInterval = {
             end: this.end,
             intervalType: 0,
-            sequenceNumber: seq,
+            sequenceNumber: 0,
             start: this.start,
         };
         if (this.properties) {
@@ -343,13 +342,13 @@ export class SequenceInterval implements ISerializableInterval {
         }
     }
 
-    public serialize(client: Client): ISerializedInterval {
-        const startPosition = client.localReferencePositionToPosition(this.start);
-        const endPosition = client.localReferencePositionToPosition(this.end);
+    public serialize(): ISerializedInterval {
+        const startPosition = this.client.localReferencePositionToPosition(this.start);
+        const endPosition = this.client.localReferencePositionToPosition(this.end);
         const serializedInterval: ISerializedInterval = {
             end: endPosition,
             intervalType: this.intervalType,
-            sequenceNumber: client.getCurrentSeq(),
+            sequenceNumber: this.client.getCurrentSeq(),
             start: startPosition,
         };
 
@@ -852,12 +851,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     public serialize(): ISerializedIntervalCollectionV2 {
-        const client = this.client;
         const intervals = this.intervalTree.intervals.keys();
 
         return {
             label: this.label,
-            intervals: intervals.map((interval) => compressInterval(interval.serialize(client))),
+            intervals: intervals.map((interval) => compressInterval(interval.serialize())),
             version: 2,
         };
     }
@@ -1289,13 +1287,10 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         if (interval) {
             // Local ops get submitted to the server. Remote ops have the deserializer run.
             if (local) {
-                if (!this.client) {
-                    throw new LoggingError("client does not exist");
-                }
                 this.emitter.emit(
                     "delete",
                     undefined,
-                    interval.serialize(this.client),
+                    interval.serialize(),
                     { localSeq: this.getNextLocalSeq() },
                 );
             } else {
@@ -1332,12 +1327,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
         const interval = this.getIntervalById(id);
         if (interval) {
-            if (!this.client) {
-                throw new LoggingError("client does not exist");
-            }
             // Pass Unassigned as the sequence number to indicate that this is a local op that is waiting for an ack.
             const deltaProps = interval.addProperties(props, true, UnassignedSequenceNumber);
-            const serializedInterval: ISerializedInterval = interval.serialize(this.client);
+            const serializedInterval: ISerializedInterval = interval.serialize();
 
             // Emit a change op that will only change properties. Add the ID to
             // the property bag provided by the caller.
@@ -1363,14 +1355,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
         const interval = this.getIntervalById(id);
         if (interval) {
-            if (!this.client) {
-                throw new LoggingError("client does not exist");
-            }
             const newInterval = this.localCollection.changeInterval(interval, start, end);
             if (!newInterval) {
                 return undefined;
             }
-            const serializedInterval: SerializedIntervalDelta = interval.serialize(this.client);
+            const serializedInterval: SerializedIntervalDelta = interval.serialize();
             serializedInterval.start = start;
             serializedInterval.end = end;
             // Emit a property bag containing only the ID, as we don't intend for this op to change any properties.
@@ -1548,9 +1537,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
         }
         if (!this.attached) {
             throw new LoggingError("attachSequence must be called");
-        }
-        if (!this.client) {
-            throw new LoggingError("client does not exist");
         }
 
         const { start, end, intervalType, properties, sequenceNumber } = serializedInterval;
