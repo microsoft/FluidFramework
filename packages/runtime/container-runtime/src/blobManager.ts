@@ -416,7 +416,10 @@ export class BlobManager {
                 assert(!!waitingBlobs, 0x38e /* local online BlobAttach op with no pending blob */);
                 waitingBlobs.forEach((localId) => {
                     const pendingBlobEntry = this.pendingBlobs.get(localId);
-                    assert(pendingBlobEntry !== undefined, 0x38f /* local online BlobAttach op with no pending blob entry */);
+                    assert(
+                        pendingBlobEntry !== undefined,
+                        0x38f, /* local online BlobAttach op with no pending blob entry */
+                    );
 
                     // It's possible we transitioned to offline flow while waiting for this op.
                     if (pendingBlobEntry.status === PendingBlobStatus.OnlinePendingOp) {
@@ -554,7 +557,8 @@ export class BlobManager {
     public setRedirectTable(table: Map<string, string>) {
         assert(this.runtime.attachState === AttachState.Detached,
             0x252 /* "redirect table can only be set in detached container" */);
-        assert(this.redirectTable.size === table.size, 0x391 /* Redirect table size must match BlobManager's local ID count */);
+        assert(this.redirectTable.size === table.size,
+            0x391 /* Redirect table size must match BlobManager's local ID count */);
         for (const [localId, storageId] of table) {
             assert(this.redirectTable.has(localId), 0x254 /* "unrecognized id in redirect table" */);
             this.redirectTable.set(localId, storageId);

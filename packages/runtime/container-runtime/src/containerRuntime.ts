@@ -1815,7 +1815,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // ensure we don't submit ops referencing a blob that has not been uploaded
         const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
         if (connecting && this.blobManager.hasPendingOfflineUploads) {
-            assert(!this.delayConnectClientId, 0x392 /* Connect event delay must be canceled before subsequent connect event */);
+            assert(!this.delayConnectClientId,
+                0x392 /* Connect event delay must be canceled before subsequent connect event */);
             assert(!!clientId, 0x393 /* Must have clientId when connecting */);
             this.delayConnectClientId = clientId;
             this.blobManager.onConnected().then(() => {
@@ -1832,7 +1833,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private setConnectionStateCore(connected: boolean, clientId?: string) {
-        assert(!this.delayConnectClientId, 0x394 /* connect event delay must be cleared before propagating connect event */);
+        assert(!this.delayConnectClientId,
+            0x394 /* connect event delay must be cleared before propagating connect event */);
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
