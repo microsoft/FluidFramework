@@ -69,7 +69,7 @@ export class SharedTreeCore<TChangeRebaser extends ChangeRebaser<any, any, any>>
         this.summaryElements = indexes.map((i) => i.summaryElement).filter((e): e is SummaryElement => e !== undefined);
         assert(
             new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
-            "Index summary element keys must be unique",
+            0x350 /* Index summary element keys must be unique */,
         );
     }
 
