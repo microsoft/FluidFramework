@@ -8,7 +8,6 @@ import { ApiItem } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
 import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
-import { JsonSchema } from '@rushstack/node-core-library';
 import { NewlineKind } from '@rushstack/node-core-library';
 import { TSDocConfiguration } from '@microsoft/tsdoc';
 
@@ -91,7 +90,6 @@ export class MarkdownDocumenter {
 
 // @public
 export interface MarkdownDocumenterConfig extends PolicyOptions {
-    readonly jsonSchema: JsonSchema;
     readonly newlineKind: NewlineKind;
     readonly uriRoot: string;
 }

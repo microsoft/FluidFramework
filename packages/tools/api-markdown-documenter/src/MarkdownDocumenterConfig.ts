@@ -1,4 +1,4 @@
-import { JsonSchema, NewlineKind } from "@rushstack/node-core-library";
+import { NewlineKind } from "@rushstack/node-core-library";
 
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
 
@@ -19,11 +19,6 @@ export interface MarkdownDocumenterConfig extends PolicyOptions {
      * Default root uri used when generating content links.
      */
     readonly uriRoot: string;
-
-    /**
-     * The JSON Schema for API Documenter config file (api-documenter.schema.json).
-     */
-    readonly jsonSchema: JsonSchema;
 }
 
 export function markdownDocumenterConfigurationWithDefaults(
