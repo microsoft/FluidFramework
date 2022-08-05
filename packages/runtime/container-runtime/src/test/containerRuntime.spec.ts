@@ -665,7 +665,6 @@ describe("Runtime", () => {
                 };
             };
             const getMockPendingStateManager = (): PendingStateManager => {
-                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 let pendingMessages = 0;
                 return {
                     replayPendingStates: () => { },

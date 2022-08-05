@@ -108,7 +108,7 @@ function visitFieldMarks(fields: Delta.FieldMarks<Delta.Mark>, props: PassProps,
 
 function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
     const { startIndex, visitor } = props;
-    visitor.enterNode(startIndex || 0);
+    visitor.enterNode(startIndex ?? 0);
     // Note that the `in` operator return true for properties that are present on the object even if they
     // are set to `undefined. This is leveraged here to represent the fact that the value should be set to
     // `undefined` as opposed to leaving the value untouched.
@@ -118,7 +118,7 @@ function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
     if (modify.fields !== undefined) {
         visitFieldMarks(modify.fields, props, func);
     }
-    visitor.exitNode(startIndex || 0);
+    visitor.exitNode(startIndex ?? 0);
 }
 
 function firstPass(delta: Delta.MarkList, props: PassProps): void {

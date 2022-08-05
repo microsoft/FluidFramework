@@ -221,14 +221,9 @@ export class Integer64Property extends ValueProperty {
      * @return {*} The serialized representation of this property
      * @private
      */
-    _serialize(in_dirtyOnly, in_includeRootTypeid,
-        in_dirtinessType, in_includeReferencedRepositories) {
+    _serialize(in_dirtyOnly, in_includeRootTypeid, in_dirtinessType, in_includeReferencedRepositories) {
         if (in_dirtyOnly) {
-            if (this._isDirty(in_dirtinessType)) {
-                return [this._data.getValueLow(), this._data.getValueHigh()];
-            } else {
-                return {};
-            }
+            return this._isDirty(in_dirtinessType) ? [this._data.getValueLow(), this._data.getValueHigh()] : {};
         } else {
             return [this._data.getValueLow(), this._data.getValueHigh()];
         }

@@ -13,11 +13,9 @@ import {
 import {
 	FieldSchema,
 	GlobalFieldKey,
-	LocalFieldKey,
 	FieldKind,
 	NamedTreeSchema,
 	TreeSchema,
-	TreeSchemaIdentifier,
 	ValueSchema,
 	emptyField, emptyMap, emptySet, fieldSchema, anyField, anyTree, neverField, neverTree, StoredSchemaRepository,
 } from "../../schema";

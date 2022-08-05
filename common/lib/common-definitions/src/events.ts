@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// TODO: we should consider using `unknown` instead of `any` in these APIs in the future.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface IEvent {
     // the event emitter polyfill and the node event emitter have different event types:
     // string | symbol vs. string | number

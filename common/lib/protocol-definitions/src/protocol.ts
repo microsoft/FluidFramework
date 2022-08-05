@@ -82,6 +82,9 @@ export interface IDocumentMessage {
     // The type of document message being sent
     type: string;
 
+    // TODO: we should consider using `unknown` instead of `any` in these methods in the future.
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+
     // The contents of the message
     contents: any;
 
@@ -90,6 +93,7 @@ export interface IDocumentMessage {
 
     // Server provided metadata about the operation
     serverMetadata?: any;
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     // Traces related to the packet.
     traces?: ITrace[];
@@ -141,6 +145,9 @@ export interface ISequencedDocumentMessage {
     // The type of operation
     type: string;
 
+    // TODO: we should consider using `unknown` instead of `any` in these methods in the future.
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+
     // The contents of the message
     contents: any;
 
@@ -149,6 +156,7 @@ export interface ISequencedDocumentMessage {
 
     // Server provided metadata about the operation
     serverMetadata?: any;
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     // Origin branch information for the message. Can be marked undefined if the current
     // message is also the origin.
@@ -180,6 +188,8 @@ export interface ISignalMessage {
     // eslint-disable-next-line @rushstack/no-new-null
     clientId: string | null;
 
+    // TODO: we should consider using `unknown` instead of `any` in here in the future.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     content: any;
 
     /**

@@ -33,6 +33,7 @@ module.exports = {
 		'@typescript-eslint/no-shadow': 'off',
 		'no-shadow': 'off',
 		'@typescript-eslint/no-unsafe-return': 'off',
+		'@typescript-eslint/no-namespace': 'off',
 	},
 	overrides: [
 		{

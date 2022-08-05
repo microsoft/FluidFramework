@@ -475,12 +475,11 @@ async function attachContainer(
             rehydrateButton.onclick = async () => {
                 const snapshot = summaryList.value;
                 currentContainer = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
-                let newLeftDiv: HTMLDivElement;
-                if (rightDiv !== undefined) {
-                    newLeftDiv = makeSideBySideDiv(uuid());
-                } else {
-                    newLeftDiv = document.createElement("div");
-                }
+
+                const newLeftDiv: HTMLDivElement = rightDiv === undefined
+                    ? document.createElement("div")
+                    : makeSideBySideDiv(uuid());
+
                 currentLeftDiv.replaceWith(newLeftDiv);
                 currentLeftDiv = newLeftDiv;
                 // Load and render the component.

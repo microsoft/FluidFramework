@@ -82,17 +82,14 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
             .catch(console.error);
     };
 
-    let importedDataView;
-    if (importedStringData !== undefined) {
-        importedDataView = (
+    const importedDataView = importedStringData !== undefined
+        ? (
             <div>
                 <div>Imported data:</div>
                 <textarea rows={5} value={importedStringData} readOnly></textarea>
             </div>
-        );
-    } else {
-        importedDataView = <div>Loaded from existing container</div>;
-    }
+        )
+        : <div>Loaded from existing container</div>;
 
     return (
         <div>

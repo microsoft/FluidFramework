@@ -6,7 +6,6 @@
 import * as fs from "fs";
 import * as util  from "util";
 import child_process from "child_process";
-import { upperFirst } from "lodash";
 
 export type PackageDetails ={
     readonly packageDir: string;

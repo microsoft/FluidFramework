@@ -74,7 +74,7 @@ export function generateToken(
         iat: now,
         exp: now + lifetime,
         ver,
-        jti: uuid(),
+        jti: uuid() as string,
     };
 
     const utf8Key = { utf8: key };
@@ -95,8 +95,8 @@ export function generateToken(
  */
 export function generateUser(): IUser {
     const randomUser = {
-        id: uuid(),
-        name: uuid(),
+        id: uuid() as string,
+        name: uuid() as string,
     };
 
     return randomUser;

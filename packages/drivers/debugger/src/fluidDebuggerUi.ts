@@ -232,11 +232,9 @@ export class DebuggerUI {
             this.versions = versions;
             for (const version of versions) {
                 const option = document.createElement("option");
-                if (version.date !== undefined) {
-                    option.text = `id = ${version.id},  time = ${version.date}`;
-                } else {
-                    option.text = `id = ${version.id}`;
-                }
+                option.text = version.date !== undefined
+                    ? `id = ${version.id},  time = ${version.date}`
+                    : `id = ${version.id}`;
                 this.selector.add(option);
             }
         }
@@ -251,12 +249,9 @@ export class DebuggerUI {
     }
 
     public versionSelected(seqNumber: number, version: IVersion | string) {
-        let text: string;
-        if (typeof version === "string") {
-            text = `Playing ${version} file`;
-        } else {
-            text = `Playing from ${version.id}, seq# ${seqNumber}`;
-        }
+        const text: string = typeof version === "string"
+            ? `Playing ${version} file`
+            : `Playing from ${version.id}, seq# ${seqNumber}`;
 
         this.wasVersionSelected = true;
         this.selector = undefined;
@@ -316,13 +311,12 @@ export class DebuggerUI {
     public updateLastOpText(lastKnownOp: number, stillLoading: boolean) {
         let text: string;
         if (lastKnownOp < 0) {
+            // TODO: this is always overridden. Was the subsequent if supposed to be an else-if?
             text = `FluidDebugger can't play ops in this mode`;
         }
-        if (stillLoading) {
-            text = `Last op (still loading): ${lastKnownOp}`;
-        } else {
-            text = `Document's last op seq#: ${lastKnownOp}`;
-        }
+        text = stillLoading
+            ? `Last op (still loading): ${lastKnownOp}`
+            : `Document's last op seq#: ${lastKnownOp}`;
         this.lastOpText!.textContent = text;
     }
 

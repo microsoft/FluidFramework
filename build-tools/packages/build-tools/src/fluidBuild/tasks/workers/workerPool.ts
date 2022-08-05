@@ -45,7 +45,8 @@ export class WorkerPool {
     public async runOnWorker(workerName: string, command: string, cwd: string): Promise<WorkerExecResultWithOutput> {
         const workerMessage: WorkerMessage = { workerName, command, cwd };
         const cleanup: (() => void)[] = [];
-        const installTemporaryListener = (object: EventEmitter | Readable, event: string, handler: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const installTemporaryListener = (object: EventEmitter | Readable, event: string, handler: (...args: any[]) => void) => {
             object.on(event, handler);
             cleanup.push(() => object.off(event, handler));
         }
@@ -67,7 +68,7 @@ export class WorkerPool {
         try {
             if (this.useWorkerThreads) {
                 const worker = this.getThreadWorker();
-                const res = await new Promise<WorkerExecResultWithOutput>((res, rej) => {
+                const res = await new Promise<WorkerExecResultWithOutput>((res) => {
                     setupWorker(worker, res);
                     worker.postMessage(workerMessage);
                 });

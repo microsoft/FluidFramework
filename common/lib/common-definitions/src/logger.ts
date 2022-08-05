@@ -98,6 +98,9 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      */
     send(event: ITelemetryBaseEvent): void;
 
+    // TODO: we should consider using `unknown` instead of `any` in these methods in the future.
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+
     /**
      * Send information telemetry event
      * @param event - Event to send
@@ -116,4 +119,5 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
      * @param event - Event to send
      */
     sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void;
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 }

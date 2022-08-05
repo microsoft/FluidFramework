@@ -507,6 +507,7 @@ export const handlers: Handler[] = [
     },
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function runNpmJsonLint(json: any, file: string) {
     const lintConfig = getLintConfig(file);
     const options = {

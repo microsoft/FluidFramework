@@ -37,11 +37,7 @@ export class NamedProperty extends ContainerProperty {
      * @return {string} String identifying the property
      */
     getId() {
-        if (this._id !== null) {
-            return this._id;
-        } else {
-            return this.getGuid();
-        }
+        return this._id !== null ? this._id : this.getGuid();
     }
 
     /**

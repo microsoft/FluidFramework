@@ -197,12 +197,9 @@ function tileShift(
         }
     } else {
         const block = <IHierBlock>node;
-        let marker: Marker;
-        if (searchInfo.posPrecedesTile) {
-            marker = <Marker>block.rightmostTiles[searchInfo.tileLabel];
-        } else {
-            marker = <Marker>block.leftmostTiles[searchInfo.tileLabel];
-        }
+        const marker: Marker = searchInfo.posPrecedesTile
+            ? <Marker>block.rightmostTiles[searchInfo.tileLabel]
+            : <Marker>block.leftmostTiles[searchInfo.tileLabel];
         if (marker !== undefined) {
             searchInfo.tile = marker;
         }
@@ -480,11 +477,7 @@ export class MergeTree {
 
     public localNetLength(segment: ISegment) {
         const removalInfo = toRemovalInfo(segment);
-        if (removalInfo !== undefined) {
-            return 0;
-        } else {
-            return segment.cachedLength;
-        }
+        return removalInfo !== undefined ? 0 : segment.cachedLength;
     }
 
     // TODO: remove id when segment removed
@@ -624,11 +617,7 @@ export class MergeTree {
                                 segment.trackingCollection.trackingGroups.forEach((tg) => tg.unlink(segment));
                             } else {
                                 holdNodes.push(segment);
-                                if (this.localNetLength(segment) > 0) {
-                                    prevSegment = segment;
-                                } else {
-                                    prevSegment = undefined;
-                                }
+                                prevSegment = this.localNetLength(segment) > 0 ? segment : undefined;
                             }
                         } else {
                             holdNodes.push(segment);
@@ -913,21 +902,15 @@ export class MergeTree {
     }
 
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
-        if ((this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)) {
-            return node.partialLengths!.getPartialLength(refSeq, clientId);
-        } else {
-            return node.cachedLength;
-        }
+        return (this.collabWindow.collaborating) && (clientId !== this.collabWindow.clientId)
+            ? node.partialLengths!.getPartialLength(refSeq, clientId)
+            : node.cachedLength;
     }
 
     private nodeLength(node: IMergeNode, refSeq: number, clientId: number) {
         if ((!this.collabWindow.collaborating) || (this.collabWindow.clientId === clientId)) {
             // Local client sees all segments, even when collaborating
-            if (!node.isLeaf()) {
-                return node.cachedLength;
-            } else {
-                return this.localNetLength(node);
-            }
+            return !node.isLeaf() ? node.cachedLength : this.localNetLength(node);
         } else {
             // Sequence number within window
             if (!node.isLeaf()) {
@@ -948,11 +931,7 @@ export class MergeTree {
                     ((segment.seq !== UnassignedSequenceNumber) && (segment.seq! <= refSeq)))) {
                     // Segment happened by reference sequence number or segment from requesting client
                     if (removalInfo !== undefined) {
-                        if (removalInfo.removedClientIds.includes(clientId)) {
-                            return 0;
-                        } else {
-                            return segment.cachedLength;
-                        }
+                        return removalInfo.removedClientIds.includes(clientId) ? 0 : segment.cachedLength;
                     } else {
                         return segment.cachedLength;
                     }

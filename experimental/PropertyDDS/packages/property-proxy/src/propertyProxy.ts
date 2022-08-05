@@ -25,11 +25,12 @@ import { ProxyType, PropertyTypes, ReferenceType } from "./interfaces";
  * This symbol is available on properties proxied via the PropertyProxy.[[proxify]] method.
  */
 export const proxySymbol = Symbol("property-proxy");
+
 /**
  * Class that contains the [[proxify]] and [[getParentOfReferencedProperty]] methods.
  * @public
  */
-
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace PropertyProxy {
     /**
      * This utility function returns the parent property of a referenced property.
@@ -63,12 +64,8 @@ export namespace PropertyProxy {
                     referencedPropertyParent = property.getRoot().get(tokens);
                 } else {
                     const parent = property.getParent() as ContainerProperty;
-                    if (types.includes(PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN)) {
-                        referencedPropertyParent = parent
-                            .resolvePath(path.slice(0, path.lastIndexOf("[")));
-                    } else {
-                        referencedPropertyParent = parent.get(tokens);
-                    }
+                    referencedPropertyParent = types.includes(PathHelper.TOKEN_TYPES.RAISE_LEVEL_TOKEN) ? parent
+                            .resolvePath(path.slice(0, path.lastIndexOf("["))) : parent.get(tokens);
                 }
             } else {
                 const parent = property.getParent() as ContainerProperty;

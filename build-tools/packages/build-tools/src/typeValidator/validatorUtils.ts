@@ -10,7 +10,7 @@ export function enableLogging(enable: boolean) {
     shouldLog = enable;
 }
 
-export function log(output: any) {
+export function log(output: unknown) {
     if (shouldLog) {
         console.log(output);
     }

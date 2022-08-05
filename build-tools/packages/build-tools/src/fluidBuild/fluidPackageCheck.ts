@@ -505,6 +505,7 @@ export class FluidPackageCheck {
 
     private static readonly commonConfig = "@fluidframework/build-common/ts-common-config.json";
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private static async checkTsConfigExtend(pkg: Package, fix: boolean, configJson: any, configFile: string) {
         let changed = false;
         if (configJson.extends !== this.commonConfig) {
@@ -594,6 +595,7 @@ export class FluidPackageCheck {
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private static checkProperty<T>(file: string, pkg: Package, configJson: any, name: string, value: T, fix: boolean) {
         if (!isEqual(configJson[name], value)) {
             this.logWarn(pkg, `Unexpected ${name} value in ${file}`, fix);

@@ -53,8 +53,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                 in_options.referenceResolutionMode;
 
         var prop = this;
-        if (typeof in_ids === 'string' ||
-            typeof in_ids === 'number') {
+        if (typeof in_ids === 'string' || typeof in_ids === 'number') {
             prop = this._get(in_ids);
             if (in_options.referenceResolutionMode === BaseProperty.REFERENCE_RESOLUTION.ALWAYS) {
                 if (prop instanceof Property.ReferenceProperty) {
@@ -81,14 +80,23 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
                     return undefined;
                 }
             }
-        } else if (in_ids === PATH_TOKENS.ROOT) {
-            prop = prop.getRoot();
-        } else if (in_ids === PATH_TOKENS.UP) {
-            prop = prop.getParent();
-        } else if (in_ids === PATH_TOKENS.REF) {
-            throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
         } else {
-            throw new Error(MSG.STRING_OR_ARRAY_STRINGS + in_ids);
+            switch (in_ids) {
+                case PATH_TOKENS.ROOT: {
+                    prop = prop.getRoot();
+                    break;
+                }
+                case PATH_TOKENS.UP: {
+                    prop = prop.getParent();
+                    break;
+                }
+                case PATH_TOKENS.REF: {
+                    throw new Error(MSG.NO_GET_DEREFERENCE_ONLY);
+                }
+                default: {
+                    throw new Error(MSG.STRING_OR_ARRAY_STRINGS + in_ids);
+                }
+            }
         }
 
         return prop;
@@ -113,11 +121,7 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
      * @return {string} String identifying the property
      */
     getId() {
-        if (this._id !== null) {
-            return this._id;
-        } else {
-            return this.getGuid();
-        }
+        return this._id !== null ? this._id : this.getGuid();
     }
 
     /**
@@ -318,11 +322,9 @@ export class AbstractStaticCollectionProperty extends BaseProperty {
             throw new Error(MSG.INVALID_PATH_TOKEN + in_segment);
         }
 
-        if (this.has(in_segment)) {
-            return this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER });
-        } else {
-            return undefined;
-        }
+        return this.has(in_segment)
+            ? this.get(in_segment, { referenceResolutionMode: BaseProperty.REFERENCE_RESOLUTION.NEVER })
+            : undefined;
     }
 
     /**

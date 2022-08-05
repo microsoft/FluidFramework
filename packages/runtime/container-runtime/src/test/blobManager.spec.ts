@@ -156,7 +156,7 @@ class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements 
 
     public async connect() {
         assert(!this.connected);
-        await new Promise<void>((r) => setTimeout(r, 0));
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
         if (this.blobManager.hasPendingOfflineUploads) {
             const uploadP = this.blobManager.onConnected();
             this.processing = true;
@@ -215,9 +215,9 @@ describe("BlobManager", () => {
         // ensures this blob will be processed next time runtime.processBlobs() is called
         waitForBlob = async (blob) => {
             if (!runtime.unprocessedBlobs.has(blob)) {
-                await new Promise<void>((res) => runtime.on("blob", () => {
+                await new Promise<void>((resolve) => runtime.on("blob", () => {
                     if (!runtime.unprocessedBlobs.has(blob)) {
-                        res();
+                        resolve();
                     }
                 }));
             }

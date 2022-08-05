@@ -13,7 +13,6 @@ import {
 import {
     InvalidationToken,
 	recordDependency,
-	SimpleObservingDependent,
 } from "../../dependency-tracking";
 import { MockDependent } from "../utils";
 
