@@ -99,9 +99,10 @@ Some key scenarios to consider are:
 * Undoing a change that is out of the collaboration window.
 
 While this is a lot of factors to consider,
-there really are only two central questions to consider:
+there really are only three central questions to consider:
 1. What possible undo semantics could we and should we support?
-2. How abstract or concrete should the representation of undo change be at the time of broadcast by the issuing client?
+2. How do we compute the concrete effect of an undo?
+3. How abstract or concrete should the representation of undo change be over the wire?
 
 ## Undo Semantics
 
@@ -161,17 +162,92 @@ The practical impact is that when reconciling inverse and interim changes,
 we need to support rebasing an inverse change over its interim changes as well as rebasing interim changes over the inverse change.
 We must therefore ensure that the relevant information to do so is available.
 
+## Computing the Effects of Undo
+
+No matter how we design our undo system,
+the starting point is always a user's intent to undo a prior change,
+and the end point is always the production of a document state Delta that has the desired undo effect.
+This is a journey from a very abstract representation ("Undo change foo")
+to a very concrete one (e.g., "set the value of node X to 42").
+
+At a high level, we want to derive an inverse changeset from the changeset being undone,
+then reconcile it with interim changes (see [Undo Semantics](#Undo-Semantics)),
+and finally derive the Delta from that.
+
+At some point in that process we may need to recover information about the state of the document before the change that we wish to undo.
+This is necessary because changes are often destructive:
+ * Setting the value on a node loses information about the prior value of that node.
+ * Deleting a subtree loses information about the contents of that subtree.
+
+Such data cannot be derived from the sole original changeset to be undone.
+We refer to the information that is needed in addition the original changeset as "restoration data".
+
+The most trivial way to ensure we can recover this information
+is to keep past revisions of the document available so long as they lie within the undo window.
+Even with the use of persistent data structures, this could be a lot of data.
+Moreover, since we will only need to recover whatever information we cannot derive from the original change,
+it seems wasteful to include other data.
+Generally speaking,
+
+Some DDSes address the need for restoration data by including it in all changesets:
+* Each set-value operation carries with it the value being overwritten.
+* Each delete operation carries with it the contents of the subtrees being deleted.
+
+A client that needs to produce an inverse change
+would therefore use that additional information in the changeset in order to produce its inverse.
+
+This scheme is unfortunately not directly applicable to SharedTree:
+a move operation that is concurrent with (and sequenced prior to) a delete operation
+may move a subtree under the deleted subtree.
+The restoration data included in the delete operation would not contain that subtree.
+In order for a client to produce an concrete inverse change,
+it would need to know the contents of the subtree that was moved.
+This could be resolved by including the contents of moved subtrees in all move operations,
+but doing so would make moves prohibitively expensive.
+
+
+
+
 ## Abstract vs. Concrete Over the Wire Representation
 
-No matter how we design our system.
+Somewhere along this process of concretization, the desired change needs to be communicated to peers.
+
+Whether this happens early or late in the concretization has important consequences for the computational needs of our system:
+ * The more concrete the on-wire change representation,
+the larger (and possibly more redundant) that representation will be.
+ * The more abstract the on-wire change representation,
+the more work each peer must do to apply the change.
+
+Note that having peers perform a larger portion of the concretization work
+is not only an issue of CPU load,
+but also an issue of data availability:
+we would indeed be forced to ensure that peers have access to the relevant data locally,
+or require that they query the Fluid service to fetch such data.
 
 
 
-## You can't just send "undo op X" when it comes to non-undo inverses
+Service-augmented changeset:
+Changesets that refer to content blobs could be sent to service without those blobs,
+and be archived in the history without those blobs,
+but the broadcasting service could include those blobs with the changeset when it broadcasts it to peers.
 
 ## Choosing a Design
 
 Generally speaking we strive for the following design goals:
-* Allow applications not to incur computational costs for features they do not wish to use.
-* For features that are used more rarely, prefer pay-as-you-go computational cost as opposed to a ubiquitous overhead
- (e.g., if a client want to use the feature then we prefer for that client to bear more of the computational cost as opposed to having peers bear it).
+ * Allow applications not to incur computational costs for features they do not wish to use.
+ * For features that are used more rarely, prefer pay-as-you-go computational cost as opposed to a ubiquitous overhead
+(e.g., if a client want to use the feature then we prefer for that client to bear more of the computational cost as opposed to having peers bear it).
+ * The needs of one client should not adversely affect the experience of peers.
+
+## Undo Recognition
+
+When the user does something that effectively amounts to undoing their prior changes,
+it may make sense to automatically interpret their changes as an undo.
+Doing so would reduce the chances that a user may be surprised by the subtle differences between their action and an actual undo.
+For example,
+moving a range of nodes from one place to another and moving them back
+is different from moving them and undoing the fist move
+in that the former means concurrent inserts between the nodes in the moved range would end up on either extremity of the moved nodes.
+
+Such a policy should be managed by the application and exist entirely outside
+(atop) the undo system.
