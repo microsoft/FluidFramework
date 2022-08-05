@@ -252,16 +252,13 @@ async function fetchLatestSnapshotCore(
                 });
 
                 let parsedSnapshotContents: IOdspResponse<ISnapshotContents> | undefined;
-                const splittedContentType = contentType?.split(";");
                 let contentTypeToRead: string | undefined;
-                if (splittedContentType !== undefined) {
-                    for (let type in splittedContentType) {
-                        if (type === "application/json" || type === "application/ms-fluid") {
-                            contentTypeToRead = type;
-                            break;
-                        }
-                    }
+                if (contentType?.indexOf("application/ms-fluid") !== -1) {
+                    contentTypeToRead = "application/ms-fluid";
+                } else if (contentType?.indexOf("application/json") !== -1) {
+                    contentTypeToRead = "application/json";
                 }
+
                 try {
                     switch (contentTypeToRead) {
                         case "application/json": {
@@ -558,9 +555,6 @@ export async function downloadSnapshot(
     };
     // Decide what snapshot format to fetch as per the feature gate.
     switch (snapshotFormatFetchType) {
-        case SnapshotFormatSupportType.JsonAndBinary:
-            headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
-            break;
         case SnapshotFormatSupportType.Binary:
             headers.accept = `application/ms-fluid; v=${currentReadVersion}`;
             break;
