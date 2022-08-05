@@ -711,7 +711,24 @@
         "removeLabelOnPush": true,
         "usePrDescriptionAsCommitMessage": true,
         "requireAllStatuses": false,
-        "conditionalMergeTypes": []
+        "conditionalMergeTypes": [
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "branch",
+              "operator": "notEquals",
+              "value": "main-next-"
+            }
+          },
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "labels",
+              "operator": "contains",
+              "label_name": "msftbot: merge-next"
+            }
+          }
+        ]
       },
       "disabled": false
     },
