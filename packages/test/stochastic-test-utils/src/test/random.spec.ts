@@ -188,7 +188,7 @@ describe("Random", () => {
                 const re = /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89a-f][\da-f]{3}-[\da-f]{12}$/;
                 assert(re.test(uuid),
                     `UUID must be in the form 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', but got '${uuid}'.`);
-            }
+            };
 
             // Predetermined bit patterns to verify that UUIDs are correctly constructed from four uint32s.
 
