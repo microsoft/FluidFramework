@@ -65,6 +65,9 @@ export class DemoModelCodeLoader implements IModelCodeLoader<IMigratableModel> {
             throw new Error("Unexpected code detail format");
         }
 
+        // Technically, this doesn't have to use an external model.  It could be requesting the model from the
+        // container (e.g. container.request({ url: "model" })).  A single model code loader could even support
+        // a combination of either (esp. if the strategy changes over time).
         switch (version) {
             case "one": {
                 const model = new InventoryListContainer1(container);

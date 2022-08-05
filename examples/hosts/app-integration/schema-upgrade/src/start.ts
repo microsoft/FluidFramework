@@ -65,6 +65,10 @@ const render = (model: IVersionedModel) => {
 async function start(): Promise<void> {
     const tinyliciousService = new TinyliciousService();
 
+    // If we assumed the container code could consistently present a model to us, we could bake that assumption
+    // in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
+    // (unknown) container version.  So the ModelLoader would be replaced by whatever the consistent request call
+    // (e.g. container.request({ url: "mode" })) looks like.
     const modelLoader = new ModelLoader<IMigratableModel>({
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
@@ -111,7 +115,7 @@ async function start(): Promise<void> {
         console.error(`Tried to migrate to version ${version} which is not supported by the current ModelLoader`);
     });
 
-    // Could do some migration loop here -- repeat this until no further migration needed
+    // TODO: Could do some migration loop here -- repeat this until no further migration needed
     // const versionToPropose = await getMaximumMigratableVersionFromSomeService(model.version); // string | undefined
     // if (versionToPropose !== undefined) {
     //     model.proposeVersion(versionToPropose);
