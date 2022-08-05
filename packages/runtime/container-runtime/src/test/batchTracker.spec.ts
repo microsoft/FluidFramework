@@ -39,7 +39,7 @@ describe("Runtime", () => {
                 batchEndSequenceNumber: 5,
                 duration: 10,
                 batchError: false,
-                category: "error",
+                category: "performance",
             }, {
                 eventName: "Batching:LengthTooBig",
                 length: 8,
@@ -47,7 +47,7 @@ describe("Runtime", () => {
                 batchEndSequenceNumber: 8,
                 duration: 20,
                 batchError: true,
-                category: "error",
+                category: "performance",
             },
         ]);
     });
