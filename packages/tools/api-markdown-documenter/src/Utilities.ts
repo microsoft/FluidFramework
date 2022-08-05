@@ -1,6 +1,7 @@
-import { ApiItem, ApiParameterListMixin } from "@microsoft/api-extractor-model";
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
-import { DocNodeKind, DocSection, DocParagraph } from "@microsoft/tsdoc";
+import { ApiItem, ApiParameterListMixin } from "@microsoft/api-extractor-model";
+import { DocNodeKind, DocParagraph, DocSection } from "@microsoft/tsdoc";
+
 import { Link } from "./Interfaces";
 import { DocumentBoundaryPolicy } from "./Policies";
 

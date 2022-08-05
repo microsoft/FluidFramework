@@ -1,9 +1,10 @@
 import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
-import { TSDocConfiguration, DocSection, DocLinkTag, DocPlainText } from "@microsoft/tsdoc";
-import { MarkdownDocumenterConfig } from "./MarkdownDocumenterConfig";
+import { DocLinkTag, DocPlainText, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
+
 import { Link } from "./Interfaces";
-import { getFirstAncestorWithOwnPage, getQualifiedApiItemName, urlFromLink } from "./Utilities";
+import { MarkdownDocumenterConfig } from "./MarkdownDocumenterConfig";
 import { DocumentBoundaryPolicy } from "./Policies";
+import { getFirstAncestorWithOwnPage, getQualifiedApiItemName, urlFromLink } from "./Utilities";
 
 // TODOs:
 // - Document assumptions around file placements: flat list of package directories

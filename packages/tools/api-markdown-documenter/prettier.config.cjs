@@ -1,5 +1,8 @@
 // TODO: Use shared config in build-common once version with config has been published.
 module.exports = {
+    importOrder: ["<THIRD_PARTY_MODULES>", "^[./]"],
+    importOrderSeparation: true,
+    importOrderSortSpecifiers: true,
     printWidth: 100,
     quoteProps: "consistent",
     semi: true,

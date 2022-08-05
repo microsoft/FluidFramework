@@ -44,6 +44,7 @@
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/test-utils": "^1.0.1",
     "@microsoft/api-extractor": "^7.22.2",
+    "@trivago/prettier-plugin-sort-imports": "^3.3.0",
     "@types/mocha": "^9.1.1",
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",

@@ -1,4 +1,5 @@
 import { JsonSchema, NewlineKind } from "@rushstack/node-core-library";
+
 import { PolicyOptions } from "./Policies";
 
 // TODOs:
