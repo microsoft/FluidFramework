@@ -34,7 +34,7 @@
   "dependencies": {
     "@fluidframework/cell": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.1",
+    "@fluidframework/common-utils": "^1.0.0-83614",
     "@fluidframework/merge-tree": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/sequence": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "react": "^16.10.2"
