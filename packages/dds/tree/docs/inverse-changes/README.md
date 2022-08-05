@@ -11,6 +11,9 @@ Inverse changes are generated in two cases:
  * When an end user performs an undo operation in the Fluid-powered application.
  * When rebasing a changeset that is based on a prior change that has since been rebased.
 
+The remainder of this document uses undo as its main motivator,
+but non-undo inverses are also mentioned where they deserve special consideration.
+
 ## Tip Undo vs. Collaborative Undo
 
 The traditional undo model that application developers are used to is that of an undo stack.
@@ -70,16 +73,18 @@ Some key scenarios to consider are:
 * Undoing a change that has been sequenced but is not yet out of the collaboration window.
 * Undoing a change that is out of the collaboration window.
 
-Generally speaking we strive for the following design goals:
-* Allow applications not to incur computational costs for features they do not wish to use.
-* For features that are used more rarely, prefer pay-as-you-go computational cost as opposed to a ubiquitous overhead
- (e.g., if a client want to use the feature then we prefer for that client to bear more of the computational cost as opposed to having peers bear it).
+While this is a lot of factors to consider,
+there really are only two central questions to consider:
+1. What possible undo semantics could we and should we support?
+2. How abstract or concrete should the representation of undo change be at the time of broadcast by the issuing client?
 
-## Undo Semantics: Retroactive Undo vs. Patch Undo
+## Undo Semantics
+
+### Possible Semantics: Rewind vs. Retroactive vs. Patch
 
 Before we describe the technical choices associated with undo,
 we should clarify the net effect we expect undo operations to have.
-In other words, we need to define the semantics of undo in a collaborative system.
+In other words, we need to define the possible semantics of undo in a collaborative system.
 
 Due to the collaborative nature of the system in which we operate,
 it's possible for some interim changes to occur between the change to be undone and the tip of the document history
@@ -90,31 +95,43 @@ In our case, this challenge is forced on us by collaboration even for applicatio
 The fact that we may find ourselves trying to undo a change that is not at the tip of the document history
 forces us to consider two options for what semantics we want undo operations to have.
 Should the state of the document after the undo operation is applied be...
-1. The same as what it would have been if the undone operation had not been performed in the first place
-(but interim operations were).
-2. The result of applying the inverse of the undone operation to the current state (which includes the effect of interim changes).
+1. The state before the undone operation?
+2. The same as what it would have been if the undone operation had not been performed in the first place
+(but interim operations were)?
+3. The result of applying the inverse of the undone operation to the current state (which includes the effect of interim changes)?
 
-There is also the option of simply reverting to document state before the undone operation,
-but we do not consider this option viable as it would discard the effects of interim edits.
 
-Option #1 is what we refer to as "Retroactive Undo".
+Option #1 is what we refer to as "Rewind Undo".
+It discards the effects of interim changes.
+In practice, this means the change we construct for the tip state is equivalent to:
+* Undoing all interim changes
+
+Option #2 is what we refer to as "Retroactive Undo".
 We adopt the inverse as a given and derive its knock-on effects on the interim changes.
 In practice, this means the change we construct for the tip state is equivalent to:
 * Undoing all interim changes
 * Applying the inverse changes
 * Applying the interim changes rebased on the inverse
 
-Option #2 is what we refer to as "Patch Undo" (in the "band-aid" sense of the term).
+Option #3 is what we refer to as "Patch Undo" (in the "band-aid" sense of the term).
 We adopt the interim changes as a given and derive their knock-on effects on the inverse.
 In practice, this means the change we construct for the tip state is equivalent to:
-* Applying the inverse rebased over the interim changes
+* Applying the inverse change rebased over the interim changes
 
-SharedTree can be made to support either or both options.
+### Which Semantics to Support
+
+We consider the "Retroactive" semantics to be .
 Application authors can decide which to leverage in a given scenario.
+This means that when reconciling inverse and interim changes,
+we need to support rebasing an inverse change over its interim changes as well as rebasing interim changes over the inverse change.
 
-## Producing Inverse Changes
+## 
 
-## Reconciling Inverse and Interim Changes
+## You can't just send "undo op X" when it comes to non-undo inverses
 
+## Choosing a Design
 
-
+Generally speaking we strive for the following design goals:
+* Allow applications not to incur computational costs for features they do not wish to use.
+* For features that are used more rarely, prefer pay-as-you-go computational cost as opposed to a ubiquitous overhead
+ (e.g., if a client want to use the feature then we prefer for that client to bear more of the computational cost as opposed to having peers bear it).
