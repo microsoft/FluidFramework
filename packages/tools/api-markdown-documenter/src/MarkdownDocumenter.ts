@@ -2,7 +2,7 @@ import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { DocLinkTag, DocPlainText, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { Link } from "./Interfaces";
-import { MarkdownDocumenterConfig } from "./MarkdownDocumenterConfig";
+import { MarkdownDocumenterConfig, markdownDocumenterConfigurationWithDefaults } from "./MarkdownDocumenterConfig";
 import { DocumentBoundaryPolicy } from "./Policies";
 import { getFirstAncestorWithOwnPage, getQualifiedApiItemName, urlFromLink } from "./Utilities";
 
@@ -30,7 +30,7 @@ export class MarkdownDocumenter {
     /**
      * TODO
      */
-    public readonly config: MarkdownDocumenterConfig;
+    public readonly documenterConfig: Required<MarkdownDocumenterConfig>;
 
     /**
      * TODO
@@ -42,9 +42,9 @@ export class MarkdownDocumenter {
      */
     // private readonly markdownEmitter: CustomMarkdownEmitter;
 
-    constructor(apiModel: ApiModel, config: MarkdownDocumenterConfig) {
+    constructor(apiModel: ApiModel, documenterConfig: MarkdownDocumenterConfig) {
         this.apiModel = apiModel;
-        this.config = config;
+        this.documenterConfig = markdownDocumenterConfigurationWithDefaults(documenterConfig);
 
         // this.tsdocConfiguration = CustomDocNodes.configuration;
         // this.markdownEmitter = new CustomMarkdownEmitter(this.apiModel);
