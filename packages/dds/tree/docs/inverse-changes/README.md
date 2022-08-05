@@ -2,6 +2,15 @@
 
 This document covers the current design thinking around inverse changes.
 
+Some terminology:
+While the terms "client" and "peer" can often be used interchangeably,
+this document deliberately uses "client" to refer to the issuer of a change,
+and "peer" to refer to the receiver of a change.
+While all clients are ultimately peers and vice-versa,
+this distinction helps us differentiate work that is done before a change is sent to the Fluid service
+(which we refer to as "client work") and work is done after a change is received from the Fluid service
+(which we refer to as "peer work").
+
 ## What are Inverse Changes?
 
 > An inverse change is a change that is meant to undo the effect of a prior change.
@@ -11,8 +20,24 @@ Inverse changes are generated in two cases:
  * When an end user performs an undo operation in the Fluid-powered application.
  * When rebasing a changeset that is based on a prior change that has since been rebased.
 
-The remainder of this document uses undo as its main motivator,
-but non-undo inverses are also mentioned where they deserve special consideration.
+## The Case of Rebase-Induced Inverses
+
+In a live collaboration session,
+changes are sent as soon as they are first created
+and are therefore unaffected by rebasing and any inverse changes that such rebasing my involve.
+
+In an asynchronous collaboration session,
+the changes sent over the wire may be the result of rebasing operations.
+This does not however imply that that such changes will contain inverse changes:
+while rebasing sometimes requires the production of inverse changes,
+those inverse changes are always rebased over instead of being added to the end product of a rebase.
+At most, a change that is rebased over an inverse change may accumulate some information about how that inverse change affected it
+(e.g., by storing tombstones that refer to it), but the inverse changes themselves never make it to the rebased change.
+
+This means that the needs of our system when it comes to inverse changes in rebasing
+are entirely subsumed by the needs of undo.
+The remainder of this document therefore focuses undo,
+but rebase-induced inverses are also mentioned where they deserve special consideration.
 
 ## Tip Undo vs. Collaborative Undo
 
@@ -134,9 +159,13 @@ is closest in spirit to Retroactive Undo.
 We currently aim to build a system that could support them all and let application authors decide which to leverage in a given scenario.
 The practical impact is that when reconciling inverse and interim changes,
 we need to support rebasing an inverse change over its interim changes as well as rebasing interim changes over the inverse change.
-We must therefore ensure that the relevant information to do is available.
+We must therefore ensure that the relevant information to do so is available.
 
-## 
+## Abstract vs. Concrete Over the Wire Representation
+
+No matter how we design our system.
+
+
 
 ## You can't just send "undo op X" when it comes to non-undo inverses
 
