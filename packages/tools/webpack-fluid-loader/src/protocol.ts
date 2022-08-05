@@ -50,10 +50,18 @@ class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
             const proposal = pair[1];
             this.proposals.set(proposal.key, proposal.value);
         }
+
+        for (const pair of quorumSnapshot.members) {
+            this.connectClient(pair[0], pair[1]);
+        }
     }
 
-    connectLocalClient(clientId: string | undefined, sequenceNumber: number) {
-        const actualClientId = clientId ?? LocalQuorum.noClientId;
+    private connectClient(clientId: string, client: ISequencedClient) {
+        this.members.set(clientId, client);
+        this.emit("addMember", clientId, client);
+    }
+
+    connectLocalClient(clientId: string, sequenceNumber: number) {
         const sequencedClient: ISequencedClient = {
             sequenceNumber,
             client: {
@@ -74,15 +82,14 @@ class LocalQuorum extends TypedEventEmitter<IQuorumEvents> implements IQuorum {
                 timestamp: Date.now(),
             },
         };
-        this.members.set(actualClientId, sequencedClient);
-        this.emit("addMember", actualClientId, sequencedClient);
+
+        this.connectClient(clientId, sequencedClient);
     }
 
-    disconnectLocalClient(clientId: string | undefined) {
-        const actualClientId = clientId ?? LocalQuorum.noClientId;
-        if (this.members.get(actualClientId) !== undefined) {
+    disconnectLocalClient(clientId: string) {
+        if (this.members.get(clientId) !== undefined) {
             this.emit("removeMember", clientId);
-            this.members.delete(actualClientId);
+            this.members.delete(clientId);
         }
     }
 
@@ -124,30 +131,29 @@ class EmptyProtocolHandler implements IProtocolHandler {
         return this.initialSnapshot;
     }
 
-    processMessage(message: ISequencedDocumentMessage, _local: boolean): IProcessMessageResult {
-        const emptyResult = {};
-        const clientId = message.clientId;
-        if (this.quorum.getMember(clientId) !== undefined) {
-            return emptyResult;
-        }
-
-        this.quorum.connectLocalClient(clientId, message.sequenceNumber);
-        return emptyResult;
+    processMessage(_message: ISequencedDocumentMessage, _local: boolean): IProcessMessageResult {
+        return {};
     }
 
     getProtocolState(): IScribeProtocolState {
         return {
             sequenceNumber: this.attributes.sequenceNumber,
             minimumSequenceNumber: this.attributes.minimumSequenceNumber,
-            members: [],
+            members: Array.from(this.quorum.getMembers()),
             proposals: [],
             values: [],
         };
     }
 
     setConnectionState(connected: boolean, clientId: string | undefined) {
+        if (clientId === undefined) {
+            return;
+        }
+
         if (connected) {
             this.quorum.connectLocalClient(clientId, this.attributes.sequenceNumber);
+        } else {
+            this.quorum.disconnectLocalClient(clientId);
         }
     }
 
