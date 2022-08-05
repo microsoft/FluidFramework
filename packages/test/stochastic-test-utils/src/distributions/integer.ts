@@ -19,6 +19,10 @@ export const integer = (uint53Source: () => number) =>
         // when constructing a Uint53, deemphasizing the low bits may be redundant.
         //
         // See: https://www.pcg-random.org/posts/bounded-rands.html
+        //
+        // Perf: While the above site ranks division and rejection among the slowest options,
+        //       this approach compared favorably vs. a modified bitmask with rejection that
+        //       discards low bits.  (node 14 x64)
         const range = max - min + 1;
         const divisor = Math.floor(2 ** 53 / range);
 
