@@ -6,7 +6,8 @@
 import { strict as assert } from "assert";
 
 import {
-	allowsFieldSuperset, allowsTreeSuperset, allowsTypesSuperset, allowsValueSuperset, isNeverField, isNeverTree,
+	allowsFieldSuperset, allowsTreeSuperset, allowsTreeSchemaIdentifierSuperset,
+	allowsValueSuperset, isNeverField, isNeverTree,
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 } from "../../schema-stored/comparison";
@@ -134,13 +135,13 @@ describe("Schema Comparison", () => {
 
 	it("allowsTypesSuperset", () => {
 		testOrder(
-			allowsTypesSuperset,
+			allowsTreeSchemaIdentifierSuperset,
 			[new Set(), new Set([brand("1")]), new Set([brand("1"), brand("2")]), undefined],
 		);
 		const neverSet: TreeTypeSet = new Set();
 		const neverSet2: TreeTypeSet = new Set();
 		testPartialOrder(
-			allowsTypesSuperset,
+			allowsTreeSchemaIdentifierSuperset,
 			[
 				neverSet,
 				neverSet2,

@@ -131,7 +131,7 @@ export function allowsFieldSuperset(
     if (original.kind === FieldKind.Forbidden) {
         return true;
     }
-    return allowsTypesSuperset(original.types, superset.types);
+    return allowsTreeSchemaIdentifierSuperset(original.types, superset.types);
 }
 
 /**
@@ -139,7 +139,7 @@ export function allowsFieldSuperset(
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
-export function allowsTypesSuperset(
+export function allowsTreeSchemaIdentifierSuperset(
     original: TreeTypeSet,
     superset: TreeTypeSet,
 ): boolean {

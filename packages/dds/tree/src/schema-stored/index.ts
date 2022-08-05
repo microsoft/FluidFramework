@@ -11,4 +11,4 @@ export {
 export { anyField, anyTree, neverField, neverTree } from "./specialSchema";
 export { StoredSchemaRepository } from "./storedSchemaRepository";
 export { treeSchema, fieldSchema, emptyField, rootFieldKey, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";
-export { isNeverField, isNeverTree, allowsRepoSuperset } from "./comparison";
+export { isNeverField, isNeverTree, allowsRepoSuperset, allowsTreeSchemaIdentifierSuperset } from "./comparison";
