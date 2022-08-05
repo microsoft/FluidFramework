@@ -29,10 +29,13 @@ export namespace DefaultPolicies {
 }
 
 // @public
+export const defaultPolicyOptions: Required<PolicyOptions>;
+
+// @public
 export type DocumentBoundaryPolicy = (apiItem: ApiItem) => boolean;
 
 // @public
-export type FileHierarchyPolicy = (apiItem: ApiItem) => string;
+export type FileHierarchyPolicy = (apiItem: ApiItem) => boolean;
 
 // @public
 export type FileNamePolicy = (apiItem: ApiItem) => string;
@@ -81,9 +84,9 @@ export interface MarkdownDocument {
 
 // @public
 export class MarkdownDocumenter {
-    constructor(apiModel: ApiModel, config: MarkdownDocumenterConfig);
+    constructor(apiModel: ApiModel, documenterConfig: MarkdownDocumenterConfig);
     readonly apiModel: ApiModel;
-    readonly config: MarkdownDocumenterConfig;
+    readonly documenterConfig: Required<MarkdownDocumenterConfig>;
 }
 
 // @public
@@ -92,6 +95,9 @@ export interface MarkdownDocumenterConfig extends PolicyOptions {
     readonly newlineKind: NewlineKind;
     readonly uriRoot: string;
 }
+
+// @public (undocumented)
+export function markdownDocumenterConfigurationWithDefaults(partialConfig: MarkdownDocumenterConfig): Required<MarkdownDocumenterConfig>;
 
 // @public
 export interface PolicyOptions {

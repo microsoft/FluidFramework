@@ -17,7 +17,9 @@
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
     "build:compile": "npm run tsc",
-    "build:docs": "api-extractor run --local",
+    "build:docs": "npm run build:docs:api-extractor && npm run build:docs:api-markdown-documenter",
+    "build:docs:api-extractor": "api-extractor run --local",
+    "build:docs:api-markdown-documenter": "echo TODO",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
     "build:genver": "gen-version",

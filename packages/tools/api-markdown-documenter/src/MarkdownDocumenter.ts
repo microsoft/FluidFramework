@@ -2,7 +2,10 @@ import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { DocLinkTag, DocPlainText, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { Link } from "./Interfaces";
-import { MarkdownDocumenterConfig, markdownDocumenterConfigurationWithDefaults } from "./MarkdownDocumenterConfig";
+import {
+    MarkdownDocumenterConfig,
+    markdownDocumenterConfigurationWithDefaults,
+} from "./MarkdownDocumenterConfig";
 import { DocumentBoundaryPolicy } from "./Policies";
 import { getFirstAncestorWithOwnPage, getQualifiedApiItemName, urlFromLink } from "./Utilities";
 
