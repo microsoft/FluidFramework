@@ -21,7 +21,7 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { IDocumentAttributes, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
-import { IntervalType, SequenceInterval, SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { IntervalType, SequenceInterval, SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -34,6 +34,7 @@ import {
     getSnapshotTreeFromSerializedContainer,
 // eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-loader/dist/utils";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 const detachedContainerRefSeqNumber = 0;
 

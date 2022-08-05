@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/local-driver";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
-import { SharedString, SparseMatrix } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { Ink } from "@fluidframework/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
@@ -28,6 +28,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 
 describe(`Container Serialization Backwards Compatibility`, () => {
     const loaderContainerTracker = new LoaderContainerTracker();
