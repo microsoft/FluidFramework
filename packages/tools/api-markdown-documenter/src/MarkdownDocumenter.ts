@@ -1,12 +1,12 @@
+import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
 import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { DocLinkTag, DocPlainText, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
-import { Link } from "./Interfaces";
+import { Link, MarkdownDocument } from "./Interfaces";
 import {
     MarkdownDocumenterConfig,
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfig";
-import { DocumentBoundaryPolicy } from "./Policies";
 import { getFirstAncestorWithOwnPage, getQualifiedApiItemName, urlFromLink } from "./Utilities";
 
 // TODOs:
@@ -24,34 +24,50 @@ import { getFirstAncestorWithOwnPage, getQualifiedApiItemName, urlFromLink } fro
  * {@link https://github.com/microsoft/rushstack/blob/main/apps/api-documenter/src/documenters/MarkdownDocumenter.ts
  * | here}.
  */
-export class MarkdownDocumenter {
-    /**
-     * API model for which the documentation will be generated.
-     */
-    public readonly apiModel: ApiModel;
 
-    /**
-     * TODO
-     */
-    public readonly documenterConfig: Required<MarkdownDocumenterConfig>;
+/**
+ * TODO
+ * @param apiModel
+ * @param partialDocumenterConfig
+ * @param tsdocConfiguration
+ * @param markdownEmitter
+ * @returns
+ */
+export function render(
+    apiModel: ApiModel,
+    partialDocumenterConfig: MarkdownDocumenterConfig,
+    tsdocConfiguration: TSDocConfiguration,
+    markdownEmitter: MarkdownEmitter,
+): MarkdownDocument[] {
+    const documenterConfig = markdownDocumenterConfigurationWithDefaults(partialDocumenterConfig);
+    const documentItems = getDocumentItems(apiModel, documenterConfig);
 
-    /**
-     * TODO
-     */
-    // private readonly tsdocConfiguration: TSDocConfiguration;
+    const documents: MarkdownDocument[] = documentItems.map((documentItem) => {
+        // TODO
+    });
+    return documents;
+}
 
-    /**
-     * TODO
-     */
-    // private readonly markdownEmitter: CustomMarkdownEmitter;
+export async function renderFiles(
+    apiModel: ApiModel,
+    partialDocumenterConfig: MarkdownDocumenterConfig,
+    tsdocConfiguration: TSDocConfiguration,
+    markdownEmitter: MarkdownEmitter,
+): Promise<void> {
+    // TODO: clear out existing contents at location
 
-    constructor(apiModel: ApiModel, documenterConfig: MarkdownDocumenterConfig) {
-        this.apiModel = apiModel;
-        this.documenterConfig = markdownDocumenterConfigurationWithDefaults(documenterConfig);
+    const documents = render(
+        apiModel,
+        partialDocumenterConfig,
+        tsdocConfiguration,
+        markdownEmitter,
+    );
 
-        // this.tsdocConfiguration = CustomDocNodes.configuration;
-        // this.markdownEmitter = new CustomMarkdownEmitter(this.apiModel);
-    }
+    Promise.all(
+        documents.map(async (document) => {
+            // TODO: write each document to disc
+        }),
+    );
 }
 
 /**
@@ -62,14 +78,14 @@ export class MarkdownDocumenter {
  */
 export function getDocumentItems(
     apiItem: ApiItem,
-    documentBoundaryPolicy: DocumentBoundaryPolicy,
+    config: Required<MarkdownDocumenterConfig>,
 ): ApiItem[] {
     const result: ApiItem[] = [];
     for (const member of apiItem.members) {
-        if (documentBoundaryPolicy(member)) {
+        if (config.documentBoundaryPolicy(member)) {
             result.push(member);
         }
-        result.push(...getDocumentItems(member, documentBoundaryPolicy));
+        result.push(...getDocumentItems(member, config));
     }
     return result;
 }
