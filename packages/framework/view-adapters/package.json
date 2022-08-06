@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/view-adapters",
-  "version": "2.0.0-internal.1.0.0",
+  "version": "2.0.0-internal.1.1.0",
   "description": "View adapters for rendering views of alternate or unknown UI frameworks",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -32,8 +32,8 @@
     "tsfmt:fix": "tsfmt --replace"
   },
   "dependencies": {
-    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/view-interfaces": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/core-interfaces": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/view-interfaces": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "react": "^16.10.2",
     "react-dom": "^16.10.2"
   },
