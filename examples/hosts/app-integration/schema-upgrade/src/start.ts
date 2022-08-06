@@ -39,8 +39,8 @@ const render = (model: IVersionedModel) => {
     const appDiv = document.getElementById("app") as HTMLDivElement;
     ReactDOM.unmountComponentAtNode(appDiv);
     // This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
-    // versions, we could check its version here and select the appropriate view.
-    // TODO: Better view code loading.
+    // versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
+    // view code loader to pull in the view dynamically based on the version we discover.
     if (isInventoryListContainer1(model) || isInventoryListContainer2(model)) {
         ReactDOM.render(
             React.createElement(InventoryListContainerView, { model }),
@@ -100,9 +100,8 @@ async function start(): Promise<void> {
         model = await modelLoader.loadExisting(id);
     }
 
-    // TODO: Could be reasonable to merge Migrator into the ModelLoader, for a MigratingModelLoader.
-    // The eventing would be a little weird if the loader can load multiple models, but maybe it's OK to have one
-    // loader per model?
+    // The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
+    // the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
     const migrator = new Migrator(modelLoader, model, id);
     migrator.on("migrated", () => {
         model.close();
@@ -110,8 +109,14 @@ async function start(): Promise<void> {
         updateTabForId(migrator.currentModelId);
         model = migrator.currentModel;
     });
+    // If the ModelLoader doesn't know how to load the model required for migration, it emits "migrationNotSupported".
+    // For example, this might be hit if another client has a newer ModelLoader and proposes a version our
+    // ModelLoader doesn't know about.
+    // However, this will never be hit in this demo since we have a finite set of models to support.  If the model
+    // code loader pulls in the appropriate model dynamically, this might also never be hit since all clients
+    // theoretically are referencing the same model library.
     migrator.on("migrationNotSupported", (version: string) => {
-        // TODO: Figure out what a reasonable end-user experience might be in this case.
+        // To move forward, we'd need to acquire a model loader capable of loading the given model, and retry the load.
         console.error(`Tried to migrate to version ${version} which is not supported by the current ModelLoader`);
     });
 
