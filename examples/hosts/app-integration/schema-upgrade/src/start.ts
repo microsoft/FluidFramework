@@ -116,18 +116,23 @@ async function start(): Promise<void> {
     // code loader pulls in the appropriate model dynamically, this might also never be hit since all clients
     // theoretically are referencing the same model library.
     migrator.on("migrationNotSupported", (version: string) => {
-        // To move forward, we'd need to acquire a model loader capable of loading the given model, and retry the load.
+        // To move forward, we would need to acquire a model loader capable of loading the given model, retry the
+        // load, and set up a new Migrator with the new model loader.
         console.error(`Tried to migrate to version ${version} which is not supported by the current ModelLoader`);
     });
 
-    // TODO: Could do some migration loop here -- repeat this until no further migration needed
-    // const versionToPropose = await getMaximumMigratableVersionFromSomeService(model.version); // string | undefined
-    // if (versionToPropose !== undefined) {
+    // This would be a good point to trigger normal upgrade logic - we're fully set up for migration, can inspect the
+    // model, and haven't rendered yet.  We could even migrate multiple times if necessary (e.g. if daisy-chaining is
+    // required).  E.g. something like:
+    // let versionToPropose: string;
+    // while (versionToPropose = await getMigrationTargetFromSomeService(model.version)) {
     //     model.proposeVersion(versionToPropose);
+    //     await new Promise<void>((resolve) => {
+    //         migrator.once("migrated", resolve);
+    //     });
     // }
+    // In this demo however, we trigger the proposal through the debug buttons.
 
-    // TODO: here I proceed to rendering without checking the migration state, but instead we could decline to render
-    // if we're going to immediately load a new container.  Consider whether this would be better.
     render(model);
     updateTabForId(id);
 }
