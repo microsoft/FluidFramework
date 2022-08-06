@@ -57,7 +57,7 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^1.0.0-83614",
+    "@fluidframework/common-utils": "^1.0.0",
     "best-random": "^1.0.0",
     "random-js": "^1.0.8"
   },

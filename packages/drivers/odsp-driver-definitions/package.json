@@ -43,7 +43,7 @@
     "@fluidframework/build-tools": "^0.3.1000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@^1.0.0",
-    "@fluidframework/protocol-definitions": "^1.0.0-83669",
+    "@fluidframework/protocol-definitions": "^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",
     "@rushstack/eslint-config": "^2.5.1",
     "concurrently": "^6.2.0",
