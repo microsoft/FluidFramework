@@ -34,8 +34,8 @@ const v2ModuleWithDetails: IFluidModuleWithDetails = {
 
 // This ICodeDetailsLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate code for unknown versions.
-export const demoCodeLoader: ICodeDetailsLoader = {
-    load: async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+export class DemoCodeLoader implements ICodeDetailsLoader {
+    public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
         const version = source.package;
         if (typeof version !== "string") {
             throw new Error("Unexpected code detail format");
@@ -45,8 +45,8 @@ export const demoCodeLoader: ICodeDetailsLoader = {
             case "two": return v2ModuleWithDetails;
             default: throw new Error("Unknown version");
         }
-    },
-};
+    }
+}
 
 // This IModelCodeLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate model for unknown versions.

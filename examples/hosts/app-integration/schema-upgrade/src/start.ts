@@ -7,7 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-import { demoCodeLoader, DemoModelCodeLoader } from "./demoLoaders";
+import { DemoCodeLoader, DemoModelCodeLoader } from "./demoLoaders";
 import { ModelLoader } from "./modelLoading";
 import { externalDataSource } from "./externalData";
 import { IMigratableModel, IVersionedModel } from "./migrationInterfaces";
@@ -72,7 +72,7 @@ async function start(): Promise<void> {
     const modelLoader = new ModelLoader<IMigratableModel>({
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
-        codeLoader: demoCodeLoader,
+        codeLoader: new DemoCodeLoader(),
         modelCodeLoader: new DemoModelCodeLoader(),
         generateCreateNewRequest: createTinyliciousCreateNewRequest,
     });
