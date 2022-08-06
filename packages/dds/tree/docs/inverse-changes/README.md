@@ -114,12 +114,13 @@ Some key scenarios to consider are:
 * Undoing a change that has been sequenced but is not yet out of the collaboration window.
 * Undoing a change that is out of the collaboration window.
 
-While this is a lot of factors to consider,
-there really are only three central questions to consider:
+Ultimately, designing our undo system requires answering the following questions:
 
 1. What possible undo semantics could we and should we support?
-2. How do we compute the concrete effect of an undo?
-3. How abstract or concrete should the representation of undo change be over the wire?
+2. What is the relevant data needed for the computation of undo?
+3. Given the relevant data, how do we compute the needed changes to accomplish an undo?
+4. Which part of the computation should happen upstream vs. downstream from broadcast?
+5. How do we source the relevant data for each part of the computation?
 
 ## Undo Semantics
 
@@ -189,7 +190,30 @@ The practical impact is that when reconciling inverse and interim changes,
 we need to support rebasing an inverse change over its interim changes as well as rebasing interim changes over the inverse change.
 We must therefore ensure that the relevant information to do so is available.
 
-## Computing the Effects of Undo
+## Relevant Data
+
+In order for us to compute the required document changes needed in the face of an undo,
+we need to have access to the following data:
+* The original change to be undone
+* All of the interim changes sequenced since the change to be undone
+* Any document state that we wish to restore as part of the undo,
+but cannot derive from the the original change or interim changes.
+
+This last bullet point may not be immediately obvious,
+but it is a critical issue.
+We may need to recover information about the state of the document before the change that we wish to undo
+because changes can be destructive:
+
+* Setting the value on a node loses information about the prior value of that node.
+* Deleting a subtree loses information about the contents of that subtree.
+
+Such data cannot be derived solely from the original changeset to be undone
+(or interim changes).
+We refer to the information that is needed in addition the original changeset as "repair data".
+
+## Computing Undo Changes
+
+The end result of an undo is the production of a Delta that can be applied to the tip state of all clients.
 
 No matter how we design our undo system,
 the starting point is always a user's intent to undo a prior change,
@@ -197,22 +221,47 @@ and the end point is always the production of a document state Delta that has th
 This is a journey from a very abstract representation ("Undo change foo")
 to a very concrete one (e.g., "set the value of node X to 42").
 
-At a high level, we want to derive an inverse changeset from the changeset being undone,
-then reconcile it with interim changes (see [Undo Semantics](#Undo-Semantics)),
-and finally derive the Delta from that.
+At a high level, our computation needs to perform the following three steps:
+1. Derive an inverse changeset from the changeset being undone.
+2. Reconcile the inverse with interim changes to produce an undo change.
+3. Derive a Delta from the undo change.
 
-### Repair Data
+In that process,
+we have some latitude as to whether the inverse change should contain repair information,
+(e.g., "set the value of node X to 42")
+or whether it should remain more abstract
+(e.g., "revert the value of node X to the revision before change foo").
+In the latter case,
+the translation into more concrete repair information would happen during the conversion to the Delta.
 
-At some point in this process 
-we may need to recover information about the state of the document before the change that we wish to undo.
-This is necessary because changes are often destructive:
+We will return to this question in the section about sourcing the relevant data.
 
-* Setting the value on a node loses information about the prior value of that node.
-* Deleting a subtree loses information about the contents of that subtree.
+### Deriving an Inverse Changeset
 
-Such data cannot be derived solely from the original changeset to be undone.
-We refer to the information that is needed in addition the original changeset as "repair data".
+TODO
 
+### Reconciling Inverse and Interim Changes
+
+Cut from semantics section
+(see [Undo Semantics](#Undo-Semantics))
+
+### Deriving a Delta
+
+???
+
+## Sourcing Relevant Data
+--
+Concrete vs. abstract change: concretize in change->delta?
+Concrete late means:
+* We may avoid the need for repair data entirely
+* Separation of concern that feels right:
+  * some code is responsible for charactersing which changes ought to happen
+  * some code is responsible for making it happen
+
+We could have an intermediary format that allows rebasing and composition, while using a little repair data as possible.
+We add the remaining repair data at the end if need be.
+This means the format that the rebaser deals with is not the same as the format that the toDelta converter deals with.
+--
 Some DDSes address the need for repair data by including it in all changesets:
 
 * Each set-value operation carries with it the value being overwritten.
@@ -240,15 +289,19 @@ Even with the use of persistent data structures, this could be a lot of data.
 Moreover, since we will only need to recover whatever information we cannot derive from the original change,
 it seems wasteful to include other data.
 
-We could keep some arbitrary amount of repair data on clients locally,
-but resort to requesting it from a document state history service in cases where it isn't.
-This would however make the obtention of this data asynchronous.
+Client applications could choose window of arbitrary size
+(less than or equal to the undo window)
+for which to keep repair data on clients locally.
+In cases where the edit to be undone falls outside of that window,
+the client would resort to requesting relevant data from the service.
+Note that this would however make the obtention of this data asynchronous.
 
 Note that repair data is available to all clients when all the changes that last contributed state
 to the portions of the document being deleted or overwritten by a change that is being undone
 are still within the collaboration window.
 This is likely to be rare in practice because collaboration windows tend to be much shorter
 than the lifetime of document contents.
+
 
 ### Rebasing Over Original and Inverse Changes
 
