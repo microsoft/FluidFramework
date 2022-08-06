@@ -70,11 +70,11 @@
   },
   "devDependencies": {
     "@fluid-experimental/property-dds": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/common-utils": "^1.0.0-83614",
+    "@fluidframework/common-utils": "^1.0.0",
     "@fluidframework/local-driver": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/runtime-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/server-local-server": "^0.1037.1000-83903",
+    "@fluidframework/server-local-server": "^0.1037.1000",
     "@fluidframework/test-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "aws-sdk": "2.547.0",

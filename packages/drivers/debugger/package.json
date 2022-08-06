@@ -33,10 +33,10 @@
     "typetests:gen": "fluid-type-validator -g -d ."
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^1.0.0-83614",
+    "@fluidframework/common-utils": "^1.0.0",
     "@fluidframework/driver-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "@fluidframework/driver-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/protocol-definitions": "^1.0.0-83669",
+    "@fluidframework/protocol-definitions": "^1.0.0",
     "@fluidframework/replay-driver": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
     "jsonschema": "^1.2.6"
   },
