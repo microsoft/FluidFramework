@@ -358,8 +358,7 @@ export class Client {
     public rollback?(op: any, localOpMetadata: unknown) {
         if (op.type === MergeTreeDeltaType.REMOVE) {
             const pendingSegmentGroup = this.mergeTree.pendingSegments?.pop?.();
-            if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
-                || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
+            if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
                 throw new Error("Rollback op doesn't match last edit");
             }
             for (const segment of pendingSegmentGroup.segments) {
@@ -390,7 +389,7 @@ export class Client {
                         UniversalSequenceNumber,
                         false,
                         { op: removeOp });
-                } else /* if (op.type === MergeTreeDeltaType.ANNOTATE) */ {
+                } else /* op.type === MergeTreeDeltaType.ANNOTATE */ {
                     const props = pendingSegmentGroup.previousProps![i];
                     const rollbackType = (op.combiningOp && op.combiningOp.name === "rewrite") ?
                         PropertiesRollback.Rewrite : PropertiesRollback.Rollback;
