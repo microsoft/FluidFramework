@@ -8,72 +8,92 @@ import { default as Random } from "random-js";
 import { makeRandom } from "../random";
 import { XSadd } from "../xsadd";
 
-let uint32: () => number;
+let next: () => number;
 
 benchmark({
     type: BenchmarkType.Measurement,
-    title: "'random-js' (raw)",
+    title: "'random-js': raw MT19937 (uint32)",
     before: () => {
-        uint32 = Random.engines.mt19937().autoSeed();
+        next = Random.engines.mt19937().autoSeed();
     },
-    benchmarkFn: () => uint32(),
+    benchmarkFn: () => next(),
 });
 
 benchmark({
     type: BenchmarkType.Measurement,
-    title: "'random-js' (integer)",
+    title: "'random-js': integer (ideal)",
     before: () => {
         const engine = Random.engines.mt19937().autoSeed();
-        uint32 = () => Random.integer(0, 0xFFFFFFFF)(engine);
+        next = () => Random.integer(0, 1)(engine);
     },
-    benchmarkFn: () => uint32(),
+    benchmarkFn: () => next(),
 });
 
 benchmark({
     type: BenchmarkType.Measurement,
-    title: "'random-js' (real)",
+    title: "'random-js': integer (pathological)",
     before: () => {
         const engine = Random.engines.mt19937().autoSeed();
-        uint32 = () => Random.real(0, 1)(engine);
+        next = () => Random.integer(0, 2 ** 52)(engine);
     },
-    benchmarkFn: () => uint32(),
+    benchmarkFn: () => next(),
 });
 
 benchmark({
     type: BenchmarkType.Measurement,
-    title: "Stochastic (raw XSadd.uint32)",
+    title: "'random-js': real",
     before: () => {
-        uint32 = new XSadd().uint32;
+        const engine = Random.engines.mt19937().autoSeed();
+        next = () => Random.real(0, 1)(engine);
     },
-    benchmarkFn: () => uint32(),
+    benchmarkFn: () => next(),
 });
 
 benchmark({
     type: BenchmarkType.Measurement,
-    title: "Stochastic (integer)",
+    title: "Stochastic: raw XSadd (uint32)",
     before: () => {
-        const random = makeRandom();
-        uint32 = () => random.integer(0, 0xFFFFFFFF);
+        next = new XSadd().uint32;
     },
-    benchmarkFn: () => uint32(),
+    benchmarkFn: () => next(),
 });
 
 benchmark({
     type: BenchmarkType.Measurement,
-    title: "Stochastic (real)",
-    before: () => {
-        const random = makeRandom();
-        uint32 = () => random.real(0, 1);
-    },
-    benchmarkFn: () => uint32(),
-});
-
-benchmark({
-    type: BenchmarkType.Measurement,
-    title: "Stochastic (normal)",
+    title: "Stochastic: integer (ideal)",
     before: () => {
         const random = makeRandom();
-        uint32 = () => random.normal();
+        next = () => random.integer(0, 1);
     },
-    benchmarkFn: () => uint32(),
+    benchmarkFn: () => next(),
+});
+
+benchmark({
+    type: BenchmarkType.Measurement,
+    title: "Stochastic: integer (pathological)",
+    before: () => {
+        const random = makeRandom();
+        next = () => random.integer(0, 2 ** 52);
+    },
+    benchmarkFn: () => next(),
+});
+
+benchmark({
+    type: BenchmarkType.Measurement,
+    title: "Stochastic: real",
+    before: () => {
+        const random = makeRandom();
+        next = () => random.real(0, 1);
+    },
+    benchmarkFn: () => next(),
+});
+
+benchmark({
+    type: BenchmarkType.Measurement,
+    title: "Stochastic: normal",
+    before: () => {
+        const random = makeRandom();
+        next = () => random.normal();
+    },
+    benchmarkFn: () => next(),
 });
