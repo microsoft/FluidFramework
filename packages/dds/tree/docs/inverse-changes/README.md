@@ -53,7 +53,7 @@ To borrow a term from source-control systems, the "tip" change
 is the state that needs to be undone.
 We call systems that works under these assumptions "tip undo" systems.
 
-In a collaborative application, there are three complicating factors to consider:
+In a collaborative application, there are complicating factors to consider:
 
 1. The change that resulted from the local user's last edit may not be the last change that was applied.
    This is because other users can contribute changes.
@@ -123,7 +123,7 @@ Ultimately, designing our undo system requires answering the following questions
 1. What possible undo semantics could we and should we support?
 2. What is the relevant data needed for the computation of undo?
 3. Given the relevant data, how do we compute the needed changes to accomplish an undo?
-4. Which part of the computation should happen upstream vs. downstream from broadcast?
+4. How do we address concurrency challenges in issuing an undo?
 5. How do we source the relevant data for each part of the computation?
 
 ## Undo Semantics
@@ -173,7 +173,7 @@ it seems preferable if a change that is concurrent to
 (and sequenced after)
 both the original change and its inverse,
 would end up behaving as though neither the original nor the inverse were ever issued.
-Otherwise one would have to issue "undo updates" to apply the effect of undo to these changes.
+Otherwise one would have to issue additional "undo updates" to apply the effect of undo to these changes as they become known.
 
 For both Patch Undo and Retroactive Undo,
 we could potentially consider whether the interim changes could successfully be applied if rebased over the inverse change.
@@ -282,6 +282,104 @@ TODO: expand on...
 * Return -> MoveIn
 * Unforward -> Nil
 * Heal -> Nil
+
+## Addressing Concurrency
+
+The previous section outlined a process for computing the adequate undo changeset,
+but did so ignoring any of the complicating factors brought about by concurrency
+(see factors #2 and #4 in [Tip Undo vs. Collaborative Undo](#tip-undo-vs-collaborative-undo)).
+
+If the issuer of the undo performs the computations in the previous sections,
+then there are three concurrency cases that may need handling:
+1. changes concurrent to and sequenced before the original change and its undo
+2. changes sequenced after the original change but concurrent to and sequenced before the undo
+3. changes concurrent to and sequenced after both the original change and its undo
+
+Note that a single undo may need to deal with a combination of these.
+
+### Case #1: Changes Concurrent to and Sequenced Before the Original
+
+Case #1 can arise when trying to undo a change that has yet to be sequenced.
+This is particularly challenging because it means that
+the client issuing the undo is doing so based on a version of the original change that is not final.
+In other words, that client does not know the precise changeset it is attempting to undo.
+
+We see three possible strategies for handling the fact that this case can arise:
+
+#### Delaying
+
+One possible strategy for handling this case is to avoid it entirely by only allowing clients to
+undo edits that have been sequenced.
+This could be hidden from the end user by having applications apply the undo locally
+(re-computing it as other sequenced changes come in)
+and only sending the now updated undo when the original change is received from the sequencing service.
+
+#### Validation by Peer
+
+The client issuing the undo computes it based on the set of changes it knows about.
+The receiving peers can then check whether
+there were concurrent changes sequenced before the original edit that the issuer did not take into account.
+If so, then the undo is rejected, forcing the issuer to send it again.
+If not, then this case did not materialize and the changeset sent by the issuer can be used in further computation.
+
+Note that in the rejection case,
+on the next attempt,
+the issuer is guaranteed to know of all the changes preceding the original change.
+This means that,
+as far as this concurrency case is concerned,
+a client cannot get stuck trying to undo a change.
+
+#### Computation by Peer
+
+Peers receiving the undo are responsible for re-computing the inverse based on the now known sequencing order.
+
+### Case #2: Changes Sequenced After the Original But Concurrent to and Sequenced Before the Undo
+
+This case is the analog of the typical concurrency case outside of undo:
+each client's changes may need rebasing before being applied.
+When that change is an undo,
+the change that would otherwise be rebased over is an interim change so
+the reconciliation process detailed in the
+[Reconciling Inverse and Interim Changes](#reconciling-inverse-and-interim-changes)
+section above must be followed.
+This is important not only because this process is potentially different from the normal rebase process,
+but also because it may entail computing inverses of new changes,
+which in turn requires having access to the adequate repair data for those changes.
+
+This leaves us with two alternatives for handling these cases:
+
+#### Validation by Peer
+
+The client issuing the undo computes it based on the set of changes it knows about.
+The receiving peers can then check whether
+there were concurrent changes sequenced before the undo edit that the issuer did not take into account.
+If so, then the undo is rejected, forcing the issuer to send it again.
+If not, then this case did not materialize and the changeset sent by the issuer can be used as is.
+
+Note that in the rejection case,
+on the next attempt,
+the issuer is *not* guaranteed to know of all the concurrent changes that will be sequenced prior to its undo.
+This means that with this approach,
+as far as this concurrency case is concerned,
+a client *can* get stuck trying to undo a change.
+
+#### Computation by Peer
+
+Peers receiving the undo are responsible for updating the undo change as appropriate.
+This means clients need to have access to repair data for changes within the collaboration window.
+
+### Case #3: Changes Concurrent to and Sequenced After Both the Original and Undo
+
+Such changes need rebasing over
+the original change,
+any interim changes,
+and the undo change.
+This is something peers should be equipped to perform without need for additional data as part of the normal rebase process.
+
+It does mean however that we must design inverse changes and the output of rebase to ensure that
+a change being rebased over an inverse change
+after having been rebased over the original would undo the effects of rebasing over the original.
+See [Deriving an Inverse Changeset](#deriving-an-inverse-changeset) for more details.
 
 ## Sourcing Relevant Data
 --
