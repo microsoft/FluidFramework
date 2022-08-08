@@ -14,7 +14,7 @@ import {
     reservedTileLabelsKey,
 } from "@fluidframework/merge-tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { SharedString } from "@fluidframework/sequence";
+import { getTextAndMarkers, SharedString } from "@fluidframework/sequence";
 import { SharedObject } from "@fluidframework/shared-object-base";
 import {
     ChannelFactoryRegistry,
@@ -557,7 +557,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(simpleMarker1.type, "Marker", "Could not get simple marker");
         assert.strictEqual(simpleMarker1.properties?.markerId, "markerId", "markerId is incorrect");
         assert.strictEqual(simpleMarker1.properties?.markerSimpleType, "markerKeyValue");
-        const parallelMarkers1 = string1.getTextAndMarkers("tileLabel");
+        const parallelMarkers1 = getTextAndMarkers(string1, "tileLabel");
         const parallelMarker1 = parallelMarkers1.parallelMarkers[0];
         assert.strictEqual(parallelMarker1.type, "Marker", "Could not get tile marker");
         assert.strictEqual(parallelMarker1.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
@@ -566,7 +566,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
         assert.strictEqual(simpleMarker2.type, "Marker", "Could not get simple marker");
         assert.strictEqual(simpleMarker2.properties?.markerId, "markerId", "markerId is incorrect");
         assert.strictEqual(simpleMarker2.properties?.markerSimpleType, "markerKeyValue");
-        const parallelMarkers2 = string2.getTextAndMarkers("tileLabel");
+        const parallelMarkers2 = getTextAndMarkers(string2, "tileLabel");
         const parallelMarker2 = parallelMarkers2.parallelMarkers[0];
         assert.strictEqual(parallelMarker2.type, "Marker", "Could not get tile marker");
         assert.strictEqual(parallelMarker2.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");

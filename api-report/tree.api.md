@@ -573,6 +573,9 @@ export class SimpleDependee implements Dependee {
     removeDependent(dependent: Dependent): void;
 }
 
+// @public (undocumented)
+export function singleTextCursor(root: JsonableTree): TextCursor;
+
 // @public
 type Skip = number;
 
@@ -604,15 +607,29 @@ export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigati
 
 // @public
 export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
-    constructor(root: JsonableTree);
+    constructor(root: JsonableTree[], index: number, field?: DetachedField);
     // (undocumented)
     down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
+    protected getNode(): JsonableTree;
+    // (undocumented)
+    protected index: number;
+    // (undocumented)
+    protected readonly indexStack: number[];
+    // (undocumented)
+    isRooted(): boolean;
+    // (undocumented)
     get keys(): Iterable<FieldKey>;
+    // (undocumented)
+    protected readonly keyStack: FieldKey[];
     // (undocumented)
     length(key: FieldKey): number;
     // (undocumented)
     seek(offset: number): SynchronousNavigationResult;
+    // (undocumented)
+    protected siblings: JsonableTree[];
+    // (undocumented)
+    protected readonly siblingStack: JsonableTree[][];
     // (undocumented)
     get type(): TreeType;
     // (undocumented)
