@@ -876,7 +876,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     // TODO: https://github.com/microsoft/FluidFramework/issues/10729
-    it.skip("works with summary while offline", async function() {
+    it("works with summary while offline", async function() {
         map1.set("test op 1", "test op 1");
         await waitForSummary();
 
@@ -898,7 +898,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
     });
 
     // TODO: https://github.com/microsoft/FluidFramework/issues/10729
-    it.skip("can stash between summary op and ack", async function() {
+    it("can stash between summary op and ack", async function() {
         map1.set("test op 1", "test op 1");
         const container = await provider.loadTestContainer(testContainerConfig);
         const pendingOps = await new Promise<string>((resolve, reject) => container.on("op", (op) => {
