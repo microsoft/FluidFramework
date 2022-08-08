@@ -1,12 +1,14 @@
 import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
 import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
-import { TSDocConfiguration } from "@microsoft/tsdoc";
+import { StringBuilder, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { MarkdownDocument } from "./Interfaces";
 import {
-    MarkdownDocumenterConfig,
+    MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
-} from "./MarkdownDocumenterConfig";
+} from "./MarkdownDocumenterConfiguration";
+import { renderPageRootItem } from "./Rendering";
+import { getQualifiedApiItemName } from "./Utilities";
 
 // TODOs:
 // - Document assumptions around file placements: flat list of package directories
@@ -33,7 +35,7 @@ import {
  */
 export function render(
     apiModel: ApiModel,
-    partialDocumenterConfig: MarkdownDocumenterConfig,
+    partialDocumenterConfig: MarkdownDocumenterConfiguration,
     tsdocConfiguration: TSDocConfiguration,
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument[] {
@@ -41,14 +43,23 @@ export function render(
     const documentItems = getDocumentItems(apiModel, documenterConfig);
 
     const documents: MarkdownDocument[] = documentItems.map((documentItem) => {
-        // TODO
+        const renderedContents = renderPageRootItem(
+            documentItem,
+            documenterConfig,
+            tsdocConfiguration,
+        );
+        const emittedContents = markdownEmitter.emit(new StringBuilder(), renderedContents, {});
+        return {
+            contents: emittedContents,
+            apiItemName: getQualifiedApiItemName(documentItem),
+        };
     });
     return documents;
 }
 
 export async function renderFiles(
     apiModel: ApiModel,
-    partialDocumenterConfig: MarkdownDocumenterConfig,
+    partialDocumenterConfig: MarkdownDocumenterConfiguration,
     tsdocConfiguration: TSDocConfiguration,
     markdownEmitter: MarkdownEmitter,
 ): Promise<void> {
@@ -76,7 +87,7 @@ export async function renderFiles(
  */
 export function getDocumentItems(
     apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfig>,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): ApiItem[] {
     const result: ApiItem[] = [];
     for (const member of apiItem.members) {

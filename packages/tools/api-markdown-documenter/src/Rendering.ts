@@ -1,21 +1,184 @@
-import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
-import { DocLinkTag, DocPlainText, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
+import { DocHeading } from "@microsoft/api-documenter/lib/nodes/DocHeading";
+import { DocNoteBox } from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
+import {
+    ApiConstructSignature,
+    ApiConstructor,
+    ApiFunction,
+    ApiItem,
+    ApiItemKind,
+    ApiMethod,
+    ApiMethodSignature,
+    ApiReleaseTagMixin,
+    ReleaseTag,
+} from "@microsoft/api-extractor-model";
+import {
+    DocLinkTag,
+    DocNode,
+    DocParagraph,
+    DocPlainText,
+    DocSection,
+    TSDocConfiguration,
+} from "@microsoft/tsdoc";
 
-import { Link } from "./Interfaces";
-import { MarkdownDocumenterConfig } from "./MarkdownDocumenterConfig";
-import { getFirstAncestorWithOwnPage, getQualifiedApiItemName, urlFromLink } from "./Utilities";
+import { DocIdentifiableHeading } from "./DocIdentifiableHeading";
+import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
+import {
+    getDisplayNameForApiItem,
+    getHeadingIdForApiItem,
+    getLinkForApiItem,
+    mergeSections,
+    urlFromLink,
+} from "./Utilities";
 
-export function renderApiItem(apiItem: ApiItem, config: MarkdownDocumenterConfig): DocSection {
-    const output = new DocSection();
+// TODOs:
+// - heading level tracking
+
+export function renderPageRootItem(
+    apiItem: ApiItem,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocSection {
+    // Render breadcrumb at top of any page
+    const breadcrumb = renderBreadcrumb(apiItem, documenterConfiguration, tsdocConfiguration);
+
+    // Render remaining page content
+    const mainContent = renderApiItem(apiItem, documenterConfiguration, tsdocConfiguration);
+
+    // TODO: what else?
+
+    const result = mergeSections([breadcrumb, mainContent], tsdocConfiguration);
+    return result;
+}
+
+function renderApiItem(
+    apiItem: ApiItem,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocSection {
+    const docNodes: DocNode[] = [];
+
+    docNodes.push(renderHeading(apiItem, documenterConfiguration, tsdocConfiguration));
+
+    // Render beta warning if applicable
+    if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
+        docNodes.push(renderBetaWarning(tsdocConfiguration));
+    }
+
+    switch (apiItem.kind) {
+        case ApiItemKind.CallSignature:
+            // TODO
+            break;
+
+        case ApiItemKind.Class:
+            // TODO
+            break;
+
+        case ApiItemKind.ConstructSignature:
+            docNodes.push(
+                documenterConfiguration.renderConstructor(
+                    apiItem as ApiConstructSignature,
+                    tsdocConfiguration,
+                ),
+            );
+            break;
+
+        case ApiItemKind.Constructor:
+            docNodes.push(
+                documenterConfiguration.renderConstructor(
+                    apiItem as ApiConstructor,
+                    tsdocConfiguration,
+                ),
+            );
+            break;
+
+        case ApiItemKind.EntryPoint:
+            // TODO
+            break;
+
+        case ApiItemKind.Enum:
+            // TODO
+            break;
+
+        case ApiItemKind.EnumMember:
+            // TODO
+            break;
+
+        case ApiItemKind.Function:
+            docNodes.push(
+                documenterConfiguration.renderFunction(apiItem as ApiFunction, tsdocConfiguration),
+            );
+            break;
+
+        case ApiItemKind.IndexSignature:
+            // TODO
+            break;
+
+        case ApiItemKind.Interface:
+            // TODO
+            break;
+
+        case ApiItemKind.Method:
+            docNodes.push(
+                documenterConfiguration.renderMethod(apiItem as ApiMethod, tsdocConfiguration),
+            );
+            break;
+
+        case ApiItemKind.MethodSignature:
+            docNodes.push(
+                documenterConfiguration.renderMethod(
+                    apiItem as ApiMethodSignature,
+                    tsdocConfiguration,
+                ),
+            );
+            break;
+
+        case ApiItemKind.Model:
+            // TODO
+            break;
+
+        case ApiItemKind.Namespace:
+            // TODO
+            break;
+
+        case ApiItemKind.Package:
+            // TODO
+            break;
+
+        case ApiItemKind.Property:
+            // TODO
+            break;
+
+        case ApiItemKind.PropertySignature:
+            // TODO
+            break;
+
+        case ApiItemKind.TypeAlias:
+            // TODO
+            break;
+
+        case ApiItemKind.Variable:
+            // TODO
+            break;
+
+        case ApiItemKind.None:
+            // TODO
+            break;
+
+        default:
+            throw new Error(`Unrecognized API item kind: "${apiItem.kind}".`);
+    }
+
+    return new DocSection({ configuration: tsdocConfiguration }, docNodes);
 }
 
 export function renderBreadcrumb(
     apiItem: ApiItem,
-    output: DocSection,
-    documenterConfiguration: Required<MarkdownDocumenterConfig>,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
-): void {
+): DocSection {
     // TODO: old system generated link text "Packages" for Model page
+
+    const output = new DocSection({ configuration: tsdocConfiguration });
 
     let writtenAnythingYet = false;
     for (const hierarchyItem of apiItem.getHierarchy()) {
@@ -45,100 +208,39 @@ export function renderBreadcrumb(
             writtenAnythingYet = true;
         }
     }
+
+    return output;
 }
 
-export function getLinkForApiItem(
+export function renderHeading(
     apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfig>,
-): Link {
-    const text = config.linkTextPolicy(apiItem);
-    const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    const relativeFilePath = getRelativeFilePathForApiItem(apiItem, config);
-    const headingId = getHeadingIdForApiItem(apiItem, config);
-
-    return {
-        text,
-        uriBase,
-        relativeFilePath,
-        headingId,
-    };
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocHeading {
+    // TODO: heading level
+    const displayName = getDisplayNameForApiItem(apiItem);
+    return new DocIdentifiableHeading({
+        configuration: tsdocConfiguration,
+        title: displayName,
+        level: 2,
+        id: getHeadingIdForApiItem(apiItem, documenterConfiguration),
+    });
 }
 
-/**
- * Gets the file path for the specified API item.
- * In the case of an item that does not get rendered to its own page, this will point to the page
- * of the ancestor item under which the provided item will be rendered.
- *
- * @param apiItem - TODO
- * @param config - TODO
- */
-export function getRelativeFilePathForApiItem(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfig>,
-): string {
-    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaryPolicy);
+export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSection {
+    const output = new DocSection({ configuration: tsdocConfiguration });
 
-    // Walk the target document item's hierarchy to create the path to it
-    let path: string = "";
-    let convergedOnDocument = false;
-    for (const hierarchyItem of targetDocumentItem.getHierarchy()) {
-        if (config.documentBoundaryPolicy(hierarchyItem)) {
-            // Terminal case: we have found the item whose document we are rendering to
-            if (hierarchyItem !== apiItem) {
-                throw new Error(
-                    "Converged on the wrong document item. This should not be possible.",
-                );
-            }
-            const fileName = config.fileNamePolicy(apiItem);
-            path = path.length === 0 ? fileName : `${path}/${fileName}`;
-            convergedOnDocument = true;
-        } else if (config.fileHierarchyPolicy(hierarchyItem)) {
-            // This item in the API hierarchy also contributes to the file-wise hierarchy per provided policy.
-            // Append filename to directory path.
-            const pathSegmentName = config.fileNamePolicy(hierarchyItem);
-            path = path.length === 0 ? pathSegmentName : `${path}/${pathSegmentName}`;
-        } else {
-            // This item in the API hierarchy does not represent the document being rendered to,
-            // nor is it specified to contribute to the resulting file hierarchy. Skip it.
-        }
-    }
+    const betaWarning: string =
+        "This API is provided as a preview for developers and may change" +
+        " based on feedback that we receive. Do not use this API in a production environment.";
 
-    if (!convergedOnDocument) {
-        throw new Error("Item's hierarchy did not converge on a file");
-    }
+    output.appendNode(
+        new DocNoteBox({ configuration: tsdocConfiguration }, [
+            new DocParagraph({ configuration: tsdocConfiguration }, [
+                new DocPlainText({ configuration: tsdocConfiguration, text: betaWarning }),
+            ]),
+        ]),
+    );
 
-    return path;
-}
-
-export function getHeadingIdForApiItem(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfig>,
-): string | undefined {
-    if (config.documentBoundaryPolicy(apiItem)) {
-        // If this API item is being rendered to its own document, then links to it do not require
-        // a heading ID.
-        return undefined;
-    }
-
-    let baseName: string | undefined;
-    const apiItemKind: ApiItemKind = apiItem.kind;
-
-    // Walk parentage up until we reach the ancestor into whose document we're being rendered.
-    // Generate ID information for everything back to that point
-    let hierarchyItem = apiItem;
-    while (!config.documentBoundaryPolicy(hierarchyItem)) {
-        const qualifiedName = getQualifiedApiItemName(hierarchyItem);
-
-        // Since we're walking up the tree, we'll build the string from the end for simplicity
-        baseName = baseName === undefined ? qualifiedName : `${qualifiedName}-${baseName}`;
-
-        if (hierarchyItem.parent === undefined) {
-            throw new Error(
-                "Walking site hierarchy does not converge on an item that is rendered to its own page.",
-            );
-        }
-        hierarchyItem = hierarchyItem.parent;
-    }
-
-    return `${baseName}-${apiItemKind}`;
+    return output;
 }

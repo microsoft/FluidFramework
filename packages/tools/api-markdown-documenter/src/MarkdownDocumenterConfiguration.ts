@@ -1,6 +1,7 @@
 import { NewlineKind } from "@rushstack/node-core-library";
 
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
+import { RenderingPolicies } from "./RenderingPolicy";
 
 // TODOs:
 // - Define "document" in terms of stream output, since we aren't necessarily writing files.
@@ -8,7 +9,7 @@ import { PolicyOptions, defaultPolicyOptions } from "./Policies";
 /**
  * Configuration options for the Markdown documenter.
  */
-export interface MarkdownDocumenterConfig extends PolicyOptions {
+export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
     /**
      * Specifies what type of newlines API Documenter should use when writing output files.
      * By default, the output files will be written with Windows-style newlines.
@@ -22,8 +23,8 @@ export interface MarkdownDocumenterConfig extends PolicyOptions {
 }
 
 export function markdownDocumenterConfigurationWithDefaults(
-    partialConfig: MarkdownDocumenterConfig,
-): Required<MarkdownDocumenterConfig> {
+    partialConfig: MarkdownDocumenterConfiguration,
+): Required<MarkdownDocumenterConfiguration> {
     return {
         ...defaultPolicyOptions,
         ...partialConfig,

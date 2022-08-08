@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-export * from "./MarkdownDocumenterConfig";
+export * from "./MarkdownDocumenterConfiguration";
 export * from "./Policies";
 export * from "./Interfaces";
 export * from "./MarkdownDocumenter";
