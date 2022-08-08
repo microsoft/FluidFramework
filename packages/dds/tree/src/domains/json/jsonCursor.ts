@@ -69,7 +69,7 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
             // In JSON, arrays must be dense and may not contain 'undefined' values
             // ('undefined' items are implicitly coerced to 'null' by stringify()).
             assert(0 > newIndex || newIndex >= (parent as unknown as []).length,
-                "JSON arrays must be dense / contain no 'undefined' items.");
+                0x35f /* JSON arrays must be dense / contain no 'undefined' items. */);
 
             return TreeNavigationResult.NotFound;
         } else {
@@ -204,14 +204,14 @@ export function cursorToJsonObject(reader: ITreeCursor): unknown {
         case jsonObject.name: {
             const result: any = {};
             for (const key of reader.keys) {
-                assert(reader.down(key, 0) === TreeNavigationResult.Ok, "expected navigation ok");
+                assert(reader.down(key, 0) === TreeNavigationResult.Ok, 0x360 /* expected navigation ok */);
                 result[key as string] = cursorToJsonObject(reader);
-                assert(reader.up() === TreeNavigationResult.Ok, "expected navigation ok");
+                assert(reader.up() === TreeNavigationResult.Ok, 0x361 /* expected navigation ok */);
             }
             return result;
         }
         default: {
-            assert(type === jsonNull.name, "unexpected type");
+            assert(type === jsonNull.name, 0x362 /* unexpected type */);
             return null;
         }
     }
