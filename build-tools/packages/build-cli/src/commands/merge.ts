@@ -1,4 +1,4 @@
-import { createBranch, mergeBase, revList } from "@fluidframework/build-tools";
+import { createBranch, mergeBase, revList, resetBranch } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../base";
 
@@ -14,21 +14,7 @@ async function listLabels(token: string) {
     // })
 }
 
-async function addLabel(token: string, issueNumber: number, labels: string[]) {
-    // const octokit = new Octokit({ auth: token });
-    // await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/labels', {
-    //     owner: owner,
-    //     repo: repo,
-    //     issue_number: issue_number,
-    //     labels: labels,
-    // });
-    // labels: [
-    //     'main-next-integrate',
-    //     'do-not-squash-merge'
-    // ]
-}
-
-async function prExists(token?: string, title?: string): Promise<boolean> {
+async function prExists(token: string, title: string): Promise<boolean> {
     const octokit = new Octokit({ auth: token });
     const response = await octokit.request("GET /repos/{owner}/{repo}/pulls", { owner, repo });
 
@@ -88,6 +74,16 @@ async function createPR(
         pull_number: newPr.data.number,
         reviewers,
     });
+    await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/labels', {
+        owner,
+        repo,
+        // eslint-disable-next-line camelcase
+        issue_number: newPr.data.number,
+        labels: [
+            'main-next-integrate',
+            'do-not-squash-merge'
+        ]
+    });
 }
 
 export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
@@ -99,6 +95,7 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
         githubToken: Flags.string({
             description: "GitHub secret token",
             required: true,
+            env: "GITHUB_TOKEN",
         }),
         source: Flags.string({
             description: "Source branch name",
@@ -138,7 +135,7 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
         const { flags } = await this.parse(Merge);
 
         // check if PR exists
-        if (await prExists()) {
+        if (await prExists(flags.githubToken, "Automation: Main Next Integrate")) {
             this.exit(-1);
         }
 
@@ -164,14 +161,17 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
         const syncbranchName: string = flags.branchName ?? `${flags.source}-${flags.target}-${lastCommitID}`;
 
         // iterate and get the last commit
-        const commitInfo: any = await prInfo("", lastCommitID);
+        const commitInfo: any = await prInfo(flags.githubToken, lastCommitID);
         this.log("commit info----", commitInfo);
 
         // create branch
         await createBranch(syncbranchName);
 
+        // reset branch to lastCommmitID
+        await resetBranch(lastCommitID);
+
         // create pull request
-        const pullRequest = await createPR("", syncbranchName, flags.target, commitInfo.actor, [
+        const pullRequest = await createPR(flags.githubToken, syncbranchName, flags.target, commitInfo.actor, [
             "sonalivdeshpande",
         ]);
         this.log(`PR opened upto ${lastCommitID}`);
