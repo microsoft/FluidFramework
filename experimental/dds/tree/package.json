@@ -34,6 +34,7 @@
     "test": "nyc npm run test:mocha",
     "test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+    "test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true npm run test:mocha",
     "tsc": "tsc"
   },
   "dependencies": {

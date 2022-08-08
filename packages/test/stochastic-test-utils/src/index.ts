@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export * from "./describeFuzz";
 export * from "./generators";
 export * from "./types";
 export * from "./performActions";

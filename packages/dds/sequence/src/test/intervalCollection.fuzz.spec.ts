@@ -10,6 +10,7 @@ import {
     AcceptanceCondition,
     BaseFuzzTestState,
     createWeightedGenerator,
+    describeFuzz,
     Generator,
     generatorFromArray,
     interleave,
@@ -30,8 +31,6 @@ import { PropertySet } from "@fluidframework/merge-tree";
 import { SharedString } from "../sharedString";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
-
-const testCount = 10;
 
 interface Client {
     sharedString: SharedString;
@@ -479,7 +478,7 @@ function getPath(seed: number): string {
     return path.join(directory, `${seed}.json`);
 }
 
-describe("IntervalCollection fuzz testing", () => {
+describeFuzz("IntervalCollection fuzz testing", (testCount) => {
     before(() => {
         if (!existsSync(directory)) {
             mkdirSync(directory);
