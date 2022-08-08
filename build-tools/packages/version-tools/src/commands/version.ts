@@ -81,6 +81,11 @@ export default class VersionCommand extends Command {
             description: "You can use ^ and ~ as a shorthand.",
             command: "<%= config.bin %> <%= command.id %> ^1.0.0",
         },
+        {
+            description:
+                "You can use the 'current' bump type to calculate ranges without bumping the version.",
+            command: "<%= config.bin %> <%= command.id %> 2.0.0-internal.1.0.0 --type current",
+        },
     ];
 
     async run(): Promise<VersionInfo> {

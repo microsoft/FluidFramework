@@ -108,7 +108,15 @@ export function toInternalScheme(
 }
 
 /**
- * Validates that the version follows the Fluid internal version scheme. Throws if not.
+ * Validates that the version follows the Fluid internal version scheme.
+ *
+ * @param version - The version to check.
+ * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
+ * @returns True if the version matches the Fluid internal version scheme. Throws if not.
+ *
+ * @remarks
+ *
+ * This function is not typically used. {@link isInternalVersionScheme} is more useful since it does not throw.
  */
 // eslint-disable-next-line @rushstack/no-new-null
 function validateVersionScheme(version: semver.SemVer | string | null, allowPrereleases = false) {
@@ -124,16 +132,11 @@ function validateVersionScheme(version: semver.SemVer | string | null, allowPrer
     }
 
     if (parsedVersion.major < 2) {
-        throw new Error(`The public major version must by >= 2; found ${parsedVersion.major}`);
+        throw new Error(`The public major version must be >= 2; found ${parsedVersion.major}`);
     }
 
     if (parsedVersion.prerelease.length > 4) {
         if (allowPrereleases) {
-            if (parsedVersion.prerelease.length > 5) {
-                throw new Error(
-                    `Prerelease value contains ${parsedVersion.prerelease.length} components; expected 5.`,
-                );
-            }
             return true;
         }
         throw new Error(
@@ -148,6 +151,7 @@ function validateVersionScheme(version: semver.SemVer | string | null, allowPrer
  * Checks if a version matches the Fluid internal version scheme.
  *
  * @param version - The version to check.
+ * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @returns True if the version matches the Fluid internal version scheme.
  */
 export function isInternalVersionScheme(
@@ -164,6 +168,12 @@ export function isInternalVersionScheme(
     return true;
 }
 
+/**
+ * Checks if a version matches the prerelease version scheme of the Fluid internal version scheme.
+ *
+ * @param version - The version to check.
+ * @returns True if the version is a prerelease Fluid internal version, false otherwise.
+ */
 export function isPrereleaseInternalVersionScheme(version: semver.SemVer | string): boolean {
     const isInternal = isInternalVersionScheme(version);
     const isInternalPrerelease = isInternalVersionScheme(version, true);

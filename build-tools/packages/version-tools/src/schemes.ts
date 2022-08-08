@@ -217,6 +217,14 @@ export function adjustVersion(
     }
 }
 
+/**
+ * Finds the highest version number in a list of versions, accounting for the Fluid internal version scheme.
+ *
+ * @param versionList - The array of versions to search.
+ * @param allowPrereleases - If true, prerelease versions will be included. Otherwise they will be filtered out, meaning
+ * only released versions will be returned.
+ * @returns The highest version number in the list.
+ */
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false) {
     let list: string[] = [];
 
