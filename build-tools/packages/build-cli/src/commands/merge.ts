@@ -106,7 +106,7 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
             required: false,
         }),
         branchName: Flags.string({
-            description: "Any specific branch name. Default would be main-next-SHA",
+            description: "Any specific branch name. Default would be source-target-SHA",
             required: false,
         }),
         reviewers: Flags.string({
