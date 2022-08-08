@@ -203,13 +203,6 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
                 provider, containerRuntime, deleteContent, mainDataStore._context.id, true /* referenced */);
         });
 
-        it("marks root data stores as referenced", async () => {
-            const rootDataStore = await requestFluidObject<ITestDataObject>(
-                await containerRuntime.createRootDataStore(TestDataObjectType, "rootDataStore"), "");
-            await validateDataStoreReferenceState(
-                provider, containerRuntime, deleteContent, rootDataStore._context.id, true /* referenced */);
-        });
-
         it("marks non-root data stores as referenced / unreferenced correctly", async () => {
             const dataStore = await requestFluidObject<ITestDataObject>(
                 await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType), "");

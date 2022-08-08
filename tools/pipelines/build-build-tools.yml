@@ -28,6 +28,7 @@ trigger:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - build-tools
@@ -45,6 +46,7 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:

@@ -89,6 +89,7 @@ The corresponding method on `IMergeTreeTexHelper` will also be removed.
 - [Remove ISummaryAuthor and ISummaryCommitter](#Remove-ISummaryAuthor-and-ISummaryCommitter)
 - [Remove IFluidDataStoreChannel.bindToContext and related types](#remove-ifluiddatastorechannelbindtocontext-and-related-types)
 - [Remove `aliasing` return value from `AliasResult`](#remove-aliasing-return-value-from-aliasresult)
+- [Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported](#Creating-root-datastores-using-IContainerRuntimeCreateRootDataStore-and-IContainerRuntimeBase_createDataStoreWithProps-is-no-longer-supported)
 
 ### Deprecate ISummaryConfigurationHeuristics.idleTime
 `ISummaryConfigurationHeuristics.idleTime` has been deprecated and will be removed in a future release. See [#10008](https://github.com/microsoft/FluidFramework/issues/10008)
@@ -123,6 +124,9 @@ See previous ["Upcoming" change notice](#bindToContext-to-be-removed-from-IFluid
 
 ### Remove `aliasing` return value from `AliasResult`
 The `aliasing` return value from `AliasResult` has been removed from `@fluidframework/runtime-definitions`, as it's no longer returned by the API. Instead of `aliasing`, the API will return the promise of the ongoing aliasing operation.
+
+### Creating root datastores using `IContainerRuntime.CreateRootDataStore` and `IContainerRuntimeBase._createDataStoreWithProps` is no longer supported
+The `IContainerRuntime.CreateRootDataStore` method has been removed. Please use aliasing instead. See [IContainerRuntime.createRootDataStore is deprecated](#icontainerruntimecreaterootdatastore-is-deprecated). The `isRoot` parameter from `IContainerRuntimeBase._createDataStoreWithProps` has also been removed. Additionally, the feature gate which would switch to using aliasing behind the aforementioned deleted APIs, `Fluid.ContainerRuntime.UseDataStoreAliasing` will no longer be observed by the runtime. As aliasing is the default behavior for creating such datastores, the `useDataStoreAliasing` property from `IContainerRuntimeOptions` has been removed.
 
 # 1.2.0
 

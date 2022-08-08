@@ -365,7 +365,7 @@ export class Client {
             let i = 0;
             for (const segment of pendingSegmentGroup.segments) {
                 const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
-                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+                assert(segmentSegmentGroup === pendingSegmentGroup, 0x347 /* Unexpected segmentGroup in segment */);
 
                 const start = this.findRollbackPosition(segment);
                 const segWindow = this.getCollabWindow();
