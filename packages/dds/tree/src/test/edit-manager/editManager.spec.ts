@@ -240,7 +240,7 @@ const NUM_STEPS = 5;
 const NUM_CLIENTS = 3;
 
 describe("EditManager", () => {
-    it("Test#1", () => {
+    it("Can handle non-concurrent local changes being sequenced immediately", () => {
         const { rebaser, manager } = editManagerFactory();
         const cs1 = rebaser.mintChangeset(0);
         const cs2 = rebaser.mintChangeset(cs1.outputContext);
