@@ -151,7 +151,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     // All subsequent helper functions are generators; note that they don't actually apply any operations.
     function position({ random, sharedString }: ClientOpState): number {
-        return random.integer(0, sharedString.getLength() - 1);
+        return random.integer(0, Math.max(0, sharedString.getLength() - 1));
     }
 
     function exclusiveRange(state: ClientOpState): RangeSpec {
@@ -162,12 +162,13 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
 
     function inclusiveRange(state: ClientOpState): RangeSpec {
         const start = position(state);
-        const end = state.random.integer(start, state.sharedString.getLength() - 1);
+        const end = state.random.integer(start, Math.max(start, state.sharedString.getLength() - 1));
         return { start, end };
     }
 
     function propertySet(state: ClientOpState): PropertySet {
-        const propNamesShuffled = state.random.shuffle(options.propertyNamePool);
+        const propNamesShuffled = [...options.propertyNamePool];
+        state.random.shuffle(propNamesShuffled);
         const propsToChange = propNamesShuffled.slice(0, state.random.integer(1, propNamesShuffled.length));
         const propSet: PropertySet = {};
         for (const name of propsToChange) {

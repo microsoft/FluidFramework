@@ -14,12 +14,12 @@
  */
 export const integer = (uint53Source: () => number) =>
     (min: number, max: number) => {
-        if (max < min) {
-            /* eslint-disable no-param-reassign */
-            const t = min;
-            min = max;
-            max = t;
-            /* eslint-enable no-param-reassign */
+        if (max < min || Math.trunc(max) !== max || Math.trunc(min) !== min) {
+            // const t = min;
+            // min = max;
+            // max = t;
+
+            throw new RangeError(`Degenerate interval [${min}..${max}].`);
         }
 
         const range = max - min + 1;

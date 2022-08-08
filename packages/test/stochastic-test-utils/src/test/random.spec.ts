@@ -202,17 +202,30 @@ describe("Random", () => {
                     [Number.MIN_SAFE_INTEGER, 0],
                     [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
                 ]) {
-                    testLimits(min, max);
+                    describe("bonudary cases", () => {
+                        testLimits(min, max);
+                    });
                 }
 
                 const random = makeRandom();
 
-                for (let i = 0; i < 10; i++) {
-                    const min = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
-                    const max = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+                // Test cases handled by the divide with rejection approach
+                describe("with |max - min| < 2^53", () => {
+                    for (let i = 0; i < 10; i++) {
+                        const min = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+                        const len = random.integer(0, Number.MAX_SAFE_INTEGER);
+                        testLimits(min, min + len);
+                    }
+                });
 
-                    testLimits(min, max);
-                }
+                // Test cases that fall back on affine combination
+                describe("with |max - min| >= 2^53", () => {
+                    for (let i = 0; i < 10; i++) {
+                        const min = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+                        const len = random.integer(Number.MAX_SAFE_INTEGER + 1, Number.MAX_SAFE_INTEGER * 2);
+                        testLimits(min, min + len);
+                    }
+                });
             });
 
             for (const [min, max] of [
@@ -248,24 +261,24 @@ describe("Random", () => {
             });
 
             describe("degenerate cases", () => {
-                describe("should reverse malformed range", () => {
+                it("should disallow malformed range", () => {
                     for (const [min, max] of [
                         [1, 0],
                         [1, -1],
                     ]) {
-                        testLimits(min, max);
+                        assert.throws(() => {
+                            makeRandom().integer(min, max);
+                        });
                     }
                 });
 
-                describe("should propagate NaN", () => {
+                it("should disallow NaN", () => {
                     for (const [min, max] of [
                         [0, NaN],
                         [NaN, 0],
                     ]) {
-                        it(`[${min}..${max}] @ α=0 -> NaN`, () => {
-                            const random = makeRandom();
-                            const actual = random.integer(min, max);
-                            assert.equal(actual, NaN);
+                        assert.throws(() => {
+                            makeRandom().integer(min, max);
                         });
                     }
                 });
