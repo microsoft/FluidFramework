@@ -167,8 +167,6 @@ export function isInternalVersionScheme(
 export function isPrereleaseInternalVersionScheme(version: semver.SemVer | string): boolean {
     const isInternal = isInternalVersionScheme(version);
     const isInternalPrerelease = isInternalVersionScheme(version, true);
-    // console.log(`isInternal: ${isInternal}`);
-    // console.log(`isInternalPrerelease: ${isInternalPrerelease}`);
     return isInternalPrerelease && !isInternal;
 }
 
