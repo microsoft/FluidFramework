@@ -12,7 +12,6 @@ import {
 
 import { IMigratableModel } from "./migrationInterfaces";
 import { IModelCodeLoader } from "./modelLoading";
-// TODO: Maybe build these as standalone demo packages?  Though might be overkill.
 import {
     InventoryListContainer as InventoryListContainer1,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
