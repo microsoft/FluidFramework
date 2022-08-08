@@ -48,15 +48,15 @@ export async function exportFile(
             const codeLoaderBundle = require(codeLoader);
             if (!isCodeLoaderBundle(codeLoaderBundle)) {
                 const eventName = clientArgsValidationError;
-                const message = "Code loader bundle is not of type ICodeLoaderBundle";
-                return { success: false, eventName, errorMessage: message };
+                const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
+                return { success: false, eventName, errorMessage };
             }
 
             const fluidExport = await codeLoaderBundle.fluidExport;
             if (!isFluidFileConverter(fluidExport)) {
                 const eventName = clientArgsValidationError;
-                const message = "Fluid export from CodeLoaderBundle is not of type IFluidFileConverter";
-                return { success: false, eventName, errorMessage: message };
+                const errorMessage = "Fluid export from CodeLoaderBundle is not of type IFluidFileConverter";
+                return { success: false, eventName, errorMessage };
             }
 
             // TODO: read file stream
