@@ -133,6 +133,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
                     this.hostPolicy.cacheCreateNewSummary ?? true,
                     !!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
                     odspResolvedUrl.isClpCompliantApp,
+                    this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+                    this.hostPolicy.enableShareLinkWithCreate,
                 );
                 const docService = this.createDocumentServiceCore(odspResolvedUrl, odspLogger,
                     cacheAndTracker, clientIsSummarizer);

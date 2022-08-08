@@ -17,7 +17,6 @@ import {
     OdspErrorType,
     ShareLinkInfoType,
     ISharingLinkKind,
-    SharingLinkScope,
     ShareLinkTypes,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
@@ -66,6 +65,8 @@ export async function createNewFluidFile(
     createNewCaching: boolean,
     forceAccessTokenViaAuthorizationHeader: boolean,
     isClpCompliantApp?: boolean,
+    enableSingleRequestForShareLinkWithCreate?: boolean,
+    enableShareLinkWithCreate?: boolean,
 ): Promise<IOdspResolvedUrl> {
     // Check for valid filename before the request to create file is actually made.
     if (isInvalidFileName(newFileInfo.filename)) {
@@ -92,7 +93,11 @@ export async function createNewFluidFile(
         itemId = content.itemId;
         summaryHandle = content.id;
 
-        shareLinkInfo = extractShareLinkData(newFileInfo.createLinkType, content);
+        shareLinkInfo = extractShareLinkData(
+            newFileInfo.createLinkType,
+            content,
+            enableSingleRequestForShareLinkWithCreate,
+            enableShareLinkWithCreate);
     }
 
     const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
@@ -128,33 +133,42 @@ export async function createNewFluidFile(
  */
 function extractShareLinkData(
     requestedSharingLinkKind: ShareLinkTypes | ISharingLinkKind | undefined,
-    response: any = {},
+    response: ICreateFileResponse,
+    enableSingleRequestForShareLinkWithCreate?: boolean,
+    enableShareLinkWithCreate?: boolean,
 ): ShareLinkInfoType | undefined {
+    if (!requestedSharingLinkKind) {
+        return;
+    }
     let shareLinkInfo: ShareLinkInfoType | undefined;
-
-    if (requestedSharingLinkKind && ShareLinkTypes[requestedSharingLinkKind as ShareLinkTypes]
-        ) {
+    if (enableSingleRequestForShareLinkWithCreate) {
+        const { sharing } = response;
+        if (!sharing) {
+            return;
+        }
+        shareLinkInfo = {
+            createLink: {
+                type: requestedSharingLinkKind,
+                link: sharing.sharingLink ? {
+                    scope: sharing.sharingLink.scope,
+                    role: sharing.sharingLink.type,
+                    webUrl: sharing.sharingLink.webUrl,
+                    ...sharing.sharingLink,
+                } : undefined,
+                error: sharing.error,
+                shareId: sharing.shareId,
+            },
+        };
+    } else if (enableShareLinkWithCreate) {
         const { sharing, sharingLink, sharingLinkErrorReason } = response;
+        if (!sharingLink && !sharingLinkErrorReason) {
+            return;
+        }
         shareLinkInfo = {
             createLink: {
                 type: requestedSharingLinkKind,
                 link: sharingLink,
                 error: sharingLinkErrorReason,
-                shareId: sharing?.shareId,
-            },
-        };
-    } else if (requestedSharingLinkKind && SharingLinkScope[(requestedSharingLinkKind as ISharingLinkKind).scope]) {
-        const { sharing } = response;
-        shareLinkInfo = {
-            createLink: {
-                type: requestedSharingLinkKind,
-                link: sharing?.sharingLink ? {
-                    scope: sharing?.sharingLink.scope,
-                    role: sharing?.sharingLink.type,
-                    webUrl: sharing?.sharingLink.webUrl,
-                    ...sharing?.sharingLink,
-                } : undefined,
-                error: sharing?.error,
                 shareId: sharing?.shareId,
             },
         };

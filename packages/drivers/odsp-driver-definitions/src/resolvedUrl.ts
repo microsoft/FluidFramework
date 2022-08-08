@@ -53,7 +53,7 @@ export interface ISharingLinkKind {
 /**
  * Sharing link data received from the /snapshot api response.
  */
-export interface ISharingLink extends ISharingLinkKind{
+export interface ISharingLink extends ISharingLinkKind {
     webUrl: string;
 }
 
