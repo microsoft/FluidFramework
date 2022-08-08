@@ -14,7 +14,7 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
      * Specifies what type of newlines API Documenter should use when writing output files.
      * By default, the output files will be written with Windows-style newlines.
      */
-    readonly newlineKind: NewlineKind;
+    readonly newlineKind?: NewlineKind;
 
     /**
      * Default root uri used when generating content links.
@@ -33,6 +33,7 @@ export function markdownDocumenterConfigurationWithDefaults(
     partialConfig: MarkdownDocumenterConfiguration,
 ): Required<MarkdownDocumenterConfiguration> {
     return {
+        newlineKind: NewlineKind.OsDefault,
         verbose: false,
         ...defaultPolicyOptions,
         ...defaultRenderingPolicies,

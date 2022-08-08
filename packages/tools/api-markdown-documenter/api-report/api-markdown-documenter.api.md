@@ -125,7 +125,7 @@ export interface MarkdownDocument {
 
 // @public
 export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
-    readonly newlineKind: NewlineKind;
+    readonly newlineKind?: NewlineKind;
     readonly uriRoot: string;
     readonly verbose?: boolean;
 }
