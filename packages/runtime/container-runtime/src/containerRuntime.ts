@@ -418,7 +418,8 @@ export interface ISummaryRuntimeOptions {
  */
 export interface ICompressionRuntimeOptions {
     /**
-     * The minimum size the content payload must exceed before it is compressed. Undefined if compression is disabled.
+     * The minimum size the content payload must exceed before it is compressed.
+     * Compression is disabled if undefined.
      */
     readonly minimumSize?: number;
 }
@@ -457,6 +458,7 @@ export interface IContainerRuntimeOptions {
     readonly enableOfflineLoad?: boolean;
     /**
      * Enables the runtime to compress ops.
+     * @experimental Not ready for use.
      */
     readonly compressionOptions?: ICompressionRuntimeOptions;
 }
@@ -3096,17 +3098,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 this.mc.logger.sendPerformanceEvent({
                     eventName: "compressedOp",
                     duration,
-                    sizeBeforeCompression: Math.ceil(contentLength / 3.0) * 4, // Cost of base64 encoding
+                    sizeBeforeCompression: contentLength,
                     sizeAfterCompression: compressedContent.length,
                 });
             }
 
-            const compressedPayload: ContainerRuntimeMessage = { type, contents: compressedContent };
+            // Only compress the payload if it's actually smaller after compression
+            const shouldCompress = contentLength > compressedContent.length;
+            const compressedPayload: ContainerRuntimeMessage = {
+                type,
+                contents: shouldCompress ? compressedContent : contents,
+            };
+
             return this.context.submitFn(
                 MessageType.Operation,
                 compressedPayload,
                 batch,
-                { ...appData, compressed: true });
+                { ...appData, compressed: shouldCompress });
         }
 
         const payload: ContainerRuntimeMessage = { type, contents };
