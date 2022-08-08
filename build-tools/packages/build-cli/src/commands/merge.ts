@@ -161,7 +161,7 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
                 ? unmergedCommits[unmergedCommits.length - 1]
                 : unmergedCommits[flags.batchSize - 1];
 
-        const syncbranchName: string = flags.branchName ?? `main-next-${lastCommitID}`;
+        const syncbranchName: string = flags.branchName ?? `${flags.source}-${flags.target}-${lastCommitID}`;
 
         // iterate and get the last commit
         const commitInfo: any = await prInfo("", lastCommitID);
