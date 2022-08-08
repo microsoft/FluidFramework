@@ -18,7 +18,10 @@ export interface IDocIdentifiableHeadingParameters extends IDocHeadingParameters
  * Represents a section header similar to an HTML `<h1>` or `<h2>` element.
  */
 export class DocIdentifiableHeading extends DocHeading {
-    public readonly id: string;
+    /**
+     * {@inheritDoc IDocIdentifiableHeadingParameters.id}
+     */
+    public readonly id?: string;
 
     /**
      * Don't call this directly.  Instead use {@link TSDocParser}
@@ -26,6 +29,6 @@ export class DocIdentifiableHeading extends DocHeading {
      */
     constructor(parameters: IDocIdentifiableHeadingParameters) {
         super(parameters);
-        this.id = parameters.id !== undefined ? parameters.id : "";
+        this.id = parameters.id;
     }
 }
