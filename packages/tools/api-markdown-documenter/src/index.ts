@@ -4,11 +4,14 @@
  * @packageDocumentation
  */
 
-export * from "./MarkdownDocumenterConfiguration";
-export * from "./Policies";
+export * from "./DocIdentifiableHeading";
 export * from "./Interfaces";
 export * from "./MarkdownDocumenter";
+export * from "./MarkdownDocumenterConfiguration";
+export * from "./Policies";
 export * from "./Utilities";
+export * from "./Rendering";
+export * from "./RenderingPolicy";
 
 // #region Convenience re-exports of Doc builder types from api-documenter
 export * from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";

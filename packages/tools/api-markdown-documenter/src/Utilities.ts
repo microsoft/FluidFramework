@@ -103,7 +103,11 @@ export function getLinkForApiItem(
 ): Link {
     const text = config.linkTextPolicy(apiItem);
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    const relativeFilePath = getRelativeFilePathForApiItem(apiItem, config);
+    const relativeFilePath = getRelativeFilePathForApiItem(
+        apiItem,
+        config,
+        /* includeExtension: */ false,
+    );
     const headingId = getHeadingIdForApiItem(apiItem, config);
 
     return {
@@ -129,10 +133,12 @@ export function getLinkUrlForApiItem(
  *
  * @param apiItem - TODO
  * @param config - TODO
+ * @param includeExtension - Whether or not to include the `.md` file extension at the end of the path.
  */
 export function getRelativeFilePathForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
+    includeExtension: boolean,
 ): string {
     const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaryPolicy);
 
@@ -140,13 +146,8 @@ export function getRelativeFilePathForApiItem(
     let path: string = "";
     let convergedOnDocument = false;
     for (const hierarchyItem of targetDocumentItem.getHierarchy()) {
-        if (config.documentBoundaryPolicy(hierarchyItem)) {
+        if (hierarchyItem === apiItem) {
             // Terminal case: we have found the item whose document we are rendering to
-            if (hierarchyItem !== apiItem) {
-                throw new Error(
-                    "Converged on the wrong document item. This should not be possible.",
-                );
-            }
             const fileName = config.fileNamePolicy(apiItem);
             path = path.length === 0 ? fileName : `${path}/${fileName}`;
             convergedOnDocument = true;
@@ -165,7 +166,7 @@ export function getRelativeFilePathForApiItem(
         throw new Error("Item's hierarchy did not converge on a file");
     }
 
-    return path;
+    return includeExtension ? `${path}.md` : path;
 }
 
 export function getHeadingIdForApiItem(

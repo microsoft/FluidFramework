@@ -4,10 +4,18 @@
 
 ```ts
 
+import { ApiConstructor } from '@microsoft/api-extractor-model';
+import { ApiConstructSignature } from '@microsoft/api-extractor-model';
+import { ApiFunction } from '@microsoft/api-extractor-model';
 import { ApiItem } from '@microsoft/api-extractor-model';
+import { ApiMethod } from '@microsoft/api-extractor-model';
+import { ApiMethodSignature } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
+import { DocHeading } from '@microsoft/api-documenter/lib/nodes/DocHeading';
 import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
+import { IDocHeadingParameters } from '@microsoft/api-documenter/lib/nodes/DocHeading';
+import { MarkdownEmitter } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { NewlineKind } from '@rushstack/node-core-library';
 import { TSDocConfiguration } from '@microsoft/tsdoc';
 
@@ -30,6 +38,28 @@ export namespace DefaultPolicies {
 // @public
 export const defaultPolicyOptions: Required<PolicyOptions>;
 
+// @public (undocumented)
+export namespace DefaultRenderingPolicies {
+    // (undocumented)
+    export function defaultRenderConstructor(apiItem: ApiConstructor | ApiConstructSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+    // (undocumented)
+    export function defaultRenderFunction(apiItem: ApiFunction, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+    // (undocumented)
+    export function defaultRenderFunctionLike(apiItem: ApiConstructor | ApiConstructSignature | ApiFunction | ApiMethod | ApiMethodSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+    // (undocumented)
+    export function defaultRenderMethod(apiItem: ApiMethod | ApiMethodSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+}
+
+// @public (undocumented)
+export const defaultRenderingPolicies: Required<RenderingPolicies>;
+
+// @public
+export class DocIdentifiableHeading extends DocHeading {
+    // @internal
+    constructor(parameters: IDocIdentifiableHeadingParameters);
+    readonly id?: string;
+}
+
 // @public
 export type DocumentBoundaryPolicy = (apiItem: ApiItem) => boolean;
 
@@ -42,23 +72,34 @@ export type FileNamePolicy = (apiItem: ApiItem) => string;
 // @public
 export type FilterContentsPolicy = (apiItem: ApiItem) => boolean;
 
+// @public (undocumented)
+export function getDisplayNameForApiItem(apiItem: ApiItem): string;
+
 // @public
-export function getDocumentItems(apiItem: ApiItem, documentBoundaryPolicy: DocumentBoundaryPolicy): ApiItem[];
+export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
 export function getFirstAncestorWithOwnPage(apiItem: ApiItem, documentBoundaryPolicy: DocumentBoundaryPolicy): ApiItem;
 
 // @public (undocumented)
-export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfig>): string | undefined;
+export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string | undefined;
 
 // @public (undocumented)
-export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfig>): Link;
+export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): Link;
+
+// @public (undocumented)
+export function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
 
 // @public
 export function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
-export function getRelativeFilePathForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfig>): string;
+export function getRelativeFilePathForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
+
+// @public
+export interface IDocIdentifiableHeadingParameters extends IDocHeadingParameters {
+    id?: string;
+}
 
 // @public (undocumented)
 export interface Link {
@@ -79,23 +120,21 @@ export type LinkTextPolicy = (apiItem: ApiItem) => string;
 export interface MarkdownDocument {
     apiItemName: string;
     contents: string;
+    path: string;
 }
 
 // @public
-export class MarkdownDocumenter {
-    constructor(apiModel: ApiModel, documenterConfig: MarkdownDocumenterConfig);
-    readonly apiModel: ApiModel;
-    readonly documenterConfig: Required<MarkdownDocumenterConfig>;
-}
-
-// @public
-export interface MarkdownDocumenterConfig extends PolicyOptions {
+export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
     readonly newlineKind: NewlineKind;
     readonly uriRoot: string;
+    readonly verbose?: boolean;
 }
 
 // @public (undocumented)
-export function markdownDocumenterConfigurationWithDefaults(partialConfig: MarkdownDocumenterConfig): Required<MarkdownDocumenterConfig>;
+export function markdownDocumenterConfigurationWithDefaults(partialConfig: MarkdownDocumenterConfiguration): Required<MarkdownDocumenterConfiguration>;
+
+// @public (undocumented)
+export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public
 export interface PolicyOptions {
@@ -107,8 +146,36 @@ export interface PolicyOptions {
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
 
+// @public
+export function render(apiModel: ApiModel, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
+
 // @public (undocumented)
-export function renderBreadcrumb(apiItem: ApiItem, output: DocSection, documenterConfiguration: Required<MarkdownDocumenterConfig>, tsdocConfiguration: TSDocConfiguration): void;
+export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSection;
+
+// @public (undocumented)
+export function renderBreadcrumb(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+
+// @public (undocumented)
+export function renderFiles(apiModel: ApiModel, outputDirectoryPath: string, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): Promise<void>;
+
+// @public (undocumented)
+export function renderHeading(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocHeading;
+
+// @public (undocumented)
+export interface RenderingPolicies {
+    // (undocumented)
+    renderConstructor?: RenderingPolicy<ApiConstructSignature | ApiConstructor>;
+    // (undocumented)
+    renderFunction?: RenderingPolicy<ApiFunction>;
+    // (undocumented)
+    renderMethod?: RenderingPolicy<ApiMethod | ApiMethodSignature>;
+}
+
+// @public (undocumented)
+export type RenderingPolicy<TApiItem extends ApiItem> = (apiItem: TApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration) => DocSection;
+
+// @public (undocumented)
+export function renderPageRootItem(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;

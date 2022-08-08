@@ -1,7 +1,9 @@
 import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
 import { CustomDocNodes } from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";
 import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
-import { StringBuilder, TSDocConfiguration } from "@microsoft/tsdoc";
+import { StringBuilder } from "@microsoft/tsdoc";
+import { FileSystem } from "@rushstack/node-core-library";
+import * as Path from "path";
 
 import { MarkdownDocument } from "./Interfaces";
 import {
@@ -9,7 +11,7 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
 import { renderPageRootItem } from "./Rendering";
-import { getQualifiedApiItemName } from "./Utilities";
+import { getQualifiedApiItemName, getRelativeFilePathForApiItem } from "./Utilities";
 
 // TODOs:
 // - Document assumptions around file placements: flat list of package directories
@@ -39,7 +41,16 @@ export function render(
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument[] {
     const documenterConfig = markdownDocumenterConfigurationWithDefaults(partialDocumenterConfig);
+
+    console.log(`Rendering markdown documentation for API Model ${apiModel.displayName}...`);
+
     const documentItems = getDocumentItems(apiModel, documenterConfig);
+
+    if (documenterConfig.verbose) {
+        console.log(
+            `Identified ${documentItems.length} API items that will be rendered to their own documents per provided policy.`,
+        );
+    }
 
     const documents: MarkdownDocument[] = documentItems.map((documentItem) => {
         const renderedContents = renderPageRootItem(
@@ -51,26 +62,39 @@ export function render(
         return {
             contents: emittedContents,
             apiItemName: getQualifiedApiItemName(documentItem),
+            path: getRelativeFilePathForApiItem(
+                documentItem,
+                documenterConfig,
+                /* includeExtension: */ true,
+            ),
         };
     });
+
+    console.log("Documents rendered.");
+
     return documents;
 }
 
 export async function renderFiles(
     apiModel: ApiModel,
+    outputDirectoryPath: string,
     partialDocumenterConfig: MarkdownDocumenterConfiguration,
-    tsdocConfiguration: TSDocConfiguration,
     markdownEmitter: MarkdownEmitter,
 ): Promise<void> {
-    // TODO: clear out existing contents at location
+    await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
     const documents = render(apiModel, partialDocumenterConfig, markdownEmitter);
 
-    Promise.all(
+    await Promise.all(
         documents.map(async (document) => {
-            // TODO: write each document to disc
+            const filePath = Path.join(outputDirectoryPath, document.path);
+            await FileSystem.writeFileAsync(filePath, document.contents, {
+                convertLineEndings: partialDocumenterConfig.newlineKind,
+                ensureFolderExists: true,
+            });
         }),
     );
+    console.log("Documents written to disk.");
 }
 
 /**

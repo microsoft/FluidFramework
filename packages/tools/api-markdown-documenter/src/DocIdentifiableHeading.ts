@@ -4,7 +4,7 @@ import { DocHeading, IDocHeadingParameters } from "@microsoft/api-documenter/lib
 // This type should be removed if such support is added natively.
 
 /**
- * Constructor parameters for {@link DocHeading}.
+ * Constructor parameters for {@link DocIdentifiableHeading}.
  */
 export interface IDocIdentifiableHeadingParameters extends IDocHeadingParameters {
     /**
@@ -24,7 +24,7 @@ export class DocIdentifiableHeading extends DocHeading {
     public readonly id?: string;
 
     /**
-     * Don't call this directly.  Instead use {@link TSDocParser}
+     * Don't call this directly. Instead use `TSDocParser`.
      * @internal
      */
     constructor(parameters: IDocIdentifiableHeadingParameters) {

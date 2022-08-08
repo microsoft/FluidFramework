@@ -38,6 +38,10 @@ export function renderPageRootItem(
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
 ): DocSection {
+    if (documenterConfiguration.verbose) {
+        console.log(`Rendering document for ${apiItem.displayName}...`);
+    }
+
     // Render breadcrumb at top of any page
     const breadcrumb = renderBreadcrumb(apiItem, documenterConfiguration, tsdocConfiguration);
 
@@ -47,6 +51,11 @@ export function renderPageRootItem(
     // TODO: what else?
 
     const result = mergeSections([breadcrumb, mainContent], tsdocConfiguration);
+
+    if (documenterConfiguration.verbose) {
+        console.log(`Document for ${apiItem.displayName} rendered successfully.`);
+    }
+
     return result;
 }
 
@@ -77,6 +86,7 @@ function renderApiItem(
             docNodes.push(
                 documenterConfiguration.renderConstructor(
                     apiItem as ApiConstructSignature,
+                    documenterConfiguration,
                     tsdocConfiguration,
                 ),
             );
@@ -86,6 +96,7 @@ function renderApiItem(
             docNodes.push(
                 documenterConfiguration.renderConstructor(
                     apiItem as ApiConstructor,
+                    documenterConfiguration,
                     tsdocConfiguration,
                 ),
             );
@@ -105,7 +116,11 @@ function renderApiItem(
 
         case ApiItemKind.Function:
             docNodes.push(
-                documenterConfiguration.renderFunction(apiItem as ApiFunction, tsdocConfiguration),
+                documenterConfiguration.renderFunction(
+                    apiItem as ApiFunction,
+                    documenterConfiguration,
+                    tsdocConfiguration,
+                ),
             );
             break;
 
@@ -119,7 +134,11 @@ function renderApiItem(
 
         case ApiItemKind.Method:
             docNodes.push(
-                documenterConfiguration.renderMethod(apiItem as ApiMethod, tsdocConfiguration),
+                documenterConfiguration.renderMethod(
+                    apiItem as ApiMethod,
+                    documenterConfiguration,
+                    tsdocConfiguration,
+                ),
             );
             break;
 
@@ -127,6 +146,7 @@ function renderApiItem(
             docNodes.push(
                 documenterConfiguration.renderMethod(
                     apiItem as ApiMethodSignature,
+                    documenterConfiguration,
                     tsdocConfiguration,
                 ),
             );

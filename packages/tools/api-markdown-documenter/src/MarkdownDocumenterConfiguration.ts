@@ -20,12 +20,20 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
      * Default root uri used when generating content links.
      */
     readonly uriRoot: string;
+
+    /**
+     * Whether or not verbose logging is enabled.
+     *
+     * @defaultValue false.
+     */
+    readonly verbose?: boolean;
 }
 
 export function markdownDocumenterConfigurationWithDefaults(
     partialConfig: MarkdownDocumenterConfiguration,
 ): Required<MarkdownDocumenterConfiguration> {
     return {
+        verbose: false,
         ...defaultPolicyOptions,
         ...defaultRenderingPolicies,
         ...partialConfig,
