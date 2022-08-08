@@ -41,7 +41,7 @@ This field has been deprecated and will be removed in a future breaking change. 
 
 
 ### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
-`enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest`  function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`.
+`enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
 # 2.0.0
 
 ## 2.0.0 Upcoming changes
