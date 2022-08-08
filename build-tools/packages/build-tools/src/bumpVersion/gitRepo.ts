@@ -141,6 +141,10 @@ export class GitRepo {
         await this.exec(`checkout ${branchName}`, `switch branch ${branchName}`);
     }
 
+    public async resetBranch(commitId: string) {
+        await this.exec(`reset --hard ${commitId}`, `reset to commit ${commitId}`);
+    }
+
     /**
      * Commit changes
      *
