@@ -9,7 +9,7 @@ import { Contravariant, Covariant, Invariant } from "../util";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../change-family";
 
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditor, DefaultChangeSet> {
-    readonly encoder = new DefaultChangeEncoder();
+    readonly encoder = defaultChangeEncoder;
     readonly rebaser = new DefaultRebaser();
 
     buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): DefaultEditor {
@@ -56,7 +56,7 @@ export class DefaultRebaser implements ChangeRebaser<DefaultChangeSet, DefaultCh
     }
 }
 
-export class DefaultChangeEncoder extends ChangeEncoder<DefaultChangeSet> {
+class DefaultChangeEncoder extends ChangeEncoder<DefaultChangeSet> {
     public encodeForJson(formatVersion: number, change: DefaultChangeSet): JsonCompatible {
         throw new Error("Method not implemented.");
     }
@@ -64,6 +64,8 @@ export class DefaultChangeEncoder extends ChangeEncoder<DefaultChangeSet> {
         throw new Error("Method not implemented.");
     }
 }
+
+const defaultChangeEncoder: ChangeEncoder<DefaultChangeSet> = new DefaultChangeEncoder();
 
 export interface DefaultEditor {}
 

@@ -7,7 +7,7 @@ import { ChangeFamily } from "../../change-family";
 import { toDelta } from "../../changeset";
 import { AnchorSet, Delta } from "../../tree";
 import { sequenceChangeRebaser } from "./sequenceChangeRebaser";
-import { SequenceChangeEncoder, SequenceChangeset } from "./sequenceChangeset";
+import { sequenceChangeEncoder, SequenceChangeset } from "./sequenceChangeset";
 import { SequenceEditBuilder } from "./sequenceEditBuilder";
 
 function buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): SequenceEditBuilder {
@@ -20,5 +20,5 @@ export const sequenceChangeFamily: SequenceChangeFamily = {
     rebaser: sequenceChangeRebaser,
     buildEditor,
     intoDelta: toDelta,
-    encoder: new SequenceChangeEncoder(),
+    encoder: sequenceChangeEncoder,
 };
