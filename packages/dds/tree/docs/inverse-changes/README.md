@@ -70,6 +70,10 @@ In a collaborative application, there are three complicating factors to consider
    Note that if a client wishes to issue an undo for an operation that has yet to be sequenced by the collaboration service,
    then they cannot yet know the final rebased form of the change they are trying to produce the inverse for.
 
+4. Concurrency again,
+   means that unless they wait for the original change to be sequenced,
+   the issuer of an undo for that original change may not be aware of all the changes that come before the original change.
+
 We call systems that work in the face of these constraints "collaborative undo" systems.
 The rest of this document focuses on such systems.
 
@@ -141,40 +145,40 @@ forces us to consider two options for what semantics we want undo operations to 
 Should the state of the document after the undo operation is applied be...
 
 1. The state before the undone operation?
-2. The same as what it would have been if the undone operation had not been performed in the first place
+2. The result of applying the inverse of the undone operation to the current state?
+3. The same as what it would have been if the undone operation had not been performed in the first place
    (but interim operations were)?
-3. The result of applying the inverse of the undone operation to the current state (which includes the effect of interim changes)?
 
 Option #1 is what we refer to as "Rewind Undo".
-It discards the effects of interim changes.
-In practice, this means the change we construct for the tip state is equivalent to:
+It discards the effects of interim changes as well as the original change being undone.
 
-* Undoing all interim changes
+Option #2 is what we refer to as "Patch Undo" (in the "band-aid" sense of the term).
+It only undoes the parts of the original edit that are still undoable
+and does not otherwise undo the effects of the original edit on interim edits.
+For example,
+if edit B is an interim edit that was concurrent to and sequenced after edit A,
+and edit B had failed to apply because of the changes introduced by edit A,
+then undoing edit A with patch undo *would not* bring back the effects of edit B.
 
-Option #2 is what we refer to as "Retroactive Undo".
-We adopt the inverse as a given and derive its knock-on effects on the interim changes.
-In practice, this means the change we construct for the tip state is equivalent to:
-
-* Undoing all interim changes
-* Applying the inverse changes
-* Applying the interim changes rebased on the inverse
-
-Option #3 is what we refer to as "Patch Undo" (in the "band-aid" sense of the term).
-We adopt the interim changes as a given and derive their knock-on effects on the inverse.
-In practice, this means the change we construct for the tip state is equivalent to:
-
-* Applying the inverse change rebased over the interim changes
+Option #3 is what we refer to as "Retroactive Undo".
+It undoes all of the effects of the original edit,
+including its effects on interim edits.
+For example,
+if edit B is an interim edit that was concurrent to and sequenced after edit A,
+and edit B had failed to apply because of the changes introduced by edit A,
+then undoing edit A with retroactive undo *would* bring back the effects of edit B.
 
 For both Patch Undo and Retroactive Undo,
 it seems preferable if a change that is concurrent to
 (and sequenced after)
 both the original change and its inverse,
 would end up behaving as though neither the original nor the inverse were ever issued.
+Otherwise one would have to issue "undo updates" to apply the effect of undo to these changes.
 
 For both Patch Undo and Retroactive Undo,
-we could potentially consider whether the interim change could successfully be applied if rebased over the inverse change.
-If not, we could only prune the inverse to make it so.
-This would have the effect of only undoing changes that no other change since depends on.
+we could potentially consider whether the interim changes could successfully be applied if rebased over the inverse change.
+If not, we could prune the inverse change to make it so.
+This would have the effect of only undoing changes that no interim change depends on.
 For example, if the original change to be undone inserted a subtree,
 then the final inverse would only delete that subtree if no interim changes had performed operations within this subtree.
 
@@ -227,27 +231,57 @@ At a high level, our computation needs to perform the following three steps:
 3. Derive a Delta from the undo change.
 
 In that process,
-we have some latitude as to whether the inverse change should contain repair information,
+we have some latitude as to whether the inverse change in step #1 should contain repair information,
 (e.g., "set the value of node X to 42")
 or whether it should remain more abstract
 (e.g., "revert the value of node X to the revision before change foo").
-In the latter case,
-the translation into more concrete repair information would happen during the conversion to the Delta.
-
-We will return to this question in the section about sourcing the relevant data.
+We will return to this question in the
+[Late Repair Data Concretization](#late-repair-data-concretization) section.
+For now, we consider the approach of creating an inverse that is as concrete as possible.
 
 ### Deriving an Inverse Changeset
 
-TODO
+TODO: Expand on...
+* Set Value -> Set Value
+* Insert -> Delete
+* Delete -> Revive
+* Revive -> Delete
+* MoveOut + MoveIn -> Return + MoveOut
+* Return + MoveOut -> MoveOut + Return
+* MoveOut + Return -> Return + MoveOut
+* Forward -> Unforward
+* Scorch -> Heal
 
 ### Reconciling Inverse and Interim Changes
 
-Cut from semantics section
-(see [Undo Semantics](#Undo-Semantics))
+Once we produce an inverse for the original change,
+we need to reconcile it with any interim changes that may have been sequenced since.
+Note that each such interim change could be...
+* concurrent with the original change.
+* concurrent with the inverse change.
+
+For each set [Undo Semantics](#Undo-Semantics),
+the reconciliation proceeds by composing the following sequences of changes:
+
+* Rewind Undo:
+  * The inverse of each interim change in reverse order
+  * The inverse of the original change
+* Patch Undo:
+  * The inverse change rebased over the interim changes
+* Retroactive Undo:
+  * The inverse of each interim change in reverse order
+  * The inverse of the original change
+  * The interim changes rebased over the inverse of the original
+
+Composing the above sequences of changes yields a changeset that can be applied to the tip state.
 
 ### Deriving a Delta
 
-???
+TODO: expand on...
+* Revive -> Insert
+* Return -> MoveIn
+* Unforward -> Nil
+* Heal -> Nil
 
 ## Sourcing Relevant Data
 --
@@ -255,7 +289,7 @@ Concrete vs. abstract change: concretize in change->delta?
 Concrete late means:
 * We may avoid the need for repair data entirely
 * Separation of concern that feels right:
-  * some code is responsible for charactersing which changes ought to happen
+  * some code is responsible for characterizing which changes ought to happen
   * some code is responsible for making it happen
 
 We could have an intermediary format that allows rebasing and composition, while using a little repair data as possible.
@@ -354,6 +388,19 @@ This means that either...
     This may need to include repair data for concurrent edits applied after
     (e.g., an insert or move into the subtree being deleted by any edit being undone)
 
+## On Peer Computation
+
+If sending an inverse for an original change that has yet to be sequenced,
+there's a possibility there exists some other changes concurrent to this original change.
+Some of these concurrent changes may be sequenced after the original change
+(in which case they are interim changes),
+but it's also possible that some of them may be sequenced before the original change.
+This is important because those changes may influence the impact of the original change.
+If a client issues an inverse for a change that has not yet been sequenced,
+there is therefore a possibility that peers will receive an inverse that is unusable.
+
+### What all needs to go into summaries?
+
 ## Choosing a Design
 
 Generally speaking we strive for the following design goals:
@@ -383,7 +430,7 @@ Proposed design:
   * V3.1: consider not reusing old blobs if the amount of data reused from them is small enough
   * V4: as references to parts of the document in space-time (queried by peers from a history server)
   * V2+.1: consider inlining the repair data in the changeset when it is small enough
-* When receiving the inverse, peers apply it as if no concurrent interim changes occurred,
+* When receiving the inverse, peers apply it as is if no concurrent interim changes occurred,
   otherwise they either:
   * A: attempt to apply outdated inverse
   * B: reject the changeset, forcing the issuing client to try again
@@ -416,20 +463,33 @@ The variables are as follows:
 | Issuer needs to upload to service                  | V1: No <br/>V2-3: Yes <br/>V4: No | V1: No <br/>V2-3: Yes <br/>V4: No | V1: No <br/>V2-3: Yes <br/>V4: No |
 | Peer needs to query service                        | No                                | No                                | If ref(undo) > Pw                 |
 
+The design above has the following characteristics:
+* Applications can opt out of undo support on a per-document basis,
+paying no overhead for its support in other documents/applications.
+* In applications where one can only undo edits from one's own session,
+participants that do not contribute edits or are unable to issue undos,
+only need to maintain repair data for the peer window.
+
 The above does not account for partial checkouts.
 The expected effect of partial checkouts
 is that an issuer or a peer may be forced to fetch repair data from the service
 for edits that fell outside of their checked out subtree.
-This is no different from the existing limitations of partial checkouts.
+This is no different from the requirements of normal edit application in the context of partial checkouts.
 
 Note that any scheme that relies on blobs or other independently fetched data to represent repair data in over-the-wire changesets
 requires clients to fetch this data before they can apply such incoming changesets.
 This not something that the Fluid runtime currently supports but is a capability needed in the more general case of large inserts.
 
+## Possible Improvements
+
+### Blob Attachment
+
 There may be opportunities for peers to be spared the additional network fetch in cases where the service knows the peer window size.
 Indeed, the service could automatically attach or inline required blobs when broadcasting an inverse change
 when that change contains references to blobs that contain repair data for prior edits that fall outside of the peer window size.
 The same idea could also be applied to partial checkouts.
+
+### Late Repair Data Concretization
 
 ## Undo Recognition
 
