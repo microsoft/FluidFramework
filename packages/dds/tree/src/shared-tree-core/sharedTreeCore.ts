@@ -128,8 +128,8 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
             changeset: changes,
         };
 
-        const sequencedChange = this.editManager.getLastSequencedChange();
         const delta = this.editManager.addSequencedChange(commit);
+        const sequencedChange = this.editManager.getLastSequencedChange();
         for (const index of this.indexes) {
             index.sequencedChange?.(sequencedChange);
             index.newLocalState?.(delta);
