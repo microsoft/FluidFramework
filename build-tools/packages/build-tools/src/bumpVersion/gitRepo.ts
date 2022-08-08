@@ -191,8 +191,8 @@ export class GitRepo {
         return this.exec(`merge-base ${source} ${target}`, `merge base ${source} ${target}`);
     }
 
-    public async revList(commitId: string, head: string) {
-        return this.exec(`rev-list ${commitId}...${head}`, `list of new commits between ${commitId} and ${head}`);
+    public async revList(commitId: string, branchName: string) {
+        return this.exec(`rev-list ${commitId}...${branchName}`, `list of new commits between ${commitId} and ${branchName}`);
     }
 
     /**
