@@ -14,7 +14,6 @@ import {
     SummarizerStopReason,
 } from "./summarizerTypes";
 import { SummaryCollection } from "./summaryCollection";
-import { Summarizer } from "./summarizer";
 
 const defaultInitialDelayMs = 5000;
 const defaultOpsToBypassInitialDelay = 4000;
@@ -199,13 +198,8 @@ export class SummaryManager implements IDisposable {
             // a summarizer to kick off lastSummary. Without that, we would not be able to summarize and get
             // document out of broken state if it has too many ops and ordering service keeps nacking main
             // container (and thus it goes into cycle of reconnects)
-            // If we can't run the LastSummary, simply return as to avoid paying the cost of launching
-            // the summarizer at all.
-            const shouldSummarizeStateEarlyStage = this.getShouldSummarizeState();
-            if (startWithInitialDelay &&
-                shouldSummarizeStateEarlyStage.shouldSummarize === false &&
-                !Summarizer.stopReasonCanRunLastSummary(shouldSummarizeStateEarlyStage.stopReason)) {
-                    return `early exit ${shouldSummarizeStateEarlyStage.stopReason}`;
+            if (startWithInitialDelay && this.getShouldSummarizeState().shouldSummarize === false) {
+                return "early exit";
             }
 
             // We transition to Running before requesting the summarizer, because after requesting we can't predict
@@ -219,19 +213,11 @@ export class SummaryManager implements IDisposable {
             this.summarizer = summarizer;
 
             // Re-validate that it need to be running. Due to asynchrony, it may be not the case anymore
-            // If we can't run the LastSummary, simply return as to avoid paying the cost of launching
-            // the summarizer at all.
             const shouldSummarizeState = this.getShouldSummarizeState();
             if (shouldSummarizeState.shouldSummarize === false) {
-                if (!Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)) {
-                    this.state = SummaryManagerState.Starting;
-                    summarizer.stop(shouldSummarizeState.stopReason);
-                    return `early exit after starting summarizer ${shouldSummarizeState.stopReason}`;
-                }
-                this.logger.sendTelemetryEvent({
-                    eventName: "LastAttemptToSummarize",
-                    startWithInitialDelay,
-                });
+                this.state = SummaryManagerState.Starting;
+                summarizer.stop(shouldSummarizeState.stopReason);
+                return "early exit after starting summarizer";
             }
 
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
