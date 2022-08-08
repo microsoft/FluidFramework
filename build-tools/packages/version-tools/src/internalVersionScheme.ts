@@ -111,16 +111,10 @@ export function toInternalScheme(
  * Validates that the version follows the Fluid internal version scheme. Throws if not.
  */
 // eslint-disable-next-line @rushstack/no-new-null
-function validateVersionScheme(version: semver.SemVer | string | null) {
+function validateVersionScheme(version: semver.SemVer | string | null, allowPrereleases = false) {
     const parsedVersion = semver.parse(version);
     if (parsedVersion === null) {
         throw new Error(`Couldn't parse ${version} as a semver.`);
-    }
-
-    if (parsedVersion.prerelease.length !== 4) {
-        throw new Error(
-            `Prerelease value doesn't contain 4 components; found ${parsedVersion.prerelease.length}`,
-        );
     }
 
     if (parsedVersion.prerelease[0] !== "internal") {
@@ -132,6 +126,21 @@ function validateVersionScheme(version: semver.SemVer | string | null) {
     if (parsedVersion.major < 2) {
         throw new Error(`The public major version must by >= 2; found ${parsedVersion.major}`);
     }
+
+    if (parsedVersion.prerelease.length > 4) {
+        if (allowPrereleases) {
+            if (parsedVersion.prerelease.length > 5) {
+                throw new Error(
+                    `Prerelease value contains ${parsedVersion.prerelease.length} components; expected 5.`,
+                );
+            }
+            return true;
+        }
+        throw new Error(
+            `Prerelease value contains ${parsedVersion.prerelease.length} components; expected 4.`,
+        );
+    }
+
     return true;
 }
 
@@ -141,15 +150,23 @@ function validateVersionScheme(version: semver.SemVer | string | null) {
  * @param version - The version to check.
  * @returns True if the version matches the Fluid internal version scheme.
  */
-export function isInternalVersionScheme(version: semver.SemVer | string): boolean {
+export function isInternalVersionScheme(version: semver.SemVer | string, allowPrereleases = false): boolean {
     const parsedVersion = semver.parse(version);
     try {
-        validateVersionScheme(parsedVersion);
+        validateVersionScheme(parsedVersion, allowPrereleases);
     } catch (error) {
         return false;
     }
 
     return true;
+}
+
+export function isPrereleaseInternalVersionScheme(version: semver.SemVer | string): boolean {
+    const isInternal = isInternalVersionScheme(version);
+    const isInternalPrerelease = isInternalVersionScheme(version, true);
+    // console.log(`isInternal: ${isInternal}`);
+    // console.log(`isInternalPrerelease: ${isInternalPrerelease}`);
+    return isInternalPrerelease && !isInternal;
 }
 
 /**
