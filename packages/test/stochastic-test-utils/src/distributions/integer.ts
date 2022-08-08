@@ -14,6 +14,24 @@
  */
 export const integer = (uint53Source: () => number) =>
     (min: number, max: number) => {
+        if (max < min) {
+            /* eslint-disable no-param-reassign */
+            const t = min;
+            min = max;
+            max = t;
+            /* eslint-enable no-param-reassign */
+        }
+
+        const range = max - min + 1;
+
+        // Use affine combination if the range exceeds 53b (or is nonfinite).
+        if (!(range <= 0x1fffffffffffff)) {
+            // Similar to implementation of 'real' distribution, but with a smaller divisor
+            // to produce [0..1] (inclusive).
+            const alpha = uint53Source() / 0x1fffffffffffff;
+            return Math.trunc((1 - alpha) * min + alpha * max);
+        }
+
         // We use the division and rejection technique to avoid bias and deemphasize the
         // weaker low bits of the XSadd engine.  However, since XSadd discards low bits
         // when constructing a Uint53, deemphasizing the low bits may be redundant.
@@ -23,14 +41,13 @@ export const integer = (uint53Source: () => number) =>
         // Perf: While the above site ranks division and rejection among the slowest options,
         //       this approach compared favorably vs. a modified bitmask with rejection that
         //       discards low bits.  (node 14 x64)
-        const range = max - min + 1;
-        const divisor = Math.floor(2 ** 53 / range);
 
-        for (;;) {
-            const candidate = uint53Source() / divisor;
+        const divisor = Math.trunc(0x20000000000000 / range);
+        let result: number;
 
-            if (candidate < range) {
-                return Math.floor(candidate) + min;
-            }
-        }
+        do {
+            result = uint53Source() / divisor;
+        } while (result >= range);
+
+        return Math.trunc(result) + min;
     };

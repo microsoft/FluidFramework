@@ -7,6 +7,7 @@
 
 import { strict as assert } from "assert";
 import { makeRandom } from "..";
+import { integer } from "../distributions";
 import { makeUuid4 } from "../random";
 import { computeChiSquared, chiSquaredCriticalValues, Counter, parseUuid } from "./utils";
 
@@ -41,6 +42,42 @@ describe("Random", () => {
     });
 
     describe("distribution", () => {
+        const nextU53: number[] = [];
+
+        const mockU53 = () => {
+            const next = nextU53.pop();
+
+            assert.notEqual(next, undefined,
+                "Must push next value to 'nextU53' array before invoking mockU53.");
+
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return next!;
+        };
+
+        const generateInteger = (alpha: number, min: number, max: number) => {
+            assert(0 <= alpha && alpha <= 1,
+                `α must be in range [0..1], but got α=${alpha}.`);
+
+            const actualMin = Math.min(min, max);
+            const actualMax = Math.max(min, max);
+
+            const range = actualMax - actualMin + 1;
+            if (range > Number.MAX_SAFE_INTEGER) {
+                nextU53.push(Math.floor(alpha * Number.MAX_SAFE_INTEGER));
+            } else {
+                const divisor = Math.floor(2 ** 53 / range);
+                const limit = (range - 1) * divisor;
+
+                nextU53.push(alpha * limit);
+            }
+            const result = integer(mockU53)(min, max);
+
+            assert(!(result < actualMin || actualMax < result),
+                `Integer must be in range [${actualMin}..${actualMax}], but got ${result}.]`);
+
+            return result;
+        };
+
         function assert_chi2<T>(
             generator: () => T,
             weights: [T, number][],
@@ -142,15 +179,41 @@ describe("Random", () => {
         });
 
         describe("integer", () => {
-            for (const [min, max] of [
-                [0, 0],
-                [Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-                [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
-            ]) {
-                it(`in range [${min}..${max}] must be ${min}.`, () => {
-                    assert.equal(makeRandom().integer(min, max), min);
+            const testLimits = (min: number, max: number) => {
+                const trueMin = Math.min(min, max);
+                it(`[${min}..${max}] @ α=0 -> ${trueMin}`, () => {
+                    const actual = generateInteger(/* alpha: */ 0, min, max);
+                    assert.equal(actual, trueMin);
                 });
-            }
+
+                const trueMax = Math.max(min, max);
+                it(`[${min}..${max}] @ α=1 -> ${trueMax}`, () => {
+                    const actual = generateInteger(/* alpha: */ 1, min, max);
+                    assert.equal(actual, trueMax);
+                });
+            };
+
+            describe("must produce limits", () => {
+                for (const [min, max] of [
+                    [0, 0],
+                    [0, Number.MAX_SAFE_INTEGER - 1],
+                    [Number.MIN_SAFE_INTEGER - 1, 0],
+                    [0, Number.MAX_SAFE_INTEGER],
+                    [Number.MIN_SAFE_INTEGER, 0],
+                    [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
+                ]) {
+                    testLimits(min, max);
+                }
+
+                const random = makeRandom();
+
+                for (let i = 0; i < 10; i++) {
+                    const min = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+                    const max = random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER);
+
+                    testLimits(min, max);
+                }
+            });
 
             for (const [min, max] of [
                 [0, 1],
@@ -182,6 +245,30 @@ describe("Random", () => {
                         /* min: */ 0,
                         /* max: */ 15);
                 }
+            });
+
+            describe("degenerate cases", () => {
+                describe("should reverse malformed range", () => {
+                    for (const [min, max] of [
+                        [1, 0],
+                        [1, -1],
+                    ]) {
+                        testLimits(min, max);
+                    }
+                });
+
+                describe("should propagate NaN", () => {
+                    for (const [min, max] of [
+                        [0, NaN],
+                        [NaN, 0],
+                    ]) {
+                        it(`[${min}..${max}] @ α=0 -> NaN`, () => {
+                            const random = makeRandom();
+                            const actual = random.integer(min, max);
+                            assert.equal(actual, NaN);
+                        });
+                    }
+                });
             });
         });
 

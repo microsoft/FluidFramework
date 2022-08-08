@@ -37,6 +37,7 @@
         "losslessly",
         "mitigations",
         "multinomial",
+        "nonfinite",
         "pseudorandomly",
         "unaugmented"
     ],

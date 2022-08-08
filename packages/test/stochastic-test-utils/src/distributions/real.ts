@@ -13,6 +13,8 @@
  */
 export const real = (float64Source: () => number) =>
     (min = 0, max = 1) => {
-        const delta = max - min;
-        return float64Source() * delta + min;
+        const alpha = float64Source();
+
+        // Use affine combination rather than 'max - min' to avoid cancellation.
+        return (1 - alpha) * min + alpha * max;
     };
