@@ -195,7 +195,7 @@ type FieldMarks<TMark> = FieldMap_2<MarkList<TMark>>;
 export interface FieldSchema {
     // (undocumented)
     readonly kind: FieldKind;
-    readonly types?: ReadonlySet<TreeSchemaIdentifier>;
+    readonly types?: TreeTypeSet;
 }
 
 // @public (undocumented)
@@ -667,6 +667,9 @@ export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 
 // @public (undocumented)
 export type TreeType = TreeSchemaIdentifier;
+
+// @public
+export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 // @public
 export interface TreeValue extends Serializable {
