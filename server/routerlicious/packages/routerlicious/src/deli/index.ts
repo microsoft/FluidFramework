@@ -41,7 +41,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const factory = await services.getDbFactory(config);
 
     const checkpointHeuristics = config.get("deli:checkpointHeuristics") as
-                            IDeliCheckpointHeuristicsServerConfiguration;
+        IDeliCheckpointHeuristicsServerConfiguration;
     // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
     if (checkpointHeuristics && checkpointHeuristics.enable) {
         core.DefaultServiceConfiguration.deli.checkpointHeuristics = checkpointHeuristics;
@@ -50,7 +50,9 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     let globalDb;
     let globalDbManager;
     if (globalDbEnabled) {
-        globalDbManager = new MongoManager(factory, false, null, true);
+        // TODO, this is an experimental flag that try to see if we could have mongo connection error fixed.
+        const globalDbReconnect = config.get("mongo:globalDbReconnect") as boolean ?? false;
+        globalDbManager = new MongoManager(factory, globalDbReconnect, null, true);
         globalDb = await globalDbManager.getDatabase();
     }
 
