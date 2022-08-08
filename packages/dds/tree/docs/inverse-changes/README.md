@@ -371,30 +371,86 @@ This means clients need to have access to repair data for changes within the col
 ### Case #3: Changes Concurrent to and Sequenced After Both the Original and Undo
 
 Such changes need rebasing over
-the original change,
-any interim changes,
-and the undo change.
+the original change, any interim changes, and the undo change.
 This is something peers should be equipped to perform without need for additional data as part of the normal rebase process.
 
 It does mean however that we must design inverse changes and the output of rebase to ensure that
 a change being rebased over an inverse change
 after having been rebased over the original would undo the effects of rebasing over the original.
+For example, if the original change was a slice-delete and the rebased change was an insert that would commute with the slice,
+then the final rebased change should not be affected by the slice delete.
+This requires that inverse changes are able to counter the effects of
+the change they seek to counteract in changes that are sequenced after that inverse.
 See [Deriving an Inverse Changeset](#deriving-an-inverse-changeset) for more details.
 
-## Sourcing Relevant Data
---
-Concrete vs. abstract change: concretize in change->delta?
-Concrete late means:
-* We may avoid the need for repair data entirely
-* Separation of concern that feels right:
-  * some code is responsible for characterizing which changes ought to happen
-  * some code is responsible for making it happen
+### Implications for Data Needs
 
-We could have an intermediary format that allows rebasing and composition, while using a little repair data as possible.
-We add the remaining repair data at the end if need be.
-This means the format that the rebaser deals with is not the same as the format that the toDelta converter deals with.
---
-Some DDSes address the need for repair data by including it in all changesets:
+With the ramifications of concurrency now established,
+we can turn to the question of sourcing the relevant data needed by
+issuers of undo and peers that may receive such undos.
+
+#### Data Needs of Issuing Client
+
+The design options outlined above
+(as well as some still to come,
+see [Abstract vs. Concrete Over the Wire Representation](#abstract-vs-concrete-over-the-wire-representation))
+can shift the data needs from the issuer of an undo onto the peers.
+Doing so however does not reduce the data needs of the issuer client since that client
+will eventually need to perform as a peer whatever work it has not performed as the issuer.
+When considering the data needs of the issuer,
+therefore consider the maximal needs of issuing client whether or not these needs arise from the issuing phase
+or the receiving phase.
+
+The client issuing the undo needs to have access to the following:
+* The original change to be undone (in its most rebased form to date) and its associated repair data
+* All of the interim changes sequenced since the change to be undone and their associated repair data
+
+This data has to be accessible as far back as the undo window extends.
+
+#### Data Needs of Peer Clients
+
+In designs where the burden of work falls entirely to the peer clients,
+then their needs are that described in the pervious section.
+
+In designs where peers clients are rejecting undo changesets that are stale
+(see "Validation By Peer" under
+[Case #1](#case-1-changes-concurrent-to-and-sequenced-before-the-original)
+and
+[Case #2](#case-2-changes-sequenced-after-the-original-but-concurrent-to-and-sequenced-before-the-undo)
+above),
+the peer clients only need the relevant reference sequence number for the undo edits,
+which the Fluid sequencing service provides.
+
+In designs where peers perform additional computation to update (or re-derive) the undo,
+(see "Computation by Peer" under
+[Case #1](#case-1-changes-concurrent-to-and-sequenced-before-the-original)
+and
+[Case #2](#case-2-changes-sequenced-after-the-original-but-concurrent-to-and-sequenced-before-the-undo)
+above),
+peers need to have access to the following:
+* All changes in the collaboration window and their associated repair data
+
+#### No Data Need Case
+
+It's interesting to note that
+the relevant repair data is available to all clients
+when all the changes that last contributed state
+to the portions of the document being deleted or overwritten by a change that is being undone
+are still within the collaboration window.
+This is likely to be rare in practice because collaboration windows tend to be much shorter
+than the lifetime of document contents.
+
+## Sourcing Relevant Data
+
+We've established that clients need access to past edits and their associated repair data
+up to some arbitrary point in the past.
+Accessing past edits is not a problematic requirement because it is already necessary for the purpose of rebasing.
+Our main challenge is therefore to maintain access to repair data.
+
+### Repair Data in Edits
+
+Some DDSes address the need for repair data by including the matching repair data in each changeset that clients send.
+In practice, this means:
 
 * Each set-value operation carries with it the value being overwritten.
 * Each delete operation carries with it the contents of the subtrees being deleted.
@@ -409,43 +465,49 @@ The repair data included in the delete operation would not contain that subtree.
 In order for a client to produce a concrete inverse change,
 it would need to know the contents of the subtree that was moved.
 This could be resolved by including the contents of moved subtrees in all move operations,
-but doing so would make moves prohibitively expensive.
+but doing so would make moves more expensive.
+
 Even without move operations (which some applications may be happy not to use),
 this scheme still bloats normal (i.e., non-inverse) operations with repair data that may never be used.
 This bloat has a negative impact on the size of the document change history
 as well as the performance of the service as whole (increasing latency and server costs).
 
-The most trivial way to ensure we can recover this information
-is to keep past revisions of the document available so long as they lie within the undo window.
-Even with the use of persistent data structures, this could be a lot of data.
-Moreover, since we will only need to recover whatever information we cannot derive from the original change,
-it seems wasteful to include other data.
+### Repair Data Cache
+
+Clients could maintain a cache of repair data for the extent of the window they for which they may need it.
+This would include:
+
+* The value being overwritten by each set-value operation.
+* The subtree being deleted by each delete operation.
+* The subtree being moved by each delete operation.
+
+Depending on the architecture of client applications,
+it may be more efficient to retain old versions of the document in a persistent data structure
+and only compute the repair data on demand.
+
+### Checkout
+
+Ultimately, the repair data needed is that data that existed in the document at some revision.
+A client in need of such data could therefore rely on the checkout mechanism to procure
+a version of the document at the relevant point in history.
+This may involve checking out an old summary and downloading some number of ops after that.
+
+Note that this would make the fetching of such data asynchronous.
+
+### Document State Service
+
+We already have plans to support a document state history service in the same way as the checkout approach.
+The advantage of this approach over the checkout is that the document state service would be able to
+compute the exact state for the document region of interest and send that over the wire,
+thereby reducing the message size.
+
+### Blended Solution
 
 Client applications could choose window of arbitrary size
 (less than or equal to the undo window)
-for which to keep repair data on clients locally.
-In cases where the edit to be undone falls outside of that window,
-the client would resort to requesting relevant data from the service.
-Note that this would however make the obtention of this data asynchronous.
-
-Note that repair data is available to all clients when all the changes that last contributed state
-to the portions of the document being deleted or overwritten by a change that is being undone
-are still within the collaboration window.
-This is likely to be rare in practice because collaboration windows tend to be much shorter
-than the lifetime of document contents.
-
-
-### Rebasing Over Original and Inverse Changes
-
-If the original change being undone is still within the collaboration window,
-then it's possible that some later changes may be concurrent to both the original change and the inverse.
-This is important because the original change may have an impact on these later concurrent changes,
-and a change that is being rebased over both the original change and the inverse change
-should in the end not be affected by the pair of them.
-For example, if the original change was a slice-delete and the rebased change was an insert that would commute with the slice,
-then the final rebased change should not be affected by the slice delete.
-This requires that inverse changes are able to counter the effects of
-the change they seek to counteract in changes that are sequenced after that inverse.
+for which to keep repair data locally.
+In cases where repair data is needed outside of that window,
+the client would resort to requesting relevant data the relevant service (see above).
 
 ## Abstract vs. Concrete Over the Wire Representation
 
@@ -468,6 +530,18 @@ During the rebasing of the inverse change,
 some of the repair data may stop being relevant.
 Doing the rebasing before we pay the cost of fetching repair data may be more efficient.
 
+--
+Concrete vs. abstract change: concretize in change->delta?
+Concrete late means:
+* We may avoid the need for repair data entirely
+* Separation of concern that feels right:
+  * some code is responsible for characterizing which changes ought to happen
+  * some code is responsible for making it happen
+
+We could have an intermediary format that allows rebasing and composition, while using a little repair data as possible.
+We add the remaining repair data at the end if need be.
+This means the format that the rebaser deals with is not the same as the format that the toDelta converter deals with.
+--
 ### Rebasing Over Concurrent Interim Changes
 
 As stated earlier
