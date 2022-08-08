@@ -3,6 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { ChangeEncoder, JsonCompatible } from "../../change-family";
 import { Transposed as T } from "../../changeset";
 
 export type SequenceChangeset = T.LocalChangeset;
+
+export class SequenceChangeEncoder extends ChangeEncoder<SequenceChangeset> {
+    public encodeForJson(formatVersion: number, change: SequenceChangeset): JsonCompatible {
+        return change as unknown as JsonCompatible;
+    }
+
+    public decodeJson(formatVersion: number, change: JsonCompatible): SequenceChangeset {
+        return change as unknown as SequenceChangeset;
+    }
+}
