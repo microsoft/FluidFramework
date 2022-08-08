@@ -150,7 +150,10 @@ function validateVersionScheme(version: semver.SemVer | string | null, allowPrer
  * @param version - The version to check.
  * @returns True if the version matches the Fluid internal version scheme.
  */
-export function isInternalVersionScheme(version: semver.SemVer | string, allowPrereleases = false): boolean {
+export function isInternalVersionScheme(
+    version: semver.SemVer | string,
+    allowPrereleases = false,
+): boolean {
     const parsedVersion = semver.parse(version);
     try {
         validateVersionScheme(parsedVersion, allowPrereleases);

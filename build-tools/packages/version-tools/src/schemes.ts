@@ -11,7 +11,11 @@ import {
     VersionChangeType,
     VersionChangeTypeExtended,
 } from "./bumpTypes";
-import { isInternalVersionRange, isInternalVersionScheme, isPrereleaseInternalVersionScheme } from "./internalVersionScheme";
+import {
+    isInternalVersionRange,
+    isInternalVersionScheme,
+    isPrereleaseInternalVersionScheme,
+} from "./internalVersionScheme";
 
 /**
  * A type defining the version schemes that can be used for packages.
@@ -30,7 +34,12 @@ export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "virt
  * A typeguard to check if a string is a {@link VersionScheme}.
  */
 export function isVersionScheme(scheme: string): scheme is VersionScheme {
-    return scheme === "semver" || scheme === "internal" || scheme === "internalPrerelease" || scheme === "virtualPatch";
+    return (
+        scheme === "semver" ||
+        scheme === "internal" ||
+        scheme === "internalPrerelease" ||
+        scheme === "virtualPatch"
+    );
 }
 
 /**
@@ -209,75 +218,21 @@ export function adjustVersion(
 }
 
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false) {
-    let latest = "";
+    let list: string[] = [];
 
-    // const usedSchemes = new Set<string>(versionList.map((v) => detectVersionScheme(v)));
-    // const maxMajor = Math.max(...versionList.map((v) => semver.major(v)));
-
-    // let scheme: VersionScheme;
-
-    // if (usedSchemes.has("internal")) {
-    //     scheme = "internal";
-    // } else if (usedSchemes.has("virtualPatch") && maxMajor === 0) {
-    //     scheme = "virtualPatch";
-    // } else {
-    //     scheme = "semver";
-    // }
-
-    // Assume list is from npm show versions, which will be in reverse order
-    let list = versionList.filter((v) => {
-        const hasPrereleaseSection = semver.prerelease(v)?.length ?? 0 !== 0;
-        const isPrerelease = isPrereleaseInternalVersionScheme(v) || (hasPrereleaseSection && detectVersionScheme(v) !== "internal");
-        return !isPrerelease;
-    });
-    // .reverse();
-
-    console.log(list);
+    // Remove pre-releases from the list
+    if (!allowPrereleases) {
+        list = versionList.filter((v) => {
+            const hasPrereleaseSection = semver.prerelease(v)?.length ?? 0 !== 0;
+            const isPrerelease =
+                isPrereleaseInternalVersionScheme(v) ||
+                (hasPrereleaseSection && detectVersionScheme(v) !== "internal");
+            return !isPrerelease;
+        });
+    }
 
     list = semver.sort(list).reverse();
-    latest = list[0];
-
-    // for (const vString of list) {
-    //     const version = semver.parse(vString);
-    //     if (version === null) {
-    //         continue;
-    //     }
-
-    //     if (detectVersionScheme(version.version) === scheme) {
-    //         latest = version.version;
-    //         break;
-    //     }
-    // }
+    const latest = list[0];
 
     return latest;
-}
-
-// export function getLatestRelease(packageName: string) {
-//     return getLatestReleaseFromList()
-// }
-
-const schemeMap = new Map<string, VersionScheme>([
-    ["@fluidframework/protocol-definitions", "virtualPatch"],
-    ["@fluidframework/common-definitions", "semver"],
-    ["@fluidframework/common-utils", "virtualPatch"],
-    ["@fluidframework/protocol-definitions", "virtualPatch"],
-    ["@fluidframework/server-local-server", "virtualPatch"],
-    ["tinylicious", "semver"],
-]);
-
-export function getSchemeForPackage(packageName: string): VersionScheme {
-    const mappedScheme = schemeMap.get(packageName);
-    if (mappedScheme !== undefined) {
-        return mappedScheme;
-    }
-
-    if (packageName.startsWith("@fluidframework/server-")) {
-        return "virtualPatch";
-    }
-
-    if (packageName.startsWith("@fluid")) {
-        return "internal";
-    }
-
-    return "semver";
 }
