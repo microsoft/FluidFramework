@@ -35,6 +35,7 @@ import {
     TypedEventEmitter,
     unreachableCase,
     performance,
+    IsoBuffer,
 } from "@fluidframework/common-utils";
 import {
     ChildLogger,
@@ -54,9 +55,9 @@ import { readAndParse, isUnpackedRuntimeMessage } from "@fluidframework/driver-u
 import {
     DataCorruptionError,
     DataProcessingError,
+    extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
-    extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 import {
     IClientDetails,
@@ -108,15 +109,15 @@ import {
 } from "@fluidframework/runtime-utils";
 import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
+import { compress, decompress } from "lz4js";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
 import { Summarizer } from "./summarizer";
 import { SummaryManager } from "./summaryManager";
-import { DeltaScheduler } from "./deltaScheduler";
 import {
     ReportOpPerfTelemetry,
-    latencyThreshold,
     IPerfSignalReport,
+    latencyThreshold,
 } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
@@ -164,6 +165,7 @@ import {
 } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
+import { DeltaScheduler } from "./deltaScheduler";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -411,6 +413,18 @@ export interface ISummaryRuntimeOptions {
 }
 
 /**
+ * Options for op compression.
+ * @experimental - Not ready for use
+ */
+export interface ICompressionRuntimeOptions {
+    /**
+     * The minimum size the content payload must exceed before it is compressed.
+     * Compression is disabled if undefined.
+     */
+    readonly minimumSize?: number;
+}
+
+/**
  * Options for container runtime.
  */
 export interface IContainerRuntimeOptions {
@@ -436,6 +450,11 @@ export interface IContainerRuntimeOptions {
      * Save enough runtime state to be able to serialize upon request and load to the same state in a new container.
      */
     readonly enableOfflineLoad?: boolean;
+    /**
+     * Enables the runtime to compress ops.
+     * @experimental Not ready for use.
+     */
+    readonly compressionOptions?: ICompressionRuntimeOptions;
 }
 
 type IRuntimeMessageMetadata = undefined | {
@@ -528,13 +547,19 @@ export enum RuntimeMessage {
 }
 
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-    if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
-        return true;
-    }
-    return false;
+    return (Object.values(RuntimeMessage) as string[]).includes(message.type);
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
+    if (message.metadata?.compressed) {
+        const contents = IsoBuffer.from(message.contents.contents, "base64");
+        const decompressedMessage = decompress(contents);
+        const intoString = new TextDecoder().decode(decompressedMessage);
+        const asObj = JSON.parse(intoString);
+        message.contents.contents = asObj;
+        message.metadata.compressed = false;
+    }
+
     if (message.type === MessageType.Operation) {
         // legacy op format?
         if (message.contents.address !== undefined && message.contents.type === undefined) {
@@ -686,6 +711,7 @@ class ScheduleManagerCore {
                 length: endBatch - startBatch,
             });
         }
+
         this.deltaManager.inbound.resume();
     }
 
@@ -898,6 +924,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             loadSequenceNumberVerification = "close",
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
+            compressionOptions = {},
         } = runtimeOptions;
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -973,6 +1000,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 loadSequenceNumberVerification,
                 flushMode,
                 enableOfflineLoad,
+                compressionOptions,
             },
             containerScope,
             logger,
@@ -1075,6 +1103,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private baseSnapshotBlobs?: ISerializedBaseSnapshotBlobs;
 
     private consecutiveReconnects = 0;
+    private compressedOpCount = 0;
 
     /**
      * Used to delay transition to "connected" state while we upload
@@ -2847,7 +2876,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (this._maxOpSizeInBytes >= 0) {
             // Chunking disabled
             if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
-                return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
+                return this.submitRuntimeMessage(type,
+                                                 content,
+                                                 batch,
+                                                 serializedContent?.length ?? 0,
+                                                 serializedContent,
+                                                 opMetadataInternal);
             }
 
             // When chunking is disabled, we ignore the server max message size
@@ -2866,7 +2900,12 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // Chunking enabled, fallback on the server's max message size
         // and split the content accordingly
         if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
-            return this.submitRuntimeMessage(type, content, batch, opMetadataInternal);
+            return this.submitRuntimeMessage(type,
+                                             content,
+                                             batch,
+                                             serializedContent?.length ?? 0,
+                                             serializedContent,
+                                             opMetadataInternal);
         }
 
         return this.submitChunkedMessage(type, serializedContent, serverMaxOpSize);
@@ -2885,10 +2924,19 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 totalChunks: chunkN,
             };
             offset += maxOpSize;
+
+            let serializedChunkedOp: string | undefined;
+            if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
+                maxOpSize > this.runtimeOptions.compressionOptions.minimumSize) {
+                serializedChunkedOp = JSON.stringify(chunkedOp);
+            }
+
             clientSequenceNumber = this.submitRuntimeMessage(
                 ContainerMessageType.ChunkedOp,
                 chunkedOp,
-                false);
+                false,
+                serializedChunkedOp !== undefined ? serializedChunkedOp.length : chunkedOp.contents.length,
+                serializedChunkedOp);
         }
         return clientSequenceNumber;
     }
@@ -2917,10 +2965,48 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
+        contentLength: number,
+        serializedContent?: string,
         appData?: any,
     ) {
         this.verifyNotClosed();
         assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
+
+        if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
+            serializedContent &&
+            contentLength > this.runtimeOptions.compressionOptions.minimumSize
+        ) {
+            this.compressedOpCount++;
+
+            const compressionStart = Date.now();
+            const contentsAsBuffer = new TextEncoder().encode(serializedContent);
+            const compressedContents = compress(contentsAsBuffer);
+            const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+            const duration = Date.now() - compressionStart;
+
+            if (this.compressedOpCount % 100) {
+                this.mc.logger.sendPerformanceEvent({
+                    eventName: "compressedOp",
+                    duration,
+                    sizeBeforeCompression: contentLength,
+                    sizeAfterCompression: compressedContent.length,
+                });
+            }
+
+            // Only compress the payload if it's actually smaller after compression
+            const shouldCompress = contentLength > compressedContent.length;
+            const compressedPayload: ContainerRuntimeMessage = {
+                type,
+                contents: shouldCompress ? compressedContent : contents,
+            };
+
+            return this.context.submitFn(
+                MessageType.Operation,
+                compressedPayload,
+                batch,
+                { ...appData, compressed: shouldCompress });
+        }
+
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,
