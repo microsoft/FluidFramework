@@ -1,0 +1,1121 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.28.1",
+    "schemaVersion": 1008,
+    "oldestForwardsCompatibleVersion": 1001,
+    "tsdocConfig": {
+      "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+      "noStandardTags": true,
+      "tagDefinitions": [
+        {
+          "tagName": "@alpha",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@beta",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@defaultValue",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@decorator",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@deprecated",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@eventProperty",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@example",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@experimental",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@inheritDoc",
+          "syntaxKind": "inline"
+        },
+        {
+          "tagName": "@internal",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@label",
+          "syntaxKind": "inline"
+        },
+        {
+          "tagName": "@link",
+          "syntaxKind": "inline",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@override",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@packageDocumentation",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@param",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@privateRemarks",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@public",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@readonly",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@remarks",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@returns",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@sealed",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@see",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@throws",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@typeParam",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@virtual",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@betaDocumentation",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@internalRemarks",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@preapproved",
+          "syntaxKind": "modifier"
+        }
+      ],
+      "supportForTags": {
+        "@alpha": true,
+        "@beta": true,
+        "@defaultValue": true,
+        "@decorator": true,
+        "@deprecated": true,
+        "@eventProperty": true,
+        "@example": true,
+        "@experimental": true,
+        "@inheritDoc": true,
+        "@internal": true,
+        "@label": true,
+        "@link": true,
+        "@override": true,
+        "@packageDocumentation": true,
+        "@param": true,
+        "@privateRemarks": true,
+        "@public": true,
+        "@readonly": true,
+        "@remarks": true,
+        "@returns": true,
+        "@sealed": true,
+        "@see": true,
+        "@throws": true,
+        "@typeParam": true,
+        "@virtual": true,
+        "@betaDocumentation": true,
+        "@internalRemarks": true,
+        "@preapproved": true
+      },
+      "reportUnsupportedHtmlElements": false
+    }
+  },
+  "kind": "Package",
+  "canonicalReference": "simple-suite-test!",
+  "docComment": "/**\n * Test package\n *\n * @packageDocumentation\n */\n",
+  "name": "simple-suite-test",
+  "preserveMemberOrder": false,
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "simple-suite-test!",
+      "name": "",
+      "preserveMemberOrder": false,
+      "members": [
+        {
+          "kind": "Class",
+          "canonicalReference": "simple-suite-test!TestClass:class",
+          "docComment": "/**\n * Test class\n *\n * @typeParam TTypeParameter - A type parameter\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class TestClass<TTypeParameter> "
+            }
+          ],
+          "releaseTag": "Public",
+          "typeParameters": [
+            {
+              "typeParameterName": "TTypeParameter",
+              "constraintTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            }
+          ],
+          "name": "TestClass",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "simple-suite-test!TestClass:constructor(1)",
+              "docComment": "/**\n * Test class constructor\n *\n * @param testClassProperty - See {@link TestClass.testClassProperty}\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(testClassProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", testClassEventProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "testClassProperty",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "testClassEventProperty",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": false
+                }
+              ]
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "simple-suite-test!TestClass#testClassEventProperty:member",
+              "docComment": "/**\n * Test class event property\n *\n * @eventProperty\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly testClassEventProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "testClassEventProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false,
+              "isProtected": false
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "simple-suite-test!TestClass#testClassGetterProperty:member",
+              "docComment": "/**\n * Test class getter-only property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "get testClassGetterProperty(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "testClassGetterProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false,
+              "isProtected": false
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "simple-suite-test!TestClass#testClassMethod:member(1)",
+              "docComment": "/**\n * Test class method\n *\n * @throws\n *\n * - An Error\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "testClassMethod(input: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "TTypeParameter"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "TTypeParameter"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "input",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ],
+              "isOptional": false,
+              "name": "testClassMethod"
+            },
+            {
+              "kind": "Property",
+              "canonicalReference": "simple-suite-test!TestClass#testClassProperty:member",
+              "docComment": "/**\n * Test class property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly testClassProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "testClassProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isStatic": false,
+              "isProtected": false
+            }
+          ],
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Variable",
+          "canonicalReference": "simple-suite-test!TestConst:var",
+          "docComment": "/**\n * Test Constant\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "TestConst = "
+            },
+            {
+              "kind": "Content",
+              "text": "42"
+            }
+          ],
+          "initializerTokenRange": {
+            "startIndex": 1,
+            "endIndex": 2
+          },
+          "isReadonly": true,
+          "releaseTag": "Public",
+          "name": "TestConst",
+          "variableTypeTokenRange": {
+            "startIndex": 0,
+            "endIndex": 0
+          }
+        },
+        {
+          "kind": "Enum",
+          "canonicalReference": "simple-suite-test!TestEnum:enum",
+          "docComment": "/**\n * Test Enum\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare enum TestEnum "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TestEnum",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "simple-suite-test!TestEnum.TestEnumValue1:member",
+              "docComment": "/**\n * Test enum value 1 (string)\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "TestEnumValue1 = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"test-enum-value-1\""
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "name": "TestEnumValue1"
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "simple-suite-test!TestEnum.TestEnumValue2:member",
+              "docComment": "/**\n * Test enum value 2 (number)\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "TestEnumValue2 = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "3"
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "name": "TestEnumValue2"
+            },
+            {
+              "kind": "EnumMember",
+              "canonicalReference": "simple-suite-test!TestEnum.TestEnumValue3:member",
+              "docComment": "/**\n * Test enum value 3 (default)\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "TestEnumValue3 = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "4"
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "name": "TestEnumValue3"
+            }
+          ]
+        },
+        {
+          "kind": "Function",
+          "canonicalReference": "simple-suite-test!testFunction:function(1)",
+          "docComment": "/**\n * Test function\n *\n * @param testParameter - A test parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns The provided parameter\n *\n * @throws\n *\n * - An Error\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare function testFunction<TTypeParameter>(testParameter: "
+            },
+            {
+              "kind": "Content",
+              "text": "TTypeParameter"
+            },
+            {
+              "kind": "Content",
+              "text": "): "
+            },
+            {
+              "kind": "Content",
+              "text": "TTypeParameter"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "returnTypeTokenRange": {
+            "startIndex": 3,
+            "endIndex": 4
+          },
+          "releaseTag": "Public",
+          "overloadIndex": 1,
+          "parameters": [
+            {
+              "parameterName": "testParameter",
+              "parameterTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isOptional": false
+            }
+          ],
+          "typeParameters": [
+            {
+              "typeParameterName": "TTypeParameter",
+              "constraintTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            }
+          ],
+          "name": "testFunction"
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "simple-suite-test!TestInterface:interface",
+          "docComment": "/**\n * Test interface\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface TestInterface "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TestInterface",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "CallSignature",
+              "canonicalReference": "simple-suite-test!TestInterface:call(1)",
+              "docComment": "/**\n * Test interface event call signature\n *\n * @eventProperty\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "(event: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "'testCallSignature'"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", listener: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(input: unknown) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "any"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "event",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "listener",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": false
+                }
+              ]
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "simple-suite-test!TestInterface#testClassEventProperty:member",
+              "docComment": "/**\n * Test interface event property\n *\n * @eventProperty\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly testClassEventProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "testClassEventProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "simple-suite-test!TestInterface#testInterfaceMethod:member(1)",
+              "docComment": "/**\n * Test interface method\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "testInterfaceMethod(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [],
+              "name": "testInterfaceMethod"
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "simple-suite-test!TestInterface#testInterfaceProperty:member",
+              "docComment": "/**\n * Test interface property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "testInterfaceProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "testInterfaceProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "Namespace",
+          "canonicalReference": "simple-suite-test!TestNamespace:namespace",
+          "docComment": "/**\n * Test Namespace\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare namespace TestNamespace "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TestNamespace",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "Class",
+              "canonicalReference": "simple-suite-test!TestNamespace.TestClass:class",
+              "docComment": "/**\n * Test class\n *\n * @public\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "class TestClass "
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "TestClass",
+              "preserveMemberOrder": false,
+              "members": [
+                {
+                  "kind": "Constructor",
+                  "canonicalReference": "simple-suite-test!TestNamespace.TestClass:constructor(1)",
+                  "docComment": "/**\n * Test class constructor\n *\n * @param testClassProperty - See {@link TestClass.testClassProperty}\n */\n",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "constructor(testClassProperty: "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "string"
+                    },
+                    {
+                      "kind": "Content",
+                      "text": ");"
+                    }
+                  ],
+                  "releaseTag": "Public",
+                  "isProtected": false,
+                  "overloadIndex": 1,
+                  "parameters": [
+                    {
+                      "parameterName": "testClassProperty",
+                      "parameterTypeTokenRange": {
+                        "startIndex": 1,
+                        "endIndex": 2
+                      },
+                      "isOptional": false
+                    }
+                  ]
+                },
+                {
+                  "kind": "Method",
+                  "canonicalReference": "simple-suite-test!TestNamespace.TestClass#testClassMethod:member(1)",
+                  "docComment": "/**\n * Test class method\n *\n * @param testParameter - A string\n *\n * @returns A Promise\n *\n * @throws\n *\n * - An Error\n */\n",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "testClassMethod(testParameter: "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "string"
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "): "
+                    },
+                    {
+                      "kind": "Reference",
+                      "text": "Promise",
+                      "canonicalReference": "!Promise:interface"
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "<string>"
+                    },
+                    {
+                      "kind": "Content",
+                      "text": ";"
+                    }
+                  ],
+                  "isStatic": false,
+                  "returnTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 5
+                  },
+                  "releaseTag": "Public",
+                  "isProtected": false,
+                  "overloadIndex": 1,
+                  "parameters": [
+                    {
+                      "parameterName": "testParameter",
+                      "parameterTypeTokenRange": {
+                        "startIndex": 1,
+                        "endIndex": 2
+                      },
+                      "isOptional": false
+                    }
+                  ],
+                  "isOptional": false,
+                  "name": "testClassMethod"
+                },
+                {
+                  "kind": "Property",
+                  "canonicalReference": "simple-suite-test!TestNamespace.TestClass#testClassProperty:member",
+                  "docComment": "/**\n * Test interface property\n */\n",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "readonly testClassProperty: "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "string"
+                    },
+                    {
+                      "kind": "Content",
+                      "text": ";"
+                    }
+                  ],
+                  "isReadonly": true,
+                  "isOptional": false,
+                  "releaseTag": "Public",
+                  "name": "testClassProperty",
+                  "propertyTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isStatic": false,
+                  "isProtected": false
+                }
+              ],
+              "implementsTokenRanges": []
+            },
+            {
+              "kind": "Variable",
+              "canonicalReference": "simple-suite-test!TestNamespace.TestConst:var",
+              "docComment": "/**\n * Test Constant\n *\n * @public\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "TestConst = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "\"Hello world!\""
+                }
+              ],
+              "initializerTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "isReadonly": true,
+              "releaseTag": "Public",
+              "name": "TestConst",
+              "variableTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            },
+            {
+              "kind": "Enum",
+              "canonicalReference": "simple-suite-test!TestNamespace.TestEnum:enum",
+              "docComment": "/**\n * Test Enum\n *\n * @public\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "enum TestEnum "
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "TestEnum",
+              "preserveMemberOrder": false,
+              "members": [
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "simple-suite-test!TestNamespace.TestEnum.TestEnumValue1:member",
+                  "docComment": "/**\n * Test enum value 1\n */\n",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "TestEnumValue1 = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "0"
+                    }
+                  ],
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "releaseTag": "Public",
+                  "name": "TestEnumValue1"
+                },
+                {
+                  "kind": "EnumMember",
+                  "canonicalReference": "simple-suite-test!TestNamespace.TestEnum.TestEnumValue2:member",
+                  "docComment": "/**\n * Test enum value 2\n */\n",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "TestEnumValue2 = "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "1"
+                    }
+                  ],
+                  "initializerTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "releaseTag": "Public",
+                  "name": "TestEnumValue2"
+                }
+              ]
+            },
+            {
+              "kind": "Function",
+              "canonicalReference": "simple-suite-test!TestNamespace.testFunction:function(1)",
+              "docComment": "/**\n * Test function\n *\n * @param Foo - A number\n *\n * @returns A number\n *\n * @throws\n *\n * - An Error\n *\n * @public\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "function testFunction(testParameter: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "testParameter",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ],
+              "name": "testFunction"
+            },
+            {
+              "kind": "Interface",
+              "canonicalReference": "simple-suite-test!TestNamespace.TestInterface:interface",
+              "docComment": "/**\n * Test interface\n *\n * @public\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "interface TestInterface "
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "TestInterface",
+              "preserveMemberOrder": false,
+              "members": [
+                {
+                  "kind": "MethodSignature",
+                  "canonicalReference": "simple-suite-test!TestNamespace.TestInterface#testInterfaceMethod:member(1)",
+                  "docComment": "/**\n * Test interface method\n */\n",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "testInterfaceMethod(): "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "void"
+                    },
+                    {
+                      "kind": "Content",
+                      "text": ";"
+                    }
+                  ],
+                  "isOptional": false,
+                  "returnTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "releaseTag": "Public",
+                  "overloadIndex": 1,
+                  "parameters": [],
+                  "name": "testInterfaceMethod"
+                },
+                {
+                  "kind": "PropertySignature",
+                  "canonicalReference": "simple-suite-test!TestNamespace.TestInterface#testInterfaceProperty:member",
+                  "docComment": "/**\n * Test interface property\n */\n",
+                  "excerptTokens": [
+                    {
+                      "kind": "Content",
+                      "text": "testInterfaceProperty: "
+                    },
+                    {
+                      "kind": "Content",
+                      "text": "boolean"
+                    },
+                    {
+                      "kind": "Content",
+                      "text": ";"
+                    }
+                  ],
+                  "isReadonly": false,
+                  "isOptional": false,
+                  "releaseTag": "Public",
+                  "name": "testInterfaceProperty",
+                  "propertyTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  }
+                }
+              ],
+              "extendsTokenRanges": []
+            },
+            {
+              "kind": "Namespace",
+              "canonicalReference": "simple-suite-test!TestNamespace.TestSubNamespace:namespace",
+              "docComment": "/**\n * Test sub-namespace\n *\n * @public\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "namespace TestSubNamespace "
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "TestSubNamespace",
+              "preserveMemberOrder": false,
+              "members": []
+            },
+            {
+              "kind": "TypeAlias",
+              "canonicalReference": "simple-suite-test!TestNamespace.TypeAlias:type",
+              "docComment": "/**\n * Test Type-Alias\n *\n * @public\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "type TypeAlias = "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "releaseTag": "Public",
+              "name": "TypeAlias",
+              "typeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ]
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "simple-suite-test!TypeAlias:type",
+          "docComment": "/**\n * Test Type-Alias\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare type TypeAlias = "
+            },
+            {
+              "kind": "Content",
+              "text": "string"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TypeAlias",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 2
+          }
+        }
+      ]
+    }
+  ]
+}

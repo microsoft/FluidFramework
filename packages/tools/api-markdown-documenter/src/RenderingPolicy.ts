@@ -12,13 +12,14 @@ import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfigurati
 
 export type RenderingPolicy<TApiItem extends ApiItem> = (
     apiItem: TApiItem,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
 ) => DocSection;
 
 export interface RenderingPolicies {
-    renderConstructor: RenderingPolicy<ApiConstructSignature | ApiConstructor>;
-    renderFunction: RenderingPolicy<ApiFunction>;
-    renderMethod: RenderingPolicy<ApiMethod | ApiMethodSignature>;
+    renderConstructor?: RenderingPolicy<ApiConstructSignature | ApiConstructor>;
+    renderFunction?: RenderingPolicy<ApiFunction>;
+    renderMethod?: RenderingPolicy<ApiMethod | ApiMethodSignature>;
 }
 
 export namespace DefaultRenderingPolicies {
@@ -39,14 +40,6 @@ export namespace DefaultRenderingPolicies {
         return new DocSection({ configuration: tsdocConfiguration }, docNodes);
     }
 
-    export function defaultRenderMethod(
-        apiItem: ApiMethod | ApiMethodSignature,
-        documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-        tsdocConfiguration: TSDocConfiguration,
-    ): DocSection {
-        return defaultRenderFunctionLike(apiItem, documenterConfiguration, tsdocConfiguration);
-    }
-
     export function defaultRenderConstructor(
         apiItem: ApiConstructor | ApiConstructSignature,
         documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
@@ -62,4 +55,18 @@ export namespace DefaultRenderingPolicies {
     ): DocSection {
         return defaultRenderFunctionLike(apiItem, documenterConfiguration, tsdocConfiguration);
     }
+
+    export function defaultRenderMethod(
+        apiItem: ApiMethod | ApiMethodSignature,
+        documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+        tsdocConfiguration: TSDocConfiguration,
+    ): DocSection {
+        return defaultRenderFunctionLike(apiItem, documenterConfiguration, tsdocConfiguration);
+    }
 }
+
+export const defaultRenderingPolicies: Required<RenderingPolicies> = {
+    renderConstructor: DefaultRenderingPolicies.defaultRenderConstructor,
+    renderFunction: DefaultRenderingPolicies.defaultRenderFunction,
+    renderMethod: DefaultRenderingPolicies.defaultRenderMethod,
+};

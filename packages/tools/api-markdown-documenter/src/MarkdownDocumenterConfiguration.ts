@@ -1,7 +1,7 @@
 import { NewlineKind } from "@rushstack/node-core-library";
 
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
-import { RenderingPolicies } from "./RenderingPolicy";
+import { RenderingPolicies, defaultRenderingPolicies } from "./RenderingPolicy";
 
 // TODOs:
 // - Define "document" in terms of stream output, since we aren't necessarily writing files.
@@ -27,6 +27,7 @@ export function markdownDocumenterConfigurationWithDefaults(
 ): Required<MarkdownDocumenterConfiguration> {
     return {
         ...defaultPolicyOptions,
+        ...defaultRenderingPolicies,
         ...partialConfig,
     };
 }

@@ -1,4 +1,5 @@
 import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
+import { CustomDocNodes } from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";
 import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
 import { StringBuilder, TSDocConfiguration } from "@microsoft/tsdoc";
 
@@ -30,13 +31,11 @@ import { getQualifiedApiItemName } from "./Utilities";
  * TODO
  * @param apiModel - TODO
  * @param partialDocumenterConfig - TODO
- * @param tsdocConfiguration - TODO
  * @param markdownEmitter - TODO
  */
 export function render(
     apiModel: ApiModel,
     partialDocumenterConfig: MarkdownDocumenterConfiguration,
-    tsdocConfiguration: TSDocConfiguration,
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument[] {
     const documenterConfig = markdownDocumenterConfigurationWithDefaults(partialDocumenterConfig);
@@ -46,7 +45,7 @@ export function render(
         const renderedContents = renderPageRootItem(
             documentItem,
             documenterConfig,
-            tsdocConfiguration,
+            CustomDocNodes.configuration,
         );
         const emittedContents = markdownEmitter.emit(new StringBuilder(), renderedContents, {});
         return {
@@ -65,12 +64,7 @@ export async function renderFiles(
 ): Promise<void> {
     // TODO: clear out existing contents at location
 
-    const documents = render(
-        apiModel,
-        partialDocumenterConfig,
-        tsdocConfiguration,
-        markdownEmitter,
-    );
+    const documents = render(apiModel, partialDocumenterConfig, markdownEmitter);
 
     Promise.all(
         documents.map(async (document) => {
