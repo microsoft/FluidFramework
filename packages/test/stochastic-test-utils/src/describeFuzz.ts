@@ -27,11 +27,11 @@ export type DescribeFuzzSuite = (
 export type DescribeFuzz = DescribeFuzzSuite & Record<"skip" | "only", DescribeFuzzSuite>;
 
 export interface FuzzDescribeOptions {
-    defaultTestCount?: number
+    defaultTestCount?: number;
 }
 
 export const defaultOptions: Required<FuzzDescribeOptions> = {
-    defaultTestCount: 10
+    defaultTestCount: 10,
 };
 
 export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFuzz {
