@@ -118,7 +118,9 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        const changes = this.editManager.changeFamily.encoder.decodeJson(0, message.contents);
+        // TODO: How should the format version be determined?
+        const formatVersion = 0;
+        const changes = this.editManager.changeFamily.encoder.decodeJson(formatVersion, message.contents);
         const commit: Commit<TChange> = {
             sessionId: message.clientId,
             seqNumber: brand(message.sequenceNumber),
