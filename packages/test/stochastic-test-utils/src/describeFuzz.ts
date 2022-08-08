@@ -17,8 +17,11 @@ export type DescribeFuzzSuite = (
     tests: (
         this: Mocha.Suite,
         /**
-         * The number of tests this suite should produce, to within a constant factor.
+         * The number of tests this suite should produce up to a constant factor.
          * It's up to the suite author to decide which parameters to vary in order to scale up the number of tests.
+         * This parameter can be interpreted liberally by the suite author--e.g. in a suite with 4 "classes" of fuzz
+         * tests due to differences in configuration, running `testCount` tests for each variation (for a total of
+         * `4 * testCount` tests) is fine.
          */
         testCount: number,
     ) => void)
