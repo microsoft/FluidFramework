@@ -162,6 +162,10 @@
       },
       "InterfaceDeclaration_IConnectableRuntime": {
         "backCompat": false
+      },
+      "TypeAliasDeclaration_SummarizerStopReason": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }

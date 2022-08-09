@@ -286,7 +286,11 @@ export type SummarizerStopReason =
      * client to no longer be elected as responsible for summaries. Then it
      * tries to stop its spawned summarizer client.
      */
-    | "parentShouldNotSummarize"
+    | "notElectedParent"
+    /**
+     * We are not already running the summarizer and we are not the current elected client id.
+     */
+    | "notElectedClient"
     /** Summarizer client was disconnected */
     | "summarizerClientDisconnected"
     /* running summarizer threw an exception */

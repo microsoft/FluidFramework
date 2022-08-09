@@ -28,7 +28,8 @@ export enum SummaryManagerState {
 // Please note that all reasons in this list are not errors,
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
-type StopReason = Extract<SummarizerStopReason, "parentNotConnected" | "parentShouldNotSummarize">;
+type StopReason = Extract<SummarizerStopReason,
+    "parentNotConnected" | "notElectedParent" | "notElectedClient">;
 type ShouldSummarizeState =
     | { shouldSummarize: true; }
     | { shouldSummarize: false; stopReason: StopReason; };
@@ -140,10 +141,15 @@ export class SummaryManager implements IDisposable {
         // enforce connectedState.clientId === clientElection.electedClientId. But once we're Running, we should
         // only transition to Stopping when the electedParentId changes. Stopping the summarizer without
         // changing the electedParent will just cause us to transition to Starting again.
-        if (this.connectedState.clientId !== this.clientElection.electedParentId ||
-            (this.state !== SummaryManagerState.Running &&
-                this.connectedState.clientId !== this.clientElection.electedClientId)) {
-            return { shouldSummarize: false, stopReason: "parentShouldNotSummarize" };
+
+        // Conditions for returning notElectedParent/notElectedClient and not running the last summary:
+        // a) New Parent has been elected and it is not the current client, or
+        // b) We are not already running the summarizer and we are not the current elected client id.
+        if (this.connectedState.clientId !== this.clientElection.electedParentId) {
+            return { shouldSummarize: false, stopReason: "notElectedParent" };
+        } else if (this.state !== SummaryManagerState.Running &&
+                this.connectedState.clientId !== this.clientElection.electedClientId) {
+            return { shouldSummarize: false, stopReason: "notElectedClient" };
         } else if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
         } else if (this.disposed) {
