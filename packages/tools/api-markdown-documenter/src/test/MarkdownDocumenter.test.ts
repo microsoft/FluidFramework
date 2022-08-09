@@ -6,8 +6,7 @@ import { compare } from "dir-compare";
 import * as Path from "path";
 
 import { MarkdownDocument } from "../MarkdownDocument";
-import { getDocumentItems, renderDocuments, renderFiles } from "../MarkdownDocumenter";
-import { markdownDocumenterConfigurationWithDefaults } from "../MarkdownDocumenterConfiguration";
+import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
 
 /**
  * Temp directory under which
