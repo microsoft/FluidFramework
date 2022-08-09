@@ -139,6 +139,10 @@
       },
       "InterfaceDeclaration_ISummarizerRuntime": {
         "backCompat": false
+      },
+      "RemovedInterfaceDeclaration_IPendingRuntimeState": {
+        "forwardCompat": false,
+        "backCompat": false
       }
     }
   }
