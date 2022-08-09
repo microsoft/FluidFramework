@@ -23,6 +23,10 @@ export default class LatestCommand extends Command {
             multiple: true,
             required: true,
         }),
+        prerelease: Flags.boolean({
+            default: false,
+            description: "Include prerelease versions.",
+        }),
     };
 
     static examples = [
@@ -45,7 +49,7 @@ export default class LatestCommand extends Command {
         const { flags } = await this.parse(LatestCommand);
 
         const data = {
-            latest: getLatestReleaseFromList(flags.versions),
+            latest: getLatestReleaseFromList(flags.versions, flags.prerelease),
         };
 
         this.log(data.latest);

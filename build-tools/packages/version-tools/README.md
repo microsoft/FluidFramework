@@ -161,10 +161,11 @@ Find the latest version from a list of version strings, accounting for the Fluid
 
 ```
 USAGE
-  $ fluv version latest -r <value> [--json]
+  $ fluv version latest -r <value> [--json] [--prerelease]
 
 FLAGS
   -r, --versions=<value>...  (required) The public version to use in the Fluid internal version.
+  --prerelease               Include prerelease versions.
 
 GLOBAL FLAGS
   --json  Format output as json.
