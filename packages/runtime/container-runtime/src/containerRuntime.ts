@@ -1387,7 +1387,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 rollback: this.rollback.bind(this),
                 orderSequentially: this.orderSequentially.bind(this),
             },
-            this.flushMode,
             pendingRuntimeState?.pending);
 
         this.context.quorum.on("removeMember", (clientId: string) => {
@@ -2065,11 +2064,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             return;
         }
 
-        // Let the PendingStateManager know that there was an attempt to flush messages.
-        // Note that this should happen before the `this.needsFlush` check below because in the scenario where we are
-        // not connected, `this.needsFlush` will be false but the PendingStateManager might have pending messages and
-        // hence needs to track this.
-        this.pendingStateManager.onFlush(isImmediateBatch);
+        // ! TODO: This condition should be removed once "flush" becomes private
+        // See https://dev.azure.com/fluidframework/internal/_workitems/edit/1076
+        if (this.flushMode !== FlushMode.Immediate || isImmediateBatch) {
+            // Let the PendingStateManager know that there was an attempt to flush messages.
+            // Note that this should happen before the `this.needsFlush` check below because in the scenario where we
+            // are not connected, `this.needsFlush` will be false but the PendingStateManager might have pending
+            // messages and hence needs to track this.
+            this.pendingStateManager.onFlush();
+        }
 
         // If flush has already been called then exit early
         if (!this.needsFlush) {

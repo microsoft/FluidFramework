@@ -10,7 +10,6 @@ import { DataProcessingError } from "@fluidframework/container-utils";
 import {
     ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
 import { wrapError } from "@fluidframework/telemetry-utils";
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
@@ -118,7 +117,6 @@ export class PendingStateManager implements IDisposable {
 
     constructor(
         private readonly stateHandler: IRuntimeStateHandler,
-        private readonly flushMode: FlushMode,
         initialLocalState: IPendingLocalState | undefined,
     ) {
         this.initialStates = new Deque<IPendingState>(initialLocalState?.pendingStates ?? []);
@@ -160,17 +158,8 @@ export class PendingStateManager implements IDisposable {
 
     /**
      * Called when flush() is called on the ContainerRuntime to manually flush messages.
-     * @param isImmediateBatch - add the "flush" message to the pending states even when flushMode is Immediate
      */
-    public onFlush(isImmediateBatch: boolean = false) {
-        /**
-         * If the FlushMode is Immediate, we don't need to track an explicit flush call because every message is
-         * automatically flushed. So, flush is a no-op.
-         */
-        if (!isImmediateBatch && this.flushMode === FlushMode.Immediate) {
-            return;
-        }
-
+    public onFlush() {
         // If the previous state is not a message, flush is a no-op.
         const previousState = this.pendingStates.peekBack();
         if (previousState?.type !== "message") {
@@ -404,13 +393,11 @@ export class PendingStateManager implements IDisposable {
                     assert(pendingState.opMetadata?.batch !== false || messageBatchQueue.length > 0,
                         "We cannot process batches in chunks");
                     /**
-                     * We want to ensure grouped messages get processed in a batch when flush mode is Immediate.
-                     * Note, it is not possible for the PendingStateManager to receive a partially acked batch. It will
+                     * We want to ensure grouped messages get processed in a batch.
+                     * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
                      * either receive the whole batch ack or nothing at all.
                      */
-                    if (this.flushMode === FlushMode.Immediate
-                        && (messageBatchQueue.length > 0 || pendingState.opMetadata?.batch)
-                    ) {
+                    if (messageBatchQueue.length > 0 || pendingState.opMetadata?.batch) {
                         messageBatchQueue.enqueue(pendingState);
                     } else {
                         this.stateHandler.reSubmit(
@@ -422,11 +409,11 @@ export class PendingStateManager implements IDisposable {
                     break;
                 case "flush":
                     /**
-                     * When flushMode is Immediate, a "flush" call can indicate the end of a batch.
+                     * A "flush" call can indicate the end of a batch.
                      * We can't rely on the "batch" property in the message metadata as it gets
                      * updated elsewhere and it is not the same object instance that gets updated.
                      */
-                    if (this.flushMode === FlushMode.Immediate && messageBatchQueue.length > 0) {
+                    if (messageBatchQueue.length > 0) {
                         this.stateHandler.orderSequentially(() => {
                             while (messageBatchQueue.length > 0) {
                                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

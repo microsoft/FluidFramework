@@ -4,7 +4,6 @@
  */
 
 import assert from "assert";
-import { FlushMode } from "@fluidframework/runtime-definitions";
 import { PendingStateManager } from "../pendingStateManager";
 import { ContainerMessageType } from "..";
 
@@ -35,7 +34,7 @@ describe("Pending State Manager Rollback", () => {
                 }
             },
             orderSequentially: () => {},
-        }, FlushMode.Immediate, undefined);
+        }, undefined);
     });
 
     it("should do nothing when rolling back empty pending stack", () => {
