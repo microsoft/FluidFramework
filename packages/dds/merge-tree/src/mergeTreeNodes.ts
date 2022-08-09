@@ -69,7 +69,7 @@ export interface IMergeNodeCommon {
 export type IMergeNode = IMergeBlock | ISegment;
 
 /**
- * Internal node in a merge tree.
+ * Internal (i.e. non-leaf) node in a merge tree.
  */
 export interface IMergeBlock extends IMergeNodeCommon {
     needsScour?: boolean;
@@ -78,7 +78,9 @@ export interface IMergeBlock extends IMergeNodeCommon {
      */
     childCount: number;
     /**
-     * Array of child nodes. To avoid reallocation, this is always initialized to have maximum length as deemed by
+     * Array of child nodes.
+     *
+     * @remarks To avoid reallocation, this is always initialized to have maximum length as deemed by
      * the merge tree's branching factor. Use `childCount` to determine how many children this node actually has.
      */
     children: IMergeNode[];
@@ -109,7 +111,7 @@ export interface IHierBlock extends IMergeBlock {
 }
 
 /**
- * Contains removal information associated to an ISegment.
+ * Contains removal information associated to an {@link ISegment}.
  */
 export interface IRemovalInfo {
     /**
@@ -117,10 +119,10 @@ export interface IRemovalInfo {
      */
     removedSeq: number;
     /**
-     * List of client ids that have removed this segment.
+     * List of client IDs that have removed this segment.
      * The client that actually removed the segment (i.e. whose removal op was sequenced first) is stored as the first
      * client in this list. Other clients in the list have all issued concurrent ops to remove the segment.
-     * (When this list has length \> 1, this is referred to as the "overlapping remove" case)
+     * @remarks When this list has length \> 1, this is referred to as the "overlapping remove" case.
      */
     removedClientIds: number[];
 }
@@ -146,12 +148,12 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      */
     propertyManager?: PropertiesManager;
     /**
-     * local seq at which this segment was inserted. If this is defined, `seq` will be UnassignedSequenceNumber.
+     * Local seq at which this segment was inserted. If this is defined, `seq` will be UnassignedSequenceNumber.
      * Once the segment is acked, this field is cleared.
      */
     localSeq?: number;
     /**
-     * local seq at which this segment was removed. If this is defined, `removedSeq` will initially be set to
+     * Local seq at which this segment was removed. If this is defined, `removedSeq` will initially be set to
      * UnassignedSequenceNumber. However, if another client concurrently removes the same segment, `removedSeq`
      * will be updated to the seq at which that client removed this segment.
      *
@@ -159,7 +161,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
      */
     localRemovedSeq?: number;
     /**
-     * seq at which this segment was inserted.
+     * Seq at which this segment was inserted.
      * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
      */
     seq?: number;
