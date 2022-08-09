@@ -34,22 +34,6 @@ describe("api-markdown-documenter simple suite tests", async () => {
         apiModel.loadPackage(apiReportPath);
     });
 
-    it("getDocumentItems", () => {
-        const documentItems = getDocumentItems(
-            apiModel,
-            markdownDocumenterConfigurationWithDefaults({ uriRoot: "" }),
-        );
-
-        // simple-suite-test.md
-        // simple-test-suite/testclass.md
-        // simple-test-suite/testinterface.md
-        // simple-test-suite/testnamespace.md
-        // simple-test-suite/testnamespace/testclass.md
-        // simple-test-suite/testnamespace/testinterface.md
-        // simple-test-suite/testnamespace/testsubnamespace.md
-        expect(documentItems.length).to.equal(7);
-    });
-
     it("Ensure no duplicate file paths", () => {
         const documents = renderDocuments(
             apiModel!,
