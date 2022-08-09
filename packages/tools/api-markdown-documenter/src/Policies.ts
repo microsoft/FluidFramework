@@ -2,6 +2,8 @@ import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { PackageName } from "@rushstack/node-core-library";
 
+import { getQualifiedApiItemName } from "./Utilities";
+
 /**
  * Determines whether or not a separate document should be generated for the API item, rather than adding
  * contents directly to the page containing the parent element's contents.
@@ -170,7 +172,7 @@ export namespace DefaultPolicies {
                     PackageName.getUnscopedName(apiItem.displayName),
                 );
             default:
-                return Utilities.getSafeFilenameForName(apiItem.displayName);
+                return getQualifiedApiItemName(apiItem);
         }
     }
 
