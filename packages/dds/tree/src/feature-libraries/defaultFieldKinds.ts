@@ -4,10 +4,10 @@
  */
 
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { ChangeEncoder, JsonCompatible, JsonCompatibleReadOnly } from "../change-family";
 import { ChangeRebaser } from "../rebase";
 import {
-    FieldKind, ChangeHandler, ChangeEncoder, JsonCompatible,
-    JsonCompatibleRead, allowsTreeSchemaIdentifierSuperset, Multiplicity,
+    FieldKind, ChangeHandler, allowsTreeSchemaIdentifierSuperset, Multiplicity,
 } from "../schema-stored";
 import { AnchorSet, JsonableTree } from "../tree";
 import { brand } from "../util";
@@ -36,12 +36,12 @@ export class UnitEncoder extends ChangeEncoder<0> {
 /**
  * Encoder for changesets which are just a json compatible value.
  */
- export class ValueEncoder<T extends JsonCompatibleRead> extends ChangeEncoder<T> {
-    public encodeForJson(formatVersion: number, change: T): JsonCompatibleRead {
+ export class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
+    public encodeForJson(formatVersion: number, change: T): JsonCompatibleReadOnly {
         return change;
     }
 
-    public decodeJson(formatVersion: number, change: JsonCompatibleRead): T {
+    public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): T {
         return change as T;
     }
 }
@@ -174,7 +174,7 @@ export const value: FieldKind = new FieldKind(
     Multiplicity.Value,
     {
         rebaser: replaceRebaser<JsonableTree>({ rebaseAnchors: () => { /* TODO: support anchors */ } }),
-        encoder: new ValueEncoder<JsonableTree & JsonCompatibleRead>(),
+        encoder: new ValueEncoder<JsonableTree & JsonCompatibleReadOnly>(),
     },
     // TODO: is order correct?
     (types, other) => other.kind === value.identifier && allowsTreeSchemaIdentifierSuperset(types, other.types),
@@ -189,7 +189,7 @@ export const optional: FieldKind = new FieldKind(
     Multiplicity.Optional,
     {
         rebaser: replaceRebaser<JsonableTree | 0>({ rebaseAnchors: () => { /* TODO: support anchors */ } }),
-        encoder: new ValueEncoder<(JsonableTree | 0) & JsonCompatibleRead>() },
+        encoder: new ValueEncoder<(JsonableTree | 0) & JsonCompatibleReadOnly>() },
     (types, other) =>
         (other.kind === value.identifier || other.kind === optional.identifier)
         // TODO: is order correct?
@@ -206,7 +206,7 @@ export const sequence: FieldKind = new FieldKind(
     Multiplicity.Sequence,
     {
         rebaser: replaceRebaser<JsonableTree[]>({ rebaseAnchors: () => { /* TODO: support anchors */ } }),
-        encoder: new ValueEncoder<(JsonableTree[]) & JsonCompatibleRead>() },
+        encoder: new ValueEncoder<(JsonableTree[]) & JsonCompatibleReadOnly>() },
     // TODO: is order correct?
     (types, other) =>
         (other.kind === value.identifier || other.kind === optional.identifier || other.kind === sequence.identifier)

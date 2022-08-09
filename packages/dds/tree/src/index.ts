@@ -28,9 +28,8 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
 export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
     FieldSchema, ValueSchema, TreeSchema, FieldKind,
-    StoredSchemaRepository, FieldKindIdentifier, Multiplicity, ChangeHandler, ChangeEncoder,
+    StoredSchemaRepository, FieldKindIdentifier, Multiplicity, ChangeHandler,
     rootFieldKey, TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
-    JsonCompatibleRead, JsonCompatible,
 } from "./schema-stored";
 
 export {
@@ -45,6 +44,8 @@ export {
     ExtractFromOpaque,
     isAny,
 } from "./util";
+
+export { ChangeEncoder, JsonCompatibleReadOnly, JsonCompatible } from "./change-family";
 
 export {
     Rebaser,

@@ -46,16 +46,16 @@ export function buildForest(schema: StoredSchemaRepository): IEditableForest;
 export abstract class ChangeEncoder<TChange> {
     decodeBinary(formatVersion: number, change: IsoBuffer): TChange;
     // (undocumented)
-    abstract decodeJson(formatVersion: number, change: JsonCompatible): TChange;
+    abstract decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TChange;
     encodeBinary(formatVersion: number, change: TChange): IsoBuffer;
     // (undocumented)
-    abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleRead;
+    abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleReadOnly;
 }
 
 // @public (undocumented)
 export type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<infer TChange, any, any> ? TChange : never;
 
-// @public (undocumented)
+// @public
 export interface ChangeHandler<TChange, TFinalChange, TChangeSet> {
     // (undocumented)
     readonly encoder: ChangeEncoder<TFinalChange>;
@@ -352,9 +352,9 @@ export type JsonCompatible = string | number | boolean | null | JsonCompatible[]
     [P in string]: JsonCompatible;
 };
 
-// @public (undocumented)
-export type JsonCompatibleRead = string | number | boolean | null | readonly JsonCompatible[] | {
-    readonly [P in string]: JsonCompatible | undefined;
+// @public
+export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
+    readonly [P in string]: JsonCompatibleReadOnly | undefined;
 };
 
 // @public
