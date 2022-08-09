@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export * from "./changeEncoder";
-export * from "./changeFamily";
-export * from "./progressiveEditBuilder";
+export { integer } from "./integer";
+export { normal } from "./normal";
+export { real } from "./real";
