@@ -13,6 +13,11 @@ import { getQualifiedApiItemName } from "./Utilities";
  * Determines whether or not a separate document should be generated for the API item, rather than adding
  * contents directly to the page containing the parent element's contents.
  *
+ * @remarks Note that `Model` and `Package` items will *always* have separate documents generated for them, even if
+ * not specified.
+ *
+ * Also note that `EntryPoint` items will always be ignored by the system, even if specified here.
+ *
  * @param apiItem - The API item in question.
  * @returns `true` if the item should have a separate document generated. `false` otherwise.
  */
@@ -127,8 +132,6 @@ export namespace DefaultPolicies {
      */
     export function defaultDocumentBoundaryPolicy(apiItem: ApiItem): boolean {
         return (
-            apiItem.kind === ApiItemKind.Model ||
-            apiItem.kind === ApiItemKind.Package ||
             apiItem.kind === ApiItemKind.Class ||
             apiItem.kind === ApiItemKind.Interface ||
             apiItem.kind === ApiItemKind.Namespace
