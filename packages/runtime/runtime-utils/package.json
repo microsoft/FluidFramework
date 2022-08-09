@@ -98,8 +98,7 @@
     "version": "2.0.0",
     "broken": {
       "InterfaceDeclaration_IRootSummarizerNodeWithGC": {
-        "backCompat": false,
-        "forwardCompat": false
+        "backCompat": false
       }
     }
   }

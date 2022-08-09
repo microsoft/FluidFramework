@@ -141,7 +141,7 @@ export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean, clientId?: string): any;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     readonly visibilityState?: VisibilityState_2;
 }
@@ -334,12 +334,11 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     createParam: CreateChildSummarizerNodeParam,
     config?: ISummarizerNodeConfigWithGC, getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>, getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>): ISummarizerNodeWithGC;
     deleteChild(id: string): void;
-    getBaseGCDetails(): IGarbageCollectionDetailsBase;
     // (undocumented)
     getChild(id: string): ISummarizerNodeWithGC | undefined;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     isReferenced(): boolean;
-    updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @public
