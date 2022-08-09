@@ -23,7 +23,7 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
 const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
 
 const documenterConfiguration = markdownDocumenterConfigurationWithDefaults({
-    uriRoot: "",
+    uriRoot: "docs",
 });
 
 const tsdocConfiguration = CustomDocNodes.configuration;
