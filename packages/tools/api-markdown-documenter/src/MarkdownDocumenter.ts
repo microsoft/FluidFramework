@@ -1,5 +1,4 @@
 import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
-import { CustomDocNodes } from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";
 import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import * as Path from "path";
@@ -10,6 +9,7 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
 import { renderApiPage, renderModelPage, renderPackagePage } from "./Rendering";
+import { CustomDocNodes } from "./doc-nodes";
 import { doesItemRequireOwnDocument } from "./utilities";
 
 // TODOs:

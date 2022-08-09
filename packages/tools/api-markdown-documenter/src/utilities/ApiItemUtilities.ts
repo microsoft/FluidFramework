@@ -230,12 +230,15 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
 export function getAncestralHierarchy(
     apiItem: ApiItem,
     includePredecate: (apiItem: ApiItem) => boolean,
-    breakPredicate: (apiItem: ApiItem) => boolean,
+    breakPredicate?: (apiItem: ApiItem) => boolean,
 ): ApiItem[] {
     const matches: ApiItem[] = [];
 
     let hierarchyItem: ApiItem | undefined = getFilteredParent(apiItem);
-    while (hierarchyItem !== undefined && !breakPredicate(hierarchyItem)) {
+    while (
+        hierarchyItem !== undefined &&
+        (breakPredicate === undefined || !breakPredicate(hierarchyItem))
+    ) {
         if (includePredecate(hierarchyItem)) {
             matches.push(hierarchyItem);
         }

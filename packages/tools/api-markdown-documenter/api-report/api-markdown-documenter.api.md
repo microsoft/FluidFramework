@@ -13,10 +13,10 @@ import { ApiMethod } from '@microsoft/api-extractor-model';
 import { ApiMethodSignature } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
 import { ApiPackage } from '@microsoft/api-extractor-model';
-import { DocHeading } from '@microsoft/api-documenter/lib/nodes/DocHeading';
+import { DocHeading as DocHeading_2 } from '@microsoft/api-documenter/lib/nodes/DocHeading';
 import { DocSection } from '@microsoft/tsdoc';
 import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
-import { IDocHeadingParameters } from '@microsoft/api-documenter/lib/nodes/DocHeading';
+import { IDocHeadingParameters as IDocHeadingParameters_2 } from '@microsoft/api-documenter/lib/nodes/DocHeading';
 import { MarkdownEmitter } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { NewlineKind } from '@rushstack/node-core-library';
 import { TSDocConfiguration } from '@microsoft/tsdoc';
@@ -28,6 +28,30 @@ export { ApiItemKind }
 export { ApiModel }
 
 export { ApiPackage }
+
+// @public
+export const enum CustomDocNodeKind {
+    // (undocumented)
+    EmphasisSpan = "EmphasisSpan",
+    // (undocumented)
+    Heading = "Heading",
+    // (undocumented)
+    HtmlLink = "HtmlLink",
+    // (undocumented)
+    NoteBox = "NoteBox",
+    // (undocumented)
+    Table = "Table",
+    // (undocumented)
+    TableCell = "TableCell",
+    // (undocumented)
+    TableRow = "TableRow"
+}
+
+// @public (undocumented)
+export class CustomDocNodes {
+    // (undocumented)
+    static get configuration(): TSDocConfiguration;
+}
 
 // @public (undocumented)
 export namespace DefaultPolicies {
@@ -61,9 +85,9 @@ export namespace DefaultRenderingPolicies {
 export const defaultRenderingPolicies: Required<RenderingPolicies>;
 
 // @public
-export class DocIdentifiableHeading extends DocHeading {
+export class DocHeading extends DocHeading_2 {
     // @internal
-    constructor(parameters: IDocIdentifiableHeadingParameters);
+    constructor(parameters: IDocHeadingParameters);
     readonly id?: string;
 }
 
@@ -80,7 +104,7 @@ export type FileNamePolicy = (apiItem: ApiItem) => string;
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
-export interface IDocIdentifiableHeadingParameters extends IDocHeadingParameters {
+export interface IDocHeadingParameters extends IDocHeadingParameters_2 {
     id?: string;
 }
 
@@ -164,9 +188,7 @@ export function renderTitleCell(apiItem: ApiItem, documenterConfiguration: Requi
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
 
 
-export * from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";
 export * from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
-export * from "@microsoft/api-documenter/lib/nodes/DocHeading";
 export * from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
 export * from "@microsoft/api-documenter/lib/nodes/DocTable";
 export * from "@microsoft/api-documenter/lib/nodes/DocTableCell";

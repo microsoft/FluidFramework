@@ -1,8 +1,4 @@
 import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
-import { DocEmphasisSpan } from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
-import { DocHeading } from "@microsoft/api-documenter/lib/nodes/DocHeading";
-import { DocNoteBox } from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
-import { DocTableCell } from "@microsoft/api-documenter/lib/nodes/DocTableCell";
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
     ApiConstructSignature,
@@ -28,13 +24,14 @@ import {
     TSDocConfiguration,
 } from "@microsoft/tsdoc";
 
-import { DocIdentifiableHeading } from "./DocIdentifiableHeading";
 import { urlFromLink } from "./Link";
 import { MarkdownDocument } from "./MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
+import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTableCell } from "./doc-nodes";
 import {
     doesItemRequireOwnDocument,
     getDisplayNameForApiItem,
+    getFilteredParent,
     getHeadingIdForApiItem,
     getLinkForApiItem,
     getLinkUrlForApiItem,
@@ -72,6 +69,8 @@ export function renderModelPage(
         new DocHeading({ configuration: tsdocConfiguration, title: headingText, level: 1 }),
     );
 
+    // Do not render breadcrumb for Model page
+
     // Render body contents
     docNodes.push(
         documenterConfiguration.renderModel(apiModel, documenterConfiguration, tsdocConfiguration),
@@ -107,6 +106,9 @@ export function renderPackagePage(
     docNodes.push(
         new DocHeading({ configuration: tsdocConfiguration, title: headingText, level: 1 }),
     );
+
+    // Render breadcrumb
+    docNodes.push(renderBreadcrumb(apiPackage, documenterConfiguration, tsdocConfiguration));
 
     // Render body contents
     docNodes.push(
@@ -347,14 +349,14 @@ export function renderBreadcrumb(
 ): DocSection {
     // TODO: old system generated link text "Packages" for Model page
 
-    const output = new DocSection({ configuration: tsdocConfiguration });
+    const docNodes: DocNode[] = [];
 
     let writtenAnythingYet = false;
     let hierarchyItem: ApiItem | undefined = apiItem;
     while (hierarchyItem !== undefined) {
         if (doesItemRequireOwnDocument(hierarchyItem, documenterConfiguration.documentBoundaries)) {
             if (writtenAnythingYet) {
-                output.appendNodeInParagraph(
+                docNodes.push(
                     new DocPlainText({
                         configuration: tsdocConfiguration,
                         text: " > ",
@@ -364,7 +366,7 @@ export function renderBreadcrumb(
 
             const link = getLinkForApiItem(hierarchyItem, documenterConfiguration);
             const linkUrl = urlFromLink(link);
-            output.appendNodeInParagraph(
+            docNodes.push(
                 new DocLinkTag({
                     configuration: tsdocConfiguration,
                     tagName: "@link",
@@ -374,9 +376,12 @@ export function renderBreadcrumb(
             );
             writtenAnythingYet = true;
         }
+        hierarchyItem = getFilteredParent(hierarchyItem);
     }
 
-    return output;
+    return new DocSection({ configuration: tsdocConfiguration }, [
+        new DocParagraph({ configuration: tsdocConfiguration }, docNodes),
+    ]);
 }
 
 export function renderHeading(
@@ -386,7 +391,7 @@ export function renderHeading(
 ): DocHeading {
     // TODO: heading level
     const displayName = getDisplayNameForApiItem(apiItem);
-    return new DocIdentifiableHeading({
+    return new DocHeading({
         configuration: tsdocConfiguration,
         title: displayName,
         level: 2,
