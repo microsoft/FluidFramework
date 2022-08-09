@@ -13,7 +13,6 @@ import { ApiMethod } from '@microsoft/api-extractor-model';
 import { ApiMethodSignature } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
 import { DocHeading } from '@microsoft/api-documenter/lib/nodes/DocHeading';
-import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { IDocHeadingParameters } from '@microsoft/api-documenter/lib/nodes/DocHeading';
 import { MarkdownEmitter } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
@@ -25,17 +24,10 @@ export { ApiItem }
 export { ApiItemKind }
 
 // @public (undocumented)
-export function appendAndMergeSection(output: DocSection, docSection: DocSection): void;
-
-// @public (undocumented)
-export function appendSection(output: DocSection | DocParagraph, docSection: DocSection): void;
-
-// @public (undocumented)
 export namespace DefaultPolicies {
     export function defaultDocumentBoundaryPolicy(apiItem: ApiItem): boolean;
     export function defaultFileHierarchyPolicy(apiItem: ApiItem): boolean;
     export function defaultFileNamePolicy(apiItem: ApiItem): string;
-    export function defaultFilterContentsPolicy(apiItem: ApiItem): boolean;
     export function defaultLinkTextPolicy(apiItem: ApiItem): string;
     export function defaultUriBaseOverridePolicy(): string | undefined;
 }
@@ -75,37 +67,7 @@ export type FileHierarchyPolicy = (apiItem: ApiItem) => boolean;
 export type FileNamePolicy = (apiItem: ApiItem) => string;
 
 // @public
-export type FilterContentsPolicy = (apiItem: ApiItem) => boolean;
-
-// @public (undocumented)
-export function getDisplayNameForApiItem(apiItem: ApiItem): string;
-
-// @public
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
-
-// @public (undocumented)
-export function getFileNameForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string | undefined;
-
-// @public
-export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined;
-
-// @public
-export function getFirstAncestorWithOwnPage(apiItem: ApiItem, documentBoundaryPolicy: DocumentBoundaryPolicy): ApiItem;
-
-// @public (undocumented)
-export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string | undefined;
-
-// @public (undocumented)
-export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): Link;
-
-// @public (undocumented)
-export function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
-
-// @public
-export function getQualifiedApiItemName(apiItem: ApiItem): string;
-
-// @public
-export function getRelativeFilePathForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
 
 // @public
 export interface IDocIdentifiableHeadingParameters extends IDocHeadingParameters {
@@ -144,15 +106,11 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
 // @public (undocumented)
 export function markdownDocumenterConfigurationWithDefaults(partialConfig: MarkdownDocumenterConfiguration): Required<MarkdownDocumenterConfiguration>;
 
-// @public (undocumented)
-export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocConfiguration): DocSection;
-
 // @public
 export interface PolicyOptions {
     documentBoundaryPolicy?: DocumentBoundaryPolicy;
     fileHierarchyPolicy?: FileHierarchyPolicy;
     fileNamePolicy?: FileNamePolicy;
-    filterContentsPolicy?: FilterContentsPolicy;
     linkTextPolicy?: LinkTextPolicy;
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
@@ -190,9 +148,6 @@ export function renderPageRootItem(apiItem: ApiItem, documenterConfiguration: Re
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
-
-// @public
-export function urlFromLink(link: Link): string;
 
 
 export * from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";

@@ -11,7 +11,7 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
 import { renderPageRootItem } from "./Rendering";
-import { getQualifiedApiItemName, getRelativeFilePathForApiItem } from "./Utilities";
+import { getQualifiedApiItemName, getRelativeFilePathForApiItem } from "./utilities";
 
 // TODOs:
 // - Handle Model and Package level separately

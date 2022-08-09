@@ -9,7 +9,6 @@ export * from "./Interfaces";
 export * from "./MarkdownDocumenter";
 export * from "./MarkdownDocumenterConfiguration";
 export * from "./Policies";
-export * from "./Utilities";
 export * from "./Rendering";
 export * from "./RenderingPolicy";
 

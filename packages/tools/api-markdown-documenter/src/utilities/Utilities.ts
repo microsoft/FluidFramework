@@ -2,9 +2,9 @@ import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import { ApiItem, ApiItemKind, ApiParameterListMixin } from "@microsoft/api-extractor-model";
 import { DocNodeKind, DocParagraph, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
-import { Link } from "./Interfaces";
-import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
-import { DocumentBoundaryPolicy } from "./Policies";
+import { Link } from "../Interfaces";
+import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
+import { DocumentBoundaryPolicy } from "../Policies";
 
 // TODOs:
 // - Helper function to walk parentage until predicate is matched
@@ -275,13 +275,13 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
 export function getAncestralHierarchy(
     apiItem: ApiItem,
     includePredecate: (apiItem: ApiItem) => boolean,
-    breakPredicate: (apiItem: ApiItem) => boolean
+    breakPredicate: (apiItem: ApiItem) => boolean,
 ): ApiItem[] {
     const matches: ApiItem[] = [];
 
     let hierarchyItem: ApiItem | undefined = getFilteredParent(apiItem);
-    while(hierarchyItem !== undefined && !breakPredicate(hierarchyItem)) {
-        if(includePredecate(hierarchyItem)) {
+    while (hierarchyItem !== undefined && !breakPredicate(hierarchyItem)) {
+        if (includePredecate(hierarchyItem)) {
             matches.push(hierarchyItem);
         }
     }

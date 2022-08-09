@@ -28,7 +28,7 @@ import {
     getLinkForApiItem,
     mergeSections,
     urlFromLink,
-} from "./Utilities";
+} from "./utilities";
 
 // TODOs:
 // - heading level tracking

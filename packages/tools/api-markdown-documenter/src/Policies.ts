@@ -2,7 +2,7 @@ import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 import { PackageName } from "@rushstack/node-core-library";
 
-import { getQualifiedApiItemName } from "./Utilities";
+import { getQualifiedApiItemName } from "./utilities";
 
 // TODOs:
 // - Better handling of path-segment vs file name policy (e.g. what to do in index model?)
@@ -120,17 +120,6 @@ export namespace DefaultPolicies {
             apiItem.kind === ApiItemKind.Interface ||
             apiItem.kind === ApiItemKind.Namespace
         );
-    }
-
-    /**
-     * Default {@link PolicyOptions.filterContentsPolicy}.
-     *
-     * Filters out the following content types:
-     *
-     * - EntryPoint
-     */
-    export function defaultFilterContentsPolicy(apiItem: ApiItem): boolean {
-        return apiItem.kind === ApiItemKind.EntryPoint;
     }
 
     /**
