@@ -14,6 +14,7 @@ import { renderPageRootItem } from "./Rendering";
 import { getQualifiedApiItemName, getRelativeFilePathForApiItem } from "./Utilities";
 
 // TODOs:
+// - Handle Model and Package level separately
 // - Document assumptions around file placements: flat list of package directories
 // - `pick` types to make unit testing easier
 
