@@ -30,8 +30,8 @@ import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfigurati
 import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTableCell } from "./doc-nodes";
 import {
     doesItemRequireOwnDocument,
+    getAncestralHierarchy,
     getDisplayNameForApiItem,
-    getFilteredParent,
     getHeadingIdForApiItem,
     getLinkForApiItem,
     getLinkUrlForApiItem,
@@ -351,32 +351,33 @@ export function renderBreadcrumb(
 
     const docNodes: DocNode[] = [];
 
-    let writtenAnythingYet = false;
-    let hierarchyItem: ApiItem | undefined = apiItem;
-    while (hierarchyItem !== undefined) {
-        if (doesItemRequireOwnDocument(hierarchyItem, documenterConfiguration.documentBoundaries)) {
-            if (writtenAnythingYet) {
-                docNodes.push(
-                    new DocPlainText({
-                        configuration: tsdocConfiguration,
-                        text: " > ",
-                    }),
-                );
-            }
+    // Get ordered ancestry of document items
+    const ancestry = getAncestralHierarchy(apiItem, (hierarchyItem) =>
+        doesItemRequireOwnDocument(hierarchyItem, documenterConfiguration.documentBoundaries),
+    );
 
-            const link = getLinkForApiItem(hierarchyItem, documenterConfiguration);
-            const linkUrl = urlFromLink(link);
+    let writtenAnythingYet = false;
+    for (const hierarchyItem of ancestry) {
+        if (writtenAnythingYet) {
             docNodes.push(
-                new DocLinkTag({
+                new DocPlainText({
                     configuration: tsdocConfiguration,
-                    tagName: "@link",
-                    linkText: link.text,
-                    urlDestination: linkUrl,
+                    text: " > ",
                 }),
             );
-            writtenAnythingYet = true;
         }
-        hierarchyItem = getFilteredParent(hierarchyItem);
+
+        const link = getLinkForApiItem(hierarchyItem, documenterConfiguration);
+        const linkUrl = urlFromLink(link);
+        docNodes.push(
+            new DocLinkTag({
+                configuration: tsdocConfiguration,
+                tagName: "@link",
+                linkText: link.text,
+                urlDestination: linkUrl,
+            }),
+        );
+        writtenAnythingYet = true;
     }
 
     return new DocSection({ configuration: tsdocConfiguration }, [
