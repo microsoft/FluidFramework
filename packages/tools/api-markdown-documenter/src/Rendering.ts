@@ -197,11 +197,9 @@ export function renderBreadcrumb(
     const output = new DocSection({ configuration: tsdocConfiguration });
 
     let writtenAnythingYet = false;
-    for (const hierarchyItem of apiItem.getHierarchy()) {
-        if (
-            documenterConfiguration.documentBoundaryPolicy(hierarchyItem) &&
-            !documenterConfiguration.filterContentsPolicy(hierarchyItem)
-        ) {
+    let hierarchyItem: ApiItem | undefined = apiItem;
+    while (hierarchyItem !== undefined) {
+        if (documenterConfiguration.documentBoundaryPolicy(hierarchyItem)) {
             if (writtenAnythingYet) {
                 output.appendNodeInParagraph(
                     new DocPlainText({

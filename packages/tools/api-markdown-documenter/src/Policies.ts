@@ -5,7 +5,6 @@ import { PackageName } from "@rushstack/node-core-library";
 import { getQualifiedApiItemName } from "./Utilities";
 
 // TODOs:
-// - Remove filtering policy (Model/Package/EntryPoint will be handled specially)
 // - Better handling of path-segment vs file name policy (e.g. what to do in index model?)
 // - Add simple pre-canned policies (index, adjacency, flat, etc.)
 
@@ -22,14 +21,6 @@ import { getQualifiedApiItemName } from "./Utilities";
  * @returns `true` if the item should have a separate document generated. `false` otherwise.
  */
 export type DocumentBoundaryPolicy = (apiItem: ApiItem) => boolean;
-
-/**
- * Whether or not the specified API item should be filtered out of documentation generation.
- *
- * @param apiItem - The API item in question.
- * @returns `true` if documentation ***should not*** be generated for the provided API item. `false` otherwise.
- */
-export type FilterContentsPolicy = (apiItem: ApiItem) => boolean;
 
 /**
  * Policy for overriding the URI base for a specific API item.
@@ -81,13 +72,6 @@ export interface PolicyOptions {
      * @defaultValue {@link DefaultPolicies.defaultDocumentBoundaryPolicy}
      */
     documentBoundaryPolicy?: DocumentBoundaryPolicy;
-
-    /**
-     * See {@link FilterContentsPolicy}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultFilterContentsPolicy}
-     */
-    filterContentsPolicy?: FilterContentsPolicy;
 
     /**
      * See {@link UriBaseOverridePolicy}.
@@ -209,7 +193,6 @@ export namespace DefaultPolicies {
  */
 export const defaultPolicyOptions: Required<PolicyOptions> = {
     documentBoundaryPolicy: DefaultPolicies.defaultDocumentBoundaryPolicy,
-    filterContentsPolicy: DefaultPolicies.defaultFilterContentsPolicy,
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
     linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
     fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,
