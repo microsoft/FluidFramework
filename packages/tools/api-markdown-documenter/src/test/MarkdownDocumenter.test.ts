@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { compare } from "dir-compare";
 import * as Path from "path";
 
-import { MarkdownDocument } from "../Interfaces";
+import { MarkdownDocument } from "../MarkdownDocument";
 import { getDocumentItems, render, renderFiles } from "../MarkdownDocumenter";
 import { markdownDocumenterConfigurationWithDefaults } from "../MarkdownDocumenterConfiguration";
 

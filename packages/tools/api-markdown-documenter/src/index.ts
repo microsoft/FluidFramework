@@ -5,7 +5,7 @@
  */
 
 export * from "./DocIdentifiableHeading";
-export * from "./Interfaces";
+export * from "./MarkdownDocument";
 export * from "./MarkdownDocumenter";
 export * from "./MarkdownDocumenterConfiguration";
 export * from "./Policies";

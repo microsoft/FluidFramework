@@ -1,7 +1,7 @@
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import { ApiItem, ApiItemKind, ApiParameterListMixin } from "@microsoft/api-extractor-model";
 
-import { Link, urlFromLink } from "../Interfaces";
+import { Link, urlFromLink } from "../Link";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaryPolicy } from "../Policies";
 

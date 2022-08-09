@@ -5,7 +5,7 @@ import { StringBuilder } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 import * as Path from "path";
 
-import { MarkdownDocument } from "./Interfaces";
+import { MarkdownDocument } from "./MarkdownDocument";
 import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,

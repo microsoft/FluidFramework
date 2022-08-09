@@ -21,7 +21,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import { DocIdentifiableHeading } from "./DocIdentifiableHeading";
-import { urlFromLink } from "./Interfaces";
+import { urlFromLink } from "./Link";
 import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
 import {
     getDisplayNameForApiItem,
