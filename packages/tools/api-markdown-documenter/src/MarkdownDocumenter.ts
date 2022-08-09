@@ -9,7 +9,7 @@ import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
-import { renderApiPage, renderPackagePage } from "./Rendering";
+import { renderApiPage, renderModelPage, renderPackagePage } from "./Rendering";
 
 // TODOs:
 // - Handle Model and Package level separately
@@ -47,7 +47,9 @@ export function renderDocuments(
     const documents: MarkdownDocument[] = [];
 
     // Always render Model page
-    documents.push(renderApiPage(apiModel, documenterConfig, tsdocConfiguration, markdownEmitter));
+    documents.push(
+        renderModelPage(apiModel, documenterConfig, tsdocConfiguration, markdownEmitter),
+    );
 
     if (apiModel.packages.length !== 0) {
         // For each package, walk the child graph to find API items which should be rendered to their own document page
