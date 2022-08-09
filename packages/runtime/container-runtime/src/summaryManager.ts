@@ -142,17 +142,22 @@ export class SummaryManager implements IDisposable {
         // only transition to Stopping when the electedParentId changes. Stopping the summarizer without
         // changing the electedParent will just cause us to transition to Starting again.
 
-        // Conditions for returning notElectedParent/notElectedClient and not running the last summary:
-        // a) New Parent has been elected and it is not the current client, or
-        // b) We are not already running the summarizer and we are not the current elected client id.
+        // New Parent has been elected and it is not the current client, or
         if (this.connectedState.clientId !== this.clientElection.electedParentId) {
             return { shouldSummarize: false, stopReason: "notElectedParent" };
-        } else if (this.state !== SummaryManagerState.Running &&
+        }
+
+        // We are not already running the summarizer and we are not the current elected client id.
+        if (this.state !== SummaryManagerState.Running &&
                 this.connectedState.clientId !== this.clientElection.electedClientId) {
             return { shouldSummarize: false, stopReason: "notElectedClient" };
-        } else if (!this.connectedState.connected) {
+        }
+
+        if (!this.connectedState.connected) {
             return { shouldSummarize: false, stopReason: "parentNotConnected" };
-        } else if (this.disposed) {
+        }
+
+        if (this.disposed) {
             assert(false, 0x260 /* "Disposed should mean disconnected!" */);
         } else {
             return { shouldSummarize: true };
