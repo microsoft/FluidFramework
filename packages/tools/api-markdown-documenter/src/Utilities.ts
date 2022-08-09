@@ -6,6 +6,9 @@ import { Link } from "./Interfaces";
 import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
 import { DocumentBoundaryPolicy } from "./Policies";
 
+// TODOs:
+// - Helper function to walk parentage until predicate is matched
+
 /**
  * Generates a complete URL for the provided {@link Link} object.
  */
@@ -52,16 +55,17 @@ export function getFirstAncestorWithOwnPage(
 ): ApiItem {
     // Walk parentage until we reach an item kind that gets rendered to its own page.
     // That is the page we will target with the generated link.
-    let result = apiItem;
-    while (!documentBoundaryPolicy(result)) {
-        if (result.parent === undefined) {
+    let hierarchyItem: ApiItem = apiItem;
+    while (!documentBoundaryPolicy(hierarchyItem)) {
+        const parent = getFilteredParent(hierarchyItem);
+        if (parent === undefined) {
             throw new Error(
                 "Walking site hierarchy does not converge on an item that is rendered to its own page.",
             );
         }
-        result = result.parent;
+        hierarchyItem = parent;
     }
-    return result;
+    return hierarchyItem;
 }
 
 export function appendSection(output: DocSection | DocParagraph, docSection: DocSection): void {
@@ -142,31 +146,64 @@ export function getRelativeFilePathForApiItem(
 ): string {
     const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaryPolicy);
 
-    // Walk the target document item's hierarchy to create the path to it
-    let path: string = "";
-    let convergedOnDocument = false;
-    for (const hierarchyItem of targetDocumentItem.getHierarchy()) {
-        if (hierarchyItem === apiItem) {
-            // Terminal case: we have found the item whose document we are rendering to
-            const fileName = config.fileNamePolicy(apiItem);
-            path = path.length === 0 ? fileName : `${path}/${fileName}`;
-            convergedOnDocument = true;
-        } else if (config.fileHierarchyPolicy(hierarchyItem)) {
-            // This item in the API hierarchy also contributes to the file-wise hierarchy per provided policy.
-            // Append filename to directory path.
-            const pathSegmentName = config.fileNamePolicy(hierarchyItem);
-            path = path.length === 0 ? pathSegmentName : `${path}/${pathSegmentName}`;
-        } else {
-            // This item in the API hierarchy does not represent the document being rendered to,
-            // nor is it specified to contribute to the resulting file hierarchy. Skip it.
+    const fileName = config.fileNamePolicy(targetDocumentItem) + (includeExtension ? ".md" : "");
+
+    // Walk the target page's hierarchy until we reach an item for which directory hierarchy policy is enabled.
+    // We will need to include hiarachy information in the file name up to that point to ensure we don't
+    // generate any filename-wise conflicts.
+    let hierarchyItem = getFilteredParent(apiItem);
+    if (hierarchyItem === undefined) {
+        // If there is no parent item, then we can just return the file name unmodified
+        return fileName;
+    }
+    let path = fileName;
+    while (!config.fileHierarchyPolicy(hierarchyItem)) {
+        const segmentName = config.fileNamePolicy(hierarchyItem);
+        path = `${segmentName}-${path}`;
+
+        const parent = getFilteredParent(hierarchyItem);
+        if (parent === undefined) {
+            break;
         }
+        hierarchyItem = parent;
     }
 
-    if (!convergedOnDocument) {
-        throw new Error("Item's hierarchy did not converge on a file");
+    return path;
+}
+
+export function getFileNameForApiItem(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+    includeExtension: boolean,
+): string | undefined {
+    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaryPolicy);
+
+    const fileName = config.fileNamePolicy(targetDocumentItem) + (includeExtension ? ".md" : "");
+
+    // Walk parentage up until we reach the first ancestor which injects directory hierarchy.
+    // Qualify generated file name to ensure no conflicts within that directory.
+    let hierarchyItem = getFilteredParent(apiItem);
+    if (hierarchyItem === undefined) {
+        // If there is no parent item, then we can just return the file name unmodified
+        return fileName;
+    }
+    let path = fileName;
+    while (!config.fileHierarchyPolicy(hierarchyItem)) {
+        const segmentName = config.fileNamePolicy(hierarchyItem);
+        if (segmentName.length === 0) {
+            throw new Error("Segment name must be non-empty.");
+        }
+
+        path = `${segmentName}-${path}`;
+
+        const parent = getFilteredParent(hierarchyItem);
+        if (parent === undefined) {
+            break;
+        }
+        hierarchyItem = parent;
     }
 
-    return includeExtension ? `${path}.md` : path;
+    return path;
 }
 
 export function getHeadingIdForApiItem(
@@ -191,13 +228,29 @@ export function getHeadingIdForApiItem(
         // Since we're walking up the tree, we'll build the string from the end for simplicity
         baseName = baseName === undefined ? qualifiedName : `${qualifiedName}-${baseName}`;
 
-        if (hierarchyItem.parent === undefined) {
+        const parent = getFilteredParent(hierarchyItem);
+        if (parent === undefined) {
             throw new Error(
                 "Walking site hierarchy does not converge on an item that is rendered to its own page.",
             );
         }
-        hierarchyItem = hierarchyItem.parent;
+        hierarchyItem = parent;
     }
 
     return `${baseName}-${apiItemKind}`;
+}
+
+/**
+ * Gets the "filted" parent of the provided API item.
+ * This logic specifically skips items of the following kinds:
+ * - EntryPoint
+ *   - Skipped because any given Package item will have exactly 1 EntryPoint child, making this
+ *     redundant in the hierarchy.
+ */
+export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
+    const parent = apiItem.parent;
+    if (parent?.kind === ApiItemKind.EntryPoint) {
+        return parent.parent;
+    }
+    return parent;
 }

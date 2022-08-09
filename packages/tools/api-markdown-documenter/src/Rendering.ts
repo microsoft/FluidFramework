@@ -64,6 +64,14 @@ function renderApiItem(
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
 ): DocSection {
+    if (
+        apiItem.kind === ApiItemKind.Model ||
+        apiItem.kind === ApiItemKind.Package ||
+        apiItem.kind === ApiItemKind.EntryPoint
+    ) {
+        throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
+    }
+
     const docNodes: DocNode[] = [];
 
     docNodes.push(renderHeading(apiItem, documenterConfiguration, tsdocConfiguration));
@@ -100,10 +108,6 @@ function renderApiItem(
                     tsdocConfiguration,
                 ),
             );
-            break;
-
-        case ApiItemKind.EntryPoint:
-            // TODO
             break;
 
         case ApiItemKind.Enum:
@@ -152,15 +156,7 @@ function renderApiItem(
             );
             break;
 
-        case ApiItemKind.Model:
-            // TODO
-            break;
-
         case ApiItemKind.Namespace:
-            // TODO
-            break;
-
-        case ApiItemKind.Package:
             // TODO
             break;
 

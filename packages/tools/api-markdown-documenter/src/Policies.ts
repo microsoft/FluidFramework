@@ -4,6 +4,11 @@ import { PackageName } from "@rushstack/node-core-library";
 
 import { getQualifiedApiItemName } from "./Utilities";
 
+// TODOs:
+// - Remove filtering policy (Model/Package/EntryPoint will be handled specially)
+// - Better handling of path-segment vs file name policy (e.g. what to do in index model?)
+// - Add simple pre-canned policies (index, adjacency, flat, etc.)
+
 /**
  * Determines whether or not a separate document should be generated for the API item, rather than adding
  * contents directly to the page containing the parent element's contents.
@@ -164,9 +169,13 @@ export namespace DefaultPolicies {
      *
      * Uses a cleaned-up version of the item's `displayName`, except for Package items,
      * in which case only the unscoped portion of the package name is used.
+     *
+     * Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root.
      */
     export function defaultFileNamePolicy(apiItem: ApiItem): string {
         switch (apiItem.kind) {
+            case ApiItemKind.Model:
+                return "index";
             case ApiItemKind.Package:
                 return Utilities.getSafeFilenameForName(
                     PackageName.getUnscopedName(apiItem.displayName),
@@ -179,10 +188,11 @@ export namespace DefaultPolicies {
     /**
      * Default {@link PolicyOptions.fileHierarchyPolicy}.
      *
-     * Only create sub-directories for Package items.
+     * Only create sub-directories for Model and Package items.
      */
     export function defaultFileHierarchyPolicy(apiItem: ApiItem): boolean {
         switch (apiItem.kind) {
+            case ApiItemKind.Model:
             case ApiItemKind.Package:
                 return true;
             default:

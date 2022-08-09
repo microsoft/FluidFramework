@@ -8,6 +8,7 @@ import { ApiConstructor } from '@microsoft/api-extractor-model';
 import { ApiConstructSignature } from '@microsoft/api-extractor-model';
 import { ApiFunction } from '@microsoft/api-extractor-model';
 import { ApiItem } from '@microsoft/api-extractor-model';
+import { ApiItemKind } from '@microsoft/api-extractor-model';
 import { ApiMethod } from '@microsoft/api-extractor-model';
 import { ApiMethodSignature } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
@@ -18,6 +19,10 @@ import { IDocHeadingParameters } from '@microsoft/api-documenter/lib/nodes/DocHe
 import { MarkdownEmitter } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { NewlineKind } from '@rushstack/node-core-library';
 import { TSDocConfiguration } from '@microsoft/tsdoc';
+
+export { ApiItem }
+
+export { ApiItemKind }
 
 // @public (undocumented)
 export function appendAndMergeSection(output: DocSection, docSection: DocSection): void;
@@ -77,6 +82,12 @@ export function getDisplayNameForApiItem(apiItem: ApiItem): string;
 
 // @public
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
+
+// @public (undocumented)
+export function getFileNameForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string | undefined;
+
+// @public
+export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined;
 
 // @public
 export function getFirstAncestorWithOwnPage(apiItem: ApiItem, documentBoundaryPolicy: DocumentBoundaryPolicy): ApiItem;
