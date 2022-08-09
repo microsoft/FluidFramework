@@ -167,20 +167,33 @@ interface IMongoDBConfig {
     bufferMaxEntries: number | undefined;
     globalDbEndpoint?: string;
     globalDbEnabled?: boolean;
+    connectionPoolMinSize?: number;
+    connectionPoolMaxSize?: number;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
     private readonly operationsDbEndpoint: string;
     private readonly bufferMaxEntries?: number;
     private readonly globalDbEndpoint?: string;
+    private readonly connectionPoolMinSize?: number;
+    private readonly connectionPoolMaxSize?: number;
     constructor(config: IMongoDBConfig) {
-        const { operationsDbEndpoint, bufferMaxEntries, globalDbEnabled, globalDbEndpoint } = config;
+        const {
+            operationsDbEndpoint,
+            bufferMaxEntries,
+            globalDbEnabled,
+            globalDbEndpoint,
+            connectionPoolMinSize,
+            connectionPoolMaxSize,
+        } = config;
         if (globalDbEnabled) {
             this.globalDbEndpoint = globalDbEndpoint;
         }
         assert(!!operationsDbEndpoint, `No endpoint provided`);
         this.operationsDbEndpoint = operationsDbEndpoint;
         this.bufferMaxEntries = bufferMaxEntries;
+        this.connectionPoolMinSize = connectionPoolMinSize;
+        this.connectionPoolMaxSize = connectionPoolMaxSize;
     }
 
     public async connect(global = false): Promise<core.IDb> {
@@ -197,6 +210,13 @@ export class MongoDbFactory implements core.IDbFactory {
             socketTimeoutMS: 120000,
             useNewUrlParser: true,
         };
+        if (this.connectionPoolMinSize) {
+            options.minSize = this.connectionPoolMinSize;
+        }
+
+        if (this.connectionPoolMaxSize) {
+            options.poolSize = this.connectionPoolMaxSize;
+        }
 
         const connection = await MongoClient.connect(
             global ?
