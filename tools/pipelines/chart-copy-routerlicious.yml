@@ -7,6 +7,7 @@ trigger:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - server/routerlicious/kubernetes/routerlicious

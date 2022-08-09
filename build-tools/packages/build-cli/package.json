@@ -1,11 +1,8 @@
 {
-  "name": "@fluid-internal/build-cli",
-  "version": "0.3.0",
+  "name": "@fluid-tools/build-cli",
+  "version": "0.3.2000",
   "private": true,
-  "description": "",
-  "keywords": [
-    "oclif"
-  ],
+  "description": "Build tools for the Fluid Framework",
   "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
@@ -14,6 +11,7 @@
   },
   "license": "MIT",
   "author": "Microsoft and contributors",
+  "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -26,48 +24,53 @@
   ],
   "scripts": {
     "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:compile": "rimraf dist && npm run tsc",
+    "build:clean": "rimraf dist oclif.manifest.json *.tsbuildinfo",
+    "build:compile": "npm run build:clean && npm run tsc",
     "build:full": "npm run format && npm run build && npm run build:manifest && npm run build:readme",
     "build:full:compile": "npm run build:full",
     "build:genver": "gen-version",
     "build:manifest": "oclif manifest",
     "build:readme": "oclif readme",
-    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "clean": "rimraf dist lib *.tsbuildinfo *.build.log oclif.manifest.json",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run prettier:fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
-    "prettier": "prettier --check \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
-    "prettier:fix": "prettier --write \"**/*.{cjs,js,json,jsx,ts,tsx,yml,yaml}\"",
+    "prettier": "prettier --check .",
+    "prettier:fix": "prettier --write .",
     "test": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
-    "tsc": "tsc -b",
-    "version": "npm run build:readme && git add README.md"
+    "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-internal/version-tools": "^0.3.0",
-    "@fluidframework/build-tools": "^0.3.0",
+    "@fluid-tools/version-tools": "^0.3.2000",
+    "@fluidframework/build-tools": "^0.3.2000",
     "@oclif/core": "^1.9.5",
     "@oclif/plugin-commands": "^2.2.0",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
+    "chalk": "^2.4.2",
     "inquirer": "^9.0.0",
+    "npm-check-updates": "^16.0.0",
     "semver": "^7.3.7",
     "table": "^6.8.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
+    "@microsoft/api-extractor": "^7.22.2",
     "@types/chai": "^4",
     "@types/inquirer": "^8.2.1",
     "@types/mocha": "^9.0.0",
     "@types/node": "^14.18.0",
     "@types/semver": "^7.3.10",
+    "@types/semver-utils": "^1.1.1",
     "@typescript-eslint/eslint-plugin": "~5.9.0",
     "@typescript-eslint/parser": "~5.9.0",
     "chai": "^4.2.0",
+    "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
     "eslint-config-oclif": "^4",
     "eslint-config-oclif-typescript": "^1.0.2",
@@ -99,7 +102,7 @@
       "@oclif/plugin-commands",
       "@oclif/plugin-help",
       "@oclif/plugin-not-found",
-      "@fluid-internal/version-tools"
+      "@fluid-tools/version-tools"
     ],
     "topicSeparator": " ",
     "topics": {}

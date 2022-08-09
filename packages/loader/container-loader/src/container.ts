@@ -181,6 +181,10 @@ export async function waitContainerToCatchUp(container: IContainer) {
         };
         container.on("closed", closedCallback);
 
+        // Depending on config, transition to "connected" state may include the guarantee
+        // that all known ops have been processed.  If so, we may introduce additional wait here.
+        // Waiting for "connected" state in either case gets us at least to our own Join op
+        // which is a reasonable approximation of "caught up"
         const waitForOps = () => {
             assert(container.connectionState === ConnectionState.CatchingUp
                 || container.connectionState === ConnectionState.Connected,
@@ -543,7 +547,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     /**
      * Returns true if container is dirty.
      * Which means data loss if container is closed at that same moment
-     * Most likely that happens when there is no network connection to ordering service
+     * Most likely that happens when there is no network connection to Relay Service
      */
     public get isDirty() {
         return this._dirtyContainer;
@@ -801,7 +805,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
         assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
-        assert(this._protocolHandler.attributes.term !== undefined, "Must have a valid protocol handler instance");
+        assert(this._protocolHandler.attributes.term !== undefined,
+            0x37e /* Must have a valid protocol handler instance */);
         const pendingState: IPendingContainerState = {
             pendingRuntimeState: this.context.getPendingLocalState(),
             url: this.resolvedUrl.url,
@@ -1551,9 +1556,15 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
                 }
             }
 
+            const deltaManagerForCatchingUp =
+                this.mc.config.getBoolean("Fluid.Container.CatchUpBeforeDeclaringConnected") === true ?
+                    this.deltaManager
+                    : undefined;
+
             this.connectionStateHandler.receivedConnectEvent(
                 this.connectionMode,
                 details,
+                deltaManagerForCatchingUp,
             );
         });
 

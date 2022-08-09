@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NodeId } from ".";
+import { JsonableTree } from "../tree";
 
 // TODOs:
 // Clipboard
@@ -12,8 +12,8 @@ import { NodeId } from ".";
 /**
  * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
- export namespace Transposed {
-	export interface Transaction extends Changeset {
+export namespace Transposed {
+	export interface Transaction extends PeerChangeset {
 		/**
 		 * The reference sequence number of the transaction that this transaction was originally
 		 * issued after.
@@ -27,32 +27,33 @@ import { NodeId } from ".";
 		newRef?: SeqNumber;
 	}
 
-	export interface Changeset {
-		marks: PositionedMarks;
+	/**
+	 * Represents changes to a document forest.
+	 */
+	export interface LocalChangeset {
+		marks: FieldMarks;
+		moves?: MoveEntry<TreeForestPath>[];
+	}
+
+	/**
+	 * Represents changes to a document tree.
+	 */
+	export interface PeerChangeset {
+		marks: MarkList;
 		moves?: MoveEntry[];
 	}
 
-	export interface MoveEntry {
+	export interface MoveEntry<TPath = TreeRootPath> {
 		id: OpId;
-		src: TreePath;
-		dst: TreePath;
-		hops?: TreePath[];
+		src: TPath;
+		dst: TPath;
+		hops?: TPath[];
 	}
 
-	export type PositionedMarks<TMark = Mark> = MarkWithOffset<TMark>[];
+	export type MarkList<TMark = Mark> = TMark[];
 
-	/**
-	 * See PositionedMarks.
-	 */
-	export interface MarkWithOffset<TMark = Mark> {
-		/**
-		 * Interpreted as zero when omitted.
-		 */
-		offset?: Offset;
-		mark: TMark;
-	}
-
-	type Mark =
+	export type Mark =
+		| Skip
 		| Tomb
 		| Modify
 		| Detach
@@ -74,7 +75,8 @@ import { NodeId } from ".";
 
 	export interface SetValue {
 		type: "Set";
-		value: Value;
+		/** Can be left unset to represent the value being cleared. */
+		value?: Value;
 	}
 
 	export interface RevertValue {
@@ -90,7 +92,7 @@ import { NodeId } from ".";
 	}
 
 	export interface FieldMarks {
-		[key: string]: PositionedMarks;
+		[key: string]: MarkList;
 	}
 
 	export interface HasPlaceFields {
@@ -157,6 +159,19 @@ import { NodeId } from ".";
 		fields?: FieldMarks;
 	}
 
+	/**
+	 * Used to represent the transitory location where an insert or move-in was before it was affected by a concurrent
+	 * slice-move.
+	 *
+	 * This is needed in order to determine the relative ordering of inserts and move-ins that were affected by the
+	 * same concurrent slice move.
+	 * Indeed their ordering ought to be the same as their ordering would have been the source location of the
+	 * concurrent slice move.
+	 * In order to determine their ordering at the source location, we have to know precisely where at the source
+	 * location (and with what tiebreak policy) the inserts were made.
+	 * Bounce marks capture that information.
+	 * See ScenarioQ for an example.
+	 */
 	export interface Bounce extends HasOpId, HasPlaceFields {
 		type: "Bounce";
 	}
@@ -289,14 +304,11 @@ export interface HasLength {
 	length?: number;
 }
 
-export interface TreeChildPath {
+export interface TreeForestPath {
 	[label: string]: TreeRootPath;
 }
 
-export type TreeRootPath = number | { [label: number]: TreeChildPath; };
-
-/** A structure that represents a path from the root to a particular node. */
-export type TreePath = TreeChildPath | TreeRootPath;
+export type TreeRootPath = number | { [label: number]: TreeForestPath; };
 
 export enum RangeType {
 	Set = "Set",
@@ -330,26 +342,11 @@ export interface HasOpId {
 /**
  * The contents of a node to be created
  */
-export interface ProtoNode {
-	id?: NodeId;
-	type?: string;
-	value?: Value;
-	fields?: ProtoFields;
-}
+export type ProtoNode = JsonableTree;
 
-/**
- * The fields of a node to be created
- */
-export interface ProtoFields {
-	[key: string]: ProtoField;
-}
-
-export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (TOffset | TContent)[];
-
-export type ProtoField = ProtoNode[];
 export type NodeCount = number;
 export type GapCount = number;
-export type Offset = number;
+export type Skip = number;
 export type SeqNumber = number;
 export type Value = number | string | boolean;
 export type ClientId = number;

@@ -59,6 +59,7 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: { get: (id: string
     // Ex. x-fluid-telemetry:Origin=c
     const fluidTelemetry = headers.get("x-fluid-telemetry");
     if (fluidTelemetry !== undefined && fluidTelemetry !== null) {
+        additionalProps.xFluidTelemetry = fluidTelemetry;
         const keyValueMap = fluidTelemetry.split(",").map((keyValuePair) => keyValuePair.split("="));
         for (const [key, value] of keyValueMap) {
             if ("Origin" === key.trim()) {

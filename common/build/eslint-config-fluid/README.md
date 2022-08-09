@@ -4,9 +4,9 @@ This package contains a shared ESLint config used by all the packages in the Flu
 
 It exports the following shared ESLint configs:
 
-- `minimal`: (default) The minimal config for Fluid Framework packages.
-- `recommended`: The recommended config for Fluid Framework packages.
-- `strict`: The strictest config; intended for packages with public facing APIs.
+-   `minimal`: (default) The minimal config for Fluid Framework packages.
+-   `recommended`: The recommended config for Fluid Framework packages.
+-   `strict`: The strictest config; intended for packages with public facing APIs.
 
 ## Changing the lint config
 
@@ -30,16 +30,22 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 ## Scripts
 
 <!-- AUTO-GENERATED-CONTENT:START (SCRIPTS) -->
-| Script | Description |
-|--------|-------------|
-| `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
-| `print-config` | Print all the eslint configs. |
-| `print-config:default` | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |
-| `print-config:minimal` | `eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json` |
-| `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
-| `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |
-| `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
+
+| Script                     | Description                                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `cleanup-printed-configs`  | Clean up the printed configs. Removes the `parser` property and sorts the JSON.                               |
+| `format`                   | `npm run prettier:fix`                                                                                        |
+| `lint`                     | `npm run prettier`                                                                                            |
+| `lint:fix`                 | `npm run prettier:fix`                                                                                        |
+| `prettier`                 | `prettier --check .`                                                                                          |
+| `prettier:fix`             | `prettier --write .`                                                                                          |
+| `print-config`             | Print all the eslint configs.                                                                                 |
+| `print-config:default`     | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |
+| `print-config:minimal`     | `eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json`                  |
+| `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json`          |
+| `print-config:strict`      | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json`                    |
+| `print-config:test`        | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`).          |
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
-

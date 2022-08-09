@@ -27,6 +27,8 @@ export interface IPackageMatchedOptions {
 const uncheckedPackages = [
     "@fluid-internal/build-cli",
     "@fluid-internal/version-tools",
+    "@fluid-tools/build-cli",
+    "@fluid-tools/version-tools",
     "@fluidframework/build-tools",
 ]
 

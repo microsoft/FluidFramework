@@ -85,20 +85,6 @@ export interface IContainerRuntime extends
     getRootDataStore(id: string, wait?: boolean): Promise<IFluidRouter>;
 
     /**
-     * Creates root data store in container. Such store is automatically bound to container, and thus is
-     * attached to storage when/if container is attached to storage. Such stores are never garbage collected
-     * and can be found / loaded by name.
-     * Majority of data stores in container should not be roots, and should be reachable (directly or indirectly)
-     * through one of the roots.
-     * @param pkg - Package name of the data store factory
-     * @param rootDataStoreId - data store ID. Must not contain slashes. IDs naming space is global in container.
-     * If collision on name occurs, it results in container corruption - loading this file after that will always
-     * result in error.
-     * @deprecated - will be removed in an upcoming release. See #9660.
-     */
-    createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter>;
-
-    /**
      * Creates detached data store context. Data store initialization is considered complete
      * only after context.attachRuntime() is called.
      * @param pkg - package path

@@ -11,15 +11,21 @@ export { Context } from "./bumpVersion/context";
 export { createReleaseBump } from "./bumpVersion/createReleaseBump";
 export { GitRepo } from "./bumpVersion/gitRepo";
 export { releaseVersion } from "./bumpVersion/releaseVersion";
-export { adjustVersion } from "./bumpVersion/utils";
+export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
-export * from "./bumpVersion/versionSchemes";
+export { FluidRepo } from "./common/fluidRepo";
 export { getResolvedFluidRoot } from "./common/fluidUtils";
+export { Logger, LoggingFunction } from "./common/logging";
 export {
     isMonoRepoKind,
+    MonoRepo,
     MonoRepoKind,
     supportedMonoRepoValues
 } from "./common/monoRepo";
 export {
     Package
 } from "./common/npmPackage";
+export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/genMonoRepoPackageJson";
+export { LayerGraph } from "./layerCheck/layerGraph";
+export { Timer } from "./common/timer";
+export { execAsync, execWithErrorAsync, readJsonAsync, readFileAsync, writeFileAsync } from "./common/utils";

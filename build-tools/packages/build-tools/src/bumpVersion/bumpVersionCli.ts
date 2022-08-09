@@ -4,6 +4,7 @@
  */
 
 import * as semver from "semver";
+import { isVersionBumpType, VersionBumpType, VersionChangeType } from "@fluid-tools/version-tools";
 import { bumpDependencies, cleanPrereleaseDependencies } from "./bumpDependencies";
 import { bumpVersionCommand } from "./bumpVersion";
 import { commonOptionString, parseOption } from "../common/commonOptions";
@@ -16,7 +17,6 @@ import { releaseVersion } from "./releaseVersion";
 import { showVersions } from "./showVersions";
 import { fatal } from "./utils";
 import { writeReleaseVersions } from "./writeReleaseVersions";
-import { isVersionBumpType, VersionBumpType, VersionChangeType } from "./versionSchemes";
 
 function printUsage() {
     console.log(
