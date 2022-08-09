@@ -21,7 +21,6 @@ import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
-import { read } from "fs";
 
 export interface IRunConfig {
     runId: number;
