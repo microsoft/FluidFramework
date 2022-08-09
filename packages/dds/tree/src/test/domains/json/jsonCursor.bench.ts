@@ -11,7 +11,8 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
-import { generateCanada } from "./json";
+import { generateCanada } from "./canada";
+import { generateTwitterJsonByByteSize } from "./twitter";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -105,6 +106,9 @@ const canada = generateCanada(
         ? undefined
         : [2, 10]);
 
+// The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true, true);
 describe("ITreeCursor", () => {
     bench("canada", () => canada);
+    bench("twitter", () => twitter);
 });
