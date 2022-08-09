@@ -60,7 +60,7 @@ export interface IMergeNodeCommon {
     index: number;
     /**
      * A string that can be used for comparing the location of this node to other `MergeNode`s in the same tree.
-     * `a.ordinal < b.ordinal` if and only if `a` comes before `b` in a pre-order traversal of the MergeTree.
+     * `a.ordinal < b.ordinal` if and only if `a` comes before `b` in a pre-order traversal of the tree.
      */
     ordinal: string;
     isLeaf(): this is ISegment;
@@ -87,6 +87,10 @@ export interface IMergeBlock extends IMergeNodeCommon {
     /**
      * Supports querying the total length of all descendants of this IMergeBlock from the perspective of any
      * (clientId, seq) within the collab window.
+     *
+     * @remarks This is only optional for implementation reasons (internal nodes can be created/moved without
+     * immediately initializing the partial lengths). Aside from mid-update on tree operations, these lengths
+     * objects are always defined.
      */
     partialLengths?: PartialSequenceLengths;
     hierBlock(): IHierBlock | undefined;
