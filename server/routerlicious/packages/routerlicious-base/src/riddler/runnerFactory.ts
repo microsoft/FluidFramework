@@ -58,7 +58,6 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
         let globalDbMongoManager;
         const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
         if (globalDbEnabled) {
-            // TODO, this is an experimental flag that try to see if we could have mongo connection error fixed.
             const globalDbReconnect = config.get("mongo:globalDbReconnect") as boolean ?? false;
             globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
         }

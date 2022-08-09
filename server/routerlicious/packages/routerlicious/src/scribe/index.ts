@@ -45,7 +45,6 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
     let globalDb;
     if (globalDbEnabled) {
-        // TODO, this is an experimental flag that try to see if we could have mongo connection error fixed.
         const globalDbReconnect = config.get("mongo:globalDbReconnect") as boolean ?? false;
         const globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
         globalDb = await globalDbMongoManager.getDatabase();
