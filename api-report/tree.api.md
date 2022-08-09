@@ -4,6 +4,7 @@
 
 ```ts
 
+import { IsoBuffer } from '@fluidframework/common-utils';
 import { Jsonable } from '@fluidframework/datastore-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
@@ -39,10 +40,28 @@ export abstract class BrandedType<ValueType, Name extends string> {
 }
 
 // @public (undocumented)
-export function buildForest(): IEditableForest;
+export function buildForest(schema: StoredSchemaRepository): IEditableForest;
+
+// @public (undocumented)
+export abstract class ChangeEncoder<TChange> {
+    decodeBinary(formatVersion: number, change: IsoBuffer): TChange;
+    // (undocumented)
+    abstract decodeJson(formatVersion: number, change: JsonCompatible): TChange;
+    encodeBinary(formatVersion: number, change: TChange): IsoBuffer;
+    // (undocumented)
+    abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleRead;
+}
 
 // @public (undocumented)
 export type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<infer TChange, any, any> ? TChange : never;
+
+// @public (undocumented)
+export interface ChangeHandler<TChange, TFinalChange, TChangeSet> {
+    // (undocumented)
+    readonly encoder: ChangeEncoder<TFinalChange>;
+    // (undocumented)
+    readonly rebaser: ChangeRebaser<TChange, TFinalChange, TChangeSet>;
+}
 
 // @public
 export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
@@ -164,12 +183,22 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(valu
 export type FieldKey = LocalFieldKey | GlobalFieldKey;
 
 // @public
-export enum FieldKind {
-    Forbidden = 3,
-    Optional = 1,
-    Sequence = 2,
-    Value = 0
+export class FieldKind {
+    constructor(identifier: FieldKindIdentifier, multiplicity: Multiplicity, changeHandler: ChangeHandler<unknown, any, any>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
+    // (undocumented)
+    readonly allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean;
+    // (undocumented)
+    readonly changeHandler: ChangeHandler<unknown, any, any>;
+    // (undocumented)
+    readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>;
+    // (undocumented)
+    readonly identifier: FieldKindIdentifier;
+    // (undocumented)
+    readonly multiplicity: Multiplicity;
 }
+
+// @public
+export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 // @public
 export interface FieldLocation {
@@ -194,7 +223,7 @@ type FieldMarks<TMark> = FieldMap_2<MarkList<TMark>>;
 // @public (undocumented)
 export interface FieldSchema {
     // (undocumented)
-    readonly kind: FieldKind;
+    readonly kind: FieldKindIdentifier;
     readonly types?: TreeTypeSet;
 }
 
@@ -228,7 +257,7 @@ export interface IForestSubscription extends Dependee {
     root(range: DetachedField): Anchor;
     // (undocumented)
     readonly rootField: DetachedField;
-    readonly schema: SchemaRepository & Dependee;
+    readonly schema: StoredSchemaRepository;
     tryMoveCursorTo(destination: Anchor, cursorToMove: ITreeSubscriptionCursor, observer?: ObservingDependent): TreeNavigationResult;
 }
 
@@ -317,6 +346,16 @@ export const jsonArray: NamedTreeSchema;
 
 // @public (undocumented)
 export const jsonBoolean: NamedTreeSchema;
+
+// @public
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | {
+    [P in string]: JsonCompatible;
+};
+
+// @public (undocumented)
+export type JsonCompatibleRead = string | number | boolean | null | readonly JsonCompatible[] | {
+    readonly [P in string]: JsonCompatible | undefined;
+};
 
 // @public
 export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
@@ -470,6 +509,14 @@ interface MoveOut {
     type: typeof MarkType.MoveOut;
 }
 
+// @public
+export enum Multiplicity {
+    Forbidden = 3,
+    Optional = 1,
+    Sequence = 2,
+    Value = 0
+}
+
 // @public (undocumented)
 export interface Named<TName> {
     // (undocumented)
@@ -549,14 +596,27 @@ export interface RootField {
 // @public
 export const rootFieldKey: BrandedType<string, "tree.GlobalFieldKey">;
 
-// @public (undocumented)
-export interface SchemaRepository {
+// @public
+export interface SchemaData extends SchemaDataReader {
     // (undocumented)
     readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
-    lookupGlobalFieldSchema(key: GlobalFieldKey): FieldSchema;
-    lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema;
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+}
+
+// @public
+export interface SchemaDataReader {
+    // (undocumented)
+    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
+    // (undocumented)
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+}
+
+// @public
+export interface SchemaPolicy {
+    readonly defaultGlobalFieldSchema: FieldSchema;
+    readonly defaultTreeSchema: TreeSchema;
+    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 }
 
 // @public
@@ -580,14 +640,19 @@ export function singleTextCursor(root: JsonableTree): TextCursor;
 type Skip = number;
 
 // @public
-export class StoredSchemaRepository extends SimpleDependee implements SchemaRepository, Dependee {
-    constructor(fields?: Map<GlobalFieldKey, FieldSchema>, trees?: Map<TreeSchemaIdentifier, TreeSchema>);
+export class StoredSchemaRepository extends SimpleDependee implements SchemaData {
+    constructor(policy: SchemaPolicy, data?: SchemaData);
     // (undocumented)
     clone(): StoredSchemaRepository;
     // (undocumented)
     readonly computationName: string;
     // (undocumented)
-    protected readonly fields: Map<GlobalFieldKey, FieldSchema>;
+    protected readonly data: {
+        treeSchema: Map<TreeSchemaIdentifier, TreeSchema>;
+        globalFieldSchema: Map<GlobalFieldKey, FieldSchema>;
+    };
+    // (undocumented)
+    get fieldKinds(): ReadonlyMap<FieldKindIdentifier, FieldKind>;
     // (undocumented)
     get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema>;
     // (undocumented)
@@ -595,7 +660,7 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaRepo
     // (undocumented)
     lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema;
     // (undocumented)
-    protected readonly trees: Map<TreeSchemaIdentifier, TreeSchema>;
+    readonly policy: SchemaPolicy;
     // (undocumented)
     get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
     tryUpdateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): boolean;
