@@ -1,0 +1,54 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-sharedstring-stress pipeline
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    trigger:
+      branches:
+      - release/*
+      - main
+      - next
+
+variables:
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+
+stages:
+  - stage:
+    displayName:  Stress tests - SharedString
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small # TODO: Revisit pool size / general machine choices
+        testPackage: "@fluidframework/sequence"
+        testWorkspace: ${{ variables.testWorkspace }}
+        timeoutInMinutes: 120
+        testCommand: test:mocha
+        env:
+          FUZZ_STRESS_RUN: 10
+          FUZZ_STRESS_RUN: true
+
+  - stage:
+    displayName:  Stress tests - SharedString
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small # TODO: Revisit pool size / general machine choices
+        testPackage: "@fluid-experimental/tree"
+        testWorkspace: ${{ variables.testWorkspace }}
+        timeoutInMinutes: 120
+        testCommand: test:mocha
+        env:
+          FUZZ_STRESS_RUN: 5
+          FUZZ_STRESS_RUN: true
