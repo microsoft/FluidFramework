@@ -76,6 +76,10 @@ describe("partial lengths", () => {
             /* currentSeq: */ 0);
     });
 
+    afterEach(() => {
+        PartialSequenceLengths.options.verify = false;
+    });
+
     it("passes with no additional ops", () => {
         validatePartialLengths(localClientId, 0, 12);
     });
