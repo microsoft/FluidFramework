@@ -12,7 +12,6 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
-import { IDb, IDeliCheckpointHeuristicsServerConfiguration, MongoManager } from "@fluidframework/server-services-core";
 
 export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
     const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -41,23 +40,23 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
     const factory = await services.getDbFactory(config);
 
     const checkpointHeuristics = config.get("deli:checkpointHeuristics") as
-                            IDeliCheckpointHeuristicsServerConfiguration;
+        core.IDeliCheckpointHeuristicsServerConfiguration;
     // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
     if (checkpointHeuristics && checkpointHeuristics.enable) {
         core.DefaultServiceConfiguration.deli.checkpointHeuristics = checkpointHeuristics;
     }
 
-    let globalDb;
-    let globalDbManager;
+    let globalDb: core.IDb;
     if (globalDbEnabled) {
-        globalDbManager = new MongoManager(factory, false, null, true);
+        const globalDbReconnect = config.get("mongo:globalDbReconnect") as boolean ?? false;
+        const globalDbManager = new core.MongoManager(factory, globalDbReconnect, null, true);
         globalDb = await globalDbManager.getDatabase();
     }
 
-    const operationsDbManager = new MongoManager(factory, false);
+    const operationsDbManager = new core.MongoManager(factory, false);
     const operationsDb = await operationsDbManager.getDatabase();
 
-    const db: IDb = globalDbEnabled ? globalDb : operationsDb;
+    const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
 
     // eslint-disable-next-line @typescript-eslint/await-thenable
     const collection = await db.collection<core.IDocument>(documentsCollectionName);
@@ -116,6 +115,14 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
     await broadcasterLambda.start();
 
+    const externalOrdererUrl: string = config.get("worker:serverUrl");
+    const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
+    const serviceConfiguration: core.IServiceConfiguration = {
+        ...core.DefaultServiceConfiguration,
+        externalOrdererUrl,
+        enforceDiscoveryFlow,
+    };
+
     return new DeliLambdaFactory(
         operationsDbManager,
         collection,
@@ -124,7 +131,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
         combinedProducer,
         undefined,
         reverseProducer,
-        core.DefaultServiceConfiguration);
+        serviceConfiguration);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

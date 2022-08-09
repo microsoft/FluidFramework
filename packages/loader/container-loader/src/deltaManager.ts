@@ -113,6 +113,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
 
     // The sequence number we initially loaded from
+    // In case of reading from a snapshot or pending state, its value will be equal to
+    // the last message that got serialized.
     private initSequenceNumber: number = 0;
 
     private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
