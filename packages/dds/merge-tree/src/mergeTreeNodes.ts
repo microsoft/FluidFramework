@@ -74,7 +74,7 @@ export type IMergeNode = IMergeBlock | ISegment;
 export interface IMergeBlock extends IMergeNodeCommon {
     needsScour?: boolean;
     /**
-     * Number of children of this node
+     * Number of direct children of this node
      */
     childCount: number;
     /**
