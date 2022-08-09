@@ -796,11 +796,10 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
         }
     }
 
-    public closeAndGetPendingLocalState(reason?: string): string {
+    public closeAndGetPendingLocalState(): string {
         // runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
         // container at the same time we get pending state, otherwise this container could reconnect and resubmit with
         // a new clientId and a future container using stale pending state without the new clientId would resubmit them
-
         assert(this.attachState === AttachState.Attached, 0x0d1 /* "Container should be attached before close" */);
         assert(this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
             0x0d2 /* "resolved url should be valid Fluid url" */);
@@ -814,12 +813,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
             clientId: this.clientId,
         };
 
-        this.mc.logger.send(
-            {
-                eventName: "CloseAndGetPendingLocalState",
-                category: reason === undefined ? "generic" : reason,
-            },
-        );
+        this.mc.logger.sendTelemetryEvent({ eventName: "CloseAndGetPendingLocalState" });
 
         this.close();
 
