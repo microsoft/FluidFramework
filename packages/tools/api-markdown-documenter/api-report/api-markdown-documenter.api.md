@@ -56,7 +56,7 @@ export class CustomDocNodes {
 // @public (undocumented)
 export namespace DefaultPolicies {
     const defaultDocumentBoundaries: ApiItemKind[];
-    export function defaultFileHierarchyPolicy(apiItem: ApiItem): boolean;
+    const defaultHierarchyBoundaries: ApiItemKind[];
     export function defaultFileNamePolicy(apiItem: ApiItem): string;
     export function defaultLinkTextPolicy(apiItem: ApiItem): string;
     export function defaultUriBaseOverridePolicy(): string | undefined;
@@ -95,13 +95,13 @@ export class DocHeading extends DocHeading_2 {
 export type DocumentBoundaries = ApiItemKind[];
 
 // @public
-export type FileHierarchyPolicy = (apiItem: ApiItem) => boolean;
-
-// @public
 export type FileNamePolicy = (apiItem: ApiItem) => string;
 
 // @public
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
+
+// @public
+export type HierarchyBoundaries = ApiItemKind[];
 
 // @public
 export interface IDocHeadingParameters extends IDocHeadingParameters_2 {
@@ -131,8 +131,8 @@ export function markdownDocumenterConfigurationWithDefaults(partialConfig: Markd
 // @public
 export interface PolicyOptions {
     documentBoundaries?: DocumentBoundaries;
-    fileHierarchyPolicy?: FileHierarchyPolicy;
     fileNamePolicy?: FileNamePolicy;
+    hierarchyBoundaries?: HierarchyBoundaries;
     linkTextPolicy?: LinkTextPolicy;
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
