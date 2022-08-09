@@ -267,10 +267,10 @@ export class LoadTestDataStoreModel {
         };
         if (partnerBlobCount > 0) {
             this.root.on("valueChanged", (v) => readBlob(v.key));
-            // additional loop of readBlob in case the eventlistener won't fire when container is closed.
-            for (const key of this.root.keys()) {
-                readBlob(key);
-            }
+        }
+        // additional loop of readBlob in case the eventlistener won't fire when container is closed.
+        for (const key of this.root.keys()) {
+            readBlob(key);
         }
     }
 
