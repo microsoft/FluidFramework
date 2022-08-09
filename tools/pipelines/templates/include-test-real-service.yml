@@ -126,7 +126,7 @@ jobs:
           preferTriggeringPipeline: true
           allowPartiallySucceededBuilds: true
           runVersion: latestFromBranch
-          runBranch: $(Build.SourceBranch)
+          runBranch: main
           artifact: pack
           patterns: "**/${{ variables.testPackageFilePattern }}"
           path: $(Pipeline.Workspace)/client/pack
