@@ -16,11 +16,11 @@ import type {
     IInventoryListContainerEvents,
     IInventoryList,
 } from "../modelInterfaces";
-import { containerKillBitId } from "./containerCode";
+import { containerKillBitId, inventoryListId } from "./containerCode";
 
 async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
-    // Our inventory list is available at the URL "/".
-    return requestFluidObject<IInventoryList>(container, { url: "/" });
+    // Our inventory list is available at the URL inventoryListId.
+    return requestFluidObject<IInventoryList>(container, { url: inventoryListId });
 }
 
 async function getContainerKillBitFromContainer(container: IContainer): Promise<IContainerKillBit> {
