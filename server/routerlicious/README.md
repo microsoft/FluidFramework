@@ -33,19 +33,19 @@ below steps if you'd like to run a local version of the service or need to make 
 #### Standalone
 
 * [Docker](https://www.docker.com/)
-    * If running on Windows, WSL 2 may not work correctly for symlinking dependencies.  This will manifest as "module not found" errors when starting the service.  You can disable WSL 2 (and use Hyper-V instead) in Docker Settings -> General
-    * In Docker Settings -> Resources -> Advanced, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well.
-    * In Docker Settings -> Resources -> Advanced, check the hard drive where your repository lives.
+  * If running on Windows, WSL 2 may not work correctly for symlinking dependencies.  This will manifest as "module not found" errors when starting the service.  You can disable WSL 2 (and use Hyper-V instead) in Docker Settings -> General
+  * In Docker Settings -> Resources -> Advanced, give Docker at least 4GB of Memory--the more the better. You can give additional CPUs as well.
+  * In Docker Settings -> Resources -> Advanced, check the hard drive where your repository lives.
 
 #### For Development
 
 * [Node v12.x](https://nodejs.org/en/) (v12.17 or above is required)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
-    * (Notes for Windows users, **not** using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)):
-        * The easiest way to install the dependencies is with windows-build-tools: `npm install --global --production windows-build-tools`
-        * The version of `node-gyp` pulled in by our current version of `Node.js` (14.x.x) **is not** compatible with Visual Studio 2022.
-          This has been fixed on more recent versions of `node-gyp`, but until we update to a more recent version of `Node.js`, we recommend using an earlier version of Visual Studio / its build tools.
-          Version 17 seems to be stable.
+  * (Notes for Windows users, **not** using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)):
+    * The easiest way to install the dependencies is with windows-build-tools: `npm install --global --production windows-build-tools`
+    * The version of `node-gyp` pulled in by our current version of `Node.js` (14.x.x) **is not** compatible with Visual Studio 2022.
+    This has been fixed on more recent versions of `node-gyp`, but until we update to a more recent version of `Node.js`, we recommend using an earlier version of Visual Studio / its build tools.
+    Version 17 seems to be stable.
 
 ### Development
 
@@ -82,10 +82,13 @@ If you also need debugging you can run:
 After starting the service, you can navigate to http://localhost:3000/ in a browser.
 
 #### Dev Flow
+
 An example developer flow would be to:
+
 * `npm run start:debug` - attach a debugger
 
 Then use another command window to deliver the changes:
+
 * `npm run build` - build
 * `docker-compose restart {modified service}` - allow the container to pick up the changes stored on the local machine
 
@@ -95,7 +98,7 @@ Then use another command window to deliver the changes:
 
 or
 
-### Standalone
+### Standalone with Docker
 
 You can also just run the service directly with Docker.
 
