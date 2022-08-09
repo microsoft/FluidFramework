@@ -1,21 +1,9 @@
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import { ApiItem, ApiItemKind, ApiParameterListMixin } from "@microsoft/api-extractor-model";
-import { DocNodeKind, DocParagraph, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
-import { Link } from "../Interfaces";
+import { Link, urlFromLink } from "../Interfaces";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaryPolicy } from "../Policies";
-
-// TODOs:
-// - Helper function to walk parentage until predicate is matched
-
-/**
- * Generates a complete URL for the provided {@link Link} object.
- */
-export function urlFromLink(link: Link): string {
-    const headingPostfix = link.headingId === undefined ? "" : `#${link.headingId}`;
-    return `${link.uriBase}/${link.relativeFilePath}${headingPostfix}`;
-}
 
 export function getDisplayNameForApiItem(apiItem: ApiItem): string {
     switch (apiItem.kind) {
@@ -66,39 +54,6 @@ export function getFirstAncestorWithOwnPage(
         hierarchyItem = parent;
     }
     return hierarchyItem;
-}
-
-export function appendSection(output: DocSection | DocParagraph, docSection: DocSection): void {
-    for (const node of docSection.nodes) {
-        output.appendNode(node);
-    }
-}
-
-export function appendAndMergeSection(output: DocSection, docSection: DocSection): void {
-    let firstNode: boolean = true;
-    for (const node of docSection.nodes) {
-        if (firstNode && node.kind === DocNodeKind.Paragraph) {
-            output.appendNodesInParagraph(node.getChildNodes());
-            firstNode = false;
-            continue;
-        }
-        firstNode = false;
-
-        output.appendNode(node);
-    }
-}
-
-export function mergeSections(
-    sections: DocSection[],
-    tsdocConfiguration: TSDocConfiguration,
-): DocSection {
-    const output = new DocSection({ configuration: tsdocConfiguration });
-
-    for (const section of sections) {
-        output.appendNodes(section.nodes);
-    }
-
-    return output;
 }
 
 export function getLinkForApiItem(

@@ -21,13 +21,13 @@ import {
 } from "@microsoft/tsdoc";
 
 import { DocIdentifiableHeading } from "./DocIdentifiableHeading";
+import { urlFromLink } from "./Interfaces";
 import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
 import {
     getDisplayNameForApiItem,
     getHeadingIdForApiItem,
     getLinkForApiItem,
     mergeSections,
-    urlFromLink,
 } from "./utilities";
 
 // TODOs:
