@@ -4,8 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { AttachState, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 
 import { MigrationState } from "../migrationInterfaces";
 import type {
@@ -77,7 +76,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     public constructor(
         inventoryList: IInventoryList,
         private readonly containerKillBit: IContainerKillBit,
-        private readonly containerRuntime: IContainerRuntime,
+        private readonly container: IContainer,
     ) {
         super();
         this._inventoryList = inventoryList;
@@ -101,7 +100,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     // Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
     // importing data into a completely untouched InventoryListContainer.
     public readonly importData = async (initialData: unknown) => {
-        if (this.containerRuntime.attachState !== AttachState.Detached) {
+        if (this.container.attachState !== AttachState.Detached) {
             throw new Error("Cannot set initial data after attach");
         }
         if (!this.supportsDataFormat(initialData)) {
@@ -152,7 +151,6 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     };
 
     public close() {
-        // Raise an event wanting close?
-        // this.container.close();
+        this.container.close();
     }
 }

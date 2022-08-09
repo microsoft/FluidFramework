@@ -54,6 +54,6 @@ export class DemoModelCodeLoader implements IModelCodeLoader<IMigratableModel> {
     };
 
     public readonly getModel = async (container: IContainer) => {
-        return requestFluidObject<IMigratableModel>(container, { url: "" });
+        return requestFluidObject<IMigratableModel>(container, { url: "", headers: { containerRef: container } });
     };
 }
