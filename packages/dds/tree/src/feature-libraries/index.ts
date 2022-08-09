@@ -9,3 +9,8 @@ export * from "./forestIndex";
 export * from "./schemaIndex";
 export * from "./treeTextCursor";
 export * from "./sequence-change-family";
+export * from "./defaultSchema";
+
+// Split this up into separate import and export for compatibility with API-Extractor.
+import * as FieldKinds from "./defaultFieldKinds";
+export { FieldKinds };

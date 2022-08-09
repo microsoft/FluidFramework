@@ -4,8 +4,9 @@
  */
 
 import { brand, brandOpaque } from "../util";
+import { FieldKind } from "./fieldKind";
 import {
-    FieldSchema, GlobalFieldKey, LocalFieldKey, FieldKind, TreeSchema, TreeSchemaIdentifier, ValueSchema,
+    FieldSchema, GlobalFieldKey, LocalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "./schema";
 
 /**
@@ -38,17 +39,10 @@ export const itemsKey: LocalFieldKey = brand("items");
  */
 export const rootFieldKey = brandOpaque<GlobalFieldKey>("rootFieldKey");
 
-/**
- * Default field which only permits emptiness.
- */
-export const emptyField: FieldSchema = {
-    kind: FieldKind.Forbidden,
-};
-
-export function fieldSchema(kind: FieldKind, types: readonly TreeSchemaIdentifier[]): FieldSchema {
+export function fieldSchema(kind: FieldKind, types?: Iterable<TreeSchemaIdentifier>): FieldSchema {
     return {
-        kind,
-        types: new Set(types),
+        kind: kind.identifier,
+        types: types === undefined ? undefined : new Set(types),
     };
 }
 
@@ -60,7 +54,7 @@ const defaultExtraGlobalFields = false;
 export interface TreeSchemaBuilder {
     readonly localFields?: { [key: string]: FieldSchema; };
     readonly globalFields?: Iterable<GlobalFieldKey>;
-    readonly extraLocalFields?: FieldSchema;
+    readonly extraLocalFields: FieldSchema;
     readonly extraGlobalFields?: boolean;
     readonly value?: ValueSchema;
 }
@@ -78,7 +72,7 @@ export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
     return {
         localFields,
         globalFields: new Set(data.globalFields ?? []),
-        extraLocalFields: data.extraLocalFields ?? emptyField,
+        extraLocalFields: data.extraLocalFields,
         extraGlobalFields: data.extraGlobalFields ?? defaultExtraGlobalFields,
         value: data.value ?? ValueSchema.Nothing,
     };

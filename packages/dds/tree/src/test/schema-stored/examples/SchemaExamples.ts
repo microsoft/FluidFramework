@@ -11,15 +11,14 @@
  * but rather just show what data a schema needs to capture.
  */
 
- import {
+import { emptyField, FieldKinds } from "../../../feature-libraries";
+import {
     TreeSchema,
-    FieldKind,
     ValueSchema,
-    TreeSchemaIdentifier,
     NamedTreeSchema,
-    emptyField,
     emptyMap,
     emptySet,
+    fieldSchema,
 } from "../../../schema-stored";
 import { brand } from "../../../util";
 
@@ -42,7 +41,7 @@ export const string: TreeSchema = {
     localFields: new Map([
         [
             brand("children"),
-            { kind: FieldKind.Sequence, types: new Set([codePoint.name]) },
+            fieldSchema(FieldKinds.sequence, [codePoint.name]),
         ],
     ]),
     value: ValueSchema.Nothing,

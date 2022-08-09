@@ -9,6 +9,7 @@ import { typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo } from "../../sc
 
 import { FieldKind, ValueSchema } from "../../schema-stored";
 import { requireTrue } from "../../util";
+import { FieldKinds } from "../../feature-libraries";
 
 // These tests currently just cover the type checking, so its all compile time.
 
@@ -20,7 +21,7 @@ export const testTypeIdentifier = "testType";
 
 const testField = typedFieldSchema({
     types: { testType: 0 as unknown },
-    kind: FieldKind.Value,
+    kind: FieldKinds.value,
 });
 
 export const testTreeSchema = typedTreeSchema({

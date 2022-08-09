@@ -28,9 +28,9 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
 export {
     LocalFieldKey, GlobalFieldKey, TreeSchemaIdentifier, NamedTreeSchema, Named,
     FieldSchema, ValueSchema, TreeSchema, FieldKind,
-    emptyField, neverTree,
-    SchemaRepository, StoredSchemaRepository,
-    rootFieldKey, TreeTypeSet,
+    StoredSchemaRepository, FieldKindIdentifier, Multiplicity, ChangeHandler, ChangeEncoder,
+    rootFieldKey, TreeTypeSet, SchemaData, SchemaPolicy, SchemaDataReader,
+    JsonCompatibleRead, JsonCompatible,
 } from "./schema-stored";
 
 export {
@@ -67,4 +67,6 @@ export {
     TextCursor,
     jsonableTreeFromCursor,
     singleTextCursor,
+    emptyField,
+    neverTree,
 } from "./feature-libraries";

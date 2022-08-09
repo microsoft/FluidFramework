@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { Dependee, SimpleDependee } from "../dependency-tracking";
+import { SimpleDependee } from "../dependency-tracking";
 import { allowsFieldSuperset, allowsTreeSuperset } from "./comparison";
+import { FieldKind } from "./fieldKind";
 import {
-    SchemaRepository,
     GlobalFieldKey,
     FieldSchema,
     TreeSchemaIdentifier,
     TreeSchema,
+    FieldKindIdentifier,
+    SchemaDataReader,
+    SchemaPolicy,
 } from "./schema";
-import {
-    neverField,
-    neverTree,
-} from "./specialSchema";
 
 /**
  * Example in memory SchemaRepository showing how stored schema could work.
@@ -54,9 +53,12 @@ import {
  *
  * TODO: could implement more fine grained dependency tracking.
  */
-export class StoredSchemaRepository extends SimpleDependee implements SchemaRepository, Dependee {
+export class StoredSchemaRepository extends SimpleDependee implements SchemaData {
     readonly computationName: string = "StoredSchemaRepository";
-
+    protected readonly data = {
+        treeSchema: new Map<TreeSchemaIdentifier, TreeSchema>(),
+        globalFieldSchema: new Map<GlobalFieldKey, FieldSchema>(),
+    };
     /**
      * For now, the schema are just scored in maps.
      * There are a couple reasons we might not want this simple solution long term:
@@ -70,30 +72,43 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaRepo
      * that might provide a decent alternative to extraFields (which is a bit odd).
      */
     public constructor(
-        protected readonly fields: Map<GlobalFieldKey, FieldSchema> = new Map(),
-        protected readonly trees: Map<TreeSchemaIdentifier, TreeSchema> = new Map(),
+        public readonly policy: SchemaPolicy,
+        data?: SchemaData,
     ) {
         super();
+        if (data !== undefined) {
+            this.data = {
+                treeSchema: new Map(this.data.treeSchema),
+                globalFieldSchema: new Map(this.data.globalFieldSchema),
+            };
+        }
     }
 
     public clone(): StoredSchemaRepository {
-        return new StoredSchemaRepository(new Map(this.fields), new Map(this.trees));
+        return new StoredSchemaRepository(
+            this.policy,
+            this.data,
+        );
     }
 
     public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
-        return this.fields;
+        return this.data.globalFieldSchema;
     }
 
     public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
-        return this.trees;
+        return this.data.treeSchema;
+    }
+
+    public get fieldKinds(): ReadonlyMap<FieldKindIdentifier, FieldKind> {
+        return this.policy.fieldKinds;
     }
 
     public lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema {
-        return this.fields.get(identifier) ?? neverField;
+        return this.globalFieldSchema.get(identifier) ?? this.policy.defaultGlobalFieldSchema;
     }
 
     public lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema {
-        return this.trees.get(identifier) ?? neverTree;
+        return this.treeSchema.get(identifier) ?? this.policy.defaultTreeSchema;
     }
 
     /**
@@ -106,12 +121,12 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaRepo
     ): boolean {
         if (
             allowsFieldSuperset(
-                this,
+                this.policy,
                 this.lookupGlobalFieldSchema(identifier),
                 schema,
             )
         ) {
-            this.fields.set(identifier, schema);
+            this.data.globalFieldSchema.set(identifier, schema);
             this.invalidateDependents();
             return true;
         }
@@ -128,10 +143,18 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaRepo
     ): boolean {
         const original = this.lookupTreeSchema(identifier);
         if (allowsTreeSuperset(this, original, schema)) {
-            this.trees.set(identifier, schema);
+            this.data.treeSchema.set(identifier, schema);
             this.invalidateDependents();
             return true;
         }
         return false;
     }
+}
+
+/**
+ * Schema data that can be stored in a document.
+ */
+export interface SchemaData extends SchemaDataReader {
+    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }

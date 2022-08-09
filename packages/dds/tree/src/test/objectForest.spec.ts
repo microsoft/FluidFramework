@@ -11,7 +11,9 @@ import { ObjectForest } from "../feature-libraries/object-forest";
 
 import {
     fieldSchema, rootFieldKey,
-    isNeverField, FieldKind,
+    isNeverField,
+    SchemaData,
+    StoredSchemaRepository,
 } from "../schema-stored";
 import { IEditableForest, initializeForest, TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../domains";
@@ -19,6 +21,7 @@ import { recordDependency } from "../dependency-tracking";
 import { clonePath, Delta, detachedFieldAsKey, JsonableTree, UpPath } from "../tree";
 import { jsonableTreeFromCursor } from "..";
 import { brand } from "../util";
+import { defaultSchemaPolicy, FieldKinds } from "../feature-libraries";
 import { MockDependent } from "./utils";
 
 /**
@@ -44,7 +47,7 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
                         assert(schema.tryUpdateTreeSchema(t.name, t));
                     }
 
-                    const rootFieldSchema = fieldSchema(FieldKind.Optional, [...jsonTypeSchema.keys()]);
+                    const rootFieldSchema = fieldSchema(FieldKinds.optional, jsonTypeSchema.keys());
                     assert(schema.tryUpdateFieldSchema(rootFieldKey, rootFieldSchema));
 
                     // Check schema is actually valid. If we forgot to add some required types this would fail.
@@ -234,4 +237,8 @@ function testForest(suiteName: string, factory: () => IEditableForest): void {
     // TODO: implement and test fine grained invalidation.
 }
 
-testForest("object-forest", () => new ObjectForest());
+const schemaData: SchemaData = {
+    globalFieldSchema: new Map(),
+    treeSchema: jsonTypeSchema,
+};
+testForest("object-forest", () => new ObjectForest(new StoredSchemaRepository(defaultSchemaPolicy, schemaData)));

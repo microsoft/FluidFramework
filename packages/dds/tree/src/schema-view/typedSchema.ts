@@ -8,10 +8,10 @@ import {
     fieldSchema, treeSchema, TreeSchemaBuilder,
     FieldSchema,
     LocalFieldKey,
-    FieldKind,
     TreeSchema,
     ValueSchema,
     TreeSchemaIdentifier,
+    FieldKind,
 } from "../schema-stored";
 
 /**

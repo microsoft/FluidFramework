@@ -7,11 +7,13 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { default as Random } from "random-js";
-import { buildForest, ITreeCursor, jsonableTreeFromCursor, singleTextCursor } from "../../..";
+import { buildForest, ITreeCursor, jsonableTreeFromCursor, jsonTypeSchema, singleTextCursor } from "../../..";
 import { initializeForest, TreeNavigationResult } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
+import { defaultSchemaPolicy } from "../../../feature-libraries";
+import { SchemaData, StoredSchemaRepository } from "../../../schema-stored";
 import { generateCanada } from "./json";
 
 // Helper for creating a PRNG instance that produces a uniform distribution in the range [0..1).
@@ -54,6 +56,11 @@ function clone<T>(value: Jsonable<T>): Jsonable<T> {
 function bench(name: string, getJson: () => any) {
     const json = getJson();
     const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
+    const schemaData: SchemaData = {
+            globalFieldSchema: new Map(),
+            treeSchema: jsonTypeSchema,
+    };
+    const schema = new StoredSchemaRepository(defaultSchemaPolicy, schemaData);
 
     benchmark({
         type: BenchmarkType.Measurement,
@@ -74,7 +81,7 @@ function bench(name: string, getJson: () => any) {
         ["JsonCursor", () => new JsonCursor(json)],
         ["TextCursor", () => singleTextCursor(encodedTree)],
         ["object-forest Cursor", () => {
-            const forest = buildForest();
+            const forest = buildForest(schema);
             initializeForest(forest, [encodedTree]);
             const cursor = forest.allocateCursor();
             assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);

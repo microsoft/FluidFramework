@@ -1,0 +1,142 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { ChangeRebaser } from "../rebase";
+import { FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier } from "./schema";
+
+/**
+ * Functionality for FieldKinds that is stable,
+ * meaning that it can not change in any measurable way without providing a new identifier.
+ *
+ * It is assumed that this information and policy is available on all clients interacting with a document
+ * using the identifier.
+ *
+ * This must contain enough information to process remote edits to this FieldKind consistently with all clients.
+ * All behavior must be deterministic, and not change across versions of the app/library.
+ *
+ * These policies include the data encoding, change encoding, change rebase and change application.
+ */
+export class FieldKind {
+    /**
+     * @param identifier - Globally scoped identifier.
+     * @param multiplicity - bound on the number of children fields of this kind may have.
+     * TODO: replace with with numeric upper and lowe bounds.
+     * @param changeHandler - Change handling policy.
+     * @param allowsTreeSupersetOf - Kinds which can be "upgraded"
+     * to this one without risk of any possible data becoming out of schema.
+     * @param handlesEditsFrom - Kinds (in addition to this) whose edits can be processed by changeHandler.
+     * If the kind of a field changes, and edits are rebased across that kind change,
+     * listing the other old kind here can prevent those edits from being conflicted and
+     * provide a chance to handle them.
+     */
+    public constructor(
+        public readonly identifier: FieldKindIdentifier,
+        public readonly multiplicity: Multiplicity,
+        public readonly changeHandler: ChangeHandler<unknown, any, any>,
+        public readonly allowsTreeSupersetOf:
+            (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean,
+        public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
+        ) {}
+}
+
+export interface ChangeHandler<TChange, TFinalChange, TChangeSet> {
+    readonly rebaser: ChangeRebaser<TChange, TFinalChange, TChangeSet>;
+    readonly encoder: ChangeEncoder<TFinalChange>;
+    // TODO: add edit builder.
+}
+
+export abstract class ChangeEncoder<TChange> {
+    public abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleRead;
+
+    /**
+     * Binary encoding.
+     * Override to do better than just Json.
+     *
+     * TODO: maybe use DataView or some kind of writer instead of IsoBuffer.
+     */
+    public encodeBinary(formatVersion: number, change: TChange): IsoBuffer {
+        const jsonable = this.encodeForJson(formatVersion, change);
+        const json = JSON.stringify(jsonable);
+        return IsoBuffer.from(json);
+    }
+
+    public abstract decodeJson(formatVersion: number, change: JsonCompatible): TChange;
+
+    /**
+     * Binary decoding.
+     * Override to do better than just Json.
+     */
+    public decodeBinary(formatVersion: number, change: IsoBuffer): TChange {
+        const json = bufferToString(change, "utf8");
+        const jsonable = JSON.parse(json);
+        return this.decodeJson(formatVersion, jsonable);
+    }
+}
+
+/**
+ * Use for Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ */
+export type JsonCompatible = string | number | boolean | null | JsonCompatible[] | { [P in string]: JsonCompatible; };
+
+export type JsonCompatibleRead =
+    | string
+    | number
+    | boolean
+    | null
+    | readonly JsonCompatible[]
+    | { readonly [P in string]: JsonCompatible | undefined; };
+
+/**
+ * Describes how a particular field functions.
+ *
+ * This determine its reading and editing APIs, multiplicity, and what merge resolution policies it will use.
+ */
+ export enum Multiplicity {
+    /**
+     * Exactly one item.
+     */
+    Value,
+    /**
+     * 0 or 1 items.
+     */
+    Optional,
+    /**
+     * 0 or more items.
+     */
+    Sequence,
+    /**
+     * Exactly 0 items.
+     *
+     * Using Forbidden makes what types are listed for allowed in a field irrelevant
+     * since the field will never have values in it.
+     *
+     * Using Forbidden is equivalent to picking a kind that permits empty (like sequence or optional)
+     * and having no allowed types (or only never types).
+     * Because of this, its possible to express everything constraint wise without Forbidden,
+     * but using Forbidden can be more semantically clear than optional with no allowed types.
+     *
+     * For view schema, this can be useful if you need to:
+     * - run a specific out of schema handler when a field is present,
+     * but otherwise are ignoring or tolerating (ex: via extra fields) unmentioned fields.
+     * - prevent a specific field from being used as an extra field
+     * (perhaps for some past of future compatibility reason)
+     * - keep a field in a schema for metadata purposes
+     * (ex: for improved error messaging, error handling or documentation)
+     * that is not used in this specific version of the schema (ex: to document what it was or will be used for).
+     *
+     * For stored schema, this can be useful if you need to:
+     * - have a field which can have its schema updated to Optional or Sequence of any type.
+     * - to exclude a field from extra fields
+     * - for the schema system to use as a default for fields which aren't declared
+     * (ex: when updating a field that did not exist into one that does)
+     *
+     * See {@link emptyField} for a constant, reusable field using Forbidden.
+     */
+    Forbidden,
+}
