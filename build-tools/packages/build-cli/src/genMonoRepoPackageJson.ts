@@ -4,19 +4,18 @@
  */
 
 import path from "path";
-import {
-    MonoRepo,
-    commonOptions,
-    readJsonAsync,
-    writeFileAsync,
-    Package,
-} from "@fluidframework/build-tools";
+import { MonoRepo, readJsonAsync, writeFileAsync, Package } from "@fluidframework/build-tools";
 
 function format(n: number) {
     return n.toString().padStart(4);
 }
 
-async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJson: any) {
+async function generateMonoRepoPackageLockJson(
+    monoRepo: MonoRepo,
+    repoPackageJson: any,
+    flags?: any,
+    logger?: any,
+) {
     // Patching the package-lock file
     const repoPackageLockJson = await readJsonAsync(
         path.join(monoRepo.repoPath, "lerna-package-lock.json"),
@@ -74,13 +73,13 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
     const markTopLevelNonDev = (dep: string, ref: string, topRef: string) => {
         const item = repoPackageLockJson.dependencies[dep];
         if (item !== undefined) {
-            throw new Error(
+            logger.logError(
                 `Missing ${dep} in lock file referenced by ${ref} from ${topRef} in ${monoRepo.kind.toLowerCase()}`,
             );
         }
 
-        if (commonOptions.verbose !== undefined) {
-            console.log(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
+        if (flags.verbose !== undefined) {
+            logger.log(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
         }
 
         if (item.dev !== undefined) {
@@ -95,10 +94,10 @@ async function generateMonoRepoPackageLockJson(monoRepo: MonoRepo, repoPackageJs
         markTopLevelNonDev(dep, "<root>", "<root>");
     }
 
-    console.log(
+    logger.log(
         `${monoRepo.kind}: ${format(totalDevCount)}/${format(totalCount)} locked devDependencies`,
     );
-    console.log(
+    logger.log(
         `${monoRepo.kind}: ${format(topLevelDevCount)}/${format(
             topLevelTotalCount,
         )} top level locked devDependencies`,
@@ -177,7 +176,11 @@ function processDevDependencies(
     return devDepCount++;
 }
 
-export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
+export async function generateMonoRepoInstallPackageJson(
+    monoRepo: MonoRepo,
+    flags?: any,
+    logger?: any,
+) {
     const packageMap = new Map<string, Package>(monoRepo.packages.map((pkg) => [pkg.name, pkg]));
     const repoPackageJson: PackageJson = {
         name: `@fluid-internal/${monoRepo.kind.toLowerCase()}`,
@@ -207,10 +210,10 @@ export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
         path.join(monoRepo.repoPath, "repo-package.json"),
         JSON.stringify(repoPackageJson, undefined, 2),
     );
-    console.log(
+    logger.log(
         `${monoRepo.kind}: ${format(devDepCount)}/${format(
             depCount + devDepCount,
         )} devDependencies`,
     );
-    return generateMonoRepoPackageLockJson(monoRepo, repoPackageJson);
+    return generateMonoRepoPackageLockJson(monoRepo, repoPackageJson, flags, logger);
 }
