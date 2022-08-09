@@ -12,8 +12,10 @@ import { ApiItemKind } from '@microsoft/api-extractor-model';
 import { ApiMethod } from '@microsoft/api-extractor-model';
 import { ApiMethodSignature } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
+import { ApiPackage } from '@microsoft/api-extractor-model';
 import { DocHeading } from '@microsoft/api-documenter/lib/nodes/DocHeading';
 import { DocSection } from '@microsoft/tsdoc';
+import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
 import { IDocHeadingParameters } from '@microsoft/api-documenter/lib/nodes/DocHeading';
 import { MarkdownEmitter } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { NewlineKind } from '@rushstack/node-core-library';
@@ -22,6 +24,10 @@ import { TSDocConfiguration } from '@microsoft/tsdoc';
 export { ApiItem }
 
 export { ApiItemKind }
+
+export { ApiModel }
+
+export { ApiPackage }
 
 // @public (undocumented)
 export namespace DefaultPolicies {
@@ -45,6 +51,10 @@ export namespace DefaultRenderingPolicies {
     export function defaultRenderFunctionLike(apiItem: ApiConstructor | ApiConstructSignature | ApiFunction | ApiMethod | ApiMethodSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
     // (undocumented)
     export function defaultRenderMethod(apiItem: ApiMethod | ApiMethodSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+    // (undocumented)
+    export function defaultRenderModel(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+    // (undocumented)
+    export function defaultRenderPackage(apiPackage: ApiPackage, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 }
 
 // @public (undocumented)
@@ -72,18 +82,6 @@ export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocu
 // @public
 export interface IDocIdentifiableHeadingParameters extends IDocHeadingParameters {
     id?: string;
-}
-
-// @public (undocumented)
-export interface Link {
-    // (undocumented)
-    headingId?: string;
-    // (undocumented)
-    relativeFilePath: string;
-    // (undocumented)
-    text: string;
-    // (undocumented)
-    uriBase: string;
 }
 
 // @public
@@ -115,8 +113,8 @@ export interface PolicyOptions {
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
 
-// @public
-export function render(apiModel: ApiModel, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
+// @public (undocumented)
+export function renderApiPage(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
 // @public (undocumented)
 export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSection;
@@ -124,13 +122,16 @@ export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSe
 // @public (undocumented)
 export function renderBreadcrumb(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
+// @public
+export function renderDocuments(apiModel: ApiModel, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
+
 // @public (undocumented)
 export function renderFiles(apiModel: ApiModel, outputDirectoryPath: string, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): Promise<void>;
 
 // @public (undocumented)
 export function renderHeading(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocHeading;
 
-// @public (undocumented)
+// @public
 export interface RenderingPolicies {
     // (undocumented)
     renderConstructor?: RenderingPolicy<ApiConstructSignature | ApiConstructor>;
@@ -138,13 +139,26 @@ export interface RenderingPolicies {
     renderFunction?: RenderingPolicy<ApiFunction>;
     // (undocumented)
     renderMethod?: RenderingPolicy<ApiMethod | ApiMethodSignature>;
+    // (undocumented)
+    renderModel?: RenderingPolicy<ApiModel>;
+    // (undocumented)
+    renderPackage?: RenderingPolicy<ApiPackage>;
 }
 
 // @public (undocumented)
 export type RenderingPolicy<TApiItem extends ApiItem> = (apiItem: TApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration) => DocSection;
 
+// @public
+export function renderModelPage(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
+
 // @public (undocumented)
-export function renderPageRootItem(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+export function renderPackagePage(apiPackage: ApiPackage, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
+
+// @public (undocumented)
+export function renderSummaryCell(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocTableCell;
+
+// @public (undocumented)
+export function renderTitleCell(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocTableCell;
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;

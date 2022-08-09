@@ -13,7 +13,7 @@ export * from "./Rendering";
 export * from "./RenderingPolicy";
 
 // #region Conveinence re-exports of API model types
-export { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
 // #endregion
 
 // #region Convenience re-exports of Doc builder types from api-documenter

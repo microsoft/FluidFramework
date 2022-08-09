@@ -1,11 +1,13 @@
 import { DocNodeKind, DocParagraph, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
+// TODO: remove
 export function appendSection(output: DocSection | DocParagraph, docSection: DocSection): void {
     for (const node of docSection.nodes) {
         output.appendNode(node);
     }
 }
 
+// TODO: remove
 export function appendAndMergeSection(output: DocSection, docSection: DocSection): void {
     let firstNode: boolean = true;
     for (const node of docSection.nodes) {
@@ -20,6 +22,7 @@ export function appendAndMergeSection(output: DocSection, docSection: DocSection
     }
 }
 
+// TODO: remove?
 export function mergeSections(
     sections: DocSection[],
     tsdocConfiguration: TSDocConfiguration,

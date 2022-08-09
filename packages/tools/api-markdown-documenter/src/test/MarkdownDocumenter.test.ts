@@ -6,7 +6,7 @@ import { compare } from "dir-compare";
 import * as Path from "path";
 
 import { MarkdownDocument } from "../MarkdownDocument";
-import { getDocumentItems, render, renderFiles } from "../MarkdownDocumenter";
+import { getDocumentItems, renderDocuments, renderFiles } from "../MarkdownDocumenter";
 import { markdownDocumenterConfigurationWithDefaults } from "../MarkdownDocumenterConfiguration";
 
 /**
@@ -51,7 +51,7 @@ describe("api-markdown-documenter simple suite tests", async () => {
     });
 
     it("Ensure no duplicate file paths", () => {
-        const documents = render(
+        const documents = renderDocuments(
             apiModel!,
             {
                 uriRoot: "",

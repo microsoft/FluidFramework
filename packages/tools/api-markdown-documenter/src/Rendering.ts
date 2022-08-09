@@ -1,13 +1,20 @@
+import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
+import { DocEmphasisSpan } from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
 import { DocHeading } from "@microsoft/api-documenter/lib/nodes/DocHeading";
 import { DocNoteBox } from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
+import { DocTableCell } from "@microsoft/api-documenter/lib/nodes/DocTableCell";
+import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
     ApiConstructSignature,
     ApiConstructor,
+    ApiDocumentedItem,
     ApiFunction,
     ApiItem,
     ApiItemKind,
     ApiMethod,
     ApiMethodSignature,
+    ApiModel,
+    ApiPackage,
     ApiReleaseTagMixin,
     ReleaseTag,
 } from "@microsoft/api-extractor-model";
@@ -17,49 +24,194 @@ import {
     DocParagraph,
     DocPlainText,
     DocSection,
+    StringBuilder,
     TSDocConfiguration,
 } from "@microsoft/tsdoc";
 
 import { DocIdentifiableHeading } from "./DocIdentifiableHeading";
 import { urlFromLink } from "./Link";
+import { MarkdownDocument } from "./MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
 import {
     getDisplayNameForApiItem,
     getHeadingIdForApiItem,
     getLinkForApiItem,
-    mergeSections,
+    getLinkUrlForApiItem,
+    getQualifiedApiItemName,
+    getRelativeFilePathForApiItem,
 } from "./utilities";
 
 // TODOs:
 // - heading level tracking
+// - Model heading text from config
 
-export function renderPageRootItem(
+/**
+ * TODO
+ * Note: no breadcrumb
+ * @param apiModel - TODO
+ * @param documenterConfiguration - TODO
+ * @param tsdocConfiguration - TODO
+ */
+export function renderModelPage(
+    apiModel: ApiModel,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+    markdownEmitter: MarkdownEmitter,
+): MarkdownDocument {
+    if (documenterConfiguration.verbose) {
+        console.log(`Rendering API Model page...`);
+    }
+
+    const docNodes: DocNode[] = [];
+
+    // Render heading
+    const headingText = "API Overview"; // TODO: from config
+    // TODO: heading level
+    docNodes.push(
+        new DocHeading({ configuration: tsdocConfiguration, title: headingText, level: 1 }),
+    );
+
+    // Render body contents
+    docNodes.push(
+        documenterConfiguration.renderModel(apiModel, documenterConfiguration, tsdocConfiguration),
+    );
+
+    if (documenterConfiguration.verbose) {
+        console.log(`API Model page rendered successfully.`);
+    }
+
+    return createMarkdownDocument(
+        apiModel,
+        new DocSection({ configuration: tsdocConfiguration }, docNodes),
+        documenterConfiguration,
+        markdownEmitter,
+    );
+}
+
+export function renderPackagePage(
+    apiPackage: ApiPackage,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+    markdownEmitter: MarkdownEmitter,
+): MarkdownDocument {
+    if (documenterConfiguration.verbose) {
+        console.log(`Rendering ${apiPackage.name} package page...`);
+    }
+
+    const docNodes: DocNode[] = [];
+
+    // Render heading
+    const headingText = apiPackage.name; // TODO: from config?
+    // TODO: heading level
+    docNodes.push(
+        new DocHeading({ configuration: tsdocConfiguration, title: headingText, level: 1 }),
+    );
+
+    // Render body contents
+    docNodes.push(
+        documenterConfiguration.renderPackage(
+            apiPackage,
+            documenterConfiguration,
+            tsdocConfiguration,
+        ),
+    );
+
+    if (documenterConfiguration.verbose) {
+        console.log(`Package page rendered successfully.`);
+    }
+
+    return createMarkdownDocument(
+        apiPackage,
+        new DocSection({ configuration: tsdocConfiguration }, docNodes),
+        documenterConfiguration,
+        markdownEmitter,
+    );
+}
+
+export function renderApiPage(
     apiItem: ApiItem,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
-): DocSection {
+    markdownEmitter: MarkdownEmitter,
+): MarkdownDocument {
+    if (
+        apiItem.kind === ApiItemKind.Model ||
+        apiItem.kind === ApiItemKind.Package ||
+        apiItem.kind === ApiItemKind.EntryPoint
+    ) {
+        throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
+    }
+
     if (documenterConfiguration.verbose) {
         console.log(`Rendering document for ${apiItem.displayName}...`);
     }
 
-    // Render breadcrumb at top of any page
-    const breadcrumb = renderBreadcrumb(apiItem, documenterConfiguration, tsdocConfiguration);
+    // Render body content for the item
+    const bodyContent = renderApiSection(apiItem, documenterConfiguration, tsdocConfiguration);
 
-    // Render remaining page content
-    const mainContent = renderApiItem(apiItem, documenterConfiguration, tsdocConfiguration);
-
-    // TODO: what else?
-
-    const result = mergeSections([breadcrumb, mainContent], tsdocConfiguration);
+    // Render body content to section including header and footer items like the breadcrumb
+    const document = renderPage(
+        apiItem,
+        bodyContent,
+        documenterConfiguration,
+        tsdocConfiguration,
+        markdownEmitter,
+    );
 
     if (documenterConfiguration.verbose) {
         console.log(`Document for ${apiItem.displayName} rendered successfully.`);
     }
 
-    return result;
+    return document;
 }
 
-function renderApiItem(
+function renderPage(
+    apiItem: ApiItem,
+    bodyContent: DocSection,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+    markdownEmitter: MarkdownEmitter,
+): MarkdownDocument {
+    const docNodes: DocNode[] = [];
+
+    // Render breadcrumb at top of any page
+    docNodes.push(renderBreadcrumb(apiItem, documenterConfiguration, tsdocConfiguration));
+
+    // TODO: anything else before main content?
+
+    docNodes.push(bodyContent);
+
+    // TODO: anything after main content?
+
+    return createMarkdownDocument(
+        apiItem,
+        new DocSection({ configuration: tsdocConfiguration }, docNodes),
+        documenterConfiguration,
+        markdownEmitter,
+    );
+}
+
+function createMarkdownDocument(
+    apiItem: ApiItem,
+    renderedContents: DocSection,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    markdownEmitter: MarkdownEmitter,
+): MarkdownDocument {
+    const emittedContents = markdownEmitter.emit(new StringBuilder(), renderedContents, {
+        /* TODO */
+    });
+    return {
+        contents: emittedContents,
+        apiItemName: getQualifiedApiItemName(apiItem),
+        path: getRelativeFilePathForApiItem(
+            apiItem,
+            documenterConfiguration,
+            /* includeExtension: */ true,
+        ),
+    };
+}
+
+function renderApiSection(
     apiItem: ApiItem,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
@@ -257,4 +409,48 @@ export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSe
     );
 
     return output;
+}
+
+export function renderTitleCell(
+    apiItem: ApiItem,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTableCell {
+    return new DocTableCell({ configuration: tsdocConfiguration }, [
+        new DocParagraph({ configuration: tsdocConfiguration }, [
+            new DocLinkTag({
+                configuration: tsdocConfiguration,
+                tagName: "@link",
+                linkText: Utilities.getConciseSignature(apiItem),
+                urlDestination: getLinkUrlForApiItem(apiItem, documenterConfiguration),
+            }),
+        ]),
+    ]);
+}
+
+export function renderSummaryCell(
+    apiItem: ApiItem,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTableCell {
+    const docNodes: DocNode[] = [];
+
+    if (ApiReleaseTagMixin.isBaseClassOf(apiItem)) {
+        if (apiItem.releaseTag === ReleaseTag.Beta) {
+            docNodes.push(
+                new DocEmphasisSpan(
+                    { configuration: tsdocConfiguration, bold: true, italic: true },
+                    [new DocPlainText({ configuration: tsdocConfiguration, text: "(BETA)" })],
+                ),
+            );
+            docNodes.push(new DocPlainText({ configuration: tsdocConfiguration, text: " " }));
+        }
+    }
+
+    if (apiItem instanceof ApiDocumentedItem) {
+        if (apiItem.tsdocComment !== undefined) {
+            docNodes.push(apiItem.tsdocComment.summarySection);
+        }
+    }
+
+    return new DocTableCell({ configuration: tsdocConfiguration }, docNodes);
 }

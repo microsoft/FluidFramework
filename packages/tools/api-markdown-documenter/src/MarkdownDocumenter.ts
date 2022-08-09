@@ -1,7 +1,6 @@
 import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
 import { CustomDocNodes } from "@microsoft/api-documenter/lib/nodes/CustomDocNodeKind";
 import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
-import { StringBuilder } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 import * as Path from "path";
 
@@ -10,8 +9,7 @@ import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
-import { renderPageRootItem } from "./Rendering";
-import { getQualifiedApiItemName, getRelativeFilePathForApiItem } from "./utilities";
+import { renderApiPage, renderPackagePage } from "./Rendering";
 
 // TODOs:
 // - Handle Model and Package level separately
@@ -36,40 +34,54 @@ import { getQualifiedApiItemName, getRelativeFilePathForApiItem } from "./utilit
  * @param partialDocumenterConfig - TODO
  * @param markdownEmitter - TODO
  */
-export function render(
+export function renderDocuments(
     apiModel: ApiModel,
     partialDocumenterConfig: MarkdownDocumenterConfiguration,
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument[] {
     const documenterConfig = markdownDocumenterConfigurationWithDefaults(partialDocumenterConfig);
+    const tsdocConfiguration = CustomDocNodes.configuration;
 
     console.log(`Rendering markdown documentation for API Model ${apiModel.displayName}...`);
 
-    const documentItems = getDocumentItems(apiModel, documenterConfig);
+    const documents: MarkdownDocument[] = [];
 
-    if (documenterConfig.verbose) {
-        console.log(
-            `Identified ${documentItems.length} API items that will be rendered to their own documents per provided policy.`,
-        );
+    // Always render Model page
+    documents.push(renderApiPage(apiModel, documenterConfig, tsdocConfiguration, markdownEmitter));
+
+    if (apiModel.packages.length !== 0) {
+        // For each package, walk the child graph to find API items which should be rendered to their own document page
+        // per provided policy.
+
+        for (const packageItem of apiModel.packages) {
+            // Always render pages for packages under the model
+            documents.push(
+                renderPackagePage(
+                    packageItem,
+                    documenterConfig,
+                    tsdocConfiguration,
+                    markdownEmitter,
+                ),
+            );
+
+            const packageEntryPoints = packageItem.entryPoints;
+            if (packageEntryPoints.length !== 1) {
+                throw new Error(
+                    `Encountered multiple EntryPoint items under package "${packageItem.name}". ` +
+                        "API-Extractor only supports single-entry packages, so this should not be possible.",
+                );
+            }
+
+            const packageEntryPointItem = packageEntryPoints[0];
+
+            const packageDocumentItems = getDocumentItems(packageEntryPointItem, documenterConfig);
+            for (const apiItem of packageDocumentItems) {
+                documents.push(
+                    renderApiPage(apiItem, documenterConfig, tsdocConfiguration, markdownEmitter),
+                );
+            }
+        }
     }
-
-    const documents: MarkdownDocument[] = documentItems.map((documentItem) => {
-        const renderedContents = renderPageRootItem(
-            documentItem,
-            documenterConfig,
-            CustomDocNodes.configuration,
-        );
-        const emittedContents = markdownEmitter.emit(new StringBuilder(), renderedContents, {});
-        return {
-            contents: emittedContents,
-            apiItemName: getQualifiedApiItemName(documentItem),
-            path: getRelativeFilePathForApiItem(
-                documentItem,
-                documenterConfig,
-                /* includeExtension: */ true,
-            ),
-        };
-    });
 
     console.log("Documents rendered.");
 
@@ -84,7 +96,7 @@ export async function renderFiles(
 ): Promise<void> {
     await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
-    const documents = render(apiModel, partialDocumenterConfig, markdownEmitter);
+    const documents = renderDocuments(apiModel, partialDocumenterConfig, markdownEmitter);
 
     await Promise.all(
         documents.map(async (document) => {
