@@ -400,21 +400,17 @@ export function renderHeading(
 }
 
 export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSection {
-    const output = new DocSection({ configuration: tsdocConfiguration });
-
     const betaWarning: string =
         "This API is provided as a preview for developers and may change" +
         " based on feedback that we receive. Do not use this API in a production environment.";
 
-    output.appendNode(
+    return new DocSection({ configuration: tsdocConfiguration }, [
         new DocNoteBox({ configuration: tsdocConfiguration }, [
             new DocParagraph({ configuration: tsdocConfiguration }, [
                 new DocPlainText({ configuration: tsdocConfiguration, text: betaWarning }),
             ]),
         ]),
-    );
-
-    return output;
+    ]);
 }
 
 export function renderTitleCell(
