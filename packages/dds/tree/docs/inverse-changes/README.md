@@ -1,9 +1,11 @@
 # Inverse Changes
 
-This document covers the existing thinking on the topic of inverse changes and undo.
+This document is a 
+"[brain dump](https://www.merriam-webster.com/dictionary/brain%20dump)"
+on the topic of inverse changes and undo.
 It is not meant to present a final design,
-but rather to reflect the current state of the discussion
-to facilitate further design and mitigate the risk of information loss.
+but rather to facilitate further design work
+and to mitigate the risk of information loss.
 
 Some terminology:
 While the terms "client" and "peer" can often be used interchangeably,
@@ -614,7 +616,7 @@ This is non-trivial for two reasons:
   or may not support undo at all,
   or may not even support making edits at all.
 
-These issues may only be addressable by assuming an infinite undo window
+These issues may be addressable by assuming an infinite undo window
 and relying on a document state history service to provide the repair data for it.
 
 ### A Middle Ground
