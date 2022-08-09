@@ -1015,7 +1015,6 @@ export class MergeTree {
     readonly collabWindow: CollaborationWindow;
     // (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    findRollbackPosition(segment: ISegment): number;
     // (undocumented)
     findTile(startPos: number, clientId: number, tileLabel: string, posPrecedesTile?: boolean): {
         tile: ReferencePosition;
@@ -1078,7 +1077,7 @@ export class MergeTree {
     // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: number): number | undefined;
-    rollbackRemovedSegment(segments: ISegment[]): void;
+    rollback(op: any, localOpMetadata: unknown): void;
     // (undocumented)
     root: IMergeBlock;
     // (undocumented)
