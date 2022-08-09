@@ -6,33 +6,29 @@
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { rootDataStoreRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
-import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
+import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { ContainerKillBitInstantiationFactory, IContainerKillBit } from "../containerKillBit";
-import { IInventoryList } from "../modelInterfaces";
+import { IInventoryList, IInventoryListContainer } from "../modelInterfaces";
+import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoading";
 import { InventoryListContainer } from "./containerModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
 export const inventoryListId = "default-inventory-list";
 export const containerKillBitId = "container-kill-bit";
 
-const modelRequestHandler: RuntimeRequestHandler =
-    async (request: RequestParser, runtime: IContainerRuntime) => {
-        if (request.pathParts.length === 0 && request.headers?.containerRef !== undefined) {
-            const inventoryList = await requestFluidObject<IInventoryList>(
-                await runtime.getRootDataStore(inventoryListId),
-                "",
-            );
-            const containerKillBit = await requestFluidObject<IContainerKillBit>(
-                await runtime.getRootDataStore(containerKillBitId),
-                "",
-            );
-            const container: IContainer = request.headers.containerRef;
-            const model = new InventoryListContainer(inventoryList, containerKillBit, container);
-
-            return { status: 200, mimeType: "fluid/object", value: model };
-        }
+const makeInventoryListModel: ModelMakerCallback<IInventoryListContainer> =
+    async (runtime: IContainerRuntime, container: IContainer) => {
+        const inventoryList = await requestFluidObject<IInventoryList>(
+            await runtime.getRootDataStore(inventoryListId),
+            "",
+        );
+        const containerKillBit = await requestFluidObject<IContainerKillBit>(
+            await runtime.getRootDataStore(containerKillBitId),
+            "",
+        );
+        return new InventoryListContainer(inventoryList, containerKillBit, container);
     };
 
 export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFactory {
@@ -44,7 +40,7 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
             ]), // registryEntries
             undefined,
             [
-                modelRequestHandler,
+                makeModelRequestHandler(makeInventoryListModel),
                 rootDataStoreRequestHandler,
             ],
         );

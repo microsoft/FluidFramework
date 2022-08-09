@@ -5,10 +5,22 @@
 
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { IModelLoader } from "./interfaces";
+
+export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
+export const makeModelRequestHandler = <ModelType>(modelMakerCallback: ModelMakerCallback<ModelType>) => {
+    return async (request: RequestParser, runtime: IContainerRuntime) => {
+        if (request.pathParts.length === 0 && request.headers?.containerRef !== undefined) {
+            const container: IContainer = request.headers.containerRef;
+            const model = await modelMakerCallback(runtime, container);
+            return { status: 200, mimeType: "fluid/object", value: model };
+        }
+    };
+};
 
 export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
     private readonly loader: IHostLoader;
