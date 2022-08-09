@@ -3,19 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import {
-    BaseContainerRuntimeFactory,
-    defaultRouteRequestHandler,
-} from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { rootDataStoreRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 
-import { ContainerKillBitInstantiationFactory } from "../containerKillBit";
+import { ContainerKillBitInstantiationFactory, IContainerKillBit } from "../containerKillBit";
+import { IInventoryList } from "../modelInterfaces";
+import { InventoryListContainer } from "./internalContainerModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
 export const inventoryListId = "default-inventory-list";
 export const containerKillBitId = "container-kill-bit";
+
+const modelRequestHandler: RuntimeRequestHandler =
+    async (request: RequestParser, runtime: IContainerRuntime) => {
+        if (request.pathParts.length === 0) {
+            const inventoryList = await requestFluidObject<IInventoryList>(
+                await runtime.getRootDataStore(inventoryListId),
+                "",
+            );
+            const containerKillBit = await requestFluidObject<IContainerKillBit>(
+                await runtime.getRootDataStore(containerKillBitId),
+                "",
+            );
+            const model = new InventoryListContainer(inventoryList, containerKillBit, runtime);
+
+            return { status: 200, mimeType: "fluid/object", value: model };
+        }
+    };
 
 export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
@@ -26,7 +42,7 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
             ]), // registryEntries
             undefined,
             [
-                defaultRouteRequestHandler(inventoryListId),
+                modelRequestHandler,
                 rootDataStoreRequestHandler,
             ],
         );
