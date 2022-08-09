@@ -33,7 +33,7 @@ The definition of a node conveys the node's semantic meaning. It is typically us
 
 ### Identifier
 
-A node's identifier is a unique key associated with that node. The identifier can be used to retrieve a node from a the current view of a SharedTree, and provides a way to refer to existing nodes when performing edits to the tree.
+A node's identifier is a unique key associated with that node. The identifier can be used to retrieve a node from the current view of a SharedTree, and provides a way to refer to existing nodes when performing edits to the tree.
 
 ### Traits
 
