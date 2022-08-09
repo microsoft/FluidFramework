@@ -72,12 +72,6 @@ describe("api-markdown-documenter simple suite tests", async () => {
             new CustomMarkdownEmitter(apiModel),
         );
 
-        // TODO: There appears to be some unawaited async code somewhere in the markdown documenter.
-        // This timeout seems to be sufficient to wait for the process to complete before validating
-        // its output.
-        // But since the code is not annotated as being async, this should probably be considered a bug.
-        // setTimeout(() => {}, 1000);
-
         // Verify against expected contents
         const result = await compare(outputDirPath, snapshotDirPath, { compareContent: true });
 
