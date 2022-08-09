@@ -35,7 +35,7 @@ stages:
         timeoutInMinutes: 120
         testCommand: test:mocha
         env:
-          FUZZ_STRESS_RUN: 10
+          FUZZ_TEST_COUNT: 10
           FUZZ_STRESS_RUN: true
 
   - stage:
@@ -50,5 +50,5 @@ stages:
         timeoutInMinutes: 120
         testCommand: test:mocha
         env:
-          FUZZ_STRESS_RUN: 5
+          FUZZ_TEST_COUNT: 5
           FUZZ_STRESS_RUN: true
