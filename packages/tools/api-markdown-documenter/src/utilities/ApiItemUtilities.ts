@@ -263,7 +263,7 @@ export function doesItemGenerateHierarchy(
     apiItem: ApiItem,
     hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
-    if(apiItem.kind === ApiItemKind.Package) {
+    if (apiItem.kind === ApiItemKind.Package) {
         return true;
     }
     if (apiItem.kind === ApiItemKind.EntryPoint) {
