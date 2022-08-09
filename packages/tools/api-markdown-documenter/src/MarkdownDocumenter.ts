@@ -10,6 +10,7 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
 import { renderApiPage, renderModelPage, renderPackagePage } from "./Rendering";
+import { doesItemRequireOwnDocument } from "./utilities";
 
 // TODOs:
 // - Handle Model and Package level separately
@@ -123,11 +124,11 @@ export function getDocumentItems(
     config: Required<MarkdownDocumenterConfiguration>,
 ): ApiItem[] {
     const result: ApiItem[] = [];
-    for (const member of apiItem.members) {
-        if (config.documentBoundaryPolicy(member)) {
-            result.push(member);
+    for (const childItem of apiItem.members) {
+        if (doesItemRequireOwnDocument(childItem, config.documentBoundaries)) {
+            result.push(childItem);
         }
-        result.push(...getDocumentItems(member, config));
+        result.push(...getDocumentItems(childItem, config));
     }
     return result;
 }

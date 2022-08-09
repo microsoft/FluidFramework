@@ -3,7 +3,7 @@ import { ApiItem, ApiItemKind, ApiParameterListMixin } from "@microsoft/api-extr
 
 import { Link, urlFromLink } from "../Link";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
-import { DocumentBoundaryPolicy } from "../Policies";
+import { DocumentBoundaries } from "../Policies";
 
 export function getDisplayNameForApiItem(apiItem: ApiItem): string {
     switch (apiItem.kind) {
@@ -39,12 +39,12 @@ export function getQualifiedApiItemName(apiItem: ApiItem): string {
  */
 export function getFirstAncestorWithOwnPage(
     apiItem: ApiItem,
-    documentBoundaryPolicy: DocumentBoundaryPolicy,
+    documentBoundaries: DocumentBoundaries,
 ): ApiItem {
     // Walk parentage until we reach an item kind that gets rendered to its own page.
     // That is the page we will target with the generated link.
     let hierarchyItem: ApiItem = apiItem;
-    while (!documentBoundaryPolicy(hierarchyItem)) {
+    while (!doesItemRequireOwnDocument(hierarchyItem, documentBoundaries)) {
         const parent = getFilteredParent(hierarchyItem);
         if (parent === undefined) {
             throw new Error(
@@ -99,7 +99,7 @@ export function getRelativeFilePathForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
     includeExtension: boolean,
 ): string {
-    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaryPolicy);
+    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaries);
 
     const fileName = config.fileNamePolicy(targetDocumentItem) + (includeExtension ? ".md" : "");
 
@@ -131,7 +131,7 @@ export function getFileNameForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
     includeExtension: boolean,
 ): string | undefined {
-    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaryPolicy);
+    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaries);
 
     const fileName = config.fileNamePolicy(targetDocumentItem) + (includeExtension ? ".md" : "");
 
@@ -165,7 +165,7 @@ export function getHeadingIdForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): string | undefined {
-    if (config.documentBoundaryPolicy(apiItem)) {
+    if (doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
         // If this API item is being rendered to its own document, then links to it do not require
         // a heading ID.
         return undefined;
@@ -177,7 +177,7 @@ export function getHeadingIdForApiItem(
     // Walk parentage up until we reach the ancestor into whose document we're being rendered.
     // Generate ID information for everything back to that point
     let hierarchyItem = apiItem;
-    while (!config.documentBoundaryPolicy(hierarchyItem)) {
+    while (!doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries)) {
         const qualifiedName = getQualifiedApiItemName(hierarchyItem);
 
         // Since we're walking up the tree, we'll build the string from the end for simplicity
@@ -241,4 +241,17 @@ export function getAncestralHierarchy(
         }
     }
     return matches.reverse();
+}
+
+export function doesItemRequireOwnDocument(
+    apiItem: ApiItem,
+    documentBoundaries: DocumentBoundaries,
+): boolean {
+    if (apiItem.kind === ApiItemKind.Model || apiItem.kind === ApiItemKind.Package) {
+        return true;
+    }
+    if (apiItem.kind === ApiItemKind.EntryPoint) {
+        return false;
+    }
+    return documentBoundaries.includes(apiItem.kind);
 }

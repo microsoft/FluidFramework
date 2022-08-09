@@ -9,18 +9,16 @@ import { getQualifiedApiItemName } from "./utilities";
 // - Add simple pre-canned policies (index, adjacency, flat, etc.)
 
 /**
- * Determines whether or not a separate document should be generated for the API item, rather than adding
- * contents directly to the page containing the parent element's contents.
+ * List of items for which separate documents should be generated.
+ * Items specified will be rendered to their own documents.
+ * Items not specified will be rendered into their parent's contents.
  *
  * @remarks Note that `Model` and `Package` items will *always* have separate documents generated for them, even if
  * not specified.
  *
  * Also note that `EntryPoint` items will always be ignored by the system, even if specified here.
- *
- * @param apiItem - The API item in question.
- * @returns `true` if the item should have a separate document generated. `false` otherwise.
  */
-export type DocumentBoundaryPolicy = (apiItem: ApiItem) => boolean;
+export type DocumentBoundaries = ApiItemKind[];
 
 /**
  * Policy for overriding the URI base for a specific API item.
@@ -67,11 +65,11 @@ export type FileHierarchyPolicy = (apiItem: ApiItem) => boolean;
  */
 export interface PolicyOptions {
     /**
-     * See {@link DocumentBoundaryPolicy}.
+     * See {@link DocumentBoundaries}.
      *
-     * @defaultValue {@link DefaultPolicies.defaultDocumentBoundaryPolicy}
+     * @defaultValue {@link DefaultPolicies.defaultDocumentBoundaries}
      */
-    documentBoundaryPolicy?: DocumentBoundaryPolicy;
+    documentBoundaries?: DocumentBoundaries;
 
     /**
      * See {@link UriBaseOverridePolicy}.
@@ -104,7 +102,7 @@ export interface PolicyOptions {
 
 export namespace DefaultPolicies {
     /**
-     * Default {@link PolicyOptions.documentBoundaryPolicy}.
+     * Default {@link PolicyOptions.documentBoundaries}.
      *
      * Generates separate documents for the following types:
      *
@@ -114,13 +112,13 @@ export namespace DefaultPolicies {
      * - Interface
      * - Namespace
      */
-    export function defaultDocumentBoundaryPolicy(apiItem: ApiItem): boolean {
-        return (
-            apiItem.kind === ApiItemKind.Class ||
-            apiItem.kind === ApiItemKind.Interface ||
-            apiItem.kind === ApiItemKind.Namespace
-        );
-    }
+    export const defaultDocumentBoundaries: ApiItemKind[] = [
+        ApiItemKind.Model,
+        ApiItemKind.Package,
+        ApiItemKind.Class,
+        ApiItemKind.Interface,
+        ApiItemKind.Namespace,
+    ];
 
     /**
      * Default {@link PolicyOptions.uriBaseOverridePolicy}.
@@ -181,7 +179,7 @@ export namespace DefaultPolicies {
  * Default {@link PolicyOptions} configuration
  */
 export const defaultPolicyOptions: Required<PolicyOptions> = {
-    documentBoundaryPolicy: DefaultPolicies.defaultDocumentBoundaryPolicy,
+    documentBoundaries: DefaultPolicies.defaultDocumentBoundaries,
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
     linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
     fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,

@@ -33,6 +33,7 @@ import { urlFromLink } from "./Link";
 import { MarkdownDocument } from "./MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
 import {
+    doesItemRequireOwnDocument,
     getDisplayNameForApiItem,
     getHeadingIdForApiItem,
     getLinkForApiItem,
@@ -351,7 +352,7 @@ export function renderBreadcrumb(
     let writtenAnythingYet = false;
     let hierarchyItem: ApiItem | undefined = apiItem;
     while (hierarchyItem !== undefined) {
-        if (documenterConfiguration.documentBoundaryPolicy(hierarchyItem)) {
+        if (doesItemRequireOwnDocument(hierarchyItem, documenterConfiguration.documentBoundaries)) {
             if (writtenAnythingYet) {
                 output.appendNodeInParagraph(
                     new DocPlainText({

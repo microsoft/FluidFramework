@@ -31,7 +31,7 @@ export { ApiPackage }
 
 // @public (undocumented)
 export namespace DefaultPolicies {
-    export function defaultDocumentBoundaryPolicy(apiItem: ApiItem): boolean;
+    const defaultDocumentBoundaries: ApiItemKind[];
     export function defaultFileHierarchyPolicy(apiItem: ApiItem): boolean;
     export function defaultFileNamePolicy(apiItem: ApiItem): string;
     export function defaultLinkTextPolicy(apiItem: ApiItem): string;
@@ -68,7 +68,7 @@ export class DocIdentifiableHeading extends DocHeading {
 }
 
 // @public
-export type DocumentBoundaryPolicy = (apiItem: ApiItem) => boolean;
+export type DocumentBoundaries = ApiItemKind[];
 
 // @public
 export type FileHierarchyPolicy = (apiItem: ApiItem) => boolean;
@@ -106,7 +106,7 @@ export function markdownDocumenterConfigurationWithDefaults(partialConfig: Markd
 
 // @public
 export interface PolicyOptions {
-    documentBoundaryPolicy?: DocumentBoundaryPolicy;
+    documentBoundaries?: DocumentBoundaries;
     fileHierarchyPolicy?: FileHierarchyPolicy;
     fileNamePolicy?: FileNamePolicy;
     linkTextPolicy?: LinkTextPolicy;
