@@ -243,6 +243,7 @@ export function getHeadingIdForApiItem(
 /**
  * Gets the "filted" parent of the provided API item.
  * This logic specifically skips items of the following kinds:
+ *
  * - EntryPoint
  *   - Skipped because any given Package item will have exactly 1 EntryPoint child, making this
  *     redundant in the hierarchy.
@@ -253,4 +254,36 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
         return parent.parent;
     }
     return parent;
+}
+
+/**
+ * Gets the ancestral hierarchy of the provided API item by walking up the parentage graph and emitting any items
+ * matching the `includePredecate` until it reaches an item that matches the `breakPredecate`.
+ *
+ * Notes:
+ *
+ * - This will not include the provided item iteslf, even if it matches the `includePredecate`.
+ *
+ * - This will not include the item matching the `breakPredecate`, even if they match the `includePredecate`.
+ *
+ * @param apiItem - TODO
+ * @param includePredecate - TODO
+ * @param breakPredicate - TODO
+ *
+ * @returns The list of matching ancestor items, provided in descending order.
+ */
+export function getAncestralHierarchy(
+    apiItem: ApiItem,
+    includePredecate: (apiItem: ApiItem) => boolean,
+    breakPredicate: (apiItem: ApiItem) => boolean
+): ApiItem[] {
+    const matches: ApiItem[] = [];
+
+    let hierarchyItem: ApiItem | undefined = getFilteredParent(apiItem);
+    while(hierarchyItem !== undefined && !breakPredicate(hierarchyItem)) {
+        if(includePredecate(hierarchyItem)) {
+            matches.push(hierarchyItem);
+        }
+    }
+    return matches.reverse();
 }
