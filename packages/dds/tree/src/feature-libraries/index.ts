@@ -6,3 +6,6 @@
 export * from "./object-forest";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
+export * from "./schemaIndex";
+export * from "./treeTextCursor";
+export * from "./sequence-change-family";

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import * as semver from "semver";
-import { VersionBumpType } from "@fluidframework/build-tools";
+import { VersionBumpTypeExtended } from "./bumpTypes";
 
 export const DEFAULT_PUBLIC_VERSION = "2.0.0";
 
@@ -153,6 +153,29 @@ export function isInternalVersionScheme(version: semver.SemVer | string): boolea
 }
 
 /**
+ * Checks if a version matches the Fluid internal version scheme.
+ *
+ * @param range - The range string to check.
+ * @returns True if the range string matches the Fluid internal version scheme.
+ */
+export function isInternalVersionRange(range: string): boolean {
+    if (semver.validRange(range) === null) {
+        return false;
+    }
+
+    if (!range.startsWith(">=")) {
+        return false;
+    }
+
+    const minVer = semver.minVersion(range);
+    if (minVer === null) {
+        return false;
+    }
+
+    return isInternalVersionScheme(minVer);
+}
+
+/**
  * Bumps the "internal version" of a version in the Fluid internal version scheme.
  *
  * @param version - The version to bump. The version must be in the Fluid internal version scheme or this function will
@@ -162,12 +185,11 @@ export function isInternalVersionScheme(version: semver.SemVer | string): boolea
  */
 export function bumpInternalVersion(
     version: semver.SemVer | string,
-    bumpType: VersionBumpType,
+    bumpType: VersionBumpTypeExtended,
 ): semver.SemVer {
     validateVersionScheme(version);
-
     const [pubVer, intVer] = fromInternalScheme(version);
-    const newIntVer = intVer.inc(bumpType);
+    const newIntVer = bumpType === "current" ? intVer : intVer.inc(bumpType);
     return toInternalScheme(pubVer, newIntVer);
 }
 

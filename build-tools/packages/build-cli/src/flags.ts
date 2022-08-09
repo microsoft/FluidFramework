@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { supportedMonoRepoValues, isVersionBumpTypeExtended } from "@fluidframework/build-tools";
+import { isVersionBumpTypeExtended, isVersionScheme } from "@fluid-tools/version-tools";
+import { supportedMonoRepoValues } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import * as semver from "semver";
 
 /**
  * A re-usable CLI flag to parse the root directory of the Fluid repo.
@@ -13,7 +15,7 @@ export const rootPathFlag = Flags.build({
     char: "r",
     description: "Root directory of the Fluid repo (default: env _FLUID_ROOT_).",
     env: "_FLUID_ROOT_",
-    // required: true,
+    hidden: true,
 });
 
 /**
@@ -22,30 +24,28 @@ export const rootPathFlag = Flags.build({
 export const releaseGroupFlag = Flags.build({
     char: "g",
     description: "release group",
-    options: [...supportedMonoRepoValues()], // releaseGroupOptions,
+    options: [...supportedMonoRepoValues()],
     parse: async (str: string, _: never) => str.toLowerCase(),
-    // Can't be used with individual packages.
-    exclusive: ["p"],
 });
 
 /**
- * A re-usable CLI flag to parse package name/version specifiers.
+ * A re-usable CLI flag to parse package names.
  */
 export const packageSelectorFlag = Flags.build({
     char: "p",
-    description: "package",
-    // Can't be used with release groups.
-    exclusive: ["g"],
+    description: "Name of package.",
+    multiple: false,
+});
+
+/**
+ * A re-usable CLI flag to parse semver ranges.
+ */
+export const semverRangeFlag = Flags.build<string | undefined>({
+    description: "A semver version range string.",
     multiple: false,
     parse: async (input) => {
-        // TODO: This function was inherited from previous build-tools commands. We should re-evaluate whether we want
-        // to support parsing versions out of strings or make it a separate explicit argument.
-
-        // If the package string includes a "=", then the string is assumed to be a package name and a version together.
-        const split = input.split("=");
-        const pkg = split[0];
-        const version = split[1];
-        return { pkg, version };
+        const range = semver.validRange(input);
+        return range === null ? undefined : input;
     },
 });
 
@@ -56,7 +56,7 @@ export const bumpTypeFlag = Flags.build({
     char: "t",
     description: "Version bump type.",
     options: ["major", "minor", "patch", "current"],
-    parse: async (input): Promise<string | undefined> => {
+    parse: async (input) => {
         if (isVersionBumpTypeExtended(input)) {
             return input;
         }
@@ -70,5 +70,79 @@ export const versionSchemeFlag = Flags.build({
     char: "S",
     description: "Version scheme to use.",
     options: ["semver", "internal", "virtualPatch"],
-    default: "semver",
+    parse: async (input) => {
+        if (isVersionScheme(input)) {
+            return input;
+        }
+    },
+});
+
+/** Reusable flags for cases where a command typically checks something before taking action. They default to true, but
+ * can be negated with `--no-<flag>`. Intended to be used with {@link skipCheckFlag}.
+ *
+ * @remarks
+ *
+ * You must use these flags in your command logic in order for them to have any effect.
+ *
+ * @example
+ * All of the check flags can be used like this:
+ *
+ * ```
+ * static flags = {
+ *     ...checkFlags,
+ * };
+ * ```
+ *
+ * @example
+ * You can also use them individually like so:
+ *
+ * ```
+ * static flags = {
+ *     commit: checkFlags.commit,
+ *     install: checkFlags.install,
+ * };
+ * ```
+ */
+export const checkFlags = {
+    commit: Flags.boolean({
+        allowNo: true,
+        default: true,
+        description: "Commit changes to a new branch.",
+    }),
+    install: Flags.boolean({
+        allowNo: true,
+        default: true,
+        description: "Update lockfiles by running 'npm install' automatically.",
+    }),
+    branchCheck: Flags.boolean({
+        allowNo: true,
+        default: true,
+        description: "Check that the current branch is correct.",
+    }),
+    updateCheck: Flags.boolean({
+        allowNo: true,
+        default: true,
+        description: "Check that the local repo is up to date with the remote.",
+    }),
+    policyCheck: Flags.boolean({
+        allowNo: true,
+        default: true,
+        description: "Check that the local repo complies with all policy.",
+    }),
+};
+
+/**
+ * A reusable flag intended to be used with {@link checkFlags} to provide a single flag that can be used to skip all
+ * checks.
+ *
+ * @remarks
+ *
+ * You must use this flag in conjuction with the {@link checkFlags} in your command logic in order for it to have any
+ * effect.
+ */
+export const skipCheckFlag = Flags.boolean({
+    char: "x",
+    default: false,
+    description: "Skip all checks.",
+    exclusive: ["install", "commit", "branchCheck", "updateCheck", "policyCheck"],
 });

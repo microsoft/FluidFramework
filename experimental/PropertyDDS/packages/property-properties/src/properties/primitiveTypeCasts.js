@@ -24,8 +24,8 @@ var castArrays = {
  * Performs a cast of a value by assigning it into the given data array and returning the resulting value. The
  * result is a native JavaScript datatype, that is compatible with the supplied typed array.
  *
- * @param {TypedArray}                    in_array - The data array to use for the cast
- * @param {number|string|boolean}         in_value - The value to use in the cast
+ * @param {TypedArray} in_array - The data array to use for the cast
+ * @param {number|string|boolean} in_value - The value to use in the cast
  * @return {number|string|boolean} The casted value
  * @private
  */
@@ -43,8 +43,8 @@ const _castFunctors = {
     /**
      * Casts the input value to a Uint64
      * @param {number} in_value - The value to use in the cast
-     * @param {number} [in_radix = 10] An integer between 2 and 36 that represents the
-     *    radix (the base in mathematical numeral systems) of the above in_value if it is a string.
+     * @param {number} [in_radix = 10] - An integer between 2 and 36 that represents the
+     * radix (the base in mathematical numeral systems) of the above in_value if it is a string.
      * @return {number} The casted value
      * @protected
      */
@@ -84,7 +84,7 @@ const _castFunctors = {
     /**
      * Casts the input value to a Int64
      * @param {number} in_value - The value to use in the cast
-     * @param {number} [in_radix = 10] An integer between 2 and 36 that represents the
+     * @param {number} [in_radix = 10] - An integer between 2 and 36 that represents the
      *    radix (the base in mathematical numeral systems) of the above in_value if it is a string.
      * @return {number} The casted value
      * @protected

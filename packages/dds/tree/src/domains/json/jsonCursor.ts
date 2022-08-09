@@ -9,6 +9,7 @@ import {
     ITreeCursor,
     mapCursorField,
     TreeNavigationResult,
+    SynchronousNavigationResult,
 } from "../../forest";
 import {
     EmptyKey,
@@ -24,7 +25,7 @@ import {
 /**
  * An ITreeCursor implementation used to read a Jsonable tree for testing and benchmarking.
  */
-export class JsonCursor<T> implements ITreeCursor {
+export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
     // PERF: JsonCursor maintains a stack of nodes/edges traversed.  This stack is
     //       partitioned across 3 arrays, with the top of the stack stored in fields.
     //       This design was advantageous in a similar tree visitor, but should
@@ -47,9 +48,9 @@ export class JsonCursor<T> implements ITreeCursor {
         this.currentIndex = -1;
     }
 
-    public seek(offset: number): { result: TreeNavigationResult; moved: number; } {
+    public seek(offset: number): SynchronousNavigationResult {
         if (offset === 0) {
-            return { result: TreeNavigationResult.Ok, moved: 0 };
+            return TreeNavigationResult.Ok;
         }
 
         // TODO: Measure if maintaining immediate parent in a field improves seek
@@ -58,7 +59,7 @@ export class JsonCursor<T> implements ITreeCursor {
 
         // The only seekable key is the 'EmptyKey' of an array.
         if (this.currentKey !== EmptyKey || !Array.isArray(parent)) {
-            return { result: TreeNavigationResult.NotFound, moved: 0 };
+            return TreeNavigationResult.NotFound;
         }
 
         const newIndex = this.currentIndex + offset;
@@ -68,18 +69,17 @@ export class JsonCursor<T> implements ITreeCursor {
             // In JSON, arrays must be dense and may not contain 'undefined' values
             // ('undefined' items are implicitly coerced to 'null' by stringify()).
             assert(0 > newIndex || newIndex >= (parent as unknown as []).length,
-                "JSON arrays must be dense / contain no 'undefined' items.");
+                0x35f /* JSON arrays must be dense / contain no 'undefined' items. */);
 
-            return { result: TreeNavigationResult.NotFound, moved: 0 };
+            return TreeNavigationResult.NotFound;
         } else {
-            const moved = newIndex - this.currentIndex;
             this.currentNode = newChild;
             this.currentIndex = newIndex;
-            return { result: TreeNavigationResult.Ok, moved };
+            return TreeNavigationResult.Ok;
         }
     }
 
-    public down(key: FieldKey, index: number): TreeNavigationResult {
+    public down(key: FieldKey, index: number): SynchronousNavigationResult {
         const parentNode = this.currentNode;
         let childNode: any;
 
@@ -108,7 +108,7 @@ export class JsonCursor<T> implements ITreeCursor {
         return TreeNavigationResult.Ok;
     }
 
-    public up(): TreeNavigationResult {
+    public up(): SynchronousNavigationResult {
         // TODO: Should benchmark vs. detecting via returned 'undefined' from 'pop()'.
         if (this.parentStack.length < 1) {
             return TreeNavigationResult.NotFound;
@@ -204,14 +204,14 @@ export function cursorToJsonObject(reader: ITreeCursor): unknown {
         case jsonObject.name: {
             const result: any = {};
             for (const key of reader.keys) {
-                assert(reader.down(key, 0) === TreeNavigationResult.Ok, "expected navigation ok");
+                assert(reader.down(key, 0) === TreeNavigationResult.Ok, 0x360 /* expected navigation ok */);
                 result[key as string] = cursorToJsonObject(reader);
-                assert(reader.up() === TreeNavigationResult.Ok, "expected navigation ok");
+                assert(reader.up() === TreeNavigationResult.Ok, 0x361 /* expected navigation ok */);
             }
             return result;
         }
         default: {
-            assert(type === jsonNull.name, "unexpected type");
+            assert(type === jsonNull.name, 0x362 /* unexpected type */);
             return null;
         }
     }

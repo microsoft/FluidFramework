@@ -17,6 +17,7 @@ import {
     ScopeType,
     ISignalMessage,
     ISummaryAck,
+    IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import { canSummarize, defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
@@ -192,7 +193,12 @@ export interface IDeliLambdaEvents extends IEvent {
         listener: (type: NackMessagesType, contents: INackMessagesControlMessageContents | undefined) => void);
 
     /**
-     * Emitted when the lambda recieves a custom control message.
+     * Emitted when the lambda receives a summarize message.
+     */
+    (event: "summarizeMessage", listener: (summarizeMessage: ISequencedDocumentAugmentedMessage) => void);
+
+    /**
+     * Emitted when the lambda receives a custom control message.
      */
     (event: "controlMessage", listener: (controlMessage: IControlMessage) => void);
 
@@ -423,6 +429,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                     if (this.serviceConfiguration.deli.enableOpHashing) {
                         this.lastHash = getNextHash(sequencedMessage, this.lastHash);
                         sequencedMessage.expHash1 = this.lastHash;
+                    }
+
+                    if (sequencedMessage.type === MessageType.Summarize) {
+                        // note: this is being emitted before it's produced to the deltas topic
+                        // that lets event handlers alter the message if necessary
+                        this.emit("summarizeMessage", sequencedMessage as ISequencedDocumentAugmentedMessage);
                     }
 
                     const outgoingMessage: ISequencedOperationMessage = {
@@ -1216,7 +1228,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
      * Creates a leave message for inactive clients.
      */
     private createLeaveMessage(clientId: string, serverMetadata?: any): IRawOperationMessage {
-        const operation: IDocumentSystemMessage = {
+        const leaveMessage: IDocumentSystemMessage = {
             clientSequenceNumber: -1,
             contents: null,
             data: JSON.stringify(clientId),
@@ -1225,15 +1237,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
             type: MessageType.ClientLeave,
             serverMetadata,
         };
-        const leaveMessage: IRawOperationMessage = {
-            clientId: null,
-            documentId: this.documentId,
-            operation,
-            tenantId: this.tenantId,
-            timestamp: Date.now(),
-            type: RawOperationType,
-        };
-        return leaveMessage;
+        return this.createRawOperationMessage(leaveMessage);
     }
 
     /**
@@ -1328,21 +1332,24 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
     }
 
     private createOpMessage(type: string): IRawOperationMessage {
-        const noOpMessage: IRawOperationMessage = {
+        return this.createRawOperationMessage({
+            clientSequenceNumber: -1,
+            contents: null,
+            referenceSequenceNumber: -1,
+            traces: this.serviceConfiguration.enableTraces ? [] : undefined,
+            type,
+        });
+    }
+
+    private createRawOperationMessage(operation: IDocumentMessage): IRawOperationMessage {
+        return {
             clientId: null,
             documentId: this.documentId,
-            operation: {
-                clientSequenceNumber: -1,
-                contents: null,
-                referenceSequenceNumber: -1,
-                traces: this.serviceConfiguration.enableTraces ? [] : undefined,
-                type,
-            },
+            operation,
             tenantId: this.tenantId,
             timestamp: Date.now(),
             type: RawOperationType,
         };
-        return noOpMessage;
     }
 
     /**

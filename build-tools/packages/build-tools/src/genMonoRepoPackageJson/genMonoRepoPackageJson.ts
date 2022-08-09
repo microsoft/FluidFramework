@@ -190,7 +190,7 @@ function processDevDependencies(repoPackageJson: PackageJson, packageJson: Packa
     return devDepCount++;
 }
 
-async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
+export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo) {
     const packageMap = new Map<string, Package>(monoRepo.packages.map(pkg => [pkg.name, pkg]));
     const repoPackageJson: PackageJson = {
         name: `@fluid-internal/${monoRepo.kind.toLowerCase()}`,
