@@ -9,15 +9,14 @@ import {
     IFluidCodeDetails,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { IMigratableModel } from "./migrationInterfaces";
 import { IModelCodeLoader } from "./modelLoading";
 import {
-    InventoryListContainer as InventoryListContainer1,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
 } from "./modelVersion1";
 import {
-    InventoryListContainer as InventoryListContainer2,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2,
 } from "./modelVersion2";
 
@@ -55,30 +54,6 @@ export class DemoModelCodeLoader implements IModelCodeLoader<IMigratableModel> {
     };
 
     public readonly getModel = async (container: IContainer) => {
-        // Here I'm using the specified code details for convenience since it already exists (a real code proposal).
-        // However, it could be reasonable to use an alternative in-container storage for the container type (e.g. a
-        // standalone Quorum DDS).  The important thing is that we need a dependable way to discover the version of the
-        // container, so ideally it remains constant across versions.
-        const version = container.getSpecifiedCodeDetails()?.package;
-        if (typeof version !== "string") {
-            throw new Error("Unexpected code detail format");
-        }
-
-        // Technically, this doesn't have to use an external model.  It could be requesting the model from the
-        // container (e.g. container.request({ url: "model" })).  A single model code loader could even support
-        // a combination of either (esp. if the strategy changes over time).
-        switch (version) {
-            case "one": {
-                const model = new InventoryListContainer1(container);
-                await model.initialize();
-                return model;
-            }
-            case "two": {
-                const model = new InventoryListContainer2(container);
-                await model.initialize();
-                return model;
-            }
-            default: throw new Error("Unknown version");
-        }
+        return requestFluidObject<IMigratableModel>(container, { url: "" });
     };
 }

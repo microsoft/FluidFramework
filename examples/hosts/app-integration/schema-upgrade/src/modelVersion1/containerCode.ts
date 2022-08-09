@@ -10,7 +10,7 @@ import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils
 
 import { ContainerKillBitInstantiationFactory, IContainerKillBit } from "../containerKillBit";
 import { IInventoryList } from "../modelInterfaces";
-import { InventoryListContainer } from "./internalContainerModel";
+import { InventoryListContainer } from "./containerModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
 export const inventoryListId = "default-inventory-list";
