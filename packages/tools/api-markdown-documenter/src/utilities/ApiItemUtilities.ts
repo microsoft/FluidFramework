@@ -48,7 +48,7 @@ export function getFirstAncestorWithOwnPage(
         const parent = getFilteredParent(hierarchyItem);
         if (parent === undefined) {
             throw new Error(
-                "Walking site hierarchy does not converge on an item that is rendered to its own page.",
+                `Walking hierarchy from "${apiItem.displayName}" does not converge on an item that is rendered to its own page.`,
             );
         }
         hierarchyItem = parent;
