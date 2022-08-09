@@ -21,6 +21,7 @@ import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
+import { read } from "fs";
 
 export interface IRunConfig {
     runId: number;
@@ -252,28 +253,23 @@ export class LoadTestDataStoreModel {
         // download any blobs our partner may upload
         const partnerBlobCount = Math.trunc(config.testConfig.totalBlobCount ?? 0 / config.testConfig.numClients) +
             (this.partnerId < (config.testConfig.totalBlobCount ?? 0 % config.testConfig.numClients) ? 1 : 0);
+
+        const readBlob = (key: string) => {
+            if (key.startsWith(this.partnerBlobKeyPrefix)) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.root.get<IFluidHandle>(key)!.get().catch((error) => {
+                    this.logger.sendErrorEvent({
+                        eventName: "ReadBlobFailed_OnValueChanged",
+                        key,
+                    }, error);
+                });
+            }
+        };
         if (partnerBlobCount > 0) {
-            this.root.on("valueChanged", (v) => {
-                if (v.key.startsWith(this.partnerBlobKeyPrefix)) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.root.get<IFluidHandle>(v.key)!.get().catch((error) => {
-                        this.logger.sendErrorEvent({
-                            eventName: "ReadBlobFailed_OnValueChanged",
-                            key: v.key,
-                        }, error);
-                    });
-                }
-            });
+            this.root.on("valueChanged", (v) => readBlob(v.key));
+            // additional loop of readBlob in case the eventlistener won't fire when container is closed.
             for (const key of this.root.keys()) {
-                if (key.startsWith(this.partnerBlobKeyPrefix)) {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                     this.root.get<IFluidHandle>(key)!.get().catch((error) => {
-                        this.logger.sendErrorEvent({
-                            eventName: "ReadBlobFailed",
-                            key,
-                        }, error);
-                    });
-                }
+                readBlob(key);
             }
         }
     }
