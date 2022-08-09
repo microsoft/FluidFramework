@@ -65,7 +65,7 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
         this.summaryElements = indexes.map((i) => i.summaryElement).filter((e): e is SummaryElement => e !== undefined);
         assert(
             new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
-            "Index summary element keys must be unique",
+            0x350 /* Index summary element keys must be unique */,
         );
     }
 
