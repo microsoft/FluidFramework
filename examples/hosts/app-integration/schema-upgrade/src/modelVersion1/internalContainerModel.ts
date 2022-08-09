@@ -74,20 +74,14 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         return this._inventoryList;
     }
 
-    private readonly _containerKillBit: IContainerKillBit;
-    private get containerKillBit() {
-        return this._containerKillBit;
-    }
-
     public constructor(
         inventoryList: IInventoryList,
-        containerKillBit: IContainerKillBit,
+        private readonly containerKillBit: IContainerKillBit,
         private readonly containerRuntime: IContainerRuntime,
     ) {
         super();
         this._inventoryList = inventoryList;
-        this._containerKillBit = containerKillBit;
-        this._migrationState = getStateFromKillBit(this._containerKillBit);
+        this._migrationState = getStateFromKillBit(this.containerKillBit);
         this.containerKillBit.on("codeDetailsAccepted", this.onCodeDetailsAccepted);
         this.containerKillBit.on("migrated", this.onMigrated);
     }
