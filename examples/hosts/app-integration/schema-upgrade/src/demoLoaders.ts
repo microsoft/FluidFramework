@@ -5,14 +5,10 @@
 
 import {
     ICodeDetailsLoader,
-    IContainer,
     IFluidCodeDetails,
     IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { IMigratableModel } from "./migrationInterfaces";
-import { IModelCodeLoader } from "./modelLoading";
 import {
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
 } from "./modelVersion1";
@@ -44,16 +40,4 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
             default: throw new Error("Unknown version");
         }
     }
-}
-
-// This IModelCodeLoader specifically supports versions one and two.  Other approaches might have network calls to
-// dynamically load in the appropriate model for unknown versions.
-export class DemoModelCodeLoader implements IModelCodeLoader<IMigratableModel> {
-    public readonly supportsVersion = async (version: string) => {
-        return version === "one" || version === "two";
-    };
-
-    public readonly getModel = async (container: IContainer) => {
-        return requestFluidObject<IMigratableModel>(container, { url: "", headers: { containerRef: container } });
-    };
 }
