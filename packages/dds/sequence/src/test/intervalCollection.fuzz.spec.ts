@@ -149,18 +149,18 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
     }
 
     // All subsequent helper functions are generators; note that they don't actually apply any operations.
-    function position({ random, sharedString }: ClientOpState): number {
+    function startPosition({ random, sharedString }: ClientOpState): number {
         return random.integer(0, Math.max(0, sharedString.getLength() - 1));
     }
 
     function exclusiveRange(state: ClientOpState): RangeSpec {
-        const start = position(state);
+        const start = startPosition(state);
         const end = state.random.integer(start + 1, state.sharedString.getLength());
         return { start, end };
     }
 
     function inclusiveRange(state: ClientOpState): RangeSpec {
-        const start = position(state);
+        const start = startPosition(state);
         const end = state.random.integer(start, Math.max(start, state.sharedString.getLength() - 1));
         return { start, end };
     }
@@ -200,7 +200,7 @@ function makeOperationGenerator(optionsParam?: OperationGenerationConfig): Gener
         const { random, sharedString } = state;
         return {
             type: "addText",
-            index: position(state),
+            index: random.integer(0, sharedString.getLength()),
             content: random.string(random.integer(0, options.maxInsertLength)),
             stringId: sharedString.id,
         };
