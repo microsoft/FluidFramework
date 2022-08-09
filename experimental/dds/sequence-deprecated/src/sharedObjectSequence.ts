@@ -4,8 +4,8 @@
  */
 
 import { IFluidDataStoreRuntime, IChannelAttributes, Serializable } from "@fluidframework/datastore-definitions";
+import { SharedSequence } from "@fluidframework/sequence";
 import { SharedObjectSequenceFactory } from "./sequenceFactory";
-import { SharedSequence } from "./sharedSequence";
 
 /**
  * The SharedObjectSequence holds a sequence of serializable objects. Each object will be stored
@@ -49,7 +49,7 @@ export class SharedObjectSequence<T> extends SharedSequence<T> {
      * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
      */
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
-        super(document, id, attributes, SharedObjectSequenceFactory.segmentFromSpec);
+        super(document, id, attributes, SharedObjectSequenceFactory.segmentFromSpec as any);
     }
 
     /**

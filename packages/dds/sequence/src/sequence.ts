@@ -50,13 +50,13 @@ import {
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
+import { DefaultMap } from "./defaultMap";
+import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import {
     IntervalCollection,
     SequenceInterval,
     SequenceIntervalCollectionValueType,
 } from "./intervalCollection";
-import { DefaultMap } from "./defaultMap";
-import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import { SequenceDeltaEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
 import { ISharedIntervalCollection } from "./sharedIntervalCollection";
 
@@ -143,6 +143,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
                 case MergeTreeDeltaType.REMOVE: {
                     const lastRem = ops[ops.length - 1] as IMergeTreeRemoveMsg;
                     if (lastRem?.pos1 === r.position) {
+                        assert(lastRem.pos2 !== undefined, "pos2 should not be undefined here");
                         lastRem.pos2 += r.segment.cachedLength;
                     } else {
                         ops.push(createRemoveRangeOp(
@@ -237,9 +238,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      */
     public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
         const removeOp = this.client.removeRangeLocal(start, end);
-        if (removeOp) {
-            this.submitSequenceMessage(removeOp);
-        }
+        this.submitSequenceMessage(removeOp);
         return removeOp;
     }
 
@@ -330,11 +329,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
     public resolveRemoteClientPosition(
         remoteClientPosition: number,
         remoteClientRefSeq: number,
-        remoteClientId: string): number {
+        remoteClientId: string): number | undefined {
         return this.client.resolveRemoteClientPosition(
             remoteClientPosition,
             remoteClientRefSeq,
-            remoteClientId);
+            remoteClientId,
+        );
     }
 
     public submitSequenceMessage(message: IMergeTreeOp) {
@@ -349,7 +349,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         // local ops until loading is complete, and then
         // they will be resent
         if (!this.loadedDeferred.isCompleted) {
-            this.loadedDeferredOutgoingOps.push([translated, metadata]);
+            this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
         } else {
             this.submitLocalMessage(translated, metadata);
         }
@@ -383,15 +383,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
      */
     public walkSegments<TClientData>(
         handler: ISegmentAction<TClientData>,
-        start?: number, end?: number, accum?: TClientData,
-        splitRange: boolean = false) {
-        return this.client.walkSegments<TClientData>(handler, start, end, accum, splitRange);
+        start?: number,
+        end?: number,
+        accum?: TClientData,
+        splitRange: boolean = false,
+    ): void {
+        this.client.walkSegments(handler, start, end, accum as TClientData, splitRange);
     }
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
     public getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
         return this.client.getStackContext(startPos, rangeLabels);
     }
@@ -480,7 +479,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
         if (insert) {
             if (start < end) {
                 const remove = this.client.removeRangeLocal(start, end);
-                this.submitSequenceMessage(createGroupOp(insert, remove));
+                const op = remove ? createGroupOp(insert, remove) : insert;
+                this.submitSequenceMessage(op);
             } else {
                 this.submitSequenceMessage(insert);
             }
