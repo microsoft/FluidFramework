@@ -242,6 +242,7 @@ export function getAncestralHierarchy(
         if (includePredecate(hierarchyItem)) {
             matches.push(hierarchyItem);
         }
+        hierarchyItem = getFilteredParent(hierarchyItem);
     }
     return matches.reverse();
 }
