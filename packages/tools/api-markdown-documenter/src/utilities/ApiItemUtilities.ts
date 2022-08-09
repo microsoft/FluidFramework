@@ -3,7 +3,7 @@ import { ApiItem, ApiItemKind, ApiParameterListMixin } from "@microsoft/api-extr
 
 import { Link, urlFromLink } from "../Link";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
-import { DocumentBoundaries } from "../Policies";
+import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
 
 export function getDisplayNameForApiItem(apiItem: ApiItem): string {
     switch (apiItem.kind) {
@@ -112,7 +112,7 @@ export function getRelativeFilePathForApiItem(
         return fileName;
     }
     let path = fileName;
-    while (!config.fileHierarchyPolicy(hierarchyItem)) {
+    while (!doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)) {
         const segmentName = config.fileNamePolicy(hierarchyItem);
         path = `${segmentName}-${path}`;
 
@@ -143,7 +143,7 @@ export function getFileNameForApiItem(
         return fileName;
     }
     let path = fileName;
-    while (!config.fileHierarchyPolicy(hierarchyItem)) {
+    while (!doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)) {
         const segmentName = config.fileNamePolicy(hierarchyItem);
         if (segmentName.length === 0) {
             throw new Error("Segment name must be non-empty.");
@@ -257,4 +257,17 @@ export function doesItemRequireOwnDocument(
         return false;
     }
     return documentBoundaries.includes(apiItem.kind);
+}
+
+export function doesItemGenerateHierarchy(
+    apiItem: ApiItem,
+    hierarchyBoundaries: HierarchyBoundaries,
+): boolean {
+    if(apiItem.kind === ApiItemKind.Package) {
+        return true;
+    }
+    if (apiItem.kind === ApiItemKind.EntryPoint) {
+        return false;
+    }
+    return hierarchyBoundaries.includes(apiItem.kind);
 }

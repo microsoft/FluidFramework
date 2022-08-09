@@ -9,7 +9,7 @@ import { getQualifiedApiItemName } from "./utilities";
 // - Add simple pre-canned policies (index, adjacency, flat, etc.)
 
 /**
- * List of items for which separate documents should be generated.
+ * List of item kinds for which separate documents should be generated.
  * Items specified will be rendered to their own documents.
  * Items not specified will be rendered into their parent's contents.
  *
@@ -19,6 +19,14 @@ import { getQualifiedApiItemName } from "./utilities";
  * Also note that `EntryPoint` items will always be ignored by the system, even if specified here.
  */
 export type DocumentBoundaries = ApiItemKind[];
+
+/**
+ * List of item kinds for which sub-directories will be generated, and under which child item pages will be created.
+ * If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
+ *
+ * For items specified, the name of the sub-directory will be defined by the {@link FileNamePolicy}.
+ */
+export type HierarchyBoundaries = ApiItemKind[];
 
 /**
  * Policy for overriding the URI base for a specific API item.
@@ -49,18 +57,6 @@ export type LinkTextPolicy = (apiItem: ApiItem) => string;
 export type FileNamePolicy = (apiItem: ApiItem) => string;
 
 /**
- * Policy for determining if an API item contributes to the resulting directory hierarchy.
- * I.e. for a specified API item, should its child items be written under a sub-directory named for the API item?
- *
- * If so, the name of the sub-directory will be defined by the {@link FileNamePolicy}.
- *
- * @param apiItem - The API item in question.
- * @returns `true` if child items should be written under a sub-directory named for the API item. `false` if not
- * (i.e. they should be placed adjacent to the item's document).
- */
-export type FileHierarchyPolicy = (apiItem: ApiItem) => boolean;
-
-/**
  * Policy configuration options
  */
 export interface PolicyOptions {
@@ -70,6 +66,13 @@ export interface PolicyOptions {
      * @defaultValue {@link DefaultPolicies.defaultDocumentBoundaries}
      */
     documentBoundaries?: DocumentBoundaries;
+
+    /**
+     * See {@link HierarchyBoundaries}.
+     *
+     * @defaultValue {@link DefaultPolicies.defaultHierarchyBoundaries}
+     */
+    hierarchyBoundaries?: HierarchyBoundaries;
 
     /**
      * See {@link UriBaseOverridePolicy}.
@@ -91,13 +94,6 @@ export interface PolicyOptions {
      * @defaultValue {@link DefaultPolicies.defaultFileNamePolicy}
      */
     fileNamePolicy?: FileNamePolicy;
-
-    /**
-     * See {@link FileHierarchyPolicy}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultFileHierarchyPolicy}
-     */
-    fileHierarchyPolicy?: FileHierarchyPolicy;
 }
 
 export namespace DefaultPolicies {
@@ -106,8 +102,8 @@ export namespace DefaultPolicies {
      *
      * Generates separate documents for the following types:
      *
-     * - Model
-     * - Package
+     * - Model*
+     * - Package*
      * - Class
      * - Interface
      * - Namespace
@@ -118,6 +114,18 @@ export namespace DefaultPolicies {
         ApiItemKind.Class,
         ApiItemKind.Interface,
         ApiItemKind.Namespace,
+    ];
+
+    /**
+     * Default {@link PolicyOptions.hierarchyBoundaries}.
+     *
+     * Creates sub-directories for the following types:
+     *
+     * - Package*
+     */
+    export const defaultHierarchyBoundaries: ApiItemKind[] = [
+        ApiItemKind.Package,
+        // ApiItemKind.Namespace,
     ];
 
     /**
@@ -158,21 +166,6 @@ export namespace DefaultPolicies {
                 return getQualifiedApiItemName(apiItem);
         }
     }
-
-    /**
-     * Default {@link PolicyOptions.fileHierarchyPolicy}.
-     *
-     * Only create sub-directories for Model and Package items.
-     */
-    export function defaultFileHierarchyPolicy(apiItem: ApiItem): boolean {
-        switch (apiItem.kind) {
-            case ApiItemKind.Model:
-            case ApiItemKind.Package:
-                return true;
-            default:
-                return false;
-        }
-    }
 }
 
 /**
@@ -180,8 +173,8 @@ export namespace DefaultPolicies {
  */
 export const defaultPolicyOptions: Required<PolicyOptions> = {
     documentBoundaries: DefaultPolicies.defaultDocumentBoundaries,
+    hierarchyBoundaries: DefaultPolicies.defaultHierarchyBoundaries,
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
     linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
     fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,
-    fileHierarchyPolicy: DefaultPolicies.defaultFileHierarchyPolicy,
 };
