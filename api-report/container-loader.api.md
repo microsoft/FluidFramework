@@ -68,7 +68,7 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     // (undocumented)
     close(error?: ICriticalContainerError): void;
     // (undocumented)
-    closeAndGetPendingLocalState(reason?: string): string;
+    closeAndGetPendingLocalState(): string;
     // (undocumented)
     get closed(): boolean;
     // (undocumented)
