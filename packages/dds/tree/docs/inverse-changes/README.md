@@ -594,6 +594,8 @@ and it's not clear that such a thing is possible in general.
 In this section we propose a design,
 explaining our motivation as we go.
 
+### General Design Goals
+
 Generally speaking we strive to meet the following design goals
 (in no particular order):
 
@@ -636,61 +638,39 @@ but they help narrow down the list:
   supplementary repair data as part of the peer computation/update strategy
   and towards having peers maintain such data locally.
 
-Proposed design:
+### Long-Term Design
 
-* Don't preemptively include repair data in ops.
-* The client that wants to issue an undo is forced to compute the repair data.
-  * Client may preemptively store repair data for a portion of their undo window.
-  * If a client needs to undo a change that falls outside of this portion,
-    then they may need to recover the missing repair data from either:
-    * V1: a new (partial) checkout
-    * V2: a document state history service
-* The on-wire changeset includes the repair data.
-  * V1: inlined plain data as though it was seen for the first time
-  * V2: as references to new blobs of plain data
-  * V3: as references to a mix of new blobs and old blobs
-  * V3.1: consider not reusing old blobs if the amount of data reused from them is small enough
-  * V4: as references to parts of the document in space-time (queried by peers from a history server)
-  * V2+.1: consider inlining the repair data in the changeset when it is small enough
-* When receiving the inverse, peers apply it as is if no concurrent interim changes occurred,
-  otherwise they either:
-  * A: attempt to apply outdated inverse
-  * B: reject the changeset, forcing the issuing client to try again
-  * C: supplement any missing repair data by either
-    * C1: leveraging a local store that they maintain for the span of min(collab window, undo window)
-    * C2: requesting repair data from the service
+* Don't preemptively include repair data in non-inverse ops.
+* A client that issues an undo needs access to edits and repair data as far back as the undo window extends.
+  The client can either:
+    * Maintain a cache locally
+    * Fetch it asynchronously from a document history server
+* The over-the-wire changeset sent by the issuer can represent repair data in the following ways:
+  * Query details for peers to fetch the relevant data from the document state history service
+  * Direct references to blobs from the document state history service
+  * Inlined if small enough
+* When receiving a changeset,
+  peers are able to asynchronously fetch relevant repair data as part of receiving the edits
+  (as opposed to as part of processing it).
+* When receiving an undo changeset peers are may need to re-compute or update the changeset
+  to account for concurrency issues.
+  To do this, they may need the edit and repair data as far back as the collab window extends.
+  Peers already need to cache the edit data for the collab window for general rebasing purposes.
+  For repair data peers can either:
+    * Maintain a cache locally
+    * Fetch it asynchronously from a document history server
 
-The tradeoffs are summarized in the following table.
-The variables are as follows:
- * Given:
-   * `I` (Intentions): the number of independent changes performed within a changeset.
-   This is typically bounded by the number of actions performed by the user.
-   * `R` (Repair): the amount of repair data necessary to undo a given change.
- * Chosen:
-   * `Iw` (Issuer window): the window within which the issuer of an undo maintains local repair data for prior edits.
-    This is never greater than the undo window.
-   * `Pw` (Peer window): the window within which peers maintain local repair data for prior edits.
-    This is never greater than the collab window.
+When it comes to procuring repair data
+(both for the issuing client and the receiving peer)
+it can be up to the application whether local caching of asynchronous fetching from the history service.
+This can be a static choice or a dynamic (e.g., based on memory pressure) one.
 
-
-| Criteria                                           | Accept Stale Invert               | Reject Stale Invert               | Update Stale Invert               |
-| -------------------------------------------------- | --------------------------------- | --------------------------------- | --------------------------------- |
-| Undo semantics are guaranteed                      | No                                | Yes                               | Yes                               |
-| Undoing client cannot be starved out               | Yes                               | No                                | Yes                               |
-| Size overhead on normal changesets                 | None                              | None                              | None                              |
-| Size of inverse changesets                         | V1: O(I + R)<br/>V2+: O(I)        | V1: O(I + R)<br/>V2+: O(I)        | V1: O(I + R)<br/>V2+: O(I)        |
-| Size of locally stored local repair data on issuer | O(Iw * (I + R))                   | O(Iw * (I + R))                   | O(Iw * (I + R))                   |
-| Size of locally stored local repair data on peer   | None                              | None                              | O(Pw * (I + R))                   |
-| Issuer needs to query service                      | If seq(orig) > Iw                 | If seq(orig) > Iw                 | If seq(orig) > Iw                 |
-| Issuer needs to upload to service                  | V1: No <br/>V2-3: Yes <br/>V4: No | V1: No <br/>V2-3: Yes <br/>V4: No | V1: No <br/>V2-3: Yes <br/>V4: No |
-| Peer needs to query service                        | No                                | No                                | If ref(undo) > Pw                 |
-
-The design above has the following characteristics:
+The design above has the following noteworthy characteristics:
 * Applications can opt out of undo support on a per-document basis,
 paying no overhead for its support in other documents/applications.
 * In applications where one can only undo edits from one's own session,
 participants that do not contribute edits or are unable to issue undos,
-only need to maintain repair data for the peer window.
+only need to access repair data for the peer window.
 
 The above does not account for partial checkouts.
 The expected effect of partial checkouts
@@ -701,6 +681,16 @@ This is no different from the requirements of normal edit application in the con
 Note that any scheme that relies on blobs or other independently fetched data to represent repair data in over-the-wire changesets
 requires clients to fetch this data before they can apply such incoming changesets.
 This not something that the Fluid runtime currently supports but is a capability needed in the more general case of large inserts.
+
+### Stepping Stones
+
+In the short an medium term,
+the following shortcuts may be preferable:
+* Force issuing client to locally store edit and repair data as far back as the undo window
+* Force peers to locally store edit and repair data as far back as the collab window
+* Inline all repair data in changesets
+
+These keep the format simpler and reduces dependency on functionality and services that do not yet exist.
 
 ## Possible Improvements
 
