@@ -32,11 +32,11 @@ import {
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
     getDisplayNameForApiItem,
+    getFilePathForApiItem,
     getHeadingIdForApiItem,
     getLinkForApiItem,
     getLinkUrlForApiItem,
     getQualifiedApiItemName,
-    getRelativeFilePathForApiItem,
 } from "./utilities";
 
 // TODOs:
@@ -206,11 +206,7 @@ function createMarkdownDocument(
     return {
         contents: emittedContents,
         apiItemName: getQualifiedApiItemName(apiItem),
-        path: getRelativeFilePathForApiItem(
-            apiItem,
-            documenterConfiguration,
-            /* includeExtension: */ true,
-        ),
+        path: getFilePathForApiItem(apiItem, documenterConfiguration, /* includeExtension: */ true),
     };
 }
 

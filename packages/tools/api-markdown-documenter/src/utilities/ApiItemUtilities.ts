@@ -1,5 +1,6 @@
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import { ApiItem, ApiItemKind, ApiParameterListMixin } from "@microsoft/api-extractor-model";
+import * as Path from "path";
 
 import { Link, urlFromLink } from "../Link";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
@@ -62,11 +63,7 @@ export function getLinkForApiItem(
 ): Link {
     const text = config.linkTextPolicy(apiItem);
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    const relativeFilePath = getRelativeFilePathForApiItem(
-        apiItem,
-        config,
-        /* includeExtension: */ false,
-    );
+    const relativeFilePath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
     const headingId = getHeadingIdForApiItem(apiItem, config);
 
     return {
@@ -94,7 +91,28 @@ export function getLinkUrlForApiItem(
  * @param config - TODO
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the path.
  */
-export function getRelativeFilePathForApiItem(
+export function getFilePathForApiItem(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+    includeExtension: boolean,
+): string {
+    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaries);
+
+    const fileName = getFileNameForApiItem(apiItem, config, includeExtension);
+
+    const documentAncestry = getAncestralHierarchy(targetDocumentItem, (hierarchyItem) =>
+        doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries),
+    );
+
+    let path = fileName;
+    for (const hierarchyItem of documentAncestry) {
+        const segmentName = config.fileNamePolicy(hierarchyItem);
+        path = Path.join(segmentName, path);
+    }
+    return path;
+}
+
+export function getFileNameForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
     includeExtension: boolean,
@@ -103,47 +121,18 @@ export function getRelativeFilePathForApiItem(
 
     const fileName = config.fileNamePolicy(targetDocumentItem) + (includeExtension ? ".md" : "");
 
-    // Walk the target page's hierarchy until we reach an item for which directory hierarchy policy is enabled.
-    // We will need to include hiarachy information in the file name up to that point to ensure we don't
-    // generate any filename-wise conflicts.
-    let hierarchyItem = getFilteredParent(apiItem);
-    if (hierarchyItem === undefined) {
-        // If there is no parent item, then we can just return the file name unmodified
-        return fileName;
-    }
-    let path = fileName;
-    while (!doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)) {
-        const segmentName = config.fileNamePolicy(hierarchyItem);
-        path = `${segmentName}-${path}`;
-
-        const parent = getFilteredParent(hierarchyItem);
-        if (parent === undefined) {
-            break;
-        }
-        hierarchyItem = parent;
-    }
-
-    return path;
-}
-
-export function getFileNameForApiItem(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
-    includeExtension: boolean,
-): string | undefined {
-    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaries);
-
-    const fileName = config.fileNamePolicy(targetDocumentItem) + (includeExtension ? ".md" : "");
-
     // Walk parentage up until we reach the first ancestor which injects directory hierarchy.
     // Qualify generated file name to ensure no conflicts within that directory.
-    let hierarchyItem = getFilteredParent(apiItem);
+    let hierarchyItem = getFilteredParent(targetDocumentItem);
     if (hierarchyItem === undefined) {
         // If there is no parent item, then we can just return the file name unmodified
         return fileName;
     }
     let path = fileName;
-    while (!doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)) {
+    while (
+        hierarchyItem.kind !== ApiItemKind.Model &&
+        !doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)
+    ) {
         const segmentName = config.fileNamePolicy(hierarchyItem);
         if (segmentName.length === 0) {
             throw new Error("Segment name must be non-empty.");
