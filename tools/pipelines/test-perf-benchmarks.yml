@@ -33,7 +33,6 @@ stages:
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Small
-        packageToTest: "@fluid-internal/tree"
         testWorkspace: ${{ variables.testWorkspace }}
         benchmarkTestParams:
         - jobName: Non-compat
