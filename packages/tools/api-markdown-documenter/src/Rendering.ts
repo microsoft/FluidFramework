@@ -24,7 +24,7 @@ import {
     TSDocConfiguration,
 } from "@microsoft/tsdoc";
 
-import { urlFromLink } from "./Link";
+import { Link, urlFromLink } from "./Link";
 import { MarkdownDocument } from "./MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTableCell } from "./doc-nodes";
@@ -350,7 +350,17 @@ export function renderBreadcrumb(
     // Get ordered ancestry of document items
     const ancestry = getAncestralHierarchy(apiItem, (hierarchyItem) =>
         doesItemRequireOwnDocument(hierarchyItem, documenterConfiguration.documentBoundaries),
-    );
+    ).reverse(); // Reverse from ascending to descending order
+
+    function createLinkTag(link: Link): DocLinkTag {
+        const linkUrl = urlFromLink(link);
+        return new DocLinkTag({
+            configuration: tsdocConfiguration,
+            tagName: "@link",
+            linkText: link.text,
+            urlDestination: linkUrl,
+        });
+    }
 
     let writtenAnythingYet = false;
     for (const hierarchyItem of ancestry) {
@@ -364,15 +374,8 @@ export function renderBreadcrumb(
         }
 
         const link = getLinkForApiItem(hierarchyItem, documenterConfiguration);
-        const linkUrl = urlFromLink(link);
-        docNodes.push(
-            new DocLinkTag({
-                configuration: tsdocConfiguration,
-                tagName: "@link",
-                linkText: link.text,
-                urlDestination: linkUrl,
-            }),
-        );
+        docNodes.push(createLinkTag(link));
+
         writtenAnythingYet = true;
     }
 

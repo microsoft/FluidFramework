@@ -122,10 +122,11 @@ export namespace DefaultPolicies {
      * Creates sub-directories for the following types:
      *
      * - Package*
+     * - Namespace
      */
     export const defaultHierarchyBoundaries: ApiItemKind[] = [
         ApiItemKind.Package,
-        // ApiItemKind.Namespace,
+        ApiItemKind.Namespace,
     ];
 
     /**

@@ -100,6 +100,7 @@ export function getFilePathForApiItem(
 
     const fileName = getFileNameForApiItem(apiItem, config, includeExtension);
 
+    // Filtered ancestry in ascending order
     const documentAncestry = getAncestralHierarchy(targetDocumentItem, (hierarchyItem) =>
         doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries),
     );
@@ -214,7 +215,7 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
  * @param includePredecate - TODO
  * @param breakPredicate - TODO
  *
- * @returns The list of matching ancestor items, provided in descending order.
+ * @returns The list of matching ancestor items, provided in *ascending* order.
  */
 export function getAncestralHierarchy(
     apiItem: ApiItem,
@@ -233,7 +234,7 @@ export function getAncestralHierarchy(
         }
         hierarchyItem = getFilteredParent(hierarchyItem);
     }
-    return matches.reverse();
+    return matches;
 }
 
 export function doesItemRequireOwnDocument(
