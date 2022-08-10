@@ -8,7 +8,7 @@ This article describes some known issues with bundlers and answers some commonly
 Framework and bundlers.
 
 ## Known Errors with Webpack 5
-We know the following packages cause errors; assert, buffer, events and url.
+The Fluid Framework uses some node.js core modules that do not exist in the browser. webpack 4 and below used to include polyfills for node.js core modules by default. This is no longer the case in webpack 5 and beyond, so these modules must be added to your project and webpack 5 config.
 
 This issue causes compiling any project that uses these libraries to fail. Upgrading to Webpack 5 removed the automatic NodeJS polyfills. We now have to manually install the missing packages and add the fallback.
 
