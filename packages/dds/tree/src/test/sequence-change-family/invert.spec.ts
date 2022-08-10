@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { Transposed as T, Value } from "../../changeset";
-import { sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
+import { Transposed as T } from "../../changeset";
+import { DUMMY_INVERSE_VALUE, DUMMY_INVERT_TAG, sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -17,21 +17,17 @@ function invert(change: SequenceChangeset): SequenceChangeset {
     return sequenceChangeRebaser.invert(change);
 }
 
-const tag = "TestTag";
-
 describe("SequenceChangeFamily - Invert", () => {
     for (const nest of [false, true]) {
         describe(nest ? "Nested" : "Root", () => {
             function asInputForest(markList: T.MarkList): SequenceChangeset {
                 return {
-                    opRanges: [{ min: 0, tag }],
                     marks: { root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList },
                 };
             }
 
             function asOutputForest(markList: T.MarkList): SequenceChangeset {
                 return {
-                    opRanges: [{ min: 0, tag: `-${tag}` }],
                     marks: { root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList },
                 };
             }
@@ -45,10 +41,10 @@ describe("SequenceChangeFamily - Invert", () => {
 
             it("set value => revert value", () => {
                 const input = asInputForest([
-                    { type: "Modify", value: { type: "Set", id: 1, value: 42 } },
+                    { type: "Modify", value: { id: 1, value: 42 } },
                 ]);
                 const expected = asOutputForest([
-                    { type: "Modify", value: { type: "Revert", id: 1, change: tag } },
+                    { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
                 ]);
                 const actual = invert(input);
                 assert.deepEqual(actual, expected);
@@ -56,10 +52,10 @@ describe("SequenceChangeFamily - Invert", () => {
 
             it("revert value => revert value", () => {
                 const input = asInputForest([
-                    { type: "Modify", value: { type: "Revert", id: 1, change: "OtherTag" } },
+                    { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
                 ]);
                 const expected = asOutputForest([
-                    { type: "Modify", value: { type: "Revert", id: 1, change: tag } },
+                    { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
                 ]);
                 const actual = invert(input);
                 assert.deepEqual(actual, expected);
@@ -90,7 +86,7 @@ describe("SequenceChangeFamily - Invert", () => {
                         type: "MInsert",
                         id: 1,
                         content: { type, value: 42 },
-                        fields: { foo: [{ type: "Modify", value: { type: "Set", id: 1, value: 42 } }] },
+                        fields: { foo: [{ type: "Modify", value: { id: 1, value: 42 } }] },
                     }],
                 ]);
                 const expected = asOutputForest([
@@ -117,7 +113,7 @@ describe("SequenceChangeFamily - Invert", () => {
                         type: "Revive",
                         id: 1,
                         count: 2,
-                        tomb: tag,
+                        tomb: DUMMY_INVERT_TAG,
                     },
                 ]);
                 const actual = invert(input);
@@ -130,7 +126,7 @@ describe("SequenceChangeFamily - Invert", () => {
                         type: "Revive",
                         id: 1,
                         count: 2,
-                        tomb: tag,
+                        tomb: DUMMY_INVERT_TAG,
                     },
                 ]);
                 const expected = asOutputForest([

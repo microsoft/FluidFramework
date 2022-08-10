@@ -7,17 +7,14 @@ import { ChangesetTag, isAttachGroup, OpId, Transposed as T } from "../../change
 import { fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
-const NO_TAG = "The input change must have a tag";
+export const DUMMY_INVERT_TAG: ChangesetTag = "Dummy Invert Changeset Tag";
 
 export function invert(change: SequenceChangeset): SequenceChangeset {
-    const ranges = change.opRanges ?? fail(NO_TAG);
     // TODO: support the input change being a squash
-    const tag = (ranges[0] ?? fail(NO_TAG)).tag;
     const opIdToTag = (id: OpId): ChangesetTag => {
-        return tag;
+        return DUMMY_INVERT_TAG;
     };
     const total: SequenceChangeset = {
-        opRanges: [{ min: 0, tag: `-${tag}` }],
         marks: invertFieldMarks(change.marks, opIdToTag),
     };
     return total;
@@ -86,9 +83,8 @@ function invertMarkList(markList: T.MarkList, opIdToTag: (id: OpId) => Changeset
                     };
                     if (mark.value !== undefined) {
                         modify.value = {
-                            type: "Revert",
                             id: mark.value.id,
-                            change: opIdToTag(mark.value.id),
+                            value: DUMMY_INVERSE_VALUE,
                         };
                     }
                     if (mark.fields !== undefined) {
@@ -103,3 +99,9 @@ function invertMarkList(markList: T.MarkList, opIdToTag: (id: OpId) => Changeset
     }
     return inverseMarkList;
 }
+
+/**
+ * Dummy value used in place of actual repair data.
+ * TODO: have `invert` access real repair data.
+ */
+export const DUMMY_INVERSE_VALUE = "Dummy inverse value";

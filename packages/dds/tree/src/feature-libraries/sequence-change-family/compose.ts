@@ -3,40 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import { getMarkLength, isAttachGroup, isDetachMark, splitMark, Transposed as T } from "../../changeset";
+import {
+    getMarkLength,
+    isAttachGroup,
+    isDetachMark,
+    splitMark,
+    Transposed as T,
+} from "../../changeset";
 import { clone, fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
 export function compose(...changes: SequenceChangeset[]): SequenceChangeset {
     const base: SequenceChangeset = {
-        // TODO: populate opRanges
-        // opRanges: [],
         marks: {},
     };
     for (const change of changes) {
-        foldInChangeset(change, base);
+        foldInFieldMarks(change.marks, base.marks);
     }
     return base;
-}
-
-function foldInChangeset(newChange: SequenceChangeset, baseChange: SequenceChangeset): void {
-    const baseFieldMarks = baseChange.marks;
-    const newFieldMarks = newChange.marks;
-    foldInFieldMarks(newFieldMarks, baseFieldMarks);
 }
 
 function foldInFieldMarks(newFieldMarks: T.FieldMarks, baseFieldMarks: T.FieldMarks) {
     for (const key of Object.keys(newFieldMarks)) {
         const newMarkList = newFieldMarks[key];
-        if (key in baseFieldMarks) {
-            foldInMarkList(newMarkList, baseFieldMarks[key]);
-        } else {
-            baseFieldMarks[key] = clone(newMarkList);
-        }
+        baseFieldMarks[key] ??= [];
+        foldInMarkList(newMarkList, baseFieldMarks[key]);
     }
 }
 
-function foldInMarkList(newMarkList: T.MarkList<T.Mark>, baseMarkList: T.MarkList<T.Mark>): void {
+function foldInMarkList(
+    newMarkList: T.MarkList<T.Mark>,
+    baseMarkList: T.MarkList<T.Mark>,
+): void {
     let iTotal = 0;
     let iIn = 0;
     let nextNewMark: T.Mark | undefined = newMarkList[iIn];
@@ -45,7 +43,7 @@ function foldInMarkList(newMarkList: T.MarkList<T.Mark>, baseMarkList: T.MarkLis
         nextNewMark = undefined;
         let baseMark = baseMarkList[iTotal];
         if (baseMark === undefined) {
-            baseMarkList.push(newMark);
+            baseMarkList.push(clone(newMark));
         } else if (isAttachGroup(newMark)) {
             baseMarkList.splice(iTotal, 0, clone(newMark));
         } else if (isDetachMark(baseMark)) {
@@ -78,13 +76,16 @@ function foldInMarkList(newMarkList: T.MarkList<T.Mark>, baseMarkList: T.MarkLis
     }
 }
 
-function composeMarks(newMark: T.SizedMark, baseMark: T.ObjectMark | T.AttachGroup): T.Mark[] {
+function composeMarks(
+    newMark: T.SizedMark,
+    baseMark: T.ObjectMark | T.AttachGroup,
+): T.Mark[] {
     if (typeof newMark === "number") {
         return [baseMark];
     }
-    const markType = newMark.type;
+    const newType = newMark.type;
     if (isAttachGroup(baseMark)) {
-        switch (markType) {
+        switch (newType) {
             case "Modify": {
                 const attach = baseMark[0];
                 if (attach.type === "Insert") {
@@ -108,15 +109,15 @@ function composeMarks(newMark: T.SizedMark, baseMark: T.ObjectMark | T.AttachGro
             default: fail("Not implemented");
         }
     }
-    const totalType = baseMark.type;
-    if (markType === "MDelete" || totalType === "MDelete") {
+    const baseType = baseMark.type;
+    if (newType === "MDelete" || baseType === "MDelete") {
         // This should not occur yet because we discard all modifications to deleted subtrees
         // In the long run we want to preserve them.
         fail("TODO: support modifications to deleted subtree");
     }
-    switch (totalType) {
+    switch (baseType) {
         case "Modify": {
-            switch (markType) {
+            switch (newType) {
                 case "Modify": {
                     updateModifyLike(newMark, baseMark);
                     return [baseMark];
@@ -124,7 +125,11 @@ function composeMarks(newMark: T.SizedMark, baseMark: T.ObjectMark | T.AttachGro
                 case "Delete": {
                     // For now the deletion obliterates all other modifications.
                     // In the long run we want to preserve them.
-                    return [clone(newMark)];
+                    return [{
+                        type: "Delete",
+                        id: newMark.id,
+                        count: newMark.count,
+                    }];
                 }
                 default: fail("Not implemented");
             }

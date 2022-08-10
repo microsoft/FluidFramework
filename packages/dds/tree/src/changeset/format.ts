@@ -27,14 +27,10 @@ export namespace Transposed {
 		newRef?: ChangesetTag;
 	}
 
-	export interface ChangesetBase {
-		opRanges?: { min: OpId; tag: ChangesetTag; }[];
-	}
-
 	/**
 	 * Represents changes to a document forest.
 	 */
-	export interface LocalChangeset extends ChangesetBase {
+	export interface LocalChangeset {
 		marks: FieldMarks;
 		moves?: MoveEntry<TreeForestPath>[];
 	}
@@ -42,7 +38,7 @@ export namespace Transposed {
 	/**
 	 * Represents changes to a document tree.
 	 */
-	export interface PeerChangeset extends ChangesetBase {
+	export interface PeerChangeset {
 		marks: MarkList;
 		moves?: MoveEntry[];
 	}
@@ -81,17 +77,11 @@ export namespace Transposed {
 		count: number;
 	}
 
-	export type ValueMark = SetValue | RevertValue;
+	export type ValueMark = SetValue;
 
 	export interface SetValue extends HasOpId {
-		type: "Set";
 		/** Can be left unset to represent the value being cleared. */
 		value?: Value;
-	}
-
-	export interface RevertValue extends HasOpId {
-		type: "Revert";
-		change: ChangesetTag;
 	}
 
 	export interface Modify {

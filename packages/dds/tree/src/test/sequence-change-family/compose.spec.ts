@@ -22,7 +22,7 @@ function setRootValueTo(value: Value): SequenceChangeset {
         marks: {
             root: [{
                 type: "Modify",
-                value: { type: "Set", id: 0, value },
+                value: { id: 0, value },
             }],
         },
     };
@@ -38,7 +38,7 @@ function setChildValueTo(value: Value): SequenceChangeset {
                         42,
                         {
                             type: "Modify",
-                            value: { type: "Set", id: 0, value },
+                            value: { id: 0, value },
                         },
                     ],
                 },
@@ -71,13 +71,13 @@ describe("SequenceChangeFamily - Compose", () => {
             marks: {
                 root: [{
                     type: "Modify",
-                    value: { type: "Set", id: 1, value: 1 },
+                    value: { id: 0, value: 1 },
                     fields: {
                         foo: [
                             42,
                             {
                                 type: "Modify",
-                                value: { type: "Set", id: 1, value: 2 },
+                                value: { id: 0, value: 2 },
                             },
                         ],
                     },
@@ -95,13 +95,13 @@ describe("SequenceChangeFamily - Compose", () => {
             marks: {
                 root: [{
                     type: "Modify",
-                    value: { type: "Set", id: 1, value: 2 },
+                    value: { id: 0, value: 2 },
                     fields: {
                         foo: [
                             42,
                             {
                                 type: "Modify",
-                                value: { type: "Set", id: 1, value: 1 },
+                                value: { id: 0, value: 1 },
                             },
                         ],
                     },
@@ -420,7 +420,7 @@ describe("SequenceChangeFamily - Compose", () => {
             marks: {
                 root: [
                     [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
-                    { type: "Modify", value: { type: "Set", id: 1, value: 1 } },
+                    { type: "Modify", value: { id: 0, value: 1 } },
                 ],
             },
         };
@@ -448,7 +448,7 @@ describe("SequenceChangeFamily - Compose", () => {
                                 42,
                                 {
                                     type: "Modify",
-                                    value: { type: "Set", id: 1, value: 1 },
+                                    value: { id: 0, value: 1 },
                                 },
                             ],
                         },
