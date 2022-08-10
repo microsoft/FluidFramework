@@ -43,7 +43,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Returns the sub-property having the given name in this property.
      *
-     * @param  {string|number} in_id the id of the prop you wish to retrieve.
+     * @param {string|number} in_id - The id of the prop you wish to retrieve.
      *
      * @return {property-properties.BaseProperty | undefined} The property you seek or undefined if none is found.
      */
@@ -53,8 +53,8 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
 
     /**
      * Adds an optional child to list of possible optional children.
-     * @param {string} in_id Id of the optional child
-     * @param {string} in_typeid typeid which determines what type the child should be
+     * @param {string} in_id - Id of the optional child
+     * @param {string} in_typeid - typeid which determines what type the child should be
      * @private
      */
     _addOptionalChild(in_id, in_typeid) {
@@ -197,13 +197,10 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
     /**
      * Inserts a property into the collection
      *
-     * @param {string}                      in_key      -
-     *     Key of the entry in the collection
-     * @param {property-properties.NamedProperty} in_property -
-     *     The property to insert
-     * @param {boolean}                     in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
-     *     When batching updates, this can be prevented via this flag.
+     * @param {string} in_key - Key of the entry in the collection
+     * @param {property-properties.NamedProperty} in_property - The property to insert
+     * @param {boolean} in_reportToView - By default, the dirtying will always be reported to the checkout view and
+     * trigger a modified event there. When batching updates, this can be prevented via this flag.
      */
     _insert(in_key, in_property, in_reportToView) {
         if (validationsEnabled.enabled) {
@@ -308,7 +305,7 @@ export class ContainerProperty extends IndexedCollectionBaseProperty {
      * You would update the values like
      * `baseProperty.setValues({foo: 'hello', bar: {baz: 1}});`
      * WARNING: not completely implemented for all types
-     * @param {object} in_properties The properties you would like to assign
+     * @param {object} in_properties - The properties you would like to assign
      * @private
      */
     setValues(in_properties) {

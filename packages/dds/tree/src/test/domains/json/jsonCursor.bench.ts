@@ -4,21 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
-import { default as Random } from "random-js";
-import { ITreeCursor } from "../../..";
+import { buildForest, ITreeCursor, jsonableTreeFromCursor, singleTextCursor } from "../../..";
+import { initializeForest, TreeNavigationResult } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./json";
-
-// Helper for creating a PRNG instance that produces a uniform distribution in the range [0..1).
-function makeRng(seed: string) {
-    const rng = Random.engines.mt19937().seed(Number.parseInt(seed, 36));
-    const dist = Random.real(0, 1);
-    return () => dist(rng);
-}
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -51,14 +44,13 @@ function clone<T>(value: Jsonable<T>): Jsonable<T> {
 // Helper that measures an optimized 'deepClone()' vs. using ITreeCursor to extract an
 // equivalent clone of the source data.
 function bench(name: string, getJson: () => any) {
-    let cursor: ITreeCursor;
-    let json: any;
+    const json = getJson();
+    const encodedTree = jsonableTreeFromCursor(new JsonCursor(json));
 
     benchmark({
         type: BenchmarkType.Measurement,
         title: `Direct: '${name}'`,
         before: () => {
-            json = getJson();
             const cloned = clone(json);
             assert.deepEqual(cloned, json,
                 "clone() must return an equivalent tree.");
@@ -70,31 +62,48 @@ function bench(name: string, getJson: () => any) {
         },
     });
 
-    benchmark({
-        type: BenchmarkType.Measurement,
-        title: `ITreeCursor: '${name}'`,
-        before: () => {
-            cursor = new JsonCursor(getJson());
+    const cursorFactories: [string, () => ITreeCursor][] = [
+        ["JsonCursor", () => new JsonCursor(json)],
+        ["TextCursor", () => singleTextCursor(encodedTree)],
+        ["object-forest Cursor", () => {
+            const forest = buildForest();
+            initializeForest(forest, [encodedTree]);
+            const cursor = forest.allocateCursor();
+            assert.equal(forest.tryMoveCursorTo(forest.root(forest.rootField), cursor), TreeNavigationResult.Ok);
+            return cursor;
+        }],
+    ];
 
-            // TODO: extract() hasn't been optimized, and possibly should be cloned into
-            //       the benchmark to avoid test enhancements (e.g., additional asserts)
-            //       from skewing benchmark results.
-            const extracted = cursorToJsonObject(cursor);
+    const consumers: [string, (cursor: ITreeCursor) => void][] = [
+        ["cursorToJsonObject", cursorToJsonObject],
+        ["jsonableTreeFromCursor", jsonableTreeFromCursor],
+    ];
 
-            assert.deepEqual(extracted, json,
-                "extract() must return an equivalent tree.");
-            assert.deepEqual(cursorToJsonObject(cursor), json,
-                "Repeated calls to extract() must return an equivalent tree.");
-            assert.notEqual(extracted, json,
-                "extract() must not return the original tree instance.");
-        },
-        benchmarkFn: () => {
-            cursorToJsonObject(cursor);
-        },
-    });
+    for (const [consumerName, consumer] of consumers) {
+        for (const [factoryName, factory] of cursorFactories) {
+            let cursor: ITreeCursor;
+            benchmark({
+                type: BenchmarkType.Measurement,
+                title: `${consumerName}(${factoryName}): '${name}'`,
+                before: () => {
+                    cursor = factory();
+                    assert.deepEqual(cursorToJsonObject(cursor), json, "data should round trip through json");
+                    assert.deepEqual(
+                        jsonableTreeFromCursor(cursor), encodedTree, "data should round trip through jsonable");
+                },
+                benchmarkFn: () => {
+                    consumer(cursor);
+                },
+            });
+        }
+    }
 }
 
-const canada = generateCanada(makeRng("canada"));
+const canada = generateCanada(
+    // Use the default (large) data set for benchmarking, otherwise use a small dataset.
+    isInPerformanceTestingMode
+        ? undefined
+        : [2, 10]);
 
 describe("ITreeCursor", () => {
     bench("canada", () => canada);

@@ -195,6 +195,7 @@ export class DocumentStorage implements IDocumentStorage {
             ordererUrl,
             historianUrl,
             isSessionAlive: true,
+            isSessionActive: false,
         };
 
         const message: string = `Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`;
@@ -379,7 +380,7 @@ export class DocumentStorage implements IDocumentStorage {
             const opsCollection = await this.databaseManager.getDeltaCollection(tenantId, documentId);
             await opsCollection
                 .insertMany(dbOps, false)
-                .catch((error) => {
+                .catch(async (error) => {
                     // Duplicate key errors are ignored
                     if (error.code !== 11000) {
                         // Needs to be a full rejection here

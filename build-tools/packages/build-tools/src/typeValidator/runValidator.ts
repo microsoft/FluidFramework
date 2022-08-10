@@ -8,7 +8,7 @@ import { bumpDependencies } from "../bumpVersion/bumpDependencies";
 import { bumpVersionCommand } from "../bumpVersion/bumpVersion";
 import { Context } from "../bumpVersion/context";
 import { GitRepo } from "../bumpVersion/gitRepo";
-import { VersionChangeType } from "../bumpVersion/versionSchemes";
+import { VersionChangeType } from "@fluid-tools/version-tools";
 import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { validateRepo } from "./repoValidator";
 import { BreakingIncrement, enableLogging } from "./validatorUtils";

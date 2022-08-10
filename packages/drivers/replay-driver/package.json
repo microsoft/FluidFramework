@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/replay-driver",
-  "version": "2.0.0-internal.1.0.0",
+  "version": "2.0.0-internal.1.1.0",
   "description": "Document replay version of Socket.IO implementation",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -35,15 +35,15 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/common-utils": "^0.32.1",
-    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/driver-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
-    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/common-utils": "^1.0.0",
+    "@fluidframework/driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/driver-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/protocol-definitions": "^1.0.0",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
-    "@fluidframework/build-tools": "^0.2.74327",
+    "@fluidframework/build-tools": "^0.3.1000",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@^1.0.0",
     "@microsoft/api-extractor": "^7.22.2",

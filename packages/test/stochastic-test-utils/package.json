@@ -1,6 +1,6 @@
 {
   "name": "@fluid-internal/stochastic-test-utils",
-  "version": "2.0.0-internal.1.0.0",
+  "version": "2.0.0-internal.1.1.0",
   "private": true,
   "description": "Utilities for stochastic tests",
   "homepage": "https://fluidframework.com",
@@ -16,6 +16,7 @@
   "module": "lib/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "bench": "mocha --recursive dist/test --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --parentProcess --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\"",
     "build": "concurrently npm:build:compile npm:lint",
     "build:compile": "npm run tsc && npm run build:test",
     "build:compile:min": "npm run build:compile",
@@ -57,13 +58,14 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.32.1",
-    "random-js": "^1.0.8"
+    "@fluidframework/common-utils": "^1.0.0",
+    "best-random": "^1.0.0"
   },
   "devDependencies": {
+    "@fluid-tools/benchmark": "^0.40.0",
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/mocha": "^9.1.1",
     "@types/node": "^14.18.0",
@@ -74,6 +76,7 @@
     "eslint": "~8.6.0",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",
+    "random-js": "^1.0.8",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5",
     "typescript-formatter": "7.1.0"

@@ -53,7 +53,9 @@
     "alfred": {
         "kafkaClientId": "alfred",
         "maxMessageSize": "16KB",
+        "verifyMaxMessageSize": false,
         "maxNumberOfClientsPerDocument": 1000000,
+        "numberOfMessagesPerTrace": 100,
         "throttling": {
             "restCalls": {
                 "maxPerMs": 1000000,
@@ -105,7 +107,8 @@
         "enforceServerGeneratedDocumentId": false,
         "socketIo": {
             "perMessageDeflate": true
-        }
+        },
+        "sessionStickinessDurationMs": 3600000
     },
     "client": {
         "type": "browser",
@@ -241,7 +244,7 @@
     "worker": {
         "alfredUrl": "http://alfred:3003",
         "serverUrl": "http://localhost:3003",
-        "blobStorageUrl": "http://historian:3000",
+        "blobStorageUrl": "http://localhost:3001",
         "internalBlobStorageUrl": "http://historian:3000",
         "permission": [
             "snapshot",
@@ -252,7 +255,8 @@
             "chain-spell",
             "chain-intel",
             "chain-translation"
-        ]
+        ],
+        "enforceDiscoveryFlow": false
     },
     "tenantConfig": [
         {

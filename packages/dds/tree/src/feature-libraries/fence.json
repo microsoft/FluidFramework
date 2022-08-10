@@ -3,5 +3,5 @@
     "exports": [ "index"],
     // Depending on "shared-tree-core" so implementations of Indexes can be here.
     // Could move the index abstraction elsewhere instead.
-    "imports": ["schema","tree","util","rebase","forest","dependency-tracking","shared-tree-core"]
+    "imports": ["schema-stored","tree","util","rebase","forest","dependency-tracking","shared-tree-core","changeset","change-family"]
 }

@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { performance } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import {
     ChildLogger,
     IFluidErrorBase,
@@ -109,6 +109,8 @@ export class OdspDocumentService implements IDocumentService {
 
     private currentConnection?: OdspDocumentDeltaConnection;
 
+    private relayServiceTenantAndSessionId: string | undefined;
+
     /**
      * @param odspResolvedUrl - resolved url identifying document that will be managed by this service instance.
      * @param getStorageToken - function that can provide the storage token. This is is also referred to as
@@ -184,6 +186,11 @@ export class OdspDocumentService implements IDocumentService {
                         return this.currentConnection.flush();
                     }
                     throw new Error("Disconnected while uploading summary (attempt to perform flush())");
+                },
+                () => {
+                    assert(this.relayServiceTenantAndSessionId !== undefined,
+                        0x37b /* relayServiceTenantAndSessionId should be present */);
+                    return this.relayServiceTenantAndSessionId;
                 },
                 this.mc.config.getNumber("Fluid.Driver.Odsp.snapshotFormatFetchType"),
             );
@@ -340,7 +347,7 @@ export class OdspDocumentService implements IDocumentService {
         requestSocketToken: boolean,
         options: TokenFetchOptionsEx,
     ) {
-        return this.joinSessionCore(requestSocketToken, options).catch((e) => {
+        const response = await this.joinSessionCore(requestSocketToken, options).catch((e) => {
             if (hasFacetCodes(e) && e.facetCodes !== undefined) {
                 for (const code of e.facetCodes) {
                     switch (code) {
@@ -359,6 +366,8 @@ export class OdspDocumentService implements IDocumentService {
             }
             throw e;
         });
+        this.relayServiceTenantAndSessionId = `${response.tenantId}/${response.id}`;
+        return response;
     }
 
     private async joinSessionCore(

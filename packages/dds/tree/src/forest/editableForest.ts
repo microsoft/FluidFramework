@@ -3,22 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { StoredSchemaRepository } from "../schema";
-import { AnchorSet, FieldKey, DetachedRange, Value } from "../tree";
-import { ITreeCursor } from "./cursor";
-import { IForestSubscription, NodeId } from "./forest";
+import { StoredSchemaRepository } from "../schema-stored";
+import { AnchorSet, FieldKey, DetachedField, Delta, JsonableTree, detachedFieldAsKey, Anchor } from "../tree";
+import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
 /**
  * Editing APIs.
- *
- * These are sufficient to perform all possible edits,
- * but not particularly efficient (for large slice moves), or semantic.
- * They are also not particularly type safe (ex: you can pass a parented nodes into attach, which is invalid).
- *
- * TODO: improve these APIs, addressing the above.
  */
 export interface IEditableForest extends IForestSubscription {
-
     // Overrides field from IForestSubscription adding editing support.
     readonly schema: StoredSchemaRepository;
 
@@ -33,59 +25,39 @@ export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
 
     /**
-     * Adds the supplied subtrees to the forest.
-     * @param nodes - the sequence of nodes to add to the forest.
-     *
-     * TODO: there should be a way to include existing detached ranges in the inserted trees.
+     * Applies the supplied Delta to the forest.
+     * Does NOT update anchors.
      */
-    add(nodes: Iterable<ITreeCursor>): DetachedRange;
-
-    /**
-     * Parents a set of nodes already in the forest at a specified location.
-     */
-    attachRangeOfChildren(
-        destination: TreeLocation,
-        toAttach: DetachedRange,
-    ): void;
-
-    /**
-     * Detaches a range of nodes from their parent. The detached nodes remain in the `Forest`.
-     * @param startIndex - the index of the first node in the range to detach
-     * @param endIndex - the index after the last node in the range to detach
-     * @returns a new `Forest` with the nodes detached, and a list of the ids of the nodes that were detached
-     */
-    detachRangeOfChildren(
-        range: FieldLocation | DetachedRange,
-        startIndex: number,
-        endIndex: number
-    ): DetachedRange;
-
-    /**
-     * Replaces a node's value. The node must exist in this `Forest`.
-     * @param nodeId - the id of the node
-     * @param value - the new value
-     */
-    setValue(nodeId: NodeId, value: Value): void;
-
-    /**
-     * Recursively deletes a range and its children.
-     */
-    delete(ids: DetachedRange): void;
+    applyDelta(delta: Delta.Root): void;
 }
 
+export function initializeForest(forest: IEditableForest, content: JsonableTree[]): void {
+    // TODO: maybe assert forest is empty?
+    const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
+    const rootField = detachedFieldAsKey(forest.rootField);
+    forest.applyDelta(new Map([[rootField, [insert]]]));
+}
+
+// TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.
+
+/**
+ * Ways to refer to a node in an IEditableForest.
+ */
+ export type ForestLocation = ITreeSubscriptionCursor | Anchor;
+
 export interface TreeLocation {
-    readonly range: FieldLocation | DetachedRange;
+    readonly range: FieldLocation | DetachedField;
     readonly index: number;
 }
 
-export function isFieldLocation(range: FieldLocation | DetachedRange): range is FieldLocation {
+export function isFieldLocation(range: FieldLocation | DetachedField): range is FieldLocation {
     return typeof range === "object";
 }
 
 /**
- * Wrapper around DetachedRange that can be detected at runtime.
+ * Wrapper around DetachedField that can be detected at runtime.
  */
 export interface FieldLocation {
 	readonly key: FieldKey;
-    readonly parent: NodeId;
+    readonly parent: ForestLocation;
 }

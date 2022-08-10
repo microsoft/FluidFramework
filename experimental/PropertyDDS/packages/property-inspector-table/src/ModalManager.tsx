@@ -11,6 +11,7 @@ interface IModalContext<P = any> {
    * A custom close handler that is invoked when the modal is closed.
    */
   closeHandler?: () => void;
+
   /**
    * Modal type currently being displayed. The string is matched to a React.Component
    */

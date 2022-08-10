@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { JsonableTree } from "../tree";
+
 // TODOs:
 // Clipboard
 // Constraint scheme
@@ -10,8 +12,8 @@
 /**
  * Changeset that has may have been transposed (i.e., rebased and/or postbased).
  */
- export namespace Transposed {
-	export interface Transaction extends Changeset {
+export namespace Transposed {
+	export interface Transaction extends PeerChangeset {
 		/**
 		 * The reference sequence number of the transaction that this transaction was originally
 		 * issued after.
@@ -25,94 +27,56 @@
 		newRef?: SeqNumber;
 	}
 
-	export interface Changeset {
+	/**
+	 * Represents changes to a document forest.
+	 */
+	export interface LocalChangeset {
 		marks: FieldMarks;
+		moves?: MoveEntry<TreeForestPath>[];
+	}
+
+	/**
+	 * Represents changes to a document tree.
+	 */
+	export interface PeerChangeset {
+		marks: MarkList;
 		moves?: MoveEntry[];
 	}
 
-	export interface MoveEntry {
+	export interface MoveEntry<TPath = TreeRootPath> {
 		id: OpId;
-		src: TreePath;
-		dst: TreePath;
-		hops?: TreePath[];
+		src: TPath;
+		dst: TPath;
+		hops?: TPath[];
 	}
 
-	export interface FieldMarks {
-		/**
-		 * Lists the additional (now deleted/detached) nodes and that must be taken into account in order to represent
-		 * the changes made to this field. Without them, describing the changes would be like drawing on an incomplete
-		 * canvas.
-		 *
-		 * Note that all tombstones introduced by concurrent changes are represented here. This includes tombstones
-		 * that are not directly relevant to the description of the changes made to the field. This is necessary to
-		 * ensure that later changes that are concurrent to this change always know how the tombstones they carry
-		 * ought to be ordered relative to the tombstones in this change.
-		 */
-		tombs?: OffsetList<Tombstones, NodeCount>;
+	export type MarkList<TMark = Mark> = TMark[];
 
-		/**
-		 * Operations that attach content in a gap.
-		 * The order of attach segments in each `Attach[]` reflects the intended order of the content in the field.
-		 *
-		 * Offsets represent gaps between any two of the following:
-		 * - the start of the field
-		 * - the end of the field
-		 * - nodes that are present in the input context
-		 * - nodes that are represented by tombstones
-		 */
-		attach?: OffsetList<Attach[], GapCount>;
+	export type Mark =
+		| Skip
+		| Tomb
+		| Modify
+		| Detach
+		| Reattach
+		| ModifyReattach
+		| ModifyDetach
+		| GapEffectSegment
+		| AttachGroup;
 
-		/**
-		 * Operations that may affect concurrently attached content.
-		 * These operation effectively target content that does not yet exist but may come to exist
-		 * as a result of concurrent changes.
-		 *
-		 * Offsets represent gaps between any two of the following:
-		 * - the start of the field
-		 * - the end of the field
-		 * - nodes that are present in the input context
-		 * - nodes that are represented by tombstones
-		 */
-		gaps?: OffsetList<GapEffectSegment, GapCount>;
+	export type AttachGroup = Attach[];
 
-		/**
-		 * Operations that affect nodes (or locations where a node used to be).
-		 *
-		 * Offsets represent both nodes that are present in the input context and nodes that were
-		 * concurrently detached.
-		 */
-		nodes?: OffsetList<NodeMark, NodeCount>;
-
-		/**
-		 * Represents the changes made to the subtrees of any of the following nodes:
-		 * - nodes that are present in the input context
-		 * - nodes that have been concurrently deleted by prior changes
-		 * - nodes that are being revived by this change
-		 *
-		 * Offsets represent both tombstones and nodes that are present in the input context.
-		 *
-		 * Modifications made to newly inserted nodes are represented on their Insert mark.
-		 */
-		modify?: OffsetList<Modify, NodeCount>;
-
-		/**
-		 * Represents change made to the values of any of the following nodes:
-		 * - nodes that are present in the input context
-		 * - nodes that have been concurrently deleted by prior changes
-		 * - nodes that are being revived by this change
-		 *
-		 * Offsets represent both tombstones and nodes that are present in the input context.
-		 *
-		 * Value changes made to newly inserted nodes are represented on their Insert mark.
-		 */
-		values?: OffsetList<ValueMark, NodeCount>;
+	export interface Tomb {
+		type: "Tomb";
+		seq: SeqNumber;
+		count: number;
 	}
 
 	export type ValueMark = SetValue | RevertValue;
 
 	export interface SetValue {
 		type: "Set";
-		value: Value;
+		/** Can be left unset to represent the value being cleared. */
+		value?: Value;
 	}
 
 	export interface RevertValue {
@@ -121,7 +85,14 @@
 	}
 
 	export interface Modify {
-		[key: string]: FieldMarks;
+		type: "Modify";
+		tomb?: SeqNumber;
+		value?: ValueMark;
+		fields?: FieldMarks;
+	}
+
+	export interface FieldMarks {
+		[key: string]: MarkList;
 	}
 
 	export interface HasPlaceFields {
@@ -179,20 +150,28 @@
 	export interface Insert extends HasOpId, HasPlaceFields {
 		type: "Insert";
 		content: ProtoNode[];
-		/**
-		 * Represents the changes made to the inserted subtrees.
-		 *
-		 * Offsets represent nodes being inserted.
-		 */
-		modify?: OffsetList<Modify, NodeCount>;
-		/**
-		 * Represents the changes made to the inserted node's values.
-		 *
-		 * Offsets represent nodes being inserted.
-		 */
-		values?: OffsetList<ValueMark, NodeCount>;
 	}
 
+	export interface ModifyInsert extends HasOpId, HasPlaceFields {
+		type: "MInsert";
+		content: ProtoNode;
+		value?: ValueMark;
+		fields?: FieldMarks;
+	}
+
+	/**
+	 * Used to represent the transitory location where an insert or move-in was before it was affected by a concurrent
+	 * slice-move.
+	 *
+	 * This is needed in order to determine the relative ordering of inserts and move-ins that were affected by the
+	 * same concurrent slice move.
+	 * Indeed their ordering ought to be the same as their ordering would have been the source location of the
+	 * concurrent slice move.
+	 * In order to determine their ordering at the source location, we have to know precisely where at the source
+	 * location (and with what tiebreak policy) the inserts were made.
+	 * Bounce marks capture that information.
+	 * See ScenarioQ for an example.
+	 */
 	export interface Bounce extends HasOpId, HasPlaceFields {
 		type: "Bounce";
 	}
@@ -208,31 +187,33 @@
 	}
 
 	export interface MoveIn extends HasOpId, HasPlaceFields {
-		type: "Move";
+		type: "MoveIn";
 		/**
 		 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
 		 */
 		count: NodeCount;
-		/**
-		 * Represents the changes made to the moved-in subtrees.
-		 *
-		 * Offsets represent nodes being moved-in.
-		 */
-		modify?: OffsetList<Modify, NodeCount>;
 	}
 
-	export type Attach = Insert | MoveIn | Bounce | Intake;
+	export interface ModifyMoveIn extends HasOpId, HasPlaceFields {
+		type: "MMoveIn";
+		value?: ValueMark;
+		fields?: FieldMarks;
+	}
+
+	export type Attach = Insert | ModifyInsert | MoveIn | ModifyMoveIn | Bounce | Intake;
 
 	export type GapEffect = Scorch | Forward | Heal | Unforward;
 
 	export type GapEffectType = GapEffect["type"];
 
 	export interface GapEffectSegment {
+		tombs?: SeqNumber;
+		type: "Gap";
 		count: GapCount;
 		/**
 		 * Stack of effects applying to the gaps.
 		 */
-		stack: (GapEffect)[];
+		stack: GapEffect[];
 	}
 
 	export interface Scorch extends HasOpId, GapEffectPolicy {
@@ -254,13 +235,29 @@
 	export type NodeMark = Detach | Reattach;
 
 	export interface Detach extends HasOpId {
-		type: "Delete" | "Move";
+		tomb?: SeqNumber;
+		gaps?: GapEffect[];
+		type: "Delete" | "MoveOut";
 		count: NodeCount;
+	}
+
+	export interface ModifyDetach extends HasOpId {
+		type: "MDelete" | "MMoveOut";
+		tomb?: SeqNumber;
+		value?: ValueMark;
+		fields?: FieldMarks;
 	}
 
 	export interface Reattach extends HasOpId {
 		type: "Revive" | "Return";
+		tomb: SeqNumber;
 		count: NodeCount;
+	}
+	export interface ModifyReattach extends HasOpId {
+		type: "MRevive" | "MReturn";
+		tomb: SeqNumber;
+		value?: ValueMark;
+		fields?: FieldMarks;
 	}
 
 	/**
@@ -307,14 +304,11 @@ export interface HasLength {
 	length?: number;
 }
 
-export interface TreeChildPath {
+export interface TreeForestPath {
 	[label: string]: TreeRootPath;
 }
 
-export type TreeRootPath = number | { [label: number]: TreeChildPath; };
-
-/** A structure that represents a path from the root to a particular node. */
-export type TreePath = TreeChildPath | TreeRootPath;
+export type TreeRootPath = number | { [label: number]: TreeForestPath; };
 
 export enum RangeType {
 	Set = "Set",
@@ -322,21 +316,11 @@ export enum RangeType {
 }
 
 /**
- * A monotonically increasing positive integer assigned to each segment.
- * The first segment is assigned OpId 0. The next one is assigned OpID 1, and so on.
- * These IDs define total a temporal ordering over all the changes within a change frame.
- * OpIds are scoped to a single frame, so referring to OpIds across frames would require
- * qualifying them by frame number (and potentially sequence/commit number).
+ * A monotonically increasing positive integer assigned to each change within the changeset.
+ * OpIds are scoped to a single changeset, so referring to OpIds across changesets requires
+ * qualifying them by sequence/commit number.
  *
- * The temporal ordering is leveraged in the `Original` format to resolve which node a given segment is anchored to:
- * A segment is anchored to the first node, when scanning in the direction indicated by the `side`
- * field, that was either inserted by an operation whose OpId is lower, or left untouched (i.e.
- * represented by an offset), or the end of the field, whichever is encountered first.
- *
- * The uniqueness of IDs is leveraged in either format to
- * 1. uniquely identify tombstones so that two changes can tell whether they carry tombstones for the same nodes or
- * for different nodes.
- * 2. uniquely identify the matching move-out for a move-in/return and vice-versa.
+ * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */
 export type OpId = number;
 
@@ -358,31 +342,14 @@ export interface HasOpId {
 /**
  * The contents of a node to be created
  */
-export interface ProtoNode {
-	id?: string;
-	type?: string;
-	value?: Value;
-	fields?: ProtoFields;
-}
+export type ProtoNode = JsonableTree;
 
-/**
- * The fields of a node to be created
- */
-export interface ProtoFields {
-	[key: string]: ProtoField;
-}
-
-export type OffsetList<TContent = Exclude<unknown, number>, TOffset = number> = (TOffset | TContent)[];
-
-export type ProtoField = ProtoNode[];
 export type NodeCount = number;
 export type GapCount = number;
-export type Offset = number;
+export type Skip = number;
 export type SeqNumber = number;
 export type Value = number | string | boolean;
-export type NodeId = string;
 export type ClientId = number;
-export type FieldLabel = string;
 export enum Tiebreak { Left, Right }
 export enum Effects {
 	All = "All",

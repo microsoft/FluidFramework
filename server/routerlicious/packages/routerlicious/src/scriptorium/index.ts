@@ -27,7 +27,8 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
     let globalDb;
     if (globalDbEnabled) {
-        const globalDbMongoManager = new MongoManager(factory, false, null, true);
+        const globalDbReconnect = config.get("mongo:globalDbReconnect") as boolean ?? false;
+        const globalDbMongoManager = new MongoManager(factory, globalDbReconnect, null, true);
         globalDb = await globalDbMongoManager.getDatabase();
     }
 

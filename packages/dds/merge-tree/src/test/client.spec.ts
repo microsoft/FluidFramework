@@ -8,7 +8,7 @@ import { UniversalSequenceNumber } from "../constants";
 import {
     Marker,
     reservedMarkerIdKey,
-} from "../mergeTree";
+} from "../mergeTreeNodes";
 import { ReferenceType } from "../ops";
 import { reservedTileLabelsKey } from "../referencePositions";
 import { TextSegment } from "../textSegment";
@@ -155,7 +155,7 @@ describe("TestClient", () => {
             assert.equal(tile.pos, 6, "Tile with label not at expected position");
         });
 
-        it("Should be able to find  tile from client with text length 1", () => {
+        it("Should be able to find tile from client with text length 1", () => {
             const tileLabel = "EOP";
             client.insertMarkerLocal(
                 0,

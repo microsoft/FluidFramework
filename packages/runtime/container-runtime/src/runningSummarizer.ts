@@ -106,10 +106,10 @@ export class RunningSummarizer implements IDisposable {
     }
 
     public get disposed() { return this._disposed; }
-
     private stopping = false;
     private _disposed = false;
     private summarizingLock: Promise<void> | undefined;
+    private refreshSummaryAckLock: Promise<void> | undefined;
     private tryWhileSummarizing = false;
     private readonly pendingAckTimer: PromiseTimer;
     private heuristicRunner?: ISummarizeHeuristicRunner;
@@ -330,6 +330,31 @@ export class RunningSummarizer implements IDisposable {
     }
 
     /**
+     * Blocks a new summarizer from running in case RefreshSummaryAck is being processed.
+     * Assumes that caller checked upfront for lack of concurrent action (this.refreshSummaryAckLock)
+     * before calling this API. I.e. caller is responsible for either erroring out or waiting on this promise.
+     * Note: The refreshSummaryAckLock makes sure no summarizer gets enqueued or processed
+     * until the refresh has completed. One can't rely uniquely on the summarizingLock as the
+     * refreshLatestSummaryAck also happens during the time summarizingLock !== undefined.
+     * Ex. Summarizer submits a summay + op and then waits for the Summary Ack to proceed
+     * with the refreshLatestSummaryAck and complete the summary.
+     * @param action - action to perform.
+     * @returns - result of action.
+     */
+    public async lockedRefreshSummaryAckAction<T>(action: () => Promise<T>) {
+        assert(this.refreshSummaryAckLock === undefined,
+            0x396 /* Refresh Summary Ack - Caller is responsible for checking lock */);
+
+        const refreshSummaryAckLock = new Deferred<void>();
+        this.refreshSummaryAckLock = refreshSummaryAckLock.promise;
+
+        return action().finally(() => {
+            refreshSummaryAckLock.resolve();
+            this.refreshSummaryAckLock = undefined;
+        });
+    }
+
+    /**
      * Runs single summary action that prevents any other concurrent actions.
      * Assumes that caller checked upfront for lack of concurrent action (this.summarizingLock)
      * before calling this API. I.e. caller is responsible for either erroring out or waiting on this promise.
@@ -343,6 +368,8 @@ export class RunningSummarizer implements IDisposable {
         this.summarizingLock = summarizingLock.promise;
 
         this.summarizeCount++;
+        // Make sure the RefreshLatestSummaryAck is not being executed.
+        await this.refreshSummaryAckLock;
 
         return action().finally(() => {
             summarizingLock.resolve();
@@ -446,6 +473,10 @@ export class RunningSummarizer implements IDisposable {
                     });
                     await delay(delaySeconds * 1000);
                 }
+
+                // Make sure the refresh Summary Ack is not being executed.
+                await this.refreshSummaryAckLock;
+
                 // Note: no need to account for cancellationToken.waitCancelled here, as
                 // this is accounted SummaryGenerator.summarizeCore that controls receivedSummaryAckOrNack.
                 const resultSummarize = this.generator.summarize(summarizeProps, options, cancellationToken);
@@ -494,6 +525,7 @@ export class RunningSummarizer implements IDisposable {
             // The heuristics are blocking concurrent summarize attempts.
             throw new UsageError("Attempted to run an already-running summarizer on demand");
         }
+
         const result = this.trySummarizeOnce(
             { reason: `onDemand/${reason}` },
             options,

@@ -88,7 +88,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly clientDetails: IClientDetails;
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
     // @internal @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string, isRoot?: boolean): Promise<IDataStore>;
+    _createDataStoreWithProps(pkg: string | string[], props?: any, id?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAudience(): IAudience;
@@ -314,10 +314,7 @@ export interface ISummarizerNode {
     // (undocumented)
     getChild(id: string): ISummarizerNode | undefined;
     invalidate(sequenceNumber: number): void;
-    loadBaseSummary(snapshot: ISnapshotTree, readAndParseBlob: <T>(id: string) => Promise<T>): Promise<{
-        baseSummary: ISnapshotTree;
-        outstandingOps: ISequencedDocumentMessage[];
-    }>;
+    loadBaseSummary(snapshot: ISnapshotTree, readAndParseBlob: <T>(id: string) => Promise<T>): Promise<ISnapshotTree>;
     loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree): void;
     recordChange(op: ISequencedDocumentMessage): void;
     readonly referenceSequenceNumber: number;

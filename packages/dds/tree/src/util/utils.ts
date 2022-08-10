@@ -5,6 +5,13 @@
 
 import structuredClone from "@ungap/structured-clone";
 
+/**
+ * Make all transitive properties in T readonly
+ */
+ export type RecursiveReadonly<T> = {
+    readonly [P in keyof T]: RecursiveReadonly<T[P]>;
+};
+
 export function clone<T>(original: T): T {
     return structuredClone(original);
 }
@@ -30,6 +37,19 @@ export function fail(message: string): never {
  *
  * @param never - The switch value
  */
- export function unreachableCase(never: never): never {
+export function unreachableCase(never: never): never {
     fail("unreachableCase was called");
+}
+
+/**
+ * Creates and populates a new array.
+ * @param size - The size of the array to be created.
+ * @param filler - Callback for populating the array with a value for a given index
+ */
+export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
+    const array = [];
+    for (let i = 0; i < size; ++i) {
+        array.push(filler(i));
+    }
+    return array;
 }

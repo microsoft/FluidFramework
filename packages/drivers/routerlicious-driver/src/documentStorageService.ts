@@ -8,7 +8,7 @@ import {
     IDocumentStorageService,
     IDocumentStorageServicePolicies,
     LoaderCachingPolicy,
- } from "@fluidframework/driver-definitions";
+} from "@fluidframework/driver-definitions";
 import {
     ISnapshotTree,
     IVersion,
@@ -38,7 +38,9 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
         snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
-        noCacheGitManager?: GitManager): IDocumentStorageService {
+        noCacheGitManager?: GitManager,
+        getStorageManager?: (disableCache?: boolean) => Promise<GitManager>,
+    ): IDocumentStorageService {
         const storageService = driverPolicies?.enableWholeSummaryUpload ?
             new WholeSummaryDocumentStorageService(
                 id,
@@ -49,6 +51,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
                 blobCache,
                 snapshotTreeCache,
                 noCacheGitManager,
+                getStorageManager,
             ) :
             new ShreddedSummaryDocumentStorageService(
                 id,
@@ -58,6 +61,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
                 driverPolicies,
                 blobCache,
                 snapshotTreeCache,
+                getStorageManager,
             );
         // TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
         if (!driverPolicies?.enableWholeSummaryUpload && policies.caching === LoaderCachingPolicy.Prefetch) {
@@ -74,7 +78,9 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
         snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
-        public noCacheGitManager?: GitManager) {
+        public noCacheGitManager?: GitManager,
+        getStorageManager?: (disableCache?: boolean) => Promise<GitManager>,
+    ) {
         super(DocumentStorageService.loadInternalDocumentStorageService(
             id,
             manager,
@@ -84,6 +90,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
             blobCache,
             snapshotTreeCache,
             noCacheGitManager,
+            getStorageManager,
         ));
     }
 

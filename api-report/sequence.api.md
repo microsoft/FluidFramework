@@ -58,6 +58,12 @@ export type CompressedSerializedInterval = [number, number, number, IntervalType
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
 
+// @public
+export function getTextAndMarkers(sharedString: SharedString, label: string): {
+    parallelText: string[];
+    parallelMarkers: Marker[];
+};
+
 // @public (undocumented)
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     (event: "changeInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
@@ -571,7 +577,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
         posStart: number;
         posAfterEnd: number;
     };
-    // (undocumented)
+    // @internal @deprecated (undocumented)
     getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
     // (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
@@ -644,16 +650,16 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     // (undocumented)
     getMarkerFromId(id: string): ISegment;
     getText(start?: number, end?: number): string;
-    // (undocumented)
+    // @deprecated (undocumented)
     getTextAndMarkers(label: string): {
         parallelText: string[];
         parallelMarkers: Marker[];
     };
     // (undocumented)
     getTextRangeWithMarkers(start: number, end: number): string;
-    // (undocumented)
+    // @deprecated (undocumented)
     getTextRangeWithPlaceholders(start: number, end: number): string;
-    getTextWithPlaceholders(): string;
+    getTextWithPlaceholders(start?: number, end?: number): string;
     // (undocumented)
     id: string;
     insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg;
@@ -664,6 +670,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     get ISharedString(): ISharedString;
     removeText(start: number, end: number): IMergeTreeRemoveMsg;
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
+    protected rollback(content: any, localOpMetadata: unknown): void;
 }
 
 // @public (undocumented)

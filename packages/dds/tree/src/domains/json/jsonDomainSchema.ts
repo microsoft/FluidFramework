@@ -16,12 +16,12 @@ import {
     ValueSchema,
     FieldSchema,
     TreeSchemaIdentifier,
-    LocalFieldKey,
     NamedTreeSchema,
     emptyField,
     emptyMap,
     emptySet,
-} from "../../schema";
+} from "../../schema-stored";
+import { brand } from "../../util";
 
 export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
 
@@ -30,7 +30,7 @@ const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
 const json: NamedTreeSchema[] = [];
 
 export const jsonObject: NamedTreeSchema = {
-    name: "Json.Object" as TreeSchemaIdentifier,
+    name: brand("Json.Object"),
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -39,13 +39,13 @@ export const jsonObject: NamedTreeSchema = {
 };
 
 export const jsonArray: NamedTreeSchema = {
-    name: "Json.Array" as TreeSchemaIdentifier,
+    name: brand("Json.Array"),
     globalFields: emptySet,
     extraLocalFields: emptyField,
     extraGlobalFields: false,
     localFields: new Map([
         [
-            "items" as LocalFieldKey,
+            brand("items"),
             { kind: FieldKind.Sequence, types: jsonTypes },
         ],
     ]),
@@ -53,7 +53,7 @@ export const jsonArray: NamedTreeSchema = {
 };
 
 export const jsonNumber: NamedTreeSchema = {
-    name: "Json.Number" as TreeSchemaIdentifier,
+    name: brand("Json.Number"),
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -62,7 +62,7 @@ export const jsonNumber: NamedTreeSchema = {
 };
 
 export const jsonString: NamedTreeSchema = {
-    name: "Json.String" as TreeSchemaIdentifier,
+    name: brand("Json.String"),
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -71,7 +71,7 @@ export const jsonString: NamedTreeSchema = {
 };
 
 export const jsonNull: NamedTreeSchema = {
-    name: "Json.Null" as TreeSchemaIdentifier,
+    name: brand("Json.Null"),
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,
@@ -80,7 +80,7 @@ export const jsonNull: NamedTreeSchema = {
 };
 
 export const jsonBoolean: NamedTreeSchema = {
-    name: "Json.Boolean" as TreeSchemaIdentifier,
+    name: brand("Json.Boolean"),
     localFields: emptyMap,
     globalFields: emptySet,
     extraLocalFields: emptyField,

@@ -7,10 +7,11 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { Client } from "../client";
-import { toRemovalInfo } from "../mergeTree";
+import { toRemovalInfo } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { DetachedReferencePosition } from "../referencePositions";
+import { LocalReferencePosition } from "../localReference";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestClient } from "./";
 
@@ -282,6 +283,7 @@ describe("MergeTree.Client", () => {
         client2.applyMsg(remove);
 
         assert.equal(client1.localReferencePositionToPosition(c1LocalRef), DetachedReferencePosition);
+        assert.equal(c1LocalRef.getSegment(), undefined);
     });
 
     it("References can have offsets on removed segment", () => {
@@ -461,5 +463,60 @@ describe("MergeTree.Client", () => {
 
         // regression: would fire 0x2be on zamboni during segment append
         clients.all.forEach((c) => c.updateMinSeq(seq));
+    });
+
+    describe("avoids removing StayOnRemove references on local + remote concurrent delete", () => {
+        let client: TestClient;
+        let localRefA: LocalReferencePosition;
+        let localRefB: LocalReferencePosition;
+        let seq: number;
+        beforeEach(() => {
+            seq = 0;
+            client = new TestClient();
+            client.startOrUpdateCollaboration("1");
+            client.enqueueMsg(client.makeOpMessage(client.insertTextLocal(0, "B"), ++seq));
+            client.enqueueMsg(client.makeOpMessage(client.insertTextLocal(0, "A"), ++seq));
+            client.applyMessages(2);
+            assert.equal(client.getText(), "AB");
+            localRefA = client.createLocalReferencePosition(
+                client.getContainingSegment(0).segment!,
+                0,
+                ReferenceType.StayOnRemove,
+                {},
+            );
+            localRefB = client.createLocalReferencePosition(
+                client.getContainingSegment(1).segment!,
+                0,
+                ReferenceType.StayOnRemove,
+                {},
+            );
+            for (const ref of [localRefA, localRefB]) {
+                ref.callbacks = {
+                    beforeSlide: () => assert.fail("Unexpected slide"),
+                    afterSlide: () => assert.fail("Unexpected slide"),
+                };
+            }
+        });
+
+        it("when references would slide forward", () => {
+            const originalSegment = localRefA.getSegment();
+            client.removeRangeLocal(0, 1);
+            client.removeRangeRemote(0, 1, ++seq, seq - 1, "2");
+            assert(localRefA.getSegment() === originalSegment, "ref was removed");
+        });
+
+        it("when references would slide backward", () => {
+            const originalSegment = localRefB.getSegment();
+            client.removeRangeLocal(1, 2);
+            client.removeRangeRemote(1, 2, ++seq, seq - 1, "2");
+            assert(localRefB.getSegment() === originalSegment, "ref was removed");
+        });
+
+        it("when references would slide off the string", () => {
+            const originalSegment = localRefA.getSegment();
+            client.removeRangeLocal(0, 2);
+            client.removeRangeRemote(0, 2, ++seq, seq - 1, "2");
+            assert(localRefA.getSegment() === originalSegment, "ref was removed");
+        });
     });
 });

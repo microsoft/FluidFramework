@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
-import { MergeTree } from "../mergeTree";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback";
 import { MergeTreeDeltaType } from "../ops";
 import { TextSegment } from "../textSegment";
+import { MergeTree } from "../mergeTree";
 import { countOperations } from "./testUtils";
 
 describe("MergeTree", () => {
