@@ -95,6 +95,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
             return false;
         }
     }
+
     return true;
 }
 

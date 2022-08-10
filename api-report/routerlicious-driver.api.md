@@ -120,9 +120,7 @@ export interface ITokenProvider {
 
 // @public (undocumented)
 export interface ITokenResponse {
-    // (undocumented)
     fromCache?: boolean;
-    // (undocumented)
     jwt: string;
 }
 

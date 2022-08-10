@@ -95,11 +95,11 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 
         if (container.getSpecifiedCodeDetails !== undefined) {
             assert.strictEqual(container.getSpecifiedCodeDetails()?.package, provider.defaultCodeDetails.package,
-            "Specified package should be same as provided");
+                "Specified package should be same as provided");
         }
         if (container.getLoadedCodeDetails !== undefined) {
             assert.strictEqual(container.getLoadedCodeDetails()?.package, provider.defaultCodeDetails.package,
-            "Loaded package should be same as provided");
+                "Loaded package should be same as provided");
         }
         assert.strictEqual((container as Container).clientDetails.capabilities.interactive, true,
             "Client details should be set with interactive as true");
@@ -319,7 +319,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
         await defPromise.promise;
     });
 
-    it.skip("Fire dataStore attach ops during container attach", async () => {
+    it("Fire dataStore attach ops during container attach", async () => {
         const testDataStoreType = "default";
         const defPromise = new Deferred<void>();
         const container = await loader.createDetachedContainer(provider.defaultCodeDetails);

@@ -1,6 +1,6 @@
 {
   "name": "@fluid-example/bundle-size-tests",
-  "version": "2.0.0-internal.1.0.0",
+  "version": "2.0.0-internal.1.1.0",
   "private": true,
   "description": "A package for understanding the bundle size of Fluid Framework",
   "homepage": "https://fluidframework.com",
@@ -28,13 +28,13 @@
     "webpack:profile": "npm run webpack"
   },
   "dependencies": {
-    "@fluidframework/aqueduct": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/container-loader": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/container-runtime": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/map": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/matrix": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/odsp-driver": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/sequence": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/aqueduct": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-loader": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/container-runtime": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/map": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/matrix": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/odsp-driver": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/sequence": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "source-map-loader": "^2.0.0"
   },
   "devDependencies": {

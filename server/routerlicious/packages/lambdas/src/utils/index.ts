@@ -7,3 +7,4 @@ export * from "./messageGenerator";
 export * from "./noOpLambda";
 export * from "./random";
 export * from "./telemetryHelper";
+export * from "./validateDocument";

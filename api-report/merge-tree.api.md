@@ -28,7 +28,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // @internal @deprecated (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
+    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
@@ -448,21 +448,17 @@ export interface IMarkerModifiedAction {
     (marker: Marker): void;
 }
 
-// @public (undocumented)
+// @public
 export interface IMergeBlock extends IMergeNodeCommon {
     // (undocumented)
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-    // (undocumented)
     childCount: number;
-    // (undocumented)
     children: IMergeNode[];
     // (undocumented)
     hierBlock(): IHierBlock | undefined;
     // (undocumented)
     needsScour?: boolean;
     // Warning: (ae-forgotten-export) The symbol "PartialSequenceLengths" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
     partialLengths?: PartialSequenceLengths;
     // (undocumented)
     setOrdinal(child: IMergeNode, index: number): void;
@@ -471,14 +467,12 @@ export interface IMergeBlock extends IMergeNodeCommon {
 // @public (undocumented)
 export type IMergeNode = IMergeBlock | ISegment;
 
-// @public (undocumented)
+// @public
 export interface IMergeNodeCommon {
     cachedLength: number;
-    // (undocumented)
     index: number;
     // (undocumented)
     isLeaf(): this is ISegment;
-    // (undocumented)
     ordinal: string;
     // (undocumented)
     parent?: IMergeBlock;
@@ -592,7 +586,7 @@ export interface IMergeTreeSegmentDelta {
 export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
-    // (undocumented)
+    // @deprecated (undocumented)
     getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number): {
         parallelText: string[];
         parallelMarkers: Marker[];
@@ -741,11 +735,9 @@ export interface IRelativePosition {
     offset?: number;
 }
 
-// @public (undocumented)
+// @public
 export interface IRemovalInfo {
-    // (undocumented)
     removedClientIds: number[];
-    // (undocumented)
     removedSeq: number;
 }
 
@@ -754,28 +746,21 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     // @internal @deprecated
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs, mergeTree: MergeTree): boolean;
     // (undocumented)
-    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow): PropertySet | undefined;
+    addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     append(segment: ISegment): void;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
-    // (undocumented)
     clientId: number;
     // (undocumented)
     clone(): ISegment;
-    // (undocumented)
     localRefs?: LocalReferenceCollection;
-    // (undocumented)
     localRemovedSeq?: number;
-    // (undocumented)
     localSeq?: number;
-    // (undocumented)
     properties?: PropertySet;
-    // (undocumented)
     propertyManager?: PropertiesManager;
     // (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
-    // (undocumented)
     seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
@@ -836,6 +821,8 @@ export class List<T> {
     last(): T | undefined;
     // (undocumented)
     next: List<T>;
+    // (undocumented)
+    pop?(): T | undefined;
     // (undocumented)
     prev: List<T>;
     // (undocumented)
@@ -1004,7 +991,7 @@ export class MergeTree {
     ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs): void;
     // (undocumented)
     addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void): void;
-    annotateRange(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs): void;
+    annotateRange(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined, refSeq: number, clientId: number, seq: number, opArgs: IMergeTreeDeltaOpArgs, rollback?: PropertiesRollback): void;
     // (undocumented)
     blockClone(block: IMergeBlock, segments?: ISegment[]): MergeBlock;
     // (undocumented)
@@ -1186,11 +1173,18 @@ export class PropertiesManager {
     // (undocumented)
     ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
     // (undocumented)
-    addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean): PropertySet | undefined;
+    addProperties(oldProps: PropertySet, newProps: PropertySet, op?: ICombiningOp, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet | undefined;
     // (undocumented)
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
     hasPendingProperties(): boolean;
+}
+
+// @public (undocumented)
+export enum PropertiesRollback {
+    None = 0,
+    Rewrite = 2,
+    Rollback = 1
 }
 
 // Warning: (ae-internal-missing-underscore) The name "Property" should be prefixed with an underscore because the declaration is marked as @internal
@@ -1430,6 +1424,8 @@ export interface SegmentGroup {
     // (undocumented)
     localSeq: number;
     // (undocumented)
+    previousProps?: PropertySet[];
+    // (undocumented)
     segments: ISegment[];
 }
 
@@ -1446,6 +1442,8 @@ export class SegmentGroupCollection {
     get empty(): boolean;
     // (undocumented)
     enqueue(segmentGroup: SegmentGroup): void;
+    // (undocumented)
+    pop?(): SegmentGroup | undefined;
     // (undocumented)
     get size(): number;
 }
