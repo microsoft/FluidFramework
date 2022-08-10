@@ -29,7 +29,8 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small # TODO: Revisit pool size / general machine choices
+        poolBuild: Small
+        extraDependencies: mocha @fluid-internal/stochastic-test-utils
         testPackage: "@fluidframework/sequence"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 120
@@ -45,7 +46,8 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small # TODO: Revisit pool size / general machine choices
+        poolBuild: Small
+        extraDependencies: mocha @fluid-internal/stochastic-test-utils
         testPackage: "@fluid-experimental/tree"
         testWorkspace: ${{ variables.testWorkspace }}
         testFileTarName: experimental-tree
