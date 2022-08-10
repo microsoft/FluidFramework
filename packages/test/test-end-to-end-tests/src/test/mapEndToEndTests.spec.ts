@@ -17,7 +17,7 @@ import {
     ChannelFactoryRegistry,
     ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
 
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -334,6 +334,25 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         assert.equal(detachedMap1.isAttached(), true, "detachedMap1 should be attached");
         assert.equal(detachedMap2.isAttached(), true, "detachedMap2 should be attached");
     });
+
+    itExpects.skip("Should close container when sending an op while processing another op",
+        [{
+            eventName: "fluid:telemetry:Container:ContainerClose",
+            error: "Making changes to data model is disallowed while processing ops.",
+        }], async () => {
+            sharedMap1.on("valueChanged", (changed, local) => {
+                if (!local) {
+                    assert.equal(changed.key, "key2", "Incorrect value for key1 in container 1");
+                }
+                // Avoid re-entrancy by setting a new key
+                if (changed.key !== "key2") {
+                    sharedMap2.set("key2", "v2");
+                }
+            });
+            // Set 1st key to trigger above valueChanged
+            sharedMap1.set("key1", "v1");
+            await provider.ensureSynchronized();
+    });
 });
 
 describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
@@ -343,8 +362,14 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     });
 
     let container: Container;
+    let container2: Container;
+
     let dataObject: ITestFluidObject;
+    let dataObject2: ITestFluidObject;
+
     let sharedMap: SharedMap;
+    let sharedMap2: SharedMap;
+
     let containerRuntime: ContainerRuntime;
     let clearEventCount: number;
     let changedEventData: IValueChanged[];
@@ -357,13 +382,21 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     beforeEach(async () => {
         const configWithFeatureGates = {
             ...testContainerConfig,
-            loaderProps: { configProvider: configProvider({
-                "Fluid.ContainerRuntime.EnableRollback": true,
-            }) },
+            loaderProps: {
+                configProvider: configProvider({
+                    "Fluid.ContainerRuntime.EnableRollback": true,
+                }),
+            },
         };
         container = await provider.makeTestContainer(configWithFeatureGates) as Container;
+        container2 = await provider.loadTestContainer(configWithFeatureGates) as Container;
+
         dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+        dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+
         sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+        sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+
         containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
         clearEventCount = 0;
         changedEventData = [];
@@ -373,6 +406,25 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         sharedMap.on("clear", (local, target) => {
             clearEventCount++;
         });
+    });
+
+    itExpects("Should close container when sending an op while processing another op",
+        [{
+            eventName: "fluid:telemetry:Container:ContainerClose",
+            error: "Making changes to data model is disallowed while processing ops.",
+        }], async () => {
+            sharedMap.on("valueChanged", (changed, local) => {
+                if (!local) {
+                    assert.equal(changed.key, "key2", "Incorrect value for key1 in container 1");
+                }
+                // Avoid re-entrancy by setting a new key
+                if (changed.key !== "key2") {
+                    sharedMap2.set("key2", "v2");
+                }
+            });
+            // Set 1st key to trigger above valueChanged
+            sharedMap.set("key1", "v1");
+            await provider.ensureSynchronized();
     });
 
     it("Should rollback set", async () => {

@@ -92,7 +92,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     // A boolean used to assert that ops are not being sent while processing another op.
     private opsCurrentlyProcessing: boolean = false;
-
+    // Delta manager option enabling the above assertion
+    private readonly preventConcurrentOpSend: boolean = true;
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
 
@@ -190,7 +191,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     public get clientDetails() { return this.connectionManager.clientDetails; }
 
     public submit(type: MessageType, contents: any, batch = false, metadata?: any) {
-        if (this.opsCurrentlyProcessing) {
+        if (this.opsCurrentlyProcessing && this.preventConcurrentOpSend) {
             this.close(new UsageError("Making changes to data model is disallowed while processing ops."));
         }
         const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
@@ -768,7 +769,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
     private processInboundMessage(message: ISequencedDocumentMessage): void {
         const startTime = Date.now();
-        assert(this.opsCurrentlyProcessing === false, "Currently processing ops.");
+        assert(!this.opsCurrentlyProcessing, "Currently processing ops.");
         this.opsCurrentlyProcessing = true;
         this.lastProcessedMessage = message;
 
