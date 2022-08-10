@@ -35,17 +35,17 @@ function foldInMarkList(
     newMarkList: T.MarkList<T.Mark>,
     baseMarkList: T.MarkList<T.Mark>,
 ): void {
-    let iTotal = 0;
+    let iBase = 0;
     let iIn = 0;
     let nextNewMark: T.Mark | undefined = newMarkList[iIn];
     while (nextNewMark !== undefined) {
         let newMark: T.Mark = nextNewMark;
         nextNewMark = undefined;
-        let baseMark = baseMarkList[iTotal];
+        let baseMark = baseMarkList[iBase];
         if (baseMark === undefined) {
             baseMarkList.push(clone(newMark));
         } else if (isAttachGroup(newMark)) {
-            baseMarkList.splice(iTotal, 0, clone(newMark));
+            baseMarkList.splice(iBase, 0, clone(newMark));
         } else if (isDetachMark(baseMark)) {
             // TODO: match base detaches to tombs and reattach in the newMarkList
             nextNewMark = newMark;
@@ -53,26 +53,26 @@ function foldInMarkList(
             const newMarkLength = getMarkLength(newMark);
             const baseMarkLength = getMarkLength(baseMark);
             if (newMarkLength < baseMarkLength) {
-                const totalMarkPair = splitMark(baseMark, newMarkLength);
-                baseMark = totalMarkPair[0];
-                baseMarkList.splice(iTotal, 1, ...totalMarkPair);
+                const baseMarkPair = splitMark(baseMark, newMarkLength);
+                baseMark = baseMarkPair[0];
+                baseMarkList.splice(iBase, 1, ...baseMarkPair);
             } else if (newMarkLength > baseMarkLength) {
                 [newMark, nextNewMark] = splitMark(newMark, baseMarkLength);
             }
-            // Passed this point, we are guaranteed that mark and total mark have the same length
+            // Passed this point, we are guaranteed that `newMark` and `baseMark` have the same length
             if (typeof baseMark === "number") {
                 // TODO: insert new tombs and reattaches without replacing the offset
-                baseMarkList.splice(iTotal, 1, newMark);
+                baseMarkList.splice(iBase, 1, newMark);
             } else {
                 const composedMark = composeMarks(newMark, baseMark);
-                baseMarkList.splice(iTotal, 1, ...composedMark);
+                baseMarkList.splice(iBase, 1, ...composedMark);
             }
         }
         if (nextNewMark === undefined) {
             iIn += 1;
             nextNewMark = newMarkList[iIn];
         }
-        iTotal += 1;
+        iBase += 1;
     }
 }
 
