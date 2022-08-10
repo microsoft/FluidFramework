@@ -50,7 +50,6 @@ import {
     IFluidDataStoreRegistry,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
     IInboundSignalMessage,
     IProvideFluidDataStoreFactory,
     ISummarizeInternalResult,
@@ -484,7 +483,7 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
 
         // Add GC data to the summary if it's not written at the root.
         if (!this.writeGCDataAtRoot) {
-            addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getGCSummaryDetails()));
+            addBlobToSummary(summarizeResult, gcBlobKey, JSON.stringify(this.summarizerNode.getBaseGCDetails()));
         }
 
         // If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
@@ -720,11 +719,6 @@ export abstract class FluidDataStoreContext extends TypedEventEmitter<IFluidData
         this._isInMemoryRoot = true;
     }
 
-    /**
-     * @deprecated - Renamed to getBaseGCDetails().
-     */
-    public abstract getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails>;
-
     public abstract getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 
     public reSubmit(contents: any, localOpMetadata: unknown) {
@@ -862,13 +856,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
         return this.initialSnapshotDetailsP;
     }
 
-    /**
-     * @deprecated - Renamed to getBaseGCDetails.
-     */
-    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
-        return this.getBaseGCDetails();
-    }
-
     public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
         return this.baseGCDetailsP;
     }
@@ -977,14 +964,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
             isRootDataStore,
             snapshot,
         };
-    }
-
-    /**
-     * @deprecated - Renamed to getBaseGCDetails.
-     */
-    public async getInitialGCSummaryDetails(): Promise<IGarbageCollectionSummaryDetails> {
-        // Local data store does not have initial summary.
-        return {};
     }
 
     public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {

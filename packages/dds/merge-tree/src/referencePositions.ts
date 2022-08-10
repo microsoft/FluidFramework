@@ -66,10 +66,6 @@ export interface ReferencePosition {
     isLeaf(): this is ISegment;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 export const DetachedReferencePosition = -1;
