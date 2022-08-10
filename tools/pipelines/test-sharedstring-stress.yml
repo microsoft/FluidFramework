@@ -33,13 +33,14 @@ stages:
         testPackage: "@fluidframework/sequence"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 120
+        testFileTarName: sequence
         testCommand: test:mocha
         env:
           FUZZ_TEST_COUNT: 10
           FUZZ_STRESS_RUN: true
 
   - stage:
-    displayName:  Stress tests - SharedString
+    displayName:  Stress tests - Legacy SharedTree
     dependsOn: []
     jobs:
     - template: templates/include-test-real-service.yml
@@ -47,6 +48,7 @@ stages:
         poolBuild: Small # TODO: Revisit pool size / general machine choices
         testPackage: "@fluid-experimental/tree"
         testWorkspace: ${{ variables.testWorkspace }}
+        testFileTarName: experimental-tree
         timeoutInMinutes: 120
         testCommand: test:mocha
         env:
