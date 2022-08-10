@@ -55,7 +55,9 @@ describe("JsonCursor", () => {
         });
 
         it("array", () => {
-            // TODO: should empty arrays report this key?
+            // Rationale: While Object.keys(..) returns the indices of the array items, the SharedTree
+            //            models edges as a (key, index) pair.  Therefore, '.keys' returns the unnamed
+            //            key of the field representing the array's indexer.
             assert.deepEqual([...new JsonCursor([]).keys], [EmptyKey]);
             assert.deepEqual([...new JsonCursor([0]).keys], [EmptyKey]);
             assert.deepEqual([...new JsonCursor(["test", {}]).keys], [EmptyKey]);
@@ -74,6 +76,12 @@ describe("JsonCursor", () => {
         it("boolean", () => {
             assert.deepEqual([...new JsonCursor(false).keys], []);
             assert.deepEqual([...new JsonCursor(true).keys], []);
+        });
+
+        it("null", () => {
+            // Rationale: While Object.keys(..) does not accept 'null', the SharedTree data model must
+            //            as any value may be augmented with by the view schema.
+            assert.deepEqual([...new JsonCursor(null).keys], []);
         });
     });
 
