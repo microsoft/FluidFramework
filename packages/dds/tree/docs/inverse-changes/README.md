@@ -137,8 +137,8 @@ Ultimately, designing our undo system requires answering the following questions
 
 In the remainder of this document,
 we consider each of those questions in turn
-then propose a design.
-Finally, we consider some potential improvements a list some miscellaneous related thoughts.
+then propose some potential designs.
+Finally, we list any remaining additional thoughts relevant to the matter.
 
 ## Undo Semantics
 
@@ -632,10 +632,9 @@ are within the collaboration window as opposed to the undo window.
 This is not something that the Fluid service supports,
 and it's not clear that such a thing is possible in general.
 
-## Design Proposal
+## Design Proposals
 
-In this section we propose a design,
-explaining our motivation as we go.
+In this section we propose some designs as a starting point for discussing long-term plans.
 
 ### General Design Goals
 
@@ -682,11 +681,15 @@ They interact with the problem at hand in the following ways:
   supplementary repair data as part of the peer computation/update strategy
   and towards having peers maintain such data locally.
 
-### Long-Term Design
+### Design A: Sending Concrete Undos
 
-We provide this design as a starting point for discussing long-term plans.
+In this design,
+undo ops sent over the wire are concrete in the sense that they describe,
+to the extent know by the sender,
+the specific document changes needed to accomplish the undo.
+This design makes undo ops more like normal changesets.
 
-* Don't preemptively include repair data in non-inverse ops.
+* Don't preemptively include repair data in all changesets.
 * A client that issues an undo needs access to edits and repair data as far back as the undo window extends.
   The client can either:
     * Maintain a cache of that data locally
@@ -708,32 +711,25 @@ We provide this design as a starting point for discussing long-term plans.
 
 When it comes to procuring repair data
 (both for the issuing client and the receiving peers)
-it can be up to the application whether local caching of asynchronous fetching from the history service.
+it can be up to the application how much local caching to do (if any)
+instead of performing asynchronous fetching from the history service.
 This can be a static choice or a dynamic one (e.g., based on memory pressure).
 
-The design above has the following noteworthy characteristics:
+This design has the following noteworthy characteristics:
 * Applications can opt out of undo support on a per-document basis,
-paying no overhead for its support in other documents.
+  paying no overhead for its support in other documents.
 * In applications where one can only undo edits from one's own session,
-participants that do not contribute edits or are unable to issue undos,
-only need to access repair data as far back as the collaboration window extends.
+  participants that do not contribute edits or are unable to issue undos,
+  only need to access repair data as far back as the collaboration window extends.
+* It can be made to work without a document state history service
+  if clients are willing to maintain relevant data locally
+  (see [Stepping Stones](#stepping-stones)).
 
-The above does not account for partial checkouts.
-The expected effect of partial checkouts
-is that an issuer or a peer may be forced to fetch repair data from the service
-for edits that fell outside of their checked out subtree.
-This is no different from the requirements of normal edit application in the context of partial checkouts.
+#### Stepping Stones
 
-Note that any scheme that relies on blobs or other independently fetched data to represent repair data in over-the-wire changesets
-requires clients to fetch this data before they can apply such incoming changesets.
-This not something that the Fluid runtime currently supports but is a capability needed in the more general case of large inserts.
-
-### Stepping Stones
-
-In the short term,
-the following shortcuts may be preferable:
+Some short term shortcuts could be taken to support undo earlier:
 * Force issuing client to locally store edit and repair data as far back as the undo window.
-* Have peers reject the change if any concurrency issue arise.
+* Have peers reject undo changes if any concurrency issue arise.
 * Inline all repair data in changesets
 
 These keep the format simpler and reduces dependency on functionality and services that do not yet exist.
@@ -743,7 +739,29 @@ peers can be made to locally store edit and repair data as far back as the colla
 This would mean that summaries need to include this information
 or that a history server can be contacted to fetch this data when a peer joins the session.
 
-## Possible Improvements
+### Design B: Sending Abstract Undos
+
+In this design,
+undo ops sent over the wire are abstract in the sense that they only describe,
+which prior change ought to be undone.
+The specific document changes needed to accomplish the undo are entirely
+left to the receiver to work out.
+This design makes undo ops, well, not really changesets anymore.
+
+* Don't preemptively include repair data in all changesets.
+* A client that issues an undo simply sends an op containing the ID of the change they want undone.
+* When processing such an op,
+  peers asynchronously fetch relevant repair and edit data from a document history server
+  and perform the whole undo changeset computation locally.
+
+This design has the following noteworthy characteristics:
+* Applications can opt out of undo support on a per-document basis,
+  paying no overhead for its support in other documents.
+* As long as *some* undo support may be required by any client for a given document,
+  the document history server has to be able to provide the relevant information.
+* This design is entirely predicated on the existence of such a service.
+
+## Misc
 
 ### On Broadcast Blob Attachment
 
@@ -773,14 +791,26 @@ Pros:
 * The undo changeset sent over the wire has the opportunity to be more terse,
   especially in comparison to a concrete changeset that had the restoration data inlined into it.
 Cons:
-* The burden of accessing the relevant repair data falls onto peers.
+* The burden of accessing the relevant repair data falls onto peers with all the challenges that implies.
   (See [Maximally Inactive Issuer](#maximally-inactive-issuer).)
 * The logic needed to rebase, inverse, and compose changesets that describe such abstract changes,
   all without using repair data,
   may be non-trivial and lead to undesirable bloat in the resulting changesets.
   It's an open problem how these algorithms would work.
 
-## Misc
+### Asynchronous Change Processing
+
+Any scheme that relies on blobs or other independently fetched data to represent repair data in over-the-wire changesets
+requires peers to fetch this data before they can apply such incoming changesets.
+This not something that the Fluid runtime currently supports but is a capability needed in the more general case of large inserts.
+
+### Partial Checkouts
+
+The above does not account for partial checkouts.
+The expected effect of partial checkouts
+is that an issuer or a peer may be forced to fetch repair data from the service
+for edits that fell outside of their checked out subtree.
+This is no different from the requirements of normal edit application in the context of partial checkouts.
 
 ### Undo Recognition
 
