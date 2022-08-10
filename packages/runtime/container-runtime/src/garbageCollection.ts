@@ -190,14 +190,14 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /** The state of node that is unreferenced. */
-const UnreferencedState = {
+export const UnreferencedState = {
     /** The node is active, i.e., it can become referenced again. */
     Active: "Active",
     /** The node is inactive, i.e., it should not become referenced. */
     Inactive: "Inactive",
     /** The node is ready to be deleted by the sweep phase. */
     SweepReady: "SweepReady",
-};
+} as const;
 export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
 
 /** The event that is logged when unreferenced node is used after a certain time. */
@@ -220,7 +220,7 @@ interface IUnreferencedEventProps {
  * Helper class that tracks the state of an unreferenced node such as the time it was unreferenced and if it can
  * be deleted by the sweep phase.
  */
-class UnreferencedStateTracker {
+export class UnreferencedStateTracker {
     private _state: UnreferencedState = UnreferencedState.Active;
     public get state(): UnreferencedState {
         return this._state;
