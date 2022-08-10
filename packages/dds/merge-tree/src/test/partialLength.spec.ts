@@ -254,4 +254,52 @@ describe("partial lengths", () => {
             validatePartialLengths(remoteClientId, 1000, 1012);
         });
     });
+
+    describe("concurrent, overlapping deletes", () => {
+        it("remote+remote", () => {
+            mergeTree.markRangeRemoved(
+                0,
+                10,
+                0,
+                remoteClientId,
+                1,
+                false,
+                undefined as any,
+            );
+            mergeTree.markRangeRemoved(
+                0,
+                10,
+                0,
+                remoteClientId + 1,
+                1,
+                false,
+                undefined as any,
+            );
+
+            validatePartialLengths(localClientId, 1, 2);
+        });
+        it("local+remote", () => {
+            mergeTree.markRangeRemoved(
+                0,
+                10,
+                0,
+                localClientId,
+                1,
+                false,
+                undefined as any,
+            );
+            mergeTree.markRangeRemoved(
+                0,
+                10,
+                0,
+                remoteClientId,
+                1,
+                false,
+                undefined as any,
+            );
+
+            validatePartialLengths(localClientId, 1, 2);
+            validatePartialLengths(remoteClientId, 1, 2);
+        });
+    });
 });
