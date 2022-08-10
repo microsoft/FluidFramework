@@ -107,6 +107,7 @@ USAGE
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
+* [`flub merge`](#flub-merge)
 * [`flub version VERSION`](#flub-version-version)
 
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
@@ -264,6 +265,41 @@ DESCRIPTION
 ```
 
 _See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/info.ts)_
+
+## `flub merge`
+
+Used to merge two branches.
+
+```
+USAGE
+  $ flub merge --githubToken <value> [--owner <value>] [--repoName <value>] [-s <value>] [-t <value>] [-b
+    <value>] [--branchName <value>] [-r <value>] [-v]
+
+FLAGS
+  -b, --batchSize=<value>     [default: 1] Number of commits to include in the pull request
+  -r, --reviewers=<value>...  Username of reviewers
+  -s, --sourceBranch=<value>  [default: main] Source branch name
+  -t, --targetBranch=<value>  [default: next] Target branch name
+  -v, --verbose               Verbose logging.
+  --branchName=<value>        Any specific branch name. Default would be source-target-SHA
+  --githubToken=<value>       (required) GitHub secret token
+  --owner=<value>             [default: microsoft] Repository owner
+  --repoName=<value>          [default: FluidFramework] Repository name
+
+DESCRIPTION
+  Used to merge two branches.
+
+EXAMPLES
+  Example to use the merge command.
+
+    $ flub merge -s main -t next -r xyz -r abc -b 5
+
+  Example to use the merge command.
+
+    $ flub merge --source=main --target=next --reviewers=xyz --reviewers=abc --batchSize=5
+```
+
+_See code: [dist/commands/merge.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/merge.ts)_
 
 ## `flub version VERSION`
 
