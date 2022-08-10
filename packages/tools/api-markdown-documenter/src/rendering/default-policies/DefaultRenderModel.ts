@@ -37,6 +37,7 @@ export function renderModelSection(
         const packagesTable: DocTable = new DocTable({
             configuration: tsdocConfiguration,
             headerTitles: ["Package", "Description"],
+            // TODO
             // cssClass: 'package-list',
             // caption: 'List of packages in this model'
         });
