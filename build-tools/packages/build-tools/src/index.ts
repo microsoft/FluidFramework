@@ -25,6 +25,7 @@ export {
 export {
     Package
 } from "./common/npmPackage";
+export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/genMonoRepoPackageJson";
 export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
 export { execAsync, execWithErrorAsync, readJsonAsync, readFileAsync, writeFileAsync } from "./common/utils";

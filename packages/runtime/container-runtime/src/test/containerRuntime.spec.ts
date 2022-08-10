@@ -880,16 +880,6 @@ describe("Runtime", () => {
                 );
             });
 
-            it("cannot create root data store with slashes in id", async () => {
-                const invalidId = "beforeSlash/afterSlash";
-                const codeBlock = async () => {
-                    await containerRuntime.createRootDataStore("", invalidId);
-                };
-                await assert.rejects(codeBlock,
-                    (e) => e.errorType === ContainerErrorType.usageError
-                        && e.message === `Id cannot contain slashes: '${invalidId}'`);
-            });
-
             it("cannot create detached root data store with slashes in id", async () => {
                 const invalidId = "beforeSlash/afterSlash";
                 const codeBlock = () => {

@@ -27,7 +27,7 @@ import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
 import { FileMode } from "@fluidframework/protocol-definitions";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import { Lumber, LumberEventName } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda, createSessionMetric } from "../utils";
+import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
@@ -77,7 +77,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         };
 
         let gitManager: IGitManager;
-        let dbObject: IDocument;
+        let document: IDocument;
 
         try {
             const tenant = await this.tenantManager.getTenant(tenantId, documentId);
@@ -85,8 +85,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 
             // Lookup the last sequence number stored
             // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-            dbObject = await this.collection.findOne({ documentId, tenantId });
-            // Check if the document was deleted prior.
+            document = await this.collection.findOne({ documentId, tenantId });
         } catch (error) {
             const errMsg = "Deli lambda creation failed";
             context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
@@ -94,9 +93,27 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             throw error;
         }
 
-        if (!dbObject || dbObject.scheduledDeletionTime) {
-            // Temporary guard against failure until we figure out what causing this to trigger.
+        // Check if the document was deleted prior.
+        if (!isDocumentValid(document)) {
+            // (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
+            // Document sessions can be joined (via Alfred) after a document is functionally deleted.
+            context.log?.error(
+                `Received attempt to connect to a missing/deleted document.`,
+                { messageMetaData },
+            );
             return new NoOpLambda(context);
+        }
+        if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
+            // Session for this document is either nonexistent or exists in a different location.
+            const errMsg =
+                `Received attempt to connect to invalid session: ${JSON.stringify(document.session)}`;
+            context.log?.error(errMsg, { messageMetaData });
+            if (this.serviceConfiguration.enforceDiscoveryFlow) {
+                // This can/will prevent any users from creating a valid session in this location
+                // for the liftime of this NoOpLambda. This is not ideal; however, throwing an error
+                // to prevent lambda creation would mark the document as corrupted, which is worse.
+                return new NoOpLambda(context);
+            }
         }
 
         let lastCheckpoint: IDeliState;
@@ -104,11 +121,11 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         // Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary or the document
         // was created within a different tenant.
-        if (dbObject.deli === undefined || dbObject.deli === null) {
+        if (document.deli === undefined || document.deli === null) {
             context.log?.info(`New document. Setting empty deli checkpoint`, { messageMetaData });
             lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
         } else {
-            if (dbObject.deli === "") {
+            if (document.deli === "") {
                 context.log?.info(`Existing document. Fetching checkpoint from summary`, { messageMetaData });
 
                 const lastCheckpointFromSummary =
@@ -131,7 +148,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                         ${JSON.stringify(lastCheckpoint)}`, { messageMetaData });
                 }
             } else {
-                lastCheckpoint = JSON.parse(dbObject.deli);
+                lastCheckpoint = JSON.parse(document.deli);
             }
         }
 
@@ -175,16 +192,37 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             const handler = async () => {
                 if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {
                     const query = { documentId, tenantId, session: { $exists: true } };
-                    const data = { "session.isSessionAlive": false, "lastAccessTime": Date.now() };
+                    const data = {
+                        "session.isSessionAlive": false,
+                        "session.isSessionActive": false,
+                        "lastAccessTime": Date.now(),
+                    };
                     await this.collection.update(query, data, null);
-                    context.log?.info(`Marked isSessionAlive as false for closeType: ${JSON.stringify(closeType)}`,
-                        { messageMetaData });
+                    context.log?.info(
+                        `Marked session alive and active as false for closeType: ${JSON.stringify(closeType)}`,
+                        { messageMetaData },
+                    );
                 }
             };
             handler().catch((e) => {
-                context.log?.error(`Failed to handle isSessionAlive with exception ${e}`
-                    , { messageMetaData });
+                context.log?.error(
+                    `Failed to handle session alive and active with exception ${e}`,
+                    { messageMetaData },
+                );
             });
+        });
+
+        // Fire-and-forget sessionActive update for session-boot performance.
+        // Worst case is that document is allowed to be deleted while active.
+        this.collection.update(
+            { documentId, tenantId },
+            {
+                "session.isSessionActive": true,
+            },
+            null,
+        ).catch((error) => {
+            const errMsg = "Deli Lambda failed to mark session as active.";
+            context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
         });
 
         return deliLambda;
