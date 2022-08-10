@@ -8,12 +8,9 @@ import { AnchorSet } from "../../tree";
 import { SequenceChangeset } from "./sequenceChangeset";
 import { compose } from "./compose";
 import { invert } from "./invert";
+import { rebase } from "./rebase";
 
 export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset, SequenceChangeset, SequenceChangeset>;
-
-function rebase(change: SequenceChangeset, over: SequenceChangeset): SequenceChangeset {
-    throw Error("Not implemented"); // TODO
-}
 
 function rebaseAnchors(anchor: AnchorSet, over: SequenceChangeset): void {}
 
