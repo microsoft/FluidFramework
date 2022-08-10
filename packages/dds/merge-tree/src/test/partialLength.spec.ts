@@ -256,7 +256,7 @@ describe("partial lengths", () => {
     });
 
     describe("concurrent, overlapping deletes", () => {
-        it("remote+remote", () => {
+        it("concurrent remote changes are visible to local", () => {
             mergeTree.markRangeRemoved(
                 0,
                 10,
@@ -271,14 +271,14 @@ describe("partial lengths", () => {
                 10,
                 0,
                 remoteClientId + 1,
-                1,
+                2,
                 false,
                 undefined as any,
             );
 
             validatePartialLengths(localClientId, 1, 2);
         });
-        it("local+remote", () => {
+        it("concurrent local and remote changes are visible", () => {
             mergeTree.markRangeRemoved(
                 0,
                 10,
@@ -293,7 +293,7 @@ describe("partial lengths", () => {
                 10,
                 0,
                 remoteClientId,
-                1,
+                2,
                 false,
                 undefined as any,
             );
