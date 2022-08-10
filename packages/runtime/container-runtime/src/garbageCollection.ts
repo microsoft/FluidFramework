@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
-import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
+import { assert, LazyPromise, Timer as CommonTimer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -226,8 +226,10 @@ export class UnreferencedStateTracker {
         return this._state;
     }
 
-    private inactiveTimer: Timer | undefined;
-    private sweepTimer: ReturnType<typeof setTimeout> | undefined;
+    /** Timer to indicate when an unreferenced object is considered Inactive */
+    private readonly inactiveTimer: Timer;
+    /** Timer to indicate when an unreferenced object is Sweep-Ready */
+    private readonly sweepTimer: Timer;
 
     constructor(
         public readonly unreferencedTimestampMs: number,
@@ -238,6 +240,23 @@ export class UnreferencedStateTracker {
         /** The current reference timestamp; undefined if no ops have ever been processed which can happen in tests. */
         currentReferenceTimestampMs?: number,
     ) {
+        this.sweepTimer = new Timer(
+            () => {
+                this._state = UnreferencedState.SweepReady;
+                this.clearTimers();
+            },
+        );
+
+        this.inactiveTimer = new Timer(() => {
+            this._state = UnreferencedState.Inactive;
+            this.clearTimers();
+
+            // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
+            if (this.sweepTimeoutMs !== undefined) {
+                this.sweepTimer.start(this.sweepTimeoutMs - this.inactiveTimeoutMs);
+            }
+        });
+
         // If there is no current reference timestamp, don't track the node's unreferenced state. This will happen
         // later when updateTracking is called with a reference timestamp.
         if (currentReferenceTimestampMs !== undefined) {
@@ -263,39 +282,18 @@ export class UnreferencedStateTracker {
             this.clearTimers();
 
             if (this.sweepTimeoutMs !== undefined) {
-                setLongTimeout(
-                    this.sweepTimeoutMs - unreferencedDurationMs,
-                    () => { this._state = UnreferencedState.SweepReady; },
-                    (timer) => { this.sweepTimer = timer; },
-                );
+                this.sweepTimer.start(this.sweepTimeoutMs - unreferencedDurationMs);
             }
             return;
         }
 
         // The node is still active. Start the inactive timer for the remaining duration.
-        const remainingDurationMs = this.inactiveTimeoutMs - unreferencedDurationMs;
-        if (this.inactiveTimer === undefined) {
-            const inactiveTimeoutHandler = () => {
-                this._state = UnreferencedState.Inactive;
-                // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
-                if (this.sweepTimeoutMs !== undefined) {
-                    setLongTimeout(
-                        this.sweepTimeoutMs - this.inactiveTimeoutMs,
-                        () => { this._state = UnreferencedState.SweepReady; },
-                        (timer) => { this.sweepTimer = timer; },
-                    );
-                }
-            };
-            this.inactiveTimer = new Timer(remainingDurationMs, () => inactiveTimeoutHandler());
-        }
-        this.inactiveTimer.restart(remainingDurationMs);
+        this.inactiveTimer.restart(this.inactiveTimeoutMs - unreferencedDurationMs);
     }
 
     private clearTimers() {
-        this.inactiveTimer?.clear();
-        if (this.sweepTimer !== undefined) {
-            clearTimeout(this.sweepTimer);
-        }
+        this.inactiveTimer.clear();
+        this.sweepTimer.clear();
     }
 
     /** Stop tracking this node. Reset the unreferenced timers and state, if any. */
@@ -412,8 +410,8 @@ export class GarbageCollector implements IGarbageCollector {
     private readonly baseGCDetailsP: Promise<Map<string, IGarbageCollectionDetailsBase>>;
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
-    // The timeout responsible for closing the container when the session has expired
-    private sessionExpiryTimer?: ReturnType<typeof setTimeout>;
+    // The Timer responsible for closing the container when the session has expired
+    private sessionExpiryTimer: CommonTimer | undefined;
 
     // Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
     // per event per node.
@@ -484,7 +482,7 @@ export class GarbageCollector implements IGarbageCollector {
             // The sweep phase has to be explicitly enabled by setting the sweepAllowed flag in GC options to true.
             this.sweepEnabled = this.gcOptions.sweepAllowed === true;
 
-            // Set the Session Expiry only if the flag is enabled or the test option is set.
+            // Set the Session Expiry only if the flag is enabled and GC is enabled.
             if (this.mc.config.getBoolean(runSessionExpiryKey) && this.gcEnabled) {
                 this.sessionExpiryTimeoutMs = this.gcOptions.sessionExpiryTimeoutMs ?? defaultSessionExpiryDurationMs;
             }
@@ -497,11 +495,10 @@ export class GarbageCollector implements IGarbageCollector {
                 this.mc.config.getNumber("Fluid.GarbageCollection.TestOverride.SessionExpiryMs");
             const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
 
-            setLongTimeout(
-                timeoutMs,
+            this.sessionExpiryTimer = new Timer(
                 () => { this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs)); },
-                (timer) => { this.sessionExpiryTimer = timer; },
             );
+            this.sessionExpiryTimer.start(timeoutMs);
 
             // TEMPORARY: Hardcode a default of 2 days which is the value used in the ODSP driver.
             // This unblocks the Sweep Log (see logSweepEvents function).
@@ -986,10 +983,8 @@ export class GarbageCollector implements IGarbageCollector {
     }
 
     public dispose(): void {
-        if (this.sessionExpiryTimer !== undefined) {
-            clearTimeout(this.sessionExpiryTimer);
-            this.sessionExpiryTimer = undefined;
-        }
+        this.sessionExpiryTimer?.clear();
+        this.sessionExpiryTimer = undefined;
     }
 
     /**
@@ -1416,25 +1411,20 @@ function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollec
     return sortedGCState;
 }
 
-/**
- * setLongTimeout is used for timeouts longer than setTimeout's ~24.8 day max
- * @param timeoutMs - the total time the timeout needs to last in ms
- * @param timeoutFn - the function to execute when the timer ends
- * @param setTimerFn - the function used to update your timer variable
- */
-function setLongTimeout(
-    timeoutMs: number,
-    timeoutFn: () => void,
-    setTimerFn: (timer: ReturnType<typeof setTimeout>) => void,
-) {
-    // The setTimeout max is 24.8 days before looping occurs.
-    const maxTimeout = 2147483647;
-    let timer: ReturnType<typeof setTimeout>;
-    if (timeoutMs > maxTimeout) {
-        const newTimeoutMs = timeoutMs - maxTimeout;
-        timer = setTimeout(() => setLongTimeout(newTimeoutMs, timeoutFn, setTimerFn), maxTimeout);
-    } else {
-        timer = setTimeout(() => timeoutFn(), timeoutMs);
+/** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
+class Timer extends CommonTimer {
+    constructor(
+        private readonly callback: () => void,
+    ) {
+        // The default timeout/handlers will never be used since start/restart pass overrides below
+        super(0, () => { throw new Error("DefaultHandler should not be used"); });
     }
-    setTimerFn(timer);
+
+    start(timeoutMs: number) {
+        super.start(timeoutMs, this.callback);
+    }
+
+    restart(timeoutMs: number): void {
+        super.restart(timeoutMs, this.callback);
+    }
 }
