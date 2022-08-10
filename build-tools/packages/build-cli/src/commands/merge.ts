@@ -6,6 +6,7 @@ import { getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
 import { Octokit } from "@octokit/core";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../base";
+import { arrayListFlag } from "../flags";
 
 const owner = "microsoft";
 const repo = "FluidFramework";
@@ -84,6 +85,8 @@ async function createPR(token: string, sourceBranch: string, targetBranch: strin
 export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
     static description = "Used to merge two branches.";
 
+    // ./bin/dev --source=main --target=next --batchSize=5 --reviewers=sonalivdeshpande,tylerbutler
+
     static flags = {
         githubToken: Flags.string({
             description: "GitHub secret token",
@@ -93,12 +96,12 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
         source: Flags.string({
             description: "Source branch name",
             default: "main",
-            required: false,
+            required: true,
         }),
         target: Flags.string({
             description: "Target branch name",
             default: "next",
-            required: false,
+            required: true,
         }),
         batchSize: Flags.integer({
             description: "Number of commits to include in the pull request",
@@ -113,14 +116,7 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
             description: "Username of reviewers",
             required: false,
         }),
-        title: Flags.string({
-            description: "PR title name",
-            required: false,
-        }),
-        assignee: Flags.string({
-            description: "PR assignee",
-            required: false,
-        }),
+        reviewersArr: arrayListFlag({ required: true }), // array of reviewers
         ...BaseCommand.flags,
     };
 
