@@ -120,7 +120,7 @@ import {
 } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
-import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
+import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     aliasBlobName,
@@ -426,12 +426,6 @@ export interface IContainerRuntimeOptions {
      */
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     /**
-     * Should the runtime use data store aliasing for creating root datastores.
-     * In case of aliasing conflicts, the runtime will raise an exception which does
-     * not effect the status of the container.
-     */
-    readonly useDataStoreAliasing?: boolean;
-    /**
      * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
      * send all operations to the driver layer, while in TurnBased the operations will be buffered
      * and then sent them as a single batch at the end of the turn.
@@ -487,11 +481,15 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
  * instantiated runtime in a new instance of the container, so it can load to the
  * same state
  */
-export interface IPendingRuntimeState {
+interface IPendingRuntimeState {
     /**
      * Pending ops from PendingStateManager
      */
     pending?: IPendingLocalState;
+    /**
+     * Pending blobs from BlobManager
+     */
+    pendingAttachmentBlobs?: IPendingBlobs;
     /**
      * A base snapshot at a sequence number prior to the first pending op
      */
@@ -509,7 +507,6 @@ export interface IPendingRuntimeState {
     savedOps: ISequencedDocumentMessage[];
 }
 
-const useDataStoreAliasingKey = "Fluid.ContainerRuntime.UseDataStoreAliasing";
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
 // Feature gate for the max op size. If the value is negative, chunking is enabled
@@ -903,7 +900,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             summaryOptions = {},
             gcOptions = {},
             loadSequenceNumberVerification = "close",
-            useDataStoreAliasing = false,
             flushMode = defaultFlushMode,
             enableOfflineLoad = false,
         } = runtimeOptions;
@@ -979,7 +975,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 summaryOptions,
                 gcOptions,
                 loadSequenceNumberVerification,
-                useDataStoreAliasing,
                 flushMode,
                 enableOfflineLoad,
             },
@@ -1069,7 +1064,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     private readonly summaryCollection: SummaryCollection;
 
     private readonly summarizerNode: IRootSummarizerNodeWithGC;
-    private readonly _aliasingEnabled: boolean;
     private readonly _maxOpSizeInBytes: number;
 
     private readonly maxConsecutiveReconnects: number;
@@ -1263,10 +1257,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
         this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
-        this._aliasingEnabled =
-            (this.mc.config.getBoolean(useDataStoreAliasingKey) ?? false) ||
-            (runtimeOptions.useDataStoreAliasing ?? false);
-
         this._maxOpSizeInBytes = (this.mc.config.getNumber(maxOpSizeInBytesKey) ?? defaultMaxOpSizeInBytes);
         this.maxConsecutiveReconnects =
             this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? this.defaultMaxConsecutiveReconnects;
@@ -1352,6 +1342,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId }),
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
+            pendingRuntimeState?.pendingAttachmentBlobs,
         );
 
         this.scheduleManager = new ScheduleManager(
@@ -1829,8 +1820,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // ensure we don't submit ops referencing a blob that has not been uploaded
         const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
         if (connecting && this.blobManager.hasPendingOfflineUploads) {
-            assert(!this.delayConnectClientId, "Connect event delay must be canceled before subsequent connect event");
-            assert(!!clientId, "Must have clientId when connecting");
+            assert(!this.delayConnectClientId,
+                0x392 /* Connect event delay must be canceled before subsequent connect event */);
+            assert(!!clientId, 0x393 /* Must have clientId when connecting */);
             this.delayConnectClientId = clientId;
             this.blobManager.onConnected().then(() => {
                 // make sure we didn't reconnect before the promise resolved
@@ -1846,7 +1838,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private setConnectionStateCore(connected: boolean, clientId?: string) {
-        assert(!this.delayConnectClientId, "connect event delay must be cleared before propagating connect event");
+        assert(!this.delayConnectClientId,
+            0x394 /* connect event delay must be cleared before propagating connect event */);
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -1870,11 +1863,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                         "Runtime detected too many reconnects with no progress syncing local ops",
                         "setConnectionState",
                         undefined,
-                       {
-                        dataLoss: 1,
-                        attempts: this.consecutiveReconnects,
-                        pendingMessages: this.pendingStateManager.pendingMessagesCount,
-                    }));
+                        {
+                            dataLoss: 1,
+                            attempts: this.consecutiveReconnects,
+                            pendingMessages: this.pendingStateManager.pendingMessagesCount,
+                        }));
                 return;
             }
         }
@@ -2137,81 +2130,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     public async createDataStore(pkg: string | string[]): Promise<IDataStore> {
         const internalId = uuid();
         return channelToDataStore(
-            await this._createDataStore(pkg, false /* isRoot */, internalId),
+            await this._createDataStore(pkg, internalId),
             internalId,
             this,
             this.dataStores,
             this.mc.logger);
-    }
-
-    /**
-     * Creates a root datastore directly with a user generated id and attaches it to storage.
-     * It is vulnerable to name collisions and should not be used.
-     *
-     * This method will be removed. See #6465.
-     */
-    private async createRootDataStoreLegacy(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        const fluidDataStore = await this._createDataStore(pkg, true /* isRoot */, rootDataStoreId);
-        fluidDataStore.makeVisibleAndAttachGraph();
-        return fluidDataStore;
-    }
-
-    /**
-     * @deprecated - will be removed in an upcoming release. See #9660.
-     */
-    public async createRootDataStore(pkg: string | string[], rootDataStoreId: string): Promise<IFluidRouter> {
-        if (rootDataStoreId.includes("/")) {
-            throw new UsageError(`Id cannot contain slashes: '${rootDataStoreId}'`);
-        }
-        return this._aliasingEnabled === true ?
-            this.createAndAliasDataStore(pkg, rootDataStoreId) :
-            this.createRootDataStoreLegacy(pkg, rootDataStoreId);
-    }
-
-    /**
-     * Creates a data store then attempts to alias it.
-     * If aliasing fails, it will raise an exception.
-     *
-     * This method will be removed. See #6465.
-     *
-     * @param pkg - Package name of the data store
-     * @param alias - Alias to be assigned to the data store
-     * @param props - Properties for the data store
-     * @returns - An aliased data store which can can be found / loaded by alias.
-     */
-    private async createAndAliasDataStore(pkg: string | string[], alias: string, props?: any): Promise<IDataStore> {
-        const internalId = uuid();
-
-        try {
-            // A similar call may have been initiated by the same client, so we should try to get
-            // a possible existing aliased datastore first.
-            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
-            return channelToDataStore(
-                existingDataStore,
-                internalId,
-                this,
-                this.dataStores,
-                this.mc.logger,
-                true, // AlreadyAliased. This will block further alias attempts for the datastore
-            );
-        } catch (err) {
-            const newChannel = await this._createDataStore(pkg, false /* isRoot */, internalId, props);
-            const newDataStore = channelToDataStore(newChannel, internalId, this, this.dataStores, this.mc.logger);
-            const aliasResult = await newDataStore.trySetAlias(alias);
-            if (aliasResult === "Success") {
-                return newDataStore;
-            }
-
-            const existingDataStore = await this.getRootDataStoreChannel(alias, /* wait */ false);
-            return channelToDataStore(
-                existingDataStore,
-                internalId,
-                this,
-                this.dataStores,
-                this.mc.logger,
-                true, // AlreadyAliased. This will block further alias attempts for the datastore
-            );
-        }
     }
 
     public createDetachedRootDataStore(
@@ -2227,49 +2150,23 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         return this.dataStores.createDetachedDataStoreCore(pkg, false);
     }
 
-    /**
-     * Creates a possibly root datastore directly with a possibly user generated id and attaches it to storage.
-     * It is vulnerable to name collisions if both aforementioned conditions are true, and should not be used.
-     *
-     * This method will be removed. See #6465.
-     */
-    private async _createDataStoreWithPropsLegacy(
-        pkg: string | string[],
-        props?: any,
-        id = uuid(),
-        isRoot = false,
-    ): Promise<IDataStore> {
-        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
-            Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props).realize();
-        if (isRoot) {
-            fluidDataStore.makeVisibleAndAttachGraph();
-            this.logger.sendTelemetryEvent({
-                eventName: "Root datastore with props",
-                hasProps: props !== undefined,
-            });
-        }
-        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
-    }
-
     public async _createDataStoreWithProps(
         pkg: string | string[],
         props?: any,
         id = uuid(),
-        isRoot = false,
     ): Promise<IDataStore> {
-        return this._aliasingEnabled === true && isRoot ?
-            this.createAndAliasDataStore(pkg, id, props) :
-            this._createDataStoreWithPropsLegacy(pkg, props, id, isRoot);
+        const fluidDataStore = await this.dataStores._createFluidDataStoreContext(
+            Array.isArray(pkg) ? pkg : [pkg], id, props).realize();
+        return channelToDataStore(fluidDataStore, id, this, this.dataStores, this.mc.logger);
     }
 
     private async _createDataStore(
         pkg: string | string[],
-        isRoot: boolean,
         id = uuid(),
         props?: any,
     ): Promise<IFluidDataStoreChannel> {
         return this.dataStores
-            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, isRoot, props)
+            ._createFluidDataStoreContext(Array.isArray(pkg) ? pkg : [pkg], id, props)
             .realize();
     }
 
@@ -2686,7 +2583,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     };
                 }
                 assert(summaryRefSeqNum === this.deltaManager.lastMessage?.sequenceNumber,
-                    "it's one and the same thing");
+                    0x395 /* it's one and the same thing */);
 
                 if (lastAck !== this.summaryCollection.latestAck) {
                     return {
@@ -3172,9 +3069,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         summaryLogger: ITelemetryLogger,
     ): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined; }> {
         const { snapshotTree, versionId } = await this.fetchSnapshotFromStorage(null, summaryLogger, {
-                eventName: "RefreshLatestSummaryGetSnapshot",
-                fetchLatest: true,
-            },
+            eventName: "RefreshLatestSummaryGetSnapshot",
+            fetchLatest: true,
+        },
             FetchSource.noCache,
         );
 
@@ -3240,7 +3137,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.baseSnapshotBlobs = await SerializedSnapshotStorage.serializeTree(this.context.baseSnapshot, this.storage);
     }
 
-    public getPendingLocalState(): IPendingRuntimeState {
+    public getPendingLocalState(): unknown {
         if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad)) {
             throw new UsageError("can't get state when offline load disabled");
         }
@@ -3249,6 +3146,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (previousPendingState) {
             return {
                 pending: this.pendingStateManager.getLocalState(),
+                pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
                 snapshotBlobs: previousPendingState.snapshotBlobs,
                 baseSnapshot: previousPendingState.baseSnapshot,
                 savedOps: this.savedOps,
@@ -3258,6 +3156,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(!!this.baseSnapshotBlobs, 0x2e7 /* "Must serialize base snapshot blobs before getting runtime state" */);
         return {
             pending: this.pendingStateManager.getLocalState(),
+            pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
             snapshotBlobs: this.baseSnapshotBlobs,
             baseSnapshot: this.context.baseSnapshot,
             savedOps: this.savedOps,

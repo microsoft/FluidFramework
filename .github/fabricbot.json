@@ -703,15 +703,40 @@
         "taskName": "Automatically squash-merge pull requests in next",
         "label": "msftbot: merge-next",
         "silentMode": false,
-        "minMinutesOpen": 480,
-        "mergeType": "squash",
+        "minMinutesOpen": "5",
         "deleteBranches": true,
         "allowAutoMergeInstructionsWithoutLabel": true,
         "enforceDMPAsStatus": true,
         "removeLabelOnPush": true,
         "usePrDescriptionAsCommitMessage": true,
         "requireAllStatuses": false,
-        "conditionalMergeTypes": []
+        "conditionalMergeTypes": [
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "labels",
+              "operator": "notContains",
+              "label_name": "do-not-squash-merge"
+            }
+          },
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "labels",
+              "operator": "notContains",
+              "label_name": "main-next-integrate"
+            }
+          },
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "author",
+              "operator": "notEquals",
+              "value": "github-actions"
+            }
+          }
+        ],
+        "mergeType": "squash"
       },
       "disabled": false
     },

@@ -88,9 +88,53 @@ jobs:
         with:
           token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           script: |
-            const path = require('path');
-            const func = require(path.resolve('./.github/gitApi.ts'));
-            return func.createPR(`${{ secrets.GITHUB_TOKEN }}`, `sha`, $SOURCE_BRANCH, $TARGET_BRANCH, author, reviewers);
+            const { Octokit } = require("@octokit/core");
+            const token = `${{ secrets.GITHUB_TOKEN }}`;
+            const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
+            const author = '${{needs.dequeue.outputs.AUTHOR}}';
+            const description = `
+              ## Main-next integrate PR
+
+              The aim of this pull request is to sync main and next branch. The expectation from the assignee is as follows:
+
+              > - Acknowledge the pull request by adding a comment -- "Actively working on it".
+              > - Resolve any merge conflicts between this branch and next (and push the resolution to this branch). Merge next into this branch if needed. **Do NOT rebase or squash this branch: its history must be preserved**.
+              > - Ensure CI is passing for this PR, fixing any issues. Please don't look into resolving **Real service e2e test** and **Stress test** failures as they are **non-required** CI failures.
+
+              For more information about how to resolve merge conflicts and CI failures, visit [this wiki page](https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation).`;
+            const octokit = new Octokit({ auth: token })
+            const newPr = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
+              owner: 'microsoft',
+              repo: 'FluidFramework',
+              title: 'Automation: Main Next Integrate',
+              body: description,
+              head: sha,
+              base: 'next'
+            });
+            await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/assignees', {
+              owner: 'microsoft',
+              repo: 'FluidFramework',
+              issue_number: newPr.data.number,
+              assignees: [ author ]
+            });
+            await octokit.request('POST /repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers', {
+              owner: 'microsoft',
+              repo: 'FluidFramework',
+              pull_number: newPr.data.number,
+              reviewers: [
+                'sonalivdeshpande',
+                'tylerbutler',
+              ]
+            });
+            await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/labels', {
+              owner: 'microsoft',
+              repo: 'FluidFramework',
+              issue_number: newPr.data.number,
+              labels: [
+                'main-next-integrate',
+                'do-not-squash-merge'
+              ]
+            })
   remove-from-queue:
     runs-on: ubuntu-latest
     concurrency:
