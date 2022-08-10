@@ -21,7 +21,9 @@ function format(n: number) {
  * @param monoRepo - MonoRepo
  * @param repoPackageJson - any
  * @param logger - Logger
- * @returns
+ * @returns - lerna doesn't distingish between dependencies vs devDependencies, this function
+    will use the lerna-package-lock.json and patch up the "dev" field in the dependencies and
+    output it to repo-package-lock.json
  */
 
 async function generateMonoRepoPackageLockJson(
@@ -193,7 +195,8 @@ function processDevDependencies(
  *
  * @param monoRepo - MonoRepo
  * @param logger - Logger
- * @returns
+ * @returns - Generate the corresponding package.json for the lerna project by gathering all the
+    dependencies from all the packages, and output it to repo-package.json
  */
 
 export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo, logger: Logger) {
