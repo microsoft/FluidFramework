@@ -120,7 +120,7 @@ import {
 } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
-import { BlobManager, IBlobManagerLoadInfo } from "./blobManager";
+import { BlobManager, IBlobManagerLoadInfo, IPendingBlobs } from "./blobManager";
 import { DataStores, getSummaryForDatastores } from "./dataStores";
 import {
     aliasBlobName,
@@ -481,11 +481,15 @@ interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedL
  * instantiated runtime in a new instance of the container, so it can load to the
  * same state
  */
-export interface IPendingRuntimeState {
+interface IPendingRuntimeState {
     /**
      * Pending ops from PendingStateManager
      */
     pending?: IPendingLocalState;
+    /**
+     * Pending blobs from BlobManager
+     */
+    pendingAttachmentBlobs?: IPendingBlobs;
     /**
      * A base snapshot at a sequence number prior to the first pending op
      */
@@ -1338,6 +1342,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId }),
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
+            pendingRuntimeState?.pendingAttachmentBlobs,
         );
 
         this.scheduleManager = new ScheduleManager(
@@ -1815,8 +1820,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // ensure we don't submit ops referencing a blob that has not been uploaded
         const connecting = connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
         if (connecting && this.blobManager.hasPendingOfflineUploads) {
-            assert(!this.delayConnectClientId, "Connect event delay must be canceled before subsequent connect event");
-            assert(!!clientId, "Must have clientId when connecting");
+            assert(!this.delayConnectClientId,
+                0x392 /* Connect event delay must be canceled before subsequent connect event */);
+            assert(!!clientId, 0x393 /* Must have clientId when connecting */);
             this.delayConnectClientId = clientId;
             this.blobManager.onConnected().then(() => {
                 // make sure we didn't reconnect before the promise resolved
@@ -1832,7 +1838,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     private setConnectionStateCore(connected: boolean, clientId?: string) {
-        assert(!this.delayConnectClientId, "connect event delay must be cleared before propagating connect event");
+        assert(!this.delayConnectClientId,
+            0x394 /* connect event delay must be cleared before propagating connect event */);
         this.verifyNotClosed();
 
         // There might be no change of state due to Container calling this API after loading runtime.
@@ -2576,7 +2583,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                     };
                 }
                 assert(summaryRefSeqNum === this.deltaManager.lastMessage?.sequenceNumber,
-                    "it's one and the same thing");
+                    0x395 /* it's one and the same thing */);
 
                 if (lastAck !== this.summaryCollection.latestAck) {
                     return {
@@ -3130,7 +3137,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         this.baseSnapshotBlobs = await SerializedSnapshotStorage.serializeTree(this.context.baseSnapshot, this.storage);
     }
 
-    public getPendingLocalState(): IPendingRuntimeState {
+    public getPendingLocalState(): unknown {
         if (!(this.mc.config.getBoolean("enableOfflineLoad") ?? this.runtimeOptions.enableOfflineLoad)) {
             throw new UsageError("can't get state when offline load disabled");
         }
@@ -3139,6 +3146,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         if (previousPendingState) {
             return {
                 pending: this.pendingStateManager.getLocalState(),
+                pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
                 snapshotBlobs: previousPendingState.snapshotBlobs,
                 baseSnapshot: previousPendingState.baseSnapshot,
                 savedOps: this.savedOps,
@@ -3148,6 +3156,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         assert(!!this.baseSnapshotBlobs, 0x2e7 /* "Must serialize base snapshot blobs before getting runtime state" */);
         return {
             pending: this.pendingStateManager.getLocalState(),
+            pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
             snapshotBlobs: this.baseSnapshotBlobs,
             baseSnapshot: this.context.baseSnapshot,
             savedOps: this.savedOps,
