@@ -6,6 +6,8 @@
 import {
     IJSONSegment,
     ISegment,
+    LocalReferenceCollection,
+    LocalReferencePosition,
     matchProperties,
     MergeTreeDeltaOperationType,
     MergeTreeDeltaType,
@@ -53,6 +55,7 @@ interface ITrackedSharedSegmentSequenceRevertible {
     trackingGroup: TrackingGroup;
     propertyDelta: PropertySet;
     operation: MergeTreeDeltaOperationType;
+    refsToRestore?: { ref: LocalReferencePosition, offset: number }[]
 }
 
 /**
@@ -74,6 +77,7 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                 if (current !== undefined
                     && current.operation === event.deltaOperation
                     && matchProperties(current.propertyDelta, range.propertyDeltas)) {
+                        // TODO: Figure out if this case applies for removed segs
                     current.trackingGroup.link(range.segment);
                 } else {
                     const tg = new TrackingGroup();
@@ -83,6 +87,10 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                         propertyDelta: range.propertyDeltas,
                         operation: event.deltaOperation,
                     };
+                    // TODO: This should be associated with each segment that
+                    if (event.deltaOperation === MergeTreeDeltaType.REMOVE) {
+                        current.refsToRestore = Array.from(range.segment.localRefs ?? []).map((ref) => ({ ref, offset: ref.getOffset() }));
+                    }
                     this.tracking.push(current);
                 }
             }
@@ -113,6 +121,14 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                                 tg.link(insertSegment);
                                 tg.unlink(sg);
                             });
+                            if (insertSegment.localRefs === undefined && tracked.refsToRestore!.length > 0) {
+                                insertSegment.localRefs = new LocalReferenceCollection(insertSegment);
+                            }
+                            for (const { ref, offset } of tracked.refsToRestore!) {
+                                ref.callbacks?.beforeSlide?.();
+                                insertSegment.localRefs?.addLocalRef(ref, offset);
+                                ref.callbacks?.afterSlide?.();
+                            }
                             break;
 
                         case MergeTreeDeltaType.ANNOTATE:

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { IntervalType, SharedString, SharedStringFactory, SequenceInterval } from "@fluidframework/sequence";
 import {
     MockContainerRuntimeFactory,
     MockFluidDataStoreRuntime,
@@ -142,5 +142,25 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
         undoRedoStack.redoOperation();
 
         assert.equal(sharedString.getText(), text);
+    });
+
+    it("Intervals endpoints are slid back to original position", () => {
+        const assertIntervalMatches = (interval: SequenceInterval, expected: { start: number; end: number }): void => {
+            assert.equal(sharedString.localReferencePositionToPosition(interval.start), expected.start, "Start mismatch");
+            assert.equal(sharedString.localReferencePositionToPosition(interval.end), expected.end, "End mismatch");
+        }
+        sharedString.insertText(0, text);
+        const collection = sharedString.getIntervalCollection("test");
+        const interval = collection.add(10, 20, IntervalType.SlideOnRemove);
+
+        const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
+        handler.attachSequence(sharedString);
+
+        sharedString.removeRange(5, 15);
+        assertIntervalMatches(interval, { start: 5, end: 10 });
+
+        while (undoRedoStack.undoOperation()) { }
+
+        assertIntervalMatches(interval, { start: 10, end: 20 });
     });
 });
