@@ -1,10 +1,10 @@
-import { ApiPropertyItem } from "@microsoft/api-extractor-model";
+import { ApiVariable } from "@microsoft/api-extractor-model";
 import { DocParagraph, DocPlainText, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 
-export function renderPropertySection(
-    apiProperty: ApiPropertyItem,
+export function renderVariableSection(
+    apiVariable: ApiVariable,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
 ): DocSection {
@@ -12,7 +12,7 @@ export function renderPropertySection(
         new DocParagraph({ configuration: tsdocConfiguration }, [
             new DocPlainText({
                 configuration: tsdocConfiguration,
-                text: "TODO: Property rendering",
+                text: "TODO: Variable rendering",
             }),
         ]),
     ]);

@@ -5,14 +5,17 @@ import {
     ApiConstructor,
     ApiEnum,
     ApiFunction,
+    ApiIndexSignature,
     ApiInterface,
     ApiItem,
     ApiMethod,
     ApiMethodSignature,
     ApiModel,
+    ApiNamespace,
     ApiPackage,
-    ApiProperty,
-    ApiPropertySignature,
+    ApiPropertyItem,
+    ApiTypeAlias,
+    ApiVariable,
 } from "@microsoft/api-extractor-model";
 import { DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
@@ -37,11 +40,15 @@ export interface RenderingPolicies {
     renderConstructorSection?: RenderingPolicy<ApiConstructSignature | ApiConstructor>;
     renderEnumSection?: RenderingPolicy<ApiEnum>;
     renderFunctionSection?: RenderingPolicy<ApiFunction>;
+    renderIndexSignatureSection?: RenderingPolicy<ApiIndexSignature>;
     renderInterfaceSection?: RenderingPolicy<ApiInterface>;
     renderMethodSection?: RenderingPolicy<ApiMethod | ApiMethodSignature>;
     renderModelSection?: RenderingPolicy<ApiModel>;
+    renderNamespaceSection?: RenderingPolicy<ApiNamespace>;
     renderPackageSection?: RenderingPolicy<ApiPackage>;
-    renderPropertySection?: RenderingPolicy<ApiProperty | ApiPropertySignature>;
+    renderPropertySection?: RenderingPolicy<ApiPropertyItem>;
+    renderTypeAliasSection?: RenderingPolicy<ApiTypeAlias>;
+    renderVariableSection?: RenderingPolicy<ApiVariable>;
 }
 
 /**
@@ -53,9 +60,13 @@ export const defaultRenderingPolicies: Required<RenderingPolicies> = {
     renderConstructorSection: DefaultRenderingPolicies.renderFunctionLikeSection,
     renderEnumSection: DefaultRenderingPolicies.renderEnumSection,
     renderFunctionSection: DefaultRenderingPolicies.renderFunctionLikeSection,
+    renderIndexSignatureSection: DefaultRenderingPolicies.renderIndexSignatureSection,
     renderInterfaceSection: DefaultRenderingPolicies.renderInterfaceSection,
     renderMethodSection: DefaultRenderingPolicies.renderFunctionLikeSection,
     renderModelSection: DefaultRenderingPolicies.renderModelSection,
+    renderNamespaceSection: DefaultRenderingPolicies.renderNamespaceSection,
     renderPackageSection: DefaultRenderingPolicies.renderPackageSection,
     renderPropertySection: DefaultRenderingPolicies.renderPropertySection,
+    renderTypeAliasSection: DefaultRenderingPolicies.renderTypeAliasSection,
+    renderVariableSection: DefaultRenderingPolicies.renderVariableSection,
 };

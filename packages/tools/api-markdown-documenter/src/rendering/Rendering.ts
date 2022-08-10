@@ -1,17 +1,26 @@
 import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
+    ApiCallSignature,
+    ApiClass,
     ApiConstructSignature,
     ApiConstructor,
     ApiDocumentedItem,
+    ApiEnum,
     ApiFunction,
+    ApiIndexSignature,
+    ApiInterface,
     ApiItem,
     ApiItemKind,
     ApiMethod,
     ApiMethodSignature,
     ApiModel,
+    ApiNamespace,
     ApiPackage,
+    ApiPropertyItem,
     ApiReleaseTagMixin,
+    ApiTypeAlias,
+    ApiVariable,
     ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import {
@@ -202,11 +211,124 @@ function renderApiSection(
     if (
         apiItem.kind === ApiItemKind.Model ||
         apiItem.kind === ApiItemKind.Package ||
-        apiItem.kind === ApiItemKind.EntryPoint
+        apiItem.kind === ApiItemKind.EnumMember ||
+        apiItem.kind === ApiItemKind.EntryPoint ||
+        apiItem.kind === ApiItemKind.None
     ) {
         throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
     }
 
+    switch (apiItem.kind) {
+        case ApiItemKind.CallSignature:
+            return documenterConfiguration.renderCallSignatureSection(
+                apiItem as ApiCallSignature,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Class:
+            return documenterConfiguration.renderClassSection(
+                apiItem as ApiClass,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.ConstructSignature:
+            return documenterConfiguration.renderConstructorSection(
+                apiItem as ApiConstructSignature,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Constructor:
+            return documenterConfiguration.renderConstructorSection(
+                apiItem as ApiConstructor,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Enum:
+            return documenterConfiguration.renderEnumSection(
+                apiItem as ApiEnum,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Function:
+            return documenterConfiguration.renderFunctionSection(
+                apiItem as ApiFunction,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.IndexSignature:
+            return documenterConfiguration.renderIndexSignatureSection(
+                apiItem as ApiIndexSignature,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Interface:
+            return documenterConfiguration.renderInterfaceSection(
+                apiItem as ApiInterface,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Method:
+            return documenterConfiguration.renderMethodSection(
+                apiItem as ApiMethod,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.MethodSignature:
+            return documenterConfiguration.renderMethodSection(
+                apiItem as ApiMethodSignature,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Namespace:
+            return documenterConfiguration.renderNamespaceSection(
+                apiItem as ApiNamespace,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Property:
+        case ApiItemKind.PropertySignature:
+            return documenterConfiguration.renderPropertySection(
+                apiItem as ApiPropertyItem,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.TypeAlias:
+            return documenterConfiguration.renderTypeAliasSection(
+                apiItem as ApiTypeAlias,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Variable:
+            return documenterConfiguration.renderVariableSection(
+                apiItem as ApiVariable,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        default:
+            throw new Error(`Unrecognized API item kind: "${apiItem.kind}".`);
+    }
+}
+
+export function renderBasicSectionBody(
+    apiItem: ApiItem,
+    innerSectionBody: DocSection,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocSection {
     const docNodes: DocNode[] = [];
 
     // Render beta warning if applicable
@@ -214,108 +336,11 @@ function renderApiSection(
         docNodes.push(renderBetaWarning(tsdocConfiguration));
     }
 
-    switch (apiItem.kind) {
-        case ApiItemKind.CallSignature:
-            // TODO
-            break;
+    // TODO: anything else before inner body
 
-        case ApiItemKind.Class:
-            // TODO
-            break;
+    docNodes.push(innerSectionBody);
 
-        case ApiItemKind.ConstructSignature:
-            docNodes.push(
-                documenterConfiguration.renderConstructorSection(
-                    apiItem as ApiConstructSignature,
-                    documenterConfiguration,
-                    tsdocConfiguration,
-                ),
-            );
-            break;
-
-        case ApiItemKind.Constructor:
-            docNodes.push(
-                documenterConfiguration.renderConstructorSection(
-                    apiItem as ApiConstructor,
-                    documenterConfiguration,
-                    tsdocConfiguration,
-                ),
-            );
-            break;
-
-        case ApiItemKind.Enum:
-            // TODO
-            break;
-
-        case ApiItemKind.EnumMember:
-            // TODO
-            break;
-
-        case ApiItemKind.Function:
-            docNodes.push(
-                documenterConfiguration.renderFunctionSection(
-                    apiItem as ApiFunction,
-                    documenterConfiguration,
-                    tsdocConfiguration,
-                ),
-            );
-            break;
-
-        case ApiItemKind.IndexSignature:
-            // TODO
-            break;
-
-        case ApiItemKind.Interface:
-            // TODO
-            break;
-
-        case ApiItemKind.Method:
-            docNodes.push(
-                documenterConfiguration.renderMethodSection(
-                    apiItem as ApiMethod,
-                    documenterConfiguration,
-                    tsdocConfiguration,
-                ),
-            );
-            break;
-
-        case ApiItemKind.MethodSignature:
-            docNodes.push(
-                documenterConfiguration.renderMethodSection(
-                    apiItem as ApiMethodSignature,
-                    documenterConfiguration,
-                    tsdocConfiguration,
-                ),
-            );
-            break;
-
-        case ApiItemKind.Namespace:
-            // TODO
-            break;
-
-        case ApiItemKind.Property:
-            // TODO
-            break;
-
-        case ApiItemKind.PropertySignature:
-            // TODO
-            break;
-
-        case ApiItemKind.TypeAlias:
-            // TODO
-            break;
-
-        case ApiItemKind.Variable:
-            // TODO
-            break;
-
-        case ApiItemKind.None:
-            // TODO
-            break;
-
-        default:
-            throw new Error(`Unrecognized API item kind: "${apiItem.kind}".`);
-    }
+    // TODO: anything after inner body?
 
     return new DocSection({ configuration: tsdocConfiguration }, docNodes);
 }
