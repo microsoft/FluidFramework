@@ -4,15 +4,21 @@
 
 ```ts
 
+import { ApiCallSignature } from '@microsoft/api-extractor-model';
+import { ApiClass } from '@microsoft/api-extractor-model';
 import { ApiConstructor } from '@microsoft/api-extractor-model';
 import { ApiConstructSignature } from '@microsoft/api-extractor-model';
+import { ApiEnum } from '@microsoft/api-extractor-model';
 import { ApiFunction } from '@microsoft/api-extractor-model';
+import { ApiInterface } from '@microsoft/api-extractor-model';
 import { ApiItem } from '@microsoft/api-extractor-model';
 import { ApiItemKind } from '@microsoft/api-extractor-model';
 import { ApiMethod } from '@microsoft/api-extractor-model';
 import { ApiMethodSignature } from '@microsoft/api-extractor-model';
 import { ApiModel } from '@microsoft/api-extractor-model';
 import { ApiPackage } from '@microsoft/api-extractor-model';
+import { ApiProperty } from '@microsoft/api-extractor-model';
+import { ApiPropertySignature } from '@microsoft/api-extractor-model';
 import { DocHeading as DocHeading_2 } from '@microsoft/api-documenter/lib/nodes/DocHeading';
 import { DocSection } from '@microsoft/tsdoc';
 import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
@@ -68,9 +74,14 @@ export const defaultPolicyOptions: Required<PolicyOptions>;
 
 declare namespace DefaultRenderingPolicies {
     export {
+        renderCallSignatureSection,
+        renderClassSection,
+        renderEnumSection,
         renderFunctionLikeSection,
+        renderInterfaceSection,
         renderModelSection,
-        renderPackageSection
+        renderPackageSection,
+        renderPropertySection
     }
 }
 export { DefaultRenderingPolicies }
@@ -146,8 +157,17 @@ export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSe
 // @public (undocumented)
 export function renderBreadcrumb(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
+// @public (undocumented)
+function renderCallSignatureSection(apiCallSignature: ApiCallSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+
+// @public (undocumented)
+function renderClassSection(apiClass: ApiClass, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+
 // @public
 export function renderDocuments(apiModel: ApiModel, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
+
+// @public (undocumented)
+function renderEnumSection(apiEnum: ApiEnum, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
 export function renderFiles(apiModel: ApiModel, outputDirectoryPath: string, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): Promise<void>;
@@ -161,19 +181,32 @@ export function renderHeading(apiItem: ApiItem, documenterConfiguration: Require
 // @public
 export interface RenderingPolicies {
     // (undocumented)
+    renderCallSignatureSection?: RenderingPolicy<ApiCallSignature>;
+    // (undocumented)
+    renderClassSection?: RenderingPolicy<ApiClass>;
+    // (undocumented)
     renderConstructorSection?: RenderingPolicy<ApiConstructSignature | ApiConstructor>;
     // (undocumented)
+    renderEnumSection?: RenderingPolicy<ApiEnum>;
+    // (undocumented)
     renderFunctionSection?: RenderingPolicy<ApiFunction>;
+    // (undocumented)
+    renderInterfaceSection?: RenderingPolicy<ApiInterface>;
     // (undocumented)
     renderMethodSection?: RenderingPolicy<ApiMethod | ApiMethodSignature>;
     // (undocumented)
     renderModelSection?: RenderingPolicy<ApiModel>;
     // (undocumented)
     renderPackageSection?: RenderingPolicy<ApiPackage>;
+    // (undocumented)
+    renderPropertySection?: RenderingPolicy<ApiProperty | ApiPropertySignature>;
 }
 
 // @public
 export type RenderingPolicy<TApiItem extends ApiItem> = (apiItem: TApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration) => DocSection;
+
+// @public (undocumented)
+function renderInterfaceSection(apiInterface: ApiInterface, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public
 export function renderModelPage(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
@@ -186,6 +219,9 @@ export function renderPackagePage(apiPackage: ApiPackage, documenterConfiguratio
 
 // @public (undocumented)
 function renderPackageSection(apiPackage: ApiPackage, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+
+// @public (undocumented)
+function renderPropertySection(apiProperty: ApiProperty | ApiPropertySignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
 export function renderSummaryCell(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocTableCell;
