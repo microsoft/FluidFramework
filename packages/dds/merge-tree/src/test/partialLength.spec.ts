@@ -232,5 +232,26 @@ describe("partial lengths", () => {
             validatePartialLengths(localClientId, 4, 16);
             validatePartialLengths(remoteClientId, 4, 16);
         });
+
+        it("is correct for different heights", () => {
+            for (let i = 0; i < 1000; i++) {
+                insertText(
+                    mergeTree,
+                    0,
+                    i,
+                    localClientId,
+                    i + 1,
+                    "a",
+                    undefined,
+                    { op: { type: MergeTreeDeltaType.INSERT } },
+                );
+
+                validatePartialLengths(localClientId, 0, i + 13);
+                validatePartialLengths(remoteClientId, i + 1, i + 13);
+            }
+
+            validatePartialLengths(localClientId, 0, 1012);
+            validatePartialLengths(remoteClientId, 1000, 1012);
+        });
     });
 });
