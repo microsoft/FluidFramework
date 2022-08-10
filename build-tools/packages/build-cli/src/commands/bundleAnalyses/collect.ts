@@ -28,7 +28,7 @@ export default class BundleAnalysesCollect extends BaseCommand<typeof BundleAnal
     };
 
     public async run(): Promise<void> {
-        const { flags } = await this.parse(BundleAnalysesCollect);
+        const flags = this.processedFlags;
 
         if (!Array.isArray(flags.lernaOutput)) {
             this.error("failed to get package information");
