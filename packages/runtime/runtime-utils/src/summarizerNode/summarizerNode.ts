@@ -224,6 +224,14 @@ export class SummarizerNode implements IRootSummarizerNode {
                 this.refreshLatestSummaryFromPending(proposalHandle, maybeSummaryNode.referenceSequenceNumber);
                 return { latestSummaryUpdated: true, wasSummaryTracked: true };
             }
+
+            this.defaultLogger.sendTelemetryEvent({
+                eventName: "PendingSummaryNotFound",
+                proposalHandle,
+                summaryRefSeq,
+                size: this.pendingSummaries.size,
+                haveHandle: this.pendingSummaries.size > 0 ? this.pendingSummaries.keys[0] : undefined,
+            });
         }
 
         // If we have seen a summary same or later as the current one, ignore it.
