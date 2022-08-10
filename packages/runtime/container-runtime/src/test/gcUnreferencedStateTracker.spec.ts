@@ -168,7 +168,7 @@ describe("Garbage Collection Tests", () => {
             clock.tick(2);
             assert.equal(tracker.state, UnreferencedState.SweepReady, "Should be SweepReady 2ms later");
         });
-        it("Inactive Timer can tighten up over time", () => {
+        it("Timers can tighten up over time", () => {
             clock.tick(10);
             tracker = new UnreferencedStateTracker(
                 0 /* unreferencedTimestampMs */,
@@ -184,6 +184,21 @@ describe("Garbage Collection Tests", () => {
             assert.equal(timerClearSpy.callCount, 1, "Expected underlying Timer to clear and reset to support shorter timeout");
             clock.tick(5);
             assert.equal(tracker.state, UnreferencedState.Inactive, "Should be Inactive at T21");
+        });
+        it("Timers can loosen up over time", () => {
+            tracker = new UnreferencedStateTracker(
+                0 /* unreferencedTimestampMs */,
+                10 /* inactiveTimeoutMs */,
+                undefined /* sweepTimeoutMs */,
+                0 /* currentReferenceTimestampMs */,
+            );
+            assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
+            clock.tick(5); // at T5, 5 to go
+            tracker.updateTracking(1); // Simulate processing an older Summary (reference time 1 at T5). Pushes out timer to 14 (9 to go)
+            clock.tick(5);
+            assert.equal(tracker.state, UnreferencedState.Active, "Should still be Active since timer was pushed out");
+            clock.tick(4);
+            assert.equal(tracker.state, UnreferencedState.Inactive, "Should be Inactive finally at T14");
         });
     });
 });
