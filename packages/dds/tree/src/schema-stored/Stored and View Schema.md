@@ -34,7 +34,7 @@ Places we can store stored schema information:
 
 -   Inline in whatever place is referring to it (see list below)
 -   As stored data
--   Hard coded into shared-tree TODO: SharedTree? (constraints like the tree being a tree not a DAG fall into this)
+-   Hard coded into the shared-tree DDS (constraints like the tree being a tree instead of a DAG fall into this)
 -   Injected via a shared-tree subclass or other Fluid configuration (schema data / constraints shipped as code)
 -   In some external repository: the repository defines an append only namespace of schema
     This repository is known about by shared-tree somehow (any of the other items in this list could contain the reference to the repository)
