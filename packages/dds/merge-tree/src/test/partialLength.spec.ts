@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { UnassignedSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeDeltaType } from "../ops";
 import { PartialSequenceLengths } from "../partialLengths";
@@ -298,8 +299,31 @@ describe("partial lengths", () => {
                 undefined as any,
             );
 
-            validatePartialLengths(localClientId, 1, 2);
-            validatePartialLengths(remoteClientId, 1, 2);
+            validatePartialLengths(localClientId, 0, 2);
+            validatePartialLengths(remoteClientId, 0, 2);
+        });
+        it("concurrent remote and unsequenced local changes are visible", () => {
+            mergeTree.markRangeRemoved(
+                0,
+                10,
+                0,
+                localClientId,
+                UnassignedSequenceNumber,
+                false,
+                undefined as any,
+            );
+            mergeTree.markRangeRemoved(
+                0,
+                10,
+                0,
+                remoteClientId,
+                2,
+                false,
+                undefined as any,
+            );
+
+            validatePartialLengths(localClientId, 0, 2);
+            validatePartialLengths(remoteClientId, 0, 2);
         });
     });
 });
