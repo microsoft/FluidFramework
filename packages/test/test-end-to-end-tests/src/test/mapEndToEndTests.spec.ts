@@ -389,7 +389,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
         });
     });
 
-    itExpects("Should close container when sending an op while processing another op",
+    itExpects.skip("Should close container when sending an op while processing another op",
         [{
             eventName: "fluid:telemetry:Container:ContainerClose",
             error: "Making changes to data model is disallowed while processing ops.",
