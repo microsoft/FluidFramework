@@ -21,6 +21,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { Timer } from "@fluidframework/common-utils";
 import {
     defaultSessionExpiryDurationMs,
     GarbageCollector,
@@ -129,6 +130,7 @@ describe("Garbage Collection Tests", () => {
                 readonly sessionExpiryTimeoutMs: number | undefined;
                 readonly inactiveTimeoutMs: number;
                 readonly sweepTimeoutMs: number | undefined;
+                readonly sessionExpiryTimer: Omit<Timer, "defaultTimeout"> & { defaultTimeout: number; };
             } = createGarbageCollector({ metadata, gcOptions, snapshotCacheExpiryMs }) as any;
             return gcWithPrivates;
         };
@@ -241,6 +243,18 @@ describe("Garbage Collection Tests", () => {
                 const gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
+            });
+        });
+
+        describe.only("Session expiry", () => {
+            beforeEach(() => {
+                injectedSettings[runSessionExpiryKey] = true;
+            });
+
+            it.only("Testing stubbability", () => {
+                const gc = createGcWithPrivateMembers(undefined /* metadata */, {});
+                const actualTimeout = gc.sessionExpiryTimer.defaultTimeout;
+                assert.equal(actualTimeout, defaultSessionExpiryDurationMs);
             });
         });
     });
