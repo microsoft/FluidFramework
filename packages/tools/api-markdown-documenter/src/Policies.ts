@@ -49,12 +49,20 @@ export type LinkTextPolicy = (apiItem: ApiItem) => string;
 
 /**
  * Policy for naming of files / directories for API items.
- * Does not include a file extension.
+ * Must not include a file extension.
  *
  * @param apiItem - The API item in question.
  * @returns The file name to use for a document generated for the specified API item.
  */
 export type FileNamePolicy = (apiItem: ApiItem) => string;
+
+/**
+ * Policy for generating heading titles for API items.
+ *
+ * @param apiItem - The API item in question.
+ * @returns The heading title for the API item.
+ */
+export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
 /**
  * Policy configuration options
@@ -94,6 +102,13 @@ export interface PolicyOptions {
      * @defaultValue {@link DefaultPolicies.defaultFileNamePolicy}
      */
     fileNamePolicy?: FileNamePolicy;
+
+    /**
+     * See {@link HeadingTitlePolicy}.
+     *
+     * @defaultValue {@link DefaultPolicies.defaultHeadingTitlePolicy}
+     */
+    headingTitlePolicy?: HeadingTitlePolicy;
 }
 
 export namespace DefaultPolicies {
@@ -150,10 +165,10 @@ export namespace DefaultPolicies {
     /**
      * Default {@link PolicyOptions.fileNamePolicy}.
      *
-     * Uses a cleaned-up version of the item's `displayName`, except for Package items,
-     * in which case only the unscoped portion of the package name is used.
+     * Uses a cleaned-up version of the item's `displayName`, except for the following types:
      *
-     * Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root.
+     * - Model: Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root.
+     * - Package: uses only the unscoped portion of the package name is used.
      */
     export function defaultFileNamePolicy(apiItem: ApiItem): string {
         switch (apiItem.kind) {
@@ -167,6 +182,20 @@ export namespace DefaultPolicies {
                 return getQualifiedApiItemName(apiItem);
         }
     }
+
+    /**
+     * Default {@link PolicyOptions.headingTitlePolicy}.
+     *
+     * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
+     */
+    export function defaultHeadingTitlePolicy(apiItem: ApiItem): string {
+        switch (apiItem.kind) {
+            case ApiItemKind.Model:
+                return "API Overview";
+            default:
+                return apiItem.displayName;
+        }
+    }
 }
 
 /**
@@ -178,4 +207,5 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
     linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
     fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,
+    headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
 };

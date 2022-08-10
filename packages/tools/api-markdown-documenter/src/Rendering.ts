@@ -31,9 +31,9 @@ import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTableCell } from "./doc-nod
 import {
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
-    getDisplayNameForApiItem,
     getFilePathForApiItem,
     getHeadingIdForApiItem,
+    getHeadingTitleForApiItem,
     getLinkForApiItem,
     getLinkUrlForApiItem,
     getQualifiedApiItemName,
@@ -63,11 +63,8 @@ export function renderModelPage(
     const docNodes: DocNode[] = [];
 
     // Render heading
-    const headingText = "API Overview"; // TODO: from config
     // TODO: heading level
-    docNodes.push(
-        new DocHeading({ configuration: tsdocConfiguration, title: headingText, level: 1 }),
-    );
+    docNodes.push(renderHeading(apiModel, documenterConfiguration, tsdocConfiguration));
 
     // Do not render breadcrumb for Model page
 
@@ -101,11 +98,8 @@ export function renderPackagePage(
     const docNodes: DocNode[] = [];
 
     // Render heading
-    const headingText = apiPackage.name; // TODO: from config?
     // TODO: heading level
-    docNodes.push(
-        new DocHeading({ configuration: tsdocConfiguration, title: headingText, level: 1 }),
-    );
+    docNodes.push(renderHeading(apiPackage, documenterConfiguration, tsdocConfiguration));
 
     // Render breadcrumb
     docNodes.push(renderBreadcrumb(apiPackage, documenterConfiguration, tsdocConfiguration));
@@ -390,11 +384,10 @@ export function renderHeading(
     tsdocConfiguration: TSDocConfiguration,
 ): DocHeading {
     // TODO: heading level
-    const displayName = getDisplayNameForApiItem(apiItem);
+    const displayName = getHeadingTitleForApiItem(apiItem, documenterConfiguration);
     return new DocHeading({
         configuration: tsdocConfiguration,
         title: displayName,
-        level: 2,
         id: getHeadingIdForApiItem(apiItem, documenterConfiguration),
     });
 }

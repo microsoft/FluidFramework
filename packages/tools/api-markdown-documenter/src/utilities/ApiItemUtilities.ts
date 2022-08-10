@@ -185,6 +185,13 @@ export function getHeadingIdForApiItem(
     return `${baseName}-${apiItemKind}`;
 }
 
+export function getHeadingTitleForApiItem(
+    apiItem: ApiItem,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+): string {
+    return documenterConfiguration.headingTitlePolicy(apiItem);
+}
+
 /**
  * Gets the "filted" parent of the provided API item.
  * This logic specifically skips items of the following kinds:
