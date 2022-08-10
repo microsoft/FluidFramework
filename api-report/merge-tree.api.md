@@ -377,21 +377,17 @@ export interface IMarkerModifiedAction {
     (marker: Marker): void;
 }
 
-// @public (undocumented)
+// @public
 export interface IMergeBlock extends IMergeNodeCommon {
     // (undocumented)
     assignChild(child: IMergeNode, index: number, updateOrdinal?: boolean): void;
-    // (undocumented)
     childCount: number;
-    // (undocumented)
     children: IMergeNode[];
     // (undocumented)
     hierBlock(): IHierBlock | undefined;
     // (undocumented)
     needsScour?: boolean;
     // Warning: (ae-forgotten-export) The symbol "PartialSequenceLengths" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
     partialLengths?: PartialSequenceLengths;
     // (undocumented)
     setOrdinal(child: IMergeNode, index: number): void;
@@ -400,14 +396,12 @@ export interface IMergeBlock extends IMergeNodeCommon {
 // @public (undocumented)
 export type IMergeNode = IMergeBlock | ISegment;
 
-// @public (undocumented)
+// @public
 export interface IMergeNodeCommon {
     cachedLength: number;
-    // (undocumented)
     index: number;
     // (undocumented)
     isLeaf(): this is ISegment;
-    // (undocumented)
     ordinal: string;
     // (undocumented)
     parent?: IMergeBlock;
@@ -622,11 +616,9 @@ export interface IRelativePosition {
     offset?: number;
 }
 
-// @public (undocumented)
+// @public
 export interface IRemovalInfo {
-    // (undocumented)
     removedClientIds: number[];
-    // (undocumented)
     removedSeq: number;
 }
 
@@ -639,23 +631,16 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
     append(segment: ISegment): void;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
-    // (undocumented)
     clientId: number;
     // (undocumented)
     clone(): ISegment;
-    // (undocumented)
     localRefs?: LocalReferenceCollection;
-    // (undocumented)
     localRemovedSeq?: number;
-    // (undocumented)
     localSeq?: number;
-    // (undocumented)
     properties?: PropertySet;
-    // (undocumented)
     propertyManager?: PropertiesManager;
     // (undocumented)
     readonly segmentGroups: SegmentGroupCollection;
-    // (undocumented)
     seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
