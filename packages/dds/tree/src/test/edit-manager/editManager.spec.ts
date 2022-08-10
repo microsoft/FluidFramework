@@ -48,12 +48,12 @@ interface AnchorRebaseData {
     intentions: Set<number>;
 }
 
-class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, TestChangeset> {
+class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
     private contextCounter: number = 0;
     private intentionCounter: number = 0;
     public readonly anchorRebases: Map<AnchorSet, AnchorRebaseData> = new Map();
 
-    public compose(...changes: TestChangeset[]): TestChangeset {
+    public compose(changes: TestChangeset[]): TestChangeset {
         let inputContext: number | undefined;
         let outputContext: number | undefined;
         const intentions: number[] = [];
@@ -135,14 +135,6 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
             updateIntentionSet(over.intentions, intentions);
             rebases.push(over);
         }
-    }
-
-    public import(change: TestChangeset): TestChangeset {
-        return change;
-    }
-
-    public export(change: TestChangeset): TestChangeset {
-        return change;
     }
 
     public mintChangeset(inputContext: number): NonEmptyTestChangeset {
