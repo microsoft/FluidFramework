@@ -216,7 +216,7 @@ export class PartialSequenceLengths {
         }
 
         if (PartialSequenceLengths.options.verify) {
-            verify(combinedPartialLengths as any as PartialSequenceLengthsForVerification);
+            verify(combinedPartialLengths);
         }
 
         return combinedPartialLengths;
@@ -272,7 +272,7 @@ export class PartialSequenceLengths {
             combinedPartialLengths.addClientSeqNumberFromPartial(seqPartials[i]);
         }
         if (PartialSequenceLengths.options.verify) {
-            verify(combinedPartialLengths as any as PartialSequenceLengthsForVerification);
+            verify(combinedPartialLengths);
         }
         return combinedPartialLengths;
     }
@@ -497,7 +497,7 @@ export class PartialSequenceLengths {
             this.zamboni(collabWindow);
         }
         if (PartialSequenceLengths.options.verify) {
-            verify(this as any as PartialSequenceLengthsForVerification);
+            verify(this);
         }
     }
 
@@ -636,15 +636,9 @@ export class PartialSequenceLengths {
     }
 }
 
-interface PartialSequenceLengthsForVerification {
-    minSeq: number;
-    minLength: number;
-    clientSeqNumbers: PartialSequenceLength[][];
-    partialLengths: PartialSequenceLength[];
-}
-
+/* eslint-disable @typescript-eslint/dot-notation */
 function verifyPartialLengths(
-    partialSeqLengths: PartialSequenceLengthsForVerification,
+    partialSeqLengths: PartialSequenceLengths,
     partialLengths: PartialSequenceLength[],
     clientPartials: boolean,
 ) {
@@ -684,7 +678,7 @@ function verifyPartialLengths(
             // client 2 after seq 11.
         } else {
             // Len adjustment should not make length negative
-            if (partialSeqLengths.minLength + partialLength.len < 0) {
+            if (partialSeqLengths["minLength"] + partialLength.len < 0) {
                 assert(false, 0x057 /* "Negative length after length adjustment!" */);
             }
         }
@@ -700,27 +694,28 @@ function verifyPartialLengths(
     return count;
 }
 
-function verify(partialSeqLengths: PartialSequenceLengthsForVerification) {
-    if (partialSeqLengths.clientSeqNumbers) {
+function verify(partialSeqLengths: PartialSequenceLengths) {
+    if (partialSeqLengths["clientSeqNumbers"]) {
         let cliCount = 0;
-        for (const cliSeq of partialSeqLengths.clientSeqNumbers) {
+        for (const cliSeq of partialSeqLengths["clientSeqNumbers"]) {
             if (cliSeq) {
                 cliCount += verifyPartialLengths(partialSeqLengths, cliSeq, true);
             }
         }
 
         // If we have client view, we should have the flat view
-        assert(!!partialSeqLengths.partialLengths, 0x059 /* "Client view exists but flat view does not!" */);
-        const flatCount = verifyPartialLengths(partialSeqLengths, partialSeqLengths.partialLengths, false);
+        assert(!!partialSeqLengths["partialLengths"], 0x059 /* "Client view exists but flat view does not!" */);
+        const flatCount = verifyPartialLengths(partialSeqLengths, partialSeqLengths["partialLengths"], false);
 
         // The number of partial lengths on the client view and flat view should be the same
         assert(flatCount === cliCount,
             0x05a /* "Mismatch between number of partial lengths on client and flat views!" */);
     } else {
         // If we don't have a client view, we shouldn't have the flat view either
-        assert(!partialSeqLengths.partialLengths, 0x05b /* "Flat view exists but client view does not!" */);
+        assert(!partialSeqLengths["partialLengths"], 0x05b /* "Flat view exists but client view does not!" */);
     }
 }
+/* eslint-enable @typescript-eslint/dot-notation */
 
 /**
  * Clones an `overlapRemoveClients` red-black tree.
