@@ -30,7 +30,7 @@ stages:
     displayName: Runtime perf - SharedTree
     dependsOn: []
     jobs:
-    - template: templates/include-test-real-service.yml
+    - template: templates/include-test-perf-benchmarks.yml
       parameters:
         poolBuild: Small
         testWorkspace: ${{ variables.testWorkspace }}
@@ -46,7 +46,7 @@ stages:
   #   displayName: e2e - routerlicious
   #   dependsOn: []
   #   jobs:
-  #   - template: templates/include-test-real-service.yml
+  #   - template: templates/include-test-perf-benchmarks.yml
   #     parameters:
   #       poolBuild: Small
   #       packageToTest: "@fluidframework/test-end-to-end-tests"
@@ -62,7 +62,7 @@ stages:
   #   displayName: e2e - frs
   #   dependsOn: []
   #   jobs:
-  #   - template: templates/include-test-real-service.yml
+  #   - template: templates/include-test-perf-benchmarks.yml
   #     parameters:
   #       poolBuild: Small
   #       packageToTest: "@fluidframework/test-end-to-end-tests"
@@ -88,7 +88,7 @@ stages:
   #   displayName:  e2e - odsp
   #   dependsOn: []
   #   jobs:
-  #   - template: templates/include-test-real-service.yml
+  #   - template: templates/include-test-perf-benchmarks.yml
   #     parameters:
   #       poolBuild: Small
   #       packageToTest: "@fluidframework/test-end-to-end-tests"
