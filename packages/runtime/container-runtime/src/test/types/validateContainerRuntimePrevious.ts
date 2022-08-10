@@ -1681,6 +1681,7 @@ declare function get_old_TypeAliasDeclaration_SummarizerStopReason():
 declare function use_current_TypeAliasDeclaration_SummarizerStopReason(
     use: TypeOnly<current.SummarizerStopReason>);
 use_current_TypeAliasDeclaration_SummarizerStopReason(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_SummarizerStopReason());
 
 /*
@@ -1693,6 +1694,7 @@ declare function get_current_TypeAliasDeclaration_SummarizerStopReason():
 declare function use_old_TypeAliasDeclaration_SummarizerStopReason(
     use: TypeOnly<old.SummarizerStopReason>);
 use_old_TypeAliasDeclaration_SummarizerStopReason(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SummarizerStopReason());
 
 /*
