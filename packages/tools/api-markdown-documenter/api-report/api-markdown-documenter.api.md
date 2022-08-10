@@ -58,6 +58,7 @@ export namespace DefaultPolicies {
     const defaultDocumentBoundaries: ApiItemKind[];
     const defaultHierarchyBoundaries: ApiItemKind[];
     export function defaultFileNamePolicy(apiItem: ApiItem): string;
+    export function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
     export function defaultLinkTextPolicy(apiItem: ApiItem): string;
     export function defaultUriBaseOverridePolicy(): string | undefined;
 }
@@ -101,6 +102,9 @@ export type FileNamePolicy = (apiItem: ApiItem) => string;
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
+export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
+
+// @public
 export type HierarchyBoundaries = ApiItemKind[];
 
 // @public
@@ -132,6 +136,7 @@ export function markdownDocumenterConfigurationWithDefaults(partialConfig: Markd
 export interface PolicyOptions {
     documentBoundaries?: DocumentBoundaries;
     fileNamePolicy?: FileNamePolicy;
+    headingTitlePolicy?: HeadingTitlePolicy;
     hierarchyBoundaries?: HierarchyBoundaries;
     linkTextPolicy?: LinkTextPolicy;
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
