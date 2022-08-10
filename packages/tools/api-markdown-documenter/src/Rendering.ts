@@ -64,7 +64,9 @@ export function renderModelPage(
 
     // Render heading
     // TODO: heading level
-    docNodes.push(renderHeading(apiModel, documenterConfiguration, tsdocConfiguration));
+    if (documenterConfiguration.includeTopLevelDocumentHeading) {
+        docNodes.push(renderHeading(apiModel, documenterConfiguration, tsdocConfiguration));
+    }
 
     // Do not render breadcrumb for Model page
 
@@ -99,7 +101,9 @@ export function renderPackagePage(
 
     // Render heading
     // TODO: heading level
-    docNodes.push(renderHeading(apiPackage, documenterConfiguration, tsdocConfiguration));
+    if (documenterConfiguration.includeTopLevelDocumentHeading) {
+        docNodes.push(renderHeading(apiPackage, documenterConfiguration, tsdocConfiguration));
+    }
 
     // Render breadcrumb
     docNodes.push(renderBreadcrumb(apiPackage, documenterConfiguration, tsdocConfiguration));
@@ -143,42 +147,24 @@ export function renderApiPage(
         console.log(`Rendering document for ${apiItem.displayName}...`);
     }
 
-    // Render body content for the item
-    const bodyContent = renderApiSection(apiItem, documenterConfiguration, tsdocConfiguration);
+    const docNodes: DocNode[] = [];
 
-    // Render body content to section including header and footer items like the breadcrumb
-    const document = renderPage(
-        apiItem,
-        bodyContent,
-        documenterConfiguration,
-        tsdocConfiguration,
-        markdownEmitter,
-    );
+    // Render heading
+    if (documenterConfiguration.includeTopLevelDocumentHeading) {
+        docNodes.push(renderHeading(apiItem, documenterConfiguration, tsdocConfiguration));
+    }
+
+    // Render breadcrumb
+    if (documenterConfiguration.includeBreadcrumb) {
+        docNodes.push(renderBreadcrumb(apiItem, documenterConfiguration, tsdocConfiguration));
+    }
+
+    // Render body content for the item
+    docNodes.push(renderApiSection(apiItem, documenterConfiguration, tsdocConfiguration));
 
     if (documenterConfiguration.verbose) {
         console.log(`Document for ${apiItem.displayName} rendered successfully.`);
     }
-
-    return document;
-}
-
-function renderPage(
-    apiItem: ApiItem,
-    bodyContent: DocSection,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
-    markdownEmitter: MarkdownEmitter,
-): MarkdownDocument {
-    const docNodes: DocNode[] = [];
-
-    // Render breadcrumb at top of any page
-    docNodes.push(renderBreadcrumb(apiItem, documenterConfiguration, tsdocConfiguration));
-
-    // TODO: anything else before main content?
-
-    docNodes.push(bodyContent);
-
-    // TODO: anything after main content?
 
     return createMarkdownDocument(
         apiItem,
@@ -218,8 +204,6 @@ function renderApiSection(
     }
 
     const docNodes: DocNode[] = [];
-
-    docNodes.push(renderHeading(apiItem, documenterConfiguration, tsdocConfiguration));
 
     // Render beta warning if applicable
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
