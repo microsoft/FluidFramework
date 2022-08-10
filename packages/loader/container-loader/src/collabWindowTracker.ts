@@ -73,6 +73,8 @@ export class CollabWindowTracker {
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             Promise.resolve().then(() => {
                 this.submitNoop(false /* immediate */);
+                assert(this.opsCountSinceNoop >= this.NoopCountFrequency,
+                     `${this.opsCountSinceNoop} ops were sent since the last no op`);
                 // reset count now that all ops are processed
                 this.opsCountSinceNoop = 0;
                 return;
