@@ -225,15 +225,18 @@ export class SummarizerNode implements IRootSummarizerNode {
                 return { latestSummaryUpdated: true, wasSummaryTracked: true };
             }
 
+            const props = {
+                summaryRefSeq,
+                pendingSize: this.pendingSummaries.size,
+                pendingHandle: this.pendingSummaries.size > 0 ? this.pendingSummaries.keys[0] : undefined,
+                pendingSeqNumber: this.pendingSummaries.size > 0 ?
+                    this.pendingSummaries.values[0].referenceSequenceNumber : undefined,
+            };
             this.defaultLogger.sendTelemetryEvent({
                 eventName: "PendingSummaryNotFound",
                 proposalHandle,
-                summaryRefSeq,
-                length: this.pendingSummaries.size,
-                pendingSummaryHandle: this.pendingSummaries.size > 0 ? this.pendingSummaries.keys[0] : undefined,
                 referenceSequenceNumber: this.referenceSequenceNumber,
-                pendingSummarySequenceNumber: this.pendingSummaries.size > 0 ?
-                    this.pendingSummaries.values[0].referenceSequenceNumber : undefined,
+                details: JSON.stringify(props),
             });
         }
 
