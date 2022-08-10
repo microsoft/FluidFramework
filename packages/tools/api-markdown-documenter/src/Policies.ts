@@ -70,6 +70,25 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
  */
 export interface PolicyOptions {
     /**
+     * Whether or not to include a top-level heading in rendered document pages.
+     *
+     * @defaultValue true
+     *
+     * @remarks If you will be rendering the document contents into some other document content that will inject its
+     * own root heading, this can be used to omit that heading from what is rendered by this system.
+     */
+    includeTopLevelDocumentHeading?: boolean;
+
+    /**
+     * Whether or not to include a navigation breadcrumb at the top of rendered document pages.
+     *
+     * @defaultValue true
+     *
+     * @remarks Note: `Model` items will never have a breadcrumb rendered, even if this is specfied.
+     */
+    includeBreadcrumb?: boolean;
+
+    /**
      * See {@link DocumentBoundaries}.
      *
      * @defaultValue {@link DefaultPolicies.defaultDocumentBoundaries}
@@ -203,6 +222,8 @@ export namespace DefaultPolicies {
  * Default {@link PolicyOptions} configuration
  */
 export const defaultPolicyOptions: Required<PolicyOptions> = {
+    includeTopLevelDocumentHeading: true,
+    includeBreadcrumb: true,
     documentBoundaries: DefaultPolicies.defaultDocumentBoundaries,
     hierarchyBoundaries: DefaultPolicies.defaultHierarchyBoundaries,
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,

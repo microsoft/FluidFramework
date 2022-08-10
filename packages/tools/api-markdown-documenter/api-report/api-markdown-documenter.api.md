@@ -138,6 +138,8 @@ export interface PolicyOptions {
     fileNamePolicy?: FileNamePolicy;
     headingTitlePolicy?: HeadingTitlePolicy;
     hierarchyBoundaries?: HierarchyBoundaries;
+    includeBreadcrumb?: boolean;
+    includeTopLevelDocumentHeading?: boolean;
     linkTextPolicy?: LinkTextPolicy;
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
