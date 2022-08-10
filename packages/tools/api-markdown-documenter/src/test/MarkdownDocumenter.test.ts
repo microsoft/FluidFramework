@@ -8,8 +8,8 @@ import * as Path from "path";
 import { MarkdownDocument } from "../MarkdownDocument";
 import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
 import { markdownDocumenterConfigurationWithDefaults } from "../MarkdownDocumenterConfiguration";
-import { renderModelPage, renderPackagePage } from "../Rendering";
 import { CustomDocNodes } from "../doc-nodes";
+import { renderModelPage, renderPackagePage } from "../rendering";
 
 /**
  * Temp directory under which

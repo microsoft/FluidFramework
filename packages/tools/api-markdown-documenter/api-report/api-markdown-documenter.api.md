@@ -66,23 +66,16 @@ export namespace DefaultPolicies {
 // @public
 export const defaultPolicyOptions: Required<PolicyOptions>;
 
-// @public (undocumented)
-export namespace DefaultRenderingPolicies {
-    // (undocumented)
-    export function defaultRenderConstructor(apiItem: ApiConstructor | ApiConstructSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
-    // (undocumented)
-    export function defaultRenderFunction(apiItem: ApiFunction, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
-    // (undocumented)
-    export function defaultRenderFunctionLike(apiItem: ApiConstructor | ApiConstructSignature | ApiFunction | ApiMethod | ApiMethodSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
-    // (undocumented)
-    export function defaultRenderMethod(apiItem: ApiMethod | ApiMethodSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
-    // (undocumented)
-    export function defaultRenderModel(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
-    // (undocumented)
-    export function defaultRenderPackage(apiPackage: ApiPackage, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+declare namespace DefaultRenderingPolicies {
+    export {
+        renderFunctionLikeSection,
+        renderModelSection,
+        renderPackageSection
+    }
 }
+export { DefaultRenderingPolicies }
 
-// @public (undocumented)
+// @public
 export const defaultRenderingPolicies: Required<RenderingPolicies>;
 
 // @public
@@ -160,30 +153,39 @@ export function renderDocuments(apiModel: ApiModel, partialDocumenterConfig: Mar
 export function renderFiles(apiModel: ApiModel, outputDirectoryPath: string, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): Promise<void>;
 
 // @public (undocumented)
+function renderFunctionLikeSection(apiItem: ApiConstructor | ApiConstructSignature | ApiFunction | ApiMethod | ApiMethodSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+
+// @public (undocumented)
 export function renderHeading(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocHeading;
 
 // @public
 export interface RenderingPolicies {
     // (undocumented)
-    renderConstructor?: RenderingPolicy<ApiConstructSignature | ApiConstructor>;
+    renderConstructorSection?: RenderingPolicy<ApiConstructSignature | ApiConstructor>;
     // (undocumented)
-    renderFunction?: RenderingPolicy<ApiFunction>;
+    renderFunctionSection?: RenderingPolicy<ApiFunction>;
     // (undocumented)
-    renderMethod?: RenderingPolicy<ApiMethod | ApiMethodSignature>;
+    renderMethodSection?: RenderingPolicy<ApiMethod | ApiMethodSignature>;
     // (undocumented)
-    renderModel?: RenderingPolicy<ApiModel>;
+    renderModelSection?: RenderingPolicy<ApiModel>;
     // (undocumented)
-    renderPackage?: RenderingPolicy<ApiPackage>;
+    renderPackageSection?: RenderingPolicy<ApiPackage>;
 }
 
-// @public (undocumented)
+// @public
 export type RenderingPolicy<TApiItem extends ApiItem> = (apiItem: TApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration) => DocSection;
 
 // @public
 export function renderModelPage(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
 // @public (undocumented)
+function renderModelSection(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+
+// @public (undocumented)
 export function renderPackagePage(apiPackage: ApiPackage, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
+
+// @public (undocumented)
+function renderPackageSection(apiPackage: ApiPackage, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
 export function renderSummaryCell(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocTableCell;

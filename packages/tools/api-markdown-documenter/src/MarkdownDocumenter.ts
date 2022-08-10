@@ -8,8 +8,8 @@ import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
-import { renderApiPage, renderModelPage, renderPackagePage } from "./Rendering";
 import { CustomDocNodes } from "./doc-nodes";
+import { renderApiPage, renderModelPage, renderPackagePage } from "./rendering";
 import { doesItemRequireOwnDocument } from "./utilities";
 
 // TODOs:

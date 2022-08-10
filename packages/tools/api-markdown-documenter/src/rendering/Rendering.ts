@@ -24,10 +24,10 @@ import {
     TSDocConfiguration,
 } from "@microsoft/tsdoc";
 
-import { Link, urlFromLink } from "./Link";
-import { MarkdownDocument } from "./MarkdownDocument";
-import { MarkdownDocumenterConfiguration } from "./MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTableCell } from "./doc-nodes";
+import { Link, urlFromLink } from "../Link";
+import { MarkdownDocument } from "../MarkdownDocument";
+import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
+import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTableCell } from "../doc-nodes";
 import {
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
@@ -37,7 +37,7 @@ import {
     getLinkForApiItem,
     getLinkUrlForApiItem,
     getQualifiedApiItemName,
-} from "./utilities";
+} from "../utilities";
 
 // TODOs:
 // - heading level tracking
@@ -72,7 +72,11 @@ export function renderModelPage(
 
     // Render body contents
     docNodes.push(
-        documenterConfiguration.renderModel(apiModel, documenterConfiguration, tsdocConfiguration),
+        documenterConfiguration.renderModelSection(
+            apiModel,
+            documenterConfiguration,
+            tsdocConfiguration,
+        ),
     );
 
     if (documenterConfiguration.verbose) {
@@ -110,7 +114,7 @@ export function renderPackagePage(
 
     // Render body contents
     docNodes.push(
-        documenterConfiguration.renderPackage(
+        documenterConfiguration.renderPackageSection(
             apiPackage,
             documenterConfiguration,
             tsdocConfiguration,
@@ -221,7 +225,7 @@ function renderApiSection(
 
         case ApiItemKind.ConstructSignature:
             docNodes.push(
-                documenterConfiguration.renderConstructor(
+                documenterConfiguration.renderConstructorSection(
                     apiItem as ApiConstructSignature,
                     documenterConfiguration,
                     tsdocConfiguration,
@@ -231,7 +235,7 @@ function renderApiSection(
 
         case ApiItemKind.Constructor:
             docNodes.push(
-                documenterConfiguration.renderConstructor(
+                documenterConfiguration.renderConstructorSection(
                     apiItem as ApiConstructor,
                     documenterConfiguration,
                     tsdocConfiguration,
@@ -249,7 +253,7 @@ function renderApiSection(
 
         case ApiItemKind.Function:
             docNodes.push(
-                documenterConfiguration.renderFunction(
+                documenterConfiguration.renderFunctionSection(
                     apiItem as ApiFunction,
                     documenterConfiguration,
                     tsdocConfiguration,
@@ -267,7 +271,7 @@ function renderApiSection(
 
         case ApiItemKind.Method:
             docNodes.push(
-                documenterConfiguration.renderMethod(
+                documenterConfiguration.renderMethodSection(
                     apiItem as ApiMethod,
                     documenterConfiguration,
                     tsdocConfiguration,
@@ -277,7 +281,7 @@ function renderApiSection(
 
         case ApiItemKind.MethodSignature:
             docNodes.push(
-                documenterConfiguration.renderMethod(
+                documenterConfiguration.renderMethodSection(
                     apiItem as ApiMethodSignature,
                     documenterConfiguration,
                     tsdocConfiguration,

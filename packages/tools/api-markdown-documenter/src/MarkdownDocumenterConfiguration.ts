@@ -1,7 +1,7 @@
 import { NewlineKind } from "@rushstack/node-core-library";
 
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
-import { RenderingPolicies, defaultRenderingPolicies } from "./RenderingPolicy";
+import { RenderingPolicies, defaultRenderingPolicies } from "./rendering/RenderingPolicy";
 
 // TODOs:
 // - Define "document" in terms of stream output, since we aren't necessarily writing files.
