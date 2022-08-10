@@ -334,25 +334,6 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
         assert.equal(detachedMap1.isAttached(), true, "detachedMap1 should be attached");
         assert.equal(detachedMap2.isAttached(), true, "detachedMap2 should be attached");
     });
-
-    itExpects.skip("Should close container when sending an op while processing another op",
-        [{
-            eventName: "fluid:telemetry:Container:ContainerClose",
-            error: "Making changes to data model is disallowed while processing ops.",
-        }], async () => {
-            sharedMap1.on("valueChanged", (changed, local) => {
-                if (!local) {
-                    assert.equal(changed.key, "key2", "Incorrect value for key1 in container 1");
-                }
-                // Avoid re-entrancy by setting a new key
-                if (changed.key !== "key2") {
-                    sharedMap2.set("key2", "v2");
-                }
-            });
-            // Set 1st key to trigger above valueChanged
-            sharedMap1.set("key1", "v1");
-            await provider.ensureSynchronized();
-    });
 });
 
 describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {

@@ -23,6 +23,12 @@ There are a few steps you can take to write a good change note and avoid needing
 - [`IContainerRuntime.flush` is deprecated](#icontainerruntimeflush-is-deprecated)
 - [MergeTree class is deprecated](#MergeTree-class-is-deprecated)
 - [Various return types in `@fluidframework/sequence` have been widened to include `undefined`](#various-return-types-in-fluidframeworksequence-have-been-widened-to-include-undefined)
+- [Add assertion that closes container in DeltaManager if sending an op while concurrently processing another op](#add-assertion-that-closes-container-in-DeltaManager-if-sending-an-op-while-concurrently-processing-another-op)
+
+### Add assertion that closes container in `DeltaManager` if sending an op while concurrently processing another op
+
+A check has been added to the `submit` function in `deltaManager.ts`. This check will be disabled by default via the
+`preventConcurrentOpSend` boolean. Set this to true to enable this check and close the container if attempting to send an op while processing another op. This temporary option will be removed and will thus require many tests to be fixed.
 
 ### Various return types in `@fluidframework/sequence` have been widened to include `undefined`
 

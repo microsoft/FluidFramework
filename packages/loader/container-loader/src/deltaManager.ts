@@ -93,7 +93,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     // A boolean used to assert that ops are not being sent while processing another op.
     private opsCurrentlyProcessing: boolean = false;
     // Delta manager option enabling the above assertion
-    private readonly preventConcurrentOpSend: boolean = true;
+    private readonly preventConcurrentOpSend: boolean = false;
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
 
