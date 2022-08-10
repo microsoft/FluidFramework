@@ -203,8 +203,7 @@ export class SummaryManager implements IDisposable {
             // the summarizer at all.
             const shouldSummarizeStateEarlyStage = this.getShouldSummarizeState();
             if (startWithInitialDelay &&
-                shouldSummarizeStateEarlyStage.shouldSummarize === false &&
-                !Summarizer.stopReasonCanRunLastSummary(shouldSummarizeStateEarlyStage.stopReason)) {
+                shouldSummarizeStateEarlyStage.shouldSummarize === false) {
                     return `early exit ${shouldSummarizeStateEarlyStage.stopReason}`;
             }
 
