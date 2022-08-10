@@ -229,8 +229,11 @@ export class SummarizerNode implements IRootSummarizerNode {
                 eventName: "PendingSummaryNotFound",
                 proposalHandle,
                 summaryRefSeq,
-                size: this.pendingSummaries.size,
-                haveHandle: this.pendingSummaries.size > 0 ? this.pendingSummaries.keys[0] : undefined,
+                length: this.pendingSummaries.size,
+                pendingSummaryHandle: this.pendingSummaries.size > 0 ? this.pendingSummaries.keys[0] : undefined,
+                referenceSequenceNumber: this.referenceSequenceNumber,
+                pendingSummarySequenceNumber: this.pendingSummaries.size > 0 ?
+                    this.pendingSummaries.values[0].referenceSequenceNumber : undefined,
             });
         }
 
