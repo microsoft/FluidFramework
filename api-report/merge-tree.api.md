@@ -1442,6 +1442,8 @@ export interface SegmentGroup {
     // (undocumented)
     previousProps?: PropertySet[];
     // (undocumented)
+    removedReferences?: LocalReferencePosition[];
+    // (undocumented)
     segments: ISegment[];
 }
 

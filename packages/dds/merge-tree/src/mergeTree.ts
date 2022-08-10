@@ -890,11 +890,13 @@ export class MergeTree {
         }
     }
 
-    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean) {
+    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean):
+        LocalReferencePosition[] | undefined {
         if (!segment.localRefs || segment.localRefs.empty) {
-            return;
+            return undefined;
         }
         const refsToSlide: ReferencePosition[] = [];
+        const removedRefs: LocalReferencePosition[] = [];
         for (const lref of segment.localRefs) {
             if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
                 continue;
@@ -904,6 +906,7 @@ export class MergeTree {
                 }
             } else {
                 segment.localRefs.removeLocalRef(lref);
+                removedRefs.push(lref);
             }
         }
         // Rethink implementation of keeping and sliding refs once other reference
@@ -911,6 +914,8 @@ export class MergeTree {
         if (!pending) {
             this.slideReferences(segment, refsToSlide);
         }
+        // return only the refs that have been entirely removed
+        return removedRefs.length > 0 ? removedRefs : undefined;
     }
 
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
@@ -1232,6 +1237,7 @@ export class MergeTree {
             }
             this.pendingSegments!.enqueue(_segmentGroup);
         }
+
         if ((!_segmentGroup.previousProps && previousProps) ||
             (_segmentGroup.previousProps && !previousProps)) {
             throw new Error("All segments in group should have previousProps or none");
@@ -1239,6 +1245,7 @@ export class MergeTree {
         if (previousProps) {
             _segmentGroup.previousProps!.push(previousProps);
         }
+
         segment.segmentGroups.enqueue(_segmentGroup);
         return _segmentGroup;
     }
@@ -1934,8 +1941,15 @@ export class MergeTree {
         // these events are newly removed
         // so we slide after eventing in case the consumer wants to make reference
         // changes at remove time, like add a ref to track undo redo.
-        removedSegments.forEach(
-            (rSeg) => this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending));
+        removedSegments.forEach((rSeg) => {
+            const removedRefs = this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending);
+            if (segmentGroup && removedRefs) {
+                if (!segmentGroup.removedReferences) {
+                    segmentGroup.removedReferences = [];
+                }
+                segmentGroup.removedReferences.push(...removedRefs);
+            }
+        });
 
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
@@ -1976,6 +1990,16 @@ export class MergeTree {
 
                 for (let updateNode = segment.parent; updateNode !== undefined; updateNode = updateNode.parent) {
                     this.blockUpdateLength(updateNode, UnassignedSequenceNumber, this.collabWindow.clientId);
+                }
+            }
+            if (pendingSegmentGroup.removedReferences) {
+                for (const ref of pendingSegmentGroup.removedReferences) {
+                    const seg = ref.getSegment();
+                    if (!seg) {
+                        throw new Error("Cannot rollback reference without segment");
+                    }
+                    const localRefs = seg.localRefs ??= new LocalReferenceCollection(seg);
+                    localRefs.addLocalRef(ref, ref.getOffset());
                 }
             }
         } else if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
