@@ -106,6 +106,7 @@ USAGE
 * [`flub bundleAnalyses run`](#flub-bundleanalyses-run)
 * [`flub check layers`](#flub-check-layers)
 * [`flub commands`](#flub-commands)
+* [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
 * [`flub version VERSION`](#flub-version-version)
@@ -245,6 +246,23 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.0/src/commands/commands.ts)_
+
+## `flub generate packageJson`
+
+Generate mono repo package json
+
+```
+USAGE
+  $ flub generate packageJson -g client|server|azure|build-tools [-v]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) release group
+                               <options: client|server|azure|build-tools>
+  -v, --verbose                Verbose logging.
+
+DESCRIPTION
+  Generate mono repo package json
+```
 
 ## `flub help [COMMAND]`
 
