@@ -51,6 +51,7 @@
     "@oclif/plugin-not-found": "^2.3.1",
     "@oclif/plugin-plugins": "^2.0.1",
     "@oclif/test": "^2",
+    "@octokit/core": "^4.0.4",
     "chalk": "^2.4.2",
     "inquirer": "^9.0.0",
     "npm-check-updates": "^16.0.0",

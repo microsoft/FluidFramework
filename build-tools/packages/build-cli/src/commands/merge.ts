@@ -14,8 +14,8 @@ async function prExists(token: string, title: string): Promise<boolean> {
     const octokit = new Octokit({ auth: token });
     const response = await octokit.request("GET /repos/{owner}/{repo}/pulls", { owner, repo });
 
-    for (const i of response.data) {
-        if (i.title === title) {
+    for (const data of response.data) {
+        if (data.title === title) {
             return true;
         }
     }
@@ -93,13 +93,11 @@ export default class Merge extends BaseCommand<typeof Merge.flags> {
             description: "Source branch name",
             char: "s",
             default: "main",
-            required: true,
         }),
         targetBranch: Flags.string({
             description: "Target branch name",
             char: "t",
             default: "next",
-            required: true,
         }),
         batchSize: Flags.integer({
             description: "Number of commits to include in the pull request",
@@ -123,8 +121,7 @@ export default class Merge extends BaseCommand<typeof Merge.flags> {
     static examples = [
         {
             description: "Example to use the merge command.",
-            command:
-                "<%= config.bin %> <%= command.id %> -s main -t next -r xyz -r abc -b 5",
+            command: "<%= config.bin %> <%= command.id %> -s main -t next -r xyz -r abc -b 5",
         },
         {
             description: "Example to use the merge command.",
@@ -153,7 +150,9 @@ export default class Merge extends BaseCommand<typeof Merge.flags> {
             unmergedCommits === "" ||
             unmergedCommits.length === 0
         ) {
-            this.log(`${flags.sourceBranch} and ${flags.targetBranch} are in sync. Not commits to merge`);
+            this.log(
+                `${flags.sourceBranch} and ${flags.targetBranch} are in sync. Not commits to merge`,
+            );
             this.exit(-1);
         }
 

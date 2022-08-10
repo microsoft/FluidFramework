@@ -85,6 +85,9 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
+  "dependencies": {
+    "@octokit/core": "^4.0.4"
+  },
   "devDependencies": {
     "@fluidframework/build-tools": "^0.3.0-0",
     "@fluidframework/test-tools": "^0.2.3074",
@@ -97,8 +100,5 @@
     "rimraf": "^2.6.2",
     "run-script-os": "^1.1.6",
     "typescript": "~4.5.5"
-  },
-  "dependencies": {
-    "@octokit/core": "^4.0.4"
   }
 }
