@@ -4,8 +4,8 @@ aliases:
   - "/start/bundlers/"
 ---
 
-The following are known bundler issues, answers to some of the most commonly asked questions about the Fluid
-Framework and Bundlers.
+This article describes some known issues with bundlers and answers some commonly asked questions about the Fluid
+Framework and bundlers.
 
 ## Known Errors with Webpack 5
 We know the following packages cause errors; assert, buffer, events and url.
