@@ -5,6 +5,7 @@ import { PackageName } from "@rushstack/node-core-library";
 import { getQualifiedApiItemName } from "./utilities";
 
 // TODOs:
+// - Option for whether or not to include title headings on pages
 // - Better handling of path-segment vs file name policy (e.g. what to do in index model?)
 // - Add simple pre-canned policies (index, adjacency, flat, etc.)
 
