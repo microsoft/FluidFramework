@@ -214,6 +214,7 @@ describe("Garbage Collection Tests", () => {
                 const gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: true, sweepAllowed: true }, 123 /* snapshotCacheExpiryMs */);
                 assert(gc.gcEnabled, "gcEnabled incorrect");
                 assert(gc.sweepEnabled, "sweepEnabled incorrect");
+                assert(gc.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
                 assert(gc.sessionExpiryTimeoutMs !== undefined, "sessionExpiryTimeoutMs incorrect");
             });
             it("sweepAllowed true, gcAllowed true, sessionExpiry off", () => {
@@ -246,19 +247,77 @@ describe("Garbage Collection Tests", () => {
             });
         });
 
-        describe.only("Session expiry", () => {
+        describe("Session expiry value", () => {
+            // Config sources for Session Expiry:
+            // 1. defaultSessionExpiryDurationMs in code
+            // 2. IGCRuntimeOptions.sessionExpiryTimeoutMs
+            // 3. IGCMetadata.sessionExpiryTimeoutMs
+            // 4. "Fluid.GarbageCollection.TestOverride.SessionExpiryMs" setting
+            // 5. disableSessionExpiryKey
             beforeEach(() => {
                 injectedSettings[runSessionExpiryKey] = true;
+                injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than sweep timeout
             });
 
-            it.only("Testing stubbability", () => {
-                const gc = createGcWithPrivateMembers(undefined /* metadata */, {});
-                const actualTimeout = gc.sessionExpiryTimer.defaultTimeout;
-                assert.equal(actualTimeout, defaultSessionExpiryDurationMs);
+            it("defaultSessionExpiryDurationMs", () => {
+                const gcNew = createGcWithPrivateMembers(undefined /* metadata */, {});
+                assert.equal(gcNew.sessionExpiryTimer.defaultTimeout, defaultSessionExpiryDurationMs);
+            });
+
+            it("IGCRuntimeOptions.sessionExpiryTimeoutMs", () => {
+                const gc = createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs: 123 });
+                assert.equal(gc.sessionExpiryTimer.defaultTimeout, 123);
+            });
+
+            it("IGCMetadata.sessionExpiryTimeoutMs", () => {
+                const gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: 456 } /* metadata */);
+                assert.equal(gc.sessionExpiryTimer.defaultTimeout, 456);
+            });
+
+            it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file", () => {
+                injectedSettings["Fluid.GarbageCollection.TestOverride.SessionExpiryMs"] = 789;
+
+                const gcNew = createGcWithPrivateMembers(undefined /* metadata */, {});
+                const gcExisting = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs } /* metadata */);
+
+                [gcNew, gcExisting].forEach((gc, index) => {
+                    const expectedMetadata: IGCMetadata = { sweepEnabled: false, gcFeature: 1 - index, sessionExpiryTimeoutMs: 2592000000 };
+                    assert.equal(gc.sessionExpiryTimer.defaultTimeout, 789, "sessionExpiry used for timer should be the override value");
+                    const outputMetadata = gc.getMetadata();
+                    assert.deepEqual(outputMetadata, expectedMetadata, `getMetadata returned different metadata than expected [index ${index}]`);
+                });
+            });
+
+            it("disableSessionExpiryKey", () => {
+                injectedSettings[disableSessionExpiryKey] = true;
+                const gcNew = createGcWithPrivateMembers(undefined /* metadata */, {});
+                assert.equal(gcNew.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs should be set even if disabled");
+                assert.equal(gcNew.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
+            });
+        });
+
+        describe("Sweep Timeout", () => {
+            it("snapshotCacheExpiryMs", () => {
+            });
+            it("sweepTimeoutMs", () => {
+            });
+        });
+
+        describe("Session Behavior (e.g. 'shouldRun' fields)", () => {
+            it("latestSummaryGCVersion", () => {
+            });
+            it("shouldRunGC", () => {
+            });
+            it("shouldRunSweep", () => {
+            });
+            it("inactiveTimeoutMs", () => {
+            });
+            it("testMode", () => {
             });
         });
     });
 
+    //* Simplify now that I have config value testing above
     describe("Session expiry", () => {
         const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
 
