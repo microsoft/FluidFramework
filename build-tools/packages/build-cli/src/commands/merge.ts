@@ -6,19 +6,9 @@ import { getResolvedFluidRoot, GitRepo } from "@fluidframework/build-tools";
 import { Octokit } from "@octokit/core";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../base";
-import { arrayListFlag } from "../flags";
 
 const owner = "microsoft";
 const repo = "FluidFramework";
-
-// async function listLabels(token: string) {
-// const octokit = new Octokit({ auth: token });
-// await octokit.request('GET /repos/{owner}/{repo}/issues/{issue_number}/labels', {
-//     owner: owner,
-//     repo: repo,
-//     issue_number: 'ISSUE_NUMBER'
-// })
-// }
 
 async function prExists(token: string, title: string): Promise<boolean> {
     const octokit = new Octokit({ auth: token });
@@ -82,10 +72,8 @@ async function createPR(token: string, sourceBranch: string, targetBranch: strin
     });
 }
 
-export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
+export default class Merge extends BaseCommand<typeof Merge.flags> {
     static description = "Used to merge two branches.";
-
-    // ./bin/dev --source=main --target=next --batchSize=5 --reviewers=sonalivdeshpande,tylerbutler
 
     static flags = {
         githubToken: Flags.string({
@@ -93,18 +81,29 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
             required: true,
             env: "GITHUB_TOKEN",
         }),
-        source: Flags.string({
+        owner: Flags.string({
+            description: "Repository owner",
+            default: "microsoft",
+        }),
+        repoName: Flags.string({
+            description: "Repository name",
+            default: "FluidFramework",
+        }),
+        sourceBranch: Flags.string({
             description: "Source branch name",
+            char: "s",
             default: "main",
             required: true,
         }),
-        target: Flags.string({
+        targetBranch: Flags.string({
             description: "Target branch name",
+            char: "t",
             default: "next",
             required: true,
         }),
         batchSize: Flags.integer({
             description: "Number of commits to include in the pull request",
+            char: "b",
             default: 1,
             required: false,
         }),
@@ -114,14 +113,28 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
         }),
         reviewers: Flags.string({
             description: "Username of reviewers",
+            char: "r",
             required: false,
+            multiple: true,
         }),
-        reviewersArr: arrayListFlag({ required: true }), // array of reviewers
         ...BaseCommand.flags,
     };
 
+    static examples = [
+        {
+            description: "Example to use the merge command.",
+            command:
+                "<%= config.bin %> <%= command.id %> -s main -t next -r xyz -r abc -b 5",
+        },
+        {
+            description: "Example to use the merge command.",
+            command:
+                "<%= config.bin %> <%= command.id %> --source=main --target=next --reviewers=xyz --reviewers=abc --batchSize=5",
+        },
+    ];
+
     public async run(): Promise<void> {
-        const { flags } = await this.parse(Merge);
+        const flags = this.processedFlags;
 
         const resolvedRoot = await getResolvedFluidRoot();
         const gitRepo = new GitRepo(resolvedRoot);
@@ -131,8 +144,8 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
             this.exit(-1);
         }
 
-        const lastMergedCommit = await gitRepo.mergeBase(flags.source, flags.target);
-        const unmergedCommits = await gitRepo.revList(lastMergedCommit, flags.source);
+        const lastMergedCommit = await gitRepo.mergeBase(flags.sourceBranch, flags.targetBranch);
+        const unmergedCommits = await gitRepo.revList(lastMergedCommit, flags.sourceBranch);
         this.log("unmerged commit------", unmergedCommits);
 
         if (
@@ -140,7 +153,7 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
             unmergedCommits === "" ||
             unmergedCommits.length === 0
         ) {
-            this.log(`${flags.source} and ${flags.target} are in sync. Not commits to merge`);
+            this.log(`${flags.sourceBranch} and ${flags.targetBranch} are in sync. Not commits to merge`);
             this.exit(-1);
         }
 
@@ -151,7 +164,7 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
                 : unmergedCommits[flags.batchSize - 1];
 
         const syncbranchName: string =
-            flags.branchName ?? `${flags.source}-${flags.target}-${lastCommitID}`;
+            flags.branchName ?? `${flags.sourceBranch}-${flags.targetBranch}-${lastCommitID}`;
 
         // iterate and get the last commit
         const commitInfo: any = await prInfo(flags.githubToken, lastCommitID);
@@ -167,7 +180,7 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
         const pullRequest = await createPR(
             flags.githubToken,
             syncbranchName,
-            flags.target,
+            flags.targetBranch,
             commitInfo.actor,
         );
         this.log(`PR opened upto ${lastCommitID}`);
@@ -177,6 +190,6 @@ export default class Merge extends BaseCommand<typeof BaseCommand.flags> {
             // notify the process owner
         }
 
-        this.log(`there is a ${syncbranchName} and ${flags.target} PR opened`);
+        this.log(`there is a ${syncbranchName} and ${flags.targetBranch} PR opened`);
     }
 }

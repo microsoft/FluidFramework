@@ -29,17 +29,6 @@ export const releaseGroupFlag = Flags.build({
 });
 
 /**
- * A re-usable CLI flag to parse array of inputs
- */
-export const arrayListFlag = Flags.build({
-    char: "l",
-    description: "array list",
-    parse: async () => {
-        // parse the input
-    }
-});
-
-/**
  * A re-usable CLI flag to parse package names.
  */
 export const packageSelectorFlag = Flags.build({
