@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryPerformanceEvent } from "@fluidframework/common-definitions";
-import { assert, LazyPromise, Timer as CommonTimer } from "@fluidframework/common-utils";
+import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ClientSessionExpiredError, DataProcessingError, UsageError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -227,9 +227,9 @@ export class UnreferencedStateTracker {
     }
 
     /** Timer to indicate when an unreferenced object is considered Inactive */
-    private readonly inactiveTimer: Timer;
+    private readonly inactiveTimer: TimerWithNoDefaultTimeout;
     /** Timer to indicate when an unreferenced object is Sweep-Ready */
-    private readonly sweepTimer: Timer;
+    private readonly sweepTimer: TimerWithNoDefaultTimeout;
 
     constructor(
         public readonly unreferencedTimestampMs: number,
@@ -245,14 +245,14 @@ export class UnreferencedStateTracker {
                 "inactive timeout must not be greater than the sweep timeout");
         }
 
-        this.sweepTimer = new Timer(
+        this.sweepTimer = new TimerWithNoDefaultTimeout(
             () => {
                 this._state = UnreferencedState.SweepReady;
                 assert(!this.inactiveTimer.hasTimer, "inactiveTimer still running after sweepTimer fired!");
             },
         );
 
-        this.inactiveTimer = new Timer(() => {
+        this.inactiveTimer = new TimerWithNoDefaultTimeout(() => {
             this._state = UnreferencedState.Inactive;
 
             // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
@@ -415,7 +415,7 @@ export class GarbageCollector implements IGarbageCollector {
     // Map of node ids to their unreferenced state tracker.
     private readonly unreferencedNodesState: Map<string, UnreferencedStateTracker> = new Map();
     // The Timer responsible for closing the container when the session has expired
-    private sessionExpiryTimer: CommonTimer | undefined;
+    private sessionExpiryTimer: Timer | undefined;
 
     // Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
     // per event per node.
@@ -500,9 +500,10 @@ export class GarbageCollector implements IGarbageCollector {
             const timeoutMs = overrideSessionExpiryTimeoutMs ?? this.sessionExpiryTimeoutMs;
 
             this.sessionExpiryTimer = new Timer(
+                timeoutMs,
                 () => { this.runtime.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs)); },
             );
-            this.sessionExpiryTimer.start(timeoutMs);
+            this.sessionExpiryTimer.start();
 
             // TEMPORARY: Hardcode a default of 2 days which is the value used in the ODSP driver.
             // This unblocks the Sweep Log (see logSweepEvents function).
@@ -1416,7 +1417,7 @@ function generateSortedGCState(gcState: IGarbageCollectionState): IGarbageCollec
 }
 
 /** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
-class Timer extends CommonTimer {
+class TimerWithNoDefaultTimeout extends Timer {
     constructor(
         private readonly callback: () => void,
     ) {
