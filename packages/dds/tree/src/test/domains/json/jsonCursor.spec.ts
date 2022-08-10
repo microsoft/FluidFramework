@@ -79,8 +79,7 @@ describe("JsonCursor", () => {
         });
 
         it("null", () => {
-            // Rationale: While Object.keys(..) does not accept 'null', the SharedTree data model must
-            //            as any value may be augmented with by the view schema.
+            // JsonCursor accepts all valid json, which includes null. Ensure null correctly lists no keys:
             assert.deepEqual([...new JsonCursor(null).keys], []);
         });
     });
