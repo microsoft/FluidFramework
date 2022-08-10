@@ -8,9 +8,6 @@ parameters:
   type: object
   default: Small
 
-- name: packageToTest
-  type: string
-
 - name: testWorkspace
   type: string
 
@@ -26,7 +23,7 @@ parameters:
   type: object
   default:
   - jobName: ""
-    cwd: ""
+    packageToTest: ""
     command: ""
 
 - name: continueOnError
@@ -50,9 +47,9 @@ jobs:
       - name: FORCE_COLOR
         value: 1
       - name: testPackageDir
-        value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.packageToTest }}'
+        value: '${{ parameters.testWorkspace }}/node_modules/${{ benchmarkTest.packageToTest }}'
       - name: testPackageFilePattern
-        value: ${{ replace(replace(parameters.packageToTest, '@', ''), '/', '-') }}-*.tgz
+        value: ${{ replace(replace(benchmarkTest.packageToTest, '@', ''), '/', '-') }}-*.tgz
       - name: testPackagePathPattern
         value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
@@ -86,14 +83,14 @@ jobs:
             echo "
             Pipeline Parameters:
               poolBuild=${{ parameters.poolBuild }}
-              packageToTest=${{ parameters.packageToTest }}
+              packageToTest=${{ benchmarkTest.packageToTest }}
 
             Pipeline Variables:
               testWorkspace=${{ parameters.testWorkspace }}
               testPackageFilePattern=${{ variables.testPackageFilePattern }}
               feed=${{ variables.feed }}
               continueOnError=${{ parameters.continueOnError }}
-              benchmarkTest.cwd=${{ benchmarkTest.cwd }}
+              benchmarkTest.packageToTest=${{ benchmarkTest.packageToTest }}
               benchmarkTest.command=${{ benchmarkTest.command }}
             "
 
@@ -151,7 +148,7 @@ jobs:
               echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
             else
               ls -1 ${{ variables.testPackagePathPattern }}
-              echo "##vso[task.logissue type=error]Test package '${{ parameters.packageToTest }}' not found, or there are more then one found"
+              echo "##vso[task.logissue type=error]Test package '${{ benchmarkTest.packageToTest }}' not found, or there are more then one found"
             fi
 
       # Auth to internal feed
@@ -185,14 +182,14 @@ jobs:
           ${{ parameters.env }}
         inputs:
           command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.packageToTest }}
+          workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ benchmarkTest.packageToTest }}
           customCommand: 'run ${{ benchmarkTest.command }}'
 
       - task: Bash@3
         displayName: Cat output file
         inputs:
           targetType: 'inline'
-          workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.packageToTest }}
+          workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ benchmarkTest.packageToTest }}
           script: |
             ls;
             ls ./benchmarkOutput;
