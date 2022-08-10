@@ -1,5 +1,6 @@
+import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import {
-    getRandomBoolean, getRandomEnglishString, getRandomNumber,
+    getRandomEnglishString,
     getRandomNumberString,
     getRandomStringByCharCode, getSizeInBytes,
 } from "./jsonGeneratorUtils";
@@ -175,13 +176,16 @@ export interface TwitterJson {
 /**
 * Generates a TwitterJson object as closely as possible to a specified byte size.
 * The generated json will as close to the specified size but will almost always be slightly less.
-* @param sizeInKb - size to generate json object
+* @param sizeInBytes - size to generate json object
 * @param includeUnicode - true to include unicode in any strings within the json
-* @param allowOversize - Allows the json to go over the sizeInKb limit. If enabled, the
+* @param allowOversize - Allows the json to go over the sizeInBytes limit. If enabled, the
 * generated json may be closer to the desired byte size but there is a risk of exceeding the inputted byte limit
 * @returns TwitterJson
 */
-export function generateTwitterJsonByByteSize(sizeInBytes: number, includeUnicode: boolean, allowOversize: boolean) {
+export function generateTwitterJsonByByteSize(sizeInBytes: number, includeUnicode: boolean, allowOversize: boolean,
+    seed = 1) {
+    const random = makeRandom(seed);
+
     const twitterJson: TwitterJson = {
         statuses: [],
         search_metadata: {
@@ -199,7 +203,7 @@ export function generateTwitterJsonByByteSize(sizeInBytes: number, includeUnicod
 
     let currentJsonSizeInBytes = getSizeInBytes(twitterJson);
     while (currentJsonSizeInBytes < sizeInBytes) {
-        const twitterStatus = generateTwitterStatus("standard", includeUnicode);
+        const twitterStatus = generateTwitterStatus("standard", includeUnicode, random);
         const nextStatusSizeInBytes = getSizeInBytes(twitterStatus);
         if (!allowOversize && currentJsonSizeInBytes + nextStatusSizeInBytes > sizeInBytes) {
             break;
@@ -217,7 +221,9 @@ export function generateTwitterJsonByByteSize(sizeInBytes: number, includeUnicod
 * @param includeUnicode - true to include unicode in any strings within the json
 * @returns TwitterJson
 */
-export function generateTwitterJsonByNumStatuses(numStatuses: number, includeUnicode: boolean) {
+export function generateTwitterJsonByNumStatuses(numStatuses: number, includeUnicode: boolean, seed = 1) {
+    const random = makeRandom(seed);
+
     const twitterJson: TwitterJson = {
         statuses: [],
         search_metadata: {
@@ -234,37 +240,36 @@ export function generateTwitterJsonByNumStatuses(numStatuses: number, includeUni
     };
 
     for (let i = 0; i < numStatuses; i++) {
-        twitterJson.statuses.push(generateTwitterStatus("standard", includeUnicode));
+        twitterJson.statuses.push(generateTwitterStatus("standard", includeUnicode, random));
     }
 
     return twitterJson;
 }
 
 /* eslint-disable no-useless-escape */
-function generateTwitterStatus(type: "standard" | "retweet", includeUnicode: boolean) {
+function generateTwitterStatus(type: "standard" | "retweet", includeUnicode: boolean, random: IRandom) {
     // id is always an 18 digit number
-    const statusIdString = getRandomNumberString(18, 18);
-    const retweetCount = Math.floor(getRandomNumber(0, 99999));
-    const favoriteCount = Math.floor(getRandomNumber(0, 99999));
-    const twitterUser = generateTwitterUser(includeUnicode);
-    const shouldAddHashtagEntity = getRandomBoolean();
-    const shouldAddUrlEntity = getRandomBoolean();
-    const shouldAddUserMentionsEntity = getRandomBoolean();
-    const shouldAddMediaEntity = getRandomBoolean();
+    const statusIdString = getRandomNumberString(random, 18, 18);
+    const retweetCount = Math.floor(random.integer(0, 99999));
+    const favoriteCount = Math.floor(random.integer(0, 99999));
+    const twitterUser = generateTwitterUser(includeUnicode, random);
+    const shouldAddHashtagEntity = random.bool(0.5);
+    const shouldAddUrlEntity = random.bool(0.5);
+    const shouldAddUserMentionsEntity = random.bool(0.5);
+    const shouldAddMediaEntity = random.bool(0.5);
 
     const twitterStatus: any = {
         metadata: {
             result_type: "recent",
             iso_language_code: "ja",
         },
-        // adding created_at variation to won't serve any purpose.
-        created_at: getRandomDateString(new Date("2005-01-01"), new Date("2022-01-01")),
+        created_at: getRandomDateString(random, new Date("2005-01-01"), new Date("2022-01-01")),
         id: Number(statusIdString),
-        id_str: statusIdString,
-        text: includeUnicode ? getRandomKanjiString(1, 200) : getRandomEnglishString(false, 1, 200),
+        id_str: `${statusIdString}`,
+        text: includeUnicode ? getRandomKanjiString(random, 1, 200) : getRandomEnglishString(random, false, 1, 200),
         // source can have unicode nested in it
         source: `<a href=\"https://twitter.com/${twitterUser.screen_name}\" rel=\"nofollow\">
-               ${includeUnicode ? getRandomKanjiString(1, 30) : getRandomEnglishString(false, 1, 30)}</a>`,
+            ${includeUnicode ? getRandomKanjiString(random, 1, 30) : getRandomEnglishString(random, false, 1, 30)}</a>`,
         truncated: true, // no examples found where truncated was false
         user: twitterUser,
         // could not find an example of non null value for these 4 values (geo, coordinaes, place, contributors)
@@ -272,7 +277,7 @@ function generateTwitterStatus(type: "standard" | "retweet", includeUnicode: boo
         coordinates: null,
         place: null,
         contributors: null,
-        possibly_sensitive: getRandomBoolean(),
+        possibly_sensitive: random.bool(0.5),
         retweet_count: retweetCount,
         favorite_count: favoriteCount,
         entities: {
@@ -286,23 +291,23 @@ function generateTwitterStatus(type: "standard" | "retweet", includeUnicode: boo
         lang: "ja",
     };
     if (type === "standard") {
-        // 50% probabality
-        const inReplyToStatusId = Math.random() === 1 ? getRandomNumberString(18, 18) : null;
-        const inReplyToUserId = Math.random() === 1 ? getRandomNumberString(10, 10) : null;
+        const inReplyToStatusId = random.bool(0.5) ? getRandomNumberString(random, 18, 18) : null;
+        const inReplyToUserId = random.bool(0.5) ? getRandomNumberString(random, 10, 10) : null;
         twitterStatus.in_reply_to_status_id = inReplyToStatusId !== null ? Number(inReplyToStatusId) : null;
         twitterStatus.in_reply_to_status_id_str = inReplyToStatusId !== null ? inReplyToStatusId : null;
         twitterStatus.in_reply_to_user_id = inReplyToUserId !== null ? Number(inReplyToUserId) : null;
         twitterStatus.in_reply_to_user_id_str = inReplyToUserId !== null ? inReplyToUserId : null;
-        twitterStatus.in_reply_to_screen_name = inReplyToUserId !== null ? getRandomEnglishString(false, 6, 30) : null;
-        twitterStatus.retweeted_status = generateTwitterStatus("retweet", includeUnicode);
+        twitterStatus.in_reply_to_screen_name = inReplyToUserId !== null ?
+         getRandomEnglishString(random, false, 6, 30) : null;
+        twitterStatus.retweeted_status = generateTwitterStatus("retweet", includeUnicode, random);
     }
 
     if (shouldAddHashtagEntity) {
         twitterStatus.entities.hashtags.push({
-            text: getRandomKanjiString(1, 30),
+            text: getRandomKanjiString(random, 1, 30),
             indices: [
-                Math.floor(getRandomNumber(0, 199)),
-                Math.floor(getRandomNumber(0, 199)),
+                Math.floor(random.integer(0, 199)),
+                Math.floor(random.integer(0, 199)),
             ],
         });
     }
@@ -312,33 +317,33 @@ function generateTwitterStatus(type: "standard" | "retweet", includeUnicode: boo
             expanded_url: "http://www.tepco.co.jp/nu/fukushima-np/review/images/review1_01.gif",
             display_url: "tepco.co.jp/nu/fukushima-n…",
             indices: [
-                Math.floor(getRandomNumber(0, 199)),
-                Math.floor(getRandomNumber(0, 199)),
+                Math.floor(random.integer(0, 199)),
+                Math.floor(random.integer(0, 199)),
             ],
         });
     }
     if (shouldAddUserMentionsEntity) {
-        const userId = getRandomNumberString(10, 10);
+        const userId = getRandomNumberString(random, 10, 10);
         twitterStatus.entities.user_mentions.push({
-            screen_name: getRandomEnglishString(true, 6, 30),
-            name: getRandomKanjiString(1, 30),
+            screen_name: getRandomEnglishString(random, true, 6, 30),
+            name: getRandomKanjiString(random, 1, 30),
             id: Number(userId),
             id_str: userId,
             indices: [
-                Math.floor(getRandomNumber(0, 199)),
-                Math.floor(getRandomNumber(0, 199)),
+                Math.floor(random.integer(0, 199)),
+                Math.floor(random.integer(0, 199)),
             ],
         });
     }
     if (shouldAddMediaEntity) {
-        const mediaStatusIdString = getRandomNumberString(18, 18);
-        const shouldAddSourceIdData = getRandomBoolean();
+        const mediaStatusIdString = getRandomNumberString(random, 18, 18);
+        const shouldAddSourceIdData = random.bool(0.5);
         const mediaEntity: any = {
             id: Number(mediaStatusIdString),
             id_str: "statusIdString",
             indices: [
-                Math.floor(getRandomNumber(0, 199)),
-                Math.floor(getRandomNumber(0, 199)),
+                Math.floor(random.integer(0, 199)),
+                Math.floor(random.integer(0, 199)),
             ],
             media_url: "http://pbs.twimg.com/media/BwU6g-dCcAALxAW.png",
             media_url_https: "https://pbs.twimg.com/media/BwU6g-dCcAALxAW.png",
@@ -371,7 +376,7 @@ function generateTwitterStatus(type: "standard" | "retweet", includeUnicode: boo
         };
 
         if (shouldAddSourceIdData) {
-            mediaEntity.source_status_id_str = getRandomNumberString(18, 18);
+            mediaEntity.source_status_id_str = getRandomNumberString(random, 18, 18);
             mediaEntity.source_status_id = Number(mediaEntity.source_status_id_str);
         }
         twitterStatus.entities.media = [mediaEntity];
@@ -380,19 +385,20 @@ function generateTwitterStatus(type: "standard" | "retweet", includeUnicode: boo
     return twitterStatus as TwitterStatus;
 }
 
-function generateTwitterUser(includeUnicode: boolean): TwitterUser {
-    const userId = getRandomNumberString(10, 10);
-    const shouldAddUrlUrlsEntity = getRandomBoolean();
-    const shouldAddDescriptionUrlsEntity = getRandomBoolean();
-    const shouldAddUtcOffsetAndtimezone = getRandomBoolean();
+function generateTwitterUser(includeUnicode: boolean, random: IRandom): TwitterUser {
+    const userId = getRandomNumberString(random, 10, 10);
+    const shouldAddUrlUrlsEntity = random.bool(0.5);
+    const shouldAddDescriptionUrlsEntity = random.bool(0.5);
+    const shouldAddUtcOffsetAndtimezone = random.bool(0.5);
     const user: TwitterUser = {
         id: Number(userId),
         id_str: userId,
-        name: includeUnicode ? getRandomKanjiString(1, 30) : getRandomEnglishString(false, 1, 30),
+        name: includeUnicode ? getRandomKanjiString(random, 1, 30) : getRandomEnglishString(random, false, 1, 30),
         // screen names do not include unicode characters
-        screen_name: getRandomEnglishString(false, 6, 30),
+        screen_name: getRandomEnglishString(random, false, 6, 30),
         location: "",
-        description: includeUnicode ? getRandomKanjiString(1, 200) : getRandomEnglishString(false, 1, 200),
+        description: includeUnicode ?
+         getRandomKanjiString(random, 1, 200) : getRandomEnglishString(random, false, 1, 200),
         url: null,
         entities: {
             // This always appears on a user, even if its empty.
@@ -404,34 +410,34 @@ function generateTwitterUser(includeUnicode: boolean): TwitterUser {
         followers_count: 289,
         friends_count: 1156,
         listed_count: 2,
-        created_at: getRandomDateString(new Date("2005-01-01"), new Date("2022-01-01")),
+        created_at: getRandomDateString(random, new Date("2005-01-01"), new Date("2022-01-01")),
         favourites_count: 0,
         utc_offset: shouldAddUtcOffsetAndtimezone ? 32400 : null,
         time_zone: shouldAddUtcOffsetAndtimezone ? "Tokyo" : null,
-        geo_enabled: getRandomBoolean(),
-        verified: getRandomBoolean(),
-        statuses_count: Math.floor(getRandomNumber(0, 99999)),
+        geo_enabled: random.bool(0.5),
+        verified: random.bool(0.5),
+        statuses_count: Math.floor(random.integer(0, 99999)),
         lang: "ja",
-        contributors_enabled: getRandomBoolean(),
-        is_translator: getRandomBoolean(),
-        is_translation_enabled: getRandomBoolean(),
-        profile_background_color: getRandomEnglishString(true, 6, 6),
+        contributors_enabled: random.bool(0.5),
+        is_translator: random.bool(0.5),
+        is_translation_enabled: random.bool(0.5),
+        profile_background_color: getRandomEnglishString(random, true, 6, 6),
         profile_background_image_url: "http://abs.twimg.com/images/themes/theme1/bg.png",
         profile_background_image_url_https: "https://abs.twimg.com/images/themes/theme1/bg.png",
-        profile_background_tile: getRandomBoolean(),
+        profile_background_tile: random.bool(0.5),
         profile_image_url: "http://pbs.twimg.com/profile_images/495353473886478336/S-4B_RVl_normal.jpeg",
         profile_image_url_https: "https://pbs.twimg.com/profile_images/495353473886478336/S-4B_RVl_normal.jpeg",
         profile_banner_url: "https://pbs.twimg.com/profile_banners/2699365116/1406936481",
-        profile_link_color: getRandomEnglishString(true, 6, 6),
-        profile_sidebar_border_color: getRandomEnglishString(true, 6, 6),
-        profile_sidebar_fill_color: getRandomEnglishString(true, 6, 6),
-        profile_text_color: getRandomEnglishString(true, 6, 6),
-        profile_use_background_image: getRandomBoolean(),
-        default_profile: getRandomBoolean(),
-        default_profile_image: getRandomBoolean(),
-        following: getRandomBoolean(),
-        follow_request_sent: getRandomBoolean(),
-        notifications: getRandomBoolean(),
+        profile_link_color: getRandomEnglishString(random, true, 6, 6),
+        profile_sidebar_border_color: getRandomEnglishString(random, true, 6, 6),
+        profile_sidebar_fill_color: getRandomEnglishString(random, true, 6, 6),
+        profile_text_color: getRandomEnglishString(random, true, 6, 6),
+        profile_use_background_image: random.bool(0.5),
+        default_profile: random.bool(0.5),
+        default_profile_image: random.bool(0.5),
+        following: random.bool(0.5),
+        follow_request_sent: random.bool(0.5),
+        notifications: random.bool(0.5),
     };
     if (shouldAddUrlUrlsEntity) {
         user.entities.url = {
@@ -441,8 +447,8 @@ function generateTwitterUser(includeUnicode: boolean): TwitterUser {
                     expanded_url: "http://astore.amazon.co.jp/furniturewood-22",
                     display_url: "astore.amazon.co.jp/furniturewood-…",
                     indices: [
-                        Math.floor(getRandomNumber(0, 199)),
-                        Math.floor(getRandomNumber(0, 199)),
+                        random.integer(0, 199),
+                        random.integer(0, 199),
                     ],
                 },
             ],
@@ -455,8 +461,8 @@ function generateTwitterUser(includeUnicode: boolean): TwitterUser {
                 expanded_url: "http://ameblo.jp/2no38mae/",
                 display_url: "ameblo.jp/2no38mae/",
                 indices: [
-                    Math.floor(getRandomNumber(0, 199)),
-                    Math.floor(getRandomNumber(0, 199)),
+                    random.integer(0, 199),
+                    random.integer(0, 199),
                 ],
             },
         );
@@ -468,14 +474,14 @@ function generateTwitterUser(includeUnicode: boolean): TwitterUser {
 
 // This includes common and uncommon kanji characters
 // but not rare kanji characters (3400 - 4dbf) as none were found in the source twitter json.
-function getRandomKanjiString(minLen: number, maxLen: number) {
-    return getRandomStringByCharCode(minLen, maxLen, 0x4e00, 0x9faf);
+function getRandomKanjiString(random = makeRandom(), minLen: number, maxLen: number) {
+    return getRandomStringByCharCode(random, minLen, maxLen, 0x4e00, 0x9faf);
 }
 
 // This is specifically formatted like the twitter json dates
 // (<3-letter-weekday> MMM DD HH:MM:SS <4-digit-TimezoneOffset> YYYY)
-function getRandomDateString(start: Date, end: Date) {
-    const dateS = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime())).toString();
+function getRandomDateString(random = makeRandom(), start: Date, end: Date) {
+    const dateS = new Date(start.getTime() + random.real() * (end.getTime() - start.getTime())).toString();
     return `${dateS.substring(0, 10)} ${dateS.substring(16, 24)} ` +
     `${dateS.substring(28, 33)} ${dateS.substring(11, 15)}`;
 }

@@ -2,35 +2,32 @@
  * This file contains a series of utility functions intended to assist with generating random data.
  */
 
-// returns a decimal number between inclusive of the min and max provided
-export function getRandomNumber(min: number, max: number) {
-    return Math.random() * (max - min) + min;
-}
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 
-export function getRandomStringByCharCode(minLen: number, maxLen: number, charCodeMin: number, charCodeMax: number) {
-    const stringLength = (minLen < maxLen) ? getRandomNumber(minLen, maxLen) : minLen;
+const englishAlphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+
+export function getRandomStringByCharCode(random = makeRandom(), minLen: number, maxLen: number,
+ charCodeMin: number, charCodeMax: number) {
+    const stringLength = (minLen < maxLen) ? random.integer(minLen, maxLen) : minLen;
     let string = "";
     for (let i = 0; i < stringLength; i++) {
-        string += String.fromCharCode(charCodeMin + Math.random() * (charCodeMax - charCodeMin + 1));
+        string += String.fromCharCode(charCodeMin + random.real() * (charCodeMax - charCodeMin + 1));
     }
     return string;
 }
 
 // Returns either an alphanumeric string or an alpha string within the specified length range
-export function getRandomEnglishString(includeNumbers: boolean, minLen: number, maxLen: number) {
+export function getRandomEnglishString(random = makeRandom(), includeNumbers: boolean, minLen: number, maxLen: number) {
+    const stringLength = (minLen < maxLen) ? random.integer(minLen, maxLen) : minLen;
     if (includeNumbers) {
-        return Math.random().toString(36).substring(2, getRandomNumber(minLen, maxLen));
+        return random.string(stringLength);
     } else {
-        return getRandomStringByCharCode(minLen, maxLen, 0x0041, 0x007A);
+        return random.string(stringLength, englishAlphabet);
     }
 }
 
-export function getRandomNumberString(minLen: number, maxLen: number) {
-    return getRandomStringByCharCode(minLen, maxLen, 0x0030, 0x0039);
-}
-
-export function getRandomBoolean() {
-    return Math.random() === 1 ? true : false;
+export function getRandomNumberString(random = makeRandom(), minLen: number, maxLen: number) {
+    return getRandomStringByCharCode(random, minLen, maxLen, 0x0030, 0x0039);
 }
 
 export function getSizeInBytes(obj: unknown) {
