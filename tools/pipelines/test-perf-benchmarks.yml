@@ -35,7 +35,7 @@ stages:
         poolBuild: Small
         testWorkspace: ${{ variables.testWorkspace }}
         benchmarkTestParams:
-        - jobName: Non-compat
+        - jobName: Runtime benchmark @fluid-internal/tree
           packageToTest: "@fluid-internal/tree"
           command: bench -- --reporterOptions reportDir=./benchmarkOutput
         env:
