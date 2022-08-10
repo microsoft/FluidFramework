@@ -240,25 +240,29 @@ export class UnreferencedStateTracker {
         /** The current reference timestamp; undefined if no ops have ever been processed which can happen in tests. */
         currentReferenceTimestampMs?: number,
     ) {
+        if (this.sweepTimeoutMs !== undefined) {
+            assert(this.inactiveTimeoutMs <= this.sweepTimeoutMs,
+                "inactive timeout must not be greater than the sweep timeout");
+        }
+
         this.sweepTimer = new Timer(
             () => {
                 this._state = UnreferencedState.SweepReady;
-                this.clearTimers();
+                assert(!this.inactiveTimer.hasTimer, "inactiveTimer still running after sweepTimer fired!");
             },
         );
 
         this.inactiveTimer = new Timer(() => {
             this._state = UnreferencedState.Inactive;
-            this.clearTimers();
 
             // After the node becomes inactive, start the sweep timer after which the node will be ready for sweep.
             if (this.sweepTimeoutMs !== undefined) {
-                this.sweepTimer.start(this.sweepTimeoutMs - this.inactiveTimeoutMs);
+                this.sweepTimer.restart(this.sweepTimeoutMs - this.inactiveTimeoutMs);
             }
         });
 
-        // If there is no current reference timestamp, don't track the node's unreferenced state. This will happen
-        // later when updateTracking is called with a reference timestamp.
+        // If there is no current reference timestamp, can't track the node's unreferenced state at this time.
+        // This will happen later when updateTracking is called with a reference timestamp.
         if (currentReferenceTimestampMs !== undefined) {
             this.updateTracking(currentReferenceTimestampMs);
         }
@@ -279,15 +283,15 @@ export class UnreferencedStateTracker {
         // Also, start a timer for the sweep timeout.
         if (unreferencedDurationMs >= this.inactiveTimeoutMs) {
             this._state = UnreferencedState.Inactive;
-            this.clearTimers();
+            this.inactiveTimer.clear();
 
             if (this.sweepTimeoutMs !== undefined) {
-                this.sweepTimer.start(this.sweepTimeoutMs - unreferencedDurationMs);
+                this.sweepTimer.restart(this.sweepTimeoutMs - unreferencedDurationMs);
             }
             return;
         }
 
-        // The node is still active. Start the inactive timer for the remaining duration.
+        // The node is still active. Ensure the inactive timer is running with the proper remaining duration.
         this.inactiveTimer.restart(this.inactiveTimeoutMs - unreferencedDurationMs);
     }
 
@@ -554,7 +558,7 @@ export class GarbageCollector implements IGarbageCollector {
 
         // Inactive timeout must be greater than sweep timeout since a node goes from active -> inactive -> sweep ready.
         if (this.sweepTimeoutMs !== undefined && this.inactiveTimeoutMs > this.sweepTimeoutMs) {
-            throw new UsageError("inactive timeout should not be greated than the sweep timeout");
+            throw new UsageError("inactive timeout should not be greater than the sweep timeout");
         }
 
         // Whether we are running in test mode. In this mode, unreferenced nodes are immediately deleted.
