@@ -4,17 +4,30 @@
  */
 
 import path from "path";
-import { MonoRepo, readJsonAsync, writeFileAsync, Package } from "@fluidframework/build-tools";
+import {
+    MonoRepo,
+    readJsonAsync,
+    writeFileAsync,
+    Package,
+    Logger,
+} from "@fluidframework/build-tools";
 
 function format(n: number) {
     return n.toString().padStart(4);
 }
 
+/**
+ *
+ * @param monoRepo - MonoRepo
+ * @param repoPackageJson - any
+ * @param logger - Logger
+ * @returns
+ */
+
 async function generateMonoRepoPackageLockJson(
     monoRepo: MonoRepo,
     repoPackageJson: any,
-    flags?: any,
-    logger?: any,
+    logger: Logger,
 ) {
     // Patching the package-lock file
     const repoPackageLockJson = await readJsonAsync(
@@ -78,9 +91,7 @@ async function generateMonoRepoPackageLockJson(
             );
         }
 
-        if (flags.verbose !== undefined) {
-            logger.log(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
-        }
+        logger.logVerbose(`NonDev Ref: ${topRef}..${ref} => ${dep}`);
 
         if (item.dev !== undefined) {
             topLevelDevCount--;
@@ -120,6 +131,7 @@ function processDependencies(
     repoPackageJson: PackageJson,
     packageJson: PackageJson,
     packageMap: Map<string, Package>,
+    logger: Logger,
 ) {
     let depCount = 0;
     for (const dep in packageJson.dependencies) {
@@ -131,7 +143,7 @@ function processDependencies(
         const existing = repoPackageJson.dependencies[dep];
         if (existing) {
             if (existing !== version) {
-                throw new Error(
+                logger.logError(
                     `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
                 );
             }
@@ -150,6 +162,7 @@ function processDevDependencies(
     repoPackageJson: PackageJson,
     packageJson: PackageJson,
     packageMap: Map<string, Package>,
+    logger: Logger,
 ) {
     let devDepCount = 0;
     for (const dep in packageJson.devDependencies) {
@@ -161,7 +174,7 @@ function processDevDependencies(
         const existing = repoPackageJson.dependencies[dep] ?? repoPackageJson.devDependencies[dep];
         if (existing) {
             if (existing !== version) {
-                throw new Error(
+                logger.logError(
                     `Dependency version mismatch for ${dep}: ${existing} and ${version}`,
                 );
             }
@@ -176,11 +189,14 @@ function processDevDependencies(
     return devDepCount++;
 }
 
-export async function generateMonoRepoInstallPackageJson(
-    monoRepo: MonoRepo,
-    flags?: any,
-    logger?: any,
-) {
+/**
+ *
+ * @param monoRepo - MonoRepo
+ * @param logger - Logger
+ * @returns
+ */
+
+export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo, logger: Logger) {
     const packageMap = new Map<string, Package>(monoRepo.packages.map((pkg) => [pkg.name, pkg]));
     const repoPackageJson: PackageJson = {
         name: `@fluid-internal/${monoRepo.kind.toLowerCase()}`,
@@ -196,15 +212,15 @@ export async function generateMonoRepoInstallPackageJson(
     let devDepCount = 0;
     // eslint-disable-next-line unicorn/no-array-for-each
     monoRepo.packages.forEach((pkg) => {
-        depCount += processDependencies(repoPackageJson, pkg.packageJson, packageMap);
+        depCount += processDependencies(repoPackageJson, pkg.packageJson, packageMap, logger);
     });
-    processDependencies(repoPackageJson, rootPackageJson, packageMap);
+    processDependencies(repoPackageJson, rootPackageJson, packageMap, logger);
 
     // eslint-disable-next-line unicorn/no-array-for-each
     monoRepo.packages.forEach((pkg) => {
-        devDepCount += processDevDependencies(repoPackageJson, pkg.packageJson, packageMap);
+        devDepCount += processDevDependencies(repoPackageJson, pkg.packageJson, packageMap, logger);
     });
-    processDevDependencies(repoPackageJson, rootPackageJson, packageMap);
+    processDevDependencies(repoPackageJson, rootPackageJson, packageMap, logger);
 
     await writeFileAsync(
         path.join(monoRepo.repoPath, "repo-package.json"),
@@ -215,5 +231,5 @@ export async function generateMonoRepoInstallPackageJson(
             depCount + devDepCount,
         )} devDependencies`,
     );
-    return generateMonoRepoPackageLockJson(monoRepo, repoPackageJson, flags, logger);
+    return generateMonoRepoPackageLockJson(monoRepo, repoPackageJson, logger);
 }
