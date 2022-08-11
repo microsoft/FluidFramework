@@ -4,18 +4,17 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 
 export interface IContainerKillBitEvents extends IEvent {
-    (event: "codeDetailsAccepted" | "migrated", listener: () => void);
+    (event: "newVersionAccepted" | "migrated", listener: () => void);
 }
 
 export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvents> {
     migrated: boolean;
     newContainerId: string | undefined;
     setNewContainerId(id: string): Promise<void>;
-    acceptedCodeDetails: IFluidCodeDetails | undefined;
-    proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<void>;
+    acceptedVersion: string | undefined;
+    proposeVersion(newVersion: string): Promise<void>;
     volunteerForMigration(): Promise<void>;
     haveMigrationTask(): boolean;
 }

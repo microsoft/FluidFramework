@@ -19,7 +19,7 @@ import type {
 const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
     if (containerKillBit.migrated) {
         return MigrationState.migrated;
-    } else if (containerKillBit.acceptedCodeDetails !== undefined) {
+    } else if (containerKillBit.acceptedVersion !== undefined) {
         return MigrationState.migrating;
     } else {
         return MigrationState.collaborating;
@@ -81,7 +81,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         super();
         this._inventoryList = inventoryList;
         this._migrationState = getStateFromKillBit(this.containerKillBit);
-        this.containerKillBit.on("codeDetailsAccepted", this.onCodeDetailsAccepted);
+        this.containerKillBit.on("newVersionAccepted", this.onNewVersionAccepted);
         this.containerKillBit.on("migrated", this.onMigrated);
     }
 
@@ -109,7 +109,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         await applyStringData(this.inventoryList, initialData);
     };
 
-    private readonly onCodeDetailsAccepted = () => {
+    private readonly onNewVersionAccepted = () => {
         this._migrationState = MigrationState.migrating;
         this.emit("migrating");
     };
@@ -124,15 +124,15 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     };
 
     public get acceptedVersion() {
-        const version = this.containerKillBit.acceptedCodeDetails?.package;
+        const version = this.containerKillBit.acceptedVersion;
         if (typeof version !== "string" && version !== undefined) {
             throw new Error("Unexpected code detail format");
         }
         return version;
     }
 
-    public readonly proposeVersion = (version: string) => {
-        this.containerKillBit.proposeCodeDetails({ package: version }).catch(console.error);
+    public readonly proposeVersion = (newVersion: string) => {
+        this.containerKillBit.proposeVersion(newVersion).catch(console.error);
     };
 
     public get newContainerId() {

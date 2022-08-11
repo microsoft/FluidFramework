@@ -6,7 +6,6 @@
 import { TaskManager } from "@fluid-experimental/task-manager";
 import { Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 
 import type { IContainerKillBit } from "./interfaces";
@@ -14,7 +13,7 @@ import type { IContainerKillBit } from "./interfaces";
 const quorumKey = "quorum";
 const crcKey = "crc";
 const taskManagerKey = "task-manager";
-const codeDetailsProposedKey = "code";
+const newVersionKey = "newVersion";
 const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
@@ -65,16 +64,16 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         await this.crc.write(newContainerIdKey, id);
     }
 
-    public get acceptedCodeDetails() {
-        return this.quorum.get(codeDetailsProposedKey) as IFluidCodeDetails | undefined;
+    public get acceptedVersion() {
+        return this.quorum.get(newVersionKey) as string | undefined;
     }
 
-    public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
-        // Don't permit changes to the code details after they've been accepted.
+    public async proposeVersion(newVersion: string) {
+        // Don't permit changes to the version after a new one has already been accepted.
         // TODO: Consider whether we should throw on trying to set when a pending proposal exists -- currently
         // the Quorum will silently drop these on the floor.
-        if (this.acceptedCodeDetails !== undefined) {
-            throw new Error("New code details were already accepted");
+        if (this.acceptedVersion !== undefined) {
+            throw new Error("New version was already accepted");
         }
 
         // Note that the accepted proposal could come from another client (e.g. two clients try to propose
@@ -82,7 +81,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         // a remote client's proposal was the one that actually got accepted.
         return new Promise<void>((resolve, reject) => {
             const acceptedListener = (key: string) => {
-                if (key === codeDetailsProposedKey) {
+                if (key === newVersionKey) {
                     resolve();
                     this.quorum.off("accepted", acceptedListener);
                 }
@@ -91,7 +90,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
             // Even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
             // whether our proposal or a remote client's proposal is accepted (though maybe we'd do retry
             // logic if a remote client rejects the local client's proposal).
-            this.quorum.set(codeDetailsProposedKey, codeDetails);
+            this.quorum.set(newVersionKey, newVersion);
         });
     }
 
@@ -120,8 +119,8 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         this._crc = await crcHandle.get();
 
         this.quorum.on("accepted", (key: string) => {
-            if (key === codeDetailsProposedKey) {
-                this.emit("codeDetailsAccepted");
+            if (key === newVersionKey) {
+                this.emit("newVersionAccepted");
             }
         });
 
