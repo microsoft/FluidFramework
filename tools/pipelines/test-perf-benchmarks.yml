@@ -37,7 +37,7 @@ stages:
         benchmarkTestParams:
         - jobName: "@fluid-experimental/tree runtime benchmark"
           packageToTest: "@fluid-experimental/tree"
-          command: npx mocha "dist/**/*.tests.js" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000 --reporterOptions reportDir=./benchmarkOutput
+          command: npx mocha "dist/**/*.tests.js" --node-option unhandled-rejections=strict,expose-gc --exit -r ../node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000 --reporterOptions reportDir=./benchmarkOutput
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
