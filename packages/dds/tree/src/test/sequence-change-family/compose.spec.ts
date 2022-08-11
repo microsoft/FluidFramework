@@ -4,47 +4,17 @@
  */
 
 import { strict as assert } from "assert";
-import { Transposed as T, Value } from "../../changeset";
 import { sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
+import { setChildValueTo, setRootValueTo } from "./cases";
 
 const type: TreeSchemaIdentifier = brand("Node");
 
 function compose(...changes: SequenceChangeset[]): SequenceChangeset {
     changes.forEach(deepFreeze);
     return sequenceChangeRebaser.compose(...changes);
-}
-
-function setRootValueTo(value: Value): SequenceChangeset {
-    return {
-        marks: {
-            root: [{
-                type: "Modify",
-                value: { id: 0, value },
-            }],
-        },
-    };
-}
-
-function setChildValueTo(value: Value): SequenceChangeset {
-    return {
-        marks: {
-            root: [{
-                type: "Modify",
-                fields: {
-                    foo: [
-                        42,
-                        {
-                            type: "Modify",
-                            value: { id: 0, value },
-                        },
-                    ],
-                },
-            }],
-        },
-    };
 }
 
 describe("SequenceChangeFamily - Compose", () => {
