@@ -176,11 +176,12 @@ describe("SequenceChangeFamily - rebase", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    2, // Insert at earlier index increases the index of the delete
-                    { type: "Delete", id: 1, count: 2 },
-                    1, // Insert within the delete splits the delete
-                    { type: "Delete", id: 1, count: 1 },
-                    // Insert after the delete has no impact on the delete
+                    // Earlier insert is unaffected
+                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    1, // Overlapping insert has its index reduced
+                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                    2, // Later insert has its index reduced
+                    [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
                 ],
             },
         };
@@ -217,7 +218,6 @@ describe("SequenceChangeFamily - rebase", () => {
                 root: [
                     2,
                     { type: "Delete", id: 2, count: 1 },
-                    1,
                     { type: "Delete", id: 2, count: 1 },
                 ],
             },
@@ -230,7 +230,7 @@ describe("SequenceChangeFamily - rebase", () => {
         const deleteA: SequenceChangeset = {
             marks: {
                 root: [
-                    2,
+                    3,
                     { type: "Delete", id: 2, count: 2 },
                 ],
             },
