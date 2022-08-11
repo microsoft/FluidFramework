@@ -1,5 +1,6 @@
 import {
     ApiCallSignature,
+    ApiConstructSignature,
     ApiIndexSignature,
     ApiInterface,
     ApiItem,
@@ -14,6 +15,7 @@ import { DocHeading } from "../../doc-nodes";
 import { getFilteredChildren } from "../../utilities";
 import {
     renderChildDetailsSection,
+    renderConstructorsTable,
     renderMethodsTable,
     renderPropertiesTable,
     renderSignaturesTable,
@@ -31,6 +33,11 @@ export function renderInterfaceSection(
 
     if (hasAnyChildren) {
         // Accumulate child items
+        const constructSignatures = getFilteredChildren(apiInterface, [
+            ApiItemKind.ConstructSignature,
+        ]).map((apiItem) => apiItem as ApiConstructSignature);
+        const hasConstructSignatures = constructSignatures.length !== 0;
+
         const properties = getFilteredChildren(apiInterface, [ApiItemKind.PropertySignature]).map(
             (apiItem) => apiItem as ApiPropertySignature,
         );
@@ -52,6 +59,26 @@ export function renderInterfaceSection(
         const hasMethods = methods.length !== 0;
 
         // #region Render summary tables
+
+        // Render construct signatures table
+        if (hasConstructSignatures) {
+            const constructSignaturesTable = renderConstructorsTable(
+                constructSignatures,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+            if (constructSignaturesTable !== undefined) {
+                docNodes.push(
+                    new DocSection({ configuration: tsdocConfiguration }, [
+                        new DocHeading({
+                            configuration: tsdocConfiguration,
+                            title: "Construct Signatures",
+                        }),
+                        constructSignaturesTable,
+                    ]),
+                );
+            }
+        }
 
         // Render properties table
         if (hasProperties) {
@@ -132,6 +159,11 @@ export function renderInterfaceSection(
         // Render child item details if there are any that will not be rendered to their own documents
         const renderedDetailsSection = renderChildDetailsSection(
             [
+                {
+                    headingTitle: "Construct Signature Details",
+                    itemKind: ApiItemKind.ConstructSignature,
+                    items: constructSignatures,
+                },
                 {
                     headingTitle: "Property Details",
                     itemKind: ApiItemKind.PropertySignature,
