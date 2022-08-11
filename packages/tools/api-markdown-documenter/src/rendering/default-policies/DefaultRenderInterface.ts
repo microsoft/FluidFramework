@@ -8,7 +8,7 @@ export function renderInterfaceSection(
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
 ): DocSection {
-    return new DocSection({ configuration: tsdocConfiguration }, [
+    const innerSectionBody = new DocSection({ configuration: tsdocConfiguration }, [
         new DocParagraph({ configuration: tsdocConfiguration }, [
             new DocPlainText({
                 configuration: tsdocConfiguration,
@@ -16,4 +16,11 @@ export function renderInterfaceSection(
             }),
         ]),
     ]);
+
+    return documenterConfiguration.renderSectionBlock(
+        apiInterface,
+        innerSectionBody,
+        documenterConfiguration,
+        tsdocConfiguration,
+    );
 }
