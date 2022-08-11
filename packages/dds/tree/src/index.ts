@@ -10,7 +10,7 @@ export {
 
 export {
     EmptyKey, FieldKey, TreeType, Value, TreeValue, AnchorSet, DetachedField,
-    UpPath, Anchor, RootField, ChildCollection, TreePosition,
+    UpPath, Anchor, RootField, ChildCollection,
     ChildLocation, FieldMap, NodeData, GenericTreeNode, PlaceholderTree, JsonableTree,
     Delta,
 } from "./tree";
