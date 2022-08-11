@@ -172,7 +172,7 @@ jobs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
           # customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
-          customCommand: 'install $(Initialize.testPackageTgz)'
+          customCommand: 'install $(Initialize.testPackageTgz) mocha'
           customRegistry: 'useNpmrc'
 
       # run the test
