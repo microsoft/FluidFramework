@@ -56,7 +56,7 @@ Some of the options do not have this issue (inline, central repository (assuming
 
 # Options to Support
 
-That's a lot of options and I think there are good reasons for all of them. Long term, we likely want all of them implemented to some extent but I think we can pick a good subset for now and allow extension in the future.
+That's a lot of options all of which have use-cases. Long term, at least basic support for all of them may make sense but a much smaller subset can be supported initially while supporting most use-cases pretty well.
 
 I think we want to at least:
 
