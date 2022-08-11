@@ -148,7 +148,8 @@ jobs:
               echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
             else
               ls -1 ${{ variables.testPackagePathPattern }}
-              echo "##vso[task.logissue type=error]Test package '${{ benchmarkTest.packageToTest }}' not found, or there are more then one found"
+              echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }} | head -n 1`"
+              echo "##vso[task.logissue type=error]Test package '${{ benchmarkTest.packageToTest }}' not found, or there are more then one found. If more tha one, using the first one"
             fi
 
       # Auth to internal feed
