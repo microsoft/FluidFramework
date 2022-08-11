@@ -111,7 +111,7 @@ Applications which wish to rely entirely on schema-on-read for some or all of th
     See `checkCompatibility` in [Schema.ts](./Schema.ts) for an example of how this could work.
 -   Writers: When inserting new content and updating modified nodes, shared-tree can check them against the schema in the document.
 
-    If you insert something into a document that does not currently have schema for the types you are using, you also have to include the schema as part of the edit. For this, the editing API needs to take in types which can have their desired stored schema queried.
+    If you insert something into a document that does not currently have schema for the types you are using, you also have to include the schema as part of the edit.
 
     For example, if you add support for tables to whiteboards, old documents will not have this schema, so part of inserting a table will require updating the schema to allow them (if the document is explicit about which item types are allowed), as well as adding the table schema itself.
 -   Change application: changes can conflict if they violate the schema (or maybe only check at the end of a transaction? Or at special marked places and at end?).
