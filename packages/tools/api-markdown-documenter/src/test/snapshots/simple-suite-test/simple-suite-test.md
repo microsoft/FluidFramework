@@ -3,5 +3,7 @@
 
 [(model)](/index)
 
+Test package
+
 TODO: package rendering
 
