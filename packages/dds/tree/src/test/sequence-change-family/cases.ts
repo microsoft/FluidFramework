@@ -4,9 +4,9 @@
  */
 
 import { DUMMY_INVERT_TAG, SequenceChangeset } from "../../feature-libraries";
-import { TreeSchemaIdentifier } from "../../schema";
 import { brand } from "../../util";
 import { Transposed as T, Value } from "../../changeset";
+import { TreeSchemaIdentifier } from "../../schema-stored";
 
 export function setRootValueTo(value: Value): SequenceChangeset {
     return {

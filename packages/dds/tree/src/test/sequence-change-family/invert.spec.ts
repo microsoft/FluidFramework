@@ -5,8 +5,13 @@
 
 import { strict as assert } from "assert";
 import { Transposed as T } from "../../changeset";
-import { DUMMY_INVERSE_VALUE, DUMMY_INVERT_TAG, sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
-import { TreeSchemaIdentifier } from "../../schema";
+import {
+    DUMMY_INVERSE_VALUE,
+    DUMMY_INVERT_TAG,
+    sequenceChangeRebaser,
+    SequenceChangeset,
+} from "../../feature-libraries";
+import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 

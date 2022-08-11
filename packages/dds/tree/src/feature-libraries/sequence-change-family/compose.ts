@@ -13,7 +13,7 @@ import {
 import { clone, fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
-export function compose(...changes: SequenceChangeset[]): SequenceChangeset {
+export function compose(changes: SequenceChangeset[]): SequenceChangeset {
     const base: SequenceChangeset = {
         marks: {},
     };

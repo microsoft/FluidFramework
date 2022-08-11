@@ -10,23 +10,13 @@ import { compose } from "./compose";
 import { invert } from "./invert";
 import { rebase } from "./rebase";
 
-export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset, SequenceChangeset, SequenceChangeset>;
+export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset>;
 
 function rebaseAnchors(anchor: AnchorSet, over: SequenceChangeset): void {}
-
-function importChange(change: SequenceChangeset): SequenceChangeset {
-    return change;
-}
-
-function exportChange(change: SequenceChangeset): SequenceChangeset {
-    return change;
-}
 
 export const sequenceChangeRebaser: SequenceChangeRebaser = {
     compose,
     invert,
     rebase,
     rebaseAnchors,
-    import: importChange,
-    export: exportChange,
 };

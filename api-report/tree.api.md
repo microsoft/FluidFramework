@@ -41,27 +41,20 @@ export abstract class BrandedType<ValueType, Name extends string> {
 // @public (undocumented)
 export function buildForest(): IEditableForest;
 
-// @public (undocumented)
-export type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<infer TChange, any, any> ? TChange : never;
-
 // @public
-export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
-    compose(...changes: TChangeSet[]): TChangeSet;
+export interface ChangeRebaser<TChangeSet> {
+    compose(changes: TChangeSet[]): TChangeSet;
     // (undocumented)
-    export(change: TChangeSet): TFinalChange;
-    // (undocumented)
-    import(change: TChange): TChangeSet;
     invert(changes: TChangeSet): TChangeSet;
-    // (undocumented)
     rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
     // (undocumented)
     rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
     // (undocumented)
-    _typeCheck?: Covariant<TChange> & Contravariant<TFinalChange> & Invariant<TChangeSet>;
+    _typeCheck?: Invariant<TChangeSet>;
 }
 
 // @public (undocumented)
-export type ChangeSetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, any, infer TChangeSet> ? TChangeSet : never;
+export type ChangeSetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> = TChangeRebaser extends ChangeRebaser<infer TChangeSet> ? TChangeSet : never;
 
 // @public
 export type ChildCollection = FieldKey | RootField;
@@ -195,11 +188,8 @@ type FieldMarks<TMark> = FieldMap_2<MarkList<TMark>>;
 export interface FieldSchema {
     // (undocumented)
     readonly kind: FieldKind;
-    readonly types?: ReadonlySet<TreeSchemaIdentifier>;
+    readonly types?: TreeTypeSet;
 }
-
-// @public (undocumented)
-export type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, infer TFinal, any> ? TFinal : never;
 
 // @public
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
@@ -518,14 +508,14 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
 type ProtoNode = JsonableTree;
 
 // @public
-export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
+export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     constructor(rebaser: TChangeRebaser);
     discardRevision(revision: RevisionTag): void;
     // (undocumented)
     readonly empty: RevisionTag;
     // (undocumented)
     getResolutionPath(from: RevisionTag, to: RevisionTag): ChangeSetFromChangeRebaser<TChangeRebaser>;
-    rebase(changes: ChangeFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>];
+    rebase(changes: ChangeSetFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, ChangeSetFromChangeRebaser<TChangeRebaser>];
     rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void;
     // (undocumented)
     readonly rebaser: TChangeRebaser;
@@ -573,6 +563,9 @@ export class SimpleDependee implements Dependee {
     removeDependent(dependent: Dependent): void;
 }
 
+// @public (undocumented)
+export function singleTextCursor(root: JsonableTree): TextCursor;
+
 // @public
 type Skip = number;
 
@@ -604,15 +597,29 @@ export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigati
 
 // @public
 export class TextCursor implements ITreeCursor<SynchronousNavigationResult> {
-    constructor(root: JsonableTree);
+    constructor(root: JsonableTree[], index: number, field?: DetachedField);
     // (undocumented)
     down(key: FieldKey, index: number): SynchronousNavigationResult;
     // (undocumented)
+    protected getNode(): JsonableTree;
+    // (undocumented)
+    protected index: number;
+    // (undocumented)
+    protected readonly indexStack: number[];
+    // (undocumented)
+    isRooted(): boolean;
+    // (undocumented)
     get keys(): Iterable<FieldKey>;
+    // (undocumented)
+    protected readonly keyStack: FieldKey[];
     // (undocumented)
     length(key: FieldKey): number;
     // (undocumented)
     seek(offset: number): SynchronousNavigationResult;
+    // (undocumented)
+    protected siblings: JsonableTree[];
+    // (undocumented)
+    protected readonly siblingStack: JsonableTree[][];
     // (undocumented)
     get type(): TreeType;
     // (undocumented)
@@ -650,6 +657,9 @@ export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 
 // @public (undocumented)
 export type TreeType = TreeSchemaIdentifier;
+
+// @public
+export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 // @public
 export interface TreeValue extends Serializable {

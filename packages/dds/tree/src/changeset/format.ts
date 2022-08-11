@@ -159,6 +159,19 @@ export namespace Transposed {
 		fields?: FieldMarks;
 	}
 
+	/**
+	 * Used to represent the transitory location where an insert or move-in was before it was affected by a concurrent
+	 * slice-move.
+	 *
+	 * This is needed in order to determine the relative ordering of inserts and move-ins that were affected by the
+	 * same concurrent slice move.
+	 * Indeed their ordering ought to be the same as their ordering would have been the source location of the
+	 * concurrent slice move.
+	 * In order to determine their ordering at the source location, we have to know precisely where at the source
+	 * location (and with what tiebreak policy) the inserts were made.
+	 * Bounce marks capture that information.
+	 * See ScenarioQ for an example.
+	 */
 	export interface Bounce extends HasOpId, HasPlaceFields {
 		type: "Bounce";
 	}

@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { Tiebreak } from "../../changeset";
 import { DUMMY_INVERT_TAG, sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
-import { TreeSchemaIdentifier } from "../../schema";
+import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 import { cases, setChildValueTo, setRootValueTo } from "./cases";

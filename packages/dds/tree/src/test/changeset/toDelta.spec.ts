@@ -9,7 +9,7 @@ import {
     toDelta as toDeltaImpl,
     Transposed as T,
 } from "../../changeset";
-import { TreeSchemaIdentifier } from "../../schema";
+import { TreeSchemaIdentifier } from "../../schema-stored";
 import { FieldKey, Delta } from "../../tree";
 import { brand, brandOpaque } from "../../util";
 import { deepFreeze } from "../utils";
