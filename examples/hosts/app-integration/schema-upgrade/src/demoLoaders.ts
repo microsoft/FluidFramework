@@ -12,7 +12,6 @@ import {
 
 import { IMigratableModel } from "./migrationInterfaces";
 import { IModelCodeLoader } from "./modelLoading";
-// TODO: Maybe build these as standalone demo packages?  Though might be overkill.
 import {
     InventoryListContainer as InventoryListContainer1,
     InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1,
@@ -34,8 +33,8 @@ const v2ModuleWithDetails: IFluidModuleWithDetails = {
 
 // This ICodeDetailsLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate code for unknown versions.
-export const demoCodeLoader: ICodeDetailsLoader = {
-    load: async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
+export class DemoCodeLoader implements ICodeDetailsLoader {
+    public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
         const version = source.package;
         if (typeof version !== "string") {
             throw new Error("Unexpected code detail format");
@@ -45,8 +44,8 @@ export const demoCodeLoader: ICodeDetailsLoader = {
             case "two": return v2ModuleWithDetails;
             default: throw new Error("Unknown version");
         }
-    },
-};
+    }
+}
 
 // This IModelCodeLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate model for unknown versions.
@@ -65,6 +64,9 @@ export class DemoModelCodeLoader implements IModelCodeLoader<IMigratableModel> {
             throw new Error("Unexpected code detail format");
         }
 
+        // Technically, this doesn't have to use an external model.  It could be requesting the model from the
+        // container (e.g. container.request({ url: "model" })).  A single model code loader could even support
+        // a combination of either (esp. if the strategy changes over time).
         switch (version) {
             case "one": {
                 const model = new InventoryListContainer1(container);

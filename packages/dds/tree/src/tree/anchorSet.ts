@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { brand, Brand } from "../util";
+import { brand, Brand, fail } from "../util";
 import { FieldKey, EmptyKey, Delta, visitDelta } from "../tree";
 import { UpPath } from "./pathTree";
 import { Value } from "./types";

@@ -103,9 +103,11 @@ export class SchemaIndex implements Index<unknown>, SummaryElement {
     }
 
     public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
-        // const schemaBuffer = await services.readBlob(schemaBlobKey);
-        // TODO: use schema to initialize this.schema
-        // const schema = parse(bufferToString(_schemaBuffer, "utf8")) as string;
-        throw new Error("Method not implemented.");
+        if (await services.contains(schemaBlobKey)) {
+            // const schemaBuffer = await services.readBlob(schemaBlobKey);
+            // TODO: use schema to initialize this.schema
+            // const schema = parse(bufferToString(_schemaBuffer, "utf8")) as string;
+            throw new Error("Method not implemented.");
+        }
     }
 }
