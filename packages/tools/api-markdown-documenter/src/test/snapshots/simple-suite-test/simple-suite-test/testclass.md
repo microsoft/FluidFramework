@@ -37,5 +37,75 @@ export declare class TestClass<TTypeParameter>
 
 ## Details
 
-TODO: Render children in groups
+## Constructor Details
+
+## (constructor)
+
+Test class constructor
+
+## Signature
+
+```typescript
+constructor(testClassProperty: number, testClassEventProperty: () => void);
+```
+
+## Parameters
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  testClassProperty | number | See  |
+|  testClassEventProperty | () =&gt; void |  |
+
+## Property Details
+
+## testClassEventProperty
+
+Test class event property
+
+## Signature
+
+```typescript
+readonly testClassEventProperty: () => void;
+```
+TODO: Property rendering
+
+## testClassGetterProperty
+
+Test class getter-only property
+
+## Signature
+
+```typescript
+get testClassGetterProperty(): number;
+```
+TODO: Property rendering
+
+## testClassProperty
+
+Test class property
+
+## Signature
+
+```typescript
+readonly testClassProperty: number;
+```
+TODO: Property rendering
+
+## Method Details
+
+## testClassMethod
+
+Test class method
+
+## Signature
+
+```typescript
+testClassMethod(input: TTypeParameter): TTypeParameter;
+```
+
+## Parameters
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  input | TTypeParameter |  |
 

@@ -881,7 +881,7 @@ export function renderParameterSummaryCell(
 ): DocTableCell {
     return new DocTableCell(
         { configuration: tsdocConfiguration },
-        apiParameter.tsdocParamBlock === undefined ? [] : [apiParameter.tsdocParamBlock],
+        apiParameter.tsdocParamBlock === undefined ? [] : [apiParameter.tsdocParamBlock.content],
     );
 }
 
@@ -1057,4 +1057,22 @@ export function renderMethodsTable(
         },
         tableRows,
     );
+}
+
+export function renderChildrenUnderHeading(
+    childItems: readonly ApiItem[],
+    headingTitle: string,
+    tsdocConfiguration: TSDocConfiguration,
+    renderChild: (childItem: ApiItem) => DocSection,
+): DocSection {
+    return new DocSection({ configuration: tsdocConfiguration }, [
+        new DocHeading({
+            configuration: tsdocConfiguration,
+            title: headingTitle,
+        }),
+        new DocSection(
+            { configuration: tsdocConfiguration },
+            childItems.map((constructor) => renderChild(constructor)),
+        ),
+    ]);
 }

@@ -198,6 +198,9 @@ export function renderBreadcrumb(apiItem: ApiItem, documenterConfiguration: Requ
 function renderCallSignatureSection(apiCallSignature: ApiCallSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
+export function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle: string, tsdocConfiguration: TSDocConfiguration, renderChild: (childItem: ApiItem) => DocSection): DocSection;
+
+// @public (undocumented)
 function renderClassSection(apiClass: ApiClass, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
