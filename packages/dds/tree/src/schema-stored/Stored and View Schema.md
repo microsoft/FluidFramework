@@ -56,9 +56,9 @@ Some of the options do not have this issue (inline, central repository (assuming
 
 # Options to Support
 
-That's a lot of options and I think there are good reasons for all of them. Long term, we likely want all of them implemented to some extent but I think we can pick a good subset for now and allow extension in the future.
+That's a lot of options all of which have use-cases. Long term, at least basic support for all of them may make sense but a much smaller subset can be supported initially while supporting most use-cases pretty well.
 
-I think we want to at least:
+Requirements for this initial version should include:
 
 -   Make adoption of different constraint/schema systems optional and incremental: all of these different options should be opt in, and easy to add to and existing application if desired.
 -   Provide a schema-on-read system (ex: schematize) that can give an application a nice interface to the data, including validation and error handling.
@@ -93,7 +93,7 @@ Features not needed for minimal strongly typed application use or the JSON and X
 
 The MVP should include a simple schema system, usable as an MVP for both `stored schema` and `view schema`.
 
-One possible such schema system is included in [Schema.ts](./Schema.ts).
+One possible such schema system is included in [schema.ts](./schema.ts).
 
 These `TreeSchema` and `FieldSchema` can be added as `stored schema` as part of an edit op,
 which is considered conflicted if it tries to add a type that has a conflicting `name` and is not equal to the existing one. TODO: This was confusing to me. This might be a bit more clear as part of the "Use as `Stored Schema` section.
@@ -117,8 +117,6 @@ Applications which wish to rely entirely on schema-on-read for some or all of th
 -   Change application: changes can conflict if they violate the schema (or maybe only check at the end of a transaction? Or at special marked places and at end?).
 
     Change application could (someday) adjust behavior based on the schema (ex: provide set semantics to a sequence) or have schema specific edits but the initial version will just detect violations and mark them as conflicted.
-
-
 ### Ways to update existing schema:
 
 -   Could support op that changes a schema in a way where all data that was accepted by the old schema is accepted by the new one (ex: add optional fields (if compatible with extra fields), move required field into extraFields, add a type to a field).
