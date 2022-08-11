@@ -161,8 +161,9 @@ export interface ChangeRebaser<TChangeSet> {
      *
      * Requirements:
      * The implementation must ensure that:
-     * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`
-     * - `rebase(compose([a, b]), c)` is equal to `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`
+     * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
+     * - `rebase(compose([a, b]), c)` is equal to
+     * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
      */
     rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
 
