@@ -15,6 +15,7 @@
         "types": [
             "node"
         ],
+        "esModuleInterop": true,
     },
     "include": [
         "src/**/*.ts"
