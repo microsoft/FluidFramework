@@ -33,7 +33,6 @@ import {
     Trace,
     TypedEventEmitter,
     unreachableCase,
-    performance,
     IsoBuffer,
 } from "@fluidframework/common-utils";
 import {
@@ -54,7 +53,6 @@ import { readAndParse, isUnpackedRuntimeMessage } from "@fluidframework/driver-u
 import {
     DataCorruptionError,
     DataProcessingError,
-    extractSafePropertiesFromMessage,
     GenericError,
     UsageError,
 } from "@fluidframework/container-utils";
@@ -116,7 +114,6 @@ import { SummaryManager } from "./summaryManager";
 import {
     ReportOpPerfTelemetry,
     IPerfSignalReport,
-    latencyThreshold,
 } from "./connectionTelemetry";
 import { IPendingLocalState, PendingStateManager } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
@@ -166,7 +163,6 @@ import {
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
 import { ScheduleManager } from "./scheduleManager";
-import { DeltaScheduler } from "./deltaScheduler";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
