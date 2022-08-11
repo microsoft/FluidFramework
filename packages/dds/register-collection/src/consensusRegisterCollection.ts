@@ -48,7 +48,10 @@ const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T
 interface IRegisterOperation {
     key: string;
     type: "write";
-    serializedValue: string;
+
+    // serializedValue was expected to be a string, however we did not have safeguards in check to prevent undefined
+    // being sent over the wire. This would corrupt the document.
+    serializedValue: string | undefined;
 
     // Message can be delivered with delay - resubmitted on reconnect.
     // As such, refSeq needs to reference seq # at the time op was created,
@@ -74,7 +77,7 @@ interface IRegisterOperationOld<T> {
 type IIncomingRegisterOperation<T> = IRegisterOperation | IRegisterOperationOld<T>;
 
 /** Distinguish between incoming op formats so we know which type it is */
-const incomingOpMatchesCurrentFormat = (op): op is IRegisterOperation => "serializedValue" in op;
+const incomingOpMatchesOldFormat = <T>(op): op is IRegisterOperationOld<T> => "value" in op;
 
 /** The type of the resolve function to call after the local operation is ack'd */
 type PendingResolve = (winner: boolean) => void;
@@ -222,9 +225,9 @@ export class ConsensusRegisterCollection<T>
                     assert(refSeqWhenCreated <= message.referenceSequenceNumber,
                         0x06e /* "Message's reference sequence number < op's reference sequence number!" */);
 
-                    const value = incomingOpMatchesCurrentFormat(op)
-                        ? this.parse(op.serializedValue, this.serializer) as T
-                        : op.value.value;
+                    const value = incomingOpMatchesOldFormat<T>(op)
+                        ? op.value.value
+                        : this.parse(op.serializedValue, this.serializer) as T;
                     const winner = this.processInboundWrite(
                         op.key,
                         value,
@@ -320,7 +323,11 @@ export class ConsensusRegisterCollection<T>
         return serializer.stringify(value, this.handle);
     }
 
-    private parse(content: string, serializer: IFluidSerializer): any {
+    // Specifically allowing the parsing of undefined content will allow us to send and store undefined.
+    private parse(content: string | undefined, serializer: IFluidSerializer): any {
+        if (content === undefined) {
+            return content;
+        }
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return serializer.parse(content);
     }

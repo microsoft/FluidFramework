@@ -290,6 +290,46 @@ describe("ConsensusRegisterCollection", () => {
                 receivedLocalStatus = true;
             });
         });
+
+        describe("Multiple connected clients sending op types", () => {
+            let containerRuntimeFactory: MockContainerRuntimeFactory;
+            let testCollection1: IConsensusRegisterCollection;
+            let testCollection2: IConsensusRegisterCollection;
+
+            beforeEach(() => {
+                containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+                testCollection1 = createConnectedCollection("collection1", containerRuntimeFactory);
+                testCollection2 = createConnectedCollection("collection2", containerRuntimeFactory);
+            });
+
+            it("should be able to send and receive undefined", async () => {
+                // Since we are testing for undefined, we want recievedValue to start as a defined value
+                const key = "key";
+                let receivedValue: any = "";
+                testCollection2.on("atomicChanged", (_key: string, value: any) => {
+                    receivedValue = value;
+                });
+
+                // Write a start value to the key
+                const startValue = "startValue";
+                const startWriteP = testCollection1.write(key, startValue);
+                containerRuntimeFactory.processAllMessages();
+                assert(await startWriteP, "Write was not successful");
+                assert(await testCollection1.read(key) === startValue, "Was not able to read written value to local");
+                assert(await testCollection2.read(key) === startValue, "Was not able to read written value to remote");
+
+                // Write a start value to the key
+                const testValue = undefined;
+                const testWriteP = testCollection1.write(key, testValue);
+                containerRuntimeFactory.processAllMessages();
+                assert(await testWriteP, "Write was not successful");
+                assert(await testCollection1.read(key) === testValue, "Was not able to read written value to local");
+                assert(await testCollection2.read(key) === testValue, "Was not able to read written value to remote");
+
+                // Verify that the remote client gets this write because the DDS is connected.
+                assert(receivedValue === undefined, "The remote client should have received the write");
+            });
+        });
     });
 
     describe("Garbage Collection", () => {
@@ -334,7 +374,7 @@ describe("ConsensusRegisterCollection", () => {
                 assert(deletedHandle, "Route must be added before deleting");
 
                 // Delete the last handle that was added.
-                await this.writeAndProcessMsg(subCollectionId, "nonHandleValue");
+                await this.writeAndProcessMsg(subCollectionId, undefined);
                 // Remove deleted handle's route from expected routes.
                 this._expectedRoutes =
                     this._expectedRoutes.filter((route) => route !== deletedHandle.absolutePath);
