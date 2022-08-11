@@ -12,7 +12,7 @@ import { SkeletonTheme } from "react-loading-skeleton";
  */
  export const ThemedSkeleton = (inSkeleton: JSX.Element) => {
     return (
-      <SkeletonTheme color="#C4C4C4">
+      <SkeletonTheme baseColor="#C4C4C4">
         {inSkeleton}
       </SkeletonTheme>
     );

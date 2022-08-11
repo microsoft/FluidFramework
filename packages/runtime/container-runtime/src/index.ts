@@ -23,6 +23,7 @@ export {
     RuntimeHeaders,
     ISummaryConfiguration,
     DefaultSummaryConfiguration,
+    ICompressionRuntimeOptions,
 } from "./containerRuntime";
 export { DeltaScheduler } from "./deltaScheduler";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -34,7 +35,6 @@ export {
 } from "./garbageCollection";
 export {
     IPendingFlush,
-    IPendingFlushMode,
     IPendingLocalState,
     IPendingMessage,
     IPendingState,
@@ -54,6 +54,7 @@ export {
     INackSummaryResult,
     IOnDemandSummarizeOptions,
     IProvideSummarizer,
+    IRefreshSummaryAckOptions,
     ISubmitSummaryOpResult,
     ISubmitSummaryOptions,
     ISummarizeOptions,

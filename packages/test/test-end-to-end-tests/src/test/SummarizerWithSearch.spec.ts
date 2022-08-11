@@ -144,11 +144,11 @@ async function submitAndAckSummary(
     const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
     // Update the container runtime with the given ack. We have to do this manually because there is no summarizer
     // client in these tests that takes care of this.
-    await summarizerClient.containerRuntime.refreshLatestSummaryAck(
-        ackedSummary.summaryOp.contents.handle,
-        ackedSummary.summaryAck.contents.handle,
-        ackedSummary.summaryOp.referenceSequenceNumber,
-        logger,
+    await summarizerClient.containerRuntime.refreshLatestSummaryAck({
+        proposalHandle: ackedSummary.summaryOp.contents.handle,
+        ackHandle: ackedSummary.summaryAck.contents.handle,
+        summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
+        summaryLogger: logger },
     );
     return { ackedSummary, summarySequenceNumber };
 }
@@ -362,11 +362,11 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
             // Wait for the above summary to be ack'd.
             const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
             // The assert 0x1a6 should not be hit anymore.
-            await summarizerClient.containerRuntime.refreshLatestSummaryAck(
-                ackedSummary.summaryOp.contents.handle,
-                ackedSummary.summaryAck.contents.handle,
-                ackedSummary.summaryOp.referenceSequenceNumber,
-                logger,
+            await summarizerClient.containerRuntime.refreshLatestSummaryAck({
+                proposalHandle: ackedSummary.summaryOp.contents.handle,
+                ackHandle: ackedSummary.summaryAck.contents.handle,
+                summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
+                summaryLogger: logger },
             );
         });
 
@@ -402,11 +402,11 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
             const ackedSummary = await summarizerClient2.summaryCollection.waitSummaryAck(summarySequenceNumber);
 
             // The assert 0x1a6 should be hit now.
-            await summarizerClient2.containerRuntime.refreshLatestSummaryAck(
-                ackedSummary.summaryOp.contents.handle,
-                ackedSummary.summaryAck.contents.handle,
-                ackedSummary.summaryOp.referenceSequenceNumber,
-                logger,
+            await summarizerClient2.containerRuntime.refreshLatestSummaryAck({
+                proposalHandle: ackedSummary.summaryOp.contents.handle,
+                ackHandle: ackedSummary.summaryAck.contents.handle,
+                summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
+                summaryLogger: logger },
             );
         });
 

@@ -44,7 +44,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
                     const newRange: ISequenceDeltaRange<TOperation> = {
                         operation: this.deltaArgs.operation,
                         position: this.mergeTreeClient.getPosition(delta.segment),
-                        propertyDeltas: delta.propertyDeltas,
+                        propertyDeltas: delta.propertyDeltas ?? {},
                         segment: delta.segment,
                     };
                     set.addOrUpdate(newRange);
@@ -72,7 +72,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
     /**
      * The client id of the client that made the change which caused the delta event
      */
-    public get clientId(): string {
+    public get clientId(): string | undefined {
         return this.mergeTreeClient.longClientId;
     }
 
@@ -152,7 +152,7 @@ export interface ISequenceDeltaRange<TOperation extends MergeTreeDeltaOperationT
 }
 
 class Lazy<T> {
-    private pValue: T;
+    private pValue: T | undefined;
     private pEvaluated: boolean;
     constructor(private readonly valueGenerator: () => T) {
         this.pEvaluated = false;
@@ -167,6 +167,6 @@ class Lazy<T> {
             this.pEvaluated = true;
             this.pValue = this.valueGenerator();
         }
-        return this.pValue;
+        return this.pValue as T;
     }
 }
