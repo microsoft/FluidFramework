@@ -11,7 +11,7 @@ import {
 import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { getFilteredChildren } from "../../utilities";
+import { filterByKind } from "../../utilities";
 import { renderChildDetailsSection } from "../Rendering";
 import { renderMemberTables } from "../Tables";
 
@@ -27,23 +27,23 @@ export function renderInterfaceSection(
 
     if (hasAnyChildren) {
         // Accumulate child items
-        const constructSignatures = getFilteredChildren(apiInterface, [
+        const constructSignatures = filterByKind(apiInterface.members, [
             ApiItemKind.ConstructSignature,
         ]).map((apiItem) => apiItem as ApiConstructSignature);
 
-        const properties = getFilteredChildren(apiInterface, [ApiItemKind.PropertySignature]).map(
+        const properties = filterByKind(apiInterface.members, [ApiItemKind.PropertySignature]).map(
             (apiItem) => apiItem as ApiPropertySignature,
         );
 
-        const callSignatures = getFilteredChildren(apiInterface, [ApiItemKind.CallSignature]).map(
+        const callSignatures = filterByKind(apiInterface.members, [ApiItemKind.CallSignature]).map(
             (apiItem) => apiItem as ApiCallSignature,
         );
 
-        const indexSignatures = getFilteredChildren(apiInterface, [ApiItemKind.IndexSignature]).map(
-            (apiItem) => apiItem as ApiIndexSignature,
-        );
+        const indexSignatures = filterByKind(apiInterface.members, [
+            ApiItemKind.IndexSignature,
+        ]).map((apiItem) => apiItem as ApiIndexSignature);
 
-        const methods = getFilteredChildren(apiInterface, [ApiItemKind.MethodSignature]).map(
+        const methods = filterByKind(apiInterface.members, [ApiItemKind.MethodSignature]).map(
             (apiItem) => apiItem as ApiMethodSignature,
         );
 

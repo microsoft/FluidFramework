@@ -43,7 +43,13 @@ export { ApiItemKind }
 
 export { ApiModel }
 
+// @public
+export type ApiModuleLike = ApiPackage | ApiNamespace;
+
 export { ApiPackage }
+
+// @public
+export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 // @public
 export interface ChildSectionProperties {
@@ -102,6 +108,7 @@ declare namespace DefaultRenderingPolicies {
         renderIndexSignatureSection,
         renderInterfaceSection,
         renderModelSection,
+        renderModuleLikeSection,
         renderNamespaceSection,
         renderPackageSection,
         renderPropertySection,
@@ -287,6 +294,9 @@ export function renderModelPage(apiModel: ApiModel, documenterConfiguration: Req
 
 // @public (undocumented)
 function renderModelSection(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+
+// @public (undocumented)
+function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly ApiItem[], documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
 function renderNamespaceSection(apiNamespace: ApiNamespace, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;

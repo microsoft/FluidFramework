@@ -11,7 +11,7 @@ export * from "./MarkdownDocumenterConfiguration";
 export * from "./Policies";
 export * from "./rendering";
 
-export { ApiFunctionLike } from "./utilities";
+export { ApiFunctionLike, ApiModuleLike, ApiSignatureLike } from "./utilities";
 
 // #region Conveinence re-exports of API model types
 export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

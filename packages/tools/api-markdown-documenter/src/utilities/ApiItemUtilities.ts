@@ -9,6 +9,8 @@ import {
     ApiItemKind,
     ApiMethod,
     ApiMethodSignature,
+    ApiNamespace,
+    ApiPackage,
     ApiParameterListMixin,
 } from "@microsoft/api-extractor-model";
 import * as Path from "path";
@@ -31,6 +33,11 @@ export type ApiFunctionLike =
  * `ApiItem` union type representing call-signature-like API kinds.
  */
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
+
+/**
+ * `ApiItem` union type representing module-like API kinds.
+ */
+export type ApiModuleLike = ApiPackage | ApiNamespace;
 
 export function getDisplayNameForApiItem(apiItem: ApiItem): string {
     switch (apiItem.kind) {
@@ -303,6 +310,6 @@ export function doesItemGenerateHierarchy(
     return hierarchyBoundaries.includes(apiItem.kind);
 }
 
-export function getFilteredChildren(apiItem: ApiItem, kinds: ApiItemKind[]): ApiItem[] {
-    return apiItem.members.filter((apiMember) => kinds.includes(apiMember.kind));
+export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[] {
+    return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));
 }

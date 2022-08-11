@@ -6,6 +6,7 @@ export * from "./DefaultRenderFunctionLike";
 export * from "./DefaultRenderIndexSignature";
 export * from "./DefaultRenderInterface";
 export * from "./DefaultRenderModel";
+export * from "./DefaultRenderModuleLike";
 export * from "./DefaultRenderNamespace";
 export * from "./DefaultRenderPackage";
 export * from "./DefaultRenderProperty";

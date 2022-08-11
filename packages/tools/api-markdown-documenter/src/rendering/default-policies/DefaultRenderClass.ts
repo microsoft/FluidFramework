@@ -6,13 +6,12 @@ import {
     ApiItem,
     ApiItemKind,
     ApiMethod,
-    ApiMethodSignature,
     ApiProperty,
 } from "@microsoft/api-extractor-model";
 import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { getFilteredChildren } from "../../utilities";
+import { filterByKind } from "../../utilities";
 import { renderChildDetailsSection } from "../Rendering";
 import { renderMemberTables } from "../Tables";
 
@@ -28,26 +27,25 @@ export function renderClassSection(
 
     if (hasAnyChildren) {
         // Accumulate child items
-        const constructors = getFilteredChildren(apiClass, [ApiItemKind.Constructor]).map(
+        const constructors = filterByKind(apiClass.members, [ApiItemKind.Constructor]).map(
             (apiItem) => apiItem as ApiConstructor,
         );
 
-        const properties = getFilteredChildren(apiClass, [ApiItemKind.Property]).map(
+        const properties = filterByKind(apiClass.members, [ApiItemKind.Property]).map(
             (apiItem) => apiItem as ApiProperty,
         );
 
-        const callSignatures = getFilteredChildren(apiClass, [ApiItemKind.CallSignature]).map(
+        const callSignatures = filterByKind(apiClass.members, [ApiItemKind.CallSignature]).map(
             (apiItem) => apiItem as ApiCallSignature,
         );
 
-        const indexSignatures = getFilteredChildren(apiClass, [ApiItemKind.IndexSignature]).map(
+        const indexSignatures = filterByKind(apiClass.members, [ApiItemKind.IndexSignature]).map(
             (apiItem) => apiItem as ApiIndexSignature,
         );
 
-        const methods = getFilteredChildren(apiClass, [
-            ApiItemKind.Method,
-            ApiItemKind.MethodSignature,
-        ]).map((apiItem) => apiItem as ApiMethod | ApiMethodSignature);
+        const methods = filterByKind(apiClass.members, [ApiItemKind.Method]).map(
+            (apiItem) => apiItem as ApiMethod,
+        );
 
         // Render summary tables
         const renderedMemberTables = renderMemberTables(

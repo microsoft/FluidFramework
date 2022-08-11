@@ -10,5 +10,3 @@ Test sub-namespace
 ```typescript
 namespace TestSubNamespace 
 ```
-TODO: Namespace rendering
-

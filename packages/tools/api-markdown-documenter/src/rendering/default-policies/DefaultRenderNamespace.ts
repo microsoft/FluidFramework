@@ -1,7 +1,8 @@
 import { ApiItem, ApiNamespace } from "@microsoft/api-extractor-model";
-import { DocParagraph, DocPlainText, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
+import { DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { renderModuleLikeSection } from "./DefaultRenderModuleLike";
 
 export function renderNamespaceSection(
     apiNamespace: ApiNamespace,
@@ -9,19 +10,11 @@ export function renderNamespaceSection(
     tsdocConfiguration: TSDocConfiguration,
     renderChild: (apiItem: ApiItem) => DocSection,
 ): DocSection {
-    const innerSectionBody = new DocSection({ configuration: tsdocConfiguration }, [
-        new DocParagraph({ configuration: tsdocConfiguration }, [
-            new DocPlainText({
-                configuration: tsdocConfiguration,
-                text: "TODO: Namespace rendering",
-            }),
-        ]),
-    ]);
-
-    return documenterConfiguration.renderSectionBlock(
+    return renderModuleLikeSection(
         apiNamespace,
-        innerSectionBody,
+        apiNamespace.members,
         documenterConfiguration,
         tsdocConfiguration,
+        renderChild,
     );
 }
