@@ -10,5 +10,15 @@ Test class
 ```typescript
 class TestClass 
 ```
-TODO: Class rendering
+TODO: Constructors table
+
+TODO: Properties table
+
+TODO: CallSignatures table
+
+TODO: IndexSignatures table
+
+TODO: Methods table
+
+TODO: Render children in groups
 
