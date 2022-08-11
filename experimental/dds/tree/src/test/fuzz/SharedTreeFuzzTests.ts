@@ -9,7 +9,7 @@ import { expect } from 'chai';
 import {
 	AsyncGenerator,
 	chainAsync as chain,
-    describeFuzz,
+	describeFuzz,
 	makeRandom,
 	takeAsync as take,
 	performFuzzActionsAsync as performFuzzActionsBase,
