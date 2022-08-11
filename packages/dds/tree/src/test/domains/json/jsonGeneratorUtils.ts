@@ -3,6 +3,7 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { string } from "../../schema-stored/examples/SchemaExamples";
 
 const englishAlphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
 
@@ -41,3 +42,38 @@ export function getSizeInBytes(obj: unknown) {
     const bytes = new TextEncoder().encode(str).length;
     return bytes;
 }
+
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+
+// Input is expected to be a list of sentences where each sentence
+// is a list of words in the same order as the original sentence
+export function markovChainBuilder(sentences: string[][]) {
+    // 1. Build a dictionary as you traverse the sentences.
+    // const dictionary: Map<string, number> = new Map();
+    // const markovChain: Map<string, number[]> = new Map();
+    const markovChain: Map<string, string[]> = new Map();
+    sentences.forEach((sentence) => {
+        let prevWord: string | null = null;
+        sentence.forEach((word) => {
+            if (prevWord === null) {
+                prevWord = word;
+            }
+
+            // if (!dictionary.get(word)) {
+            //     dictionary.set(word, dictionary.size + 1);
+            // }
+            if (!markovChain.get(word)) {
+                markovChain.set(word, []);
+            }
+
+            if (word !== prevWord) {
+                markovChain.get(prevWord)?.push(word);
+                prevWord = word;
+            }
+        });
+    });
+
+    return markovChain;
+}
+
+/* eslint-enable */
