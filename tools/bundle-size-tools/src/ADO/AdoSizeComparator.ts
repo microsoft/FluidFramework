@@ -79,8 +79,8 @@ export class ADOSizeComparator {
    * @returns The size comparison result with formatted message and raw data.  In case
    * of failure, the message contains the error message and the raw data will be undefined.
    */
-  public async createSizeComparisonMessage(tagWaiting: boolean): Promise<BundleComparisonResult> {
-    let baselineCommit: string | undefined = getBaselineCommit();
+  public async createSizeComparisonMessage(tagWaiting: boolean, branchName?: string): Promise<BundleComparisonResult> {
+    let baselineCommit: string | undefined = getBaselineCommit(branchName);
     console.log(`The baseline commit for this PR is ${baselineCommit}`);
 
     // Some circumstances may want us to try a fallback, such as when a commit does
@@ -153,7 +153,7 @@ export class ADOSizeComparator {
 
     // Unable to find a usable baseline
     if (baselineCommit === undefined || baselineZip === undefined) {
-      const message = `Could not find a usable baseline build with search starting at CI ${getBaselineCommit()}`;
+      const message = `Could not find a usable baseline build with search starting at CI ${getBaselineCommit(branchName)}`;
       console.log(message);
       return { message, comparison: undefined };
     }
