@@ -103,7 +103,7 @@ The MVP should include a simple schema system, usable as an MVP for both `stored
     For example, if you add support for tables to whiteboards, old documents will not have this schema, so part of inserting a table will require updating the schema to allow them (if the document is explicit about which item types are allowed), as well as adding the table schema itself.
 
     This is necessary because otherwise adding a new type could break existing data which might not even be downloaded on the current client.
-    In [schema.ts](./schema.ts), `TreeSchema` and `FieldSchema` can be added as `stored schema` as part of an edit op.
+    In [schema.ts](./schema.ts), `TreeSchema` and `FieldSchema` can be added to an edit op to be used as `stored schema`.
 
     Note: It's possible to add a schema that is compatible with all possible data (assuming the children themselves are compatible with their own types).
     Applications which wish to rely entirely on schema-on-read for some or all of their data can use this pattern for all `stored schema` and only use their actual developer authored schema as `view schema`.
