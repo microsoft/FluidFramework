@@ -297,7 +297,7 @@ describe("ConsensusRegisterCollection", () => {
             let testCollection2: IConsensusRegisterCollection;
 
             beforeEach(() => {
-                containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+                containerRuntimeFactory = new MockContainerRuntimeFactory();
                 testCollection1 = createConnectedCollection("collection1", containerRuntimeFactory);
                 testCollection2 = createConnectedCollection("collection2", containerRuntimeFactory);
             });
