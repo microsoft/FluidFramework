@@ -93,7 +93,7 @@ Features not needed for minimal strongly typed application use or the JSON and X
 
 The MVP should include a simple schema system, usable as an MVP for both `stored schema` and `view schema`.
 
-One possible such schema system is included in [Schema.ts](./Schema.ts).
+One possible such schema system is included in [schema.ts](./schema.ts).
 
 These `TreeSchema` and `FieldSchema` can be added as `stored schema` as part of an edit op,
 which is considered conflicted if it tries to add a type that has a conflicting `name` and is not equal to the existing one. TODO: This was confusing to me. This might be a bit more clear as part of the "Use as `Stored Schema` section.
