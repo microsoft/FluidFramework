@@ -5,13 +5,23 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { brand, Brand } from "../util";
-import { FieldKey, EmptyKey } from "../tree";
+import { FieldKey, EmptyKey, Delta, visitDelta } from "../tree";
 import { UpPath } from "./pathTree";
+import { Value } from "./types";
 
 /**
  * A way to refer to a particular tree location within a {@link Rebaser} instance's revision.
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
+
+/**
+ * Represents the position at `index` within `field` of the node described by `path`
+ */
+ export interface TreePosition {
+    path: UpPath | undefined;
+    field: FieldKey;
+    index: number;
+}
 
 /**
  * Collection of Anchors at a specific revision.
@@ -132,15 +142,15 @@ export class AnchorSet {
      */
     public moveChildren(
         count: number,
-        src: undefined | { path: UpPath; field: FieldKey; start: number; },
-        dst: undefined | { path: UpPath; field: FieldKey; start: number; },
+        src: undefined | TreePosition,
+        dst: undefined | TreePosition,
     ): void {
         assert(
             src !== undefined || dst !== undefined,
             0x352 /* moveChildren is a no-op and should not be called if there is no src or dst */,
         );
 
-        const srcParent = src === undefined ? undefined : this.find(src.path);
+        const srcParent = src === undefined ? undefined : this.find(src.path ?? this.root);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const srcChildren = srcParent?.children?.get(src!.field);
         // Sorted list of PathNodes to move from src to dst.
@@ -152,12 +162,12 @@ export class AnchorSet {
             let numberToMove = 0;
             let index = 0;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            while (index < srcChildren.length && srcChildren[index].parentIndex < src!.start) {
+            while (index < srcChildren.length && srcChildren[index].parentIndex < src!.index) {
                 numberBeforeMove++;
                 index++;
             }
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            while (index < srcChildren.length && srcChildren[index].parentIndex < src!.start + count) {
+            while (index < srcChildren.length && srcChildren[index].parentIndex < src!.index + count) {
                 numberToMove++;
                 index++;
             }
@@ -190,11 +200,14 @@ export class AnchorSet {
         if (toMove.length > 0) {
             // There are anchors which are getting moved,
             // therefor the destination needs to be created if it does not yet exist.
-            dstPath = this.trackInner(dst.path);
+
+            if (dst.path !== undefined) {
+                dstPath = this.trackInner(dst.path);
+            }
 
             // Update moved items for new parent.
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const offset = dst.start - src!.start;
+            const offset = dst.index - src!.index;
             for (const moved of toMove) {
                 moved.parentIndex += offset;
                 moved.parentPath = dstPath;
@@ -203,7 +216,7 @@ export class AnchorSet {
         } else {
             // There are no anchors to move,
             // therefor we want to avoid creating the destination if it does not already exist.
-            dstPath = this.find(dst.path);
+            dstPath = this.find(dst.path ?? this.root);
             if (dstPath !== undefined) {
                 // Since we need a remove ref below to handle the `toMove.length > 0` case above,
                 // add a ref here so that does not break this case.
@@ -223,7 +236,7 @@ export class AnchorSet {
                 // Update existing field contents
                 let numberBeforeMove = 0;
                 let index = 0;
-                while (index < field.length && field[index].parentIndex < dst.start) {
+                while (index < field.length && field[index].parentIndex < dst.index) {
                     numberBeforeMove++;
                     index++;
                 }
@@ -239,6 +252,53 @@ export class AnchorSet {
 
             dstPath.removeRef();
         }
+    }
+
+    /**
+     * Updates the anchors according to the changes described in the given delta
+     */
+    public applyDelta(delta: Delta.Root): void {
+        let field: FieldKey | undefined;
+        let path: UpPath | undefined;
+        const moveTable = new Map<Delta.MoveId, TreePosition>();
+
+        const visitor = {
+            onDelete: (start: number, count: number): void => {
+                assert(field !== undefined, "Must be in a field to delete");
+                this.moveChildren(count, { path, field, index: start }, undefined);
+            },
+            onInsert: (start: number, content: Delta.ProtoNode[]): void => {
+                assert(field !== undefined, "Must be in a field to insert");
+                this.moveChildren(content.length, undefined, { path, field, index: start });
+            },
+            onMoveOut: (start: number, count: number, id: Delta.MoveId): void => {
+                assert(field !== undefined, "Must be in a field to move out");
+                moveTable.set(id, { path, field, index: start });
+            },
+            onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
+                assert(field !== undefined, "Must be in a field to move in");
+                this.moveChildren(count, moveTable.get(id), { path, field, index: start });
+            },
+            onSetValue: (value: Value): void => {},
+            enterNode: (index: number): void => {
+                assert(field !== undefined, "Must be in a field to enter node");
+                path = { parent: path, parentField: field, parentIndex: index };
+                field = undefined;
+            },
+            exitNode: (index: number): void => {
+                assert(path !== undefined, "Must have parent node");
+                field = path.parentField;
+                path = path.parent;
+            },
+            enterField: (key: FieldKey): void => {
+                field = key;
+            },
+            exitField: (key: FieldKey): void => {
+                field = undefined;
+            },
+        };
+
+        visitDelta(delta, visitor);
     }
 }
 

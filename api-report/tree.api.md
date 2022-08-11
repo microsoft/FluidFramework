@@ -12,19 +12,12 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @public
 export class AnchorSet {
+    applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
     isEmpty(): boolean;
     locate(anchor: Anchor): UpPath | undefined;
-    moveChildren(count: number, src: undefined | {
-        path: UpPath;
-        field: FieldKey;
-        start: number;
-    }, dst: undefined | {
-        path: UpPath;
-        field: FieldKey;
-        start: number;
-    }): void;
+    moveChildren(count: number, src: undefined | TreePosition, dst: undefined | TreePosition): void;
     track(path: UpPath): Anchor;
 }
 
@@ -55,7 +48,7 @@ export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
     // (undocumented)
     rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
     // (undocumented)
-    rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
+    rebaseAnchors(anchors: AnchorSet, over: TChangeSet): void;
     // (undocumented)
     _typeCheck?: Covariant<TChange> & Contravariant<TFinalChange> & Invariant<TChangeSet>;
 }
@@ -651,6 +644,16 @@ export const enum TreeNavigationResult {
     NotFound = -1,
     Ok = 1,
     Pending = 0
+}
+
+// @public
+export interface TreePosition {
+    // (undocumented)
+    field: FieldKey;
+    // (undocumented)
+    index: number;
+    // (undocumented)
+    path: UpPath | undefined;
 }
 
 // @public (undocumented)
