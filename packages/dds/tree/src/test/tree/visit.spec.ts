@@ -220,7 +220,7 @@ describe("visit", () => {
             ["enterField", rootKey],
             ["enterNode", 0],
             ["enterField", fooKey],
-            ["onMoveIn", 3, 2, moveId],
+            ["onMoveIn", 5, 2, moveId],
             ["exitField", fooKey],
             ["exitNode", 0],
             ["exitField", rootKey],

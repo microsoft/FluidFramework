@@ -185,13 +185,9 @@ function secondPass(delta: Delta.MarkList, props: PassProps): void {
             switch (type) {
                 case Delta.MarkType.ModifyAndDelete:
                 case Delta.MarkType.ModifyAndMoveOut:
-                    // Handled in the first pass
-                    index -= 1;
-                    break;
                 case Delta.MarkType.Delete:
                 case Delta.MarkType.MoveOut:
                     // Handled in the first pass
-                    index -= mark.count;
                     break;
                 case Delta.MarkType.Modify:
                     visitModify(mark, { ...props, startIndex: index }, secondPass);

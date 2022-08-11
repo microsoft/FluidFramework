@@ -32,10 +32,10 @@ describe("AnchorSet", () => {
             content: [node, node],
         };
 
-        anchors.applyDelta(makeDelta(insert, makePath([fieldFoo, 3])));
+        anchors.applyDelta(makeDelta(insert, makePath([fieldFoo, 4])));
 
         checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 7], [fieldBar, 4]));
-        checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 5], [fieldBaz, 2]));
+        checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 3], [fieldBaz, 2]));
         checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 6]));
     });
 
@@ -43,13 +43,13 @@ describe("AnchorSet", () => {
         const [anchors, anchor1, anchor2, anchor3] = setup();
         const deleteMark = {
             type: Delta.MarkType.Delete,
-            count: 3,
+            count: 1,
         };
 
-        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 5], [fieldBar, 1])));
-        checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 5], [fieldBar, 1]));
+        anchors.applyDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])));
+        checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 4]));
         checkEquality(anchors.locate(anchor2), path2);
-        checkEquality(anchors.locate(anchor3), path3);
+        assert.equal(anchors.locate(anchor3), undefined);
     });
 
     it("can rebase over move", () => {
@@ -71,7 +71,7 @@ describe("AnchorSet", () => {
             fields: new Map([[fieldBar, [3, moveIn]]]),
         };
 
-        const delta = new Map([[fieldFoo, [3, moveOut, 2, modify]]]);
+        const delta = new Map([[fieldFoo, [3, moveOut, 1, modify]]]);
         anchors.applyDelta(delta);
         checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
         checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]));

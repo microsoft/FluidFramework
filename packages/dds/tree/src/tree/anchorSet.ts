@@ -57,7 +57,9 @@ export class AnchorSet {
     public locate(anchor: Anchor): UpPath | undefined {
         // TODO: this should error for anchors that do not exist,
         // and return undefined only if anchor does exist, but points nowhere in current revision.
-        return this.anchorToPath.get(anchor);
+        const path = this.anchorToPath.get(anchor);
+        assert(path !== undefined, "Cannot locate anchor which is not in this AnchorSet");
+        return path.deleted ? undefined : path;
     }
 
     public forget(anchor: Anchor): void {
