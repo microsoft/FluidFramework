@@ -61,9 +61,9 @@ export const gcTreeKey = "gc";
 export const gcBlobPrefix = "__gc";
 
 // Feature gate key to turn GC on / off.
-const runGCKey = "Fluid.GarbageCollection.RunGC";
+export const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Feature gate key to turn GC sweep on / off.
-// const runSweepKey = "Fluid.GarbageCollection.RunSweep";
+export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to turn GC test mode on / off.
 const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to write GC data at the root of the summary tree.
