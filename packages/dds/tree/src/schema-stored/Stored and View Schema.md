@@ -91,25 +91,22 @@ Features not needed for minimal strongly typed application use or the JSON and X
 
 ## Schema Representation
 
-The MVP should include a simple schema system, usable as an MVP for both `stored schema` and `view schema`.
-
-One possible such schema system is included in [schema.ts](./schema.ts).
-
-These `TreeSchema` and `FieldSchema` can be added as `stored schema` as part of an edit op,
-which is considered conflicted if it tries to add a type that has a conflicting `name` and is not equal to the existing one. TODO: This was confusing to me. This might be a bit more clear as part of the "Use as `Stored Schema` section.
-
-While a schema must be added to the document as a stored schema to use the type TODO: Which type? I.e. does this mean the same thing as 'a schema must be added to the document as a stored schema in order to be applied to a specific type of node'?
-(otherwise adding a new type could break existing data which might not even be downloaded on the current client),
-it's possible to add a schema that is compatible with all possible data (assuming the children themselves are compatible with their own types).
-Applications which wish to rely entirely on schema-on-read for some or all of their data can use this pattern for all `stored schema` and only use their actual developer authored schema as `view schema`:
+The MVP should include a simple schema system, usable as an MVP for both `stored schema` and `view schema`. One possible such schema system is included in [schema.ts](./schema.ts).
 
 ## Use as `Stored Schema`
 
 -   Writers: When inserting new content and updating modified nodes, shared-tree can check them against the schema in the document.
 
-    If you insert something into a document that does not currently have schema for the types you are using, you also have to include the schema as part of the edit.
+    Each node has a type that can reference a schema. For stored nodes, this is a stored schema and it must exist in the document.
+    If you insert something into a document that does not currently have schemas for its types, you also have to include the schema as part of the edit.
 
     For example, if you add support for tables to whiteboards, old documents will not have this schema, so part of inserting a table will require updating the schema to allow them (if the document is explicit about which item types are allowed), as well as adding the table schema itself.
+
+    This is necessary because otherwise adding a new type could break existing data which might not even be downloaded on the current client.
+    In [schema.ts](./schema.ts), `TreeSchema` and `FieldSchema` can be added as `stored schema` as part of an edit op.
+
+    Note: It's possible to add a schema that is compatible with all possible data (assuming the children themselves are compatible with their own types).
+    Applications which wish to rely entirely on schema-on-read for some or all of their data can use this pattern for all `stored schema` and only use their actual developer authored schema as `view schema`.
 -   Change application: changes can conflict if they violate the schema (or maybe only check at the end of a transaction? Or at special marked places and at end?).
 
     Change application could (someday) adjust behavior based on the schema (ex: provide set semantics to a sequence) or have schema specific edits but the initial version will just detect violations and mark them as conflicted.
