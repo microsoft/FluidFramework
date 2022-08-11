@@ -21,6 +21,7 @@ import {
     ApiPackage,
     ApiPropertyItem,
     ApiReleaseTagMixin,
+    ApiStaticMixin,
     ApiTypeAlias,
     ApiVariable,
     Excerpt,
@@ -32,6 +33,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import {
     DocBlock,
+    DocCodeSpan,
     DocFencedCode,
     DocLinkTag,
     DocNode,
@@ -797,6 +799,38 @@ export function renderApiTitleCell(
     ]);
 }
 
+export function renderModifiersCell(
+    apiItem: ApiItem,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTableCell {
+    const modifierNodes: DocNode[] = [];
+    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
+        if (apiItem.isStatic) {
+            modifierNodes.push(
+                new DocCodeSpan({ configuration: tsdocConfiguration, code: "static" }),
+            );
+        }
+    }
+
+    return new DocTableCell({ configuration: tsdocConfiguration }, modifierNodes);
+}
+
+export function renderPropertyTypeCell(
+    apiItem: ApiPropertyItem,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTableCell {
+    return new DocTableCell({ configuration: tsdocConfiguration }, [
+        new DocParagraph({ configuration: tsdocConfiguration }, [
+            renderExcerptWithHyperlinks(
+                apiItem.propertyTypeExcerpt,
+                documenterConfiguration,
+                tsdocConfiguration,
+            ),
+        ]),
+    ]);
+}
+
 export function renderParameterTitleCell(
     apiParameter: Parameter,
     tsdocConfiguration: TSDocConfiguration,
@@ -860,6 +894,7 @@ export function renderParametersTable(
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
 ): DocTable {
+    const headerTitles = ["Parameter", "Type", "Description"];
     // TODO: denote optional parameters?
     const tableRows: DocTableRow[] = apiParameters.map(
         (apiParameter) =>
@@ -873,10 +908,135 @@ export function renderParametersTable(
     return new DocTable(
         {
             configuration: tsdocConfiguration,
-            headerTitles: ["Parameter", "Type", "Description"],
+            headerTitles,
             // TODO
             // cssClass: 'param-list',
             // caption: 'List of parameters'
+        },
+        tableRows,
+    );
+}
+
+export function renderConstructorsTable(
+    apiConstructors: ReadonlyArray<ApiConstructSignature | ApiConstructor>,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTable | undefined {
+    if (apiConstructors.length === 0) {
+        return undefined;
+    }
+
+    const headerTitles = ["Constructor", "Modifiers", "Description"];
+    const tableRows: DocTableRow[] = apiConstructors.map(
+        (apiConstructor) =>
+            new DocTableRow({ configuration: tsdocConfiguration }, [
+                renderApiTitleCell(apiConstructor, documenterConfiguration, tsdocConfiguration),
+                renderModifiersCell(apiConstructor, tsdocConfiguration),
+                renderApiSummaryCell(apiConstructor, tsdocConfiguration),
+            ]),
+    );
+
+    return new DocTable(
+        {
+            configuration: tsdocConfiguration,
+            headerTitles,
+            // TODO
+            // cssClass: 'param-list',
+            // caption: 'List of parameters'
+        },
+        tableRows,
+    );
+}
+
+export function renderPropertiesTable(
+    apiProperties: readonly ApiPropertyItem[],
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTable | undefined {
+    if (apiProperties.length === 0) {
+        return undefined;
+    }
+
+    const headerTitles = ["Property", "Modifiers", "Type", "Description"];
+    const tableRows: DocTableRow[] = apiProperties.map(
+        (apiProperty) =>
+            new DocTableRow({ configuration: tsdocConfiguration }, [
+                renderApiTitleCell(apiProperty, documenterConfiguration, tsdocConfiguration),
+                renderModifiersCell(apiProperty, tsdocConfiguration),
+                renderPropertyTypeCell(apiProperty, documenterConfiguration, tsdocConfiguration),
+                renderApiSummaryCell(apiProperty, tsdocConfiguration),
+            ]),
+    );
+
+    return new DocTable(
+        {
+            configuration: tsdocConfiguration,
+            headerTitles,
+            // TODO
+            // cssClass: 'property-list',
+            // caption: 'List of properties on this class'
+        },
+        tableRows,
+    );
+}
+
+export function renderSignaturesTable(
+    apiSignatures: ReadonlyArray<ApiCallSignature | ApiIndexSignature>,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTable | undefined {
+    if (apiSignatures.length === 0) {
+        return undefined;
+    }
+
+    const headerTitles = ["Signature", "Modifiers", "Description"];
+    const tableRows: DocTableRow[] = apiSignatures.map(
+        (apiSignature) =>
+            new DocTableRow({ configuration: tsdocConfiguration }, [
+                renderApiTitleCell(apiSignature, documenterConfiguration, tsdocConfiguration),
+                renderModifiersCell(apiSignature, tsdocConfiguration),
+                renderApiSummaryCell(apiSignature, tsdocConfiguration),
+            ]),
+    );
+
+    return new DocTable(
+        {
+            configuration: tsdocConfiguration,
+            headerTitles,
+            // TODO
+            // cssClass: 'signatures-list',
+            // caption: 'List of properties on this class'
+        },
+        tableRows,
+    );
+}
+
+export function renderMethodsTable(
+    apiMethods: ReadonlyArray<ApiMethod | ApiMethodSignature>,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTable | undefined {
+    if (apiMethods.length === 0) {
+        return undefined;
+    }
+
+    const headerTitles = ["Method", "Modifiers", "Description"];
+    const tableRows: DocTableRow[] = apiMethods.map(
+        (apiMethod) =>
+            new DocTableRow({ configuration: tsdocConfiguration }, [
+                renderApiTitleCell(apiMethod, documenterConfiguration, tsdocConfiguration),
+                renderModifiersCell(apiMethod, tsdocConfiguration),
+                renderApiSummaryCell(apiMethod, tsdocConfiguration),
+            ]),
+    );
+
+    return new DocTable(
+        {
+            configuration: tsdocConfiguration,
+            headerTitles,
+            // TODO
+            // cssClass: 'method-list',
+            // caption: 'List of properties on this class'
         },
         tableRows,
     );

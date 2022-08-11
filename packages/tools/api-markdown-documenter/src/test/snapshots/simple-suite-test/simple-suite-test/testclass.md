@@ -15,15 +15,27 @@ export declare class TestClass<TTypeParameter>
 \* <b>TTypeParameter</b>: A type parameter
 
 
-TODO: Constructors table
+## Constructors
 
-TODO: Properties table
+|  Constructor | Modifiers | Description |
+|  --- | --- | --- |
+|  [(constructor)(testClassProperty, testClassEventProperty)](/simple-suite-test/testclass#_constructor_-Constructor) |  | Test class constructor |
 
-TODO: CallSignatures table
+## Properties
 
-TODO: IndexSignatures table
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassEventProperty](/simple-suite-test/testclass#testclasseventproperty-Property) |  | () =&gt; void | Test class event property |
+|  [testClassGetterProperty](/simple-suite-test/testclass#testclassgetterproperty-Property) |  | number | Test class getter-only property |
+|  [testClassProperty](/simple-suite-test/testclass#testclassproperty-Property) |  | number | Test class property |
 
-TODO: Methods table
+## Methods
+
+|  Method | Modifiers | Description |
+|  --- | --- | --- |
+|  [testClassMethod(input)](/simple-suite-test/testclass#testclassmethod-Method) |  | Test class method |
+
+## Details
 
 TODO: Render children in groups
 

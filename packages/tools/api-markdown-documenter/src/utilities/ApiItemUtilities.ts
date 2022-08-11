@@ -288,3 +288,7 @@ export function doesItemGenerateHierarchy(
     }
     return hierarchyBoundaries.includes(apiItem.kind);
 }
+
+export function getFilteredChildren(apiItem: ApiItem, kinds: ApiItemKind[]): ApiItem[] {
+    return apiItem.members.filter((apiMember) => kinds.includes(apiMember.kind));
+}

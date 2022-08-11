@@ -10,15 +10,26 @@ Test class
 ```typescript
 class TestClass 
 ```
-TODO: Constructors table
 
-TODO: Properties table
+## Constructors
 
-TODO: CallSignatures table
+|  Constructor | Modifiers | Description |
+|  --- | --- | --- |
+|  [(constructor)(testClassProperty)](/simple-suite-test/testnamespace/testclass#_constructor_-Constructor) |  | Test class constructor |
 
-TODO: IndexSignatures table
+## Properties
 
-TODO: Methods table
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassProperty](/simple-suite-test/testnamespace/testclass#testclassproperty-Property) |  | string | Test interface property |
+
+## Methods
+
+|  Method | Modifiers | Description |
+|  --- | --- | --- |
+|  [testClassMethod(testParameter)](/simple-suite-test/testnamespace/testclass#testclassmethod-Method) |  | Test class method |
+
+## Details
 
 TODO: Render children in groups
 
