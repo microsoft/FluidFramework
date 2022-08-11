@@ -147,6 +147,7 @@ import {
     ISummarizerInternalsProvider,
     ISummarizerOptions,
     ISummarizerRuntime,
+    IRefreshSummaryAckOptions,
 } from "./summarizerTypes";
 import { formExponentialFn, Throttler } from "./throttler";
 import { RunWhileConnectedCoordinator } from "./runWhileConnectedCoordinator";
@@ -3087,12 +3088,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     }
 
     /** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
-    public async refreshLatestSummaryAck(
-        proposalHandle: string | undefined,
-        ackHandle: string,
-        summaryRefSeq: number,
-        summaryLogger: ITelemetryLogger,
-    ) {
+    public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
+        const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
         const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
         const { snapshotTree } = await this.fetchSnapshotFromStorage(
             ackHandle,
