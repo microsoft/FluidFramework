@@ -515,4 +515,177 @@ describe("SequenceChangeFamily - Rebase", () => {
         };
         assert.deepEqual(actual, expected);
     });
+
+    it("set ↷ revive", () => {
+        const sets: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Modify", value: { id: 0, value: 42 } },
+                    2,
+                    { type: "Modify", value: { id: 0, value: 42 } },
+                ],
+            },
+        };
+        const revive: SequenceChangeset = {
+            marks: {
+                root: [
+                    2,
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [
+                    // Set at earlier index is unaffected
+                    { type: "Modify", value: { id: 0, value: 42 } },
+                    3,
+                    // Set at later index has its index increased
+                    { type: "Modify", value: { id: 0, value: 42 } },
+                ],
+            },
+        };
+        const actual = rebase(sets, revive);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("modify ↷ revive", () => {
+        const mods: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Modify", fields: { foo: [{ type: "Delete", id: 1, count: 1 }] } },
+                    2,
+                    { type: "Modify", fields: { foo: [{ type: "Delete", id: 1, count: 1 }] } },
+                ],
+            },
+        };
+        const revive: SequenceChangeset = {
+            marks: {
+                root: [
+                    2,
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [
+                    // Modify at earlier index is unaffected
+                    { type: "Modify", fields: { foo: [{ type: "Delete", id: 1, count: 1 }] } },
+                    3,
+                    // Modify at later index has its index increased
+                    { type: "Modify", fields: { foo: [{ type: "Delete", id: 1, count: 1 }] } },
+                ],
+            },
+        };
+        const actual = rebase(mods, revive);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("delete ↷ revive", () => {
+        // Deletes A-CD-E
+        const deletion: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Delete", id: 1, count: 1 },
+                    1,
+                    { type: "Delete", id: 1, count: 2 },
+                    1,
+                    { type: "Delete", id: 1, count: 1 },
+                ],
+            },
+        };
+        // Revives content between C and D
+        const revive: SequenceChangeset = {
+            marks: {
+                root: [
+                    3,
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [
+                    // Delete with earlier index is unaffected
+                    { type: "Delete", id: 1, count: 1 },
+                    1,
+                    { type: "Delete", id: 1, count: 1 },
+                    1, // Delete at overlapping index is split
+                    { type: "Delete", id: 1, count: 1 },
+                    1,
+                    // Delete at later index has its index increased
+                    { type: "Delete", id: 1, count: 1 },
+                ],
+            },
+        };
+        const actual = rebase(deletion, revive);
+        assert.deepEqual(actual, expected);
+    });
+
+    it("insert ↷ revive", () => {
+        const insert: SequenceChangeset = {
+            marks: {
+                root: [
+                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    2,
+                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                ],
+            },
+        };
+        const revive: SequenceChangeset = {
+            marks: {
+                root: [
+                    1,
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        const actual = rebase(insert, revive);
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [
+                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    3,
+                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                ],
+            },
+        };
+        assert.deepEqual(actual, expected);
+    });
+
+    it("revive ↷ revive", () => {
+        const reviveA: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    2,
+                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    2,
+                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        const reviveB: SequenceChangeset = {
+            marks: {
+                root: [
+                    2,
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        const actual = rebase(reviveA, reviveB);
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    2,
+                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    3,
+                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        assert.deepEqual(actual, expected);
+    });
 });

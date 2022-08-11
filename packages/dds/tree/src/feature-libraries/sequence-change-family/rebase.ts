@@ -42,7 +42,7 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             // TODO: respect tiebreak
             factory.pushContent(clone(currMark));
             nextBaseMark = baseMark;
-        } else if (isAttachGroup(baseMark)) {
+        } else if (isAttachGroup(baseMark) || isReattach(baseMark)) {
             factory.pushOffset(getMarkLength(baseMark));
             nextCurrMark = currMark;
         } else {
