@@ -7,7 +7,12 @@ import { Command, Flags } from "@oclif/core";
 import { getLatestReleaseFromList } from "../../schemes";
 
 /**
- * The root `version` command.
+ * The `version latest` command is used to find the latest (highest) version in a list of versions. The command takes
+ * the Fluid internal version scheme into account, and handles prerelease versions properly.
+ *
+ * Once scenario where this is useful is for Fluid customers who want to consume the most recent version from npm. The
+ * standard tools (e.g. `npm show versions`) don't fully work in that scenario because the Fluid internal version scheme
+ * overloads the semver prerelease field.
  */
 // eslint-disable-next-line import/no-default-export
 export default class LatestCommand extends Command {
@@ -19,13 +24,15 @@ export default class LatestCommand extends Command {
     static flags = {
         versions: Flags.string({
             char: "r",
-            description: "The public version to use in the Fluid internal version.",
+            description:
+                "The versions to evaluate. The argument can be passed multiple times to provide multiple versions, or a space-delimited list of versions can be provided using a single argument.",
             multiple: true,
             required: true,
         }),
         prerelease: Flags.boolean({
             default: false,
-            description: "Include prerelease versions.",
+            description:
+                "Include prerelease versions. By default, prerelease versions are excluded.",
         }),
     };
 

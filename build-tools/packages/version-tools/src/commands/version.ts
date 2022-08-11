@@ -9,7 +9,7 @@ import { table } from "table";
 import { isVersionBumpTypeExtended } from "../bumpTypes";
 import {
     bumpInternalVersion,
-    DEFAULT_PUBLIC_VERSION,
+    MINIMUM_PUBLIC_VERSION,
     fromInternalScheme,
     toInternalScheme,
     getVersionRange,
@@ -51,7 +51,7 @@ export default class VersionCommand extends Command {
             required: false,
         }),
         publicVersion: Flags.string({
-            default: DEFAULT_PUBLIC_VERSION,
+            default: MINIMUM_PUBLIC_VERSION,
             description: "The public version to use in the Fluid internal version.",
         }),
     };

@@ -11,11 +11,7 @@ import {
     VersionChangeType,
     VersionChangeTypeExtended,
 } from "./bumpTypes";
-import {
-    isInternalVersionRange,
-    isInternalVersionScheme,
-    isPrereleaseInternalVersionScheme,
-} from "./internalVersionScheme";
+import { isInternalVersionRange, isInternalVersionScheme } from "./internalVersionScheme";
 
 /**
  * A type defining the version schemes that can be used for packages.
@@ -58,13 +54,13 @@ function isVirtualPatch(version: semver.SemVer | string): boolean {
  * @param rangeOrVersion - a version or range string.
  * @returns The version scheme that the string is in.
  */
-export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
-    // First check if the string is a valid internal version
+export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme {
+    // First check if the string is a valid internal version. We need to check this
     if (isInternalVersionScheme(rangeOrVersion)) {
         return "internal";
     }
 
-    if (isPrereleaseInternalVersionScheme(rangeOrVersion)) {
+    if (isInternalVersionScheme(rangeOrVersion, true)) {
         return "internalPrerelease";
     }
 
@@ -75,7 +71,7 @@ export function detectVersionScheme(rangeOrVersion: string): VersionScheme {
         }
 
         return "semver";
-    } else if (semver.validRange(rangeOrVersion) !== null) {
+    } else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
         // Must be a range string
         if (isInternalVersionRange(rangeOrVersion)) {
             return "internal";
@@ -231,16 +227,17 @@ export function getLatestReleaseFromList(versionList: string[], allowPrereleases
     // Remove pre-releases from the list
     if (!allowPrereleases) {
         list = versionList.filter((v) => {
-            const hasPrereleaseSection = semver.prerelease(v)?.length ?? 0 !== 0;
+            const hasSemverPrereleaseSection = semver.prerelease(v)?.length ?? 0 !== 0;
+            const scheme = detectVersionScheme(v);
             const isPrerelease =
-                isPrereleaseInternalVersionScheme(v) ||
-                (hasPrereleaseSection && detectVersionScheme(v) !== "internal");
+                scheme === "internalPrerelease" ||
+                (hasSemverPrereleaseSection && scheme !== "internal");
             return !isPrerelease;
         });
     }
 
-    list = semver.sort(list).reverse();
-    const latest = list[0];
+    list = semver.sort(list);
+    const latest = list[list.length - 1];
 
     return latest;
 }

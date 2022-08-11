@@ -71,7 +71,7 @@ export function incRange(
  * versions.
  *
  * @param range - The range to check.
- * @returns the constraint type.
+ * @returns The constraint type.
  *
  * @remarks
  *

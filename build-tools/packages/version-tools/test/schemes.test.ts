@@ -111,7 +111,7 @@ describe("getLatestReleaseFromList", () => {
         assert.strictEqual(latest, expected);
     });
 
-    it("detects 0.59.4002 is latest release", () => {
+    it("detects 0.59.4002 is latest release (checks logic when list contains only pre-v1 versions)", () => {
         const expected = "0.59.4002";
         versionList.push(expected);
         const latest = getLatestReleaseFromList(pre1VersionList);
