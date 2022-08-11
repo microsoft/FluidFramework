@@ -14,16 +14,16 @@ This issue causes bundling any project that uses these libraries to fail. We now
 
 To fix this take these steps:
 
-1. Run the command `npm install -D <package>`
+1. Run the command `npm install -D <library>`
 2. In the webpack.config.js file, add the following `fallback` property to the `resolve` object:
 
     ```javascript
     fallback: {
-            "<package>": require.resolve("<package>/")
+            "<library>": require.resolve("<library>/")
         }
     ```
 
-    Add an additional `"<package>"` property to the `fallback` object for each of the four problematic packages that you are using. An example of this is located [here](https://github.com/microsoft/FluidFramework/blob/a4c38234a920abe9b54b1c26a14c0a8e430cd3fa/packages/tools/webpack-fluid-loader/webpack.config.js#L37)
+    Add an additional `"<library>"` property to the `fallback` object for each of the four problematic libraries that you are using. An example of this is located [here](https://github.com/microsoft/FluidFramework/blob/a4c38234a920abe9b54b1c26a14c0a8e430cd3fa/packages/tools/webpack-fluid-loader/webpack.config.js#L37)
 
 Error:
 ```bash
@@ -31,8 +31,8 @@ BREAKING CHANGE: webpack < 5 used to include polyfills for node.js core modules 
 This is no longer the case. Verify if you need this module and configure a polyfill for it.
 
 If you want to include a polyfill, you need to:
-        - add a fallback 'resolve.fallback: { "<package>": require.resolve("<package>/") }'
-        - install '<package>'
+        - add a fallback 'resolve.fallback: { "<library>": require.resolve("<library>/") }'
+        - install '<library>'
 If you don't want to include a polyfill, you can use an empty module like this:
-        resolve.fallback: { "<package>": false }
+        resolve.fallback: { "<library>": false }
 ```
