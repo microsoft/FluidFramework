@@ -36,9 +36,14 @@ This field has been deprecated and will be removed in a future breaking change. 
         fileName: string,
 -       createShareLinkType?: ShareLinkTypes,
 +       createShareLinkType?: ShareLinkTypes | ISharingLinkKind,
-    ): 
+    ):
 ```
 
+## 3.0.0 Breaking changes
+- [Remove `IContainerRuntime.flush`](#icontainerruntimeflush-is-deprecated)
+
+### Remove `IContainerRuntime.flush`
+`IContainerRuntime.flush` has been removed. If a more manual/ensured flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
 
 ### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`

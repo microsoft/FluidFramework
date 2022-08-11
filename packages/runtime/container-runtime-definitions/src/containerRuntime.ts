@@ -99,13 +99,6 @@ export interface IContainerRuntime extends
     readonly isDirty: boolean;
 
     /**
-     * Flushes any ops currently being batched to the loader
-     * @deprecated - This will be removed in a later release. If a more manual flushing process is needed,
-     * move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
-     */
-    flush(): void;
-
-    /**
      * Get an absolute url for a provided container-relative request.
      * Returns undefined if the container isn't attached to storage.
      * @param relativeUrl - A relative request within the container

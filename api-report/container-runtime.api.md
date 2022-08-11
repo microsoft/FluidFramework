@@ -110,7 +110,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get disposed(): boolean;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
-    flush(isImmediateBatch?: boolean): void;
     // (undocumented)
     get flushMode(): FlushMode;
     // (undocumented)
