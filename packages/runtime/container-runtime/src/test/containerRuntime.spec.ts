@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
 import {
-    ISequencedDocumentMessage,
+    ISequencedDocumentMessage, MessageType,
 } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
