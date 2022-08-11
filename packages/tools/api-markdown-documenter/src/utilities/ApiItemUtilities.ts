@@ -1,8 +1,10 @@
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
+    ApiCallSignature,
     ApiConstructSignature,
     ApiConstructor,
     ApiFunction,
+    ApiIndexSignature,
     ApiItem,
     ApiItemKind,
     ApiMethod,
@@ -24,6 +26,11 @@ export type ApiFunctionLike =
     | ApiFunction
     | ApiMethod
     | ApiMethodSignature;
+
+/**
+ * `ApiItem` union type representing call-signature-like API kinds.
+ */
+export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 export function getDisplayNameForApiItem(apiItem: ApiItem): string {
     switch (apiItem.kind) {

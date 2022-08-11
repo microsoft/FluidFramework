@@ -19,9 +19,9 @@ interface TestInterface
 
 ## Methods
 
-|  Method | Modifiers | Description |
-|  --- | --- | --- |
-|  [testInterfaceMethod()](/simple-suite-test/testnamespace/testinterface#testinterfacemethod-MethodSignature) |  | Test interface method |
+|  Method | Modifiers | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [testInterfaceMethod()](/simple-suite-test/testnamespace/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
 
 ## Details
 

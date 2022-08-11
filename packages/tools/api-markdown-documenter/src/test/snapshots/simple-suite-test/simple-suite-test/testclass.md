@@ -17,9 +17,9 @@ export declare class TestClass<TTypeParameter>
 
 ## Constructors
 
-|  Constructor | Modifiers | Description |
-|  --- | --- | --- |
-|  [(constructor)(testClassProperty, testClassEventProperty)](/simple-suite-test/testclass#_constructor_-Constructor) |  | Test class constructor |
+|  Constructor | Modifiers | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [(constructor)(testClassProperty, testClassEventProperty)](/simple-suite-test/testclass#_constructor_-Constructor) |  |  | Test class constructor |
 
 ## Properties
 
@@ -31,9 +31,9 @@ export declare class TestClass<TTypeParameter>
 
 ## Methods
 
-|  Method | Modifiers | Description |
-|  --- | --- | --- |
-|  [testClassMethod(input)](/simple-suite-test/testclass#testclassmethod-Method) |  | Test class method |
+|  Method | Modifiers | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [testClassMethod(input)](/simple-suite-test/testclass#testclassmethod-Method) |  | TTypeParameter | Test class method |
 
 ## Details
 

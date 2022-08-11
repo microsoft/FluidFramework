@@ -11,15 +11,9 @@ import {
 import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { DocHeading } from "../../doc-nodes";
 import { getFilteredChildren } from "../../utilities";
 import { renderChildDetailsSection } from "../Rendering";
-import {
-    renderConstructorsTable,
-    renderMethodsTable,
-    renderPropertiesTable,
-    renderSignaturesTable,
-} from "../Tables";
+import { renderMemberTables } from "../Tables";
 
 export function renderInterfaceSection(
     apiInterface: ApiInterface,
@@ -36,125 +30,59 @@ export function renderInterfaceSection(
         const constructSignatures = getFilteredChildren(apiInterface, [
             ApiItemKind.ConstructSignature,
         ]).map((apiItem) => apiItem as ApiConstructSignature);
-        const hasConstructSignatures = constructSignatures.length !== 0;
 
         const properties = getFilteredChildren(apiInterface, [ApiItemKind.PropertySignature]).map(
             (apiItem) => apiItem as ApiPropertySignature,
         );
-        const hasProperties = properties.length !== 0;
 
         const callSignatures = getFilteredChildren(apiInterface, [ApiItemKind.CallSignature]).map(
             (apiItem) => apiItem as ApiCallSignature,
         );
-        const hasCallSignatures = callSignatures.length !== 0;
 
         const indexSignatures = getFilteredChildren(apiInterface, [ApiItemKind.IndexSignature]).map(
             (apiItem) => apiItem as ApiIndexSignature,
         );
-        const hasIndexSignatures = indexSignatures.length !== 0;
 
         const methods = getFilteredChildren(apiInterface, [ApiItemKind.MethodSignature]).map(
             (apiItem) => apiItem as ApiMethodSignature,
         );
-        const hasMethods = methods.length !== 0;
 
-        // #region Render summary tables
+        // Render summary tables
+        const renderedMemberTables = renderMemberTables(
+            [
+                {
+                    headingTitle: "Construct Signatures",
+                    itemKind: ApiItemKind.ConstructSignature,
+                    items: constructSignatures,
+                },
+                {
+                    headingTitle: "Properties",
+                    itemKind: ApiItemKind.PropertySignature,
+                    items: properties,
+                },
+                {
+                    headingTitle: "Call Signatures",
+                    itemKind: ApiItemKind.CallSignature,
+                    items: callSignatures,
+                },
+                {
+                    headingTitle: "Index Signatures",
+                    itemKind: ApiItemKind.IndexSignature,
+                    items: indexSignatures,
+                },
+                {
+                    headingTitle: "Methods",
+                    itemKind: ApiItemKind.MethodSignature,
+                    items: methods,
+                },
+            ],
+            documenterConfiguration,
+            tsdocConfiguration,
+        );
 
-        // Render construct signatures table
-        if (hasConstructSignatures) {
-            const constructSignaturesTable = renderConstructorsTable(
-                constructSignatures,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
-            if (constructSignaturesTable !== undefined) {
-                docNodes.push(
-                    new DocSection({ configuration: tsdocConfiguration }, [
-                        new DocHeading({
-                            configuration: tsdocConfiguration,
-                            title: "Construct Signatures",
-                        }),
-                        constructSignaturesTable,
-                    ]),
-                );
-            }
+        if (renderedMemberTables !== undefined) {
+            docNodes.push(renderedMemberTables);
         }
-
-        // Render properties table
-        if (hasProperties) {
-            const propertiesTable = renderPropertiesTable(
-                properties,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
-            if (propertiesTable !== undefined) {
-                docNodes.push(
-                    new DocSection({ configuration: tsdocConfiguration }, [
-                        new DocHeading({ configuration: tsdocConfiguration, title: "Properties" }),
-                        propertiesTable,
-                    ]),
-                );
-            }
-        }
-
-        // Render call signatures table
-        if (hasCallSignatures) {
-            const callSignaturesTable = renderSignaturesTable(
-                callSignatures,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
-            if (callSignaturesTable !== undefined) {
-                docNodes.push(
-                    new DocSection({ configuration: tsdocConfiguration }, [
-                        new DocHeading({
-                            configuration: tsdocConfiguration,
-                            title: "Call Signatures",
-                        }),
-                        callSignaturesTable,
-                    ]),
-                );
-            }
-        }
-
-        // Render index signatures table
-        if (hasIndexSignatures) {
-            const indexSignaturesTable = renderSignaturesTable(
-                indexSignatures,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
-            if (indexSignaturesTable !== undefined) {
-                docNodes.push(
-                    new DocSection({ configuration: tsdocConfiguration }, [
-                        new DocHeading({
-                            configuration: tsdocConfiguration,
-                            title: "Index Signatures",
-                        }),
-                        indexSignaturesTable,
-                    ]),
-                );
-            }
-        }
-
-        // Render methods table
-        if (hasMethods) {
-            const methodsTable = renderMethodsTable(
-                methods,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
-            if (methodsTable !== undefined) {
-                docNodes.push(
-                    new DocSection({ configuration: tsdocConfiguration }, [
-                        new DocHeading({ configuration: tsdocConfiguration, title: "Methods" }),
-                        methodsTable,
-                    ]),
-                );
-            }
-        }
-
-        // #endregion
 
         // Render child item details if there are any that will not be rendered to their own documents
         const renderedDetailsSection = renderChildDetailsSection(

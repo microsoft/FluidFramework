@@ -20,15 +20,15 @@ export interface TestInterface
 
 ## Call Signatures
 
-|  Signature | Modifiers | Description |
+|  CallSignature | Modifiers | Description |
 |  --- | --- | --- |
 |  [(call)(event, listener)](/simple-suite-test/testinterface#_call_-CallSignature) |  | Test interface event call signature |
 
 ## Methods
 
-|  Method | Modifiers | Description |
-|  --- | --- | --- |
-|  [testInterfaceMethod()](/simple-suite-test/testinterface#testinterfacemethod-MethodSignature) |  | Test interface method |
+|  Method | Modifiers | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [testInterfaceMethod()](/simple-suite-test/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
 
 ## Details
 

@@ -1,16 +1,12 @@
 import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
-    ApiCallSignature,
-    ApiConstructSignature,
-    ApiConstructor,
     ApiDocumentedItem,
-    ApiIndexSignature,
     ApiItem,
-    ApiMethod,
-    ApiMethodSignature,
+    ApiItemKind,
     ApiPropertyItem,
     ApiReleaseTagMixin,
+    ApiReturnTypeMixin,
     ApiStaticMixin,
     Parameter,
     ReleaseTag,
@@ -21,13 +17,140 @@ import {
     DocNode,
     DocParagraph,
     DocPlainText,
+    DocSection,
     TSDocConfiguration,
 } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocTable, DocTableCell } from "../doc-nodes";
-import { getLinkUrlForApiItem } from "../utilities";
+import { DocEmphasisSpan, DocHeading, DocTable, DocTableCell } from "../doc-nodes";
+import { ApiFunctionLike, getLinkUrlForApiItem } from "../utilities";
 import { renderExcerptWithHyperlinks } from "./Rendering";
+
+export interface MemberTableProperties {
+    headingTitle: string;
+    itemKind: ApiItemKind;
+    items: readonly ApiItem[];
+}
+
+export function renderMemberTables(
+    memberTableProperties: readonly MemberTableProperties[],
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocSection | undefined {
+    const docNodes: DocNode[] = [];
+
+    for (const member of memberTableProperties) {
+        const renderedTable = renderTableWithHeading(
+            member,
+            documenterConfiguration,
+            tsdocConfiguration,
+        );
+        if (renderedTable !== undefined) {
+            docNodes.push(renderedTable);
+        }
+    }
+
+    return docNodes.length === 0
+        ? undefined
+        : new DocSection({ configuration: tsdocConfiguration }, docNodes);
+}
+
+export function renderTableWithHeading(
+    memberTableProperties: MemberTableProperties,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocSection | undefined {
+    const renderedTable = renderTable(
+        memberTableProperties.items,
+        memberTableProperties.itemKind,
+        documenterConfiguration,
+        tsdocConfiguration,
+    );
+
+    return renderedTable === undefined
+        ? undefined
+        : new DocSection({ configuration: tsdocConfiguration }, [
+              new DocHeading({
+                  configuration: tsdocConfiguration,
+                  title: memberTableProperties.headingTitle,
+              }),
+              renderedTable,
+          ]);
+}
+
+export function renderTable(
+    apiItems: readonly ApiItem[],
+    itemKind: ApiItemKind,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTable | undefined {
+    if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
+        throw new Error(`Table rendering does not support provided API item kind: "${itemKind}".`);
+    }
+
+    if (apiItems.length === 0) {
+        return undefined;
+    }
+
+    switch (itemKind) {
+        case ApiItemKind.ConstructSignature:
+        case ApiItemKind.Constructor:
+        case ApiItemKind.Function:
+        case ApiItemKind.Method:
+        case ApiItemKind.MethodSignature:
+            return renderFunctionLikeTable(
+                apiItems.map((apiItem) => apiItem as ApiFunctionLike),
+                itemKind,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        case ApiItemKind.Property:
+        case ApiItemKind.PropertySignature:
+            return renderPropertiesTable(
+                apiItems.map((apiItem) => apiItem as ApiPropertyItem),
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+
+        default:
+            return renderDefaultTable(
+                apiItems,
+                itemKind,
+                documenterConfiguration,
+                tsdocConfiguration,
+            );
+    }
+}
+
+export function renderDefaultTable(
+    apiItems: readonly ApiItem[],
+    itemKind: ApiItemKind,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTable | undefined {
+    if (apiItems.length === 0) {
+        return undefined;
+    }
+
+    const headerTitles = [getHeadingTitleForApiKind(itemKind), "Modifiers", "Description"];
+    const tableRows: DocTableRow[] = apiItems.map(
+        (apiItem) =>
+            new DocTableRow({ configuration: tsdocConfiguration }, [
+                renderApiTitleCell(apiItem, documenterConfiguration, tsdocConfiguration),
+                renderModifiersCell(apiItem, tsdocConfiguration),
+                renderApiSummaryCell(apiItem, tsdocConfiguration),
+            ]),
+    );
+
+    return new DocTable(
+        {
+            configuration: tsdocConfiguration,
+            headerTitles,
+        },
+        tableRows,
+    );
+}
 
 export function renderParametersTable(
     apiParameters: readonly Parameter[],
@@ -49,30 +172,34 @@ export function renderParametersTable(
         {
             configuration: tsdocConfiguration,
             headerTitles,
-            // TODO
-            // cssClass: 'param-list',
-            // caption: 'List of parameters'
         },
         tableRows,
     );
 }
 
-export function renderConstructorsTable(
-    apiConstructors: ReadonlyArray<ApiConstructSignature | ApiConstructor>,
+export function renderFunctionLikeTable(
+    apiItems: readonly ApiFunctionLike[],
+    itemKind: ApiItemKind,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
 ): DocTable | undefined {
-    if (apiConstructors.length === 0) {
+    if (apiItems.length === 0) {
         return undefined;
     }
 
-    const headerTitles = ["Constructor", "Modifiers", "Description"];
-    const tableRows: DocTableRow[] = apiConstructors.map(
-        (apiConstructor) =>
+    const headerTitles = [
+        getHeadingTitleForApiKind(itemKind),
+        "Modifiers",
+        "Return Type",
+        "Description",
+    ];
+    const tableRows: DocTableRow[] = apiItems.map(
+        (apiItem) =>
             new DocTableRow({ configuration: tsdocConfiguration }, [
-                renderApiTitleCell(apiConstructor, documenterConfiguration, tsdocConfiguration),
-                renderModifiersCell(apiConstructor, tsdocConfiguration),
-                renderApiSummaryCell(apiConstructor, tsdocConfiguration),
+                renderApiTitleCell(apiItem, documenterConfiguration, tsdocConfiguration),
+                renderModifiersCell(apiItem, tsdocConfiguration),
+                renderReturnTypeCell(apiItem, documenterConfiguration, tsdocConfiguration),
+                renderApiSummaryCell(apiItem, tsdocConfiguration),
             ]),
     );
 
@@ -80,9 +207,6 @@ export function renderConstructorsTable(
         {
             configuration: tsdocConfiguration,
             headerTitles,
-            // TODO
-            // cssClass: 'param-list',
-            // caption: 'List of parameters'
         },
         tableRows,
     );
@@ -112,71 +236,6 @@ export function renderPropertiesTable(
         {
             configuration: tsdocConfiguration,
             headerTitles,
-            // TODO
-            // cssClass: 'property-list',
-            // caption: 'List of properties on this class'
-        },
-        tableRows,
-    );
-}
-
-export function renderSignaturesTable(
-    apiSignatures: ReadonlyArray<ApiCallSignature | ApiIndexSignature>,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
-): DocTable | undefined {
-    if (apiSignatures.length === 0) {
-        return undefined;
-    }
-
-    const headerTitles = ["Signature", "Modifiers", "Description"];
-    const tableRows: DocTableRow[] = apiSignatures.map(
-        (apiSignature) =>
-            new DocTableRow({ configuration: tsdocConfiguration }, [
-                renderApiTitleCell(apiSignature, documenterConfiguration, tsdocConfiguration),
-                renderModifiersCell(apiSignature, tsdocConfiguration),
-                renderApiSummaryCell(apiSignature, tsdocConfiguration),
-            ]),
-    );
-
-    return new DocTable(
-        {
-            configuration: tsdocConfiguration,
-            headerTitles,
-            // TODO
-            // cssClass: 'signatures-list',
-            // caption: 'List of properties on this class'
-        },
-        tableRows,
-    );
-}
-
-export function renderMethodsTable(
-    apiMethods: ReadonlyArray<ApiMethod | ApiMethodSignature>,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
-): DocTable | undefined {
-    if (apiMethods.length === 0) {
-        return undefined;
-    }
-
-    const headerTitles = ["Method", "Modifiers", "Description"];
-    const tableRows: DocTableRow[] = apiMethods.map(
-        (apiMethod) =>
-            new DocTableRow({ configuration: tsdocConfiguration }, [
-                renderApiTitleCell(apiMethod, documenterConfiguration, tsdocConfiguration),
-                renderModifiersCell(apiMethod, tsdocConfiguration),
-                renderApiSummaryCell(apiMethod, tsdocConfiguration),
-            ]),
-    );
-
-    return new DocTable(
-        {
-            configuration: tsdocConfiguration,
-            headerTitles,
-            // TODO
-            // cssClass: 'method-list',
-            // caption: 'List of properties on this class'
         },
         tableRows,
     );
@@ -207,6 +266,28 @@ export function renderApiSummaryCell(
     }
 
     return new DocTableCell({ configuration: tsdocConfiguration }, docNodes);
+}
+
+export function renderReturnTypeCell(
+    apiItem: ApiFunctionLike,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTableCell {
+    const docNodes: DocNode[] = [];
+
+    if (ApiReturnTypeMixin.isBaseClassOf(apiItem)) {
+        docNodes.push(
+            renderExcerptWithHyperlinks(
+                apiItem.returnTypeExcerpt,
+                documenterConfiguration,
+                tsdocConfiguration,
+            ),
+        );
+    }
+
+    return new DocTableCell({ configuration: tsdocConfiguration }, [
+        new DocParagraph({ configuration: tsdocConfiguration }, docNodes),
+    ]);
 }
 
 export function renderApiTitleCell(
@@ -293,4 +374,15 @@ export function renderParameterSummaryCell(
         { configuration: tsdocConfiguration },
         apiParameter.tsdocParamBlock === undefined ? [] : [apiParameter.tsdocParamBlock.content],
     );
+}
+
+export function getHeadingTitleForApiKind(itemKind: ApiItemKind): string {
+    switch (itemKind) {
+        case ApiItemKind.PropertySignature:
+            return ApiItemKind.Property;
+        case ApiItemKind.MethodSignature:
+            return ApiItemKind.Method;
+        default:
+            return itemKind;
+    }
 }
