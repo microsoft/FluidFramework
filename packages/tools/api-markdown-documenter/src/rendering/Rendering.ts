@@ -52,6 +52,7 @@ import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfigurat
 import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTable, DocTableCell } from "../doc-nodes";
 import {
     ApiFunctionLike,
+    doesItemKindRequireOwnDocument,
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
     getFilePathForApiItem,
@@ -1064,15 +1065,67 @@ export function renderChildrenUnderHeading(
     headingTitle: string,
     tsdocConfiguration: TSDocConfiguration,
     renderChild: (childItem: ApiItem) => DocSection,
-): DocSection {
-    return new DocSection({ configuration: tsdocConfiguration }, [
-        new DocHeading({
-            configuration: tsdocConfiguration,
-            title: headingTitle,
-        }),
-        new DocSection(
-            { configuration: tsdocConfiguration },
-            childItems.map((constructor) => renderChild(constructor)),
-        ),
-    ]);
+): DocSection | undefined {
+    return childItems.length === 0
+        ? undefined
+        : new DocSection({ configuration: tsdocConfiguration }, [
+              new DocHeading({
+                  configuration: tsdocConfiguration,
+                  title: headingTitle,
+              }),
+              new DocSection(
+                  { configuration: tsdocConfiguration },
+                  childItems.map((constructor) => renderChild(constructor)),
+              ),
+          ]);
+}
+
+/**
+ * TODO
+ *
+ * Input props for {@link renderChildDetailsSection}
+ */
+export interface ChildSectionProperties {
+    headingTitle: string;
+    itemKind: ApiItemKind;
+    items: readonly ApiItem[];
+}
+
+export function renderChildDetailsSection(
+    childSections: readonly ChildSectionProperties[],
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+    renderChild: (apiItem) => DocSection,
+): DocSection | undefined {
+    const docNodes: DocNode[] = [];
+
+    for (const childSection of childSections) {
+        // Only render contents for a section if the item kind is one that gets rendered to its parent's document
+        // (i.e. it does not get rendered to its own document).
+        // Also only render the section if it actually has contents to render (to avoid empty headings).
+        if (
+            !doesItemKindRequireOwnDocument(
+                childSection.itemKind,
+                documenterConfiguration.documentBoundaries,
+            ) &&
+            childSection.items.length !== 0
+        ) {
+            const renderedChildSection = renderChildrenUnderHeading(
+                childSection.items,
+                childSection.headingTitle,
+                tsdocConfiguration,
+                renderChild,
+            );
+            if (renderedChildSection !== undefined) {
+                docNodes.push(renderedChildSection);
+            }
+        }
+    }
+
+    return docNodes.length === 0
+        ? undefined
+        : new DocSection({ configuration: tsdocConfiguration }, [
+              new DocHeading({ configuration: tsdocConfiguration, title: "Details" }),
+              new DocSection({ configuration: tsdocConfiguration }, docNodes),
+          ]);
 }

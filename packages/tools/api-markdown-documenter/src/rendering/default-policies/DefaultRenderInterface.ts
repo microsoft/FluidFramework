@@ -13,7 +13,7 @@ import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfigu
 import { DocHeading } from "../../doc-nodes";
 import { getFilteredChildren } from "../../utilities";
 import {
-    renderChildrenUnderHeading,
+    renderChildDetailsSection,
     renderMethodsTable,
     renderPropertiesTable,
     renderSignaturesTable,
@@ -129,59 +129,38 @@ export function renderInterfaceSection(
 
         // #endregion
 
-        docNodes.push(new DocHeading({ configuration: tsdocConfiguration, title: "Details" }));
+        // Render child item details if there are any that will not be rendered to their own documents
+        const renderedDetailsSection = renderChildDetailsSection(
+            [
+                {
+                    headingTitle: "Property Details",
+                    itemKind: ApiItemKind.PropertySignature,
+                    items: properties,
+                },
+                {
+                    headingTitle: "Call Signature Details",
+                    itemKind: ApiItemKind.CallSignature,
+                    items: callSignatures,
+                },
+                {
+                    headingTitle: "Index Signature Details",
+                    itemKind: ApiItemKind.IndexSignature,
+                    items: indexSignatures,
+                },
+                {
+                    headingTitle: "Method Details",
+                    itemKind: ApiItemKind.MethodSignature,
+                    items: methods,
+                },
+            ],
+            documenterConfiguration,
+            tsdocConfiguration,
+            renderChild,
+        );
 
-        // #region Render children (grouped)
-
-        // Render property details
-        if (hasProperties) {
-            docNodes.push(
-                renderChildrenUnderHeading(
-                    properties,
-                    "Property Details",
-                    tsdocConfiguration,
-                    renderChild,
-                ),
-            );
+        if (renderedDetailsSection !== undefined) {
+            docNodes.push(renderedDetailsSection);
         }
-
-        // Render call signature details
-        if (hasCallSignatures) {
-            docNodes.push(
-                renderChildrenUnderHeading(
-                    callSignatures,
-                    "Call Signature Details",
-                    tsdocConfiguration,
-                    renderChild,
-                ),
-            );
-        }
-
-        // Render index signature details
-        if (hasIndexSignatures) {
-            docNodes.push(
-                renderChildrenUnderHeading(
-                    indexSignatures,
-                    "Index Signature Details",
-                    tsdocConfiguration,
-                    renderChild,
-                ),
-            );
-        }
-
-        // Render method details
-        if (hasMethods) {
-            docNodes.push(
-                renderChildrenUnderHeading(
-                    methods,
-                    "Method Details",
-                    tsdocConfiguration,
-                    renderChild,
-                ),
-            );
-        }
-
-        // #endregion
     }
 
     const innerSectionBody = new DocSection({ configuration: tsdocConfiguration }, docNodes);

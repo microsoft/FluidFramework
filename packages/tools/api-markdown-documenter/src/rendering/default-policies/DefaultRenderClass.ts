@@ -1,14 +1,13 @@
 import {
     ApiCallSignature,
     ApiClass,
-    ApiConstructSignature,
     ApiConstructor,
     ApiIndexSignature,
     ApiItem,
     ApiItemKind,
     ApiMethod,
     ApiMethodSignature,
-    ApiPropertyItem,
+    ApiProperty,
 } from "@microsoft/api-extractor-model";
 import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
@@ -16,7 +15,7 @@ import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfigu
 import { DocHeading } from "../../doc-nodes";
 import { getFilteredChildren } from "../../utilities";
 import {
-    renderChildrenUnderHeading,
+    renderChildDetailsSection,
     renderConstructorsTable,
     renderMethodsTable,
     renderPropertiesTable,
@@ -35,16 +34,14 @@ export function renderClassSection(
 
     if (hasAnyChildren) {
         // Accumulate child items
-        const constructors = getFilteredChildren(apiClass, [
-            ApiItemKind.ConstructSignature,
-            ApiItemKind.Constructor,
-        ]).map((apiItem) => apiItem as ApiConstructSignature | ApiConstructor);
+        const constructors = getFilteredChildren(apiClass, [ApiItemKind.Constructor]).map(
+            (apiItem) => apiItem as ApiConstructor,
+        );
         const hasConstructors = constructors.length !== 0;
 
-        const properties = getFilteredChildren(apiClass, [
-            ApiItemKind.Property,
-            ApiItemKind.PropertySignature,
-        ]).map((apiItem) => apiItem as ApiPropertyItem);
+        const properties = getFilteredChildren(apiClass, [ApiItemKind.Property]).map(
+            (apiItem) => apiItem as ApiProperty,
+        );
         const hasProperties = properties.length !== 0;
 
         const callSignatures = getFilteredChildren(apiClass, [ApiItemKind.CallSignature]).map(
@@ -161,71 +158,43 @@ export function renderClassSection(
 
         // #endregion
 
-        docNodes.push(new DocHeading({ configuration: tsdocConfiguration, title: "Details" }));
+        // Render child item details if there are any that will not be rendered to their own documents
+        const renderedDetailsSection = renderChildDetailsSection(
+            [
+                {
+                    headingTitle: "Constructor Details",
+                    itemKind: ApiItemKind.Constructor,
+                    items: constructors,
+                },
+                {
+                    headingTitle: "Property Details",
+                    itemKind: ApiItemKind.Property,
+                    items: properties,
+                },
+                {
+                    headingTitle: "Call Signature Details",
+                    itemKind: ApiItemKind.CallSignature,
+                    items: callSignatures,
+                },
+                {
+                    headingTitle: "Index Signature Details",
+                    itemKind: ApiItemKind.IndexSignature,
+                    items: indexSignatures,
+                },
+                {
+                    headingTitle: "Method Details",
+                    itemKind: ApiItemKind.MethodSignature,
+                    items: methods,
+                },
+            ],
+            documenterConfiguration,
+            tsdocConfiguration,
+            renderChild,
+        );
 
-        // #region Render children (grouped)
-
-        // Render constructor details
-        if (hasConstructors) {
-            docNodes.push(
-                renderChildrenUnderHeading(
-                    constructors,
-                    "Constructor Details",
-                    tsdocConfiguration,
-                    renderChild,
-                ),
-            );
+        if (renderedDetailsSection !== undefined) {
+            docNodes.push(renderedDetailsSection);
         }
-
-        // Render property details
-        if (hasProperties) {
-            docNodes.push(
-                renderChildrenUnderHeading(
-                    properties,
-                    "Property Details",
-                    tsdocConfiguration,
-                    renderChild,
-                ),
-            );
-        }
-
-        // Render call signature details
-        if (hasCallSignatures) {
-            docNodes.push(
-                renderChildrenUnderHeading(
-                    callSignatures,
-                    "Call Signature Details",
-                    tsdocConfiguration,
-                    renderChild,
-                ),
-            );
-        }
-
-        // Render index signature details
-        if (hasIndexSignatures) {
-            docNodes.push(
-                renderChildrenUnderHeading(
-                    indexSignatures,
-                    "Index Signature Details",
-                    tsdocConfiguration,
-                    renderChild,
-                ),
-            );
-        }
-
-        // Render method details
-        if (hasMethods) {
-            docNodes.push(
-                renderChildrenUnderHeading(
-                    methods,
-                    "Method Details",
-                    tsdocConfiguration,
-                    renderChild,
-                ),
-            );
-        }
-
-        // #endregion
     }
 
     const innerSectionBody = new DocSection({ configuration: tsdocConfiguration }, docNodes);

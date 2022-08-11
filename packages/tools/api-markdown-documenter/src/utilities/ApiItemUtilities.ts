@@ -263,17 +263,24 @@ export function getAncestralHierarchy(
     return matches;
 }
 
+export function doesItemKindRequireOwnDocument(
+    kind: ApiItemKind,
+    documentBoundaries: DocumentBoundaries,
+): boolean {
+    if (kind === ApiItemKind.Model || kind === ApiItemKind.Package) {
+        return true;
+    }
+    if (kind === ApiItemKind.EntryPoint) {
+        return false;
+    }
+    return documentBoundaries.includes(kind);
+}
+
 export function doesItemRequireOwnDocument(
     apiItem: ApiItem,
     documentBoundaries: DocumentBoundaries,
 ): boolean {
-    if (apiItem.kind === ApiItemKind.Model || apiItem.kind === ApiItemKind.Package) {
-        return true;
-    }
-    if (apiItem.kind === ApiItemKind.EntryPoint) {
-        return false;
-    }
-    return documentBoundaries.includes(apiItem.kind);
+    return doesItemKindRequireOwnDocument(apiItem.kind, documentBoundaries);
 }
 
 export function doesItemGenerateHierarchy(
