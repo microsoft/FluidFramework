@@ -1,25 +1,24 @@
-import { ApiInterface, ApiItem } from "@microsoft/api-extractor-model";
+import { ApiEnumMember } from "@microsoft/api-extractor-model";
 import { DocParagraph, DocPlainText, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 
-export function renderInterfaceSection(
-    apiInterface: ApiInterface,
+export function renderEnumMemberSection(
+    apiEnumMember: ApiEnumMember,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
-    renderChild: (apiItem: ApiItem) => DocSection,
 ): DocSection {
     const innerSectionBody = new DocSection({ configuration: tsdocConfiguration }, [
         new DocParagraph({ configuration: tsdocConfiguration }, [
             new DocPlainText({
                 configuration: tsdocConfiguration,
-                text: "TODO: Interface rendering",
+                text: "TODO: Enum rendering",
             }),
         ]),
     ]);
 
     return documenterConfiguration.renderSectionBlock(
-        apiInterface,
+        apiEnumMember,
         innerSectionBody,
         documenterConfiguration,
         tsdocConfiguration,

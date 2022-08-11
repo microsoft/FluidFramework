@@ -4,6 +4,7 @@ import {
     ApiConstructSignature,
     ApiConstructor,
     ApiIndexSignature,
+    ApiItem,
     ApiItemKind,
     ApiMethod,
     ApiMethodSignature,
@@ -31,6 +32,7 @@ export function renderClassSection(
     apiClass: ApiClass,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
+    renderChild: (apiItem: ApiItem) => DocSection,
 ): DocSection {
     const docNodes: DocNode[] = [];
 

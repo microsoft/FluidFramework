@@ -1,6 +1,7 @@
 export * from "./DefaultRenderCallSignature";
 export * from "./DefaultRenderClass";
 export * from "./DefaultRenderEnum";
+export * from "./DefaultRenderEnumMember";
 export * from "./DefaultRenderFunctionLike";
 export * from "./DefaultRenderIndexSignature";
 export * from "./DefaultRenderInterface";

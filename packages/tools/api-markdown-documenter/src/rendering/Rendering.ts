@@ -9,6 +9,7 @@ import {
     ApiDeclaredItem,
     ApiDocumentedItem,
     ApiEnum,
+    ApiEnumMember,
     ApiFunction,
     ApiIndexSignature,
     ApiInterface,
@@ -98,6 +99,7 @@ export function renderModelPage(
             apiModel,
             documenterConfiguration,
             tsdocConfiguration,
+            (childItem) => renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
         ),
     );
 
@@ -140,6 +142,7 @@ export function renderPackagePage(
             apiPackage,
             documenterConfiguration,
             tsdocConfiguration,
+            (childItem) => renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
         ),
     );
 
@@ -224,7 +227,6 @@ function renderApiSection(
     if (
         apiItem.kind === ApiItemKind.Model ||
         apiItem.kind === ApiItemKind.Package ||
-        apiItem.kind === ApiItemKind.EnumMember ||
         apiItem.kind === ApiItemKind.EntryPoint ||
         apiItem.kind === ApiItemKind.None
     ) {
@@ -244,6 +246,8 @@ function renderApiSection(
                 apiItem as ApiClass,
                 documenterConfiguration,
                 tsdocConfiguration,
+                (childItem) =>
+                    renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
             );
 
         case ApiItemKind.ConstructSignature:
@@ -263,6 +267,15 @@ function renderApiSection(
         case ApiItemKind.Enum:
             return documenterConfiguration.renderEnumSection(
                 apiItem as ApiEnum,
+                documenterConfiguration,
+                tsdocConfiguration,
+                (childItem) =>
+                    renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
+            );
+
+        case ApiItemKind.EnumMember:
+            return documenterConfiguration.renderEnumMemberSection(
+                apiItem as ApiEnumMember,
                 documenterConfiguration,
                 tsdocConfiguration,
             );
@@ -286,6 +299,8 @@ function renderApiSection(
                 apiItem as ApiInterface,
                 documenterConfiguration,
                 tsdocConfiguration,
+                (childItem) =>
+                    renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
             );
 
         case ApiItemKind.Method:
@@ -307,6 +322,8 @@ function renderApiSection(
                 apiItem as ApiNamespace,
                 documenterConfiguration,
                 tsdocConfiguration,
+                (childItem) =>
+                    renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
             );
 
         case ApiItemKind.Property:

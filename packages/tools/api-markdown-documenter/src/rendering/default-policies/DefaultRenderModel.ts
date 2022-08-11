@@ -2,7 +2,7 @@ import { DocEmphasisSpan } from "@microsoft/api-documenter/lib/nodes/DocEmphasis
 import { DocHeading } from "@microsoft/api-documenter/lib/nodes/DocHeading";
 import { DocTable } from "@microsoft/api-documenter/lib/nodes/DocTable";
 import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
-import { ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
 import {
     DocNode,
     DocParagraph,
@@ -18,6 +18,7 @@ export function renderModelSection(
     apiModel: ApiModel,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
+    renderChild: (apiItem: ApiItem) => DocSection,
 ) {
     const docNodes: DocNode[] = [];
 

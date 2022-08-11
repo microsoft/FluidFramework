@@ -4,6 +4,7 @@ import {
     ApiConstructSignature,
     ApiConstructor,
     ApiEnum,
+    ApiEnumMember,
     ApiFunction,
     ApiIndexSignature,
     ApiInterface,
@@ -25,7 +26,17 @@ import * as DefaultRenderingPolicies from "./default-policies";
 /**
  * TODO
  */
-export type RenderingPolicy<TApiItem extends ApiItem> = (
+export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (
+    apiItem: TApiItem,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+    renderChild: (apiItem: ApiItem) => DocSection,
+) => DocSection;
+
+/**
+ * TODO
+ */
+export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (
     apiItem: TApiItem,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
@@ -45,20 +56,21 @@ export type RenderSectionBlock = (
  * TODO
  */
 export interface RenderingPolicies {
-    renderCallSignatureSection?: RenderingPolicy<ApiCallSignature>;
-    renderClassSection?: RenderingPolicy<ApiClass>;
-    renderConstructorSection?: RenderingPolicy<ApiConstructSignature | ApiConstructor>;
-    renderEnumSection?: RenderingPolicy<ApiEnum>;
-    renderFunctionSection?: RenderingPolicy<ApiFunction>;
-    renderIndexSignatureSection?: RenderingPolicy<ApiIndexSignature>;
-    renderInterfaceSection?: RenderingPolicy<ApiInterface>;
-    renderMethodSection?: RenderingPolicy<ApiMethod | ApiMethodSignature>;
-    renderModelSection?: RenderingPolicy<ApiModel>;
-    renderNamespaceSection?: RenderingPolicy<ApiNamespace>;
-    renderPackageSection?: RenderingPolicy<ApiPackage>;
-    renderPropertySection?: RenderingPolicy<ApiPropertyItem>;
-    renderTypeAliasSection?: RenderingPolicy<ApiTypeAlias>;
-    renderVariableSection?: RenderingPolicy<ApiVariable>;
+    renderCallSignatureSection?: RenderApiItemWithoutChildren<ApiCallSignature>;
+    renderClassSection?: RenderApiItemWithChildren<ApiClass>;
+    renderConstructorSection?: RenderApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+    renderEnumSection?: RenderApiItemWithChildren<ApiEnum>;
+    renderEnumMemberSection?: RenderApiItemWithoutChildren<ApiEnumMember>;
+    renderFunctionSection?: RenderApiItemWithoutChildren<ApiFunction>;
+    renderIndexSignatureSection?: RenderApiItemWithoutChildren<ApiIndexSignature>;
+    renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
+    renderMethodSection?: RenderApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
+    renderModelSection?: RenderApiItemWithChildren<ApiModel>;
+    renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
+    renderPackageSection?: RenderApiItemWithChildren<ApiPackage>;
+    renderPropertySection?: RenderApiItemWithoutChildren<ApiPropertyItem>;
+    renderTypeAliasSection?: RenderApiItemWithoutChildren<ApiTypeAlias>;
+    renderVariableSection?: RenderApiItemWithoutChildren<ApiVariable>;
 
     renderSectionBlock?: RenderSectionBlock;
 }
@@ -71,6 +83,7 @@ export const defaultRenderingPolicies: Required<RenderingPolicies> = {
     renderClassSection: DefaultRenderingPolicies.renderClassSection,
     renderConstructorSection: DefaultRenderingPolicies.renderFunctionLikeSection,
     renderEnumSection: DefaultRenderingPolicies.renderEnumSection,
+    renderEnumMemberSection: DefaultRenderingPolicies.renderEnumMemberSection,
     renderFunctionSection: DefaultRenderingPolicies.renderFunctionLikeSection,
     renderIndexSignatureSection: DefaultRenderingPolicies.renderIndexSignatureSection,
     renderInterfaceSection: DefaultRenderingPolicies.renderInterfaceSection,
