@@ -84,10 +84,12 @@ export default class Merge extends BaseCommand<typeof Merge.flags> {
         owner: Flags.string({
             description: "Repository owner",
             default: "microsoft",
+            hidden: true,
         }),
         repoName: Flags.string({
             description: "Repository name",
             default: "FluidFramework",
+            hidden: true,
         }),
         sourceBranch: Flags.string({
             description: "Source branch name",

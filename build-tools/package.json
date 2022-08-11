@@ -85,9 +85,6 @@
     ],
     "temp-directory": "nyc/.nyc_output"
   },
-  "dependencies": {
-    "@octokit/core": "^4.0.4"
-  },
   "devDependencies": {
     "@fluidframework/build-tools": "^0.3.0-0",
     "@fluidframework/test-tools": "^0.2.3074",
