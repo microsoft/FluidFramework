@@ -867,7 +867,7 @@ describe("Directory", () => {
                 assert.equal(directory1.get("test"), "directory1value4", "could not get the set key");
             });
 
-            it.skip("Directory should ensure LWW approach 1", async () => {
+            it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
                 const root1SubDir = directory1.createSubDirectory("testSubDir");
                 root1SubDir.set("key1", "testValue1");
 
@@ -893,7 +893,7 @@ describe("Directory", () => {
                 assert.strictEqual(directory2SubDir.get("key2"), "testValue2", "Dir2 key value should match");
             });
 
-            it.skip("Directory should ensure LWW approach 2", async () => {
+            it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
                 const root1SubDir = directory1.createSubDirectory("testSubDir");
                 directory2.createSubDirectory("testSubDir");
 
