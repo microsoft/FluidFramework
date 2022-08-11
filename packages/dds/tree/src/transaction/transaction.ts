@@ -35,7 +35,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
     const t = new Transaction(checkout.forest, checkout.changeFamily);
     const result = command(checkout.forest, t.editor);
     const changes = t.editor.getChanges();
-    const edit = checkout.changeFamily.rebaser.compose(...changes);
+    const edit = checkout.changeFamily.rebaser.compose(changes);
     if (result === CommandResult.Abort) {
         // Roll back changes
         const inverse = checkout.changeFamily.rebaser.invert(edit);
