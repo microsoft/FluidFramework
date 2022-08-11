@@ -101,7 +101,6 @@ which is considered conflicted if it tries to add a type that has a conflicting 
 While a schema must be added to the document as a stored schema to use the type TODO: Which type? I.e. does this mean the same thing as 'a schema must be added to the document as a stored schema in order to be applied to a specific type of node'?
 (otherwise adding a new type could break existing data which might not even be downloaded on the current client),
 it's possible to add a schema that is compatible with all possible data (assuming the children themselves are compatible with their own types).
-
 Applications which wish to rely entirely on schema-on-read for some or all of their data can use this pattern for all `stored schema` and only use their actual developer authored schema as `view schema`:
 
 ## Use as `Stored Schema`
