@@ -222,6 +222,14 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run lint'
 
+        # Benchmark tests
+        - task: Npm@1
+          displayName: npm run test:benchmark:report
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.buildDirectory }}
+            customCommand: 'run test:benchmark:report --timeout 30000 -r ${{ parameters.buildDirectory }}/node_modules/@fluidframework/mocha-test-setup --reporter ${{ parameters.buildDirectory }}/node_modules/@fluid-tools/benchmark/dist/MochaReporter.js --reporterOptions reportDir=./benchmarkOutput'
+
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
           # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
