@@ -232,7 +232,6 @@ export class SummaryManager implements IDisposable {
                 }
                 this.logger.sendTelemetryEvent({
                     eventName: "LastAttemptToSummarize",
-                    startWithInitialDelay,
                 });
             }
 
