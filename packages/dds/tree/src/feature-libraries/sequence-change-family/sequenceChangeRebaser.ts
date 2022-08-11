@@ -7,9 +7,9 @@ import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { SequenceChangeset } from "./sequenceChangeset";
 
-export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset, SequenceChangeset, SequenceChangeset>;
+export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset>;
 
-function compose(...changes: SequenceChangeset[]): SequenceChangeset {
+function compose(changes: SequenceChangeset[]): SequenceChangeset {
     throw Error("Not implemented"); // TODO
 }
 
@@ -23,19 +23,9 @@ function rebase(change: SequenceChangeset, over: SequenceChangeset): SequenceCha
 
 function rebaseAnchors(anchor: AnchorSet, over: SequenceChangeset): void {}
 
-function importChange(change: SequenceChangeset): SequenceChangeset {
-    return change;
-}
-
-function exportChange(change: SequenceChangeset): SequenceChangeset {
-    return change;
-}
-
 export const sequenceChangeRebaser: SequenceChangeRebaser = {
     compose,
     invert,
     rebase,
     rebaseAnchors,
-    import: importChange,
-    export: exportChange,
 };

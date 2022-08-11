@@ -3,19 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import {
-    BaseContainerRuntimeFactory,
-    defaultRouteRequestHandler,
-} from "@fluidframework/aqueduct";
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
+import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { ContainerKillBitInstantiationFactory } from "../containerKillBit";
+import { ContainerKillBitInstantiationFactory, IContainerKillBit } from "../containerKillBit";
+import { IInventoryList, IInventoryListContainer } from "../modelInterfaces";
+import { makeModelRequestHandler, ModelMakerCallback } from "../modelLoading";
+import { InventoryListContainer } from "./containerModel";
 import { InventoryListInstantiationFactory } from "./inventoryList";
 
 export const inventoryListId = "default-inventory-list";
 export const containerKillBitId = "container-kill-bit";
+
+const makeInventoryListModel: ModelMakerCallback<IInventoryListContainer> =
+    async (runtime: IContainerRuntime, container: IContainer) => {
+        const inventoryList = await requestFluidObject<IInventoryList>(
+            await runtime.getRootDataStore(inventoryListId),
+            "",
+        );
+        const containerKillBit = await requestFluidObject<IContainerKillBit>(
+            await runtime.getRootDataStore(containerKillBitId),
+            "",
+        );
+        return new InventoryListContainer(inventoryList, containerKillBit, container);
+    };
 
 export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFactory {
     constructor() {
@@ -26,7 +40,7 @@ export class InventoryListContainerRuntimeFactory extends BaseContainerRuntimeFa
             ]), // registryEntries
             undefined,
             [
-                defaultRouteRequestHandler(inventoryListId),
+                makeModelRequestHandler(makeInventoryListModel),
                 rootDataStoreRequestHandler,
             ],
         );

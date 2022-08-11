@@ -5,7 +5,6 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { MigrationState } from "../migrationInterfaces";
 import type {
@@ -16,17 +15,6 @@ import type {
     IInventoryListContainerEvents,
     IInventoryList,
 } from "../modelInterfaces";
-import { containerKillBitId } from "./containerCode";
-
-async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
-    // Our inventory list is available at the URL "/".
-    return requestFluidObject<IInventoryList>(container, { url: "/" });
-}
-
-async function getContainerKillBitFromContainer(container: IContainer): Promise<IContainerKillBit> {
-    // Our kill bit is available at the URL containerKillBitId.
-    return requestFluidObject<IContainerKillBit>(container, { url: containerKillBitId });
-}
 
 const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
     if (containerKillBit.migrated) {
@@ -80,37 +68,22 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         return this._migrationState;
     }
 
-    private _inventoryList: IInventoryList | undefined;
+    private readonly _inventoryList: IInventoryList;
     public get inventoryList() {
-        if (this._inventoryList === undefined) {
-            throw new Error("Initialize InventoryListContainer before using");
-        }
         return this._inventoryList;
     }
 
-    private _containerKillBit: IContainerKillBit | undefined;
-    private get containerKillBit() {
-        if (this._containerKillBit === undefined) {
-            throw new Error("Initialize InventoryListContainer before using");
-        }
-        return this._containerKillBit;
-    }
-
-    public constructor(private readonly container: IContainer) {
+    public constructor(
+        inventoryList: IInventoryList,
+        private readonly containerKillBit: IContainerKillBit,
+        private readonly container: IContainer,
+    ) {
         super();
-    }
-
-    /**
-     * Initialize must be called after constructing the InventoryListContainer.  This is where we do whatever async
-     * stuff is needed to prepare a sync API surface on the InventoryListContainer.
-     */
-    public readonly initialize = async () => {
-        this._inventoryList = await getInventoryListFromContainer(this.container);
-        this._containerKillBit = await getContainerKillBitFromContainer(this.container);
-        this._migrationState = getStateFromKillBit(this._containerKillBit);
+        this._inventoryList = inventoryList;
+        this._migrationState = getStateFromKillBit(this.containerKillBit);
         this.containerKillBit.on("codeDetailsAccepted", this.onCodeDetailsAccepted);
         this.containerKillBit.on("migrated", this.onMigrated);
-    };
+    }
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListContainerExportType => {
         if (typeof initialData !== "string") {
