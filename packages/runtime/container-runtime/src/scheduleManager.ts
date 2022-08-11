@@ -7,7 +7,7 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert, performance } from "@fluidframework/common-utils";
 import { isUnpackedRuntimeMessage } from "@fluidframework/driver-utils";
 import { DataCorruptionError, extractSafePropertiesFromMessage } from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
