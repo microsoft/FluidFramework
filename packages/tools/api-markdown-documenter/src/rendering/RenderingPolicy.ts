@@ -34,6 +34,16 @@ export type RenderingPolicy<TApiItem extends ApiItem> = (
 /**
  * TODO
  */
+export type RenderSectionBlock = (
+    apiItem: ApiItem,
+    innerSectionBody: DocSection,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+) => DocSection;
+
+/**
+ * TODO
+ */
 export interface RenderingPolicies {
     renderCallSignatureSection?: RenderingPolicy<ApiCallSignature>;
     renderClassSection?: RenderingPolicy<ApiClass>;
@@ -49,6 +59,8 @@ export interface RenderingPolicies {
     renderPropertySection?: RenderingPolicy<ApiPropertyItem>;
     renderTypeAliasSection?: RenderingPolicy<ApiTypeAlias>;
     renderVariableSection?: RenderingPolicy<ApiVariable>;
+
+    renderSectionBlock?: RenderSectionBlock;
 }
 
 /**
@@ -69,4 +81,6 @@ export const defaultRenderingPolicies: Required<RenderingPolicies> = {
     renderPropertySection: DefaultRenderingPolicies.renderPropertySection,
     renderTypeAliasSection: DefaultRenderingPolicies.renderTypeAliasSection,
     renderVariableSection: DefaultRenderingPolicies.renderVariableSection,
+
+    renderSectionBlock: DefaultRenderingPolicies.renderSectionBlock,
 };

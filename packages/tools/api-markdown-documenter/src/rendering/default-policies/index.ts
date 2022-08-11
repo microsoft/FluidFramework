@@ -8,5 +8,6 @@ export * from "./DefaultRenderModel";
 export * from "./DefaultRenderNamespace";
 export * from "./DefaultRenderPackage";
 export * from "./DefaultRenderProperty";
+export * from "./DefaultRenderSectionBlock";
 export * from "./DefaultRenderTypeAlias";
 export * from "./DefaultRenderVariable";

@@ -91,6 +91,7 @@ declare namespace DefaultRenderingPolicies {
         renderNamespaceSection,
         renderPackageSection,
         renderPropertySection,
+        renderSectionBlock,
         renderTypeAliasSection,
         renderVariableSection
     }
@@ -240,6 +241,8 @@ export interface RenderingPolicies {
     // (undocumented)
     renderPropertySection?: RenderingPolicy<ApiPropertyItem>;
     // (undocumented)
+    renderSectionBlock?: RenderSectionBlock;
+    // (undocumented)
     renderTypeAliasSection?: RenderingPolicy<ApiTypeAlias>;
     // (undocumented)
     renderVariableSection?: RenderingPolicy<ApiVariable>;
@@ -271,6 +274,12 @@ function renderPropertySection(apiProperty: ApiPropertyItem, documenterConfigura
 
 // @public (undocumented)
 export function renderRemarks(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
+
+// @public
+export type RenderSectionBlock = (apiItem: ApiItem, innerSectionBody: DocSection, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration) => DocSection;
+
+// @public
+function renderSectionBlock(apiItem: ApiItem, innerSectionBody: DocSection, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
 export function renderSignature(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
