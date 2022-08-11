@@ -164,8 +164,10 @@ USAGE
   $ fluv version latest -r <value> [--json] [--prerelease]
 
 FLAGS
-  -r, --versions=<value>...  (required) The public version to use in the Fluid internal version.
-  --prerelease               Include prerelease versions.
+  -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
+                             multiple versions, or a space-delimited list of versions can be provided using a single
+                             argument.
+  --prerelease               Include prerelease versions. By default, prerelease versions are excluded.
 
 GLOBAL FLAGS
   --json  Format output as json.
