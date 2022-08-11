@@ -184,14 +184,14 @@ jobs:
         inputs:
           targetType: 'inline'
           command: 'custom'
-          workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ benchmarkTest.packageToTest }}
+          workingDirectory: ${{ parameters.testWorkspace }}/node_modules/${{ benchmarkTest.packageToTest }}
           script: ${{ benchmarkTest.command }}
 
       - task: Bash@3
         displayName: Cat output file
         inputs:
           targetType: 'inline'
-          workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ benchmarkTest.packageToTest }}
+          workingDirectory: ${{ parameters.testWorkspace }}/node_modules/${{ benchmarkTest.packageToTest }}
           script: |
             ls;
             ls ./benchmarkOutput;
