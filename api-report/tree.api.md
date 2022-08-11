@@ -17,7 +17,7 @@ export class AnchorSet {
     forget(anchor: Anchor): void;
     isEmpty(): boolean;
     locate(anchor: Anchor): UpPath | undefined;
-    moveChildren(count: number, src: undefined | TreePosition, dst: undefined | TreePosition): void;
+    moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
     track(path: UpPath): Anchor;
 }
 
@@ -644,16 +644,6 @@ export const enum TreeNavigationResult {
     NotFound = -1,
     Ok = 1,
     Pending = 0
-}
-
-// @public
-export interface TreePosition {
-    // (undocumented)
-    field: FieldKey;
-    // (undocumented)
-    index: number;
-    // (undocumented)
-    path: UpPath | undefined;
 }
 
 // @public (undocumented)
