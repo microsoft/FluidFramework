@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
 import { MigrationState } from "../migrationInterfaces";
 import type {
@@ -130,10 +130,6 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         }
         return version;
     }
-
-    public readonly proposeCodeDetails = (codeDetails: IFluidCodeDetails) => {
-        this.containerKillBit.proposeCodeDetails(codeDetails).catch(console.error);
-    };
 
     public readonly proposeVersion = (version: string) => {
         this.containerKillBit.proposeCodeDetails({ package: version }).catch(console.error);
