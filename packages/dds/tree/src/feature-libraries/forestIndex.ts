@@ -122,10 +122,12 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
     }
 
     public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
-        const treeBuffer = await services.readBlob(treeBlobKey);
-        const tree = parse(bufferToString(treeBuffer, "utf8")) as string;
-        const placeholderTree = JSON.parse(tree) as JsonableTree[];
-
-        initializeForest(this.forest, placeholderTree);
+        if (await services.contains(treeBlobKey)) {
+            const treeBuffer = await services.readBlob(treeBlobKey);
+            const treeBufferString = bufferToString(treeBuffer, "utf8");
+            const tree = parse(treeBufferString) as string;
+            const placeholderTree = JSON.parse(tree) as JsonableTree[];
+            initializeForest(this.forest, placeholderTree);
+        }
     }
 }
