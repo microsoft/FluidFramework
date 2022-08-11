@@ -268,7 +268,8 @@ export class AnchorSet {
             },
             onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
                 assert(parentField !== undefined, "Must be in a field to move in");
-                this.moveChildren(count, moveTable.get(id), { parent, parentField, parentIndex: start });
+                const srcPath = moveTable.get(id) ?? fail("Must visit a move in after its move out");
+                this.moveChildren(count, srcPath, { parent, parentField, parentIndex: start });
             },
             onSetValue: (value: Value): void => {},
             enterNode: (index: number): void => {
