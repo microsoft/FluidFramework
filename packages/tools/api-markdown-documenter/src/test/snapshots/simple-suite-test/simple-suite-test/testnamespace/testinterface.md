@@ -10,5 +10,42 @@ Test interface
 ```typescript
 interface TestInterface 
 ```
-TODO: Interface rendering
 
+## Properties
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [testInterfaceProperty](/simple-suite-test/testnamespace/testinterface#testinterfaceproperty-PropertySignature) |  | boolean | Test interface property |
+
+## Methods
+
+|  Method | Modifiers | Description |
+|  --- | --- | --- |
+|  [testInterfaceMethod()](/simple-suite-test/testnamespace/testinterface#testinterfacemethod-MethodSignature) |  | Test interface method |
+
+## Details
+
+## Property Details
+
+## testInterfaceProperty
+
+Test interface property
+
+## Signature
+
+```typescript
+testInterfaceProperty: boolean;
+```
+TODO: Property rendering
+
+## Method Details
+
+## testInterfaceMethod
+
+Test interface method
+
+## Signature
+
+```typescript
+testInterfaceMethod(): void;
+```
