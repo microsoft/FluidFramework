@@ -4,5 +4,4 @@
  */
 
 export * from "./containerCode";
-export * from "./containerModel";
 export * from "./inventoryList";
