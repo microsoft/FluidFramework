@@ -1,4 +1,5 @@
 import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
+import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
     ApiCallSignature,
@@ -25,6 +26,7 @@ import {
     Excerpt,
     ExcerptTokenKind,
     HeritageType,
+    Parameter,
     ReleaseTag,
     TypeParameter,
 } from "@microsoft/api-extractor-model";
@@ -44,8 +46,9 @@ import {
 import { Link, urlFromLink } from "../Link";
 import { MarkdownDocument } from "../MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTableCell } from "../doc-nodes";
+import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTable, DocTableCell } from "../doc-nodes";
 import {
+    ApiFunctionLike,
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
     getFilePathForApiItem,
@@ -750,24 +753,7 @@ export function renderExample(
     ]);
 }
 
-export function renderTitleCell(
-    apiItem: ApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
-): DocTableCell {
-    return new DocTableCell({ configuration: tsdocConfiguration }, [
-        new DocParagraph({ configuration: tsdocConfiguration }, [
-            new DocLinkTag({
-                configuration: tsdocConfiguration,
-                tagName: "@link",
-                linkText: Utilities.getConciseSignature(apiItem),
-                urlDestination: getLinkUrlForApiItem(apiItem, documenterConfiguration),
-            }),
-        ]),
-    ]);
-}
-
-export function renderSummaryCell(
+export function renderApiSummaryCell(
     apiItem: ApiItem,
     tsdocConfiguration: TSDocConfiguration,
 ): DocTableCell {
@@ -792,4 +778,106 @@ export function renderSummaryCell(
     }
 
     return new DocTableCell({ configuration: tsdocConfiguration }, docNodes);
+}
+
+export function renderApiTitleCell(
+    apiItem: ApiItem,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTableCell {
+    return new DocTableCell({ configuration: tsdocConfiguration }, [
+        new DocParagraph({ configuration: tsdocConfiguration }, [
+            new DocLinkTag({
+                configuration: tsdocConfiguration,
+                tagName: "@link",
+                linkText: Utilities.getConciseSignature(apiItem),
+                urlDestination: getLinkUrlForApiItem(apiItem, documenterConfiguration),
+            }),
+        ]),
+    ]);
+}
+
+export function renderParameterTitleCell(
+    apiParameter: Parameter,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTableCell {
+    return new DocTableCell({ configuration: tsdocConfiguration }, [
+        new DocParagraph({ configuration: tsdocConfiguration }, [
+            new DocPlainText({ configuration: tsdocConfiguration, text: apiParameter.name }),
+        ]),
+    ]);
+}
+
+export function renderParameterTypeCell(
+    apiParameter: Parameter,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTableCell {
+    return new DocTableCell({ configuration: tsdocConfiguration }, [
+        new DocParagraph({ configuration: tsdocConfiguration }, [
+            renderExcerptWithHyperlinks(
+                apiParameter.parameterTypeExcerpt,
+                documenterConfiguration,
+                tsdocConfiguration,
+            ),
+        ]),
+    ]);
+}
+
+export function renderParameterSummaryCell(
+    apiParameter: Parameter,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTableCell {
+    return new DocTableCell(
+        { configuration: tsdocConfiguration },
+        apiParameter.tsdocParamBlock === undefined ? [] : [apiParameter.tsdocParamBlock],
+    );
+}
+
+export function renderParametersSection(
+    apiFunctionLike: ApiFunctionLike,
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocSection | undefined {
+    if (apiFunctionLike.parameters.length === 0) {
+        return undefined;
+    }
+
+    // TODO: caption text?
+
+    return new DocSection({ configuration: tsdocConfiguration }, [
+        new DocHeading({ configuration: tsdocConfiguration, title: "Parameters" }),
+        renderParametersTable(
+            apiFunctionLike.parameters,
+            documenterConfiguration,
+            tsdocConfiguration,
+        ),
+    ]);
+}
+
+export function renderParametersTable(
+    apiParameters: readonly Parameter[],
+    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    tsdocConfiguration: TSDocConfiguration,
+): DocTable {
+    // TODO: denote optional parameters?
+    const tableRows: DocTableRow[] = apiParameters.map(
+        (apiParameter) =>
+            new DocTableRow({ configuration: tsdocConfiguration }, [
+                renderParameterTitleCell(apiParameter, tsdocConfiguration),
+                renderParameterTypeCell(apiParameter, documenterConfiguration, tsdocConfiguration),
+                renderParameterSummaryCell(apiParameter, tsdocConfiguration),
+            ]),
+    );
+
+    return new DocTable(
+        {
+            configuration: tsdocConfiguration,
+            headerTitles: ["Parameter", "Type", "Description"],
+            // TODO
+            // cssClass: 'param-list',
+            // caption: 'List of parameters'
+        },
+        tableRows,
+    );
 }

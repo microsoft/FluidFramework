@@ -1,10 +1,29 @@
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
-import { ApiItem, ApiItemKind, ApiParameterListMixin } from "@microsoft/api-extractor-model";
+import {
+    ApiConstructSignature,
+    ApiConstructor,
+    ApiFunction,
+    ApiItem,
+    ApiItemKind,
+    ApiMethod,
+    ApiMethodSignature,
+    ApiParameterListMixin,
+} from "@microsoft/api-extractor-model";
 import * as Path from "path";
 
 import { Link, urlFromLink } from "../Link";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
+
+/**
+ * `ApiItem` union type representing function-like API kinds.
+ */
+export type ApiFunctionLike =
+    | ApiConstructSignature
+    | ApiConstructor
+    | ApiFunction
+    | ApiMethod
+    | ApiMethodSignature;
 
 export function getDisplayNameForApiItem(apiItem: ApiItem): string {
     switch (apiItem.kind) {

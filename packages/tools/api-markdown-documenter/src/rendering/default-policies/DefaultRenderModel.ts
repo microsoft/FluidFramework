@@ -12,7 +12,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { renderSummaryCell, renderTitleCell } from "../Rendering";
+import { renderApiSummaryCell, renderApiTitleCell } from "../Rendering";
 
 export function renderModelSection(
     apiModel: ApiModel,
@@ -45,13 +45,16 @@ export function renderModelSection(
         for (const apiPackage of apiModel.packages) {
             packagesTable.addRow(
                 new DocTableRow({ configuration: tsdocConfiguration }, [
-                    renderTitleCell(apiPackage, documenterConfiguration, tsdocConfiguration),
-                    renderSummaryCell(apiPackage, tsdocConfiguration),
+                    renderApiTitleCell(apiPackage, documenterConfiguration, tsdocConfiguration),
+                    renderApiSummaryCell(apiPackage, tsdocConfiguration),
                 ]),
             );
         }
 
         docNodes.push(new DocHeading({ configuration: tsdocConfiguration, title: "Packages" }));
+
+        // TODO: table caption?
+
         docNodes.push(packagesTable);
     }
 
