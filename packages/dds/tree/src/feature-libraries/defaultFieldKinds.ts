@@ -6,11 +6,9 @@
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { ChangeEncoder, JsonCompatible, JsonCompatibleReadOnly } from "../change-family";
 import { ChangeRebaser } from "../rebase";
-import {
-    FieldKind, ChangeHandler, allowsTreeSchemaIdentifierSuperset, Multiplicity,
-} from "../schema-stored";
 import { AnchorSet, JsonableTree } from "../tree";
 import { brand } from "../util";
+import { ChangeHandler, FieldKind, Multiplicity, allowsTreeSchemaIdentifierSuperset } from "./modular-schema";
 
 /**
  * Encoder for changesets which carry no information.
@@ -92,8 +90,7 @@ type ReplaceOp<T> = Replacement<T> | 0;
 /**
  * Picks the last value written.
  *
- * TODO: it seems impossible for this to obey the desired axioms.
- * Specifically inverse needs to cancel, restoring the value from the previous change which was discarded.
+ * Consistant if used on valid paths with correct old states.
  */
 function replaceRebaser<T>(data: {
     rebaseAnchors: (anchor: AnchorSet, over: ReplaceOp<T>) => void;
@@ -130,7 +127,7 @@ function replaceRebaser<T>(data: {
  */
 export const noChangeHandle: ChangeHandler<never, 0, 0> = {
     rebaser: {
-        compose: (...changes: never[]) => 0,
+        compose: (...changes: 0[]) => 0,
         invert: (changes: 0) => 0,
         rebase: (change: 0, over: 0) => 0,
         rebaseAnchors: (anchor: AnchorSet, over: 0) => {},

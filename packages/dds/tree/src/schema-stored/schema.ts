@@ -4,7 +4,6 @@
  */
 
 import { Brand, Opaque } from "../util";
-import { FieldKind } from "./fieldKind";
 
 /**
  * Example internal schema representation types.
@@ -226,13 +225,11 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
  */
  export interface SchemaPolicy {
     /**
-     * Policy information about FieldKinds:
-     * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.
-     * It is assumed that all users of a document will have exactly the same FieldKind policies,
-     * though older applications might be missing some,
-     * and will be unable to process any changes that use those FieldKinds.
+     * @returns true iff `superset` is a superset of `original`.
+     *
+     * This does not require a strict (aka proper) superset: equivalent schema will return true.
      */
-    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
+    allowsFieldSuperset(original: FieldSchema, superset: FieldSchema): boolean;
 
     /**
      * Schema used when there is no schema explicitly specified for an identifier.

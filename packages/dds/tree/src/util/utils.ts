@@ -53,3 +53,34 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
     }
     return array;
 }
+
+/**
+ * @returns false iff any of the call backs returned false.
+ */
+ export function compareSets<T>(
+    a: ReadonlySet<T> | ReadonlyMap<T, unknown>,
+    b: ReadonlySet<T> | ReadonlyMap<T, unknown>,
+    aExtra: (t: T) => boolean,
+    bExtra: (t: T) => boolean,
+    same: (t: T) => boolean = () => true,
+): boolean {
+    for (const item of a.keys()) {
+        if (!b.has(item)) {
+            if (!aExtra(item)) {
+                return false;
+            }
+        } else {
+            if (!same(item)) {
+                return false;
+            }
+        }
+    }
+    for (const item of b.keys()) {
+        if (!a.has(item)) {
+            if (!bExtra(item)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}

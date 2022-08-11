@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "../util";
+import { Invariant } from "../../util";
 import {
     fieldSchema, treeSchema, TreeSchemaBuilder,
     FieldSchema,
@@ -11,8 +11,8 @@ import {
     TreeSchema,
     ValueSchema,
     TreeSchemaIdentifier,
-    FieldKind,
-} from "../schema-stored";
+} from "../../schema-stored";
+import { FieldKind } from "./fieldKind";
 
 /**
  * APIs for building typescript types and schema together.

@@ -4,8 +4,8 @@
  */
 
 import { brand, brandOpaque } from "../util";
-import { FieldKind } from "./fieldKind";
 import {
+    FieldKindIdentifier,
     FieldSchema, GlobalFieldKey, LocalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema,
 } from "./schema";
 
@@ -39,7 +39,10 @@ export const itemsKey: LocalFieldKey = brand("items");
  */
 export const rootFieldKey = brandOpaque<GlobalFieldKey>("rootFieldKey");
 
-export function fieldSchema(kind: FieldKind, types?: Iterable<TreeSchemaIdentifier>): FieldSchema {
+export function fieldSchema(
+    kind: { identifier: FieldKindIdentifier; },
+    types?: Iterable<TreeSchemaIdentifier>,
+): FieldSchema {
     return {
         kind: kind.identifier,
         types: types === undefined ? undefined : new Set(types),

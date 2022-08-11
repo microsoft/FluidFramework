@@ -99,6 +99,12 @@ export interface Contravariant<T> {
     _removeCovariance?: (_: T) => void;
 }
 
+// @public (undocumented)
+const counter: FieldKind;
+
+// @public
+const counterHandle: ChangeHandler<number, number, number>;
+
 // @public
 export interface Covariant<T> {
     // (undocumented)
@@ -200,6 +206,23 @@ export class FieldKind {
 // @public
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
+declare namespace FieldKinds {
+    export {
+        lastWriteWinsRebaser,
+        UnitEncoder,
+        ValueEncoder,
+        Replacement,
+        noChangeHandle,
+        counterHandle,
+        counter,
+        value,
+        optional,
+        sequence,
+        forbidden
+    }
+}
+export { FieldKinds }
+
 // @public
 export interface FieldLocation {
     // (undocumented)
@@ -229,6 +252,9 @@ export interface FieldSchema {
 
 // @public (undocumented)
 export type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, infer TFinal, any> ? TFinal : never;
+
+// @public
+const forbidden: FieldKind;
 
 // @public
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
@@ -392,6 +418,13 @@ export const jsonString: NamedTreeSchema;
 export const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema>;
 
 // @public
+function lastWriteWinsRebaser<TChange>(data: {
+    noop: TChange;
+    invert: (changes: TChange) => TChange;
+    rebaseAnchors: (anchor: AnchorSet, over: TChange) => void;
+}): ChangeRebaser<TChange, TChange, TChange>;
+
+// @public
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @public
@@ -537,6 +570,9 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 export const neverTree: TreeSchema;
 
 // @public
+const noChangeHandle: ChangeHandler<never, 0, 0>;
+
+// @public
 export interface NodeData {
     readonly type: TreeSchemaIdentifier;
     value?: TreeValue;
@@ -554,6 +590,9 @@ type Offset = number;
 
 // @public
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
+
+// @public
+const optional: FieldKind;
 
 // @public
 type OuterMark = Skip | Modify | Delete | MoveOut | MoveIn | Insert | ModifyAndDelete | ModifyAndMoveOut | MoveInAndModify | InsertAndModify;
@@ -580,6 +619,14 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
 
 // @public
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
+
+// @public (undocumented)
+interface Replacement<T> {
+    // (undocumented)
+    new: T;
+    // (undocumented)
+    old: T;
+}
 
 // @public
 export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
@@ -614,10 +661,14 @@ export interface SchemaDataReader {
 
 // @public
 export interface SchemaPolicy {
+    // (undocumented)
+    allowsFieldSuperset(original: FieldSchema, superset: FieldSchema): boolean;
     readonly defaultGlobalFieldSchema: FieldSchema;
     readonly defaultTreeSchema: TreeSchema;
-    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 }
+
+// @public
+const sequence: FieldKind;
 
 // @public
 export class SimpleDependee implements Dependee {
@@ -640,8 +691,8 @@ export function singleTextCursor(root: JsonableTree): TextCursor;
 type Skip = number;
 
 // @public
-export class StoredSchemaRepository extends SimpleDependee implements SchemaData {
-    constructor(policy: SchemaPolicy, data?: SchemaData);
+export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends SimpleDependee implements SchemaData {
+    constructor(policy: TPolicy, data?: SchemaData);
     // (undocumented)
     clone(): StoredSchemaRepository;
     // (undocumented)
@@ -652,19 +703,17 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaData
         globalFieldSchema: Map<GlobalFieldKey, FieldSchema>;
     };
     // (undocumented)
-    get fieldKinds(): ReadonlyMap<FieldKindIdentifier, FieldKind>;
-    // (undocumented)
     get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema>;
     // (undocumented)
     lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema;
     // (undocumented)
     lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema;
     // (undocumented)
-    readonly policy: SchemaPolicy;
+    readonly policy: TPolicy;
     // (undocumented)
     get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
-    tryUpdateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): boolean;
-    tryUpdateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): boolean;
+    updateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): void;
+    updateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): void;
 }
 
 // @public
@@ -741,6 +790,18 @@ export interface TreeValue extends Serializable {
 }
 
 // @public
+class UnitEncoder extends ChangeEncoder<0> {
+    // (undocumented)
+    decodeBinary(formatVersion: number, change: IsoBuffer): 0;
+    // (undocumented)
+    decodeJson(formatVersion: number, change: JsonCompatible): 0;
+    // (undocumented)
+    encodeBinary(formatVersion: number, change: 0): IsoBuffer;
+    // (undocumented)
+    encodeForJson(formatVersion: number, change: 0): JsonCompatible;
+}
+
+// @public
 export interface UpPath {
     // (undocumented)
     readonly parent: UpPath | undefined;
@@ -750,6 +811,17 @@ export interface UpPath {
 
 // @public
 export type Value = undefined | TreeValue;
+
+// @public
+const value: FieldKind;
+
+// @public
+class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
+    // (undocumented)
+    decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): T;
+    // (undocumented)
+    encodeForJson(formatVersion: number, change: T): JsonCompatibleReadOnly;
+}
 
 // @public
 export enum ValueSchema {

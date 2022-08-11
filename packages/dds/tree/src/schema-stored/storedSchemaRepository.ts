@@ -4,14 +4,11 @@
  */
 
 import { SimpleDependee } from "../dependency-tracking";
-import { allowsFieldSuperset, allowsTreeSuperset } from "./comparison";
-import { FieldKind } from "./fieldKind";
 import {
     GlobalFieldKey,
     FieldSchema,
     TreeSchemaIdentifier,
     TreeSchema,
-    FieldKindIdentifier,
     SchemaDataReader,
     SchemaPolicy,
 } from "./schema";
@@ -53,7 +50,8 @@ import {
  *
  * TODO: could implement more fine grained dependency tracking.
  */
-export class StoredSchemaRepository extends SimpleDependee implements SchemaData {
+export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
+    extends SimpleDependee implements SchemaData {
     readonly computationName: string = "StoredSchemaRepository";
     protected readonly data = {
         treeSchema: new Map<TreeSchemaIdentifier, TreeSchema>(),
@@ -72,7 +70,7 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaData
      * that might provide a decent alternative to extraFields (which is a bit odd).
      */
     public constructor(
-        public readonly policy: SchemaPolicy,
+        public readonly policy: TPolicy,
         data?: SchemaData,
     ) {
         super();
@@ -99,10 +97,6 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaData
         return this.data.treeSchema;
     }
 
-    public get fieldKinds(): ReadonlyMap<FieldKindIdentifier, FieldKind> {
-        return this.policy.fieldKinds;
-    }
-
     public lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema {
         return this.globalFieldSchema.get(identifier) ?? this.policy.defaultGlobalFieldSchema;
     }
@@ -112,42 +106,25 @@ export class StoredSchemaRepository extends SimpleDependee implements SchemaData
     }
 
     /**
-     * Updates the specified schema iff all possible in schema data would remain in schema after the change.
-     * @returns true iff update was performed.
+     * Updates the specified schema.
      */
-    public tryUpdateFieldSchema(
+    public updateFieldSchema(
         identifier: GlobalFieldKey,
         schema: FieldSchema,
-    ): boolean {
-        if (
-            allowsFieldSuperset(
-                this.policy,
-                this.lookupGlobalFieldSchema(identifier),
-                schema,
-            )
-        ) {
-            this.data.globalFieldSchema.set(identifier, schema);
-            this.invalidateDependents();
-            return true;
-        }
-        return false;
+    ): void {
+        this.data.globalFieldSchema.set(identifier, schema);
+        this.invalidateDependents();
     }
 
     /**
-     * Updates the specified schema iff all possible in schema data would remain in schema after the change.
-     * @returns true iff update was performed.
+     * Updates the specified schema.
      */
-    public tryUpdateTreeSchema(
+    public updateTreeSchema(
         identifier: TreeSchemaIdentifier,
         schema: TreeSchema,
-    ): boolean {
-        const original = this.lookupTreeSchema(identifier);
-        if (allowsTreeSuperset(this, original, schema)) {
-            this.data.treeSchema.set(identifier, schema);
-            this.invalidateDependents();
-            return true;
-        }
-        return false;
+    ): void {
+        this.data.treeSchema.set(identifier, schema);
+        this.invalidateDependents();
     }
 }
 

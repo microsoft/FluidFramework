@@ -4,5 +4,6 @@
  */
 
 export {
-	Adapters, Compatibility, MissingFieldAdapter, TreeAdapter, ViewSchemaCollection, ViewSchemaData, FieldTypeView,
+	Adapters, Compatibility, MissingFieldAdapter, TreeAdapter,
+	ViewSchemaData, AdaptedViewSchema,
 } from "./view";

@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeEncoder } from "../change-family";
-import { ChangeRebaser } from "../rebase";
-import { FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier } from "./schema";
+import { ChangeEncoder } from "../../change-family";
+import { ChangeRebaser } from "../../rebase";
+import { FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier, SchemaPolicy } from "../../schema-stored";
+
+/**
+ * This logic lives in feature-libraries since using it is technically optional.
+ *
+ * This is all helper code for doing a dependency in version implementations of
+ * change rebasers, edit builders and such more modular.
+ */
 
 /**
  * Functionality for FieldKinds that is stable,
@@ -43,6 +50,21 @@ export class FieldKind {
 }
 
 /**
+ * Policy from the app for interpreting the stored schema.
+ * The app must ensure consistency for all users of the document.
+ */
+ export interface FullSchemaPolicy extends SchemaPolicy {
+    /**
+     * Policy information about FieldKinds:
+     * This is typically stored as code, not in documents, and defines how to handles fields based on their kind.
+     * It is assumed that all users of a document will have exactly the same FieldKind policies,
+     * though older applications might be missing some,
+     * and will be unable to process any changes that use those FieldKinds.
+     */
+    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
+}
+
+/**
  * Functionality provided by a field kind which will be composed together to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
  *
@@ -59,7 +81,7 @@ export interface ChangeHandler<TChange, TFinalChange, TChangeSet> {
  *
  * This determine its reading and editing APIs, multiplicity, and what merge resolution policies it will use.
  */
- export enum Multiplicity {
+export enum Multiplicity {
     /**
      * Exactly one item.
      */

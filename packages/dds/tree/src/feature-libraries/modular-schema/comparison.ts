@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../util";
-import { Multiplicity } from "./fieldKind";
+import { compareSets, fail } from "../../util";
 import {
     TreeSchema,
     ValueSchema,
     FieldSchema,
     TreeTypeSet,
-    SchemaPolicy,
-} from "./schema";
-import { StoredSchemaRepository } from "./storedSchemaRepository";
+    StoredSchemaRepository,
+} from "../../schema-stored";
+import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
+
+export type SchemaRepo = StoredSchemaRepository<FullSchemaPolicy>;
 
 /**
  * @returns true iff `superset` is a superset of `original`.
@@ -20,7 +21,7 @@ import { StoredSchemaRepository } from "./storedSchemaRepository";
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
 export function allowsTreeSuperset(
-    repo: StoredSchemaRepository,
+    repo: SchemaRepo,
     original: TreeSchema,
     superset: TreeSchema,
 ): boolean {
@@ -31,8 +32,7 @@ export function allowsTreeSuperset(
         return false;
     }
     if (
-        !allowsFieldSuperset(
-            repo.policy,
+        !repo.policy.allowsFieldSuperset(
             original.extraLocalFields,
             superset.extraLocalFields,
         )
@@ -49,15 +49,13 @@ export function allowsTreeSuperset(
             // true iff the original field must always be empty, or superset supports extra global fields.
             (originalField) =>
                 superset.extraGlobalFields ||
-                allowsFieldSuperset(
-                    repo.policy,
+                repo.policy.allowsFieldSuperset(
                     repo.lookupGlobalFieldSchema(originalField),
                     repo.policy.defaultGlobalFieldSchema,
                 ),
             // true iff the new field can be empty, since it may be empty in original
             (supersetField) =>
-                allowsFieldSuperset(
-                    repo.policy,
+                repo.policy.allowsFieldSuperset(
                     repo.policy.defaultGlobalFieldSchema,
                     repo.lookupGlobalFieldSchema(supersetField),
                 ),
@@ -71,19 +69,16 @@ export function allowsTreeSuperset(
             original.localFields,
             superset.localFields,
             (originalField) =>
-                allowsFieldSuperset(
-                    repo.policy,
+                repo.policy.allowsFieldSuperset(
                     original.localFields.get(originalField) ?? fail("missing expected field"),
                     superset.extraLocalFields,
                 ),
             (supersetField) =>
-                allowsFieldSuperset(
-                    repo.policy,
+                repo.policy.allowsFieldSuperset(
                     original.extraLocalFields,
                     superset.localFields.get(supersetField) ?? fail("missing expected field"),
                 ),
-            (sameField) => allowsFieldSuperset(
-                repo.policy,
+            (sameField) => repo.policy.allowsFieldSuperset(
                 original.localFields.get(sameField) ?? fail("missing expected field"),
                 superset.localFields.get(sameField) ?? fail("missing expected field"),
             ),
@@ -106,13 +101,14 @@ export function allowsValueSuperset(
 ): boolean {
     return original === superset || superset === ValueSchema.Serializable;
 }
+
 /**
  * @returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
-export function allowsFieldSuperset(
-    policy: SchemaPolicy,
+ export function allowsFieldSuperset(
+    policy: FullSchemaPolicy,
     original: FieldSchema,
     superset: FieldSchema,
 ): boolean {
@@ -153,14 +149,13 @@ export function allowsTreeSchemaIdentifierSuperset(
  * it would have to compare everything anyway.
  */
 export function allowsRepoSuperset(
-    original: StoredSchemaRepository,
-    superset: StoredSchemaRepository,
+    original: SchemaRepo,
+    superset: SchemaRepo,
 ): boolean {
     for (const [key, schema] of original.globalFieldSchema) {
         // TODO: I think its ok to use the field from superset here, but I should confirm it is, and document why.
         if (
-            !allowsFieldSuperset(
-                original.policy,
+            !original.policy.allowsFieldSuperset(
                 schema,
                 superset.lookupGlobalFieldSchema(key),
             )
@@ -183,43 +178,12 @@ export function allowsRepoSuperset(
     return true;
 }
 
-/**
- * @returns false iff any of the call backs returned false.
- */
-export function compareSets<T>(
-    a: ReadonlySet<T> | ReadonlyMap<T, unknown>,
-    b: ReadonlySet<T> | ReadonlyMap<T, unknown>,
-    aExtra: (t: T) => boolean,
-    bExtra: (t: T) => boolean,
-    same: (t: T) => boolean = () => true,
-): boolean {
-    for (const item of a.keys()) {
-        if (!b.has(item)) {
-            if (!aExtra(item)) {
-                return false;
-            }
-        } else {
-            if (!same(item)) {
-                return false;
-            }
-        }
-    }
-    for (const item of b.keys()) {
-        if (!a.has(item)) {
-            if (!bExtra(item)) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 export function isNeverField(
-    repo: StoredSchemaRepository,
+    repo: SchemaRepo,
     field: FieldSchema,
 ): boolean {
     if (
-        (repo.fieldKinds.get(field.kind) ?? fail("missing field kind")).multiplicity === Multiplicity.Value &&
+        (repo.policy.fieldKinds.get(field.kind) ?? fail("missing field kind")).multiplicity === Multiplicity.Value &&
         field.types !== undefined
     ) {
         for (const type of field.types) {
@@ -234,8 +198,8 @@ export function isNeverField(
     return false;
 }
 
-export function isNeverTree(repo: StoredSchemaRepository, tree: TreeSchema): boolean {
-    if ((repo.fieldKinds.get(tree.extraLocalFields.kind) ?? fail("missing field kind")).multiplicity
+export function isNeverTree(repo: SchemaRepo, tree: TreeSchema): boolean {
+    if ((repo.policy.fieldKinds.get(tree.extraLocalFields.kind) ?? fail("missing field kind")).multiplicity
             === Multiplicity.Value) {
         return true;
     }

@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaPolicy, fieldSchema, emptyMap, emptySet, ValueSchema, TreeSchema } from "../schema-stored";
+import { fieldSchema, emptyMap, emptySet, ValueSchema, TreeSchema, FieldSchema } from "../schema-stored";
+import { fail } from "../util";
 import { value, forbidden, optional, sequence, counter } from "./defaultFieldKinds";
+import { FieldKind, FullSchemaPolicy } from "./modular-schema";
 
 /**
 * FieldSchema which is impossible for any data to be in schema with.
@@ -28,8 +30,12 @@ export const neverTree: TreeSchema = {
 	value: ValueSchema.Nothing,
 };
 
-export const defaultSchemaPolicy: SchemaPolicy = {
+export const defaultSchemaPolicy: FullSchemaPolicy = {
 	fieldKinds: new Map([value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s])),
+	allowsFieldSuperset: (original: FieldSchema, superset: FieldSchema): boolean => {
+		const kind: FieldKind = (defaultSchemaPolicy.fieldKinds.get(superset.kind) ?? fail("missing kind"));
+		return kind.allowsTreeSupersetOf(original.types, superset);
+	},
 	defaultTreeSchema: neverTree,
 	defaultGlobalFieldSchema: emptyField,
 };

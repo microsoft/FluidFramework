@@ -11,5 +11,3 @@ export {
 } from "./schema";
 export { StoredSchemaRepository, SchemaData } from "./storedSchemaRepository";
 export { treeSchema, fieldSchema, rootFieldKey, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";
-export { isNeverField, isNeverTree, allowsRepoSuperset, allowsTreeSchemaIdentifierSuperset } from "./comparison";
-export * from "./fieldKind";
