@@ -235,7 +235,7 @@ describe("partial lengths", () => {
         });
 
         it("is correct for different heights", () => {
-            for (let i = 0; i < 1000; i++) {
+            for (let i = 0; i < 100; i++) {
                 insertText(
                     mergeTree,
                     0,
@@ -251,8 +251,8 @@ describe("partial lengths", () => {
                 validatePartialLengths(remoteClientId, i + 1, i + 13);
             }
 
-            validatePartialLengths(localClientId, 0, 1012);
-            validatePartialLengths(remoteClientId, 1000, 1012);
+            validatePartialLengths(localClientId, 0, 112);
+            validatePartialLengths(remoteClientId, 100, 112);
         });
     });
 
