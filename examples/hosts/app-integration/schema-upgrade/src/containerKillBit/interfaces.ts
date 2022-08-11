@@ -14,7 +14,6 @@ export interface IContainerKillBit extends IEventProvider<IContainerKillBitEvent
     migrated: boolean;
     newContainerId: string | undefined;
     setNewContainerId(id: string): Promise<void>;
-    codeDetailsAccepted: boolean;
     acceptedCodeDetails: IFluidCodeDetails | undefined;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<void>;
     volunteerForMigration(): Promise<void>;

@@ -19,7 +19,7 @@ import type {
 const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
     if (containerKillBit.migrated) {
         return MigrationState.migrated;
-    } else if (containerKillBit.codeDetailsAccepted) {
+    } else if (containerKillBit.acceptedCodeDetails !== undefined) {
         return MigrationState.migrating;
     } else {
         return MigrationState.collaborating;

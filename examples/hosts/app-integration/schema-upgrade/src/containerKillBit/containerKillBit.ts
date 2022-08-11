@@ -54,13 +54,15 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public async setNewContainerId(id: string) {
-        // Using a consensus-type data structure here, to make it easier to validate
-        // that the setNewContainerId was ack'd and we can have confidence other clients will agree.
-        await this.crc.write(newContainerIdKey, id);
-    }
+        // Only permit a single container to be set as a migration destination.
+        if (this.crc.read(newContainerIdKey) !== undefined) {
+            throw new Error("New container was already established");
+        }
 
-    public get codeDetailsAccepted() {
-        return this.quorum.get(codeDetailsProposedKey) !== undefined;
+        // Using a consensus data structure is important here, because other clients might race us to set the new
+        // value.  All clients must agree on the final value even in these race conditions so everyone ends up in the
+        // same final container.
+        await this.crc.write(newContainerIdKey, id);
     }
 
     public get acceptedCodeDetails() {
@@ -68,14 +70,16 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
-        // Early exit/resolve if already marked.
-        if (this.codeDetailsAccepted) {
-            return;
+        // Don't permit changes to the code details after they've been accepted.
+        // TODO: Consider whether we should throw on trying to set when a pending proposal exists -- currently
+        // the Quorum will silently drop these on the floor.
+        if (this.acceptedCodeDetails !== undefined) {
+            throw new Error("New code details were already accepted");
         }
 
-        // Note that the marking could come from another client (e.g. two clients try to mark simultaneously).
-        // Watching via the event listener will work regardless of whether our marking or a remote client's
-        // marking was the one that actually wrote the flag.
+        // Note that the accepted proposal could come from another client (e.g. two clients try to propose
+        // simultaneously).  Watching via the event listener will work regardless of whether our proposal or
+        // a remote client's proposal was the one that actually got accepted.
         return new Promise<void>((resolve, reject) => {
             const acceptedListener = (key: string) => {
                 if (key === codeDetailsProposedKey) {
@@ -85,8 +89,8 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
             };
             this.quorum.on("accepted", acceptedListener);
             // Even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
-            // whether our marking or a remote client's marking writes the flag (though maybe we'd do retry
-            // logic if a remote client rejects the local client's mark).
+            // whether our proposal or a remote client's proposal is accepted (though maybe we'd do retry
+            // logic if a remote client rejects the local client's proposal).
             this.quorum.set(codeDetailsProposedKey, codeDetails);
         });
     }
