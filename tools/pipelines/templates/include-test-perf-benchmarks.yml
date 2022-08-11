@@ -176,15 +176,16 @@ jobs:
           customRegistry: 'useNpmrc'
 
       # run the test
-      - task: Npm@1
-        displayName: '[test] ${{ benchmarkTest.command }}'
+      - task: Bash@3
+        displayName: 'Run test'
         continueOnError: ${{ parameters.continueOnError }}
         env:
           ${{ parameters.env }}
         inputs:
+          targetType: 'inline'
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ benchmarkTest.packageToTest }}
-          customCommand: 'run ${{ benchmarkTest.command }}'
+          script: ${{ benchmarkTest.command }}
 
       - task: Bash@3
         displayName: Cat output file
