@@ -27,13 +27,10 @@ import { DocBlock } from '@microsoft/tsdoc';
 import { DocHeading as DocHeading_2 } from '@microsoft/api-documenter/lib/nodes/DocHeading';
 import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
-import { DocTable } from '@microsoft/api-documenter/lib/nodes/DocTable';
-import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
 import { Excerpt } from '@microsoft/api-extractor-model';
 import { IDocHeadingParameters as IDocHeadingParameters_2 } from '@microsoft/api-documenter/lib/nodes/DocHeading';
 import { MarkdownEmitter } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { NewlineKind } from '@rushstack/node-core-library';
-import { Parameter } from '@microsoft/api-extractor-model';
 import { TSDocConfiguration } from '@microsoft/tsdoc';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
@@ -193,12 +190,6 @@ export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: T
 export function renderApiPage(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
 // @public (undocumented)
-export function renderApiSummaryCell(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocTableCell;
-
-// @public (undocumented)
-export function renderApiTitleCell(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocTableCell;
-
-// @public (undocumented)
 export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
@@ -215,9 +206,6 @@ export function renderChildrenUnderHeading(childItems: readonly ApiItem[], headi
 
 // @public (undocumented)
 function renderClassSection(apiClass: ApiClass, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
-
-// @public (undocumented)
-export function renderConstructorsTable(apiConstructors: ReadonlyArray<ApiConstructSignature | ApiConstructor>, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocTable | undefined;
 
 // @public (undocumented)
 export function renderDeprecationNotice(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
@@ -294,17 +282,11 @@ export interface RenderingPolicies {
 // @public (undocumented)
 function renderInterfaceSection(apiInterface: ApiInterface, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
-// @public (undocumented)
-export function renderMethodsTable(apiMethods: ReadonlyArray<ApiMethod | ApiMethodSignature>, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocTable | undefined;
-
 // @public
 export function renderModelPage(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
 // @public (undocumented)
 function renderModelSection(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
-
-// @public (undocumented)
-export function renderModifiersCell(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocTableCell;
 
 // @public (undocumented)
 function renderNamespaceSection(apiNamespace: ApiNamespace, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
@@ -319,25 +301,7 @@ function renderPackageSection(apiPackage: ApiPackage, documenterConfiguration: R
 export function renderParametersSection(apiFunctionLike: ApiFunctionLike, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
 
 // @public (undocumented)
-export function renderParametersTable(apiParameters: readonly Parameter[], documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocTable;
-
-// @public (undocumented)
-export function renderParameterSummaryCell(apiParameter: Parameter, tsdocConfiguration: TSDocConfiguration): DocTableCell;
-
-// @public (undocumented)
-export function renderParameterTitleCell(apiParameter: Parameter, tsdocConfiguration: TSDocConfiguration): DocTableCell;
-
-// @public (undocumented)
-export function renderParameterTypeCell(apiParameter: Parameter, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocTableCell;
-
-// @public (undocumented)
-export function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocTable | undefined;
-
-// @public (undocumented)
 function renderPropertySection(apiProperty: ApiPropertyItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
-
-// @public (undocumented)
-export function renderPropertyTypeCell(apiItem: ApiPropertyItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocTableCell;
 
 // @public (undocumented)
 export function renderRemarks(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
@@ -350,9 +314,6 @@ function renderSectionBlock(apiItem: ApiItem, innerSectionBody: DocSection, docu
 
 // @public (undocumented)
 export function renderSignature(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
-
-// @public (undocumented)
-export function renderSignaturesTable(apiSignatures: ReadonlyArray<ApiCallSignature | ApiIndexSignature>, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocTable | undefined;
 
 // @public (undocumented)
 export function renderSummary(apiItem: ApiItem): DocSection | undefined;

@@ -12,7 +12,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { renderApiSummaryCell, renderApiTitleCell } from "../Rendering";
+import { renderApiSummaryCell, renderApiTitleCell } from "../Tables";
 
 export function renderModelSection(
     apiModel: ApiModel,

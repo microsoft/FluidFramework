@@ -13,13 +13,13 @@ import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocHeading } from "../../doc-nodes";
 import { getFilteredChildren } from "../../utilities";
+import { renderChildDetailsSection } from "../Rendering";
 import {
-    renderChildDetailsSection,
     renderConstructorsTable,
     renderMethodsTable,
     renderPropertiesTable,
     renderSignaturesTable,
-} from "../Rendering";
+} from "../Tables";
 
 export function renderInterfaceSection(
     apiInterface: ApiInterface,
