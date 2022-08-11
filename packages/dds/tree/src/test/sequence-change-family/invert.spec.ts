@@ -39,20 +39,9 @@ describe("SequenceChangeFamily - Invert", () => {
                 assert.deepEqual(actual, expected);
             });
 
-            it("set value => revert value", () => {
+            it("set value => set value", () => {
                 const input = asInputForest([
                     { type: "Modify", value: { id: 1, value: 42 } },
-                ]);
-                const expected = asOutputForest([
-                    { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
-                ]);
-                const actual = invert(input);
-                assert.deepEqual(actual, expected);
-            });
-
-            it("revert value => revert value", () => {
-                const input = asInputForest([
-                    { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
                 ]);
                 const expected = asOutputForest([
                     { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
