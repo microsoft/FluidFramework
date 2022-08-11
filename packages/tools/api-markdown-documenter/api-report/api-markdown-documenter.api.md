@@ -203,7 +203,7 @@ export function renderExcerptWithHyperlinks(excerpt: Excerpt, documenterConfigur
 export function renderFiles(apiModel: ApiModel, outputDirectoryPath: string, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): Promise<void>;
 
 // @public (undocumented)
-function renderFunctionLikeSection(apiItem: ApiConstructor | ApiConstructSignature | ApiFunction | ApiMethod | ApiMethodSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+function renderFunctionLikeSection(apiFunctionLike: ApiConstructor | ApiConstructSignature | ApiFunction | ApiMethod | ApiMethodSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
 export function renderHeading(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocHeading;
