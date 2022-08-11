@@ -46,7 +46,7 @@ This field has been deprecated and will be removed in a future breaking change. 
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
 
 ### Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface
-`ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryOptions` property instead.
+`ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has been updated to now accept `IRefreshSummaryAckOptions` property instead.
 ```diff
     async refreshLatestSummaryAck(
 -       proposalHandle: string | undefined,
