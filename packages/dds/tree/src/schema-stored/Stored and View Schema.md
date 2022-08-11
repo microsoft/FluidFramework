@@ -123,7 +123,7 @@ The MVP should include a simple schema system, usable as an MVP for both `stored
     See `checkCompatibility` in [schema.ts](./schema.ts) for an example of how this could work.
 -   Let the app provide handlers/converters to adapt data that does not match the desired view schema (ex: support old formats), and apply them through Schematize.
 
-## Schema Migration Design Pattern
+## Schema Evolution Design Pattern
 
 To support making changes to schema used in existing documents:
 
