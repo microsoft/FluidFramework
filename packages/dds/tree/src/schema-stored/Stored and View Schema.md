@@ -249,6 +249,12 @@ And with CircleV1, we provide an adapter for use with schematize that can handle
 
 ## Open questions in proposed design
 
+### How to deal with rebasing of schema changes?
+
+Like any other edit, schema changes can be concurrent and need rebasing.
+Doing this will need careful design, both to avoid schema violation in documents and to provide a nice app-facing API for handling cases where their schema changes conflicted and thus were apparently undone in an incompatible way.
+These cases (where a schema change gets reverted/undone or conflicted) mean that the monotonic approach of schema changes always relaxing constraints cannot apply everywhere, and thus may be worth reconsidering.
+
 ### How should we deal with transient out of schema states while editing?
 
 Use edit primitives that avoid this?
