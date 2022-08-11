@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
+import { Tiebreak } from "../../changeset";
+import { DUMMY_INVERT_TAG, sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -18,7 +19,7 @@ function rebase(change: SequenceChangeset, base: SequenceChangeset): SequenceCha
     return sequenceChangeRebaser.rebase(change, base);
 }
 
-describe("SequenceChangeFamily - rebase", () => {
+describe("SequenceChangeFamily - Rebase", () => {
     describe("no changes ↷ *", () => {
         for (const [name, testCase] of Object.entries(cases)) {
             it(`no changes ↷ ${name}`, () => {
@@ -78,6 +79,33 @@ describe("SequenceChangeFamily - rebase", () => {
     it("delete ↷ modify", () => {
         const actual = rebase(cases.delete, cases.modify);
         assert.deepEqual(actual, cases.delete);
+    });
+
+    it("revive ↷ modify", () => {
+        const revive: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Revive", id: 1, count: 2, tomb: DUMMY_INVERT_TAG },
+                    2,
+                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    4,
+                    { type: "Revive", id: 3, count: 2, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        const mods: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Modify", fields: { foo: [{ type: "Delete", id: 1, count: 1 }] } },
+                    2,
+                    { type: "Modify", fields: { foo: [{ type: "Delete", id: 2, count: 1 }] } },
+                    4,
+                    { type: "Modify", fields: { foo: [{ type: "Delete", id: 3, count: 1 }] } },
+                ],
+            },
+        };
+        const actual = rebase(revive, mods);
+        assert.deepEqual(actual, revive);
     });
 
     it("set ↷ delete", () => {
@@ -182,6 +210,42 @@ describe("SequenceChangeFamily - rebase", () => {
                     [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
                     2, // Later insert has its index reduced
                     [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                ],
+            },
+        };
+        assert.deepEqual(actual, expected);
+    });
+
+    it("revive ↷ delete", () => {
+        const revive: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    2,
+                    { type: "Revive", id: 2, count: 1, tomb: DUMMY_INVERT_TAG },
+                    4,
+                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        const deletion: SequenceChangeset = {
+            marks: {
+                root: [
+                    1,
+                    { type: "Delete", id: 1, count: 3 },
+                ],
+            },
+        };
+        const actual = rebase(revive, deletion);
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [
+                    // Earlier revive is unaffected
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    1, // Overlapping revive has its index reduced
+                    { type: "Revive", id: 2, count: 1, tomb: DUMMY_INVERT_TAG },
+                    2, // Later revive has its index reduced
+                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
                 ],
             },
         };
@@ -410,6 +474,42 @@ describe("SequenceChangeFamily - rebase", () => {
                     [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
                     3,
                     [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                ],
+            },
+        };
+        assert.deepEqual(actual, expected);
+    });
+
+    it("revive ↷ insert", () => {
+        const revive: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    2,
+                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    2,
+                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                ],
+            },
+        };
+        const insert: SequenceChangeset = {
+            marks: {
+                root: [
+                    2,
+                    // TODO: test both tiebreak policies
+                    [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
+                ],
+            },
+        };
+        const actual = rebase(revive, insert);
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    2,
+                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    3,
+                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
                 ],
             },
         };

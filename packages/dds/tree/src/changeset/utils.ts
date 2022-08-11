@@ -11,6 +11,10 @@ export function isAttachGroup(mark: T.Mark): mark is T.AttachGroup {
     return Array.isArray(mark);
 }
 
+export function isReattach(mark: T.Mark): mark is T.AttachGroup {
+    return typeof mark === "object" && "type" in mark && (mark.type === "Revive" || mark.type === "Return");
+}
+
 export function getAttachLength(attach: T.Attach): number {
     const type = attach.type;
     switch (type) {

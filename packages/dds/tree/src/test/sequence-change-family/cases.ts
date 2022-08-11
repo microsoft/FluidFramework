@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceChangeset } from "../../feature-libraries";
+import { DUMMY_INVERT_TAG, SequenceChangeset } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema";
 import { brand } from "../../util";
 import { Transposed as T, Value } from "../../changeset";
@@ -48,6 +48,7 @@ export const cases: {
     modify: SequenceChangeset;
     modify_insert: SequenceChangeset;
     delete: SequenceChangeset;
+    revive: SequenceChangeset;
 } = {
     no_change: {
         marks: {},
@@ -96,6 +97,14 @@ export const cases: {
             root: [
                 1,
                 { type: "Delete", id: 1, count: 3 },
+            ],
+        },
+    },
+    revive: {
+        marks: {
+            root: [
+                2,
+                { type: "Revive", id: 1, count: 2, tomb: DUMMY_INVERT_TAG },
             ],
         },
     },

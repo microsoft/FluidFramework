@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { getMarkLength, isAttachGroup, Skip, splitMark, Transposed as T } from "../../changeset";
+import { getMarkLength, isAttachGroup, isReattach, Skip, splitMark, Transposed as T } from "../../changeset";
 import { clone, fail, OffsetListFactory } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
@@ -38,7 +38,7 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
         nextCurrMark = undefined;
         nextBaseMark = undefined;
 
-        if (isAttachGroup(currMark)) {
+        if (isAttachGroup(currMark) || isReattach(currMark)) {
             // TODO: respect tiebreak
             factory.pushContent(clone(currMark));
             nextBaseMark = baseMark;
@@ -69,10 +69,7 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
         }
     }
     if (nextCurrMark !== undefined) {
-        factory.push(nextCurrMark);
-        for (const mark of currMarkList.slice(iCurr + 1)) {
-            factory.push(mark);
-        }
+        factory.push(nextCurrMark, ...currMarkList.slice(iCurr + 1));
     }
     return factory.list;
 }

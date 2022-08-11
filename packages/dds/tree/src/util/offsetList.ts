@@ -14,11 +14,13 @@ export class OffsetListFactory<TContent> {
 	private offset = 0;
 	public readonly list: OffsetList<TContent> = [];
 
-	public push(offsetOrContent: number | TContent): void {
-		if (typeof offsetOrContent === "number") {
-			this.pushOffset(offsetOrContent);
-		} else {
-			this.pushContent(offsetOrContent);
+	public push(...offsetOrContent: (number | TContent)[]): void {
+		for (const item of offsetOrContent) {
+			if (typeof item === "number") {
+				this.pushOffset(item);
+			} else {
+				this.pushContent(item);
+			}
 		}
 	}
 
