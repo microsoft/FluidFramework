@@ -117,8 +117,6 @@ TODO: Use what as stored schema? Isn't stored schema just that or can it be used
 -   Change application: changes can conflict if they violate the schema (or maybe only check at the end of a transaction? Or at special marked places and at end?).
 
     Change application could (someday) adjust behavior based on the schema (ex: provide set semantics to a sequence) or have schema specific edits but the initial version will just detect violations and mark them as conflicted.
-
-
 ### Ways to update existing schema:
 
 -   Could support op that changes a schema in a way where all data that was accepted by the old schema is accepted by the new one (ex: add optional fields (if compatible with extra fields), move required field into extraFields, add a type to a field).
