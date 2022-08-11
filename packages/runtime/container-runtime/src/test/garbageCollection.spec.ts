@@ -383,6 +383,7 @@ describe("Garbage Collection Tests", () => {
                     });
                 });
             });
+            //* TODO IN THIS PR: Write these tests
             it("inactiveTimeoutMs", () => {
             });
             it("testMode", () => {
@@ -390,7 +391,7 @@ describe("Garbage Collection Tests", () => {
         });
     });
 
-    //* Simplify now that I have config value testing above
+    //* TODO IN THIS PR: Simplify now that I have config value testing above
     describe("Session expiry", () => {
         const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
 
