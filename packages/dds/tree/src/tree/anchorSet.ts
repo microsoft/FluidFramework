@@ -61,7 +61,7 @@ export class AnchorSet {
 
     public forget(anchor: Anchor): void {
         const path = this.anchorToPath.get(anchor);
-        assert(path !== undefined, "cannot forget unknown Anchor");
+        assert(path !== undefined, 0x351 /* cannot forget unknown Anchor */);
         path.removeRef();
         this.anchorToPath.delete(anchor);
     }
@@ -137,7 +137,7 @@ export class AnchorSet {
     ): void {
         assert(
             src !== undefined || dst !== undefined,
-            "moveChildren is a no-op and should not be called if there is no src or dst",
+            0x352 /* moveChildren is a no-op and should not be called if there is no src or dst */,
         );
 
         const srcParent = src === undefined ? undefined : this.find(src.path);
@@ -179,7 +179,7 @@ export class AnchorSet {
             // Change is a delete.
             // Moved items have already been un-parented, so just mark them as deleted.
             for (const moved of toMove) {
-                assert(!moved.deleted, "PathNode must not be deleted");
+                assert(!moved.deleted, 0x353 /* PathNode must not be deleted */);
                 moved.deleted = true;
             }
             return;
@@ -306,10 +306,10 @@ class PathNode implements UpPath {
     }
 
     public get parent(): UpPath | undefined {
-        assert(!this.deleted, "PathNode must not be deleted");
+        assert(!this.deleted, 0x354 /* PathNode must not be deleted */);
         assert(
             this.parentPath !== undefined,
-            "PathNode.parent is an UpPath API and thus should never be called on the root PathNode.",
+            0x355 /* PathNode.parent is an UpPath API and thus should never be called on the root PathNode. */,
         );
         // Root PathNode corresponds to the undefined root for UpPath API.
         if (this.parentPath.isRoot()) {
@@ -319,17 +319,17 @@ class PathNode implements UpPath {
     }
 
     public addRef(count = 1): void {
-        assert(!this.deleted, "PathNode must not be deleted");
+        assert(!this.deleted, 0x356 /* PathNode must not be deleted */);
         this.refCount += count;
     }
 
     public removeRef(count = 1): void {
-        assert(!this.deleted, "PathNode must not be deleted");
+        assert(!this.deleted, 0x357 /* PathNode must not be deleted */);
         this.refCount -= count;
         if (this.refCount < 1) {
             assert(
                 this.refCount === 0,
-                "PathNode Refcount should not be negative.",
+                0x358 /* PathNode Refcount should not be negative. */,
             );
 
             if (this.children.size === 0) {
@@ -343,7 +343,7 @@ class PathNode implements UpPath {
      * Creates child (with 1 ref) if needed.
      */
     public getOrCreateChild(key: FieldKey, index: number): PathNode {
-        assert(!this.deleted, "PathNode must not be deleted");
+        assert(!this.deleted, 0x359 /* PathNode must not be deleted */);
         let field = this.children.get(key);
         if (field === undefined) {
             field = [];
@@ -367,7 +367,7 @@ class PathNode implements UpPath {
      * Does NOT add a ref.
      */
     public tryGetChild(key: FieldKey, index: number): PathNode | undefined {
-        assert(!this.deleted, "PathNode must not be deleted");
+        assert(!this.deleted, 0x35a /* PathNode must not be deleted */);
         const field = this.children.get(key);
         if (field === undefined) {
             return undefined;
@@ -382,7 +382,7 @@ class PathNode implements UpPath {
      * the caller must ensure that the reference from child to parent is also removed (or the child is no longer used).
      */
     public removeChild(child: PathNode): void {
-        assert(!this.deleted, "PathNode must not be deleted");
+        assert(!this.deleted, 0x35b /* PathNode must not be deleted */);
         const key = child.parentField;
         const field = this.children.get(key);
         // TODO: should do more optimized search (ex: binary search or better) using child.parentIndex()
@@ -390,7 +390,7 @@ class PathNode implements UpPath {
         const childIndex = field?.indexOf(child);
         assert(
             childIndex !== undefined,
-            "child must be parented to be removed",
+            0x35c /* child must be parented to be removed */,
         );
         field?.splice(childIndex, 1);
         if (field?.length === 0) {
@@ -404,7 +404,7 @@ class PathNode implements UpPath {
      * (like the field in the map, and possibly this entire PathNode and its parents if they are no longer needed.)
      */
     public afterEmptyField(key: FieldKey): void {
-        assert(!this.deleted, "PathNode must not be deleted");
+        assert(!this.deleted, 0x35d /* PathNode must not be deleted */);
         this.children.delete(key);
         if (this.refCount === 0 && this.children.size === 0) {
             this.deleteThis();
@@ -415,7 +415,7 @@ class PathNode implements UpPath {
      * Removes this from parent, and sets this to deleated.
      */
     private deleteThis(): void {
-        assert(!this.deleted, "must not double delete PathNode");
+        assert(!this.deleted, 0x35e /* must not double delete PathNode */);
         this.parentPath?.removeChild(this);
 
         this.deleted = true;

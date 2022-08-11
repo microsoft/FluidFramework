@@ -21,7 +21,7 @@ import {
     MockEmptyDeltaConnection,
     MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
+import { getTextAndMarkers, SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 
 describe("SharedString", () => {
@@ -169,7 +169,7 @@ describe("SharedString", () => {
                 });
 
             // Verify that the tile marker can be retrieved via label.
-            const { parallelMarkers } = sharedString.getTextAndMarkers("tileLabel");
+            const { parallelMarkers } = getTextAndMarkers(sharedString, "tileLabel");
             const parallelMarker = parallelMarkers[0];
             assert.equal(parallelMarker.type, "Marker", "Could not get tile marker");
             assert.equal(parallelMarker.properties?.markerId, "tileMarkerId", "tile markerId is incorrect");
@@ -442,9 +442,9 @@ describe("SharedString", () => {
             verifyMarker(simpleMarker2);
 
             // Verify that the marker can be retrieved via label from both the shared strings.
-            const textAndMarker1 = sharedString.getTextAndMarkers(label);
+            const textAndMarker1 = getTextAndMarkers(sharedString, label);
             verifyMarker(textAndMarker1.parallelMarkers[0]);
-            const textAndMarker2 = sharedString2.getTextAndMarkers(label);
+            const textAndMarker2 = getTextAndMarkers(sharedString2, label);
             verifyMarker(textAndMarker2.parallelMarkers[0]);
         });
 

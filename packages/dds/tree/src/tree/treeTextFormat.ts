@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeSchemaIdentifier } from "../schema";
+import { TreeSchemaIdentifier } from "../schema-stored";
 import { FieldKey, TreeValue } from "./types";
 
 /**
