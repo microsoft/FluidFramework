@@ -35,8 +35,8 @@ stages:
         poolBuild: Small
         testWorkspace: ${{ variables.testWorkspace }}
         benchmarkTestParams:
-        - jobName: Runtime benchmark @fluid-internal/tree
-          packageToTest: "@fluid-internal/tree"
+        - jobName: Runtime benchmark @fluid-experimental/tree
+          packageToTest: "@fluid-experimental/tree"
           command: bench -- --reporterOptions reportDir=./benchmarkOutput
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
