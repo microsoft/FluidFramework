@@ -106,8 +106,6 @@ Applications which wish to rely entirely on schema-on-read for some or all of th
 
 ## Use as `Stored Schema`
 
-TODO: Use what as stored schema? Isn't stored schema just that or can it be used as something else? Or is 'Usages of Stored Schema` a more accurate title?
-
 -   Document load: The application can check that their view schema matches their stored schema and that the root has supported content.
 
     See `checkCompatibility` in [Schema.ts](./Schema.ts) for an example of how this could work.
