@@ -56,6 +56,8 @@ function packageMustPublishToInternalFeedOnly(name: string): boolean {
         // TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
         name === "@fluid-internal/test-app-insights-logger"
         || name === "@fluid-internal/test-service-load"
+        // Required for DDS fuzz stress testing in CI
+        || name === "@fluid-internal/stochastic-test-utils"
         // Most examples should be private, but table-document needs to publish internally for legacy compat
         || name === "@fluid-example/table-document"
     );
