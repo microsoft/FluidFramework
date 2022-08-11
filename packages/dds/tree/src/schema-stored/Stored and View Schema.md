@@ -58,7 +58,7 @@ Some of the options do not have this issue (inline, central repository (assuming
 
 That's a lot of options all of which have use-cases. Long term, at least basic support for all of them may make sense but a much smaller subset can be supported initially while supporting most use-cases pretty well.
 
-I think we want to at least:
+Requirements for this initial version should include:
 
 -   Make adoption of different constraint/schema systems optional and incremental: all of these different options should be opt in, and easy to add to and existing application if desired.
 -   Provide a schema-on-read system (ex: schematize) that can give an application a nice interface to the data, including validation and error handling.
