@@ -11,9 +11,26 @@ import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject, RequestParser } from "@fluidframework/runtime-utils";
 import { IModelLoader } from "./interfaces";
 
+// This ModelLoader works on a convention, that the container it will load a model for must respond to a specific
+// request format with the model object.  Here we export a helper function for those container authors to align to
+// that contract -- the container author provides a ModelMakerCallback that will produce the model given a container
+// runtime and container, and this helper will appropriately translate to/from the request/response format.
+
+/**
+ * The callback signature that the container author will provide.  It must return a promise for the container's model.
+ */
 export type ModelMakerCallback<ModelType> = (runtime: IContainerRuntime, container: IContainer) => Promise<ModelType>;
+
+/**
+ * A helper function for container authors, which generates the request handler they need to align with the
+ * ModelLoader contract.
+ * @param modelMakerCallback - A callback that will produce the model for the container
+ * @returns A request handler that can be provided to the container runtime factory
+ */
 export const makeModelRequestHandler = <ModelType>(modelMakerCallback: ModelMakerCallback<ModelType>) => {
     return async (request: RequestParser, runtime: IContainerRuntime) => {
+        // The model request format is for an empty path (i.e. "") and passing a reference to the container in the
+        // header as containerRef.
         if (request.pathParts.length === 0 && request.headers?.containerRef !== undefined) {
             const container: IContainer = request.headers.containerRef;
             const model = await modelMakerCallback(runtime, container);
