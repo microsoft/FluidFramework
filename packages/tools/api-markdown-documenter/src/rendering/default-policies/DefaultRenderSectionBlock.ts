@@ -11,7 +11,7 @@ import {
     renderRemarks,
     renderSignature,
     renderSummary,
-} from "../Rendering";
+} from "../RenderingHelpers";
 
 /**
  * Default rendering format for API item sections.

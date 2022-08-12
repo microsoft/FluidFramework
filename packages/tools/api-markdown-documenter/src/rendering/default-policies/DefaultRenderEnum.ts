@@ -3,7 +3,7 @@ import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { filterByKind } from "../../utilities";
-import { renderChildDetailsSection } from "../Rendering";
+import { renderChildDetailsSection } from "../RenderingHelpers";
 import { renderMemberTables } from "../Tables";
 
 export function renderEnumSection(

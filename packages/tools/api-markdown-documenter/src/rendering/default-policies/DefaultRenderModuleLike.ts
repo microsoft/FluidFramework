@@ -13,7 +13,7 @@ import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { ApiModuleLike, filterByKind } from "../../utilities";
-import { renderChildDetailsSection } from "../Rendering";
+import { renderChildDetailsSection } from "../RenderingHelpers";
 import { renderMemberTables } from "../Tables";
 
 export function renderModuleLikeSection(

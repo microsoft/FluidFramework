@@ -24,7 +24,7 @@ import {
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../doc-nodes";
 import { ApiFunctionLike, getLinkUrlForApiItem } from "../utilities";
-import { renderExcerptWithHyperlinks, renderHeading } from "./Rendering";
+import { renderExcerptWithHyperlinks, renderHeading } from "./RenderingHelpers";
 
 export interface MemberTableProperties {
     headingTitle: string;

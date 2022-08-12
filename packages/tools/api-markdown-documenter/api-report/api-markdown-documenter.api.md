@@ -23,15 +23,12 @@ import { ApiPackage } from '@microsoft/api-extractor-model';
 import { ApiPropertyItem } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
-import { DocBlock } from '@microsoft/tsdoc';
 import { DocEmphasisSpan } from '@microsoft/api-documenter/lib/nodes/DocEmphasisSpan';
 import { DocLinkTag } from '@microsoft/tsdoc';
 import { DocNode } from '@microsoft/tsdoc';
 import { DocNoteBox } from '@microsoft/api-documenter/lib/nodes/DocNoteBox';
-import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { DocTable } from '@microsoft/api-documenter/lib/nodes/DocTable';
-import { Excerpt } from '@microsoft/api-extractor-model';
 import { IDocNodeParameters } from '@microsoft/tsdoc';
 import { IMarkdownEmitterContext } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { IMarkdownEmitterOptions } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
@@ -39,7 +36,6 @@ import { MarkdownEmitter as MarkdownEmitter_2 } from '@microsoft/api-documenter/
 import { NewlineKind } from '@rushstack/node-core-library';
 import { StringBuilder } from '@microsoft/tsdoc';
 import { TSDocConfiguration } from '@microsoft/tsdoc';
-import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
 export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
@@ -57,16 +53,6 @@ export { ApiPackage }
 
 // @public
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
-
-// @public
-export interface ChildSectionProperties {
-    // (undocumented)
-    headingTitle: string;
-    // (undocumented)
-    itemKind: ApiItemKind;
-    // (undocumented)
-    items: readonly ApiItem[];
-}
 
 // @public
 export const enum CustomDocNodeKind {
@@ -123,12 +109,6 @@ export { DefaultRenderingPolicies }
 
 // @public
 export const defaultRenderingPolicies: Required<RenderingPolicies>;
-
-// @public (undocumented)
-export interface DocExample {
-    content: DocBlock;
-    exampleNumber?: number;
-}
 
 // @public
 export class DocHeading extends DocNode {
@@ -242,22 +222,7 @@ export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: T
 export function renderApiPage(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
 // @public (undocumented)
-export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public (undocumented)
-export function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public (undocumented)
-export function renderChildDetailsSection(childSections: readonly ChildSectionProperties[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
-
-// @public (undocumented)
-export function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle: string, config: Required<MarkdownDocumenterConfiguration>, renderChild: (childItem: ApiItem) => DocSection): DocSection | undefined;
-
-// @public (undocumented)
 function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
-
-// @public (undocumented)
-export function renderDeprecationNotice(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
@@ -266,28 +231,10 @@ export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration, 
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-export function renderExample(example: DocExample, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public (undocumented)
-export function renderExamples(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public (undocumented)
-export function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph;
-
-// @public (undocumented)
 export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, markdownEmitter: MarkdownEmitter): Promise<void>;
 
 // @public (undocumented)
 function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public (undocumented)
-export function renderHeading(heading: Heading, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
-
-// @public (undocumented)
-export function renderHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
-
-// @public (undocumented)
-export function renderHeritageTypes(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 export interface RenderingPolicies {
@@ -348,26 +295,11 @@ export function renderPackagePage(apiPackage: ApiPackage, config: Required<Markd
 // @public (undocumented)
 function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
-// @public (undocumented)
-export function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public (undocumented)
-export function renderRemarks(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
 // @public
 export type RenderSectionBlock = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 
 // @public
 function renderSectionBlock(apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>): DocSection;
-
-// @public (undocumented)
-export function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
-
-// @public (undocumented)
-export function renderSummary(apiItem: ApiItem): DocSection | undefined;
-
-// @public (undocumented)
-export function renderTypeParameters(typeParameters: readonly TypeParameter[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
