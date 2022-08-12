@@ -60,8 +60,10 @@ import {
     MergeTreeMaintenanceCallback,
     MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
+import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder";
 import {
     ICombiningOp,
+    IMergeTreeDeltaOp,
     IRelativePosition,
     MergeTreeDeltaType,
     ReferenceType,
@@ -889,11 +891,13 @@ export class MergeTree {
         }
     }
 
-    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean) {
+    private updateSegmentRefsAfterMarkRemoved(segment: ISegment, pending: boolean):
+        LocalReferencePosition[] | undefined {
         if (!segment.localRefs || segment.localRefs.empty) {
-            return;
+            return undefined;
         }
         const refsToSlide: ReferencePosition[] = [];
+        const removedRefs: LocalReferencePosition[] = [];
         for (const lref of segment.localRefs) {
             if (refTypeIncludesFlag(lref, ReferenceType.StayOnRemove)) {
                 continue;
@@ -903,6 +907,7 @@ export class MergeTree {
                 }
             } else {
                 segment.localRefs.removeLocalRef(lref);
+                removedRefs.push(lref);
             }
         }
         // Rethink implementation of keeping and sliding refs once other reference
@@ -910,6 +915,8 @@ export class MergeTree {
         if (!pending) {
             this.slideReferences(segment, refsToSlide);
         }
+        // return only the refs that have been entirely removed
+        return removedRefs.length > 0 ? removedRefs : undefined;
     }
 
     private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
@@ -1231,6 +1238,7 @@ export class MergeTree {
             }
             this.pendingSegments!.enqueue(_segmentGroup);
         }
+
         if ((!_segmentGroup.previousProps && previousProps) ||
             (_segmentGroup.previousProps && !previousProps)) {
             throw new Error("All segments in group should have previousProps or none");
@@ -1238,6 +1246,7 @@ export class MergeTree {
         if (previousProps) {
             _segmentGroup.previousProps!.push(previousProps);
         }
+
         segment.segmentGroups.enqueue(_segmentGroup);
         return _segmentGroup;
     }
@@ -1933,14 +1942,132 @@ export class MergeTree {
         // these events are newly removed
         // so we slide after eventing in case the consumer wants to make reference
         // changes at remove time, like add a ref to track undo redo.
-        removedSegments.forEach(
-            (rSeg) => this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending));
+        removedSegments.forEach((rSeg) => {
+            const removedRefs = this.updateSegmentRefsAfterMarkRemoved(rSeg.segment, pending);
+            if (segmentGroup && removedRefs) {
+                if (!segmentGroup.removedReferences) {
+                    segmentGroup.removedReferences = [];
+                }
+                segmentGroup.removedReferences.push(...removedRefs);
+            }
+        });
 
         if (this.collabWindow.collaborating && (seq !== UnassignedSequenceNumber)) {
             if (MergeTree.options.zamboniSegments) {
                 this.zamboniSegments();
             }
         }
+    }
+
+    /**
+     * Revert an unacked local op
+     */
+    public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup) {
+        if (op.type === MergeTreeDeltaType.REMOVE) {
+            const pendingSegmentGroup = this.pendingSegments?.pop?.();
+            if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
+                throw new Error("Rollback op doesn't match last edit");
+            }
+            for (const segment of pendingSegmentGroup.segments) {
+                const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
+                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+
+                assert(segment.removedClientIds !== undefined
+                    && segment.removedClientIds[0] === this.collabWindow.clientId,
+                    "Rollback segment removedClientId does not match local client");
+                segment.removedClientIds = undefined;
+                segment.removedSeq = undefined;
+                segment.localRemovedSeq = undefined;
+
+                if (this.mergeTreeDeltaCallback) {
+                    const insertOp = createInsertSegmentOp(this.findRollbackPosition(segment), segment);
+                    this.mergeTreeDeltaCallback(
+                        { op: insertOp },
+                        {
+                            operation: MergeTreeDeltaType.INSERT,
+                            deltaSegments: [{ segment }],
+                        });
+                }
+
+                for (let updateNode = segment.parent; updateNode !== undefined; updateNode = updateNode.parent) {
+                    this.blockUpdateLength(updateNode, UnassignedSequenceNumber, this.collabWindow.clientId);
+                }
+            }
+            if (pendingSegmentGroup.removedReferences) {
+                for (const ref of pendingSegmentGroup.removedReferences) {
+                    const seg = ref.getSegment();
+                    if (!seg) {
+                        throw new Error("Cannot rollback reference without segment");
+                    }
+                    const localRefs = seg.localRefs ??= new LocalReferenceCollection(seg);
+                    localRefs.addLocalRef(ref, ref.getOffset());
+                }
+            }
+        } else if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
+            const pendingSegmentGroup = this.pendingSegments?.pop?.();
+            if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
+                || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
+                throw new Error("Rollback op doesn't match last edit");
+            }
+            let i = 0;
+            for (const segment of pendingSegmentGroup.segments) {
+                const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
+                assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
+
+                const start = this.findRollbackPosition(segment);
+                if (op.type === MergeTreeDeltaType.INSERT) {
+                    const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
+                    this.markRangeRemoved(
+                        start,
+                        start + segment.cachedLength,
+                        UniversalSequenceNumber,
+                        this.collabWindow.clientId,
+                        UniversalSequenceNumber,
+                        false,
+                        { op: removeOp });
+                } else /* op.type === MergeTreeDeltaType.ANNOTATE */ {
+                    const props = pendingSegmentGroup.previousProps![i];
+                    const rollbackType = (op.combiningOp && op.combiningOp.name === "rewrite") ?
+                        PropertiesRollback.Rewrite : PropertiesRollback.Rollback;
+                    const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props, undefined);
+                    this.annotateRange(
+                        start,
+                        start + segment.cachedLength,
+                        props,
+                        undefined,
+                        UniversalSequenceNumber,
+                        this.collabWindow.clientId,
+                        UniversalSequenceNumber,
+                        { op: annotateOp },
+                        rollbackType);
+                    i++;
+                }
+            }
+        } else {
+            throw new Error("Unsupported op type for rollback");
+        }
+    }
+
+    /**
+     *  Walk the segments up to the current segment and calculate its position
+     */
+    private findRollbackPosition(segment: ISegment) {
+        let segmentPosition = 0;
+        this.walkAllSegments(this.root, (seg) => {
+            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
+            if (seg === segment) {
+                return false;
+            }
+
+            // If not removed, increase position
+            if (seg.removedSeq === undefined) {
+                segmentPosition += seg.cachedLength;
+            }
+
+            return true;
+        });
+
+        return segmentPosition;
     }
 
     private nodeUpdateLengthNewStructure(node: IMergeBlock, recur = false) {

@@ -1062,6 +1062,7 @@ export class MergeTree {
     // (undocumented)
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: number): number | undefined;
+    rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup): void;
     // (undocumented)
     root: IMergeBlock;
     // (undocumented)
@@ -1425,6 +1426,8 @@ export interface SegmentGroup {
     localSeq: number;
     // (undocumented)
     previousProps?: PropertySet[];
+    // (undocumented)
+    removedReferences?: LocalReferencePosition[];
     // (undocumented)
     segments: ISegment[];
 }
