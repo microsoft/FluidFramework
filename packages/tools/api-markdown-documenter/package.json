@@ -30,6 +30,7 @@
     "eslint": "eslint",
     "eslint:fix": "eslint --fix",
     "format": "npm run prettier:fix",
+    "format-and-build": "npm run format && npm run build",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check .",
