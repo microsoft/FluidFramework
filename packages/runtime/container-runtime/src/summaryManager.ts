@@ -225,9 +225,7 @@ export class SummaryManager implements IDisposable {
                 // In order to allow the last summary to run, we not only need a stop reason that would
                 // allow it but also, startWithInitialDelay to be false (start the summarization immediately),
                 // which would happen when we have a high enough number of unsummarized ops.
-                if (startWithInitialDelay ||
-                    this.summaryCollection.opsSinceLastAck < this.opsToBypassInitialDelay ||
-                      !Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)) {
+                if (startWithInitialDelay || !Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)) {
                     this.state = SummaryManagerState.Starting;
                     summarizer.stop(shouldSummarizeState.stopReason);
                     return `early exit after starting summarizer ${shouldSummarizeState.stopReason}`;
