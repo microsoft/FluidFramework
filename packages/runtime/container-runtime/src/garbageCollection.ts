@@ -65,7 +65,7 @@ export const runGCKey = "Fluid.GarbageCollection.RunGC";
 // Feature gate key to turn GC sweep on / off.
 export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
 // Feature gate key to turn GC test mode on / off.
-const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
+export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
 // Feature gate key to write GC data at the root of the summary tree.
 const writeAtRootKey = "Fluid.GarbageCollection.WriteDataAtRoot";
 // Feature gate key to expire a session after a set period of time.
@@ -80,7 +80,7 @@ const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
 
-const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
+export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
 /** The statistics of the system state after a garbage collection run. */

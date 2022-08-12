@@ -36,6 +36,8 @@ import {
     oneDayMs,
     runGCKey,
     runSweepKey,
+    defaultInactiveTimeoutMs,
+    gcTestModeKey,
 } from "../garbageCollection";
 import { dataStoreAttributesBlobName, GCVersion, IContainerRuntimeMetadata, IGCMetadata } from "../summaryFormat";
 import { IGCRuntimeOptions } from "../containerRuntime";
@@ -339,7 +341,6 @@ describe("Garbage Collection Tests", () => {
 
         describe("Session Behavior (e.g. 'shouldRun' fields)", () => {
             beforeEach(() => {
-                injectedSettings[runSessionExpiryKey] = true;
                 injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than sweep timeout
             });
 
@@ -383,10 +384,42 @@ describe("Garbage Collection Tests", () => {
                     });
                 });
             });
-            //* TODO IN THIS PR: Write these tests
-            it("inactiveTimeoutMs", () => {
+            describe("inactiveTimeoutMs", () => {
+                const testCases: [{ testOverride?: number; option?: number; }, number /* expectedResult */][] = [
+                    [{ testOverride: 123, option: 456 }, 123],
+                    [{ option: 456 }, 456],
+                    [{}, defaultInactiveTimeoutMs],
+                ];
+                testCases.forEach(([testCase, expectedResult]) => {
+                    it(`Test Case ${JSON.stringify(testCase)}`, () => {
+                        injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = testCase.testOverride;
+                        gc = createGcWithPrivateMembers(undefined /* metadata */, { inactiveTimeoutMs: testCase.option });
+                        assert.equal(gc.inactiveTimeoutMs, expectedResult, "inactiveTimeoutMs not set as expected");
+                    });
+                });
+                it("inactiveTimeout must not be greater than sweepTimeout", () => {
+                    injectedSettings[runSessionExpiryKey] = true;
+                    injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = Number.MAX_VALUE;
+                    assert.throws(
+                        () => { gc = createGcWithPrivateMembers(); },
+                        (e) => e.errorType === "usageError",
+                        "inactiveTimeout must not be greater than sweepTimeout");
+                });
             });
-            it("testMode", () => {
+            describe("testMode", () => {
+                const testCases: [{ setting?: boolean; option?: boolean; }, boolean /* expectedResult */][] = [
+                    [{ setting: true, option: false }, true],
+                    [{ setting: false, option: true }, false],
+                    [{ option: true }, true],
+                    [{}, false],
+                ];
+                testCases.forEach(([testCase, expectedResult]) => {
+                    it(`Test Case ${JSON.stringify(testCase)}`, () => {
+                        injectedSettings[gcTestModeKey] = testCase.setting;
+                        gc = createGcWithPrivateMembers(undefined /* metadata */, { runGCInTestMode: testCase.option });
+                        assert.equal(gc.testMode, expectedResult, "testMode not set as expected");
+                    });
+                });
             });
         });
     });
