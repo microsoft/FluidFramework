@@ -28,7 +28,6 @@ steps:
       popd
       npm link "$(Build.SourcesDirectory)/build-tools/packages/build-cli"
       npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
-      npm link "$(Build.SourcesDirectory)/build-tools/packages/version-tools"
 
 - task: Bash@3
   name: SetVersion
@@ -50,7 +49,9 @@ steps:
       echo TEST_BUILD=$TEST_BUILD
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
+      echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
 
+      flub --help
       flub generate buildVersion
 - task: Bash@3
   displayName: Update Package Version
