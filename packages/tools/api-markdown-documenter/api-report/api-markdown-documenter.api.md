@@ -131,13 +131,16 @@ export { DocTableRow }
 // @public
 export type DocumentBoundaries = ApiItemKind[];
 
-// @public (undocumented)
+// @public
 export function doesItemGenerateHierarchy(apiItem: ApiItem, hierarchyBoundaries: HierarchyBoundaries): boolean;
 
-// @public (undocumented)
+// @public
+export function doesItemKindGenerateHierarchy(kind: ApiItemKind, hierarchyBoundaries: HierarchyBoundaries): boolean;
+
+// @public
 export function doesItemKindRequireOwnDocument(kind: ApiItemKind, documentBoundaries: DocumentBoundaries): boolean;
 
-// @public (undocumented)
+// @public
 export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
 
 // @public (undocumented)
@@ -155,7 +158,7 @@ export interface EmitterOptions extends IMarkdownEmitterOptions {
 // @public
 export type FileNamePolicy = (apiItem: ApiItem) => string;
 
-// @public (undocumented)
+// @public
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[];
 
 // @public
@@ -164,7 +167,7 @@ export function getAncestralHierarchy(apiItem: ApiItem, includePredecate: (apiIt
 // @public
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
-// @public (undocumented)
+// @public
 export function getFileNameForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
 
 // @public
@@ -176,16 +179,16 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined;
 // @public
 export function getFirstAncestorWithOwnPage(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): ApiItem;
 
-// @public (undocumented)
+// @public
 export function getHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, headingLevel?: number): Heading;
 
-// @public (undocumented)
+// @public
 export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string | undefined;
 
-// @public (undocumented)
+// @public
 export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): Link;
 
-// @public (undocumented)
+// @public
 export function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
 
 // @public

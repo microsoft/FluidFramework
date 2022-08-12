@@ -47,6 +47,8 @@ export type ApiModuleLike = ApiPackage | ApiNamespace;
 /**
  * Adjusts the name of the item as needed.
  * Accounts for method overloads by adding a suffix such as "MyClass.myMethod_2".
+ *
+ * @param apiItem - The API item for which the qualified name is being queried.
  */
 export function getQualifiedApiItemName(apiItem: ApiItem): string {
     let qualifiedName: string = Utilities.getSafeFilenameForName(apiItem.displayName);
@@ -60,8 +62,13 @@ export function getQualifiedApiItemName(apiItem: ApiItem): string {
 
 /**
  * Gets the nearest ancestor of the provided item that will have its own rendered page.
+ *
+ * @remarks
  * This can be useful for determining the file path the item will ultimately be rendered under,
  * as well as for generating links.
+ *
+ * @param apiItem - The API item for which we are generating a file path.
+ * @param documentBoundaries - See {@link DocumentBoundaries}
  */
 export function getFirstAncestorWithOwnPage(
     apiItem: ApiItem,
@@ -82,6 +89,16 @@ export function getFirstAncestorWithOwnPage(
     return hierarchyItem;
 }
 
+/**
+ * Creates a {@link Link} for the provided API item.
+ *
+ * @remarks
+ * If that item is one that will be rendered to a parent document, it will contain the necessary heading identifier
+ * information to link to the appropriate heading.
+ *
+ * @param apiItem - The API item for which we are generating the link.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
+ */
 export function getLinkForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -99,6 +116,16 @@ export function getLinkForApiItem(
     };
 }
 
+/**
+ * Creates a link URL to the specified API item.
+ *
+ * @remarks
+ * If that item is one that will be rendered to a parent document, it will contain the necessary heading identifier
+ * information to link to the appropriate heading.
+ *
+ * @param apiItem - The API item for which we are generating the link URL.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
+ */
 export function getLinkUrlForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -109,11 +136,15 @@ export function getLinkUrlForApiItem(
 
 /**
  * Gets the file path for the specified API item.
- * In the case of an item that does not get rendered to its own page, this will point to the page
+ *
+ * @remarks
+ * In the case of an item that does not get rendered to its own page, this will point to the document
  * of the ancestor item under which the provided item will be rendered.
  *
- * @param apiItem - TODO
- * @param config - TODO
+ * The generated path is relative to {@link MarkdownDocumenterConfiguration.uriRoot}.
+ *
+ * @param apiItem - The API item for which we are generating a file path.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the path.
  */
 export function getFilePathForApiItem(
@@ -138,6 +169,20 @@ export function getFilePathForApiItem(
     return path;
 }
 
+/**
+ * Gets the file name for the specified API item.
+ *
+ * @remarks
+ * In the case of an item that does not get rendered to its own page, this will be the file name for the document
+ * of the ancestor item under which the provided item will be rendered.
+ *
+ * Note: This is strictly the name of the file, not a path to that file.
+ * To get the path, use {@link getFilePathForApiItem}.
+ *
+ * @param apiItem - The API item for which we are generating a file path.
+ * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param includeExtension - Whether or not to include the `.md` file extension at the end of the file name.
+ */
 export function getFileNameForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -176,6 +221,15 @@ export function getFileNameForApiItem(
     return path;
 }
 
+/**
+ * Generates a {@link Heading} for the specified API item.
+ *
+ * @param apiItem - The API item for which the heading is being generated.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param headingLevel - Heading level to use.
+ * If not specified, the heading level will be automatically generated based on the item's context in the resulting
+ * document.
+ */
 export function getHeadingForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -188,6 +242,22 @@ export function getHeadingForApiItem(
     };
 }
 
+/**
+ * Generates a unique heading ID for the provided API item.
+ *
+ * @remarks
+ * Notes:
+ *
+ * - If the item is one that will be rendered to its own document, this will return `undefined`.
+ *   Any links pointing to this item may simply link to the document; no heading ID is needed.
+ * - The resulting ID is context-dependent. In order to guarantee uniqueness, it will need to express
+ *   hierarchical information up to the ancester item whose document the specified item will ultimately be rendered to.
+ *
+ * @param apiItem - The API item for which the heading ID is being generated.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns A unique heading ID for the API item if one is needed. Otherwise, `undefined`.
+ */
 export function getHeadingIdForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -242,15 +312,17 @@ export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
  * Gets the ancestral hierarchy of the provided API item by walking up the parentage graph and emitting any items
  * matching the `includePredecate` until it reaches an item that matches the `breakPredecate`.
  *
- * Notes:
+ * @remarks Notes:
  *
- * - This will not include the provided item iteslf, even if it matches the `includePredecate`.
+ * - This will not include the provided item itself, even if it matches the `includePredecate`.
  *
  * - This will not include the item matching the `breakPredecate`, even if they match the `includePredecate`.
  *
- * @param apiItem - TODO
- * @param includePredecate - TODO
- * @param breakPredicate - TODO
+ * @param apiItem - The API item whose ancestral hierarchy is being queried.
+ * @param includePredecate - Predicate to determine which items in the hierarchy should be preserved in the
+ * returned list. The provided API item will not be included in the output, even if it would be included by this.
+ * @param breakPredicate - Predicate to determine when to break from the traversal and return.
+ * The item matching this predicate will not be included, even if it would be included by `includePredicate`.
  *
  * @returns The list of matching ancestor items, provided in *ascending* order.
  */
@@ -274,6 +346,23 @@ export function getAncestralHierarchy(
     return matches;
 }
 
+/**
+ * Determines whether or not the specified API item kind is one that should be rendered to its own document.
+ *
+ * @remarks
+ * This is essentially a wrapper around {@link PolicyOptions.documentBoundaries}, but also enforces system-wide invariants.
+ *
+ * Namely...
+ *
+ * - `Model` and `Package` items are *always* rendered to their own documents, regardless of the specified policy.
+ * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
+ *   regardless of the specified policy.
+ *
+ * @param kind - The kind of API item.
+ * @param documentBoundaries - See {@link DocumentBoundaries}
+ *
+ * @returns `true` if the item should be rendered to its own document. `false` otherwise.
+ */
 export function doesItemKindRequireOwnDocument(
     kind: ApiItemKind,
     documentBoundaries: DocumentBoundaries,
@@ -287,6 +376,11 @@ export function doesItemKindRequireOwnDocument(
     return documentBoundaries.includes(kind);
 }
 
+/**
+ * Determines whether or not the specified API item is one that should be rendered to its own document.
+ *
+ * @remarks This is based on the item's `kind`. See {@link doesItemKindRequireOwnDocument}.
+ */
 export function doesItemRequireOwnDocument(
     apiItem: ApiItem,
     documentBoundaries: DocumentBoundaries,
@@ -294,19 +388,59 @@ export function doesItemRequireOwnDocument(
     return doesItemKindRequireOwnDocument(apiItem.kind, documentBoundaries);
 }
 
+/**
+ * Determines whether or not the specified API item kind is one that should generate directory-wise hierarchy
+ * in the resulting documentation suite.
+ * I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
+ *
+ * @remarks
+ * This is essentially a wrapper around {@link PolicyOptions.hierarchyBoundaries}, but also enforces system-wide invariants.
+ *
+ * Namely...
+ *
+ * - `Package` items are *always* rendered to their own documents, regardless of the specified policy.
+ * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
+ *   regardless of the specified policy.
+ *
+ * @param kind - The kind of API item.
+ * @param hierarchyBoundaries - See {@link HierarchyBoundaries}
+ *
+ * @returns `true` if the item should contribute to directory-wise hierarchy in the output. `false` otherwise.
+ */
+export function doesItemKindGenerateHierarchy(
+    kind: ApiItemKind,
+    hierarchyBoundaries: HierarchyBoundaries,
+): boolean {
+    if (kind === ApiItemKind.Package) {
+        return true;
+    }
+    if (kind === ApiItemKind.EntryPoint) {
+        return false;
+    }
+    return hierarchyBoundaries.includes(kind);
+}
+
+/**
+ * Determines whether or not the specified API item is one that should generate directory-wise hierarchy
+ * in the resulting documentation suite.
+ * I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
+ *
+ * @remarks This is based on the item's `kind`. See {@link doesItemKindGenerateHierarchy}.
+ */
 export function doesItemGenerateHierarchy(
     apiItem: ApiItem,
     hierarchyBoundaries: HierarchyBoundaries,
 ): boolean {
-    if (apiItem.kind === ApiItemKind.Package) {
-        return true;
-    }
-    if (apiItem.kind === ApiItemKind.EntryPoint) {
-        return false;
-    }
-    return hierarchyBoundaries.includes(apiItem.kind);
+    return doesItemKindGenerateHierarchy(apiItem.kind, hierarchyBoundaries);
 }
 
+/**
+ * Filters the provided list of API items based on the provided `kinds`.
+ *
+ * @param apiItems - The list of items being filtered.
+ * @param kinds - The kinds of items to consider. An item is considered a match if it matches any kind in this list.
+ * @returns - The filtered list of items.
+ */
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[] {
     return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));
 }
