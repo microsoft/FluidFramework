@@ -116,33 +116,27 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         // synchronize output, exit code, and resolve decision for all handlers
         const routeToHandlers = (file: string) => {
             handlers
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 .filter((handler) => handler.match.test(file) && handlerRegex.test(handler.name))
                 // eslint-disable-next-line array-callback-return
                 .map((handler) => {
                     const result = runWithPerf(handler.name, "handle", () =>
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         handler.handler(file, pathToGitRoot),
                     );
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (result) {
                         let output = `${newline}file failed policy check: ${file}${newline}${result}`;
                         const resolver = handler.resolver;
-                        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                         if (flags.resolve && resolver) {
                             output += `${newline}attempting to resolve: ${file}`;
                             const resolveResult = runWithPerf(handler.name, "resolve", () =>
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                                 resolver(file, pathToGitRoot),
                             );
 
                             // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                             if (resolveResult.message) {
-                                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                                 output += newline + resolveResult.message;
                             }
 
-                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                             if (!resolveResult.resolved) {
                                 this.exit(1);
                             }
@@ -156,6 +150,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         };
 
         const handleLine = (line: string) => {
+            this.log(line);
             const filePath = path.join(pathToGitRoot, line).trim().replace(/\\/g, "/");
 
             if (pathRegex.test(line) && fs.existsSync(filePath)) {
@@ -172,10 +167,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         const runPolicyCheck = () => {
             for (const h of handlers) {
                 const final = h.final;
-                // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                 if (final) {
                     const result = runWithPerf(h.name, "final", () =>
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                         final(pathToGitRoot, flags.resolve),
                     );
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -234,17 +227,18 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                 "--exclude-standard",
                 "--full-name",
             ]);
-            const pipeString = await readPipe();
-
-            if (typeof pipeString === "string") {
-                this.log(pipeString);
-                // for each run handleLine
-            } else {
-                this.log(pipeString);
-            }
+            let scriptOutput = "";
+            p.stdout.on("data", (data) => {
+                scriptOutput = `${scriptOutput}${data.toString()}`;
+            });
+            p.stdout.on("close", () => {
+                // this.log(`pipe: ${scriptOutput}`);
+                scriptOutput.split("\n").map((line:string) => handleLine(line));
+                runPolicyCheck();
+                logStats();
+            });
         }
 
-        runPolicyCheck();
-        logStats();
+        this.log("running");
     }
 }
