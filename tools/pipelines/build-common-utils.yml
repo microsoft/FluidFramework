@@ -6,6 +6,79 @@
 name: $(Build.BuildId)
 
 parameters:
+- name: buildDirectory
+  type: string
+  default: common/lib/common-utils
+
+- name: taskBuild
+  type: string
+  default: ci:build
+
+- name: taskBuildDocs
+  type: boolean
+  default: true
+
+- name: taskLint
+  type: boolean
+  default: true
+
+- name: taskTest
+  type: string
+  default: ci:test
+
+- name: taskBundleAnalysis
+  type: boolean
+  default: false
+
+- name: taskPublishBundleSizeArtifacts
+  type: boolean
+  default: false
+
+- name: taskPack
+  type: boolean
+  default: true
+
+- name: poolCG
+  type: object
+  default: Small
+
+- name: poolBuild
+  type: object
+  default: Small
+
+- name: preCG
+  type: stepList
+  default: []
+
+# These should output results under an /nyc/ dir (anywhere in the repo) to get included in the published test results
+- name: additionalTests
+  type: stepList
+  default: []
+
+- name: cgSubDirectory
+  type: string
+  default:
+
+- name: checkoutSubmodules
+  type: boolean
+  default: false
+
+- name: namespace
+  type: boolean
+  default: true
+
+- name: buildNumberInPatch
+  type: string
+  default:
+
+- name: nonScopedPackages
+  type: object
+  default: []
+
+- name: tagName
+  type: string
+  default: common-utils
+
 - name: releaseBuildOverride
   displayName: Release Build (default = not released)
   type: string
@@ -59,10 +132,340 @@ pr:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
 
-extends:
-  template: templates/build-npm-package.yml
-  parameters:
-    publishOverride: ${{ parameters.publishOverride }}
-    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-    buildDirectory: common/lib/common-utils
-    tagName: common-utils
+variables:
+  # We use 'chalk' to colorize output, which auto-detects color support in the
+  # running terminal.  The log output shown in Azure DevOps job runs only has
+  # basic ANSI color support though, so force that in the pipeline
+  - name: FORCE_COLOR
+    value: 1
+  - template: include-vars.yml
+    parameters:
+      publishOverride: ${{ parameters.publishOverride }}
+      releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+      nonScopedPackages: ${{ parameters.nonScopedPackages }}
+
+stages:
+  # Install / Build / Test Stage
+  - stage: build
+    displayName: Build Stage
+    jobs:
+      # Job - Build
+      - job: build
+        displayName: Build
+        pool: ${{ parameters.poolBuild }}
+        variables:
+          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          releaseBuildVar: $[variables.releaseBuild]
+        steps:
+        # Setup
+        - checkout: self
+          clean: true
+          lfs: ${{ parameters.checkoutSubmodules }}
+          submodules: ${{ parameters.checkoutSubmodules }}
+
+        - task: Bash@3
+          displayName: Parameters
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              # Show all task group conditions
+
+              echo "
+              Pipeline Variables:
+                releaseBuild=$(releaseBuildVar)
+
+              Override Parameters:
+                publishOverride=${{ parameters.publishOverride }}
+                releaseBuildOverride=${{ parameters.releaseBuildOverride }}
+
+              Tasks Parameters:
+                BuildDir=${{ parameters.buildDirectory }}
+                Build=${{ parameters.taskBuild }}
+                Lint=${{ parameters.taskLint }}
+                Test=${{ parameters.taskTest }}
+                BuildDoc=${{ parameters.taskBuildDocs }}
+                TestCoverage=$(testCoverage)
+
+              Publish Parameters:
+                nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
+
+              Computed variables:
+                shouldPublish=${{ variables.shouldPublish }}
+                componentDetection=${{ variables.componentDetection }}
+                publish=${{ variables.publish }}
+                canRelease=${{ variables.canRelease }}
+                publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
+
+                release=$(release)"
+
+              # Error checking
+              if [[ "$(release)" == "release" ]]; then
+                if [[ "${{ variables.canRelease }}" == "False" ]]; then
+                  echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
+                  exit -1;
+                fi
+
+                if [ -f "lerna.json" ]; then
+                  grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
+                else
+                  grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
+                fi
+
+                if [[ $? == 0 ]]; then
+                  echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" == "prerelease" ]]; then
+                if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+                  echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
+                  exit -1;
+                fi
+              fi
+
+              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
+                if [[ "${{ variables.publish }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+                  exit -1;
+                fi
+              fi
+
+        # Install
+        - task: UseNode@1
+          displayName: Use Node 14.x
+          inputs:
+            version: 14.x
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.buildDirectory }}
+            customCommand: 'ci --unsafe-perm'
+            customRegistry: 'useNpmrc'
+
+        # Set version
+        - template: include-set-package-version.yml
+          parameters:
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            tagName: ${{ parameters.tagName }}
+
+        # Build
+        - ${{ if ne(parameters.taskBuild, 'false') }}:
+          - task: Npm@1
+            displayName: npm run ${{ parameters.taskBuild }}
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run ${{ parameters.taskBuild }}'
+
+        # Lint
+        - ${{ if ne(parameters.taskLint, false) }}:
+          - task: Npm@1
+            displayName: npm run lint
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run lint'
+
+        # Test
+        - ${{ if ne(parameters.taskTest, 'false') }}:
+          # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
+          - ${{ parameters.additionalTests }}
+
+          # Test - No coverage
+          - ${{ if ne(variables['testCoverage'], true) }}:
+            - task: Npm@1
+              displayName: npm run ${{ parameters.taskTest }}
+              inputs:
+                command: 'custom'
+                workingDir: ${{ parameters.buildDirectory }}
+                customCommand: 'run ${{ parameters.taskTest }}'
+
+          # Test - With coverage
+          - ${{ if eq(variables['testCoverage'], true) }}:
+            - task: Npm@1
+              displayName: npm run ci:test:coverage
+              inputs:
+                command: 'custom'
+                workingDir: ${{ parameters.buildDirectory }}
+                customCommand: 'run ci:test:coverage'
+            # Some webpacked file using externals introduce file name with quotes in them
+            # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
+            # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
+            - task: Bash@3
+              displayName: 'Check for nyc/report directory'
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}
+                script: |
+                  test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No
+                  nyc/report directory'
+              condition: succeededOrFailed()
+            - task: Bash@3
+              displayName: Patch Coverage Results
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}/nyc/report
+                script: |
+                  sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+              condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+
+            - task: PublishCodeCoverageResults@1
+              displayName: Publish Code Coverage
+              inputs:
+                codeCoverageTool: Cobertura
+                summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+                reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
+                failIfCoverageEmpty: true
+              condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+
+          # Test - Upload results
+          - task: PublishTestResults@2
+            displayName: Publish Test Results
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/*junit-report.xml'
+              searchFolder: ${{ parameters.buildDirectory }}/nyc
+              mergeTestResults: false
+            condition: succeededOrFailed()
+
+        # Pack
+        - ${{ if ne(parameters.taskPack, false) }}:
+          - task: Bash@3
+            displayName: npm pack
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                mkdir $(Build.ArtifactStagingDirectory)/pack/
+                mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
+                mkdir $(Build.ArtifactStagingDirectory)/test-files/
+                if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
+                  mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
+                fi
+                if [ -f "lerna.json" ]; then
+                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm && \
+                  npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
+                  npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
+                else
+                  npm pack --unsafe-perm && \
+                  mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
+                fi
+
+          - ${{ if eq(variables.publishNonScopedPackages, true) }}:
+            - ${{ each parameter in parameters.nonScopedPackages }}:
+              - task: Bash@3
+                displayName: Move Non-Scoped Package ${{parameter}}
+                inputs:
+                  targetType: 'inline'
+                  workingDirectory: ${{ parameters.buildDirectory }}
+                  script: |
+                    mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - pack
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
+              ArtifactName: 'pack'
+              publishLocation: 'Container'
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - Test Files
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/test-files'
+              ArtifactName: 'test-files'
+              publishLocation: 'Container'
+
+        # Collect/publish/run bundle analysis
+        - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
+          - task: Npm@1
+            displayName: npm run bundle-analysis:collect
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run bundle-analysis:collect'
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifacts - bundle-analysis
+            condition:
+              and(
+                succeeded(),
+                ne(variables['Build.Reason'], 'PullRequest'),
+                eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
+              )
+            inputs:
+              PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+              Artifactname: 'bundleAnalysis'
+              publishLocation: 'Container'
+
+          - task: Npm@1
+            displayName: run bundle size comparison
+            condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+            env:
+              ADO_API_TOKEN: $(System.AccessToken)
+              DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run bundle-analysis:run'
+
+        # Docs
+        - ${{ if ne(parameters.taskBuildDocs, false) }}:
+          - task: Npm@1
+            displayName: npm run ci:build:docs
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run ci:build:docs'
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Artifact - _api-extractor-temp
+            inputs:
+              PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+              ArtifactName: '_api-extractor-temp'
+              publishLocation: 'Container'
+
+        - task: Bash@3
+          displayName: Check for extraneous modified files
+          inputs:
+            targetType: 'inline'
+            script: |
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|\(use.*' | grep '^\s' > git_status.log
+              if [ `cat git_status.log | wc -l` != "0" ]; then
+                cat git_status.log
+                echo "##vso[task.logissue type=error]Build should not create extraneous files"
+                exit -1;
+              fi
+
+      # Job - Component detection
+      - ${{ if eq(variables.componentDetection, true) }}:
+        - job: CG
+          displayName: Component Detection
+          pool: ${{ parameters.poolCG }}
+          steps:
+          - checkout: self
+            clean: true
+            lfs: false
+            submodules: false
+
+          - ${{ parameters.preCG }}
+
+          - task: ComponentGovernanceComponentDetection@0
+            displayName: Component Detection
+            inputs:
+              sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
+              verbosity: Verbose
+              scanType: Register
+              alertWarningLevel: High
+
+  # Publish stage
+  - ${{ if eq(variables.publish, true) }}:
+    - template: include-publish-npm-package.yml
+      parameters:
+        namespace: ${{ parameters.namespace }}
+        tagName: ${{ parameters.tagName }}
+        publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
