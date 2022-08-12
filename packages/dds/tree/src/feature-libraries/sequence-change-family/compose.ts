@@ -7,6 +7,7 @@ import {
     getMarkLength,
     isAttachGroup,
     isDetachMark,
+    isReattach,
     splitMark,
     Transposed as T,
 } from "../../changeset";
@@ -44,7 +45,7 @@ function foldInMarkList(
         let baseMark = baseMarkList[iBase];
         if (baseMark === undefined) {
             baseMarkList.push(clone(newMark));
-        } else if (isAttachGroup(newMark)) {
+        } else if (isAttachGroup(newMark) || isReattach(newMark)) {
             baseMarkList.splice(iBase, 0, clone(newMark));
         } else if (isDetachMark(baseMark)) {
             // TODO: match base detaches to tombs and reattach in the newMarkList
@@ -140,10 +141,28 @@ function composeMarks(
                 default: fail("Not implemented");
             }
         }
+        case "Revive": {
+            switch (newType) {
+                case "Modify": {
+                    const modRevive: T.ModifyReattach = {
+                        type: "MRevive",
+                        id: baseMark.id,
+                        tomb: baseMark.tomb,
+                    };
+                    updateModifyLike(newMark, modRevive);
+                    return [modRevive];
+                }
+                case "Delete": {
+                    // The deletion undoes the revival
+                    return [];
+                }
+                default: fail("Not implemented");
+            }
+        }
         default: fail("Not implemented");
     }
 }
-function updateModifyLike(curr: T.Modify, base: T.ModifyInsert | T.Modify) {
+function updateModifyLike(curr: T.Modify, base: T.ModifyInsert | T.Modify | T.ModifyReattach) {
     if (curr.fields !== undefined) {
         if (base.fields === undefined) {
             base.fields = {};
