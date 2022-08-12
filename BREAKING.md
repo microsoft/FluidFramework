@@ -40,7 +40,7 @@ This field has been deprecated and will be removed in a future breaking change. 
 ```
 
 ## 3.0.0 Breaking changes
-- [Remove `IContainerRuntime.flush`](#icontainerruntimeflush-is-deprecated)
+- [Remove `IContainerRuntime.flush`](#remove-icontainerruntimeflush)
 
 ### Remove `IContainerRuntime.flush`
 `IContainerRuntime.flush` has been removed. If a more manual/ensured flushing process is needed, move all usage to `IContainerRuntimeBase.orderSequentially` if possible.
