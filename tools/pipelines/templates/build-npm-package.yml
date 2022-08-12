@@ -224,11 +224,19 @@ stages:
 
         # Benchmark tests
         - task: Npm@1
-          displayName: npm run test:benchmark:report
+          displayName: npm run ci:test:benchmark
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'run test:benchmark:report --timeout 30000 -r ${{ parameters.buildDirectory }}/node_modules/@fluidframework/mocha-test-setup --reporter ${{ parameters.buildDirectory }}/node_modules/@fluid-tools/benchmark/dist/MochaReporter.js --reporterOptions reportDir=./benchmarkOutput'
+            customCommand: 'run ci:test:benchmark'
+        - task: Bash@3
+          displayName: 'Check for results'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              ls; ls benchmarkOutput;
+          condition: succeededOrFailed()
 
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
