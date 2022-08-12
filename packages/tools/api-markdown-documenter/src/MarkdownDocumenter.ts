@@ -8,7 +8,6 @@ import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
-import { CustomDocNodes } from "./doc-nodes";
 import { renderApiPage, renderModelPage, renderPackagePage } from "./rendering";
 import { doesItemRequireOwnDocument } from "./utilities";
 
@@ -32,25 +31,22 @@ import { doesItemRequireOwnDocument } from "./utilities";
 /**
  * TODO
  * @param apiModel - TODO
- * @param partialDocumenterConfig - TODO
+ * @param partialConfig - TODO
  * @param markdownEmitter - TODO
  */
 export function renderDocuments(
     apiModel: ApiModel,
-    partialDocumenterConfig: MarkdownDocumenterConfiguration,
+    partialConfig: MarkdownDocumenterConfiguration,
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument[] {
-    const documenterConfig = markdownDocumenterConfigurationWithDefaults(partialDocumenterConfig);
-    const tsdocConfiguration = CustomDocNodes.configuration;
+    const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 
     console.log(`Rendering markdown documentation for API Model ${apiModel.displayName}...`);
 
     const documents: MarkdownDocument[] = [];
 
     // Always render Model page
-    documents.push(
-        renderModelPage(apiModel, documenterConfig, tsdocConfiguration, markdownEmitter),
-    );
+    documents.push(renderModelPage(apiModel, config, markdownEmitter));
 
     if (apiModel.packages.length !== 0) {
         // For each package, walk the child graph to find API items which should be rendered to their own document page
@@ -58,14 +54,7 @@ export function renderDocuments(
 
         for (const packageItem of apiModel.packages) {
             // Always render pages for packages under the model
-            documents.push(
-                renderPackagePage(
-                    packageItem,
-                    documenterConfig,
-                    tsdocConfiguration,
-                    markdownEmitter,
-                ),
-            );
+            documents.push(renderPackagePage(packageItem, config, markdownEmitter));
 
             const packageEntryPoints = packageItem.entryPoints;
             if (packageEntryPoints.length !== 1) {
@@ -77,11 +66,9 @@ export function renderDocuments(
 
             const packageEntryPointItem = packageEntryPoints[0];
 
-            const packageDocumentItems = getDocumentItems(packageEntryPointItem, documenterConfig);
+            const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
             for (const apiItem of packageDocumentItems) {
-                documents.push(
-                    renderApiPage(apiItem, documenterConfig, tsdocConfiguration, markdownEmitter),
-                );
+                documents.push(renderApiPage(apiItem, config, markdownEmitter));
             }
         }
     }

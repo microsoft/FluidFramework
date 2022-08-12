@@ -1,4 +1,4 @@
-import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
+import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { ApiFunctionLike } from "../../utilities";
@@ -6,27 +6,17 @@ import { renderParametersSection } from "../Rendering";
 
 export function renderFunctionLikeSection(
     apiFunctionLike: ApiFunctionLike,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
     const docNodes: DocNode[] = [];
 
     // Render parameter table (if any parameters)
-    const renderedParameterTable = renderParametersSection(
-        apiFunctionLike,
-        documenterConfiguration,
-        tsdocConfiguration,
-    );
+    const renderedParameterTable = renderParametersSection(apiFunctionLike, config);
     if (renderedParameterTable !== undefined) {
         docNodes.push(renderedParameterTable);
     }
 
-    const innerSectionBody = new DocSection({ configuration: tsdocConfiguration }, docNodes);
+    const innerSectionBody = new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 
-    return documenterConfiguration.renderSectionBlock(
-        apiFunctionLike,
-        innerSectionBody,
-        documenterConfiguration,
-        tsdocConfiguration,
-    );
+    return config.renderSectionBlock(apiFunctionLike, innerSectionBody, config);
 }

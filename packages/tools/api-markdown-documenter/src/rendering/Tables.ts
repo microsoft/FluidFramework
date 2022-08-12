@@ -18,7 +18,6 @@ import {
     DocParagraph,
     DocPlainText,
     DocSection,
-    TSDocConfiguration,
 } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
@@ -34,17 +33,12 @@ export interface MemberTableProperties {
 
 export function renderMemberTables(
     memberTableProperties: readonly MemberTableProperties[],
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     const docNodes: DocNode[] = [];
 
     for (const member of memberTableProperties) {
-        const renderedTable = renderTableWithHeading(
-            member,
-            documenterConfiguration,
-            tsdocConfiguration,
-        );
+        const renderedTable = renderTableWithHeading(member, config);
         if (renderedTable !== undefined) {
             docNodes.push(renderedTable);
         }
@@ -52,26 +46,24 @@ export function renderMemberTables(
 
     return docNodes.length === 0
         ? undefined
-        : new DocSection({ configuration: tsdocConfiguration }, docNodes);
+        : new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 export function renderTableWithHeading(
     memberTableProperties: MemberTableProperties,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     const renderedTable = renderTable(
         memberTableProperties.items,
         memberTableProperties.itemKind,
-        documenterConfiguration,
-        tsdocConfiguration,
+        config,
     );
 
     return renderedTable === undefined
         ? undefined
-        : new DocSection({ configuration: tsdocConfiguration }, [
+        : new DocSection({ configuration: config.tsdocConfiguration }, [
               new DocHeading({
-                  configuration: tsdocConfiguration,
+                  configuration: config.tsdocConfiguration,
                   title: memberTableProperties.headingTitle,
               }),
               renderedTable,
@@ -81,8 +73,7 @@ export function renderTableWithHeading(
 export function renderTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable | undefined {
     if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
         throw new Error(`Table rendering does not support provided API item kind: "${itemKind}".`);
@@ -101,33 +92,25 @@ export function renderTable(
             return renderFunctionLikeTable(
                 apiItems.map((apiItem) => apiItem as ApiFunctionLike),
                 itemKind,
-                documenterConfiguration,
-                tsdocConfiguration,
+                config,
             );
 
         case ApiItemKind.Property:
         case ApiItemKind.PropertySignature:
             return renderPropertiesTable(
                 apiItems.map((apiItem) => apiItem as ApiPropertyItem),
-                documenterConfiguration,
-                tsdocConfiguration,
+                config,
             );
 
         default:
-            return renderDefaultTable(
-                apiItems,
-                itemKind,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return renderDefaultTable(apiItems, itemKind, config);
     }
 }
 
 export function renderDefaultTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable | undefined {
     if (apiItems.length === 0) {
         return undefined;
@@ -136,16 +119,16 @@ export function renderDefaultTable(
     const headerTitles = [getHeadingTitleForApiKind(itemKind), "Modifiers", "Description"];
     const tableRows: DocTableRow[] = apiItems.map(
         (apiItem) =>
-            new DocTableRow({ configuration: tsdocConfiguration }, [
-                renderApiTitleCell(apiItem, documenterConfiguration, tsdocConfiguration),
-                renderModifiersCell(apiItem, tsdocConfiguration),
-                renderApiSummaryCell(apiItem, tsdocConfiguration),
+            new DocTableRow({ configuration: config.tsdocConfiguration }, [
+                renderApiTitleCell(apiItem, config),
+                renderModifiersCell(apiItem, config),
+                renderApiSummaryCell(apiItem, config),
             ]),
     );
 
     return new DocTable(
         {
-            configuration: tsdocConfiguration,
+            configuration: config.tsdocConfiguration,
             headerTitles,
         },
         tableRows,
@@ -154,23 +137,22 @@ export function renderDefaultTable(
 
 export function renderParametersTable(
     apiParameters: readonly Parameter[],
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable {
     const headerTitles = ["Parameter", "Type", "Description"];
     // TODO: denote optional parameters?
     const tableRows: DocTableRow[] = apiParameters.map(
         (apiParameter) =>
-            new DocTableRow({ configuration: tsdocConfiguration }, [
-                renderParameterTitleCell(apiParameter, tsdocConfiguration),
-                renderParameterTypeCell(apiParameter, documenterConfiguration, tsdocConfiguration),
-                renderParameterSummaryCell(apiParameter, tsdocConfiguration),
+            new DocTableRow({ configuration: config.tsdocConfiguration }, [
+                renderParameterTitleCell(apiParameter, config),
+                renderParameterTypeCell(apiParameter, config),
+                renderParameterSummaryCell(apiParameter, config),
             ]),
     );
 
     return new DocTable(
         {
-            configuration: tsdocConfiguration,
+            configuration: config.tsdocConfiguration,
             headerTitles,
         },
         tableRows,
@@ -180,8 +162,7 @@ export function renderParametersTable(
 export function renderFunctionLikeTable(
     apiItems: readonly ApiFunctionLike[],
     itemKind: ApiItemKind,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable | undefined {
     if (apiItems.length === 0) {
         return undefined;
@@ -195,17 +176,17 @@ export function renderFunctionLikeTable(
     ];
     const tableRows: DocTableRow[] = apiItems.map(
         (apiItem) =>
-            new DocTableRow({ configuration: tsdocConfiguration }, [
-                renderApiTitleCell(apiItem, documenterConfiguration, tsdocConfiguration),
-                renderModifiersCell(apiItem, tsdocConfiguration),
-                renderReturnTypeCell(apiItem, documenterConfiguration, tsdocConfiguration),
-                renderApiSummaryCell(apiItem, tsdocConfiguration),
+            new DocTableRow({ configuration: config.tsdocConfiguration }, [
+                renderApiTitleCell(apiItem, config),
+                renderModifiersCell(apiItem, config),
+                renderReturnTypeCell(apiItem, config),
+                renderApiSummaryCell(apiItem, config),
             ]),
     );
 
     return new DocTable(
         {
-            configuration: tsdocConfiguration,
+            configuration: config.tsdocConfiguration,
             headerTitles,
         },
         tableRows,
@@ -214,8 +195,7 @@ export function renderFunctionLikeTable(
 
 export function renderPropertiesTable(
     apiProperties: readonly ApiPropertyItem[],
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable | undefined {
     if (apiProperties.length === 0) {
         return undefined;
@@ -224,17 +204,17 @@ export function renderPropertiesTable(
     const headerTitles = ["Property", "Modifiers", "Type", "Description"];
     const tableRows: DocTableRow[] = apiProperties.map(
         (apiProperty) =>
-            new DocTableRow({ configuration: tsdocConfiguration }, [
-                renderApiTitleCell(apiProperty, documenterConfiguration, tsdocConfiguration),
-                renderModifiersCell(apiProperty, tsdocConfiguration),
-                renderPropertyTypeCell(apiProperty, documenterConfiguration, tsdocConfiguration),
-                renderApiSummaryCell(apiProperty, tsdocConfiguration),
+            new DocTableRow({ configuration: config.tsdocConfiguration }, [
+                renderApiTitleCell(apiProperty, config),
+                renderModifiersCell(apiProperty, config),
+                renderPropertyTypeCell(apiProperty, config),
+                renderApiSummaryCell(apiProperty, config),
             ]),
     );
 
     return new DocTable(
         {
-            configuration: tsdocConfiguration,
+            configuration: config.tsdocConfiguration,
             headerTitles,
         },
         tableRows,
@@ -243,7 +223,7 @@ export function renderPropertiesTable(
 
 export function renderApiSummaryCell(
     apiItem: ApiItem,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
     const docNodes: DocNode[] = [];
 
@@ -251,11 +231,18 @@ export function renderApiSummaryCell(
         if (apiItem.releaseTag === ReleaseTag.Beta) {
             docNodes.push(
                 new DocEmphasisSpan(
-                    { configuration: tsdocConfiguration, bold: true, italic: true },
-                    [new DocPlainText({ configuration: tsdocConfiguration, text: "(BETA)" })],
+                    { configuration: config.tsdocConfiguration, bold: true, italic: true },
+                    [
+                        new DocPlainText({
+                            configuration: config.tsdocConfiguration,
+                            text: "(BETA)",
+                        }),
+                    ],
                 ),
             );
-            docNodes.push(new DocPlainText({ configuration: tsdocConfiguration, text: " " }));
+            docNodes.push(
+                new DocPlainText({ configuration: config.tsdocConfiguration, text: " " }),
+            );
         }
     }
 
@@ -265,43 +252,35 @@ export function renderApiSummaryCell(
         }
     }
 
-    return new DocTableCell({ configuration: tsdocConfiguration }, docNodes);
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 export function renderReturnTypeCell(
     apiItem: ApiFunctionLike,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
     const docNodes: DocNode[] = [];
 
     if (ApiReturnTypeMixin.isBaseClassOf(apiItem)) {
-        docNodes.push(
-            renderExcerptWithHyperlinks(
-                apiItem.returnTypeExcerpt,
-                documenterConfiguration,
-                tsdocConfiguration,
-            ),
-        );
+        docNodes.push(renderExcerptWithHyperlinks(apiItem.returnTypeExcerpt, config));
     }
 
-    return new DocTableCell({ configuration: tsdocConfiguration }, [
-        new DocParagraph({ configuration: tsdocConfiguration }, docNodes),
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes),
     ]);
 }
 
 export function renderApiTitleCell(
     apiItem: ApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: tsdocConfiguration }, [
-        new DocParagraph({ configuration: tsdocConfiguration }, [
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, [
             new DocLinkTag({
-                configuration: tsdocConfiguration,
+                configuration: config.tsdocConfiguration,
                 tagName: "@link",
                 linkText: Utilities.getConciseSignature(apiItem),
-                urlDestination: getLinkUrlForApiItem(apiItem, documenterConfiguration),
+                urlDestination: getLinkUrlForApiItem(apiItem, config),
             }),
         ]),
     ]);
@@ -309,69 +288,59 @@ export function renderApiTitleCell(
 
 export function renderModifiersCell(
     apiItem: ApiItem,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
     const modifierNodes: DocNode[] = [];
     if (ApiStaticMixin.isBaseClassOf(apiItem)) {
         if (apiItem.isStatic) {
             modifierNodes.push(
-                new DocCodeSpan({ configuration: tsdocConfiguration, code: "static" }),
+                new DocCodeSpan({ configuration: config.tsdocConfiguration, code: "static" }),
             );
         }
     }
 
-    return new DocTableCell({ configuration: tsdocConfiguration }, modifierNodes);
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, modifierNodes);
 }
 
 export function renderPropertyTypeCell(
     apiItem: ApiPropertyItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: tsdocConfiguration }, [
-        new DocParagraph({ configuration: tsdocConfiguration }, [
-            renderExcerptWithHyperlinks(
-                apiItem.propertyTypeExcerpt,
-                documenterConfiguration,
-                tsdocConfiguration,
-            ),
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, [
+            renderExcerptWithHyperlinks(apiItem.propertyTypeExcerpt, config),
         ]),
     ]);
 }
 
 export function renderParameterTitleCell(
     apiParameter: Parameter,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: tsdocConfiguration }, [
-        new DocParagraph({ configuration: tsdocConfiguration }, [
-            new DocPlainText({ configuration: tsdocConfiguration, text: apiParameter.name }),
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, [
+            new DocPlainText({ configuration: config.tsdocConfiguration, text: apiParameter.name }),
         ]),
     ]);
 }
 
 export function renderParameterTypeCell(
     apiParameter: Parameter,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: tsdocConfiguration }, [
-        new DocParagraph({ configuration: tsdocConfiguration }, [
-            renderExcerptWithHyperlinks(
-                apiParameter.parameterTypeExcerpt,
-                documenterConfiguration,
-                tsdocConfiguration,
-            ),
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, [
+            renderExcerptWithHyperlinks(apiParameter.parameterTypeExcerpt, config),
         ]),
     ]);
 }
 
 export function renderParameterSummaryCell(
     apiParameter: Parameter,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
     return new DocTableCell(
-        { configuration: tsdocConfiguration },
+        { configuration: config.tsdocConfiguration },
         apiParameter.tsdocParamBlock === undefined ? [] : [apiParameter.tsdocParamBlock.content],
     );
 }

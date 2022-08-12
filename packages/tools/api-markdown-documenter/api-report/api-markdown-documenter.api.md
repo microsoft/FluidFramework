@@ -163,6 +163,7 @@ export interface MarkdownDocument {
 // @public
 export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
     readonly newlineKind?: NewlineKind;
+    readonly tsdocConfiguration?: TSDocConfiguration;
     readonly uriRoot: string;
     readonly verbose?: boolean;
 }
@@ -183,58 +184,58 @@ export interface PolicyOptions {
 }
 
 // @public
-export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection) => DocSection;
+export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection) => DocSection;
 
 // @public
-export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration) => DocSection;
+export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 
 // @public (undocumented)
-export function renderApiPage(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
+export function renderApiPage(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
 // @public (undocumented)
-export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSection;
+export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public (undocumented)
-export function renderBreadcrumb(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+export function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public (undocumented)
-export function renderChildDetailsSection(childSections: readonly ChildSectionProperties[], documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
+export function renderChildDetailsSection(childSections: readonly ChildSectionProperties[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
 
 // @public (undocumented)
 export function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle: string, tsdocConfiguration: TSDocConfiguration, renderChild: (childItem: ApiItem) => DocSection): DocSection | undefined;
 
 // @public (undocumented)
-function renderClassSection(apiClass: ApiClass, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-export function renderDeprecationNotice(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
+export function renderDeprecationNotice(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-export function renderDocuments(apiModel: ApiModel, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
+export function renderDocuments(apiModel: ApiModel, partialConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
 
 // @public (undocumented)
-function renderEnumSection(apiEnum: ApiEnum, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-export function renderExample(example: DocExample, tsdocConfiguration: TSDocConfiguration): DocSection;
+export function renderExample(example: DocExample, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public (undocumented)
-export function renderExamples(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
+export function renderExamples(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public (undocumented)
-export function renderExcerptWithHyperlinks(excerpt: Excerpt, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocParagraph;
+export function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph;
 
 // @public (undocumented)
 export function renderFiles(apiModel: ApiModel, outputDirectoryPath: string, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): Promise<void>;
 
 // @public (undocumented)
-function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public (undocumented)
-export function renderHeading(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocHeading;
+export function renderHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
 
 // @public (undocumented)
-export function renderHeritageTypes(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
+export function renderHeritageTypes(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 export interface RenderingPolicies {
@@ -273,49 +274,49 @@ export interface RenderingPolicies {
 }
 
 // @public (undocumented)
-function renderInterfaceSection(apiInterface: ApiInterface, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+function renderInterfaceSection(apiInterface: ApiInterface, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-function renderItemWithoutChildren(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
-export function renderModelPage(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
+export function renderModelPage(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
 // @public (undocumented)
-function renderModelSection(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+function renderModelSection(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly ApiItem[], documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly ApiItem[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-function renderNamespaceSection(apiNamespace: ApiNamespace, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+function renderNamespaceSection(apiNamespace: ApiNamespace, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-export function renderPackagePage(apiPackage: ApiPackage, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
+export function renderPackagePage(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
 // @public (undocumented)
-function renderPackageSection(apiPackage: ApiPackage, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-export function renderParametersSection(apiFunctionLike: ApiFunctionLike, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
+export function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public (undocumented)
-export function renderRemarks(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
+export function renderRemarks(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-export type RenderSectionBlock = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration) => DocSection;
+export type RenderSectionBlock = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 
 // @public
-function renderSectionBlock(apiItem: ApiItem, innerSectionBody: DocSection | undefined, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+function renderSectionBlock(apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public (undocumented)
-export function renderSignature(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
+export function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public (undocumented)
 export function renderSummary(apiItem: ApiItem): DocSection | undefined;
 
 // @public (undocumented)
-export function renderTypeParameters(typeParameters: readonly TypeParameter[], documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
+export function renderTypeParameters(typeParameters: readonly TypeParameter[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;

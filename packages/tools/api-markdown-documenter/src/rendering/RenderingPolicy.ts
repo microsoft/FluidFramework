@@ -18,7 +18,7 @@ import {
     ApiTypeAlias,
     ApiVariable,
 } from "@microsoft/api-extractor-model";
-import { DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
+import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import * as DefaultRenderingPolicies from "./default-policies";
@@ -28,8 +28,7 @@ import * as DefaultRenderingPolicies from "./default-policies";
  */
 export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (
     apiItem: TApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
     renderChild: (apiItem: ApiItem) => DocSection,
 ) => DocSection;
 
@@ -38,8 +37,7 @@ export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (
  */
 export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (
     apiItem: TApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ) => DocSection;
 
 /**
@@ -48,8 +46,7 @@ export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (
 export type RenderSectionBlock = (
     apiItem: ApiItem,
     innerSectionBody: DocSection | undefined,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ) => DocSection;
 
 /**

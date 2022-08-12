@@ -1,5 +1,5 @@
 import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
-import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
+import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { filterByKind } from "../../utilities";
@@ -8,8 +8,7 @@ import { renderMemberTables } from "../Tables";
 
 export function renderEnumSection(
     apiEnum: ApiEnum,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
     renderChild: (apiItem: ApiItem) => DocSection,
 ): DocSection {
     const docNodes: DocNode[] = [];
@@ -31,8 +30,7 @@ export function renderEnumSection(
                     items: flags,
                 },
             ],
-            documenterConfiguration,
-            tsdocConfiguration,
+            config,
         );
 
         if (renderedMemberTables !== undefined) {
@@ -48,8 +46,7 @@ export function renderEnumSection(
                     items: flags,
                 },
             ],
-            documenterConfiguration,
-            tsdocConfiguration,
+            config,
             renderChild,
         );
 
@@ -58,12 +55,7 @@ export function renderEnumSection(
         }
     }
 
-    const innerSectionBody = new DocSection({ configuration: tsdocConfiguration }, docNodes);
+    const innerSectionBody = new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 
-    return documenterConfiguration.renderSectionBlock(
-        apiEnum,
-        innerSectionBody,
-        documenterConfiguration,
-        tsdocConfiguration,
-    );
+    return config.renderSectionBlock(apiEnum, innerSectionBody, config);
 }

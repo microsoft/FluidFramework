@@ -1,6 +1,8 @@
+import { TSDocConfiguration } from "@microsoft/tsdoc";
 import { NewlineKind } from "@rushstack/node-core-library";
 
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
+import { CustomDocNodes } from "./doc-nodes";
 import { RenderingPolicies, defaultRenderingPolicies } from "./rendering/RenderingPolicy";
 
 // TODOs:
@@ -11,15 +13,22 @@ import { RenderingPolicies, defaultRenderingPolicies } from "./rendering/Renderi
  */
 export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
     /**
+     * Default root uri used when generating content links.
+     */
+    readonly uriRoot: string;
+
+    /**
      * Specifies what type of newlines API Documenter should use when writing output files.
      * By default, the output files will be written with Windows-style newlines.
      */
     readonly newlineKind?: NewlineKind;
 
     /**
-     * Default root uri used when generating content links.
+     * TSDoc Configuration to use when parsing source-code documentation.
+     *
+     * @defaultValue {@link CustomDocNodes.configuration}
      */
-    readonly uriRoot: string;
+    readonly tsdocConfiguration?: TSDocConfiguration;
 
     /**
      * Whether or not verbose logging is enabled.
@@ -34,6 +43,7 @@ export function markdownDocumenterConfigurationWithDefaults(
 ): Required<MarkdownDocumenterConfiguration> {
     return {
         newlineKind: NewlineKind.OsDefault,
+        tsdocConfiguration: CustomDocNodes.configuration,
         verbose: false,
         ...defaultPolicyOptions,
         ...defaultRenderingPolicies,

@@ -50,7 +50,6 @@ import {
     getAncestralHierarchy,
     getFilePathForApiItem,
     getHeadingIdForApiItem,
-    getHeadingTitleForApiItem,
     getLinkForApiItem,
     getQualifiedApiItemName,
 } from "../utilities";
@@ -64,16 +63,15 @@ import { renderParametersTable } from "./Tables";
  * TODO
  * Note: no breadcrumb
  * @param apiModel - TODO
- * @param documenterConfiguration - TODO
+ * @param config - TODO
  * @param tsdocConfiguration - TODO
  */
 export function renderModelPage(
     apiModel: ApiModel,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument {
-    if (documenterConfiguration.verbose) {
+    if (config.verbose) {
         console.log(`Rendering API Model page...`);
     }
 
@@ -81,41 +79,37 @@ export function renderModelPage(
 
     // Render heading
     // TODO: heading level
-    if (documenterConfiguration.includeTopLevelDocumentHeading) {
-        docNodes.push(renderHeading(apiModel, documenterConfiguration, tsdocConfiguration));
+    if (config.includeTopLevelDocumentHeading) {
+        docNodes.push(renderHeadingForApiItem(apiModel, config));
     }
 
     // Do not render breadcrumb for Model page
 
     // Render body contents
     docNodes.push(
-        documenterConfiguration.renderModelSection(
-            apiModel,
-            documenterConfiguration,
-            tsdocConfiguration,
-            (childItem) => renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
+        config.renderModelSection(apiModel, config, (childItem) =>
+            renderApiSection(childItem, config),
         ),
     );
 
-    if (documenterConfiguration.verbose) {
+    if (config.verbose) {
         console.log(`API Model page rendered successfully.`);
     }
 
     return createMarkdownDocument(
         apiModel,
-        new DocSection({ configuration: tsdocConfiguration }, docNodes),
-        documenterConfiguration,
+        new DocSection({ configuration: config.tsdocConfiguration }, docNodes),
+        config,
         markdownEmitter,
     );
 }
 
 export function renderPackagePage(
     apiPackage: ApiPackage,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument {
-    if (documenterConfiguration.verbose) {
+    if (config.verbose) {
         console.log(`Rendering ${apiPackage.name} package page...`);
     }
 
@@ -123,39 +117,35 @@ export function renderPackagePage(
 
     // Render heading
     // TODO: heading level
-    if (documenterConfiguration.includeTopLevelDocumentHeading) {
-        docNodes.push(renderHeading(apiPackage, documenterConfiguration, tsdocConfiguration));
+    if (config.includeTopLevelDocumentHeading) {
+        docNodes.push(renderHeadingForApiItem(apiPackage, config));
     }
 
     // Render breadcrumb
-    docNodes.push(renderBreadcrumb(apiPackage, documenterConfiguration, tsdocConfiguration));
+    docNodes.push(renderBreadcrumb(apiPackage, config));
 
     // Render body contents
     docNodes.push(
-        documenterConfiguration.renderPackageSection(
-            apiPackage,
-            documenterConfiguration,
-            tsdocConfiguration,
-            (childItem) => renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
+        config.renderPackageSection(apiPackage, config, (childItem) =>
+            renderApiSection(childItem, config),
         ),
     );
 
-    if (documenterConfiguration.verbose) {
+    if (config.verbose) {
         console.log(`Package page rendered successfully.`);
     }
 
     return createMarkdownDocument(
         apiPackage,
-        new DocSection({ configuration: tsdocConfiguration }, docNodes),
-        documenterConfiguration,
+        new DocSection({ configuration: config.tsdocConfiguration }, docNodes),
+        config,
         markdownEmitter,
     );
 }
 
 export function renderApiPage(
     apiItem: ApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument {
     if (
@@ -166,33 +156,33 @@ export function renderApiPage(
         throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
     }
 
-    if (documenterConfiguration.verbose) {
+    if (config.verbose) {
         console.log(`Rendering document for ${apiItem.displayName}...`);
     }
 
     const docNodes: DocNode[] = [];
 
     // Render heading
-    if (documenterConfiguration.includeTopLevelDocumentHeading) {
-        docNodes.push(renderHeading(apiItem, documenterConfiguration, tsdocConfiguration));
+    if (config.includeTopLevelDocumentHeading) {
+        docNodes.push(renderHeadingForApiItem(apiItem, config));
     }
 
     // Render breadcrumb
-    if (documenterConfiguration.includeBreadcrumb) {
-        docNodes.push(renderBreadcrumb(apiItem, documenterConfiguration, tsdocConfiguration));
+    if (config.includeBreadcrumb) {
+        docNodes.push(renderBreadcrumb(apiItem, config));
     }
 
     // Render body content for the item
-    docNodes.push(renderApiSection(apiItem, documenterConfiguration, tsdocConfiguration));
+    docNodes.push(renderApiSection(apiItem, config));
 
-    if (documenterConfiguration.verbose) {
+    if (config.verbose) {
         console.log(`Document for ${apiItem.displayName} rendered successfully.`);
     }
 
     return createMarkdownDocument(
         apiItem,
-        new DocSection({ configuration: tsdocConfiguration }, docNodes),
-        documenterConfiguration,
+        new DocSection({ configuration: config.tsdocConfiguration }, docNodes),
+        config,
         markdownEmitter,
     );
 }
@@ -200,7 +190,7 @@ export function renderApiPage(
 function createMarkdownDocument(
     apiItem: ApiItem,
     renderedContents: DocSection,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
+    config: Required<MarkdownDocumenterConfiguration>,
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument {
     const emittedContents = markdownEmitter.emit(new StringBuilder(), renderedContents, {
@@ -209,14 +199,13 @@ function createMarkdownDocument(
     return {
         contents: emittedContents,
         apiItemName: getQualifiedApiItemName(apiItem),
-        path: getFilePathForApiItem(apiItem, documenterConfiguration, /* includeExtension: */ true),
+        path: getFilePathForApiItem(apiItem, config, /* includeExtension: */ true),
     };
 }
 
 function renderApiSection(
     apiItem: ApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
     if (
         apiItem.kind === ApiItemKind.Model ||
@@ -229,118 +218,58 @@ function renderApiSection(
 
     switch (apiItem.kind) {
         case ApiItemKind.CallSignature:
-            return documenterConfiguration.renderCallSignatureSection(
-                apiItem as ApiCallSignature,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderCallSignatureSection(apiItem as ApiCallSignature, config);
 
         case ApiItemKind.Class:
-            return documenterConfiguration.renderClassSection(
-                apiItem as ApiClass,
-                documenterConfiguration,
-                tsdocConfiguration,
-                (childItem) =>
-                    renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
+            return config.renderClassSection(apiItem as ApiClass, config, (childItem) =>
+                renderApiSection(childItem, config),
             );
 
         case ApiItemKind.ConstructSignature:
-            return documenterConfiguration.renderConstructorSection(
-                apiItem as ApiConstructSignature,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderConstructorSection(apiItem as ApiConstructSignature, config);
 
         case ApiItemKind.Constructor:
-            return documenterConfiguration.renderConstructorSection(
-                apiItem as ApiConstructor,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderConstructorSection(apiItem as ApiConstructor, config);
 
         case ApiItemKind.Enum:
-            return documenterConfiguration.renderEnumSection(
-                apiItem as ApiEnum,
-                documenterConfiguration,
-                tsdocConfiguration,
-                (childItem) =>
-                    renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
+            return config.renderEnumSection(apiItem as ApiEnum, config, (childItem) =>
+                renderApiSection(childItem, config),
             );
 
         case ApiItemKind.EnumMember:
-            return documenterConfiguration.renderEnumMemberSection(
-                apiItem as ApiEnumMember,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderEnumMemberSection(apiItem as ApiEnumMember, config);
 
         case ApiItemKind.Function:
-            return documenterConfiguration.renderFunctionSection(
-                apiItem as ApiFunction,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderFunctionSection(apiItem as ApiFunction, config);
 
         case ApiItemKind.IndexSignature:
-            return documenterConfiguration.renderIndexSignatureSection(
-                apiItem as ApiIndexSignature,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderIndexSignatureSection(apiItem as ApiIndexSignature, config);
 
         case ApiItemKind.Interface:
-            return documenterConfiguration.renderInterfaceSection(
-                apiItem as ApiInterface,
-                documenterConfiguration,
-                tsdocConfiguration,
-                (childItem) =>
-                    renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
+            return config.renderInterfaceSection(apiItem as ApiInterface, config, (childItem) =>
+                renderApiSection(childItem, config),
             );
 
         case ApiItemKind.Method:
-            return documenterConfiguration.renderMethodSection(
-                apiItem as ApiMethod,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderMethodSection(apiItem as ApiMethod, config);
 
         case ApiItemKind.MethodSignature:
-            return documenterConfiguration.renderMethodSection(
-                apiItem as ApiMethodSignature,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderMethodSection(apiItem as ApiMethodSignature, config);
 
         case ApiItemKind.Namespace:
-            return documenterConfiguration.renderNamespaceSection(
-                apiItem as ApiNamespace,
-                documenterConfiguration,
-                tsdocConfiguration,
-                (childItem) =>
-                    renderApiSection(childItem, documenterConfiguration, tsdocConfiguration),
+            return config.renderNamespaceSection(apiItem as ApiNamespace, config, (childItem) =>
+                renderApiSection(childItem, config),
             );
 
         case ApiItemKind.Property:
         case ApiItemKind.PropertySignature:
-            return documenterConfiguration.renderPropertySection(
-                apiItem as ApiPropertyItem,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderPropertySection(apiItem as ApiPropertyItem, config);
 
         case ApiItemKind.TypeAlias:
-            return documenterConfiguration.renderTypeAliasSection(
-                apiItem as ApiTypeAlias,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderTypeAliasSection(apiItem as ApiTypeAlias, config);
 
         case ApiItemKind.Variable:
-            return documenterConfiguration.renderVariableSection(
-                apiItem as ApiVariable,
-                documenterConfiguration,
-                tsdocConfiguration,
-            );
+            return config.renderVariableSection(apiItem as ApiVariable, config);
 
         default:
             throw new Error(`Unrecognized API item kind: "${apiItem.kind}".`);
@@ -349,40 +278,36 @@ function renderApiSection(
 
 export function renderSignature(
     apiItem: ApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     if (apiItem instanceof ApiDeclaredItem) {
         const docNodes: DocNode[] = [];
-        docNodes.push(new DocHeading({ configuration: tsdocConfiguration, title: "Signature" }));
+        docNodes.push(
+            new DocHeading({ configuration: config.tsdocConfiguration, title: "Signature" }),
+        );
         if (apiItem.excerpt.text.length > 0) {
             docNodes.push(
                 new DocFencedCode({
-                    configuration: tsdocConfiguration,
+                    configuration: config.tsdocConfiguration,
                     code: apiItem.getExcerptWithModifiers(),
                     language: "typescript",
                 }),
             );
         }
 
-        const renderedHeritageTypes = renderHeritageTypes(
-            apiItem,
-            documenterConfiguration,
-            tsdocConfiguration,
-        );
+        const renderedHeritageTypes = renderHeritageTypes(apiItem, config);
         if (renderedHeritageTypes !== undefined) {
             docNodes.push(renderedHeritageTypes);
         }
 
-        return new DocSection({ configuration: tsdocConfiguration }, docNodes);
+        return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
     }
     return undefined;
 }
 
 export function renderHeritageTypes(
     apiItem: ApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     const docNodes: DocNode[] = [];
 
@@ -392,8 +317,7 @@ export function renderHeritageTypes(
             const renderedExtendsTypes = renderHeritageTypeList(
                 [apiItem.extendsType],
                 "Extends",
-                documenterConfiguration,
-                tsdocConfiguration,
+                config,
             );
             if (renderedExtendsTypes === undefined) {
                 throw new Error(
@@ -407,19 +331,14 @@ export function renderHeritageTypes(
         const renderedImplementsTypes = renderHeritageTypeList(
             apiItem.implementsTypes,
             "Implements",
-            documenterConfiguration,
-            tsdocConfiguration,
+            config,
         );
         if (renderedImplementsTypes !== undefined) {
             docNodes.push(renderedImplementsTypes);
         }
 
         // Render type parameters if there are any.
-        const renderedTypeParameters = renderTypeParameters(
-            apiItem.typeParameters,
-            documenterConfiguration,
-            tsdocConfiguration,
-        );
+        const renderedTypeParameters = renderTypeParameters(apiItem.typeParameters, config);
         if (renderedTypeParameters !== undefined) {
             docNodes.push(renderedTypeParameters);
         }
@@ -430,76 +349,65 @@ export function renderHeritageTypes(
         const renderedExtendsTypes = renderHeritageTypeList(
             apiItem.extendsTypes,
             "Extends",
-            documenterConfiguration,
-            tsdocConfiguration,
+            config,
         );
         if (renderedExtendsTypes !== undefined) {
             docNodes.push(renderedExtendsTypes);
         }
 
         // Render type parameters if there are any.
-        const renderedTypeParameters = renderTypeParameters(
-            apiItem.typeParameters,
-            documenterConfiguration,
-            tsdocConfiguration,
-        );
+        const renderedTypeParameters = renderTypeParameters(apiItem.typeParameters, config);
         if (renderedTypeParameters !== undefined) {
             docNodes.push(renderedTypeParameters);
         }
     }
 
-    return new DocSection({ configuration: tsdocConfiguration }, docNodes);
+    return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 function renderHeritageTypeList(
     heritageTypes: readonly HeritageType[],
     label: string,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocParagraph | undefined {
     if (heritageTypes.length > 0) {
         const docNodes: DocNode[] = [];
 
         docNodes.push(
-            new DocEmphasisSpan({ configuration: tsdocConfiguration, bold: true }, [
-                new DocPlainText({ configuration: tsdocConfiguration, text: `${label}: ` }),
+            new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
+                new DocPlainText({ configuration: config.tsdocConfiguration, text: `${label}: ` }),
             ]),
         );
 
         let needsComma: boolean = false;
         for (const heritageType of heritageTypes) {
             if (needsComma) {
-                docNodes.push(new DocPlainText({ configuration: tsdocConfiguration, text: ", " }));
+                docNodes.push(
+                    new DocPlainText({ configuration: config.tsdocConfiguration, text: ", " }),
+                );
             }
 
-            docNodes.push(
-                renderExcerptWithHyperlinks(
-                    heritageType.excerpt,
-                    documenterConfiguration,
-                    tsdocConfiguration,
-                ),
-            );
+            docNodes.push(renderExcerptWithHyperlinks(heritageType.excerpt, config));
             needsComma = true;
         }
 
-        return new DocParagraph({ configuration: tsdocConfiguration }, docNodes);
+        return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
     }
     return undefined;
 }
 
 export function renderTypeParameters(
     typeParameters: readonly TypeParameter[],
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     if (typeParameters.length > 0) {
         const docNodes: DocNode[] = [];
 
         docNodes.push(
-            new DocParagraph({ configuration: tsdocConfiguration }, [
-                new DocEmphasisSpan({ configuration: tsdocConfiguration, bold: true }, [
+            new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
                     new DocPlainText({
-                        configuration: tsdocConfiguration,
+                        configuration: config.tsdocConfiguration,
                         text: "Type parameters: ",
                     }),
                 ]),
@@ -511,12 +419,12 @@ export function renderTypeParameters(
             const paragraphNodes: DocNode[] = [];
 
             paragraphNodes.push(
-                new DocPlainText({ configuration: tsdocConfiguration, text: "* " }),
+                new DocPlainText({ configuration: config.tsdocConfiguration, text: "* " }),
             ); // List bullet
             paragraphNodes.push(
-                new DocEmphasisSpan({ configuration: tsdocConfiguration, bold: true }, [
+                new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
                     new DocPlainText({
-                        configuration: tsdocConfiguration,
+                        configuration: config.tsdocConfiguration,
                         text: typeParameter.name,
                     }),
                 ]),
@@ -524,23 +432,24 @@ export function renderTypeParameters(
 
             if (typeParameter.tsdocTypeParamBlock !== undefined) {
                 paragraphNodes.push(
-                    new DocPlainText({ configuration: tsdocConfiguration, text: ": " }),
+                    new DocPlainText({ configuration: config.tsdocConfiguration, text: ": " }),
                 );
                 paragraphNodes.push(...typeParameter.tsdocTypeParamBlock.content.nodes);
             }
 
-            docNodes.push(new DocParagraph({ configuration: tsdocConfiguration }, paragraphNodes));
+            docNodes.push(
+                new DocParagraph({ configuration: config.tsdocConfiguration }, paragraphNodes),
+            );
         }
 
-        return new DocSection({ configuration: tsdocConfiguration }, docNodes);
+        return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
     }
     return undefined;
 }
 
 export function renderExcerptWithHyperlinks(
     excerpt: Excerpt,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocParagraph {
     const docNodes: DocNode[] = [];
     for (const token of excerpt.spannedTokens) {
@@ -556,7 +465,10 @@ export function renderExcerptWithHyperlinks(
             // TODO: links
 
             docNodes.push(
-                new DocPlainText({ configuration: tsdocConfiguration, text: unwrappedTokenText }),
+                new DocPlainText({
+                    configuration: config.tsdocConfiguration,
+                    text: unwrappedTokenText,
+                }),
             );
 
             // const apiItemResult: IResolveDeclarationReferenceResult =
@@ -570,7 +482,7 @@ export function renderExcerptWithHyperlinks(
             //             linkText: unwrappedTokenText,
             //             urlDestination: getLinkUrlForApiItem(
             //                 apiItemResult.resolvedApiItem,
-            //                 documenterConfiguration,
+            //                 config,
             //             ),
             //         }),
             //     );
@@ -581,17 +493,19 @@ export function renderExcerptWithHyperlinks(
         // If the token was not one from which we generated hyperlink text, write as plain text instead
         if (!wroteHyperlink) {
             docNodes.push(
-                new DocPlainText({ configuration: tsdocConfiguration, text: unwrappedTokenText }),
+                new DocPlainText({
+                    configuration: config.tsdocConfiguration,
+                    text: unwrappedTokenText,
+                }),
             );
         }
     }
-    return new DocParagraph({ configuration: tsdocConfiguration }, docNodes);
+    return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
 export function renderBreadcrumb(
     apiItem: ApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
     // TODO: old system generated link text "Packages" for Model page
 
@@ -599,13 +513,13 @@ export function renderBreadcrumb(
 
     // Get ordered ancestry of document items
     const ancestry = getAncestralHierarchy(apiItem, (hierarchyItem) =>
-        doesItemRequireOwnDocument(hierarchyItem, documenterConfiguration.documentBoundaries),
+        doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries),
     ).reverse(); // Reverse from ascending to descending order
 
     function createLinkTag(link: Link): DocLinkTag {
         const linkUrl = urlFromLink(link);
         return new DocLinkTag({
-            configuration: tsdocConfiguration,
+            configuration: config.tsdocConfiguration,
             tagName: "@link",
             linkText: link.text,
             urlDestination: linkUrl,
@@ -617,46 +531,45 @@ export function renderBreadcrumb(
         if (writtenAnythingYet) {
             docNodes.push(
                 new DocPlainText({
-                    configuration: tsdocConfiguration,
+                    configuration: config.tsdocConfiguration,
                     text: " > ",
                 }),
             );
         }
 
-        const link = getLinkForApiItem(hierarchyItem, documenterConfiguration);
+        const link = getLinkForApiItem(hierarchyItem, config);
         docNodes.push(createLinkTag(link));
 
         writtenAnythingYet = true;
     }
 
-    return new DocSection({ configuration: tsdocConfiguration }, [
-        new DocParagraph({ configuration: tsdocConfiguration }, docNodes),
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes),
     ]);
 }
 
-export function renderHeading(
+export function renderHeadingForApiItem(
     apiItem: ApiItem,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocHeading {
     // TODO: heading level
-    const displayName = getHeadingTitleForApiItem(apiItem, documenterConfiguration);
+    const displayName = config.headingTitlePolicy(apiItem);
     return new DocHeading({
-        configuration: tsdocConfiguration,
+        configuration: config.tsdocConfiguration,
         title: displayName,
-        id: getHeadingIdForApiItem(apiItem, documenterConfiguration),
+        id: getHeadingIdForApiItem(apiItem, config),
     });
 }
 
-export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSection {
+export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocSection {
     const betaWarning: string =
         "This API is provided as a preview for developers and may change" +
         " based on feedback that we receive. Do not use this API in a production environment.";
 
-    return new DocSection({ configuration: tsdocConfiguration }, [
-        new DocNoteBox({ configuration: tsdocConfiguration }, [
-            new DocParagraph({ configuration: tsdocConfiguration }, [
-                new DocPlainText({ configuration: tsdocConfiguration, text: betaWarning }),
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        new DocNoteBox({ configuration: config.tsdocConfiguration }, [
+            new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                new DocPlainText({ configuration: config.tsdocConfiguration, text: betaWarning }),
             ]),
         ]),
     ]);
@@ -670,12 +583,12 @@ export function renderSummary(apiItem: ApiItem): DocSection | undefined {
 
 export function renderRemarks(
     apiItem: ApiItem,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.remarksBlock !== undefined) {
-        return new DocSection({ configuration: tsdocConfiguration }, [
+        return new DocSection({ configuration: config.tsdocConfiguration }, [
             // TODO: heading level
-            new DocHeading({ configuration: tsdocConfiguration, title: "Remarks" }),
+            new DocHeading({ configuration: config.tsdocConfiguration, title: "Remarks" }),
             apiItem.tsdocComment.remarksBlock.content,
         ]);
     }
@@ -684,16 +597,16 @@ export function renderRemarks(
 
 export function renderDeprecationNotice(
     apiItem: ApiItem,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     if (
         apiItem instanceof ApiDocumentedItem &&
         apiItem.tsdocComment?.deprecatedBlock !== undefined
     ) {
-        return new DocSection({ configuration: tsdocConfiguration }, [
+        return new DocSection({ configuration: config.tsdocConfiguration }, [
             new DocNoteBox(
                 {
-                    configuration: tsdocConfiguration,
+                    configuration: config.tsdocConfiguration,
                     // TODO
                     // type: 'warning',
                     // title: 'Deprecated'
@@ -707,7 +620,7 @@ export function renderDeprecationNotice(
 
 export function renderExamples(
     apiItem: ApiItem,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
         const exampleBlocks: DocBlock[] = apiItem.tsdocComment.customBlocks.filter(
@@ -720,22 +633,19 @@ export function renderExamples(
 
         // If there is only 1 example, render it with the default (un-numbered) heading
         if (exampleBlocks.length === 1) {
-            return new DocSection({ configuration: tsdocConfiguration }, [
-                renderExample({ content: exampleBlocks[0] }, tsdocConfiguration),
+            return new DocSection({ configuration: config.tsdocConfiguration }, [
+                renderExample({ content: exampleBlocks[0] }, config),
             ]);
         }
 
         const renderedExamples: DocSection[] = [];
         for (let i = 0; i < exampleBlocks.length; i++) {
             renderedExamples.push(
-                renderExample(
-                    { content: exampleBlocks[i], exampleNumber: i + 1 },
-                    tsdocConfiguration,
-                ),
+                renderExample({ content: exampleBlocks[i], exampleNumber: i + 1 }, config),
             );
         }
 
-        return new DocSection({ configuration: tsdocConfiguration }, renderedExamples);
+        return new DocSection({ configuration: config.tsdocConfiguration }, renderedExamples);
     }
     return undefined;
 }
@@ -755,21 +665,20 @@ export interface DocExample {
 
 export function renderExample(
     example: DocExample,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
     const headingTitle: string =
         example.exampleNumber === undefined ? "Example" : `Example ${example.exampleNumber}`;
 
-    return new DocSection({ configuration: tsdocConfiguration }, [
-        new DocHeading({ configuration: tsdocConfiguration, title: headingTitle }),
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        new DocHeading({ configuration: config.tsdocConfiguration, title: headingTitle }),
         example.content,
     ]);
 }
 
 export function renderParametersSection(
     apiFunctionLike: ApiFunctionLike,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     if (apiFunctionLike.parameters.length === 0) {
         return undefined;
@@ -777,13 +686,9 @@ export function renderParametersSection(
 
     // TODO: caption text?
 
-    return new DocSection({ configuration: tsdocConfiguration }, [
-        new DocHeading({ configuration: tsdocConfiguration, title: "Parameters" }),
-        renderParametersTable(
-            apiFunctionLike.parameters,
-            documenterConfiguration,
-            tsdocConfiguration,
-        ),
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        new DocHeading({ configuration: config.tsdocConfiguration, title: "Parameters" }),
+        renderParametersTable(apiFunctionLike.parameters, config),
     ]);
 }
 
@@ -820,8 +725,7 @@ export interface ChildSectionProperties {
 
 export function renderChildDetailsSection(
     childSections: readonly ChildSectionProperties[],
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
     renderChild: (apiItem) => DocSection,
 ): DocSection | undefined {
     const docNodes: DocNode[] = [];
@@ -831,16 +735,13 @@ export function renderChildDetailsSection(
         // (i.e. it does not get rendered to its own document).
         // Also only render the section if it actually has contents to render (to avoid empty headings).
         if (
-            !doesItemKindRequireOwnDocument(
-                childSection.itemKind,
-                documenterConfiguration.documentBoundaries,
-            ) &&
+            !doesItemKindRequireOwnDocument(childSection.itemKind, config.documentBoundaries) &&
             childSection.items.length !== 0
         ) {
             const renderedChildSection = renderChildrenUnderHeading(
                 childSection.items,
                 childSection.headingTitle,
-                tsdocConfiguration,
+                config.tsdocConfiguration,
                 renderChild,
             );
             if (renderedChildSection !== undefined) {
@@ -851,8 +752,8 @@ export function renderChildDetailsSection(
 
     return docNodes.length === 0
         ? undefined
-        : new DocSection({ configuration: tsdocConfiguration }, [
-              new DocHeading({ configuration: tsdocConfiguration, title: "Details" }),
-              new DocSection({ configuration: tsdocConfiguration }, docNodes),
+        : new DocSection({ configuration: config.tsdocConfiguration }, [
+              new DocHeading({ configuration: config.tsdocConfiguration, title: "Details" }),
+              new DocSection({ configuration: config.tsdocConfiguration }, docNodes),
           ]);
 }

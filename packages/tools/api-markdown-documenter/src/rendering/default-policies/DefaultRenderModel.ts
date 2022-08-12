@@ -3,21 +3,17 @@ import { DocHeading } from "@microsoft/api-documenter/lib/nodes/DocHeading";
 import { DocTable } from "@microsoft/api-documenter/lib/nodes/DocTable";
 import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
-import {
-    DocNode,
-    DocParagraph,
-    DocPlainText,
-    DocSection,
-    TSDocConfiguration,
-} from "@microsoft/tsdoc";
+import { DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { renderApiSummaryCell, renderApiTitleCell } from "../Tables";
 
+// TODOs:
+// - Reuse child table / contents rendering utilities
+
 export function renderModelSection(
     apiModel: ApiModel,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
     renderChild: (apiItem: ApiItem) => DocSection,
 ) {
     const docNodes: DocNode[] = [];
@@ -25,10 +21,10 @@ export function renderModelSection(
     if (apiModel.packages.length === 0) {
         // If no packages under model, print simple note.
         docNodes.push(
-            new DocParagraph({ configuration: tsdocConfiguration }, [
-                new DocEmphasisSpan({ configuration: tsdocConfiguration, italic: true }, [
+            new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                new DocEmphasisSpan({ configuration: config.tsdocConfiguration, italic: true }, [
                     new DocPlainText({
-                        configuration: tsdocConfiguration,
+                        configuration: config.tsdocConfiguration,
                         text: "No packages discovered while parsing model.",
                     }),
                 ]),
@@ -36,7 +32,7 @@ export function renderModelSection(
         );
     } else {
         const packagesTable: DocTable = new DocTable({
-            configuration: tsdocConfiguration,
+            configuration: config.tsdocConfiguration,
             headerTitles: ["Package", "Description"],
             // TODO
             // cssClass: 'package-list',
@@ -45,19 +41,21 @@ export function renderModelSection(
 
         for (const apiPackage of apiModel.packages) {
             packagesTable.addRow(
-                new DocTableRow({ configuration: tsdocConfiguration }, [
-                    renderApiTitleCell(apiPackage, documenterConfiguration, tsdocConfiguration),
-                    renderApiSummaryCell(apiPackage, tsdocConfiguration),
+                new DocTableRow({ configuration: config.tsdocConfiguration }, [
+                    renderApiTitleCell(apiPackage, config),
+                    renderApiSummaryCell(apiPackage, config),
                 ]),
             );
         }
 
-        docNodes.push(new DocHeading({ configuration: tsdocConfiguration, title: "Packages" }));
+        docNodes.push(
+            new DocHeading({ configuration: config.tsdocConfiguration, title: "Packages" }),
+        );
 
         // TODO: table caption?
 
         docNodes.push(packagesTable);
     }
 
-    return new DocSection({ configuration: tsdocConfiguration }, docNodes);
+    return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }

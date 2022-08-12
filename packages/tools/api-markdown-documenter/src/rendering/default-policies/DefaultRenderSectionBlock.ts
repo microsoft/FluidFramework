@@ -1,5 +1,5 @@
 import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extractor-model";
-import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
+import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { doesItemRequireOwnDocument } from "../../utilities";
@@ -7,7 +7,7 @@ import {
     renderBetaWarning,
     renderDeprecationNotice,
     renderExamples,
-    renderHeading,
+    renderHeadingForApiItem,
     renderRemarks,
     renderSignature,
     renderSummary,
@@ -32,31 +32,30 @@ import {
  *
  * @param apiItem - TODO
  * @param innerSectionBody - TODO
- * @param documenterConfiguration - TODO
+ * @param config - TODO
  * @param tsdocConfiguration - TODO
  * @returns TODO
  */
 export function renderSectionBlock(
     apiItem: ApiItem,
     innerSectionBody: DocSection | undefined,
-    documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
     const docNodes: DocNode[] = [];
 
     // Render heading for non-document-items only.
     // Document items have their headings handled specially.
-    if (!doesItemRequireOwnDocument(apiItem, documenterConfiguration.documentBoundaries)) {
-        docNodes.push(renderHeading(apiItem, documenterConfiguration, tsdocConfiguration));
+    if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
+        docNodes.push(renderHeadingForApiItem(apiItem, config));
     }
 
     // Render beta warning if applicable
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-        docNodes.push(renderBetaWarning(tsdocConfiguration));
+        docNodes.push(renderBetaWarning(config));
     }
 
     // Render deprecation notice (if any)
-    const renderedDeprecationNotice = renderDeprecationNotice(apiItem, tsdocConfiguration);
+    const renderedDeprecationNotice = renderDeprecationNotice(apiItem, config);
     if (renderedDeprecationNotice !== undefined) {
         docNodes.push(renderedDeprecationNotice);
     }
@@ -68,19 +67,19 @@ export function renderSectionBlock(
     }
 
     // Render @remarks content (if any)
-    const renderedRemarks = renderRemarks(apiItem, tsdocConfiguration);
+    const renderedRemarks = renderRemarks(apiItem, config);
     if (renderedRemarks !== undefined) {
         docNodes.push(renderedRemarks);
     }
 
     // Render examples (if any)
-    const renderedExamples = renderExamples(apiItem, tsdocConfiguration);
+    const renderedExamples = renderExamples(apiItem, config);
     if (renderedExamples !== undefined) {
         docNodes.push(renderedExamples);
     }
 
     // Render signature
-    const renderedSignature = renderSignature(apiItem, documenterConfiguration, tsdocConfiguration);
+    const renderedSignature = renderSignature(apiItem, config);
     if (renderedSignature !== undefined) {
         docNodes.push(renderedSignature);
     }
@@ -93,5 +92,5 @@ export function renderSectionBlock(
 
     // TODO: anything after inner body?
 
-    return new DocSection({ configuration: tsdocConfiguration }, docNodes);
+    return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }

@@ -8,7 +8,6 @@ import * as Path from "path";
 import { MarkdownDocument } from "../MarkdownDocument";
 import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
 import { markdownDocumenterConfigurationWithDefaults } from "../MarkdownDocumenterConfiguration";
-import { CustomDocNodes } from "../doc-nodes";
 import { renderModelPage, renderPackagePage } from "../rendering";
 
 /**
@@ -22,11 +21,9 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
  */
 const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
 
-const documenterConfiguration = markdownDocumenterConfigurationWithDefaults({
+const config = markdownDocumenterConfigurationWithDefaults({
     uriRoot: "docs",
 });
-
-const tsdocConfiguration = CustomDocNodes.configuration;
 
 describe("api-markdown-documenter simple suite tests", async () => {
     const apiReportPath = Path.resolve(__dirname, "test-data", "simple-suite-test.json");
@@ -43,12 +40,7 @@ describe("api-markdown-documenter simple suite tests", async () => {
     });
 
     it("Render Model page (smoke test)", () => {
-        const result = renderModelPage(
-            apiModel!,
-            documenterConfiguration,
-            tsdocConfiguration,
-            new CustomMarkdownEmitter(apiModel),
-        );
+        const result = renderModelPage(apiModel!, config, new CustomMarkdownEmitter(apiModel));
         expect(result.path).to.equal("index.md");
         // TODO: snapshot
     });
@@ -56,22 +48,13 @@ describe("api-markdown-documenter simple suite tests", async () => {
     it("Render Package page (smoke test)", () => {
         const packageItem = apiModel.packages[0];
 
-        const result = renderPackagePage(
-            packageItem,
-            documenterConfiguration,
-            tsdocConfiguration,
-            new CustomMarkdownEmitter(apiModel),
-        );
+        const result = renderPackagePage(packageItem, config, new CustomMarkdownEmitter(apiModel));
         expect(result.path).to.equal("simple-suite-test.md");
         // TODO: snapshot
     });
 
     it("Ensure no duplicate file paths", () => {
-        const documents = renderDocuments(
-            apiModel!,
-            documenterConfiguration,
-            new CustomMarkdownEmitter(apiModel),
-        );
+        const documents = renderDocuments(apiModel!, config, new CustomMarkdownEmitter(apiModel));
 
         const pathMap = new Map<string, MarkdownDocument>();
         for (const document of documents) {
