@@ -60,7 +60,6 @@ Test interface property
 ```typescript
 readonly testClassProperty: string;
 ```
-TODO: Property rendering
 
 ## Method Details
 

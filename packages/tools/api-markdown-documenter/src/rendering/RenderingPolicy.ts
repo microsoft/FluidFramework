@@ -47,7 +47,7 @@ export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (
  */
 export type RenderSectionBlock = (
     apiItem: ApiItem,
-    innerSectionBody: DocSection,
+    innerSectionBody: DocSection | undefined,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
 ) => DocSection;
@@ -79,21 +79,21 @@ export interface RenderingPolicies {
  * TODO
  */
 export const defaultRenderingPolicies: Required<RenderingPolicies> = {
-    renderCallSignatureSection: DefaultRenderingPolicies.renderCallSignatureSection,
+    renderCallSignatureSection: DefaultRenderingPolicies.renderItemWithoutChildren,
     renderClassSection: DefaultRenderingPolicies.renderClassSection,
     renderConstructorSection: DefaultRenderingPolicies.renderFunctionLikeSection,
     renderEnumSection: DefaultRenderingPolicies.renderEnumSection,
-    renderEnumMemberSection: DefaultRenderingPolicies.renderEnumMemberSection,
+    renderEnumMemberSection: DefaultRenderingPolicies.renderItemWithoutChildren,
     renderFunctionSection: DefaultRenderingPolicies.renderFunctionLikeSection,
-    renderIndexSignatureSection: DefaultRenderingPolicies.renderIndexSignatureSection,
+    renderIndexSignatureSection: DefaultRenderingPolicies.renderItemWithoutChildren,
     renderInterfaceSection: DefaultRenderingPolicies.renderInterfaceSection,
     renderMethodSection: DefaultRenderingPolicies.renderFunctionLikeSection,
     renderModelSection: DefaultRenderingPolicies.renderModelSection,
     renderNamespaceSection: DefaultRenderingPolicies.renderNamespaceSection,
     renderPackageSection: DefaultRenderingPolicies.renderPackageSection,
-    renderPropertySection: DefaultRenderingPolicies.renderPropertySection,
-    renderTypeAliasSection: DefaultRenderingPolicies.renderTypeAliasSection,
-    renderVariableSection: DefaultRenderingPolicies.renderVariableSection,
+    renderPropertySection: DefaultRenderingPolicies.renderItemWithoutChildren,
+    renderTypeAliasSection: DefaultRenderingPolicies.renderItemWithoutChildren,
+    renderVariableSection: DefaultRenderingPolicies.renderItemWithoutChildren,
 
     renderSectionBlock: DefaultRenderingPolicies.renderSectionBlock,
 };

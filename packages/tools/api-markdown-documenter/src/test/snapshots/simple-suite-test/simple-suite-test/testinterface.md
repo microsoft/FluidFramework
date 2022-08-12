@@ -43,7 +43,6 @@ Test interface event property
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
-TODO: Property rendering
 
 ## testInterfaceProperty
 
@@ -54,7 +53,6 @@ Test interface property
 ```typescript
 testInterfaceProperty: number;
 ```
-TODO: Property rendering
 
 ## Call Signature Details
 
@@ -67,7 +65,6 @@ Test interface event call signature
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
-TODO: CallSignature rendering
 
 ## Method Details
 

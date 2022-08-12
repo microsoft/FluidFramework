@@ -100,21 +100,16 @@ export const defaultPolicyOptions: Required<PolicyOptions>;
 
 declare namespace DefaultRenderingPolicies {
     export {
-        renderCallSignatureSection,
         renderClassSection,
         renderEnumSection,
-        renderEnumMemberSection,
         renderFunctionLikeSection,
-        renderIndexSignatureSection,
         renderInterfaceSection,
+        renderItemWithoutChildren,
         renderModelSection,
         renderModuleLikeSection,
         renderNamespaceSection,
         renderPackageSection,
-        renderPropertySection,
-        renderSectionBlock,
-        renderTypeAliasSection,
-        renderVariableSection
+        renderSectionBlock
     }
 }
 export { DefaultRenderingPolicies }
@@ -203,9 +198,6 @@ export function renderBetaWarning(tsdocConfiguration: TSDocConfiguration): DocSe
 export function renderBreadcrumb(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
-function renderCallSignatureSection(apiCallSignature: ApiCallSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
-
-// @public (undocumented)
 export function renderChildDetailsSection(childSections: readonly ChildSectionProperties[], documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
 
 // @public (undocumented)
@@ -219,9 +211,6 @@ export function renderDeprecationNotice(apiItem: ApiItem, tsdocConfiguration: TS
 
 // @public
 export function renderDocuments(apiModel: ApiModel, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
-
-// @public (undocumented)
-function renderEnumMemberSection(apiEnumMember: ApiEnumMember, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
 function renderEnumSection(apiEnum: ApiEnum, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
@@ -246,9 +235,6 @@ export function renderHeading(apiItem: ApiItem, documenterConfiguration: Require
 
 // @public (undocumented)
 export function renderHeritageTypes(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
-
-// @public (undocumented)
-function renderIndexSignatureSection(apiIndexSignature: ApiIndexSignature, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public
 export interface RenderingPolicies {
@@ -289,6 +275,9 @@ export interface RenderingPolicies {
 // @public (undocumented)
 function renderInterfaceSection(apiInterface: ApiInterface, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
+// @public (undocumented)
+function renderItemWithoutChildren(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+
 // @public
 export function renderModelPage(apiModel: ApiModel, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
@@ -311,16 +300,13 @@ function renderPackageSection(apiPackage: ApiPackage, documenterConfiguration: R
 export function renderParametersSection(apiFunctionLike: ApiFunctionLike, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
 
 // @public (undocumented)
-function renderPropertySection(apiProperty: ApiPropertyItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
-
-// @public (undocumented)
 export function renderRemarks(apiItem: ApiItem, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
 
 // @public
-export type RenderSectionBlock = (apiItem: ApiItem, innerSectionBody: DocSection, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration) => DocSection;
+export type RenderSectionBlock = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration) => DocSection;
 
 // @public
-function renderSectionBlock(apiItem: ApiItem, innerSectionBody: DocSection, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
+function renderSectionBlock(apiItem: ApiItem, innerSectionBody: DocSection | undefined, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public (undocumented)
 export function renderSignature(apiItem: ApiItem, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
@@ -329,13 +315,7 @@ export function renderSignature(apiItem: ApiItem, documenterConfiguration: Requi
 export function renderSummary(apiItem: ApiItem): DocSection | undefined;
 
 // @public (undocumented)
-function renderTypeAliasSection(apiTypeAlias: ApiTypeAlias, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
-
-// @public (undocumented)
 export function renderTypeParameters(typeParameters: readonly TypeParameter[], documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection | undefined;
-
-// @public (undocumented)
-function renderVariableSection(apiVariable: ApiVariable, documenterConfiguration: Required<MarkdownDocumenterConfiguration>, tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;

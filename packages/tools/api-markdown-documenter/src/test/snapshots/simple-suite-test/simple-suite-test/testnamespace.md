@@ -66,7 +66,6 @@ Test Type-Alias
 ```typescript
 type TypeAlias = boolean;
 ```
-TODO: TypeAlias rendering
 
 ## Function Details
 
@@ -118,7 +117,6 @@ Test enum value 1
 ```typescript
 TestEnumValue1 = 0
 ```
-TODO: Enum rendering
 
 ## TestEnumValue2
 
@@ -129,7 +127,6 @@ Test enum value 2
 ```typescript
 TestEnumValue2 = 1
 ```
-TODO: Enum rendering
 
 ## Variable Details
 
@@ -142,5 +139,3 @@ Test Constant
 ```typescript
 TestConst = "Hello world!"
 ```
-TODO: Variable rendering
-

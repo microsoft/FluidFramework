@@ -67,7 +67,6 @@ Test class event property
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
-TODO: Property rendering
 
 ## testClassGetterProperty
 
@@ -78,7 +77,6 @@ Test class getter-only property
 ```typescript
 get testClassGetterProperty(): number;
 ```
-TODO: Property rendering
 
 ## testClassProperty
 
@@ -89,7 +87,6 @@ Test class property
 ```typescript
 readonly testClassProperty: number;
 ```
-TODO: Property rendering
 
 ## Method Details
 

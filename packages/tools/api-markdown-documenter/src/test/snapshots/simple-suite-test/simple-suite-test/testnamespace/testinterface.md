@@ -36,7 +36,6 @@ Test interface property
 ```typescript
 testInterfaceProperty: boolean;
 ```
-TODO: Property rendering
 
 ## Method Details
 

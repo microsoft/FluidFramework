@@ -38,7 +38,7 @@ import {
  */
 export function renderSectionBlock(
     apiItem: ApiItem,
-    innerSectionBody: DocSection,
+    innerSectionBody: DocSection | undefined,
     documenterConfiguration: Required<MarkdownDocumenterConfiguration>,
     tsdocConfiguration: TSDocConfiguration,
 ): DocSection {
@@ -87,7 +87,9 @@ export function renderSectionBlock(
 
     // TODO: anything else before inner body?
 
-    docNodes.push(innerSectionBody);
+    if (innerSectionBody !== undefined) {
+        docNodes.push(innerSectionBody);
+    }
 
     // TODO: anything after inner body?
 

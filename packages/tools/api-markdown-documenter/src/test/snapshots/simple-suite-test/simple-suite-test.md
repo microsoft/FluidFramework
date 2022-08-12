@@ -60,7 +60,6 @@ Test Type-Alias
 ```typescript
 export declare type TypeAlias = string;
 ```
-TODO: TypeAlias rendering
 
 ## Function Details
 
@@ -113,7 +112,6 @@ Test enum value 1 (string)
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
-TODO: Enum rendering
 
 ## TestEnumValue2
 
@@ -124,7 +122,6 @@ Test enum value 2 (number)
 ```typescript
 TestEnumValue2 = 3
 ```
-TODO: Enum rendering
 
 ## TestEnumValue3
 
@@ -135,7 +132,6 @@ Test enum value 3 (default)
 ```typescript
 TestEnumValue3 = 4
 ```
-TODO: Enum rendering
 
 ## Variable Details
 
@@ -148,5 +144,3 @@ Test Constant
 ```typescript
 TestConst = 42
 ```
-TODO: Variable rendering
-
