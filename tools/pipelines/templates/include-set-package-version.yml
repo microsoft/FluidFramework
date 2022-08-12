@@ -45,7 +45,7 @@ steps:
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
 
-      fluid-build-version
+      flub generate buildVersion
 - task: Bash@3
   displayName: Update Package Version
   env:
