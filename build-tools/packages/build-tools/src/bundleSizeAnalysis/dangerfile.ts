@@ -41,6 +41,9 @@ const localReportPath = "./artifacts/bundleAnalysis";
         undefined,
         ADOSizeComparator.naiveFallbackCommitGenerator,
     );
+    const branchName = process.env["TARGET_BRANCH_NAME"] === "" || process.env["TARGET_BRANCH_NAME"] === undefined
+        ? "main" : process.env["TARGET_BRANCH_NAME"];
+    console.log(`Branch name: ${branchName}`);
     const result: BundleComparisonResult = await sizeComparator.createSizeComparisonMessage(false);
 
     // Post a message only if there was an error (result.comparison is undefined) or if

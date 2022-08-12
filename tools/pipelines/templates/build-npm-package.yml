@@ -359,6 +359,7 @@ stages:
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+              TARGET_BRANCH_NAME: ${{ variables['Build.SourceBranch'] }}
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
