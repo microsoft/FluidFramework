@@ -10,8 +10,8 @@ import {
     IResolveDeclarationReferenceResult,
 } from "@microsoft/api-extractor-model";
 import { DocLinkTag, DocNode, DocNodeKind, StringBuilder } from "@microsoft/tsdoc";
-import * as colors from "colors";
 
+import { logWarning } from "./LoggingUtilities";
 import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTable, DocTableCell } from "./doc-nodes";
 import { CustomDocNodeKind } from "./doc-nodes/CustomDocNodeKind";
 
@@ -126,16 +126,12 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                     context.writer.write(encodedLinkText);
                     context.writer.write(`](${filename!})`);
                 } else {
-                    console.log(colors.yellow("WARNING: Unable to determine link text"));
+                    logWarning("Unable to determine link text");
                 }
             }
         } else if (result.errorMessage) {
             const elementText = docLinkTag.codeDestination.emitAsTsdoc();
-            console.log(
-                colors.yellow(
-                    `WARNING: Unable to resolve reference "${elementText}": ` + result.errorMessage,
-                ),
-            );
+            logWarning(`Unable to resolve reference "${elementText}": ` + result.errorMessage);
 
             // Emit item as simple italicized text, so that at least something appears in the generated output
             context.writer.write(
