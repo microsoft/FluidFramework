@@ -33,12 +33,11 @@ down to the below command to create a secret in Kubernetes:
 kubectl create secret docker-registry regsecret --docker-server=prague.azurecr.io --docker-username=prague --docker-password=/vM3i=D+K4+vj+pgha=cg=55OQLDWj3w --docker-email=kurtb@microsoft.com
 ```
 
-#### Custom Storage Class
+#### Storage Classes
 
-**Note: this might be outdated.**
-
-We use a custom [StorageClass](https://kubernetes.io/docs/concepts/storage/storage-classes/) that uses Azure's unmanaged
-disks to provision volumes for some services running in the cluster. To create that storage class, edit the `system/azure-unmanaged-premium.yaml`
+We use specific [StorageClasses](https://kubernetes.io/docs/concepts/storage/storage-classes/) for some services running in the cluster. For MongoDB we use a storage class
+that leverages Azure's premium managed disks. This one comes by default with AKS clusters. For GitRest we use a storage class that leverages Azure's **unmanaged**
+disks, and does not come by default in AKS. To create it, edit the `system/azure-unmanaged-premium.yaml`
 file (adjust the `storageAccount` field, and if necessary, `skuName` and `location`) and then run this command:
 
 ```bash
@@ -49,8 +48,9 @@ kubectl apply -f system/azure-unmanaged-premium.yaml
 
 You'll also need to have a Redis, MongoDB, Rabbitmq, and Historian instances running.
 
-We install MongoDB and Rabbitmq from the helm stable repository
-`helm install -f system/mongodb.yaml stable/mongodb`
+We install MongoDB and Rabbitmq from the helm stable repository. We also configure MongoDB to use the managed-premium storage class in AKS.
+
+`helm install --set persistence.storageClass=managed-premium,persistence.size=4094Gi,usePassword=false stable/mongodb`
 `helm install --set rbacEnabled=false,rabbitmq.username=prague,rabbitmq.password=[rabbitmq password],persistence.enabled=true,persistence.size=16Gi stable/rabbitmq`
 
 Redis, Kafka and Historian come from the `/server/charts` directory. You'll want to install each of them.

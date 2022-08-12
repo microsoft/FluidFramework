@@ -25,7 +25,7 @@ import {
     SummaryElementStringifier,
 } from "../../shared-tree-core";
 import { AnchorSet } from "../../tree";
-import { DefaultChangeSet, DefaultRebaser } from "../../feature-libraries";
+import { DefaultChangeFamily, DefaultChangeSet, DefaultRebaser } from "../../feature-libraries";
 
 describe("SharedTreeCore", () => {
     it("summarizes without indexes", async () => {
@@ -107,7 +107,7 @@ describe("SharedTreeCore", () => {
 
     function createTree(
         indexes?: Index<DefaultChangeSet>[],
-    ): SharedTreeCore<DefaultRebaser> {
+    ): SharedTreeCore<DefaultChangeSet, DefaultChangeFamily> {
         const runtime = new MockFluidDataStoreRuntime();
         const attributes: IChannelAttributes = {
             type: "TestSharedTree",
@@ -117,7 +117,7 @@ describe("SharedTreeCore", () => {
 
         return new SharedTreeCore(
             indexes ?? [],
-            new DefaultRebaser(),
+            new DefaultChangeFamily(),
             new AnchorSet(),
             "TestSharedTree",
             runtime,

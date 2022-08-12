@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services",
-  "version": "0.1037.1000",
+  "version": "0.1037.2000",
   "description": "Fluid server services",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -50,15 +50,15 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "dependencies": {
-    "@fluidframework/common-utils": "^0.33.1000-74526",
-    "@fluidframework/protocol-definitions": "^0.1029.1000-0",
-    "@fluidframework/server-services-client": "^0.1037.1000-0",
-    "@fluidframework/server-services-core": "^0.1037.1000-0",
-    "@fluidframework/server-services-ordering-kafkanode": "^0.1037.1000-0",
-    "@fluidframework/server-services-ordering-rdkafka": "^0.1037.1000-0",
-    "@fluidframework/server-services-shared": "^0.1037.1000-0",
-    "@fluidframework/server-services-telemetry": "^0.1037.1000-0",
-    "@fluidframework/server-services-utils": "^0.1037.1000-0",
+    "@fluidframework/common-utils": "^1.0.0",
+    "@fluidframework/protocol-definitions": "^1.0.0",
+    "@fluidframework/server-services-client": "^0.1037.2000",
+    "@fluidframework/server-services-core": "^0.1037.2000",
+    "@fluidframework/server-services-ordering-kafkanode": "^0.1037.2000",
+    "@fluidframework/server-services-ordering-rdkafka": "^0.1037.2000",
+    "@fluidframework/server-services-shared": "^0.1037.2000",
+    "@fluidframework/server-services-telemetry": "^0.1037.2000",
+    "@fluidframework/server-services-utils": "^0.1037.2000",
     "@socket.io/redis-emitter": "^4.1.0",
     "amqplib": "^0.8.0",
     "axios": "^0.26.0",
@@ -75,7 +75,7 @@
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
-    "@fluidframework/server-test-utils": "^0.1037.1000-0",
+    "@fluidframework/server-test-utils": "^0.1037.2000",
     "@rushstack/eslint-config": "^2.5.1",
     "@types/amqplib": "^0.5.17",
     "@types/debug": "^4.1.5",
