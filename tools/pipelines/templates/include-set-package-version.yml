@@ -38,7 +38,7 @@ steps:
     TEST_BUILD: $(testBuild)
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
     VERSION_TAGNAME: ${{ parameters.tagName }}
-    VERSION_INCLUDE_INTERNAL_VERSIONS: ${ parameters.includeInternalVersions }
+    VERSION_INCLUDE_INTERNAL_VERSIONS: ${{ parameters.includeInternalVersions }}
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
