@@ -19,6 +19,7 @@
 
 import child_process from "child_process";
 import fs from "fs";
+import { detectVersionScheme, getLatestReleaseFromList, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
 import { Logger } from "../common/logging";
 import { test } from "./buildVersionTests";
@@ -134,15 +135,23 @@ export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
  * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
  * pre-release version).
  */
-export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[], log?: Logger) {
+export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[], includeInternalVersions = false, log?: Logger) {
     const versions = input_tags !== undefined ? getVersionsFromStrings(prefix, input_tags) : getVersions(prefix);
 
     // The last item in the array is the latest because the array is already sorted.
-    const latestTaggedRelease = versions.slice(-1)[0] ?? "0.0.0";
+    let latestTaggedRelease = includeInternalVersions ? getLatestReleaseFromList(versions) : versions.slice(-1)[0] ?? "0.0.0";
+
+    // const hasInternalReleases = versions.some(v => isInternalVersionScheme(v));
+    // const hasInternalPrereleases = versions.some(v => isInternalVersionScheme(v, true));
+    if (includeInternalVersions) {
+        latestTaggedRelease = getLatestReleaseFromList(versions);
+    }
 
     log?.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
     const currentIsGreater = gt_semver(current_version, latestTaggedRelease);
-    const currentIsPrerelease = prerelease_semver(current_version) !== null;
+    const currentIsPrerelease =
+        prerelease_semver(current_version) !== null
+        && detectVersionScheme(current_version) !== "internalPrerelease";
     return currentIsGreater && !currentIsPrerelease;
 }
 
@@ -262,7 +271,8 @@ function main() {
     }
 
     if (arg_tag !== undefined) {
-        const isLatest = getIsLatest(arg_tag, version);
+        const includeInternalVersions = (process.env["VERSION_INCLUDE_INTERNAL_VERSIONS"] === "true");
+        const isLatest = getIsLatest(arg_tag, version, undefined, includeInternalVersions);
         console.log(`isLatest=${isLatest}`);
         if (arg_release && isLatest) {
             console.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);

@@ -224,6 +224,9 @@ export function adjustVersion(
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false) {
     let list: string[] = [];
 
+    // Check if the versionList is version strings or tag names
+    const isTagNames = versionList.some(v => v.includes("_v"));
+
     // Remove pre-releases from the list
     if (!allowPrereleases) {
         list = versionList.filter((v) => {

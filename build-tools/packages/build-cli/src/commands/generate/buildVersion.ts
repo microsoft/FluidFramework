@@ -7,9 +7,9 @@
 
 import child_process from "child_process";
 import * as fs from "fs";
-import { getSimpleVersion, getIsLatest } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
+import { getSimpleVersion, getIsLatest } from "../../lib";
 
 export default class GenerateBuildVersionCommand extends BaseCommand<
     typeof GenerateBuildVersionCommand.flags
@@ -44,6 +44,11 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
         tag: Flags.string({
             description: "The tag name to use.",
             env: "VERSION_TAGNAME",
+        }),
+        includeInternalVersions: Flags.boolean({
+            char: "i",
+            description: "Include Fluid internal versions.",
+            env: "VERSION_INCLUDE_INTERNAL_VERSIONS",
         }),
         test: Flags.boolean({}),
         ...BaseCommand.flags,
@@ -97,7 +102,12 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
         }
 
         if (flags.tag !== undefined) {
-            const isLatest = getIsLatest(flags.tag, version);
+            const isLatest = getIsLatest(
+                flags.tag,
+                version,
+                undefined,
+                flags.includeInternalVersions,
+            );
             this.log(`isLatest=${isLatest}`);
             if (isRelease && isLatest === true) {
                 this.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);
