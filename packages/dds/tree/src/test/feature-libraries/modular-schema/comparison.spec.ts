@@ -171,11 +171,13 @@ describe("Schema Comparison", () => {
     });
 
     it("allowsFieldSuperset", () => {
+        const repo = new StoredSchemaRepository(defaultSchemaPolicy);
+        repo.updateTreeSchema(brand("never"), neverTree);
         const neverField2: FieldSchema = fieldSchema(
             FieldKinds.value,
             [brand("never")],
         );
-        const compare = (a: FieldSchema, b: FieldSchema): boolean => allowsFieldSuperset(defaultSchemaPolicy, a, b);
+        const compare = (a: FieldSchema, b: FieldSchema): boolean => allowsFieldSuperset(repo, a, b);
         testOrder(compare, [neverField, emptyField, anyField]);
         testPartialOrder(compare, [neverField, neverField2, emptyField, anyField], [[neverField, neverField2]]);
     });
@@ -220,7 +222,14 @@ function getOrdering<T>(original: T, superset: T, allowsSuperset: (a: T, b: T) =
 
 function testOrder<T>(compare: (a: T, b: T) => boolean, inOrder: T[]): void {
     for (let index = 0; index < inOrder.length - 1; index++) {
-        assert.equal(getOrdering(inOrder[index], inOrder[index + 1], compare), Ordering.Superset);
+        const order = getOrdering(inOrder[index], inOrder[index + 1], compare);
+        if (order !== Ordering.Superset) {
+            assert.fail(
+                `expected ${
+                    JSON.stringify(intoSimpleObject(inOrder[index + 1]))} to be a superset of ${
+                    JSON.stringify(intoSimpleObject(inOrder[index]))} but was ${Ordering[order]}`,
+            );
+        }
     }
 }
 

@@ -121,7 +121,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
                 this.adapters.missingField?.has(key) ?? false,
             );
             const adapatedField = adapted.lookupGlobalFieldSchema(key);
-            if (!allowsFieldSuperset(this.policy, field, adapatedField)) {
+            if (!allowsFieldSuperset(adapted, field, adapatedField)) {
                 fail("error adapting field schema");
             }
             adapted.updateFieldSchema(key, adapatedField);

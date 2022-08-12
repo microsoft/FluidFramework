@@ -74,4 +74,6 @@ export {
     ChangeHandler,
     FieldKind,
     Multiplicity,
+    isNeverField,
+    FullSchemaPolicy,
 } from "./feature-libraries";

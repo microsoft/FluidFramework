@@ -192,7 +192,7 @@ export type FieldKey = LocalFieldKey | GlobalFieldKey;
 export class FieldKind {
     constructor(identifier: FieldKindIdentifier, multiplicity: Multiplicity, changeHandler: ChangeHandler<unknown, any, any>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
-    readonly allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean;
+    allowsFieldSuperset(originalRepo: StoredSchemaRepository<FullSchemaPolicy>, originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema): boolean;
     // (undocumented)
     readonly changeHandler: ChangeHandler<unknown, any, any>;
     // (undocumented)
@@ -218,10 +218,14 @@ declare namespace FieldKinds {
         value,
         optional,
         sequence,
-        forbidden
+        forbidden,
+        fieldKinds
     }
 }
 export { FieldKinds }
+
+// @public
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
 
 // @public
 export interface FieldLocation {
@@ -258,6 +262,11 @@ const forbidden: FieldKind;
 
 // @public
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
+
+// @public
+export interface FullSchemaPolicy extends SchemaPolicy {
+    readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
+}
 
 // @public
 export interface GenericTreeNode<TChild> extends NodeData {
@@ -328,6 +337,9 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 
 // @public
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
+
+// @public (undocumented)
+export function isNeverField(repo: StoredSchemaRepository<FullSchemaPolicy>, field: FieldSchema): boolean;
 
 // @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {
@@ -661,8 +673,6 @@ export interface SchemaDataReader {
 
 // @public
 export interface SchemaPolicy {
-    // (undocumented)
-    allowsFieldSuperset(original: FieldSchema, superset: FieldSchema): boolean;
     readonly defaultGlobalFieldSchema: FieldSchema;
     readonly defaultTreeSchema: TreeSchema;
 }

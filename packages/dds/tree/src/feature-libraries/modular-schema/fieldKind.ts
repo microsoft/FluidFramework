@@ -5,7 +5,10 @@
 
 import { ChangeEncoder } from "../../change-family";
 import { ChangeRebaser } from "../../rebase";
-import { FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier, SchemaPolicy } from "../../schema-stored";
+import {
+    FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier, SchemaPolicy, StoredSchemaRepository, fieldSchema,
+} from "../../schema-stored";
+import { isNeverField } from "./comparison";
 
 /**
  * This logic lives in feature-libraries since using it is technically optional.
@@ -32,7 +35,9 @@ export class FieldKind {
      * @param multiplicity - bound on the number of children fields of this kind may have.
      * TODO: replace with with numeric upper and lowe bounds.
      * @param changeHandler - Change handling policy.
-     * @param allowsTreeSupersetOf - Kinds which can be "upgraded"
+     * @param allowsTreeSupersetOf - returns true iff `superset` supports all this this does,
+     * and such a schema change is an allowed upgrade. Does not have to handle the `never` cases.
+     * See {@link isNeverField}.
      * to this one without risk of any possible data becoming out of schema.
      * @param handlesEditsFrom - Kinds (in addition to this) whose edits can be processed by changeHandler.
      * If the kind of a field changes, and edits are rebased across that kind change,
@@ -43,10 +48,24 @@ export class FieldKind {
         public readonly identifier: FieldKindIdentifier,
         public readonly multiplicity: Multiplicity,
         public readonly changeHandler: ChangeHandler<unknown, any, any>,
-        public readonly allowsTreeSupersetOf:
+        private readonly allowsTreeSupersetOf:
             (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean,
         public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
         ) {}
+
+    public allowsFieldSuperset(
+        originalRepo: StoredSchemaRepository<FullSchemaPolicy>,
+        originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
+        superset: FieldSchema,
+    ): boolean {
+        if (isNeverField(originalRepo, fieldSchema(this, originalTypes))) {
+            return true;
+        }
+        if (isNeverField(originalRepo, superset)) {
+            return false;
+        }
+        return this.allowsTreeSupersetOf(originalTypes, superset);
+    }
 }
 
 /**

@@ -6,6 +6,7 @@
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { ChangeEncoder, JsonCompatible, JsonCompatibleReadOnly } from "../change-family";
 import { ChangeRebaser } from "../rebase";
+import { FieldKindIdentifier } from "../schema-stored";
 import { AnchorSet, JsonableTree } from "../tree";
 import { brand } from "../util";
 import { ChangeHandler, FieldKind, Multiplicity, allowsTreeSchemaIdentifierSuperset } from "./modular-schema";
@@ -173,8 +174,9 @@ export const value: FieldKind = new FieldKind(
         rebaser: replaceRebaser<JsonableTree>({ rebaseAnchors: () => { /* TODO: support anchors */ } }),
         encoder: new ValueEncoder<JsonableTree & JsonCompatibleReadOnly>(),
     },
-    // TODO: is order correct?
-    (types, other) => other.kind === value.identifier && allowsTreeSchemaIdentifierSuperset(types, other.types),
+    (types, other) =>
+        (other.kind === sequence.identifier || other.kind === value.identifier)
+        && allowsTreeSchemaIdentifierSuperset(types, other.types),
     new Set(),
 );
 
@@ -188,8 +190,7 @@ export const optional: FieldKind = new FieldKind(
         rebaser: replaceRebaser<JsonableTree | 0>({ rebaseAnchors: () => { /* TODO: support anchors */ } }),
         encoder: new ValueEncoder<(JsonableTree | 0) & JsonCompatibleReadOnly>() },
     (types, other) =>
-        (other.kind === value.identifier || other.kind === optional.identifier)
-        // TODO: is order correct?
+        (other.kind === sequence.identifier || other.kind === optional.identifier)
         && allowsTreeSchemaIdentifierSuperset(types, other.types),
     new Set([value.identifier]),
 );
@@ -206,8 +207,7 @@ export const sequence: FieldKind = new FieldKind(
         encoder: new ValueEncoder<(JsonableTree[]) & JsonCompatibleReadOnly>() },
     // TODO: is order correct?
     (types, other) =>
-        (other.kind === value.identifier || other.kind === optional.identifier || other.kind === sequence.identifier)
-        // TODO: is order correct?
+        (other.kind === sequence.identifier)
         && allowsTreeSchemaIdentifierSuperset(types, other.types),
     // TODO: add normalizer/importers for handling ops from other kinds.
     new Set([value.identifier, optional.identifier]),
@@ -245,6 +245,13 @@ export const forbidden: FieldKind = new FieldKind(
     brand("Forbidden"),
     Multiplicity.Forbidden,
     noChangeHandle,
-    (types, other) => other.kind === forbidden.identifier,
+    // All multiplicities other than Value support empty.
+    (types, other) => fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Value,
     new Set(),
 );
+
+/**
+ * Default field kinds by identifier
+ */
+export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
+    [value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s]));

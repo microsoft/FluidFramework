@@ -225,13 +225,6 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
  */
  export interface SchemaPolicy {
     /**
-     * @returns true iff `superset` is a superset of `original`.
-     *
-     * This does not require a strict (aka proper) superset: equivalent schema will return true.
-     */
-    allowsFieldSuperset(original: FieldSchema, superset: FieldSchema): boolean;
-
-    /**
      * Schema used when there is no schema explicitly specified for an identifier.
      * Typically a "never" schema which forbids any nodes with that type.
      */
