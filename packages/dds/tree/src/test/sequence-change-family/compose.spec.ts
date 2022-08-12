@@ -36,11 +36,56 @@ describe("SequenceChangeFamily - Compose", () => {
     });
 
     it("no changes", () => {
-        const expected: SequenceChangeset = {
-            marks: {},
-        };
         const actual = compose([]);
-        assert.deepEqual(actual, expected);
+        assert.deepEqual(actual, cases.no_change);
+    });
+
+    it("Does not leave empty mark lists and fields", () => {
+        const insertion: SequenceChangeset = {
+            marks: {
+                root: [
+                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                ],
+            },
+        };
+        const deletion: SequenceChangeset = {
+            marks: {
+                root: [
+                    { type: "Delete", id: 2, count: 1 },
+                ],
+            },
+        };
+        const actual = compose([insertion, deletion]);
+        assert.deepEqual(actual, cases.no_change);
+    });
+
+    it("Does not leave empty modify marks", () => {
+        const insertion: SequenceChangeset = {
+            marks: {
+                root: [
+                    {
+                        type: "Modify",
+                        fields: {
+                            foo: [[{ type: "Insert", id: 1, content: [{ type, value: 1 }] }]],
+                        },
+                    },
+                ],
+            },
+        };
+        const deletion: SequenceChangeset = {
+            marks: {
+                root: [
+                    {
+                        type: "Modify",
+                        fields: {
+                            foo: [{ type: "Delete", id: 2, count: 1 }],
+                        },
+                    },
+                ],
+            },
+        };
+        const actual = compose([insertion, deletion]);
+        assert.deepEqual(actual, cases.no_change);
     });
 
     it("set root | set root", () => {

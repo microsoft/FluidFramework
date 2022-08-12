@@ -28,7 +28,15 @@ function foldInFieldMarks(newFieldMarks: T.FieldMarks, baseFieldMarks: T.FieldMa
     for (const key of Object.keys(newFieldMarks)) {
         const newMarkList = newFieldMarks[key];
         baseFieldMarks[key] ??= [];
-        foldInMarkList(newMarkList, baseFieldMarks[key]);
+        const baseMarkList = baseFieldMarks[key];
+        foldInMarkList(newMarkList, baseMarkList);
+        while (typeof baseMarkList[baseMarkList.length - 1] === "number") {
+            baseMarkList.pop();
+        }
+        if (baseMarkList.length === 0) {
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete baseFieldMarks[key];
+        }
     }
 }
 
@@ -127,6 +135,9 @@ function composeMarks(
             switch (newType) {
                 case "Modify": {
                     updateModifyLike(newMark, baseMark);
+                    if (baseMark.fields === undefined && baseMark.value === undefined) {
+                        return [1];
+                    }
                     return [baseMark];
                 }
                 case "Delete": {
@@ -164,10 +175,11 @@ function composeMarks(
 }
 function updateModifyLike(curr: T.Modify, base: T.ModifyInsert | T.Modify | T.ModifyReattach) {
     if (curr.fields !== undefined) {
-        if (base.fields === undefined) {
-            base.fields = {};
-        }
+        base.fields ??= {};
         foldInFieldMarks(curr.fields, base.fields);
+        if (Object.keys(base.fields).length === 0) {
+            delete base.fields;
+        }
     }
     if (curr.value !== undefined) {
         // Later values override earlier ones
