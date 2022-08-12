@@ -5,6 +5,10 @@
 
 Test interface
 
+### Remarks
+
+Here are some remarks about the interface
+
 ### Signature
 
 ```typescript
@@ -23,6 +27,7 @@ export interface TestInterface
 |  CallSignature | Modifiers | Description |
 |  --- | --- | --- |
 |  [(call)(event, listener)](docs/simple-suite-test/testinterface#_call_-CallSignature) |  | Test interface event call signature |
+|  [(call)(event, listener)](docs/simple-suite-test/testinterface#_call__1-CallSignature) |  | Another example call signature |
 
 #### Methods
 
@@ -38,6 +43,10 @@ export interface TestInterface
 
 Test interface event property
 
+<b>Remarks</b>
+
+Here are some remarks about the event property
+
 <b>Signature</b>
 
 ```typescript
@@ -47,6 +56,10 @@ readonly testClassEventProperty: () => void;
 <b>testInterfaceProperty</b>
 
 Test interface property
+
+<b>Remarks</b>
+
+Here are some remarks about the property
 
 <b>Signature</b>
 
@@ -60,10 +73,28 @@ testInterfaceProperty: number;
 
 Test interface event call signature
 
+<b>Remarks</b>
+
+Here are some remarks about the event call signature
+
 <b>Signature</b>
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
+```
+
+<b>(call)</b>
+
+Another example call signature
+
+<b>Remarks</b>
+
+Here are some remarks about the event call signature
+
+<b>Signature</b>
+
+```typescript
+(event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
 ##### Method Details
@@ -71,6 +102,10 @@ Test interface event call signature
 <b>testInterfaceMethod</b>
 
 Test interface method
+
+<b>Remarks</b>
+
+Here are some remarks about the method
 
 <b>Signature</b>
 

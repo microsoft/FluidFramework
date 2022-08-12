@@ -1,8 +1,8 @@
 {
   "metadata": {
     "toolPackage": "@microsoft/api-extractor",
-    "toolVersion": "7.28.1",
-    "schemaVersion": 1008,
+    "toolVersion": "7.28.3",
+    "schemaVersion": 1009,
     "oldestForwardsCompatibleVersion": 1001,
     "tsdocConfig": {
       "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
@@ -162,7 +162,7 @@
   },
   "kind": "Package",
   "canonicalReference": "simple-suite-test!",
-  "docComment": "/**\n * Test package\n *\n * @packageDocumentation\n */\n",
+  "docComment": "/**\n * Test package\n *\n * @remarks\n *\n * This remarks block includes a bulleted list!\n *\n * - Bullet 1\n *\n * - Bullet 2\n *\n * And an ordered list for good measure!\n *\n * 1. List item 1\n *\n * 2. List item 2\n *\n * 3. List item 3\n *\n * Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:\n *\n * - Good link (no alias): {@link TestClass}\n *\n * - Good link (with alias): {@link testFunction | function alias text}\n *\n * - Bad link (no alias): {@link InvalidItem}\n *\n * - Bad link (with alias): {@link InvalidItem | even though I link to an invalid item, I would still like this text to be rendered}\n *\n * @example\n *\n * A test example\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @packageDocumentation\n */\n",
   "name": "simple-suite-test",
   "preserveMemberOrder": false,
   "members": [
@@ -175,17 +175,28 @@
         {
           "kind": "Class",
           "canonicalReference": "simple-suite-test!TestClass:class",
-          "docComment": "/**\n * Test class\n *\n * @typeParam TTypeParameter - A type parameter\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test class\n *\n * @remarks\n *\n * Here are some remarks about the class\n *\n * @typeParam TTypeParameterA - A type parameter\n *\n * @typeParam TTypeParameterB - Another type parameter\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
-              "text": "export declare class TestClass<TTypeParameter> "
+              "text": "export declare class TestClass<TTypeParameterA, TTypeParameterB> "
             }
           ],
           "releaseTag": "Public",
           "typeParameters": [
             {
-              "typeParameterName": "TTypeParameter",
+              "typeParameterName": "TTypeParameterA",
+              "constraintTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            },
+            {
+              "typeParameterName": "TTypeParameterB",
               "constraintTokenRange": {
                 "startIndex": 0,
                 "endIndex": 0
@@ -202,7 +213,7 @@
             {
               "kind": "Constructor",
               "canonicalReference": "simple-suite-test!TestClass:constructor(1)",
-              "docComment": "/**\n * Test class constructor\n *\n * @param testClassProperty - See {@link TestClass.testClassProperty}\n */\n",
+              "docComment": "/**\n * Test class constructor\n *\n * @remarks\n *\n * Here are some remarks about the constructor\n *\n * @param testClassProperty - See {@link TestClass.testClassProperty}\n *\n * @param testClassEventProperty - See {@link TestClass.testClassEventProperty}\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -210,7 +221,7 @@
                 },
                 {
                   "kind": "Content",
-                  "text": "number"
+                  "text": "TTypeParameterB"
                 },
                 {
                   "kind": "Content",
@@ -250,7 +261,7 @@
             {
               "kind": "Property",
               "canonicalReference": "simple-suite-test!TestClass#testClassEventProperty:member",
-              "docComment": "/**\n * Test class event property\n *\n * @eventProperty\n */\n",
+              "docComment": "/**\n * Test class event property\n *\n * @remarks\n *\n * Here are some remarks about the property\n *\n * @eventProperty\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -279,7 +290,7 @@
             {
               "kind": "Property",
               "canonicalReference": "simple-suite-test!TestClass#testClassGetterProperty:member",
-              "docComment": "/**\n * Test class getter-only property\n */\n",
+              "docComment": "/**\n * Test class getter-only property\n *\n * @remarks\n *\n * Here are some remarks about the getter-only property\n *\n * @virtual\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -308,7 +319,7 @@
             {
               "kind": "Method",
               "canonicalReference": "simple-suite-test!TestClass#testClassMethod:member(1)",
-              "docComment": "/**\n * Test class method\n *\n * @throws\n *\n * - An Error\n */\n",
+              "docComment": "/**\n * Test class method\n *\n * @remarks\n *\n * Here are some remarks about the method\n *\n * @throws\n *\n * - An Error\n *\n * @sealed\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -316,7 +327,7 @@
                 },
                 {
                   "kind": "Content",
-                  "text": "TTypeParameter"
+                  "text": "TTypeParameterA"
                 },
                 {
                   "kind": "Content",
@@ -324,7 +335,7 @@
                 },
                 {
                   "kind": "Content",
-                  "text": "TTypeParameter"
+                  "text": "TTypeParameterA"
                 },
                 {
                   "kind": "Content",
@@ -355,7 +366,7 @@
             {
               "kind": "Property",
               "canonicalReference": "simple-suite-test!TestClass#testClassProperty:member",
-              "docComment": "/**\n * Test class property\n */\n",
+              "docComment": "/**\n * Test class property\n *\n * @remarks\n *\n * Here are some remarks about the property\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -363,7 +374,7 @@
                 },
                 {
                   "kind": "Content",
-                  "text": "number"
+                  "text": "TTypeParameterB"
                 },
                 {
                   "kind": "Content",
@@ -386,12 +397,12 @@
         },
         {
           "kind": "Variable",
-          "canonicalReference": "simple-suite-test!TestConst:var",
-          "docComment": "/**\n * Test Constant\n *\n * @public\n */\n",
+          "canonicalReference": "simple-suite-test!testConst:var",
+          "docComment": "/**\n * Test Constant\n *\n * @remarks\n *\n * Here are some remarks about the variable\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
-              "text": "TestConst = "
+              "text": "testConst = "
             },
             {
               "kind": "Content",
@@ -404,16 +415,32 @@
           },
           "isReadonly": true,
           "releaseTag": "Public",
-          "name": "TestConst",
+          "name": "testConst",
           "variableTypeTokenRange": {
             "startIndex": 0,
             "endIndex": 0
           }
         },
         {
+          "kind": "Interface",
+          "canonicalReference": "simple-suite-test!TestEmptyInterface:interface",
+          "docComment": "/**\n * An empty interface\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface TestEmptyInterface "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TestEmptyInterface",
+          "preserveMemberOrder": false,
+          "members": [],
+          "extendsTokenRanges": []
+        },
+        {
           "kind": "Enum",
           "canonicalReference": "simple-suite-test!TestEnum:enum",
-          "docComment": "/**\n * Test Enum\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test Enum\n *\n * @remarks\n *\n * Here are some remarks about the enum\n *\n * @example\n *\n * Some example\n * ```typescript\n * const foo = TestEnum.TestEnumValue1\n * ```\n *\n * @example\n *\n * Another example\n * ```ts\n * const bar = TestEnum.TestEnumValue2\n * ```\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -427,7 +454,7 @@
             {
               "kind": "EnumMember",
               "canonicalReference": "simple-suite-test!TestEnum.TestEnumValue1:member",
-              "docComment": "/**\n * Test enum value 1 (string)\n */\n",
+              "docComment": "/**\n * Test enum value 1 (string)\n *\n * @remarks\n *\n * Here are some remarks about the enum value\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -448,7 +475,7 @@
             {
               "kind": "EnumMember",
               "canonicalReference": "simple-suite-test!TestEnum.TestEnumValue2:member",
-              "docComment": "/**\n * Test enum value 2 (number)\n */\n",
+              "docComment": "/**\n * Test enum value 2 (number)\n *\n * @remarks\n *\n * Here are some remarks about the enum value\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -469,7 +496,7 @@
             {
               "kind": "EnumMember",
               "canonicalReference": "simple-suite-test!TestEnum.TestEnumValue3:member",
-              "docComment": "/**\n * Test enum value 3 (default)\n */\n",
+              "docComment": "/**\n * Test enum value 3 (default)\n *\n * @remarks\n *\n * Here are some remarks about the enum value\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -492,7 +519,7 @@
         {
           "kind": "Function",
           "canonicalReference": "simple-suite-test!testFunction:function(1)",
-          "docComment": "/**\n * Test function\n *\n * @param testParameter - A test parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns The provided parameter\n *\n * @throws\n *\n * - An Error\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test function\n *\n * @remarks\n *\n * This is a test {@link TestInterface | link} to another API member\n *\n * @param testParameter - A test parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns The provided parameter\n *\n * @throws\n *\n * - An Error\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -547,9 +574,118 @@
           "name": "testFunction"
         },
         {
+          "kind": "Function",
+          "canonicalReference": "simple-suite-test!testFunctionReturningInlineType:function(1)",
+          "docComment": "/**\n * Test function that returns an inline type\n *\n * @returns An inline type\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare function testFunctionReturningInlineType(): "
+            },
+            {
+              "kind": "Content",
+              "text": "{\n    foo: number;\n    bar: "
+            },
+            {
+              "kind": "Reference",
+              "text": "TestEnum",
+              "canonicalReference": "simple-suite-test!TestEnum:enum"
+            },
+            {
+              "kind": "Content",
+              "text": ";\n}"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "returnTypeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 4
+          },
+          "releaseTag": "Public",
+          "overloadIndex": 1,
+          "parameters": [],
+          "name": "testFunctionReturningInlineType"
+        },
+        {
+          "kind": "Function",
+          "canonicalReference": "simple-suite-test!testFunctionReturningIntersectionType:function(1)",
+          "docComment": "/**\n * Test function that returns an inline type\n *\n * @returns An intersection type\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare function testFunctionReturningIntersectionType(): "
+            },
+            {
+              "kind": "Reference",
+              "text": "TestEmptyInterface",
+              "canonicalReference": "simple-suite-test!TestEmptyInterface:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "TestInterfaceWithTypeParameter",
+              "canonicalReference": "simple-suite-test!TestInterfaceWithTypeParameter:interface"
+            },
+            {
+              "kind": "Content",
+              "text": "<number>"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "returnTypeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 5
+          },
+          "releaseTag": "Public",
+          "overloadIndex": 1,
+          "parameters": [],
+          "name": "testFunctionReturningIntersectionType"
+        },
+        {
+          "kind": "Function",
+          "canonicalReference": "simple-suite-test!testFunctionReturningUnionType:function(1)",
+          "docComment": "/**\n * Test function that returns an inline type\n *\n * @returns A union type\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare function testFunctionReturningUnionType(): "
+            },
+            {
+              "kind": "Content",
+              "text": "string | "
+            },
+            {
+              "kind": "Reference",
+              "text": "TestInterface",
+              "canonicalReference": "simple-suite-test!TestInterface:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "returnTypeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 3
+          },
+          "releaseTag": "Public",
+          "overloadIndex": 1,
+          "parameters": [],
+          "name": "testFunctionReturningUnionType"
+        },
+        {
           "kind": "Interface",
           "canonicalReference": "simple-suite-test!TestInterface:interface",
-          "docComment": "/**\n * Test interface\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test interface\n *\n * @remarks\n *\n * Here are some remarks about the interface\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -563,7 +699,7 @@
             {
               "kind": "CallSignature",
               "canonicalReference": "simple-suite-test!TestInterface:call(1)",
-              "docComment": "/**\n * Test interface event call signature\n *\n * @eventProperty\n */\n",
+              "docComment": "/**\n * Test interface event call signature\n *\n * @remarks\n *\n * Here are some remarks about the event call signature\n *\n * @returns A value\n *\n * @eventProperty\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -620,9 +756,68 @@
               ]
             },
             {
+              "kind": "CallSignature",
+              "canonicalReference": "simple-suite-test!TestInterface:call(2)",
+              "docComment": "/**\n * Another example call signature\n *\n * @remarks\n *\n * Here are some remarks about the event call signature\n *\n * @returns A value\n *\n * @eventProperty\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "(event: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "'anotherTestCallSignature'"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", listener: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(input: number) => string"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 2,
+              "parameters": [
+                {
+                  "parameterName": "event",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "listener",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": false
+                }
+              ]
+            },
+            {
               "kind": "PropertySignature",
               "canonicalReference": "simple-suite-test!TestInterface#testClassEventProperty:member",
-              "docComment": "/**\n * Test interface event property\n *\n * @eventProperty\n */\n",
+              "docComment": "/**\n * Test interface event property\n *\n * @remarks\n *\n * Here are some remarks about the event property\n *\n * @eventProperty\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -649,7 +844,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "simple-suite-test!TestInterface#testInterfaceMethod:member(1)",
-              "docComment": "/**\n * Test interface method\n */\n",
+              "docComment": "/**\n * Test interface method\n *\n * @remarks\n *\n * Here are some remarks about the method\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -677,7 +872,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "simple-suite-test!TestInterface#testInterfaceProperty:member",
-              "docComment": "/**\n * Test interface property\n */\n",
+              "docComment": "/**\n * Test interface property\n *\n * @remarks\n *\n * Here are some remarks about the property\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -705,9 +900,206 @@
           "extendsTokenRanges": []
         },
         {
+          "kind": "Interface",
+          "canonicalReference": "simple-suite-test!TestInterfaceExtendingOtherInterfaces:interface",
+          "docComment": "/**\n * Test interface that extends other interfaces\n *\n * @remarks\n *\n * Here are some remarks about the interface\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface TestInterfaceExtendingOtherInterfaces extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "TestInterface",
+              "canonicalReference": "simple-suite-test!TestInterface:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ", "
+            },
+            {
+              "kind": "Reference",
+              "text": "TestInterfaceWithTypeParameter",
+              "canonicalReference": "simple-suite-test!TestInterfaceWithTypeParameter:interface"
+            },
+            {
+              "kind": "Content",
+              "text": "<number>"
+            },
+            {
+              "kind": "Content",
+              "text": ", "
+            },
+            {
+              "kind": "Reference",
+              "text": "TestMappedType",
+              "canonicalReference": "simple-suite-test!TestMappedType:type"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TestInterfaceExtendingOtherInterfaces",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "simple-suite-test!TestInterfaceExtendingOtherInterfaces#testMethod:member(1)",
+              "docComment": "/**\n * Test interface method accepting a string and returning a number.\n *\n * @remarks\n *\n * Here are some remarks about the method\n *\n * @param input - A string\n *\n * @returns A number\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "testMethod(input: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "input",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ],
+              "name": "testMethod"
+            }
+          ],
+          "extendsTokenRanges": [
+            {
+              "startIndex": 1,
+              "endIndex": 2
+            },
+            {
+              "startIndex": 3,
+              "endIndex": 5
+            },
+            {
+              "startIndex": 6,
+              "endIndex": 7
+            }
+          ]
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "simple-suite-test!TestInterfaceWithTypeParameter:interface",
+          "docComment": "/**\n * Test interface with generic type parameter\n *\n * @remarks\n *\n * Here are some remarks about the interface\n *\n * @typeParam T - A type parameter\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface TestInterfaceWithTypeParameter<T> "
+            }
+          ],
+          "releaseTag": "Public",
+          "typeParameters": [
+            {
+              "typeParameterName": "T",
+              "constraintTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 0,
+                "endIndex": 0
+              }
+            }
+          ],
+          "name": "TestInterfaceWithTypeParameter",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "simple-suite-test!TestInterfaceWithTypeParameter#testProperty:member",
+              "docComment": "/**\n * A test interface property using generic type parameter\n *\n * @remarks\n *\n * Here are some remarks about the property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "testProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "T"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "testProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "simple-suite-test!TestMappedType:type",
+          "docComment": "/**\n * Test Mapped Type, using {@link TestEnum}\n *\n * @remarks\n *\n * Here are some remarks about the mapped type\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare type TestMappedType = "
+            },
+            {
+              "kind": "Content",
+              "text": "{\n    [K in "
+            },
+            {
+              "kind": "Reference",
+              "text": "TestEnum",
+              "canonicalReference": "simple-suite-test!TestEnum:enum"
+            },
+            {
+              "kind": "Content",
+              "text": "]: boolean;\n}"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "releaseTag": "Public",
+          "name": "TestMappedType",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 4
+          }
+        },
+        {
           "kind": "Namespace",
           "canonicalReference": "simple-suite-test!TestNamespace:namespace",
-          "docComment": "/**\n * Test Namespace\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test Namespace\n *\n * @remarks\n *\n * Here are some remarks about the namespace\n *\n * @example\n *\n * Example 1\n *\n * @example\n *\n * Example 2\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1093,7 +1485,7 @@
         {
           "kind": "TypeAlias",
           "canonicalReference": "simple-suite-test!TypeAlias:type",
-          "docComment": "/**\n * Test Type-Alias\n *\n * @public\n */\n",
+          "docComment": "/**\n * Test Type-Alias\n *\n * @remarks\n *\n * Here are some remarks about the type alias\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",

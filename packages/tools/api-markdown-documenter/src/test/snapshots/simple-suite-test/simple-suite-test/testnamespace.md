@@ -5,6 +5,20 @@
 
 Test Namespace
 
+### Remarks
+
+Here are some remarks about the namespace
+
+### Examples
+
+#### Example 1
+
+Example 1
+
+#### Example 2
+
+Example 2
+
 ### Signature
 
 ```typescript

@@ -5,14 +5,21 @@
 
 Test class
 
+### Remarks
+
+Here are some remarks about the class
+
 ### Signature
 
 ```typescript
-export declare class TestClass<TTypeParameter> 
+export declare class TestClass<TTypeParameterA, TTypeParameterB> 
 ```
 <b>Type parameters:</b> 
 
-\* <b>TTypeParameter</b>: A type parameter
+\* <b>TTypeParameterA</b>: A type parameter
+
+
+\* <b>TTypeParameterB</b>: Another type parameter
 
 
 #### Constructors
@@ -27,13 +34,13 @@ export declare class TestClass<TTypeParameter>
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](docs/simple-suite-test/testclass#testclasseventproperty-Property) |  | () =&gt; void | Test class event property |
 |  [testClassGetterProperty](docs/simple-suite-test/testclass#testclassgetterproperty-Property) |  | number | Test class getter-only property |
-|  [testClassProperty](docs/simple-suite-test/testclass#testclassproperty-Property) |  | number | Test class property |
+|  [testClassProperty](docs/simple-suite-test/testclass#testclassproperty-Property) |  | TTypeParameterB | Test class property |
 
 #### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassMethod(input)](docs/simple-suite-test/testclass#testclassmethod-Method) |  | TTypeParameter | Test class method |
+|  [testClassMethod(input)](docs/simple-suite-test/testclass#testclassmethod-Method) |  | TTypeParameterA | Test class method |
 
 ### Details
 
@@ -43,24 +50,32 @@ export declare class TestClass<TTypeParameter>
 
 Test class constructor
 
+<b>Remarks</b>
+
+Here are some remarks about the constructor
+
 <b>Signature</b>
 
 ```typescript
-constructor(testClassProperty: number, testClassEventProperty: () => void);
+constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
 <b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | number | See [TestClass.testClassProperty](simple-suite-test/testclass.md) |
-|  testClassEventProperty | () =&gt; void |  |
+|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](simple-suite-test/testclass.md) |
+|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](simple-suite-test/testclass.md) |
 
 ##### Property Details
 
 <b>testClassEventProperty</b>
 
 Test class event property
+
+<b>Remarks</b>
+
+Here are some remarks about the property
 
 <b>Signature</b>
 
@@ -72,9 +87,14 @@ readonly testClassEventProperty: () => void;
 
 Test class getter-only property
 
+<b>Remarks</b>
+
+Here are some remarks about the getter-only property
+
 <b>Signature</b>
 
 ```typescript
+/** @virtual */
 get testClassGetterProperty(): number;
 ```
 
@@ -82,10 +102,14 @@ get testClassGetterProperty(): number;
 
 Test class property
 
+<b>Remarks</b>
+
+Here are some remarks about the property
+
 <b>Signature</b>
 
 ```typescript
-readonly testClassProperty: number;
+readonly testClassProperty: TTypeParameterB;
 ```
 
 ##### Method Details
@@ -94,15 +118,20 @@ readonly testClassProperty: number;
 
 Test class method
 
+<b>Remarks</b>
+
+Here are some remarks about the method
+
 <b>Signature</b>
 
 ```typescript
-testClassMethod(input: TTypeParameter): TTypeParameter;
+/** @sealed */
+testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
 <b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  input | TTypeParameter |  |
+|  input | TTypeParameterA |  |
 
