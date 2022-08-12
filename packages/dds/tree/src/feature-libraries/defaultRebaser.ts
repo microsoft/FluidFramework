@@ -29,24 +29,18 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditor, DefaultC
 // TODO: factor actual changeset logic out by field kind, and into some other directory.
 
 // TODO: implement
-export class DefaultRebaser implements ChangeRebaser<DefaultChangeSet, DefaultChangeSet, DefaultChangeSet> {
+export class DefaultRebaser implements ChangeRebaser<DefaultChangeSet> {
     rebaseAnchors(anchor: AnchorSet, over: DefaultChangeSet): void {
         throw new Error("Method not implemented.");
     }
     _typeCheck?: Covariant<DefaultChangeSet> & Contravariant<DefaultChangeSet> & Invariant<DefaultChangeSet>;
-    compose(...changes: DefaultChangeSet[]): DefaultChangeSet {
+    compose(changes: DefaultChangeSet[]): DefaultChangeSet {
         throw new Error("Method not implemented.");
     }
     invert(changes: DefaultChangeSet): DefaultChangeSet {
         throw new Error("Method not implemented.");
     }
     rebase(change: DefaultChangeSet, over: DefaultChangeSet): DefaultChangeSet {
-        throw new Error("Method not implemented.");
-    }
-    import(change: DefaultChangeSet): DefaultChangeSet {
-        throw new Error("Method not implemented.");
-    }
-    export(change: DefaultChangeSet): DefaultChangeSet {
         throw new Error("Method not implemented.");
     }
 

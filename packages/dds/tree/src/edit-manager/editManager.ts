@@ -123,11 +123,11 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             inverses.unshift(this.changeFamily.rebaser.invert(localChange));
         }
 
-        const netChange = this.changeFamily.rebaser.compose(
+        const netChange = this.changeFamily.rebaser.compose([
             ...inverses,
             trunkChange,
             ...newBranchChanges,
-        );
+        ]);
 
         if (this.anchors !== undefined) {
             this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
