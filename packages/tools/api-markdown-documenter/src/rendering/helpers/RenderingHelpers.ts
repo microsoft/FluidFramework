@@ -312,16 +312,14 @@ export function renderHeading(
     });
 }
 
-export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocSection {
+export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox {
     const betaWarning: string =
         "This API is provided as a preview for developers and may change" +
         " based on feedback that we receive. Do not use this API in a production environment.";
 
-    return new DocSection({ configuration: config.tsdocConfiguration }, [
-        new DocNoteBox({ configuration: config.tsdocConfiguration }, [
-            new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                new DocPlainText({ configuration: config.tsdocConfiguration, text: betaWarning }),
-            ]),
+    return new DocNoteBox({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, [
+            new DocPlainText({ configuration: config.tsdocConfiguration, text: betaWarning }),
         ]),
     ]);
 }

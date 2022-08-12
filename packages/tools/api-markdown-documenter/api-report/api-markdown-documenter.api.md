@@ -317,7 +317,7 @@ function renderApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumen
 function renderApiTitleCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public (undocumented)
-function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocSection;
+function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox;
 
 // @public (undocumented)
 function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
