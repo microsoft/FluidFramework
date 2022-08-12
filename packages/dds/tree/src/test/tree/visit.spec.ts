@@ -184,4 +184,48 @@ describe("visit", () => {
         ];
         testTreeVisit(delta, expected);
     });
+
+    it("move children", () => {
+        const moveId: Delta.MoveId = brand(1);
+        const moveOut: Delta.MoveOut = {
+            type: Delta.MarkType.MoveOut,
+            count: 2,
+            moveId,
+        };
+
+        const moveIn: Delta.MoveIn = {
+            type: Delta.MarkType.MoveIn,
+            moveId,
+        };
+
+        const delta: Delta.Root = new Map([[
+            rootKey,
+            [{
+                type: Delta.MarkType.Modify,
+                fields: new Map([[
+                    fooKey,
+                    [2, moveOut, 3, moveIn],
+                ]]),
+            }],
+        ]]);
+
+        const expected: VisitScript = [
+            ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["onMoveOut", 2, 2, moveId],
+            ["exitField", fooKey],
+            ["exitNode", 0],
+            ["exitField", rootKey],
+            ["enterField", rootKey],
+            ["enterNode", 0],
+            ["enterField", fooKey],
+            ["onMoveIn", 5, 2, moveId],
+            ["exitField", fooKey],
+            ["exitNode", 0],
+            ["exitField", rootKey],
+        ];
+
+        testVisit(delta, expected);
+    });
 });
