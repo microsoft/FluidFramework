@@ -18,6 +18,7 @@ describe("ScheduleManager", () => {
         let emitter: EventEmitter;
         let deltaManager: MockDeltaManager;
         let scheduleManager: ScheduleManager;
+        const testClientId = "test-client";
 
         beforeEach(() => {
             emitter = new EventEmitter();
@@ -30,6 +31,7 @@ describe("ScheduleManager", () => {
             scheduleManager = new ScheduleManager(
                 deltaManager,
                 emitter,
+                () => testClientId,
                 DebugLogger.create("fluid:testScheduleManager"),
             );
 
@@ -74,9 +76,8 @@ describe("ScheduleManager", () => {
         }
 
         it("Single non-batch message", async () => {
-            const clientId: string = "test-client";
             const message: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
@@ -91,9 +92,8 @@ describe("ScheduleManager", () => {
         });
 
         it("Multiple non-batch messages", async () => {
-            const clientId: string = "test-client";
             const message: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
@@ -112,9 +112,8 @@ describe("ScheduleManager", () => {
         });
 
         it("Message with non batch-related metadata", async () => {
-            const clientId: string = "test-client";
             const message: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { foo: 1 },
             };
@@ -129,20 +128,19 @@ describe("ScheduleManager", () => {
         });
 
         it("Messages in a single batch", async () => {
-            const clientId: string = "test-client";
             const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: true },
             };
 
             const batchMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
             const batchEndMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: false },
             };
@@ -160,25 +158,24 @@ describe("ScheduleManager", () => {
 
             // We should have only received one "batchBegin" and one "batchEnd" event for the batch.
             assert.strictEqual(deltaManager.inbound.length, 0, "Did not process all ops");
-            assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
-            assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
+            assert.strictEqual(batchBegin, 1, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd event for the batch");
         });
 
         it("two batches", async () => {
-            const clientId: string = "test-client";
             const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: true },
             };
 
             const batchMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
             const batchEndMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: false },
             };
@@ -204,33 +201,32 @@ describe("ScheduleManager", () => {
 
             assert.strictEqual(deltaManager.inbound.length, 3,
                 "none of the second batch ops are processed yet");
-            assert.strictEqual(1, batchBegin, "Did not receive correct batchBegin event for the batch");
-            assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
+            assert.strictEqual(batchBegin, 1, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd event for the batch");
 
             // End the batch - all ops should be processed.
             pushOp(batchEndMessage);
             await processOps();
 
             assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
-            assert.strictEqual(2, batchBegin, "Did not receive correct batchBegin event for the batch");
-            assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
+            assert.strictEqual(batchBegin, 2, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(batchEnd, 2, "Did not receive correct batchEnd event for the batch");
         });
 
         it("non-batched ops followed by batch", async () => {
-            const clientId: string = "test-client";
             const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: true },
             };
 
             const batchMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
             const batchEndMessage: Partial<ISequencedDocumentMessage> = {
-                clientId,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: false },
             };
@@ -262,64 +258,46 @@ describe("ScheduleManager", () => {
             await processOps();
 
             assert.strictEqual(deltaManager.inbound.length, 0, "processed all ops");
-            assert.strictEqual(3, batchBegin, "Did not receive correct batchBegin event for the batch");
-            assert.strictEqual(3, batchEnd, "Did not receive correct batchEnd event for the batch");
+            assert.strictEqual(batchBegin, 3, "Did not receive correct batchBegin event for the batch");
+            assert.strictEqual(batchEnd, 3, "Did not receive correct batchEnd event for the batch");
         });
 
         function testWrongBatches() {
-            const clientId1: string = "test-client-1";
-            const clientId2: string = "test-client-2";
-
             const batchBeginMessage: Partial<ISequencedDocumentMessage> = {
-                clientId: clientId1,
+                clientId: testClientId,
                 type: MessageType.Operation,
                 metadata: { batch: true },
             };
 
             const batchMessage: Partial<ISequencedDocumentMessage> = {
-                clientId: clientId1,
+                clientId: testClientId,
                 type: MessageType.Operation,
             };
 
-            const messagesToFail: Partial<ISequencedDocumentMessage>[] = [
-                // System op from same client
-                {
-                    clientId: clientId1,
-                    type: MessageType.NoOp,
-                },
+            const messagesToFail: [string, Partial<ISequencedDocumentMessage>][] = [
+                [
+                    "System op from same client",
+                    {
+                        clientId: testClientId,
+                        type: MessageType.NoOp,
+                    },
+                ], [
+                    "Batch messages interleaved with a batch begin message from same client",
+                    batchBeginMessage,
+                ], [
+                    "Batch message from the same client",
+                    // This should result in a "batchEnd" event for the
+                    // previous batch since the client id changes. Also, we should get one "batchBegin" and
+                    // one "batchEnd" event for the batch from the new client.
+                    {
+                        clientId: testClientId,
+                        type: MessageType.Operation,
+                        metadata: { batch: true },
+                    },
+                ]];
 
-                // Batch messages interleaved with a batch begin message from same client
-                batchBeginMessage,
-
-                // Send a message from another client. This should result in a a violation!
-                {
-                    clientId: clientId2,
-                    type: MessageType.Operation,
-                },
-
-                // Send a message from another client with non batch-related metadata. This should result
-                // in a "batchEnd" event for the previous batch since the client id changes. Also, we
-                // should get a "batchBegin" and a "batchEnd" event for the new client.
-                {
-                    clientId: clientId2,
-                    type: MessageType.Operation,
-                    metadata: { foo: 1 },
-                },
-
-                // Send a batch from another client. This should result in a "batchEnd" event for the
-                // previous batch since the client id changes. Also, we should get one "batchBegin" and
-                // one "batchEnd" event for the batch from the new client.
-                {
-                    clientId: clientId2,
-                    type: MessageType.Operation,
-                    metadata: { batch: true },
-                },
-            ];
-
-            let counter = 0;
-            for (const messageToFail of messagesToFail) {
-                counter++;
-                it(`Partial batch messages, case ${counter}`, async () => {
+            for (const [message, op] of messagesToFail) {
+                it(`Partial batch messages, case ["${message}"]`, async () => {
                     // Send a batch with 3 messages from first client but don't send batch end message.
                     pushOp(batchBeginMessage);
                     pushOp(batchMessage);
@@ -329,11 +307,11 @@ describe("ScheduleManager", () => {
                     assert.strictEqual(deltaManager.inbound.length, 3,
                         "Some of partial batch ops were processed");
 
-                    assert.throws(() => pushOp(messageToFail));
+                    assert.throws(() => pushOp(op));
 
                     assert.strictEqual(deltaManager.inbound.length, 4, "Some of batch ops were processed");
-                    assert.strictEqual(0, batchBegin, "Did not receive correct batchBegin event for the batch");
-                    assert.strictEqual(0, batchEnd, "Did not receive correct batchBegin event for the batch");
+                    assert.strictEqual(batchBegin, 0, "Did not receive correct batchBegin event for the batch");
+                    assert.strictEqual(batchEnd, 0, "Did not receive correct batchBegin event for the batch");
                 });
             }
         }
