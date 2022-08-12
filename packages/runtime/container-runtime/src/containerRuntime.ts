@@ -2825,26 +2825,29 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         let clientSequenceNumber: number = -1;
         let opMetadataInternal = opMetadata;
+        let addedBatchMetadata = false;
+
+        // We should add the batch metadata regardless of the connected state
+        if (this.currentlyBatching() && !this.needsFlush) {
+            opMetadataInternal = {
+                ...opMetadata,
+                batch: true,
+            };
+            this.needsFlush = true;
+            addedBatchMetadata = true;
+        }
 
         if (this.canSendOps()) {
             const serializedContent = JSON.stringify(content);
             const maxOpSize = this.context.deltaManager.maxMessageSize;
 
             // If in TurnBased flush mode we will trigger a flush at the next turn break
-            if (this.currentlyBatching() && !this.needsFlush) {
-                opMetadataInternal = {
-                    ...opMetadata,
-                    batch: true,
-                };
-                this.needsFlush = true;
-
+            if (addedBatchMetadata && this.flushMode === FlushMode.TurnBased) {
                 // Use Promise.resolve().then() to queue a microtask to detect the end of the turn and force a flush.
-                if (this.flushMode === FlushMode.TurnBased) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    Promise.resolve().then(() => {
-                        this.flush();
-                    });
-                }
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                Promise.resolve().then(() => {
+                    this.flush();
+                });
             }
 
             clientSequenceNumber = this.submitMaybeChunkedMessages(
