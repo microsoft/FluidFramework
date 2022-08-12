@@ -27,10 +27,6 @@ import { MarkdownEmitter } from "../MarkdownEmitter";
 import { getFilePathForApiItem, getQualifiedApiItemName } from "../utilities";
 import { renderBreadcrumb, renderHeadingForApiItem } from "./helpers";
 
-// TODOs:
-// - heading level tracking
-// - Model heading text from config
-
 /**
  * TODO
  * Note: no breadcrumb
