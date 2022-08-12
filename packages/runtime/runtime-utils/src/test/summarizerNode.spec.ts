@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+
+import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     channelsTreeName,
     CreateChildSummarizerNodeParam,
@@ -12,14 +13,15 @@ import {
     ISummarizerNode,
     ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions";
-import { ISequencedDocumentMessage, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+
 import {
     createRootSummarizerNode,
     IRootSummarizerNode,
 } from "../summarizerNode";
-import { mergeStats } from "../summaryUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { SummarizerNode } from "../summarizerNode/summarizerNode";
+import { mergeStats } from "../summaryUtils";
 
 describe("Runtime", () => {
     describe("Summarization", () => {
