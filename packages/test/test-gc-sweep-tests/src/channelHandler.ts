@@ -7,228 +7,302 @@ import assert from "assert";
 import { SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { IChannel } from "@fluidframework/datastore-definitions";
 import { Ink, IPen, IColor, IInkPoint } from "@fluidframework/ink";
-import { SharedMap } from "@fluidframework/map";
+import { ISharedDirectory, SharedMap } from "@fluidframework/map";
 import { ConsensusQueue, ConsensusResult } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
+import Random from "random-js";
+import { IChannel } from "@fluidframework/datastore-definitions";
 
-export interface IRandomOpHandler {
-	executeRandomNonHandleOp(): Promise<void>;
+export interface IRemovedHandle {
+    handle: IFluidHandle;
+    key: string;
+}
+
+export interface IAddedHandle {
+    addedHandleKey: string;
+    removedHandle?: IRemovedHandle;
+}
+
+export interface IOpManager {
+    channel: IChannel;
+}
+
+export interface IRandomOpManager extends IOpManager {
+    executeRandomNonHandleOp(random: Random): Promise<void>;
+}
+
+export interface IHandleOpManager extends IOpManager {
+    type: string;
+    addHandle(handle: IFluidHandle, random: Random): Promise<IAddedHandle>;
+    removeRandomHandle(random: Random): Promise<IRemovedHandle>;
+    hasHandles(): boolean;
 }
 
 /**
- * TODO: opHandlers to add - SharedDirectoryHandler, SharedMatrixHandler and SharedStringHandler
- * Not sure if SharedString can store and remove handles.
+ * TODO: handlers to add - SharedDirectoryHandler, SharedMatrixHandler and SharedStringHandler
+ * all these DDSes can serialize and deserialize handles.
  */
-export abstract class OpHandler {
-    protected readonly actions: (() => Promise<void>)[] = [];
-	private _random: Random | undefined;
+export class RandomManager {
+    private _random: Random | undefined;
 
-	public get random(): Random {
-		assert(this._random !== undefined, "Random needs to be set first before we do any op handling");
-		return this._random;
-	}
+    public get random(): Random {
+        assert(this._random !== undefined, "Random needs to be set first before we do any op handling");
+        return this._random;
+    }
 
-	public set random(random: Random) {
-		this._random = random;
-	}
+    public set random(random: Random) {
+        this._random = random;
+    }
+}
 
+export class ConsensusQueueHandler implements IHandleOpManager {
     constructor(
-        protected readonly channel: IChannel,
+        public readonly channel: ConsensusQueue<IFluidHandle>,
     ) {}
-}
+    public readonly type: string = "ConsensusQueueHandler";
 
-export abstract class HandleOpHandler extends OpHandler {
-    protected readonly removeHandleActions: (() => Promise<IFluidHandle | undefined>)[] = [];
-    protected readonly handles: Map<string, IFluidHandle> = new Map();
+    private static readonly handleKey: string = "ConsensusQueueHandle";
 
-	public async executeRandomAddHandleOp(handle: IFluidHandle): Promise<IFluidHandle | undefined> {
-		const oldHandle = await this.addHandle(handle);
-		this.handles.set(handle.absolutePath, handle);
-		if (oldHandle !== undefined && oldHandle.absolutePath !== handle.absolutePath) {
-			this.handles.delete(oldHandle.absolutePath);
-		}
-		return oldHandle;
+    public async addHandle(handle: IFluidHandle): Promise<IAddedHandle> {
+        await this.channel.add(handle);
+        return {
+            addedHandleKey: ConsensusQueueHandler.handleKey,
+        };
     }
 
-    public async executeRandomRemoveHandleOp(): Promise<IFluidHandle | undefined> {
-		if (this.removeHandleActions.length === 0) {
-			return undefined;
-		}
-		const action = this.random.pick(this.removeHandleActions);
-		const handle = await action();
-		if (handle !== undefined) {
-			this.handles.delete(handle.absolutePath);
-		}
-		return handle;
+    public async removeRandomHandle(random: Random): Promise<IRemovedHandle> {
+        let result: IFluidHandle | undefined;
+        const setValue = async (value: IFluidHandle): Promise<ConsensusResult> => {
+            result = value;
+            return ConsensusResult.Complete;
+        };
+
+        if (random.bool()) {
+            await this.channel.acquire(setValue);
+        } else {
+            await this.channel.waitAndAcquire(setValue);
+        }
+        assert(result !== undefined, `ConsensusQueue removed nothing from the queue!`);
+
+        return {
+            handle: result,
+            key: ConsensusQueueHandler.handleKey,
+        };
     }
 
-	protected abstract addHandle(handle: IFluidHandle): Promise<IFluidHandle | undefined>;
+    public hasHandles(): boolean {
+        return true;
+    }
 }
 
-export class ConsensusQueueHandler extends HandleOpHandler {
+// TODO: make this more like SharedMapHandler
+export class ConsensusRegisterCollectionHandler implements IHandleOpManager {
     constructor(
-        protected readonly channel: ConsensusQueue<IFluidHandle>,
-    ) {
-		super(channel);
+        private readonly root: ISharedDirectory,
+        // eslint-disable-next-line @rushstack/no-new-null
+        public readonly channel: ConsensusRegisterCollection<IFluidHandle | null>,
+    ) {}
+    public readonly type: string = "ConsensusRegisterCollectionHandler";
 
-		let result: IFluidHandle;
-		const setValue = async (value: IFluidHandle): Promise<ConsensusResult> => {
-			result = value;
-			assert(result !== undefined, `ConsensusQueue removed nothing from the queue!`);
-			return ConsensusResult.Complete;
-		};
-		const removeHandle = async () => {
-			await channel.acquire(setValue);
-			return result;
-		};
+    private readonly handlesKey: string = "CRCHandles";
 
-		const removeHandle2 = async () => {
-			await channel.waitAndAcquire(setValue);
-			return result;
-		};
+    public async addHandle(handle: IFluidHandle, random: Random): Promise<IAddedHandle> {
+        const key = handle.absolutePath + random.string(10);
+        const oldHandle = this.channel.read(key);
+        await this.channel.write(key, handle);
+        const keys = this.getKeys();
+        keys.add(key);
+        this.updateKeys(keys);
+        return {
+            addedHandleKey: key,
+            removedHandle: (oldHandle !== undefined && oldHandle !== null) ? {
+                key,
+                handle: oldHandle,
+            } : undefined,
+        };
+    }
 
-		this.removeHandleActions.push(removeHandle);
-		this.removeHandleActions.push(removeHandle2);
-	}
+    public async removeRandomHandle(random: Random): Promise<IRemovedHandle> {
+        const keys = this.getKeys();
+        assert(this.hasHandles(), "Attempting to remove a handle with no keys in ConsensusRegisterCollection!");
+        const key = random.pick(Array.from(keys.values()));
+        const oldHandle = this.channel.read(key);
+        assert(oldHandle !== undefined && oldHandle !== null,
+            `ConsensusRegisterCollection removed nothing from register: ${key}!`);
+        await this.channel.write(key, null);
+        keys.delete(key);
+        this.updateKeys(keys);
+        return {
+            handle: oldHandle,
+            key,
+        };
+    }
 
-	protected async addHandle(handle: IFluidHandle): Promise<undefined> {
-		await this.channel.add(handle);
-		return undefined;
-	}
+    public hasHandles(): boolean {
+        return this.getKeys().size > 0;
+    }
+
+    private getKeys(): Set<string> {
+        const keys = this.root.get<string[]>(this.handlesKey) ?? [];
+        return new Set(keys);
+    }
+
+    private updateKeys(keys: Set<string>) {
+        this.root.set<string[]>(this.handlesKey, Array.from(keys));
+    }
 }
 
-export class ConsensusRegisterCollectionHandler extends HandleOpHandler {
+export class InkHandler implements IRandomOpManager {
     constructor(
-        protected readonly channel: ConsensusRegisterCollection<IFluidHandle>,
-    ) {
-		super(channel);
-	}
+        public readonly channel: Ink,
+    ) {}
 
-	protected async addHandle(handle: IFluidHandle): Promise<IFluidHandle | undefined> {
-		const oldHandle = this.channel.read(handle.absolutePath);
-		await this.channel.write(handle.absolutePath, handle);
-		return oldHandle;
-	}
+    private createRandomStroke(random: Random) {
+        const color: IColor = {
+            r: random.integer(0, 256),
+            g: random.integer(0, 256),
+            b: random.integer(0, 256),
+            a: random.integer(0, 100),
+        };
+        const pen: IPen = {
+            color,
+            thickness: random.integer(1, 10),
+        };
+        this.channel.createStroke(pen);
+    }
+
+    private writeRandomStroke(random: Random) {
+        let strokes = this.channel.getStrokes();
+        if (strokes.length === 0) {
+            this.createRandomStroke(random);
+            strokes = this.channel.getStrokes();
+        }
+        const stroke = random.pick(strokes);
+        const point: IInkPoint = {
+            x: random.integer(1, 1000),
+            y: random.integer(1, 1000),
+            time: random.integer(1, 1000),
+            pressure: random.integer(1, 1000),
+        };
+
+        this.channel.appendPointToStroke(point, stroke.id);
+    }
+
+    public async executeRandomNonHandleOp(random: Random): Promise<void> {
+        const randNum = random.integer(1, 3);
+        switch (randNum) {
+            case 1:
+                this.createRandomStroke(random);
+                break;
+            case 2:
+                this.writeRandomStroke(random);
+                break;
+            default:
+                this.channel.clear();
+        }
+    }
 }
 
-export class InkHandler extends OpHandler implements IRandomOpHandler {
+export class SharedCellHandler implements IHandleOpManager {
     constructor(
-        protected readonly channel: Ink,
-    ) {
-		super(channel);
-		this.actions.push(async () => {
-			this.createRandomStroke();
-		});
-		this.actions.push(async () => {
-			let strokes = channel.getStrokes();
-			if (strokes.length === 0) {
-				this.createRandomStroke();
-				strokes = channel.getStrokes();
-			}
-			const stroke = this.random.pick(strokes);
-			const point: IInkPoint = {
-				x: this.random.integer(1, 1000),
-				y: this.random.integer(1, 1000),
-				time: this.random.integer(1, 1000),
-				pressure: this.random.integer(1, 1000),
-			};
+        public readonly channel: SharedCell<IFluidHandle>,
+    ) {}
+    public readonly type: string = "SharedCellHandler";
 
-			channel.appendPointToStroke(point, stroke.id);
-		});
-		this.actions.push(async () => channel.clear());
-	}
+    private static readonly handleKey: string = "SharedCell";
 
-	private createRandomStroke() {
-		const color: IColor = {
-			r: this.random.integer(0, 256),
-			g: this.random.integer(0, 256),
-			b: this.random.integer(0, 256),
-			a: this.random.integer(0, 100),
-		};
-		const pen: IPen = {
-			color,
-			thickness: this.random.integer(1, 10),
-		};
-		this.channel.createStroke(pen);
-	}
+    public async addHandle(handle: IFluidHandle): Promise<IAddedHandle> {
+        const oldHandle = this.channel.get();
+        this.channel.set(handle);
+        return {
+            addedHandleKey: SharedCellHandler.handleKey,
+            removedHandle: oldHandle ? {
+                key: SharedCellHandler.handleKey,
+                handle: oldHandle,
+            } : undefined,
+        };
+    }
 
-	public async executeRandomNonHandleOp(): Promise<void> {
-		assert(this.actions.length === 0, "this.actions should have actions added!");
-		const action = this.random.pick(this.actions);
-		await action();
-	}
+    public async removeRandomHandle(random: Random): Promise<IRemovedHandle> {
+        const handle = this.channel.get();
+        assert(handle !== undefined, `Attempting to remove a handle from an empty SharedCell!`);
+        this.channel.delete();
+        return {
+            handle,
+            key: SharedCellHandler.handleKey,
+        };
+    }
+
+    public hasHandles(): boolean {
+        return this.channel.get() !== undefined;
+    }
 }
 
-export class SharedCellHandler extends HandleOpHandler {
-	constructor(
-        protected readonly channel: SharedCell<IFluidHandle>,
-    ) {
-		super(channel);
-		this.removeHandleActions.push(async () => this.removeHandle());
-	}
-
-	protected async addHandle(handle: IFluidHandle): Promise<IFluidHandle | undefined> {
-		const potentialHandle = this.channel.get();
-		this.channel.set(handle);
-		this.handles.set(handle.absolutePath, handle);
-		if (potentialHandle !== undefined) {
-			this.handles.delete(potentialHandle.absolutePath);
-		}
-		return potentialHandle;
-	}
-
-	private removeHandle(): IFluidHandle | undefined {
-		const handle = this.channel.get();
-		this.channel.delete();
-		if (handle !== undefined) {
-			this.handles.delete(handle.absolutePath);
-		}
-		return handle;
-	}
-}
-
-export class SharedCounterHandler extends OpHandler implements IRandomOpHandler {
+export class SharedCounterHandler implements IRandomOpManager {
     constructor(
-        protected readonly channel: SharedCounter,
-    ) {
-		super(channel);
-	}
+        public readonly channel: SharedCounter,
+    ) {}
 
-	public async executeRandomNonHandleOp(): Promise<void> {
-		this.channel.increment(this.random.integer(1, 10));
-	}
+    public async executeRandomNonHandleOp(random: Random): Promise<void> {
+        this.channel.increment(random.integer(1, 10));
+    }
 }
 
-export class SharedMapHandler extends HandleOpHandler implements IRandomOpHandler {
-	constructor(
-        protected readonly channel: SharedMap,
-    ) {
-		super(channel);
-		this.removeHandleActions.push(async () => this.removeHandle());
-	}
+export class SharedMapHandler implements IHandleOpManager, IRandomOpManager {
+    constructor(
+        public readonly channel: SharedMap,
+    ) {}
+    public readonly type: string = "SharedMapHandler";
 
-	public async executeRandomNonHandleOp(): Promise<void> {
-		this.channel.set("NotAHandleOp", this.random.string(10));
-	}
+    private readonly handleMapKey = "handleMap";
 
-	protected async addHandle(handle: IFluidHandle): Promise<IFluidHandle | undefined> {
-		// Only a handle should be added where we are using absolute paths.
-		const oldHandle = this.channel.get(handle.absolutePath) as IFluidHandle;
-		this.channel.set(handle.absolutePath, handle);
-		return oldHandle;
-	}
+    public async executeRandomNonHandleOp(random: Random): Promise<void> {
+        this.channel.set(`NotAHandleOp${random.string(10)}`, random.string(10));
+    }
 
-	private removeHandle(): IFluidHandle | undefined {
-		const entries = Array.from(this.channel.entries());
-		const handles = entries.filter((entry) => entry[0] !== "NotAHandleOp");
-		const handleList = handles.map((entry) => entry[1] as IFluidHandle);
-		if (handleList.length === 0) {
-			return undefined;
-		}
-		const handle = this.random.pick(handleList);
-		this.channel.delete(handle.absolutePath);
-		return handle;
-	}
+    public async addHandle(handle: IFluidHandle, random: Random): Promise<IAddedHandle> {
+        const key = handle.absolutePath + random.string(10);
+        const map = this.getHandleMap();
+        const oldHandle: IFluidHandle | undefined = this.channel.get(key);
+        this.channel.set(key, handle);
+        map.set(key, handle);
+        this.updateHandleMap(map);
+        return {
+            addedHandleKey: key,
+            removedHandle: oldHandle ? {
+                key,
+                handle: oldHandle,
+            } : undefined,
+        };
+    }
+
+    public async removeRandomHandle(random: Random): Promise<IRemovedHandle> {
+        const map = this.getHandleMap();
+        assert(this.hasHandles(), "Removing handle from empty SharedMap!");
+        const key = random.pick(Array.from(map.keys()));
+        const handle: IFluidHandle | undefined = this.channel.get(key);
+        assert(handle !== undefined, "Removing non existent handle on the SharedMap!");
+        this.channel.delete(key);
+        map.delete(key);
+        this.updateHandleMap(map);
+        return {
+            handle,
+            key,
+        };
+    }
+
+    public hasHandles(): boolean {
+        return this.getHandleMap().size > 0;
+    }
+
+    private getHandleMap(): Map<string, IFluidHandle> {
+        const entries = this.channel.get(this.handleMapKey) ?? [];
+        const map: Map<string, IFluidHandle> = new Map(entries);
+        return map;
+    }
+
+    private updateHandleMap(map: Map<string, IFluidHandle>) {
+        this.channel.set(this.handleMapKey, Array.from(map.entries()));
+    }
 }

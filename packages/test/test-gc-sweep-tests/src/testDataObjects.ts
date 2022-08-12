@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
@@ -14,16 +14,17 @@ import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { Ink } from "@fluidframework/ink";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { IChannel, IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import Random from "random-js";
 import {
     ConsensusQueueHandler,
     ConsensusRegisterCollectionHandler,
-    HandleOpHandler,
+    IAddedHandle,
+    IHandleOpManager,
     InkHandler,
-    IRandomOpHandler,
-    OpHandler,
+    IRandomOpManager,
+    IRemovedHandle,
     SharedCellHandler,
     SharedCounterHandler,
     SharedMapHandler,
@@ -52,68 +53,127 @@ export class BaseTestDataObject extends DataObject {
     }
 }
 
+const channelHandlesKey = "channelHandles";
+const channelIdsKey = "channelIds";
+
 export class DataObjectManyDDSes extends BaseTestDataObject {
     public static get type(): string {
         return "TestDataObjectWithEveryDDS";
     }
 
-    private readonly opHandlers: OpHandler[] = [];
-    private readonly handleOpHandlers: HandleOpHandler[] = [];
-    private readonly randomOpHandlers: IRandomOpHandler[] = [];
-    private random: Random | undefined;
+    private readonly handleManager: HandleManager = new HandleManager();
+    private readonly randomOpHandlers: IRandomOpManager[] = [];
 
-    public setRandom(random: Random) {
-        this.random = random;
-        for (const opHandler of this.opHandlers) {
-            opHandler.random = random;
-        }
+    public async addHandleOpForChannel(
+        ddsId: string,
+        handle: IFluidHandle,
+        random: Random,
+    ): Promise<IAddedHandle> {
+        return this.handleManager.executeAddHandleOp(ddsId, handle, random);
     }
 
-    public async generateAddHandleOp(handle: IFluidHandle): Promise<IFluidHandle | undefined> {
-        assert(this.random !== undefined, `Random for TestDataObjectWithEveryDDS needs to be set!`);
-        const handler: HandleOpHandler = this.random.pick(this.handleOpHandlers);
-        return handler.executeRandomAddHandleOp(handle);
+    public async removeHandleForChannel(ddsId: string, random: Random): Promise<IRemovedHandle> {
+        return this.handleManager.executeRandomRemoveHandleOp(ddsId, random);
     }
 
-    public async generateRemoveHandleOp(): Promise<IFluidHandle | undefined> {
-        assert(this.random !== undefined, `Random for TestDataObjectWithEveryDDS needs to be set!`);
-        const handler: HandleOpHandler = this.random.pick(this.handleOpHandlers);
-        return handler.executeRandomRemoveHandleOp();
+    public getChannelIds(): string[] {
+        const channelIds = this.root.get<string[]>(channelIdsKey);
+        assert(channelIds !== undefined, `Channel handles should exist on the DDS!`);
+        return channelIds;
+    }
+
+    public getHandleChannelIds(): string[] {
+        return Array.from(this.handleManager.handleOpManagers.keys());
+    }
+
+    private addChannelType(channel: IChannel) {
+        this.root.set(channel.constructor.name, channel.handle);
+        this.root.set(channel.id, channel.handle);
+
+        const handles: IFluidHandle[] = this.root.get(channelHandlesKey) ?? [];
+        handles.push(channel.handle);
+        this.root.set(channelHandlesKey, handles);
+
+        const ids: string[] = this.root.get(channelIdsKey) ?? [];
+        ids.push(channel.id);
+        this.root.set(channelIdsKey, ids);
+    }
+
+    protected async initializingFirstTime(props?: any): Promise<void> {
+        this.addChannelType(ConsensusQueue.create(this.runtime));
+        this.addChannelType(ConsensusRegisterCollection.create(this.runtime));
+        this.addChannelType(Ink.create(this.runtime));
+        this.addChannelType(SharedCell.create(this.runtime));
+        this.addChannelType(SharedCounter.create(this.runtime));
+        // this.addChannelType(SharedDirectory.create(this.runtime));
+        this.addChannelType(SharedMap.create(this.runtime));
+        // this.addChannelType(SharedMatrix.create(this.runtime));
+        // this.addChannelType(SharedString.create(this.runtime));
+    }
+
+    private async assertedGet<T>(key: string): Promise<T> {
+        const handle = this.root.get<IFluidHandle<T>>(key);
+        assert(handle !== undefined, `Expected ${key}!`);
+        const channel = await handle.get();
+        assert(channel !== undefined, `Expected channel to be defined for ${key}!`);
+        return channel;
     }
 
     protected async hasInitialized(): Promise<void> {
-        const consensusQueue: ConsensusQueue<IFluidHandle> = ConsensusQueue.create(this.runtime);
-        const consensusQueueHandler = new ConsensusQueueHandler(consensusQueue);
-        this.opHandlers.push(consensusQueueHandler);
-        this.handleOpHandlers.push(consensusQueueHandler);
+        const consensusQueueHandler = new ConsensusQueueHandler(
+            await this.assertedGet<ConsensusQueue>("ConsensusQueue"),
+        );
+        this.handleManager.add(consensusQueueHandler);
 
-        const consensusRegisterCollection: ConsensusRegisterCollection<IFluidHandle> =
-            ConsensusRegisterCollection.create(this.runtime);
-        const consensusRegisterCollectionHandler = new ConsensusRegisterCollectionHandler(consensusRegisterCollection);
-        this.opHandlers.push(consensusRegisterCollectionHandler);
-        this.handleOpHandlers.push(consensusRegisterCollectionHandler);
+        const consensusRegisterCollectionHandler = new ConsensusRegisterCollectionHandler(
+            this.root,
+            await this.assertedGet<ConsensusRegisterCollection<IFluidHandle | null>>("ConsensusRegisterCollection"),
+        );
+        this.handleManager.add(consensusRegisterCollectionHandler);
 
-        const ink: Ink = Ink.create(this.runtime);
-        const inkHandler = new InkHandler(ink);
-        this.opHandlers.push(inkHandler);
+        const inkHandler = new InkHandler(await this.assertedGet<Ink>("Ink"));
         this.randomOpHandlers.push(inkHandler);
 
-        const sharedCell: SharedCell<IFluidHandle> = SharedCell.create(this.runtime);
-        const sharedCellHandler = new SharedCellHandler(sharedCell);
-        this.opHandlers.push(sharedCellHandler);
-        this.handleOpHandlers.push(sharedCellHandler);
-        this.randomOpHandlers.push(inkHandler);
+        const sharedCellHandler = new SharedCellHandler(await this.assertedGet<SharedCell>("SharedCell"));
+        this.handleManager.add(sharedCellHandler);
 
-        const sharedCounter: SharedCounter = SharedCounter.create(this.runtime);
-        const sharedCounterHandler = new SharedCounterHandler(sharedCounter);
-        this.opHandlers.push(sharedCounterHandler);
-        this.randomOpHandlers.push(inkHandler);
+        const sharedCounterHandler = new SharedCounterHandler(await this.assertedGet<SharedCounter>("SharedCounter"));
+        this.randomOpHandlers.push(sharedCounterHandler);
 
-        const sharedMap: SharedMap = SharedMap.create(this.runtime);
-        const sharedMapHandler = new SharedMapHandler(sharedMap);
-        this.opHandlers.push(sharedMapHandler);
-        this.handleOpHandlers.push(sharedMapHandler);
-        this.randomOpHandlers.push(inkHandler);
+        const sharedMapHandler = new SharedMapHandler(await this.assertedGet<SharedMap>("SharedMap"));
+        this.handleManager.add(sharedMapHandler);
+        this.randomOpHandlers.push(sharedMapHandler);
+    }
+}
+
+export class HandleManager {
+    public readonly handleOpManagers: Map<string, IHandleOpManager> = new Map();
+
+    public add(handleOpManager: IHandleOpManager) {
+        this.handleOpManagers.set(handleOpManager.channel.id, handleOpManager);
+    }
+
+    public async executeAddHandleOp(
+        ddsId: string,
+        handle: IFluidHandle,
+        random: Random,
+    ): Promise<IAddedHandle> {
+        const handleOpManager = this.handleOpManagers.get(ddsId);
+        assert(handleOpManager !== undefined,
+            // eslint-disable-next-line max-len
+            `Missing handle op manager for ${ddsId}, size: ${this.handleOpManagers.size} keys: ${this.handleOpManagers.keys()}`);
+        return handleOpManager.addHandle(handle, random);
+    }
+
+    public async executeRandomRemoveHandleOp(
+        ddsId: string,
+        random: Random,
+    ): Promise<IRemovedHandle> {
+        const handleOpManager = this.handleOpManagers.get(ddsId);
+        assert(handleOpManager !== undefined,
+            `Missing handle op manager for ${ddsId} keys: ${this.handleOpManagers.keys()}`);
+        assert(handleOpManager.hasHandles(), `No handles in op manager for ${handleOpManager.type} ${ddsId}`);
+        return handleOpManager.removeRandomHandle(random);
     }
 }
 
