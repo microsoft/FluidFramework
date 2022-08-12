@@ -97,6 +97,38 @@ Test Enum
 ```typescript
 enum TestEnum 
 ```
+
+## Flags
+
+|  Flag | Modifiers | Description |
+|  --- | --- | --- |
+|  [TestEnumValue1](/simple-suite-test/testnamespace#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 |
+|  [TestEnumValue2](/simple-suite-test/testnamespace#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 |
+
+## Details
+
+## Flag Details
+
+## TestEnumValue1
+
+Test enum value 1
+
+## Signature
+
+```typescript
+TestEnumValue1 = 0
+```
+TODO: Enum rendering
+
+## TestEnumValue2
+
+Test enum value 2
+
+## Signature
+
+```typescript
+TestEnumValue2 = 1
+```
 TODO: Enum rendering
 
 ## Variable Details

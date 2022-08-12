@@ -1,7 +1,10 @@
-import { ApiEnum, ApiItem } from "@microsoft/api-extractor-model";
-import { DocParagraph, DocPlainText, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
+import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
+import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { filterByKind } from "../../utilities";
+import { renderChildDetailsSection } from "../Rendering";
+import { renderMemberTables } from "../Tables";
 
 export function renderEnumSection(
     apiEnum: ApiEnum,
@@ -9,14 +12,53 @@ export function renderEnumSection(
     tsdocConfiguration: TSDocConfiguration,
     renderChild: (apiItem: ApiItem) => DocSection,
 ): DocSection {
-    const innerSectionBody = new DocSection({ configuration: tsdocConfiguration }, [
-        new DocParagraph({ configuration: tsdocConfiguration }, [
-            new DocPlainText({
-                configuration: tsdocConfiguration,
-                text: "TODO: Enum rendering",
-            }),
-        ]),
-    ]);
+    const docNodes: DocNode[] = [];
+
+    const hasAnyChildren = apiEnum.members.length !== 0;
+
+    if (hasAnyChildren) {
+        // Accumulate child items
+        const flags = filterByKind(apiEnum.members, [ApiItemKind.EnumMember]).map(
+            (apiItem) => apiItem as ApiEnumMember,
+        );
+
+        // Render summary tables
+        const renderedMemberTables = renderMemberTables(
+            [
+                {
+                    headingTitle: "Flags",
+                    itemKind: ApiItemKind.EnumMember,
+                    items: flags,
+                },
+            ],
+            documenterConfiguration,
+            tsdocConfiguration,
+        );
+
+        if (renderedMemberTables !== undefined) {
+            docNodes.push(renderedMemberTables);
+        }
+
+        // Render child item details if there are any that will not be rendered to their own documents
+        const renderedDetailsSection = renderChildDetailsSection(
+            [
+                {
+                    headingTitle: "Flag Details",
+                    itemKind: ApiItemKind.EnumMember,
+                    items: flags,
+                },
+            ],
+            documenterConfiguration,
+            tsdocConfiguration,
+            renderChild,
+        );
+
+        if (renderedDetailsSection !== undefined) {
+            docNodes.push(renderedDetailsSection);
+        }
+    }
+
+    const innerSectionBody = new DocSection({ configuration: tsdocConfiguration }, docNodes);
 
     return documenterConfiguration.renderSectionBlock(
         apiEnum,

@@ -91,6 +91,50 @@ Test Enum
 ```typescript
 export declare enum TestEnum 
 ```
+
+## Flags
+
+|  Flag | Modifiers | Description |
+|  --- | --- | --- |
+|  [TestEnumValue1](/simple-suite-test#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 (string) |
+|  [TestEnumValue2](/simple-suite-test#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 (number) |
+|  [TestEnumValue3](/simple-suite-test#testenum-testenumvalue3-EnumMember) |  | Test enum value 3 (default) |
+
+## Details
+
+## Flag Details
+
+## TestEnumValue1
+
+Test enum value 1 (string)
+
+## Signature
+
+```typescript
+TestEnumValue1 = "test-enum-value-1"
+```
+TODO: Enum rendering
+
+## TestEnumValue2
+
+Test enum value 2 (number)
+
+## Signature
+
+```typescript
+TestEnumValue2 = 3
+```
+TODO: Enum rendering
+
+## TestEnumValue3
+
+Test enum value 3 (default)
+
+## Signature
+
+```typescript
+TestEnumValue3 = 4
+```
 TODO: Enum rendering
 
 ## Variable Details

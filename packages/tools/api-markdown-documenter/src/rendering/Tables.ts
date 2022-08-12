@@ -378,10 +378,12 @@ export function renderParameterSummaryCell(
 
 export function getHeadingTitleForApiKind(itemKind: ApiItemKind): string {
     switch (itemKind) {
-        case ApiItemKind.PropertySignature:
-            return ApiItemKind.Property;
+        case ApiItemKind.EnumMember:
+            return "Flag";
         case ApiItemKind.MethodSignature:
             return ApiItemKind.Method;
+        case ApiItemKind.PropertySignature:
+            return ApiItemKind.Property;
         default:
             return itemKind;
     }
