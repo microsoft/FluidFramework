@@ -1,16 +1,16 @@
 import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
-import { DocNode, DocSection } from "@microsoft/tsdoc";
+import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { filterByKind } from "../../utilities";
-import { renderChildDetailsSection, renderMemberTables } from "../helpers";
+import { filterByKind, mergeSections } from "../../utilities";
+import { renderChildrenUnderHeading, renderMemberTables } from "../helpers";
 
 export function renderEnumSection(
     apiEnum: ApiEnum,
     config: Required<MarkdownDocumenterConfiguration>,
     renderChild: (apiItem: ApiItem) => DocSection,
 ): DocSection {
-    const docNodes: DocNode[] = [];
+    const docSections: DocSection[] = [];
 
     const hasAnyChildren = apiEnum.members.length !== 0;
 
@@ -31,30 +31,23 @@ export function renderEnumSection(
             ],
             config,
         );
-
         if (renderedMemberTables !== undefined) {
-            docNodes.push(renderedMemberTables);
+            docSections.push(renderedMemberTables);
         }
 
-        // Render child item details if there are any that will not be rendered to their own documents
-        const renderedDetailsSection = renderChildDetailsSection(
-            [
-                {
-                    headingTitle: "Flag Details",
-                    itemKind: ApiItemKind.EnumMember,
-                    items: flags,
-                },
-            ],
+        // Render individual flag details
+        const renderedDetailsSection = renderChildrenUnderHeading(
+            flags,
+            "FlagDetails",
             config,
             renderChild,
         );
-
         if (renderedDetailsSection !== undefined) {
-            docNodes.push(renderedDetailsSection);
+            docSections.push(renderedDetailsSection);
         }
     }
 
-    const innerSectionBody = new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
-
+    // Merge sections to reduce and simplify hierarchy
+    const innerSectionBody = mergeSections(docSections, config.tsdocConfiguration);
     return config.renderSectionBlock(apiEnum, innerSectionBody, config);
 }

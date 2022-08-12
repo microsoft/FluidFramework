@@ -5,109 +5,107 @@
 
 Test interface
 
-### Remarks
+## Remarks
 
 Here are some remarks about the interface
 
-### Signature
+## Signature
 
 ```typescript
 export interface TestInterface 
 ```
 
-#### Properties
+## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](docs/simple-suite-test/testinterface#testclasseventproperty-PropertySignature) |  | () =&gt; void | Test interface event property |
 |  [testInterfaceProperty](docs/simple-suite-test/testinterface#testinterfaceproperty-PropertySignature) |  | number | Test interface property |
 
-#### Call Signatures
+## Call Signatures
 
 |  CallSignature | Modifiers | Description |
 |  --- | --- | --- |
 |  [(call)(event, listener)](docs/simple-suite-test/testinterface#_call_-CallSignature) |  | Test interface event call signature |
 |  [(call)(event, listener)](docs/simple-suite-test/testinterface#_call__1-CallSignature) |  | Another example call signature |
 
-#### Methods
+## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testInterfaceMethod()](docs/simple-suite-test/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
 
-### Details
+## Property Details
 
-##### Property Details
-
-<b>testClassEventProperty</b>
+### testClassEventProperty {#testclasseventproperty-PropertySignature}
 
 Test interface event property
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the event property
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
 
-<b>testInterfaceProperty</b>
+### testInterfaceProperty {#testinterfaceproperty-PropertySignature}
 
 Test interface property
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the property
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 testInterfaceProperty: number;
 ```
 
-##### Call Signature Details
+## Call Signature Details
 
-<b>(call)</b>
+### (call) {#_call_-CallSignature}
 
 Test interface event call signature
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the event call signature
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-<b>(call)</b>
+### (call) {#_call__1-CallSignature}
 
 Another example call signature
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the event call signature
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-##### Method Details
+## Method Details
 
-<b>testInterfaceMethod</b>
+### testInterfaceMethod {#testinterfacemethod-MethodSignature}
 
 Test interface method
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the method
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 testInterfaceMethod(): void;

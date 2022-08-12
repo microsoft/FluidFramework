@@ -5,75 +5,73 @@
 
 Test class
 
-### Signature
+## Signature
 
 ```typescript
 class TestClass 
 ```
 
-#### Constructors
+## Constructors
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [(constructor)(testClassProperty)](docs/simple-suite-test/testnamespace/testclass#_constructor_-Constructor) |  |  | Test class constructor |
 
-#### Properties
+## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassProperty](docs/simple-suite-test/testnamespace/testclass#testclassproperty-Property) |  | string | Test interface property |
 
-#### Methods
+## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassMethod(testParameter)](docs/simple-suite-test/testnamespace/testclass#testclassmethod-Method) |  | Promise&lt;string&gt; | Test class method |
 
-### Details
+## Constructor Details
 
-##### Constructor Details
-
-<b>(constructor)</b>
+### (constructor) {#_constructor_-Constructor}
 
 Test class constructor
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-<b>Parameters</b>
+#### Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testClassProperty | string | See [TestClass.testClassProperty](simple-suite-test/testclass.md) |
 
-##### Property Details
+## Property Details
 
-<b>testClassProperty</b>
+### testClassProperty {#testclassproperty-Property}
 
 Test interface property
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 readonly testClassProperty: string;
 ```
 
-##### Method Details
+## Method Details
 
-<b>testClassMethod</b>
+### testClassMethod {#testclassmethod-Method}
 
 Test class method
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-<b>Parameters</b>
+#### Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

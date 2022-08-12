@@ -449,20 +449,21 @@ export function renderChildrenUnderHeading(
     config: Required<MarkdownDocumenterConfiguration>,
     renderChild: (childItem: ApiItem) => DocSection,
 ): DocSection | undefined {
-    return childItems.length === 0
-        ? undefined
-        : new DocSection({ configuration: config.tsdocConfiguration }, [
-              renderHeading(
-                  {
-                      title: headingTitle,
-                  },
-                  config,
-              ),
-              new DocSection(
-                  { configuration: config.tsdocConfiguration },
-                  childItems.map((constructor) => renderChild(constructor)),
-              ),
-          ]);
+    if (childItems.length === 0) {
+        return undefined;
+    }
+
+    const childSections: DocSection[] = childItems.map((childItem) => renderChild(childItem));
+
+    return new DocSection({ configuration: config.tsdocConfiguration }, [
+        renderHeading(
+            {
+                title: headingTitle,
+            },
+            config,
+        ),
+        mergeSections(childSections, config.tsdocConfiguration),
+    ]);
 }
 
 export interface ChildSectionProperties {
@@ -476,7 +477,7 @@ export function renderChildDetailsSection(
     config: Required<MarkdownDocumenterConfiguration>,
     renderChild: (apiItem) => DocSection,
 ): DocSection | undefined {
-    const docNodes: DocNode[] = [];
+    const childNodes: DocSection[] = [];
 
     for (const childSection of childSections) {
         // Only render contents for a section if the item kind is one that gets rendered to its parent's document
@@ -493,15 +494,12 @@ export function renderChildDetailsSection(
                 renderChild,
             );
             if (renderedChildSection !== undefined) {
-                docNodes.push(renderedChildSection);
+                childNodes.push(renderedChildSection);
             }
         }
     }
 
-    return docNodes.length === 0
+    return childNodes.length === 0
         ? undefined
-        : new DocSection({ configuration: config.tsdocConfiguration }, [
-              renderHeading({ title: "Details" }, config),
-              new DocSection({ configuration: config.tsdocConfiguration }, docNodes),
-          ]);
+        : mergeSections(childNodes, config.tsdocConfiguration);
 }

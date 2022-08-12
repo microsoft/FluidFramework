@@ -5,11 +5,11 @@
 
 Test class
 
-### Remarks
+## Remarks
 
 Here are some remarks about the class
 
-### Signature
+## Signature
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> 
@@ -22,13 +22,13 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB>
 \* <b>TTypeParameterB</b>: Another type parameter
 
 
-#### Constructors
+## Constructors
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [(constructor)(testClassProperty, testClassEventProperty)](docs/simple-suite-test/testclass#_constructor_-Constructor) |  |  | Test class constructor |
 
-#### Properties
+## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
@@ -36,100 +36,98 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB>
 |  [testClassGetterProperty](docs/simple-suite-test/testclass#testclassgetterproperty-Property) |  | number | Test class getter-only property |
 |  [testClassProperty](docs/simple-suite-test/testclass#testclassproperty-Property) |  | TTypeParameterB | Test class property |
 
-#### Methods
+## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassMethod(input)](docs/simple-suite-test/testclass#testclassmethod-Method) |  | TTypeParameterA | Test class method |
 
-### Details
+## Constructor Details
 
-##### Constructor Details
-
-<b>(constructor)</b>
+### (constructor) {#_constructor_-Constructor}
 
 Test class constructor
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the constructor
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-<b>Parameters</b>
+#### Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](simple-suite-test/testclass.md) |
 |  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](simple-suite-test/testclass.md) |
 
-##### Property Details
+## Property Details
 
-<b>testClassEventProperty</b>
+### testClassEventProperty {#testclasseventproperty-Property}
 
 Test class event property
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the property
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
 
-<b>testClassGetterProperty</b>
+### testClassGetterProperty {#testclassgetterproperty-Property}
 
 Test class getter-only property
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the getter-only property
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
 ```
 
-<b>testClassProperty</b>
+### testClassProperty {#testclassproperty-Property}
 
 Test class property
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the property
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
 ```
 
-##### Method Details
+## Method Details
 
-<b>testClassMethod</b>
+### testClassMethod {#testclassmethod-Method}
 
 Test class method
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the method
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 /** @sealed */
 testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
-<b>Parameters</b>
+#### Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

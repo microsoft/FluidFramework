@@ -5,11 +5,11 @@
 
 Test interface that extends other interfaces
 
-### Remarks
+## Remarks
 
 Here are some remarks about the interface
 
-### Signature
+## Signature
 
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestInterfaceWithTypeParameter<number>, TestMappedType 
@@ -21,31 +21,29 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 , [TestMappedType](docs/simple-suite-test#testmappedtype-TypeAlias)
 
 
-#### Methods
+## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testMethod(input)](docs/simple-suite-test/testinterfaceextendingotherinterfaces#testmethod-MethodSignature) |  | number | Test interface method accepting a string and returning a number. |
 
-### Details
+## Method Details
 
-##### Method Details
-
-<b>testMethod</b>
+### testMethod {#testmethod-MethodSignature}
 
 Test interface method accepting a string and returning a number.
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the method
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 testMethod(input: string): number;
 ```
 
-<b>Parameters</b>
+#### Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

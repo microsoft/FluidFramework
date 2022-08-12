@@ -5,150 +5,146 @@
 
 Test Namespace
 
-### Remarks
+## Remarks
 
 Here are some remarks about the namespace
 
-### Examples
+## Examples
 
-#### Example 1
+### Example 1
 
 Example 1
 
-#### Example 2
+### Example 2
 
 Example 2
 
-### Signature
+## Signature
 
 ```typescript
 export declare namespace TestNamespace 
 ```
 
-#### Interfaces
+## Interfaces
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestInterface](docs/simple-suite-test/testnamespace/testinterface) |  | Test interface |
 
-#### Classes
+## Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestClass](docs/simple-suite-test/testnamespace/testclass) |  | Test class |
 
-#### Namespaces
+## Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestSubNamespace](docs/simple-suite-test/testnamespace/testsubnamespace) |  | Test sub-namespace |
 
-#### Types
+## Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
 |  [TypeAlias](docs/simple-suite-test/testnamespace#typealias-TypeAlias) |  | Test Type-Alias |
 
-#### Functions
+## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testFunction(testParameter)](docs/simple-suite-test/testnamespace#testfunction-Function) |  | number | Test function |
 
-#### Enumerations
+## Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestEnum](docs/simple-suite-test/testnamespace#testenum-Enum) |  | Test Enum |
 
-#### Variables
+## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestConst](docs/simple-suite-test/testnamespace#testconst-Variable) |  | Test Constant |
 
-### Details
+## Type Details
 
-##### Type Details
-
-<b>TypeAlias</b>
+### TypeAlias {#typealias-TypeAlias}
 
 Test Type-Alias
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 type TypeAlias = boolean;
 ```
 
-##### Function Details
+## Function Details
 
-<b>testFunction</b>
+### testFunction {#testfunction-Function}
 
 Test function
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-<b>Parameters</b>
+#### Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | number |  |
 
-##### Enumeration Details
+## Enumeration Details
 
-<b>TestEnum</b>
+### TestEnum {#testenum-Enum}
 
 Test Enum
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 enum TestEnum 
 ```
 
-<b>Flags</b>
+#### Flags
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestEnumValue1](docs/simple-suite-test/testnamespace#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 |
 |  [TestEnumValue2](docs/simple-suite-test/testnamespace#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 |
 
-<b>Details</b>
+#### FlagDetails
 
-<b>Flag Details</b>
-
-<b>TestEnumValue1</b>
+##### TestEnumValue1 {#testenum-testenumvalue1-EnumMember}
 
 Test enum value 1
 
-<b>Signature</b>
+###### Signature
 
 ```typescript
 TestEnumValue1 = 0
 ```
 
-<b>TestEnumValue2</b>
+##### TestEnumValue2 {#testenum-testenumvalue2-EnumMember}
 
 Test enum value 2
 
-<b>Signature</b>
+###### Signature
 
 ```typescript
 TestEnumValue2 = 1
 ```
 
-##### Variable Details
+## Variable Details
 
-<b>TestConst</b>
+### TestConst {#testconst-Variable}
 
 Test Constant
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 TestConst = "Hello world!"

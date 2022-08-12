@@ -5,7 +5,7 @@
 
 Test package
 
-### Remarks
+## Remarks
 
 This remarks block includes a bulleted list!
 
@@ -31,7 +31,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Bad link (with alias): *even though I link to an invalid item, I would still like this text to be rendered*
 
-### Example
+## Example
 
 A test example
 
@@ -39,7 +39,7 @@ A test example
 const foo = bar;
 ```
 
-#### Interfaces
+## Interfaces
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
@@ -48,26 +48,26 @@ const foo = bar;
 |  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test/testinterfaceextendingotherinterfaces) |  | Test interface that extends other interfaces |
 |  [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter) |  | Test interface with generic type parameter |
 
-#### Classes
+## Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestClass](docs/simple-suite-test/testclass) |  | Test class |
 
-#### Namespaces
+## Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestNamespace](docs/simple-suite-test/testnamespace) |  | Test Namespace |
 
-#### Types
+## Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestMappedType](docs/simple-suite-test#testmappedtype-TypeAlias) |  | Test Mapped Type, using [TestEnum](simple-suite-test.md) |
 |  [TypeAlias](docs/simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
 
-#### Functions
+## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
@@ -76,31 +76,29 @@ const foo = bar;
 |  [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-Function) |  | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter)<!-- -->&lt;number&gt; | Test function that returns an inline type |
 |  [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-Function) |  | string \| [TestInterface](docs/simple-suite-test/testinterface) | Test function that returns an inline type |
 
-#### Enumerations
+## Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestEnum](docs/simple-suite-test#testenum-Enum) |  | Test Enum |
 
-#### Variables
+## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
 |  [testConst](docs/simple-suite-test#testconst-Variable) |  | Test Constant |
 
-### Details
+## Type Details
 
-##### Type Details
-
-<b>TestMappedType</b>
+### TestMappedType {#testmappedtype-TypeAlias}
 
 Test Mapped Type, using [TestEnum](simple-suite-test.md)
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the mapped type
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 export declare type TestMappedType = {
@@ -108,47 +106,47 @@ export declare type TestMappedType = {
 };
 ```
 
-<b>TypeAlias</b>
+### TypeAlias {#typealias-TypeAlias}
 
 Test Type-Alias
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the type alias
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 export declare type TypeAlias = string;
 ```
 
-##### Function Details
+## Function Details
 
-<b>testFunction</b>
+### testFunction {#testfunction-Function}
 
 Test function
 
-<b>Remarks</b>
+#### Remarks
 
 This is a test [link](simple-suite-test/testinterface.md) to another API member
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter): TTypeParameter;
 ```
 
-<b>Parameters</b>
+#### Parameters
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | TTypeParameter | A test parameter |
 
-<b>testFunctionReturningInlineType</b>
+### testFunctionReturningInlineType {#testfunctionreturninginlinetype-Function}
 
 Test function that returns an inline type
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {
@@ -157,39 +155,39 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
-<b>testFunctionReturningIntersectionType</b>
+### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-Function}
 
 Test function that returns an inline type
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
-<b>testFunctionReturningUnionType</b>
+### testFunctionReturningUnionType {#testfunctionreturninguniontype-Function}
 
 Test function that returns an inline type
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
 ```
 
-##### Enumeration Details
+## Enumeration Details
 
-<b>TestEnum</b>
+### TestEnum {#testenum-Enum}
 
 Test Enum
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the enum
 
-<b>Examples</b>
+#### Examples
 
-<b>Example 1</b>
+##### Example 1
 
 Some example
 
@@ -197,7 +195,7 @@ Some example
 const foo = TestEnum.TestEnumValue1
 ```
 
-<b>Example 2</b>
+##### Example 2
 
 Another example
 
@@ -205,13 +203,13 @@ Another example
 const bar = TestEnum.TestEnumValue2
 ```
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 export declare enum TestEnum 
 ```
 
-<b>Flags</b>
+#### Flags
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
@@ -219,63 +217,61 @@ export declare enum TestEnum
 |  [TestEnumValue2](docs/simple-suite-test#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 (number) |
 |  [TestEnumValue3](docs/simple-suite-test#testenum-testenumvalue3-EnumMember) |  | Test enum value 3 (default) |
 
-<b>Details</b>
+#### FlagDetails
 
-<b>Flag Details</b>
-
-<b>TestEnumValue1</b>
+##### TestEnumValue1 {#testenum-testenumvalue1-EnumMember}
 
 Test enum value 1 (string)
 
-<b>Remarks</b>
+###### Remarks
 
 Here are some remarks about the enum value
 
-<b>Signature</b>
+###### Signature
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
-<b>TestEnumValue2</b>
+##### TestEnumValue2 {#testenum-testenumvalue2-EnumMember}
 
 Test enum value 2 (number)
 
-<b>Remarks</b>
+###### Remarks
 
 Here are some remarks about the enum value
 
-<b>Signature</b>
+###### Signature
 
 ```typescript
 TestEnumValue2 = 3
 ```
 
-<b>TestEnumValue3</b>
+##### TestEnumValue3 {#testenum-testenumvalue3-EnumMember}
 
 Test enum value 3 (default)
 
-<b>Remarks</b>
+###### Remarks
 
 Here are some remarks about the enum value
 
-<b>Signature</b>
+###### Signature
 
 ```typescript
 TestEnumValue3 = 4
 ```
 
-##### Variable Details
+## Variable Details
 
-<b>testConst</b>
+### testConst {#testconst-Variable}
 
 Test Constant
 
-<b>Remarks</b>
+#### Remarks
 
 Here are some remarks about the variable
 
-<b>Signature</b>
+#### Signature
 
 ```typescript
 testConst = 42

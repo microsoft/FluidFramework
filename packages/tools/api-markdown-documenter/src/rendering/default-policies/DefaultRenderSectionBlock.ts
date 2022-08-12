@@ -1,8 +1,8 @@
 import { ApiItem, ApiReleaseTagMixin, ReleaseTag } from "@microsoft/api-extractor-model";
-import { DocNode, DocSection } from "@microsoft/tsdoc";
+import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { doesItemRequireOwnDocument } from "../../utilities";
+import { doesItemRequireOwnDocument, mergeSections } from "../../utilities";
 import {
     renderBetaWarning,
     renderDeprecationNotice,
@@ -37,53 +37,63 @@ export function renderSectionBlock(
     innerSectionBody: DocSection | undefined,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
-    const docNodes: DocNode[] = [];
-
-    // Render heading for non-document-items only.
-    // Document items have their headings handled specially.
-    if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
-        docNodes.push(renderHeadingForApiItem(apiItem, config));
-    }
+    const docSections: DocSection[] = [];
 
     // Render beta warning if applicable
     if (ApiReleaseTagMixin.isBaseClassOf(apiItem) && apiItem.releaseTag === ReleaseTag.Beta) {
-        docNodes.push(renderBetaWarning(config));
+        docSections.push(
+            new DocSection({ configuration: config.tsdocConfiguration }, [
+                renderBetaWarning(config),
+            ]),
+        );
     }
 
     // Render deprecation notice (if any)
     const renderedDeprecationNotice = renderDeprecationNotice(apiItem, config);
     if (renderedDeprecationNotice !== undefined) {
-        docNodes.push(renderedDeprecationNotice);
+        docSections.push(renderedDeprecationNotice);
     }
 
     // Render summary comment (if any)
     const renderedSummary = renderSummary(apiItem);
     if (renderedSummary !== undefined) {
-        docNodes.push(renderedSummary);
+        docSections.push(renderedSummary);
     }
 
     // Render @remarks content (if any)
     const renderedRemarks = renderRemarks(apiItem, config);
     if (renderedRemarks !== undefined) {
-        docNodes.push(renderedRemarks);
+        docSections.push(renderedRemarks);
     }
 
     // Render examples (if any)
     const renderedExamples = renderExamples(apiItem, config);
     if (renderedExamples !== undefined) {
-        docNodes.push(renderedExamples);
+        docSections.push(renderedExamples);
     }
 
     // Render signature
     const renderedSignature = renderSignature(apiItem, config);
     if (renderedSignature !== undefined) {
-        docNodes.push(renderedSignature);
+        docSections.push(renderedSignature);
     }
 
     if (innerSectionBody !== undefined) {
         // Flatten contents into this section
-        docNodes.push(...innerSectionBody.nodes);
+        docSections.push(innerSectionBody);
     }
 
-    return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
+    // Merge sections to reduce and simplify hierarchy
+    const mergedSections = mergeSections(docSections, config.tsdocConfiguration);
+
+    // Add heading to top of section only if this is being rendered to a parent item.
+    // Document items have their headings handled specially.
+    return doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
+        ? mergedSections
+        : new DocSection(
+              {
+                  configuration: config.tsdocConfiguration,
+              },
+              [renderHeadingForApiItem(apiItem, config), mergedSections],
+          );
 }

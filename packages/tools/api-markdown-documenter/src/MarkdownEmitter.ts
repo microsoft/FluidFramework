@@ -185,6 +185,9 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             case 5:
                 prefix = "#####";
                 break;
+            case 6:
+                prefix = "######";
+                break;
             default:
                 // If the heading level is beyond the max, we will simply render the title as bolded text
                 super.writePlainText(docHeading.title, {

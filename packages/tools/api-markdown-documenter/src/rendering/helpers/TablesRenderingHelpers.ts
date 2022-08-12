@@ -23,7 +23,7 @@ import {
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
-import { ApiFunctionLike, getLinkUrlForApiItem } from "../../utilities";
+import { ApiFunctionLike, getLinkUrlForApiItem, mergeSections } from "../../utilities";
 import { renderExcerptWithHyperlinks, renderHeading } from "./RenderingHelpers";
 
 export interface MemberTableProperties {
@@ -36,18 +36,18 @@ export function renderMemberTables(
     memberTableProperties: readonly MemberTableProperties[],
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    const docNodes: DocNode[] = [];
+    const docSections: DocSection[] = [];
 
     for (const member of memberTableProperties) {
         const renderedTable = renderTableWithHeading(member, config);
         if (renderedTable !== undefined) {
-            docNodes.push(renderedTable);
+            docSections.push(renderedTable);
         }
     }
 
-    return docNodes.length === 0
+    return docSections.length === 0
         ? undefined
-        : new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
+        : mergeSections(docSections, config.tsdocConfiguration);
 }
 
 export function renderTableWithHeading(

@@ -8,10 +8,10 @@ import {
     ApiMethod,
     ApiProperty,
 } from "@microsoft/api-extractor-model";
-import { DocNode, DocSection } from "@microsoft/tsdoc";
+import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { filterByKind } from "../../utilities";
+import { filterByKind, mergeSections } from "../../utilities";
 import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
 export function renderClassSection(
@@ -19,7 +19,7 @@ export function renderClassSection(
     config: Required<MarkdownDocumenterConfiguration>,
     renderChild: (apiItem: ApiItem) => DocSection,
 ): DocSection {
-    const docNodes: DocNode[] = [];
+    const docSections: DocSection[] = [];
 
     const hasAnyChildren = apiClass.members.length !== 0;
 
@@ -78,7 +78,7 @@ export function renderClassSection(
         );
 
         if (renderedMemberTables !== undefined) {
-            docNodes.push(renderedMemberTables);
+            docSections.push(renderedMemberTables);
         }
 
         // Render child item details if there are any that will not be rendered to their own documents
@@ -115,11 +115,12 @@ export function renderClassSection(
         );
 
         if (renderedDetailsSection !== undefined) {
-            docNodes.push(renderedDetailsSection);
+            docSections.push(renderedDetailsSection);
         }
     }
 
-    const innerSectionBody = new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
+    // Merge sections to reduce and simplify hierarchy
+    const innerSectionBody = mergeSections(docSections, config.tsdocConfiguration);
 
     return config.renderSectionBlock(apiClass, innerSectionBody, config);
 }
