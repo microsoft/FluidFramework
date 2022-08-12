@@ -1,14 +1,14 @@
-import { DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
+import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 export function mergeSections(
     sections: DocSection[],
     tsdocConfiguration: TSDocConfiguration,
 ): DocSection {
-    const output = new DocSection({ configuration: tsdocConfiguration });
+    const childNodes: DocNode[] = [];
 
     for (const section of sections) {
-        output.appendNodes(section.nodes);
+        childNodes.push(...section.nodes);
     }
 
-    return output;
+    return new DocSection({ configuration: tsdocConfiguration }, childNodes);
 }
