@@ -24,7 +24,7 @@ steps:
     script: |
       pushd "$(Build.SourcesDirectory)/build-tools"
       npm ci
-      npm run install:build-tools
+      # npm run install:build-tools
       popd
       npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
       prefix=$(npm config get prefix)
