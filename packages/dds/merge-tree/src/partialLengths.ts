@@ -298,12 +298,11 @@ export class PartialSequenceLengths {
                 const removalInfo = toRemovalInfo(segment);
                 if (seqLTE(removalInfo?.removedSeq, collabWindow.minSeq)) {
                     combinedPartialLengths.minLength -= segment.cachedLength;
-                } else if (removalInfo !== undefined ||
-                    (segment.localRemovedSeq !== undefined && segment.localRemovedSeq !== UnassignedSequenceNumber)) {
+                } else if (removalInfo !== undefined) {
                     PartialSequenceLengths.insertSegment(
                         combinedPartialLengths,
                         segment,
-                        segment as IRemovalInfo);
+                        removalInfo);
                 }
             }
         }
@@ -366,6 +365,9 @@ export class PartialSequenceLengths {
      * Does not update the clientSeqNumbers field to account for this segment.
      * If `removalInfo` is defined, this operation updates the bookkeeping to account for the removal of this
      * segment at the removedSeq instead.
+     * When the insertion or removal of the segment is un-acked and `combinedPartialLengths` is meant to compute
+     * such records, this does the analogous addition to the bookkeeping for the local segment in
+     * `combinedPartialLengths.unsequencedRecords`.
      */
     private static insertSegment(
         combinedPartialLengths: PartialSequenceLengths,
@@ -374,54 +376,51 @@ export class PartialSequenceLengths {
         const isLocal = (removalInfo === undefined && segment.seq === UnassignedSequenceNumber)
             || (removalInfo !== undefined && segment.removedSeq === UnassignedSequenceNumber);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        let seq = isLocal ? segment.localSeq! : segment.seq!;
+        let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq!;
         let segmentLen = segment.cachedLength;
         let clientId = segment.clientId;
         let removeClientOverlap: number[] | undefined;
 
         if (removalInfo) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            seq = isLocal ? segment.localRemovedSeq! : removalInfo.removedSeq;
+            seqOrLocalSeq = isLocal ? removalInfo.localRemovedSeq! : removalInfo.removedSeq;
             segmentLen = -segmentLen;
             // The client who performed the remove is always stored
             // in the first position of removalInfo.
-            const removingClient = removalInfo.removedClientIds[0];
-            assert(typeof removingClient === "number",
-                "Local client cannot have removed first if there are overlapping removes");
-            clientId = removingClient;
+            clientId = removalInfo.removedClientIds[0];
             const hasOverlap = removalInfo.removedClientIds.length > 1;
             removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
         }
 
-        const seqPartials = isLocal ?
+        const partials = isLocal ?
             combinedPartialLengths.unsequencedRecords?.partialLengths : combinedPartialLengths.partialLengths;
-        if (seqPartials === undefined) {
+        if (partials === undefined) {
             // Local partial but its computation isn't required
             return;
         }
-        const seqPartialsLen = seqPartials.length;
+        const partialsLen = partials.length;
         // Find the first entry with sequence number greater or equal to seq
         let indexFirstGTE = 0;
-        for (; indexFirstGTE < seqPartialsLen; indexFirstGTE++) {
-            if (seqPartials[indexFirstGTE].seq >= seq) {
+        for (; indexFirstGTE < partialsLen; indexFirstGTE++) {
+            if (partials[indexFirstGTE].seq >= seqOrLocalSeq) {
                 break;
             }
         }
 
         let partialLengthEntry: PartialSequenceLength;
-        if (seqPartials[indexFirstGTE]?.seq === seq) {
-            partialLengthEntry = seqPartials[indexFirstGTE];
+        if (partials[indexFirstGTE]?.seq === seqOrLocalSeq) {
+            partialLengthEntry = partials[indexFirstGTE];
             // Existing entry at this seq--this occurs for ops that insert/delete more than one segment.
             partialLengthEntry.seglen += segmentLen;
             if (removeClientOverlap) {
                 PartialSequenceLengths.accumulateRemoveClientOverlap(
-                    seqPartials[indexFirstGTE],
+                    partials[indexFirstGTE],
                     removeClientOverlap,
                     segmentLen);
             }
         } else {
             partialLengthEntry = {
-                seq,
+                seq: seqOrLocalSeq,
                 clientId,
                 len: 0,
                 seglen: segmentLen,
@@ -431,32 +430,31 @@ export class PartialSequenceLengths {
             };
 
             // TODO: investigate performance improvement using BST
-            insertIntoList(seqPartials, indexFirstGTE, partialLengthEntry);
+            insertIntoList(partials, indexFirstGTE, partialLengthEntry);
         }
 
         const { unsequencedRecords } = combinedPartialLengths;
         if (unsequencedRecords && removeClientOverlap && segment.localRemovedSeq !== undefined) {
             const localSeq = segment.localRemovedSeq;
             const localPartialLengthEntry: LocalPartialSequenceLength = {
-                seq,
+                seq: seqOrLocalSeq,
                 localSeq,
                 clientId,
                 len: 0,
                 seglen: segmentLen,
             };
             let localIndexFirstGTE = 0;
-            const { partialLengths, overlappingRemoves } = unsequencedRecords;
-            for (; localIndexFirstGTE < overlappingRemoves.length; localIndexFirstGTE++) {
-                if (overlappingRemoves[localIndexFirstGTE].seq >= seq) {
+            for (; localIndexFirstGTE < unsequencedRecords.overlappingRemoves.length; localIndexFirstGTE++) {
+                if (unsequencedRecords.overlappingRemoves[localIndexFirstGTE].seq >= seqOrLocalSeq) {
                     break;
                 }
             }
 
-            insertIntoList(overlappingRemoves, localIndexFirstGTE, localPartialLengthEntry);
+            insertIntoList(unsequencedRecords.overlappingRemoves, localIndexFirstGTE, localPartialLengthEntry);
 
             localIndexFirstGTE = 0;
-            for (; localIndexFirstGTE < partialLengths.length; localIndexFirstGTE++) {
-                if (partialLengths[localIndexFirstGTE].seq >= localSeq) {
+            for (; localIndexFirstGTE < unsequencedRecords.partialLengths.length; localIndexFirstGTE++) {
+                if (unsequencedRecords.partialLengths[localIndexFirstGTE].seq >= localSeq) {
                     break;
                 }
             }
@@ -466,10 +464,10 @@ export class PartialSequenceLengths {
                 seq: localSeq,
             };
 
-            if (partialLengths[localIndexFirstGTE]?.seq === localSeq) {
-                partialLengths[localIndexFirstGTE].seglen += localPartialLengthEntry.seglen;
+            if (unsequencedRecords.partialLengths[localIndexFirstGTE]?.seq === localSeq) {
+                unsequencedRecords.partialLengths[localIndexFirstGTE].seglen += localPartialLengthEntry.seglen;
             } else {
-                insertIntoList(partialLengths, localIndexFirstGTE, tweakedLocalPartialEntry);
+                insertIntoList(unsequencedRecords.partialLengths, localIndexFirstGTE, tweakedLocalPartialEntry);
             }
         }
     }

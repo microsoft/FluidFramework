@@ -86,6 +86,7 @@ export interface IHierBlock extends IMergeBlock {
 }
 
 export interface IRemovalInfo {
+    localRemovedSeq?: number;
     removedSeq: number;
     removedClientIds: number[];
 }

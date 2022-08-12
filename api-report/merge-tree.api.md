@@ -744,6 +744,8 @@ export interface IRelativePosition {
 // @public (undocumented)
 export interface IRemovalInfo {
     // (undocumented)
+    localRemovedSeq?: number;
+    // (undocumented)
     removedClientIds: number[];
     // (undocumented)
     removedSeq: number;
