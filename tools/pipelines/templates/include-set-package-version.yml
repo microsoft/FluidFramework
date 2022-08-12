@@ -26,8 +26,11 @@ steps:
       npm ci
       npm run install:build-tools
       popd
-      npm link "$(Build.SourcesDirectory)/build-tools/packages/build-cli"
       npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
+      prefix=$(npm config get prefix)
+      ln -s "$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin/run" "$(prefix)/bin/flub"
+
+      flub help
 
 - task: Bash@3
   name: SetVersion
