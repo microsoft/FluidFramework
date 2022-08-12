@@ -5,11 +5,11 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
-export interface IMigrationToolsEvents extends IEvent {
+export interface IMigrationToolEvents extends IEvent {
     (event: "newVersionAccepted" | "migrated", listener: () => void);
 }
 
-export interface IMigrationTools extends IEventProvider<IMigrationToolsEvents> {
+export interface IMigrationTool extends IEventProvider<IMigrationToolEvents> {
     migrated: boolean;
     newContainerId: string | undefined;
     setNewContainerId(id: string): Promise<void>;

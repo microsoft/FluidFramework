@@ -8,7 +8,7 @@ import { Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 
-import type { IMigrationTools } from "./interfaces";
+import type { IMigrationTool } from "./interfaces";
 
 const quorumKey = "quorum";
 const crcKey = "crc";
@@ -17,7 +17,7 @@ const newVersionKey = "newVersion";
 const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
-export class MigrationTools extends DataObject implements IMigrationTools {
+export class MigrationTool extends DataObject implements IMigrationTool {
     private _quorum: Quorum | undefined;
     private _crc: ConsensusRegisterCollection<string> | undefined;
     private _taskManager: TaskManager | undefined;
@@ -141,10 +141,10 @@ export class MigrationTools extends DataObject implements IMigrationTools {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const MigrationToolsInstantiationFactory =
-    new DataObjectFactory<MigrationTools>(
-        "migration-tools",
-        MigrationTools,
+export const MigrationToolInstantiationFactory =
+    new DataObjectFactory<MigrationTool>(
+        "migration-tool",
+        MigrationTool,
         [
             ConsensusRegisterCollection.getFactory(),
             Quorum.getFactory(),
