@@ -345,7 +345,7 @@ export function renderParameterSummaryCell(
     );
 }
 
-export function getHeadingTitleForApiKind(itemKind: ApiItemKind): string {
+function getHeadingTitleForApiKind(itemKind: ApiItemKind): string {
     switch (itemKind) {
         case ApiItemKind.EnumMember:
             return "Flag";

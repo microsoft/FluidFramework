@@ -15,6 +15,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import * as Path from "path";
 
+import { Heading } from "../Heading";
 import { Link, urlFromLink } from "../Link";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
@@ -182,6 +183,18 @@ export function getFileNameForApiItem(
     }
 
     return path;
+}
+
+export function getHeadingForApiItem(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+    headingLevel?: number,
+): Heading {
+    return {
+        title: config.headingTitlePolicy(apiItem),
+        id: getHeadingIdForApiItem(apiItem, config),
+        level: headingLevel,
+    };
 }
 
 export function getHeadingIdForApiItem(

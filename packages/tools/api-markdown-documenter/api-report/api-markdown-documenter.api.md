@@ -140,6 +140,13 @@ export type FileNamePolicy = (apiItem: ApiItem) => string;
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
+export interface Heading {
+    id?: string;
+    level?: number;
+    title: string;
+}
+
+// @public
 export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
 // @public
@@ -231,6 +238,9 @@ export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outp
 
 // @public (undocumented)
 function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+
+// @public (undocumented)
+export function renderHeading(heading: Heading, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
 
 // @public (undocumented)
 export function renderHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocHeading;

@@ -5,6 +5,7 @@
  */
 
 export * from "./doc-nodes";
+export * from "./Heading";
 export * from "./MarkdownDocument";
 export * from "./MarkdownDocumenter";
 export * from "./MarkdownDocumenterConfiguration";

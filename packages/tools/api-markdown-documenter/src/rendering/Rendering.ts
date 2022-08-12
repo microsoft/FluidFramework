@@ -40,6 +40,7 @@ import {
     TSDocConfiguration,
 } from "@microsoft/tsdoc";
 
+import { Heading } from "../Heading";
 import { Link, urlFromLink } from "../Link";
 import { MarkdownDocument } from "../MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
@@ -50,7 +51,7 @@ import {
     doesItemRequireOwnDocument,
     getAncestralHierarchy,
     getFilePathForApiItem,
-    getHeadingIdForApiItem,
+    getHeadingForApiItem,
     getLinkForApiItem,
     getLinkUrlForApiItem,
     getQualifiedApiItemName,
@@ -542,12 +543,18 @@ export function renderHeadingForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocHeading {
-    // TODO: heading level
-    const displayName = config.headingTitlePolicy(apiItem);
+    return renderHeading(getHeadingForApiItem(apiItem, config), config);
+}
+
+export function renderHeading(
+    heading: Heading,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocHeading {
     return new DocHeading({
         configuration: config.tsdocConfiguration,
-        title: displayName,
-        id: getHeadingIdForApiItem(apiItem, config),
+        title: heading.title,
+        id: heading.id,
+        level: heading.level,
     });
 }
 
