@@ -23,7 +23,6 @@ import { ApiPackage } from '@microsoft/api-extractor-model';
 import { ApiPropertyItem } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
-import { DocBlock } from '@microsoft/tsdoc';
 import { DocEmphasisSpan } from '@microsoft/api-documenter/lib/nodes/DocEmphasisSpan';
 import { DocLinkTag } from '@microsoft/tsdoc';
 import { DocNode } from '@microsoft/tsdoc';
@@ -128,7 +127,7 @@ export const defaultRenderingPolicies: Required<RenderingPolicies>;
 
 // @public (undocumented)
 interface DocExample {
-    content: DocBlock;
+    content: DocSection;
     exampleNumber?: number;
 }
 
