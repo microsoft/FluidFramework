@@ -9,7 +9,7 @@ import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { MigrationState } from "../migrationInterfaces";
 import type {
     IMigrationTools,
-} from "../containerKillBit";
+} from "../migrationTools";
 import type {
     IInventoryListContainer,
     IInventoryListContainerEvents,
