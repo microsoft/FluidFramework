@@ -237,7 +237,7 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Benchmark tests output
             inputs:
-              targetPath: '$(Build.ArtifactStagingDirectory)/benchmarkOutput'
+              targetPath: '${{ parameters.buildDirectory }}/benchmarkOutput'
               artifactName: 'benchmark-test-outputs'
               condition: succeededOrFailed()
 
