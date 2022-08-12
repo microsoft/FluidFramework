@@ -170,7 +170,7 @@ export interface ChangeRebaser<TChangeSet> {
     // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
     // This isn't ideal, but it might be fine?
     // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
-    rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
+    rebaseAnchors(anchors: AnchorSet, over: TChangeSet): void;
 }
 
 export interface FinalChange {
