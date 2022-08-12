@@ -3,7 +3,7 @@ import { DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdo
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan } from "../../doc-nodes";
-import { renderTableWithHeading } from "../Tables";
+import { renderTableWithHeading } from "../helpers";
 
 export function renderModelSection(
     apiModel: ApiModel,

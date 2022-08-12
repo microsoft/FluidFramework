@@ -25,7 +25,7 @@ import { MarkdownDocument } from "../MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { MarkdownEmitter } from "../MarkdownEmitter";
 import { getFilePathForApiItem, getQualifiedApiItemName } from "../utilities";
-import { renderBreadcrumb, renderHeadingForApiItem } from "./RenderingHelpers";
+import { renderBreadcrumb, renderHeadingForApiItem } from "./helpers";
 
 // TODOs:
 // - heading level tracking

@@ -13,8 +13,8 @@ import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { ApiModuleLike, filterByKind } from "../../utilities";
-import { renderChildDetailsSection } from "../RenderingHelpers";
-import { renderMemberTables } from "../Tables";
+import { renderMemberTables } from "../helpers";
+import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
 
 export function renderModuleLikeSection(
     apiItem: ApiModuleLike,

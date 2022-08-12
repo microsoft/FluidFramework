@@ -4,7 +4,7 @@ import { NewlineKind } from "@rushstack/node-core-library";
 
 import { PolicyOptions, defaultPolicyOptions } from "./Policies";
 import { CustomDocNodes } from "./doc-nodes";
-import { RenderingPolicies, defaultRenderingPolicies } from "./rendering/RenderingPolicy";
+import { RenderingPolicies, defaultRenderingPolicies } from "./rendering";
 
 // TODOs:
 // - Define "document" in terms of stream output, since we aren't necessarily writing files.

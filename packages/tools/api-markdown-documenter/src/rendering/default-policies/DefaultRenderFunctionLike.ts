@@ -2,7 +2,7 @@ import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { ApiFunctionLike } from "../../utilities";
-import { renderParametersSection } from "../RenderingHelpers";
+import { renderParametersSection } from "../helpers";
 
 export function renderFunctionLikeSection(
     apiFunctionLike: ApiFunctionLike,

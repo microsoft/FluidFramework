@@ -21,9 +21,9 @@ import {
     DocSection,
 } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocTable, DocTableCell } from "../doc-nodes";
-import { ApiFunctionLike, getLinkUrlForApiItem } from "../utilities";
+import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
+import { ApiFunctionLike, getLinkUrlForApiItem } from "../../utilities";
 import { renderExcerptWithHyperlinks, renderHeading } from "./RenderingHelpers";
 
 export interface MemberTableProperties {

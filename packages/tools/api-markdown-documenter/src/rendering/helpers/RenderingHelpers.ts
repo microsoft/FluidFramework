@@ -22,10 +22,10 @@ import {
     StandardTags,
 } from "@microsoft/tsdoc";
 
-import { Heading } from "../Heading";
-import { Link, urlFromLink } from "../Link";
-import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocHeading, DocNoteBox } from "../doc-nodes";
+import { Heading } from "../../Heading";
+import { Link, urlFromLink } from "../../Link";
+import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { DocEmphasisSpan, DocHeading, DocNoteBox } from "../../doc-nodes";
 import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,
@@ -34,8 +34,8 @@ import {
     getHeadingForApiItem,
     getLinkForApiItem,
     getLinkUrlForApiItem,
-} from "../utilities";
-import { renderParametersTable } from "./Tables";
+} from "../../utilities";
+import { renderParametersTable } from "./TablesRenderingHelpers";
 
 export function renderSignature(
     apiItem: ApiItem,
@@ -464,11 +464,6 @@ export function renderChildrenUnderHeading(
           ]);
 }
 
-/**
- * TODO
- *
- * Input props for {@link renderChildDetailsSection}
- */
 export interface ChildSectionProperties {
     headingTitle: string;
     itemKind: ApiItemKind;
