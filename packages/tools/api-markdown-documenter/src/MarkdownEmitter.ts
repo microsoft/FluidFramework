@@ -240,7 +240,10 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
         // whereas VS Code's renderer is totally fine with it.
         writer.ensureSkippedLine();
 
-        context.insideTable = true;
+        const childContext: EmitterContext = {
+            ...context,
+            insideTable: true,
+        };
 
         // Markdown table rows can have inconsistent cell counts.  Size the table based on the longest row.
         let columnCount: number = 0;
@@ -260,7 +263,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             if (docTable.header) {
                 const cell: DocTableCell | undefined = docTable.header.cells[i];
                 if (cell) {
-                    this.writeNode(cell.content, context, false);
+                    this.writeNode(cell.content, childContext, false);
                 }
             }
             writer.write(" |");
@@ -278,14 +281,12 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             writer.write("| ");
             for (const cell of row.cells) {
                 writer.write(" ");
-                this.writeNode(cell.content, context, false);
+                this.writeNode(cell.content, childContext, false);
                 writer.write(" |");
             }
             writer.writeLine();
         }
         writer.writeLine();
-
-        context.insideTable = false;
     }
 }
 
