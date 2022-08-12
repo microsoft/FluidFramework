@@ -11,21 +11,21 @@ Test interface
 interface TestInterface 
 ```
 
-##### Properties
+#### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testInterfaceProperty](docs/simple-suite-test/testnamespace/testinterface#testinterfaceproperty-PropertySignature) |  | boolean | Test interface property |
 
-##### Methods
+#### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testInterfaceMethod()](docs/simple-suite-test/testnamespace/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
 
-#### Details
+### Details
 
-<b>Property Details</b>
+##### Property Details
 
 <b>testInterfaceProperty</b>
 
@@ -37,7 +37,7 @@ Test interface property
 testInterfaceProperty: boolean;
 ```
 
-<b>Method Details</b>
+##### Method Details
 
 <b>testInterfaceMethod</b>
 

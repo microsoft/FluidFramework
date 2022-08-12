@@ -5,51 +5,51 @@
 
 Test package
 
-##### Interfaces
+#### Interfaces
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestInterface](docs/simple-suite-test/testinterface) |  | Test interface |
 
-##### Classes
+#### Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestClass](docs/simple-suite-test/testclass) |  | Test class |
 
-##### Namespaces
+#### Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestNamespace](docs/simple-suite-test/testnamespace) |  | Test Namespace |
 
-##### Types
+#### Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
 |  [TypeAlias](docs/simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
 
-##### Functions
+#### Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testFunction(testParameter)](docs/simple-suite-test#testfunction-Function) |  | TTypeParameter | Test function |
 
-##### Enumerations
+#### Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestEnum](docs/simple-suite-test#testenum-Enum) |  | Test Enum |
 
-##### Variables
+#### Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestConst](docs/simple-suite-test#testconst-Variable) |  | Test Constant |
 
-#### Details
+### Details
 
-<b>Type Details</b>
+##### Type Details
 
 <b>TypeAlias</b>
 
@@ -61,7 +61,7 @@ Test Type-Alias
 export declare type TypeAlias = string;
 ```
 
-<b>Function Details</b>
+##### Function Details
 
 <b>testFunction</b>
 
@@ -79,7 +79,7 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 |  --- | --- | --- |
 |  testParameter | TTypeParameter | A test parameter |
 
-<b>Enumeration Details</b>
+##### Enumeration Details
 
 <b>TestEnum</b>
 
@@ -133,7 +133,7 @@ Test enum value 3 (default)
 TestEnumValue3 = 4
 ```
 
-<b>Variable Details</b>
+##### Variable Details
 
 <b>TestConst</b>
 

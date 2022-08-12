@@ -11,27 +11,27 @@ Test class
 class TestClass 
 ```
 
-##### Constructors
+#### Constructors
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [(constructor)(testClassProperty)](docs/simple-suite-test/testnamespace/testclass#_constructor_-Constructor) |  |  | Test class constructor |
 
-##### Properties
+#### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassProperty](docs/simple-suite-test/testnamespace/testclass#testclassproperty-Property) |  | string | Test interface property |
 
-##### Methods
+#### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassMethod(testParameter)](docs/simple-suite-test/testnamespace/testclass#testclassmethod-Method) |  | Promise&lt;string&gt; | Test class method |
 
-#### Details
+### Details
 
-<b>Constructor Details</b>
+##### Constructor Details
 
 <b>(constructor)</b>
 
@@ -49,7 +49,7 @@ constructor(testClassProperty: string);
 |  --- | --- | --- |
 |  testClassProperty | string | See [TestClass.testClassProperty](simple-suite-test/testclass.md) |
 
-<b>Property Details</b>
+##### Property Details
 
 <b>testClassProperty</b>
 
@@ -61,7 +61,7 @@ Test interface property
 readonly testClassProperty: string;
 ```
 
-<b>Method Details</b>
+##### Method Details
 
 <b>testClassMethod</b>
 

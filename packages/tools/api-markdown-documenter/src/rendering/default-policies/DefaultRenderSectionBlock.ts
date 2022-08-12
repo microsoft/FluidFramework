@@ -24,11 +24,7 @@ import {
  * 1. Remarks (if any)
  * 1. Examples (if any)
  * 1. Item Signature
- * 1. TODO: what else?
- *
  * 1. `innerSectionBody`
- *
- * 1.TODO: what else?
  *
  * @param apiItem - TODO
  * @param innerSectionBody - TODO
@@ -84,13 +80,10 @@ export function renderSectionBlock(
         docNodes.push(renderedSignature);
     }
 
-    // TODO: anything else before inner body?
-
     if (innerSectionBody !== undefined) {
-        docNodes.push(innerSectionBody);
+        // Flatten contents into this section
+        docNodes.push(...innerSectionBody.nodes);
     }
-
-    // TODO: anything after inner body?
 
     return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }

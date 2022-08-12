@@ -11,51 +11,51 @@ Test Namespace
 export declare namespace TestNamespace 
 ```
 
-##### Interfaces
+#### Interfaces
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestInterface](docs/simple-suite-test/testnamespace/testinterface) |  | Test interface |
 
-##### Classes
+#### Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestClass](docs/simple-suite-test/testnamespace/testclass) |  | Test class |
 
-##### Namespaces
+#### Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestSubNamespace](docs/simple-suite-test/testnamespace/testsubnamespace) |  | Test sub-namespace |
 
-##### Types
+#### Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
 |  [TypeAlias](docs/simple-suite-test/testnamespace#typealias-TypeAlias) |  | Test Type-Alias |
 
-##### Functions
+#### Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testFunction(testParameter)](docs/simple-suite-test/testnamespace#testfunction-Function) |  | number | Test function |
 
-##### Enumerations
+#### Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestEnum](docs/simple-suite-test/testnamespace#testenum-Enum) |  | Test Enum |
 
-##### Variables
+#### Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestConst](docs/simple-suite-test/testnamespace#testconst-Variable) |  | Test Constant |
 
-#### Details
+### Details
 
-<b>Type Details</b>
+##### Type Details
 
 <b>TypeAlias</b>
 
@@ -67,7 +67,7 @@ Test Type-Alias
 type TypeAlias = boolean;
 ```
 
-<b>Function Details</b>
+##### Function Details
 
 <b>testFunction</b>
 
@@ -85,7 +85,7 @@ function testFunction(testParameter: number): number;
 |  --- | --- | --- |
 |  testParameter | number |  |
 
-<b>Enumeration Details</b>
+##### Enumeration Details
 
 <b>TestEnum</b>
 
@@ -128,7 +128,7 @@ Test enum value 2
 TestEnumValue2 = 1
 ```
 
-<b>Variable Details</b>
+##### Variable Details
 
 <b>TestConst</b>
 

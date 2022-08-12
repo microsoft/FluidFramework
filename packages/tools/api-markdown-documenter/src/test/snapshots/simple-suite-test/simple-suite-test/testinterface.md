@@ -11,28 +11,28 @@ Test interface
 export interface TestInterface 
 ```
 
-##### Properties
+#### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](docs/simple-suite-test/testinterface#testclasseventproperty-PropertySignature) |  | () =&gt; void | Test interface event property |
 |  [testInterfaceProperty](docs/simple-suite-test/testinterface#testinterfaceproperty-PropertySignature) |  | number | Test interface property |
 
-##### Call Signatures
+#### Call Signatures
 
 |  CallSignature | Modifiers | Description |
 |  --- | --- | --- |
 |  [(call)(event, listener)](docs/simple-suite-test/testinterface#_call_-CallSignature) |  | Test interface event call signature |
 
-##### Methods
+#### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testInterfaceMethod()](docs/simple-suite-test/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
 
-#### Details
+### Details
 
-<b>Property Details</b>
+##### Property Details
 
 <b>testClassEventProperty</b>
 
@@ -54,7 +54,7 @@ Test interface property
 testInterfaceProperty: number;
 ```
 
-<b>Call Signature Details</b>
+##### Call Signature Details
 
 <b>(call)</b>
 
@@ -66,7 +66,7 @@ Test interface event call signature
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-<b>Method Details</b>
+##### Method Details
 
 <b>testInterfaceMethod</b>
 
