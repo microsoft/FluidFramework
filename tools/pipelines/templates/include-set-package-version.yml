@@ -9,6 +9,9 @@ parameters:
   default:
 - name: tagName
   type: string
+- name: includeInternalVersions
+  type: boolean
+  default: false
 
 # Set version
 steps:
@@ -23,7 +26,9 @@ steps:
       npm ci
       npm run install:build-tools
       popd
+      npm link "$(Build.SourcesDirectory)/build-tools/packages/build-cli"
       npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
+      npm link "$(Build.SourcesDirectory)/build-tools/packages/version-tools"
 
 - task: Bash@3
   name: SetVersion
@@ -34,6 +39,7 @@ steps:
     TEST_BUILD: $(testBuild)
     VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
     VERSION_TAGNAME: ${{ parameters.tagName }}
+    VERSION_INCLUDE_INTERNAL_VERSIONS: ${ parameters.includeInternalVersions }
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
