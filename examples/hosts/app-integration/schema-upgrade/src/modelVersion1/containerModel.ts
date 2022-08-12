@@ -8,7 +8,7 @@ import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
 import { MigrationState } from "../migrationInterfaces";
 import type {
-    IContainerKillBit,
+    IMigrationTools,
 } from "../containerKillBit";
 import type {
     IInventoryListContainer,
@@ -16,10 +16,10 @@ import type {
     IInventoryList,
 } from "../modelInterfaces";
 
-const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
-    if (containerKillBit.migrated) {
+const getStateFromMigrationTools = (migrationTools: IMigrationTools) => {
+    if (migrationTools.migrated) {
         return MigrationState.migrated;
-    } else if (containerKillBit.acceptedVersion !== undefined) {
+    } else if (migrationTools.acceptedVersion !== undefined) {
         return MigrationState.migrating;
     } else {
         return MigrationState.collaborating;
@@ -75,14 +75,14 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
 
     public constructor(
         inventoryList: IInventoryList,
-        private readonly containerKillBit: IContainerKillBit,
+        private readonly migrationTools: IMigrationTools,
         private readonly container: IContainer,
     ) {
         super();
         this._inventoryList = inventoryList;
-        this._migrationState = getStateFromKillBit(this.containerKillBit);
-        this.containerKillBit.on("newVersionAccepted", this.onNewVersionAccepted);
-        this.containerKillBit.on("migrated", this.onMigrated);
+        this._migrationState = getStateFromMigrationTools(this.migrationTools);
+        this.migrationTools.on("newVersionAccepted", this.onNewVersionAccepted);
+        this.migrationTools.on("migrated", this.onMigrated);
     }
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListContainerExportType => {
@@ -124,7 +124,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     };
 
     public get acceptedVersion() {
-        const version = this.containerKillBit.acceptedVersion;
+        const version = this.migrationTools.acceptedVersion;
         if (typeof version !== "string" && version !== undefined) {
             throw new Error("Unexpected code detail format");
         }
@@ -132,18 +132,18 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     }
 
     public readonly proposeVersion = (newVersion: string) => {
-        this.containerKillBit.proposeVersion(newVersion).catch(console.error);
+        this.migrationTools.proposeVersion(newVersion).catch(console.error);
     };
 
     public get newContainerId() {
-        return this.containerKillBit.newContainerId;
+        return this.migrationTools.newContainerId;
     }
 
     public readonly finalizeMigration = async (newContainerId: string) => {
         if (this.newContainerId !== undefined) {
             throw new Error("The migration has already been finalized.");
         }
-        return this.containerKillBit.setNewContainerId(newContainerId);
+        return this.migrationTools.setNewContainerId(newContainerId);
     };
 
     public close() {

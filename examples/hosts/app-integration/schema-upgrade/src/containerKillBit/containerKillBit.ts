@@ -8,7 +8,7 @@ import { Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 
-import type { IContainerKillBit } from "./interfaces";
+import type { IMigrationTools } from "./interfaces";
 
 const quorumKey = "quorum";
 const crcKey = "crc";
@@ -17,7 +17,7 @@ const newVersionKey = "newVersion";
 const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
-export class ContainerKillBit extends DataObject implements IContainerKillBit {
+export class MigrationTools extends DataObject implements IMigrationTools {
     private _quorum: Quorum | undefined;
     private _crc: ConsensusRegisterCollection<string> | undefined;
     private _taskManager: TaskManager | undefined;
@@ -141,10 +141,10 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const ContainerKillBitInstantiationFactory =
-    new DataObjectFactory<ContainerKillBit>(
-        "container-kill-bit",
-        ContainerKillBit,
+export const MigrationToolsInstantiationFactory =
+    new DataObjectFactory<MigrationTools>(
+        "migration-tools",
+        MigrationTools,
         [
             ConsensusRegisterCollection.getFactory(),
             Quorum.getFactory(),
