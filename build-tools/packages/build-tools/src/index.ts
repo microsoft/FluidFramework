@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+export {
+    getSimpleVersion,
+    getVersionsFromStrings,
+    getIsLatest,
+} from "./buildVersion/buildVersion";
 export { bumpDependencies, cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
 export {
     bumpRepo

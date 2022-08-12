@@ -20,6 +20,7 @@
 import child_process from "child_process";
 import fs from "fs";
 import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
+import { Logger } from "../common/logging";
 import { test } from "./buildVersionTests";
 
 function getFileVersion() {
@@ -133,13 +134,13 @@ export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
  * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
  * pre-release version).
  */
-export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[]) {
+export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[], log?: Logger) {
     const versions = input_tags !== undefined ? getVersionsFromStrings(prefix, input_tags) : getVersions(prefix);
 
     // The last item in the array is the latest because the array is already sorted.
     const latestTaggedRelease = versions.slice(-1)[0] ?? "0.0.0";
 
-    console.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
+    log?.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
     const currentIsGreater = gt_semver(current_version, latestTaggedRelease);
     const currentIsPrerelease = prerelease_semver(current_version) !== null;
     return currentIsGreater && !currentIsPrerelease;
