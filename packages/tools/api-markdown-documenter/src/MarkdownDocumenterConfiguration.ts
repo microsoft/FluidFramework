@@ -1,3 +1,4 @@
+import { ApiModel } from "@microsoft/api-extractor-model";
 import { TSDocConfiguration } from "@microsoft/tsdoc";
 import { NewlineKind } from "@rushstack/node-core-library";
 
@@ -12,6 +13,13 @@ import { RenderingPolicies, defaultRenderingPolicies } from "./rendering/Renderi
  * Configuration options for the Markdown documenter.
  */
 export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
+    /**
+     * API Model for which the documentation is being generated.
+     *
+     * @remarks Beyond being the root entry for rendering, this is used to resolve member links globally, etc.
+     */
+    apiModel: ApiModel;
+
     /**
      * Default root uri used when generating content links.
      */

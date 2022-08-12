@@ -1,5 +1,5 @@
 import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
-import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItem } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import * as Path from "path";
 
@@ -35,11 +35,11 @@ import { doesItemRequireOwnDocument } from "./utilities";
  * @param markdownEmitter - TODO
  */
 export function renderDocuments(
-    apiModel: ApiModel,
     partialConfig: MarkdownDocumenterConfiguration,
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument[] {
     const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
+    const apiModel = config.apiModel;
 
     console.log(`Rendering markdown documentation for API Model ${apiModel.displayName}...`);
 
@@ -79,20 +79,19 @@ export function renderDocuments(
 }
 
 export async function renderFiles(
-    apiModel: ApiModel,
+    partialConfig: MarkdownDocumenterConfiguration,
     outputDirectoryPath: string,
-    partialDocumenterConfig: MarkdownDocumenterConfiguration,
     markdownEmitter: MarkdownEmitter,
 ): Promise<void> {
     await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
-    const documents = renderDocuments(apiModel, partialDocumenterConfig, markdownEmitter);
+    const documents = renderDocuments(partialConfig, markdownEmitter);
 
     await Promise.all(
         documents.map(async (document) => {
             const filePath = Path.join(outputDirectoryPath, document.path);
             await FileSystem.writeFileAsync(filePath, document.contents, {
-                convertLineEndings: partialDocumenterConfig.newlineKind,
+                convertLineEndings: partialConfig.newlineKind,
                 ensureFolderExists: true,
             });
         }),

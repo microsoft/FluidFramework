@@ -162,6 +162,7 @@ export interface MarkdownDocument {
 
 // @public
 export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
+    apiModel: ApiModel;
     readonly newlineKind?: NewlineKind;
     readonly tsdocConfiguration?: TSDocConfiguration;
     readonly uriRoot: string;
@@ -211,7 +212,7 @@ function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumen
 export function renderDeprecationNotice(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-export function renderDocuments(apiModel: ApiModel, partialConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
+export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
 
 // @public (undocumented)
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
@@ -226,7 +227,7 @@ export function renderExamples(apiItem: ApiItem, config: Required<MarkdownDocume
 export function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph;
 
 // @public (undocumented)
-export function renderFiles(apiModel: ApiModel, outputDirectoryPath: string, partialDocumenterConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): Promise<void>;
+export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, markdownEmitter: MarkdownEmitter): Promise<void>;
 
 // @public (undocumented)
 function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;

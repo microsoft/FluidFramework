@@ -1,7 +1,7 @@
 
 ## simple-suite-test
 
-[(model)](/index)
+[(model)](docs/index)
 
 Test package
 
@@ -9,43 +9,43 @@ Test package
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestInterface](/simple-suite-test/testinterface) |  | Test interface |
+|  [TestInterface](docs/simple-suite-test/testinterface) |  | Test interface |
 
 ## Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestClass](/simple-suite-test/testclass) |  | Test class |
+|  [TestClass](docs/simple-suite-test/testclass) |  | Test class |
 
 ## Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestNamespace](/simple-suite-test/testnamespace) |  | Test Namespace |
+|  [TestNamespace](docs/simple-suite-test/testnamespace) |  | Test Namespace |
 
 ## Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [TypeAlias](/simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
+|  [TypeAlias](docs/simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
 
 ## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testFunction(testParameter)](/simple-suite-test#testfunction-Function) |  | TTypeParameter | Test function |
+|  [testFunction(testParameter)](docs/simple-suite-test#testfunction-Function) |  | TTypeParameter | Test function |
 
 ## Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnum](/simple-suite-test#testenum-Enum) |  | Test Enum |
+|  [TestEnum](docs/simple-suite-test#testenum-Enum) |  | Test Enum |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestConst](/simple-suite-test#testconst-Variable) |  | Test Constant |
+|  [TestConst](docs/simple-suite-test#testconst-Variable) |  | Test Constant |
 
 ## Details
 
@@ -95,9 +95,9 @@ export declare enum TestEnum
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnumValue1](/simple-suite-test#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 (string) |
-|  [TestEnumValue2](/simple-suite-test#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 (number) |
-|  [TestEnumValue3](/simple-suite-test#testenum-testenumvalue3-EnumMember) |  | Test enum value 3 (default) |
+|  [TestEnumValue1](docs/simple-suite-test#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 (string) |
+|  [TestEnumValue2](docs/simple-suite-test#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 (number) |
+|  [TestEnumValue3](docs/simple-suite-test#testenum-testenumvalue3-EnumMember) |  | Test enum value 3 (default) |
 
 ## Details
 

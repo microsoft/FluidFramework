@@ -1,7 +1,7 @@
 
 ## TestClass
 
-[(model)](/index) &gt; [simple-suite-test](/simple-suite-test)
+[(model)](docs/index) &gt; [simple-suite-test](docs/simple-suite-test)
 
 Test class
 
@@ -19,21 +19,21 @@ export declare class TestClass<TTypeParameter>
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty, testClassEventProperty)](/simple-suite-test/testclass#_constructor_-Constructor) |  |  | Test class constructor |
+|  [(constructor)(testClassProperty, testClassEventProperty)](docs/simple-suite-test/testclass#_constructor_-Constructor) |  |  | Test class constructor |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](/simple-suite-test/testclass#testclasseventproperty-Property) |  | () =&gt; void | Test class event property |
-|  [testClassGetterProperty](/simple-suite-test/testclass#testclassgetterproperty-Property) |  | number | Test class getter-only property |
-|  [testClassProperty](/simple-suite-test/testclass#testclassproperty-Property) |  | number | Test class property |
+|  [testClassEventProperty](docs/simple-suite-test/testclass#testclasseventproperty-Property) |  | () =&gt; void | Test class event property |
+|  [testClassGetterProperty](docs/simple-suite-test/testclass#testclassgetterproperty-Property) |  | number | Test class getter-only property |
+|  [testClassProperty](docs/simple-suite-test/testclass#testclassproperty-Property) |  | number | Test class property |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassMethod(input)](/simple-suite-test/testclass#testclassmethod-Method) |  | TTypeParameter | Test class method |
+|  [testClassMethod(input)](docs/simple-suite-test/testclass#testclassmethod-Method) |  | TTypeParameter | Test class method |
 
 ## Details
 

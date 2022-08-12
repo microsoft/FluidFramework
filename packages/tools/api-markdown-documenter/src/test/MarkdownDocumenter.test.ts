@@ -7,7 +7,10 @@ import * as Path from "path";
 
 import { MarkdownDocument } from "../MarkdownDocument";
 import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
-import { markdownDocumenterConfigurationWithDefaults } from "../MarkdownDocumenterConfiguration";
+import {
+    MarkdownDocumenterConfiguration,
+    markdownDocumenterConfigurationWithDefaults,
+} from "../MarkdownDocumenterConfiguration";
 import { renderModelPage, renderPackagePage } from "../rendering";
 
 /**
@@ -21,40 +24,49 @@ const testTempDirPath = Path.resolve(__dirname, "test_temp");
  */
 const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "snapshots");
 
-const config = markdownDocumenterConfigurationWithDefaults({
-    uriRoot: "docs",
-});
-
 describe("api-markdown-documenter simple suite tests", async () => {
     const apiReportPath = Path.resolve(__dirname, "test-data", "simple-suite-test.json");
     const outputDirPath = Path.resolve(testTempDirPath, "simple-suite-test");
     const snapshotDirPath = Path.resolve(snapshotsDirPath, "simple-suite-test");
 
-    let apiModel: ApiModel;
+    let config: Required<MarkdownDocumenterConfiguration>;
     before(async () => {
         // Clear any existing test_temp data
         await FileSystem.ensureEmptyFolderAsync(testTempDirPath);
 
-        apiModel = new ApiModel();
+        const apiModel = new ApiModel();
         apiModel.loadPackage(apiReportPath);
+
+        config = markdownDocumenterConfigurationWithDefaults({
+            apiModel,
+            uriRoot: "docs",
+        });
     });
 
     it("Render Model page (smoke test)", () => {
-        const result = renderModelPage(apiModel!, config, new CustomMarkdownEmitter(apiModel));
+        const result = renderModelPage(
+            config.apiModel,
+            config,
+            new CustomMarkdownEmitter(config.apiModel),
+        );
         expect(result.path).to.equal("index.md");
         // TODO: snapshot
     });
 
     it("Render Package page (smoke test)", () => {
-        const packageItem = apiModel.packages[0];
+        const packageItem = config.apiModel.packages[0];
 
-        const result = renderPackagePage(packageItem, config, new CustomMarkdownEmitter(apiModel));
+        const result = renderPackagePage(
+            packageItem,
+            config,
+            new CustomMarkdownEmitter(config.apiModel),
+        );
         expect(result.path).to.equal("simple-suite-test.md");
         // TODO: snapshot
     });
 
     it("Ensure no duplicate file paths", () => {
-        const documents = renderDocuments(apiModel!, config, new CustomMarkdownEmitter(apiModel));
+        const documents = renderDocuments(config, new CustomMarkdownEmitter(config.apiModel));
 
         const pathMap = new Map<string, MarkdownDocument>();
         for (const document of documents) {
@@ -76,14 +88,7 @@ describe("api-markdown-documenter simple suite tests", async () => {
      * Simple integration test that validates complete output from simple test package
      */
     it("Compare sample suite against expected", async () => {
-        await renderFiles(
-            apiModel!,
-            outputDirPath,
-            {
-                uriRoot: "",
-            },
-            new CustomMarkdownEmitter(apiModel),
-        );
+        await renderFiles(config, outputDirPath, new CustomMarkdownEmitter(config.apiModel));
 
         // Verify against expected contents
         const result = await compare(outputDirPath, snapshotDirPath, { compareContent: true });
