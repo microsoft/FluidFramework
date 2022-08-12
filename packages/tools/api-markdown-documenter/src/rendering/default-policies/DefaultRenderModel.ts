@@ -1,18 +1,13 @@
-import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocTable, DocTableRow } from "../../doc-nodes";
-import { renderHeading } from "../Rendering";
-import { renderApiSummaryCell, renderApiTitleCell } from "../Tables";
-
-// TODOs:
-// - Reuse child table / contents rendering utilities
+import { DocEmphasisSpan } from "../../doc-nodes";
+import { renderTableWithHeading } from "../Tables";
 
 export function renderModelSection(
     apiModel: ApiModel,
     config: Required<MarkdownDocumenterConfiguration>,
-    renderChild: (apiItem: ApiItem) => DocSection,
 ) {
     const docNodes: DocNode[] = [];
 
@@ -29,26 +24,19 @@ export function renderModelSection(
             ]),
         );
     } else {
-        const packagesTable: DocTable = new DocTable({
-            configuration: config.tsdocConfiguration,
-            headerTitles: ["Package", "Description"],
-            // TODO
-            // cssClass: 'package-list',
-            // caption: 'List of packages in this model'
-        });
+        // Render packages table
+        const packagesTable = renderTableWithHeading(
+            {
+                headingTitle: "Packages",
+                itemKind: ApiItemKind.Package,
+                items: apiModel.packages,
+            },
+            config,
+        );
 
-        for (const apiPackage of apiModel.packages) {
-            packagesTable.addRow(
-                new DocTableRow({ configuration: config.tsdocConfiguration }, [
-                    renderApiTitleCell(apiPackage, config),
-                    renderApiSummaryCell(apiPackage, config),
-                ]),
-            );
+        if (packagesTable === undefined) {
+            throw new Error("No packages table rendered for non-empty list of packages.");
         }
-
-        docNodes.push(renderHeading({ title: "Packages" }, config));
-
-        // TODO: table caption?
 
         docNodes.push(packagesTable);
     }

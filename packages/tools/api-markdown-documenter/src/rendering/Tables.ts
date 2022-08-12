@@ -4,6 +4,7 @@ import {
     ApiDocumentedItem,
     ApiItem,
     ApiItemKind,
+    ApiPackage,
     ApiPropertyItem,
     ApiReleaseTagMixin,
     ApiReturnTypeMixin,
@@ -96,6 +97,12 @@ export function renderTable(
         case ApiItemKind.PropertySignature:
             return renderPropertiesTable(
                 apiItems.map((apiItem) => apiItem as ApiPropertyItem),
+                config,
+            );
+
+        case ApiItemKind.Package:
+            return renderPackagesTable(
+                apiItems.map((apiItem) => apiItem as ApiPackage),
                 config,
             );
 
@@ -205,6 +212,32 @@ export function renderPropertiesTable(
                 renderApiTitleCell(apiProperty, config),
                 renderModifiersCell(apiProperty, config),
                 renderPropertyTypeCell(apiProperty, config),
+                renderApiSummaryCell(apiProperty, config),
+            ]),
+    );
+
+    return new DocTable(
+        {
+            configuration: config.tsdocConfiguration,
+            headerTitles,
+        },
+        tableRows,
+    );
+}
+
+export function renderPackagesTable(
+    apiPackages: readonly ApiPackage[],
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocTable | undefined {
+    if (apiPackages.length === 0) {
+        return undefined;
+    }
+
+    const headerTitles = ["Package", "Description"];
+    const tableRows: DocTableRow[] = apiPackages.map(
+        (apiProperty) =>
+            new DocTableRow({ configuration: config.tsdocConfiguration }, [
+                renderApiTitleCell(apiProperty, config),
                 renderApiSummaryCell(apiProperty, config),
             ]),
     );

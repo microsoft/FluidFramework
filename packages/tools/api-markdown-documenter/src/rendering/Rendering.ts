@@ -88,11 +88,7 @@ export function renderModelPage(
     // Do not render breadcrumb for Model page
 
     // Render body contents
-    docNodes.push(
-        config.renderModelSection(apiModel, config, (childItem) =>
-            renderApiSection(childItem, config),
-        ),
-    );
+    docNodes.push(config.renderModelSection(apiModel, config));
 
     if (config.verbose) {
         console.log(`API Model page rendered successfully.`);

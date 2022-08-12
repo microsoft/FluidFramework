@@ -309,8 +309,7 @@ export interface RenderingPolicies {
     renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
     // (undocumented)
     renderMethodSection?: RenderApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
-    // (undocumented)
-    renderModelSection?: RenderApiItemWithChildren<ApiModel>;
+    renderModelSection?: RenderApiItemWithoutChildren<ApiModel>;
     // (undocumented)
     renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
     // (undocumented)
@@ -335,7 +334,7 @@ function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDo
 export function renderModelPage(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>, markdownEmitter: MarkdownEmitter): MarkdownDocument;
 
 // @public (undocumented)
-function renderModelSection(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
+function renderModelSection(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public (undocumented)
 function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly ApiItem[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;

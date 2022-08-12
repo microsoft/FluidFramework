@@ -62,7 +62,15 @@ export interface RenderingPolicies {
     renderIndexSignatureSection?: RenderApiItemWithoutChildren<ApiIndexSignature>;
     renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
     renderMethodSection?: RenderApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
-    renderModelSection?: RenderApiItemWithChildren<ApiModel>;
+
+    /**
+     * Policy for rendering a section describing a `Model`.
+     *
+     * @privateRemarks Note that this is a {@link RenderApiItemWithoutChildren} only because we handle `Model`
+     * and `Package` items specially. We never render `Package` child details directly to the `Modal` document.
+     * These are always rendered to seperate documents from each other.
+     */
+    renderModelSection?: RenderApiItemWithoutChildren<ApiModel>;
     renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
     renderPackageSection?: RenderApiItemWithChildren<ApiPackage>;
     renderPropertySection?: RenderApiItemWithoutChildren<ApiPropertyItem>;
