@@ -1,11 +1,9 @@
-import { DocEmphasisSpan } from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
-import { DocHeading } from "@microsoft/api-documenter/lib/nodes/DocHeading";
-import { DocTable } from "@microsoft/api-documenter/lib/nodes/DocTable";
-import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 import { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
 import { DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
+import { DocEmphasisSpan, DocTable, DocTableRow } from "../../doc-nodes";
+import { renderHeading } from "../Rendering";
 import { renderApiSummaryCell, renderApiTitleCell } from "../Tables";
 
 // TODOs:
@@ -48,9 +46,7 @@ export function renderModelSection(
             );
         }
 
-        docNodes.push(
-            new DocHeading({ configuration: config.tsdocConfiguration, title: "Packages" }),
-        );
+        docNodes.push(renderHeading({ title: "Packages" }, config));
 
         // TODO: table caption?
 

@@ -210,7 +210,7 @@ export function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocu
 export function renderChildDetailsSection(childSections: readonly ChildSectionProperties[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
 
 // @public (undocumented)
-export function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle: string, tsdocConfiguration: TSDocConfiguration, renderChild: (childItem: ApiItem) => DocSection): DocSection | undefined;
+export function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle: string, config: Required<MarkdownDocumenterConfiguration>, renderChild: (childItem: ApiItem) => DocSection): DocSection | undefined;
 
 // @public (undocumented)
 function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
@@ -337,5 +337,6 @@ export * from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
 export * from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
 export * from "@microsoft/api-documenter/lib/nodes/DocTable";
 export * from "@microsoft/api-documenter/lib/nodes/DocTableCell";
+export * from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 
 ```

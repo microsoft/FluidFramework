@@ -37,7 +37,6 @@ import {
     DocSection,
     StandardTags,
     StringBuilder,
-    TSDocConfiguration,
 } from "@microsoft/tsdoc";
 
 import { Heading } from "../Heading";
@@ -585,7 +584,7 @@ export function renderRemarks(
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.remarksBlock !== undefined) {
         return new DocSection({ configuration: config.tsdocConfiguration }, [
             // TODO: heading level
-            new DocHeading({ configuration: config.tsdocConfiguration, title: "Remarks" }),
+            renderHeading({ title: "Remarks" }, config),
             apiItem.tsdocComment.remarksBlock.content,
         ]);
     }
@@ -668,7 +667,7 @@ export function renderExample(
         example.exampleNumber === undefined ? "Example" : `Example ${example.exampleNumber}`;
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
-        new DocHeading({ configuration: config.tsdocConfiguration, title: headingTitle }),
+        renderHeading({ title: headingTitle }, config),
         example.content,
     ]);
 }
@@ -684,7 +683,7 @@ export function renderParametersSection(
     // TODO: caption text?
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
-        new DocHeading({ configuration: config.tsdocConfiguration, title: "Parameters" }),
+        renderHeading({ title: "Parameters" }, config),
         renderParametersTable(apiFunctionLike.parameters, config),
     ]);
 }
@@ -692,18 +691,20 @@ export function renderParametersSection(
 export function renderChildrenUnderHeading(
     childItems: readonly ApiItem[],
     headingTitle: string,
-    tsdocConfiguration: TSDocConfiguration,
+    config: Required<MarkdownDocumenterConfiguration>,
     renderChild: (childItem: ApiItem) => DocSection,
 ): DocSection | undefined {
     return childItems.length === 0
         ? undefined
-        : new DocSection({ configuration: tsdocConfiguration }, [
-              new DocHeading({
-                  configuration: tsdocConfiguration,
-                  title: headingTitle,
-              }),
+        : new DocSection({ configuration: config.tsdocConfiguration }, [
+              renderHeading(
+                  {
+                      title: headingTitle,
+                  },
+                  config,
+              ),
               new DocSection(
-                  { configuration: tsdocConfiguration },
+                  { configuration: config.tsdocConfiguration },
                   childItems.map((constructor) => renderChild(constructor)),
               ),
           ]);
@@ -738,7 +739,7 @@ export function renderChildDetailsSection(
             const renderedChildSection = renderChildrenUnderHeading(
                 childSection.items,
                 childSection.headingTitle,
-                config.tsdocConfiguration,
+                config,
                 renderChild,
             );
             if (renderedChildSection !== undefined) {
@@ -750,7 +751,7 @@ export function renderChildDetailsSection(
     return docNodes.length === 0
         ? undefined
         : new DocSection({ configuration: config.tsdocConfiguration }, [
-              new DocHeading({ configuration: config.tsdocConfiguration, title: "Details" }),
+              renderHeading({ title: "Details" }, config),
               new DocSection({ configuration: config.tsdocConfiguration }, docNodes),
           ]);
 }

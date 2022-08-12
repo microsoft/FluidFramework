@@ -21,9 +21,9 @@ import {
 } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocHeading, DocTable, DocTableCell } from "../doc-nodes";
+import { DocEmphasisSpan, DocTable, DocTableCell } from "../doc-nodes";
 import { ApiFunctionLike, getLinkUrlForApiItem } from "../utilities";
-import { renderExcerptWithHyperlinks } from "./Rendering";
+import { renderExcerptWithHyperlinks, renderHeading } from "./Rendering";
 
 export interface MemberTableProperties {
     headingTitle: string;
@@ -62,10 +62,7 @@ export function renderTableWithHeading(
     return renderedTable === undefined
         ? undefined
         : new DocSection({ configuration: config.tsdocConfiguration }, [
-              new DocHeading({
-                  configuration: config.tsdocConfiguration,
-                  title: memberTableProperties.headingTitle,
-              }),
+              renderHeading({ title: memberTableProperties.headingTitle }, config),
               renderedTable,
           ]);
 }
