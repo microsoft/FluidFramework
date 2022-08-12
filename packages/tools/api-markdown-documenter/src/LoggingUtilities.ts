@@ -1,4 +1,4 @@
-import * as Colors from "colors";
+import Colors from "colors";
 
 /**
  * Contains simple console logging utilities used by the package.
