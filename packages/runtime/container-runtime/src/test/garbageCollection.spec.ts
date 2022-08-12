@@ -19,7 +19,12 @@ import {
     IGarbageCollectionDetailsBase,
     ISummarizeResult,
 } from "@fluidframework/runtime-definitions";
-import { MockLogger, sessionStorageConfigProvider, TelemetryDataTag, mixinMonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+    MockLogger,
+    sessionStorageConfigProvider,
+    TelemetryDataTag,
+    ConfigTypes,
+} from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
@@ -66,14 +71,12 @@ describe("Garbage Collection Tests", () => {
     ];
 
     const mockLogger: MockLogger = new MockLogger();
-    const mc = mixinMonitoringContext(mockLogger, sessionStorageConfigProvider.value);
-    let closeCalled = false;
     const testPkgPath = ["testPkg"];
     // The package data is tagged in the telemetry event.
     const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.CodeArtifact };
 
     const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
-    let injectedSettings = {};
+    let injectedSettings: Record<string, ConfigTypes> = {};
     let clock: SinonFakeTimers;
 
     // The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
@@ -116,19 +119,22 @@ describe("Garbage Collection Tests", () => {
             getLastSummaryTimestampMs: () => Date.now(),
         });
     }
-    let gc: GcWithPrivates;
+    let gc: GcWithPrivates | undefined;
 
     before(() => {
         clock = useFakeTimers();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
+    });
+
+    beforeEach(() => {
+        gc = undefined;
     });
 
     afterEach(() => {
         clock.reset();
         mockLogger.clear();
         injectedSettings = {};
-        gc.dispose();
+        gc?.dispose();
     });
 
     after(() => {
@@ -247,7 +253,7 @@ describe("Garbage Collection Tests", () => {
             });
             it("Metadata Roundtrip", () => {
                 injectedSettings[runSessionExpiryKey] = true;
-                const expectedMetadata: IGCMetadata = { sweepEnabled: true, gcFeature: 1, sessionExpiryTimeoutMs: 2592000000 };
+                const expectedMetadata: IGCMetadata = { sweepEnabled: true, gcFeature: 1, sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs };
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
                 const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
@@ -255,6 +261,7 @@ describe("Garbage Collection Tests", () => {
         });
 
         describe("Session Expiry and Sweep Timeout", () => {
+            const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
             const defaultSnapshotCacheExpiryMs = 2 * 24 * 60 * 60 * 1000;
             beforeEach(() => {
                 injectedSettings[runSessionExpiryKey] = true;
@@ -271,67 +278,71 @@ describe("Garbage Collection Tests", () => {
             // - Computed from Session Expiry, Snapshot Expiry and a fixed buffer
             // - Only set if Session Expiry timer is set, but using Session Expiry value written to file
 
-            function validateSweepTimeout(theGc: ReturnType<typeof createGcWithPrivateMembers>, snapshotCacheExpiryMs: number = defaultSnapshotCacheExpiryMs) {
-                if (theGc.sessionExpiryTimeoutMs === undefined) {
-                    assert.equal(theGc.sweepTimeoutMs, undefined, "sweepTimeoutMs should be undefined if sessionExpiryTimeoutMs is undefined");
+            function validateSweepTimeout(snapshotCacheExpiryMs: number = defaultSnapshotCacheExpiryMs) {
+                assert(!!gc, "PRECONDITION: gc must be set before calling this helper");
+                if (gc.sessionExpiryTimeoutMs === undefined) {
+                    assert.equal(gc.sweepTimeoutMs, undefined, "sweepTimeoutMs should be undefined if sessionExpiryTimeoutMs is undefined");
                 } else {
-                    assert.equal(theGc.sweepTimeoutMs, theGc.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs);
+                    assert.equal(gc.sweepTimeoutMs, gc.sessionExpiryTimeoutMs + snapshotCacheExpiryMs + oneDayMs);
                 }
             }
 
             it("defaultSessionExpiryDurationMs", () => {
-                gc = createGcWithPrivateMembers(undefined /* metadata */, {});
+                gc = createGcWithPrivateMembers();
                 assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, defaultSessionExpiryDurationMs, "sessionExpiryTimer incorrect");
-                validateSweepTimeout(gc);
+                validateSweepTimeout();
             });
             it("defaultSessionExpiryDurationMs with custom snapshotCacheExpiryMs", () => {
                 gc = createGcWithPrivateMembers(undefined /* metadata */, {}, 12345);
                 assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, defaultSessionExpiryDurationMs, "sessionExpiryTimer incorrect");
-                validateSweepTimeout(gc, 12345);
+                validateSweepTimeout(12345);
             });
             it("IGCRuntimeOptions.sessionExpiryTimeoutMs", () => {
                 gc = createGcWithPrivateMembers(undefined /* metadata */, { sessionExpiryTimeoutMs: 123 });
                 assert.equal(gc.sessionExpiryTimeoutMs, 123, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, 123, "sessionExpiryTimer incorrect");
-                validateSweepTimeout(gc);
+                validateSweepTimeout();
             });
             it("IGCMetadata.sessionExpiryTimeoutMs", () => {
                 gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: 456 } /* metadata */);
                 assert.equal(gc.sessionExpiryTimeoutMs, 456, "sessionExpiryTimeoutMs incorrect");
                 assert.equal(gc.sessionExpiryTimer.defaultTimeout, 456, "sessionExpiryTimer incorrect");
-                validateSweepTimeout(gc);
+                validateSweepTimeout();
             });
-            function testSessionExpiryMsOverride(theGc: GcWithPrivates, gcFeature: number) {
-                assert.equal(theGc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
-                assert.equal(theGc.sessionExpiryTimer.defaultTimeout, 789, "sessionExpiry used for timer should be the override value");
-                validateSweepTimeout(theGc);
+            function testSessionExpiryMsOverride() {
+                assert(!!gc, "PRECONDITION: gc must be set before calling this helper");
+                assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs incorrect");
+                assert.equal(gc.sessionExpiryTimer.defaultTimeout, 789, "sessionExpiry used for timer should be the override value");
+                validateSweepTimeout();
 
-                const expectedMetadata: IGCMetadata = { sweepEnabled: false, gcFeature, sessionExpiryTimeoutMs: 2592000000 };
-                const outputMetadata = theGc.getMetadata();
+                const expectedMetadata: IGCMetadata = { sweepEnabled: false, gcFeature: 1, sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs };
+                const outputMetadata = gc.getMetadata();
                 assert.deepEqual(outputMetadata, expectedMetadata, "getMetadata returned different metadata than expected");
             }
-            it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file - Existing Container", () => {
-                injectedSettings["Fluid.GarbageCollection.TestOverride.SessionExpiryMs"] = 789;
-                gc = createGcWithPrivateMembers(undefined /* metadata */, {});
-                testSessionExpiryMsOverride(gc, 1);
-            });
             it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file - New Container", () => {
-                injectedSettings["Fluid.GarbageCollection.TestOverride.SessionExpiryMs"] = 789;
-                gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs } /* metadata */);
-                testSessionExpiryMsOverride(gc, 0);
+                injectedSettings[testOverrideSessionExpiryMsKey] = 789;
+                gc = createGcWithPrivateMembers();
+                testSessionExpiryMsOverride();
             });
-            it("SessionExpiry Not Running", () => {
+            it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file - Existing Container", () => {
+                injectedSettings[testOverrideSessionExpiryMsKey] = 789;
+                gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs, gcFeature: 1 } /* metadata */);
+                testSessionExpiryMsOverride();
+            });
+            it("RunSessionExpiry setting turned off", () => {
                 injectedSettings[runSessionExpiryKey] = false;
-                gc = createGcWithPrivateMembers(undefined /* metadata */, {});
+                injectedSettings[testOverrideSessionExpiryMsKey] = 1234; // This override should be ignored
+                gc = createGcWithPrivateMembers();
                 assert.equal(gc.sessionExpiryTimeoutMs, undefined, "sessionExpiryTimeoutMs should be undefined if runSessionExpiryKey setting is false");
                 assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
-                validateSweepTimeout(gc);
+                validateSweepTimeout();
             });
             it("Disable SessionExpiry", () => {
                 injectedSettings[disableSessionExpiryKey] = true;
-                gc = createGcWithPrivateMembers(undefined /* metadata */, {});
+                injectedSettings[testOverrideSessionExpiryMsKey] = 1234; // This override should be ignored
+                gc = createGcWithPrivateMembers();
                 assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs should be set even if disabled");
                 assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
                 // (validateSweepTimeout doesn't try to handle this case)
@@ -424,17 +435,10 @@ describe("Garbage Collection Tests", () => {
         });
     });
 
-    //* TODO IN THIS PR: Simplify now that I have config value testing above
-    describe("Session expiry", () => {
-        const testOverrideSessionExpiryMsKey = "Fluid.GarbageCollection.TestOverride.SessionExpiryMs";
+    it("Session expiry closes container", () => {
+        injectedSettings[runSessionExpiryKey] = "true";
 
-        beforeEach(() => {
-            closeCalled = false;
-            injectedSettings[runSessionExpiryKey] = "true";
-            // Reduce InactiveObject to ensure it's less than total Sweep Timeout
-            injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1234;
-        });
-
+        let closeCalled = false;
         function closeCalledAfterExactTicks(ticks: number) {
             clock.tick(ticks - 1);
             if (closeCalled) {
@@ -444,85 +448,8 @@ describe("Garbage Collection Tests", () => {
             return closeCalled;
         }
 
-        const createGCOverride = (metadata?: IContainerRuntimeMetadata) => {
-            return createGarbageCollector({ metadata }, undefined /* gcBlobsMap */, () => { closeCalled = true; });
-        };
-
-        it("Session expires for an existing container", async () => {
-            const metadata: IContainerRuntimeMetadata =
-                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
-            createGCOverride(metadata);
-            assert(closeCalledAfterExactTicks(10), "Close should have been called at exact expiry.");
-        });
-
-        it("Session expires for a new container", async () => {
-            createGCOverride();
-            assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
-        });
-
-        it("Session expiry disabled via DisableSessionExpiry config", async () => {
-            // disable expiry even though it's set to run (meaning expiry value will present)
-            injectedSettings[disableSessionExpiryKey] = "true";
-            createGCOverride();
-            assert(!closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should NOT have been called due to disable.");
-        });
-
-        it("Session expiry explicitly not disabled via DisableSessionExpiry config", async () => {
-            // Explicitly set value to false (instead of relying on undefined)
-            injectedSettings[disableSessionExpiryKey] = "false";
-            createGCOverride();
-            assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exact expiry.");
-        });
-
-        it("Session expiry overridden via TestOverride setting (existing container)", async () => {
-            // Override expiry to 2 seconds
-            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
-            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
-            assert(customExpiryMs, "setting not found!");
-
-            const metadata: IContainerRuntimeMetadata =
-                { summaryFormatVersion: 1, message: undefined, sessionExpiryTimeoutMs: 10 };
-            createGCOverride(metadata);
-            assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
-        });
-
-        it("Session expiry overridden via TestOverride setting (new container)", async () => {
-            // Override expiry to 2 seconds
-            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
-            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
-            assert(customExpiryMs, "setting not found!");
-
-            createGCOverride();
-            assert(closeCalledAfterExactTicks(customExpiryMs), "Close should have been called at exact expiry.");
-        });
-
-        it("Session expiry override ignored if RunSessionExpiry setting disabled", async () => {
-            injectedSettings[runSessionExpiryKey] = "false";
-            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
-            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
-            assert(customExpiryMs, "setting not found!");
-
-            createGCOverride();
-
-            clock.tick(customExpiryMs);
-            assert(!closeCalled, "Close should not have been called since runSessionExpiry disabled.");
-            clock.tick(defaultSessionExpiryDurationMs);
-            assert(!closeCalled, "Close should not have been called since runSessionExpiry disabled.");
-        });
-
-        it("Session expiry override ignored if DisableSessionExpiry is true", async () => {
-            injectedSettings[disableSessionExpiryKey] = "true";
-            injectedSettings[testOverrideSessionExpiryMsKey] = "2000";
-            const customExpiryMs = mc.config.getNumber(testOverrideSessionExpiryMsKey);
-            assert(customExpiryMs, "setting not found!");
-
-            createGCOverride();
-
-            clock.tick(customExpiryMs);
-            assert(!closeCalled, "Close should not have been called since DisableSessionExpiry true.");
-            clock.tick(defaultSessionExpiryDurationMs);
-            assert(!closeCalled, "Close should not have been called since DisableSessionExpiry true.");
-        });
+        gc = createGarbageCollector({ }, undefined /* gcBlobsMap */, () => { closeCalled = true; }) as GcWithPrivates;
+        assert(closeCalledAfterExactTicks(defaultSessionExpiryDurationMs), "Close should have been called at exactly defaultSessionExpiryDurationMs");
     });
 
     describe("errors when unreferenced objects are used after they are inactive / deleted", () => {
