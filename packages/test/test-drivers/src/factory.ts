@@ -39,6 +39,11 @@ function patchHttpRequestToForceKeepAlive() {
     const httpAgent = new http.Agent({ keepAlive: true, scheduling: "fifo" });
     const oldRequest = http.request;
     http.request = ((url, options, callback) => {
+        // There are two variant of the API
+        // - http.request(options[, callback])
+        // - http.request(url[, options][, callback])
+        // See https://nodejs.org/dist/latest-v18.x/docs/api/http.html#httprequestoptions-callback
+
         // decide which param is the actual options object and add agent to it.
         let opts;
         if (options !== undefined) {
