@@ -24,6 +24,7 @@ import {
     Excerpt,
     ExcerptTokenKind,
     HeritageType,
+    IResolveDeclarationReferenceResult,
     TypeParameter,
 } from "@microsoft/api-extractor-model";
 import {
@@ -51,6 +52,7 @@ import {
     getFilePathForApiItem,
     getHeadingIdForApiItem,
     getLinkForApiItem,
+    getLinkUrlForApiItem,
     getQualifiedApiItemName,
 } from "../utilities";
 import { renderParametersTable } from "./Tables";
@@ -462,32 +464,20 @@ export function renderExcerptWithHyperlinks(
 
         // If it's hyperlink-able, then append a DocLinkTag
         if (token.kind === ExcerptTokenKind.Reference && token.canonicalReference) {
-            // TODO: links
+            const apiItemResult: IResolveDeclarationReferenceResult =
+                config.apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
 
-            docNodes.push(
-                new DocPlainText({
-                    configuration: config.tsdocConfiguration,
-                    text: unwrappedTokenText,
-                }),
-            );
-
-            // const apiItemResult: IResolveDeclarationReferenceResult =
-            //     this._apiModel.resolveDeclarationReference(token.canonicalReference, undefined);
-
-            // if (apiItemResult.resolvedApiItem) {
-            //     docNodes.push(
-            //         new DocLinkTag({
-            //             configuration: tsdocConfiguration,
-            //             tagName: "@link",
-            //             linkText: unwrappedTokenText,
-            //             urlDestination: getLinkUrlForApiItem(
-            //                 apiItemResult.resolvedApiItem,
-            //                 config,
-            //             ),
-            //         }),
-            //     );
-            //     wroteHyperlink = true;
-            // }
+            if (apiItemResult.resolvedApiItem) {
+                docNodes.push(
+                    new DocLinkTag({
+                        configuration: config.tsdocConfiguration,
+                        tagName: "@link",
+                        linkText: unwrappedTokenText,
+                        urlDestination: getLinkUrlForApiItem(apiItemResult.resolvedApiItem, config),
+                    }),
+                );
+                wroteHyperlink = true;
+            }
         }
 
         // If the token was not one from which we generated hyperlink text, write as plain text instead

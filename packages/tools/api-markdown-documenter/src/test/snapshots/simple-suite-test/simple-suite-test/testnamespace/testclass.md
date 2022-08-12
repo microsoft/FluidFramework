@@ -27,7 +27,7 @@ class TestClass
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassMethod(testParameter)](docs/simple-suite-test/testnamespace/testclass#testclassmethod-Method) |  | PromisePromise&lt;string&gt; | Test class method |
+|  [testClassMethod(testParameter)](docs/simple-suite-test/testnamespace/testclass#testclassmethod-Method) |  | Promise&lt;string&gt; | Test class method |
 
 ## Details
 
