@@ -222,6 +222,15 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run lint'
 
+      # Job - Build
+      - job: test
+        displayName: Test
+        pool: ${{ parameters.poolBuild }}
+        variables:
+          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          releaseBuildVar: $[variables.releaseBuild]
+        dependsOn: build
+        steps:
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
           # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
