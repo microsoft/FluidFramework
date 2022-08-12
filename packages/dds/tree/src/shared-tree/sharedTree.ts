@@ -4,8 +4,18 @@
  */
 
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { DefaultChangeFamily, DefaultChangeSet, ForestIndex, ObjectForest, SchemaIndex } from "../feature-libraries";
+import {
+    ForestIndex,
+    ObjectForest,
+    SchemaIndex,
+    sequenceChangeFamily,
+    SequenceChangeFamily,
+    SequenceChangeset,
+    SequenceEditBuilder,
+} from "../feature-libraries";
+import { IEditableForest, IForestSubscription } from "../forest";
 import { Index, SharedTreeCore } from "../shared-tree-core";
+import { Checkout, runSynchronousTransaction, TransactionResult } from "../transaction";
 import { AnchorSet } from "../tree";
 
 /**
@@ -14,7 +24,10 @@ import { AnchorSet } from "../tree";
  *
  * TODO: detail compatibility requirements.
  */
-export class SharedTree extends SharedTreeCore<DefaultChangeSet, DefaultChangeFamily> {
+export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChangeFamily>
+    implements Checkout<SequenceEditBuilder, SequenceChangeset> {
+    public forest: IEditableForest;
+
     public constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
@@ -22,16 +35,22 @@ export class SharedTree extends SharedTreeCore<DefaultChangeSet, DefaultChangeFa
         telemetryContextPrefix: string) {
             const anchors = new AnchorSet();
             const forest = new ObjectForest(anchors);
-            const indexes: Index<DefaultChangeSet>[] = [
+            const indexes: Index<SequenceChangeset>[] = [
                 new SchemaIndex(runtime, forest.schema),
                 new ForestIndex(runtime, forest),
             ];
             super(
                 indexes,
-                new DefaultChangeFamily(), anchors, id, runtime, attributes, telemetryContextPrefix,
+                sequenceChangeFamily, anchors, id, runtime, attributes, telemetryContextPrefix,
                 );
 
-            // Could save a reference to this to allow use as part of a default checkout.
-            // this.forest = forest;
+            this.forest = forest;
+    }
+
+    public runTransaction(transaction: (
+        forest: IForestSubscription,
+        editor: SequenceEditBuilder,
+    ) => TransactionResult): TransactionResult {
+        return runSynchronousTransaction(this, transaction);
     }
 }
