@@ -34,6 +34,7 @@ import {
     getHeadingForApiItem,
     getLinkForApiItem,
     getLinkUrlForApiItem,
+    mergeSections,
 } from "../../utilities";
 import { renderParametersTable } from "./TablesRenderingHelpers";
 
@@ -381,19 +382,23 @@ export function renderExamples(
 
         // If there is only 1 example, render it with the default (un-numbered) heading
         if (exampleBlocks.length === 1) {
-            return new DocSection({ configuration: config.tsdocConfiguration }, [
-                renderExample({ content: exampleBlocks[0] }, config),
-            ]);
+            return renderExample({ content: exampleBlocks[0].content }, config);
         }
 
-        const renderedExamples: DocSection[] = [];
+        const exampleSections: DocSection[] = [];
         for (let i = 0; i < exampleBlocks.length; i++) {
-            renderedExamples.push(
-                renderExample({ content: exampleBlocks[i], exampleNumber: i + 1 }, config),
+            exampleSections.push(
+                renderExample({ content: exampleBlocks[i].content, exampleNumber: i + 1 }, config),
             );
         }
 
-        return new DocSection({ configuration: config.tsdocConfiguration }, renderedExamples);
+        // Merge example sections into a single section to simplify hierarchy
+        const mergedSection = mergeSections(exampleSections, config.tsdocConfiguration);
+
+        return new DocSection({ configuration: config.tsdocConfiguration }, [
+            renderHeading({ title: "Examples" }, config),
+            mergedSection,
+        ]);
     }
     return undefined;
 }
@@ -402,7 +407,7 @@ export interface DocExample {
     /**
      * `@example` comment body.
      */
-    content: DocBlock;
+    content: DocSection;
 
     /**
      * Example number. Used to disambiguate multiple `@example` comments numerically.
@@ -431,8 +436,6 @@ export function renderParametersSection(
     if (apiFunctionLike.parameters.length === 0) {
         return undefined;
     }
-
-    // TODO: caption text?
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
         renderHeading({ title: "Parameters" }, config),
