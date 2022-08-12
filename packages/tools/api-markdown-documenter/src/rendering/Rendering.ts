@@ -80,7 +80,6 @@ export function renderModelPage(
     const docNodes: DocNode[] = [];
 
     // Render heading
-    // TODO: heading level
     if (config.includeTopLevelDocumentHeading) {
         docNodes.push(renderHeadingForApiItem(apiModel, config));
     }
@@ -114,7 +113,6 @@ export function renderPackagePage(
     const docNodes: DocNode[] = [];
 
     // Render heading
-    // TODO: heading level
     if (config.includeTopLevelDocumentHeading) {
         docNodes.push(renderHeadingForApiItem(apiPackage, config));
     }
@@ -576,7 +574,6 @@ export function renderRemarks(
 ): DocSection | undefined {
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.remarksBlock !== undefined) {
         return new DocSection({ configuration: config.tsdocConfiguration }, [
-            // TODO: heading level
             renderHeading({ title: "Remarks" }, config),
             apiItem.tsdocComment.remarksBlock.content,
         ]);
