@@ -91,7 +91,7 @@ export async function createContainerAndExecute(
     const loader = new Loader({
         urlResolver: new FakeUrlResolver(),
         documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
-        codeLoader: fluidFileConverter.codeLoader,
+        codeLoader: await fluidFileConverter.getCodeLoader(logger),
         scope: fluidFileConverter.scope,
         logger,
     });

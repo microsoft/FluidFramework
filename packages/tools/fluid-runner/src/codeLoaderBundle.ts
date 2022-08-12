@@ -23,9 +23,9 @@ import { FluidObject } from "@fluidframework/core-interfaces";
  */
 export interface IFluidFileConverter {
     /**
-     * Code loader details to provide at Loader creation
+     * Get code loader details to provide at Loader creation
      */
-    codeLoader: ICodeDetailsLoader;
+    getCodeLoader(logger: ITelemetryBaseLogger): Promise<ICodeDetailsLoader>;
 
     /**
      * Scope object to provide at Loader creation
@@ -53,6 +53,6 @@ export function isCodeLoaderBundle(bundle: any): bundle is ICodeLoaderBundle {
 
 export function isFluidFileConverter(obj: any): obj is IFluidFileConverter {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return obj?.codeLoader && typeof obj.codeLoader === "object"
+    return obj?.getCodeLoader && typeof obj.getCodeLoader === "function"
         && obj.execute && typeof obj.execute === "function";
 }
