@@ -1,78 +1,78 @@
 
-## TestInterface
+# TestInterface
 
 [(model)](docs/index) &gt; [simple-suite-test](docs/simple-suite-test)
 
 Test interface
 
-## Signature
+### Signature
 
 ```typescript
 export interface TestInterface 
 ```
 
-## Properties
+##### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](docs/simple-suite-test/testinterface#testclasseventproperty-PropertySignature) |  | () =&gt; void | Test interface event property |
 |  [testInterfaceProperty](docs/simple-suite-test/testinterface#testinterfaceproperty-PropertySignature) |  | number | Test interface property |
 
-## Call Signatures
+##### Call Signatures
 
 |  CallSignature | Modifiers | Description |
 |  --- | --- | --- |
 |  [(call)(event, listener)](docs/simple-suite-test/testinterface#_call_-CallSignature) |  | Test interface event call signature |
 
-## Methods
+##### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testInterfaceMethod()](docs/simple-suite-test/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
 
-## Details
+#### Details
 
-## Property Details
+<b>Property Details</b>
 
-## testClassEventProperty
+<b>testClassEventProperty</b>
 
 Test interface event property
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
 
-## testInterfaceProperty
+<b>testInterfaceProperty</b>
 
 Test interface property
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 testInterfaceProperty: number;
 ```
 
-## Call Signature Details
+<b>Call Signature Details</b>
 
-## (call)
+<b>(call)</b>
 
 Test interface event call signature
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-## Method Details
+<b>Method Details</b>
 
-## testInterfaceMethod
+<b>testInterfaceMethod</b>
 
 Test interface method
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 testInterfaceMethod(): void;

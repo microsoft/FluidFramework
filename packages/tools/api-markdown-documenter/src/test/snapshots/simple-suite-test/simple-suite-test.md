@@ -1,97 +1,97 @@
 
-## simple-suite-test
+# simple-suite-test
 
 [(model)](docs/index)
 
 Test package
 
-## Interfaces
+##### Interfaces
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestInterface](docs/simple-suite-test/testinterface) |  | Test interface |
 
-## Classes
+##### Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestClass](docs/simple-suite-test/testclass) |  | Test class |
 
-## Namespaces
+##### Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestNamespace](docs/simple-suite-test/testnamespace) |  | Test Namespace |
 
-## Types
+##### Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
 |  [TypeAlias](docs/simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
 
-## Functions
+##### Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testFunction(testParameter)](docs/simple-suite-test#testfunction-Function) |  | TTypeParameter | Test function |
 
-## Enumerations
+##### Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestEnum](docs/simple-suite-test#testenum-Enum) |  | Test Enum |
 
-## Variables
+##### Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
 |  [TestConst](docs/simple-suite-test#testconst-Variable) |  | Test Constant |
 
-## Details
+#### Details
 
-## Type Details
+<b>Type Details</b>
 
-## TypeAlias
+<b>TypeAlias</b>
 
 Test Type-Alias
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 export declare type TypeAlias = string;
 ```
 
-## Function Details
+<b>Function Details</b>
 
-## testFunction
+<b>testFunction</b>
 
 Test function
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter): TTypeParameter;
 ```
 
-## Parameters
+<b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  testParameter | TTypeParameter | A test parameter |
 
-## Enumeration Details
+<b>Enumeration Details</b>
 
-## TestEnum
+<b>TestEnum</b>
 
 Test Enum
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 export declare enum TestEnum 
 ```
 
-## Flags
+<b>Flags</b>
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
@@ -99,47 +99,47 @@ export declare enum TestEnum
 |  [TestEnumValue2](docs/simple-suite-test#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 (number) |
 |  [TestEnumValue3](docs/simple-suite-test#testenum-testenumvalue3-EnumMember) |  | Test enum value 3 (default) |
 
-## Details
+<b>Details</b>
 
-## Flag Details
+<b>Flag Details</b>
 
-## TestEnumValue1
+<b>TestEnumValue1</b>
 
 Test enum value 1 (string)
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 
-## TestEnumValue2
+<b>TestEnumValue2</b>
 
 Test enum value 2 (number)
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 TestEnumValue2 = 3
 ```
 
-## TestEnumValue3
+<b>TestEnumValue3</b>
 
 Test enum value 3 (default)
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 TestEnumValue3 = 4
 ```
 
-## Variable Details
+<b>Variable Details</b>
 
-## TestConst
+<b>TestConst</b>
 
 Test Constant
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 TestConst = 42

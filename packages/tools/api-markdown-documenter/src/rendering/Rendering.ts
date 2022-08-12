@@ -1,4 +1,3 @@
-import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
 import {
     ApiCallSignature,
     ApiClass,
@@ -43,6 +42,7 @@ import { Heading } from "../Heading";
 import { Link, urlFromLink } from "../Link";
 import { MarkdownDocument } from "../MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
+import { MarkdownEmitter } from "../MarkdownEmitter";
 import { DocEmphasisSpan, DocHeading, DocNoteBox } from "../doc-nodes";
 import {
     ApiFunctionLike,
@@ -196,7 +196,8 @@ function createMarkdownDocument(
     markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument {
     const emittedContents = markdownEmitter.emit(new StringBuilder(), renderedContents, {
-        /* TODO */
+        contextApiItem: apiItem,
+        getFileNameForApiItem: (_apiItem) => getFilePathForApiItem(_apiItem, config, true),
     });
     return {
         contents: emittedContents,
@@ -284,9 +285,7 @@ export function renderSignature(
 ): DocSection | undefined {
     if (apiItem instanceof ApiDeclaredItem) {
         const docNodes: DocNode[] = [];
-        docNodes.push(
-            new DocHeading({ configuration: config.tsdocConfiguration, title: "Signature" }),
-        );
+        docNodes.push(renderHeading({ title: "Signature" }, config));
         if (apiItem.excerpt.text.length > 0) {
             docNodes.push(
                 new DocFencedCode({
@@ -550,10 +549,8 @@ export function renderHeading(
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocHeading {
     return new DocHeading({
+        ...heading,
         configuration: config.tsdocConfiguration,
-        title: heading.title,
-        id: heading.id,
-        level: heading.level,
     });
 }
 

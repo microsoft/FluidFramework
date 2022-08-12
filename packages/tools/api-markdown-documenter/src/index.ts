@@ -9,6 +9,7 @@ export * from "./Heading";
 export * from "./MarkdownDocument";
 export * from "./MarkdownDocumenter";
 export * from "./MarkdownDocumenterConfiguration";
+export * from "./MarkdownEmitter";
 export * from "./Policies";
 export * from "./rendering";
 

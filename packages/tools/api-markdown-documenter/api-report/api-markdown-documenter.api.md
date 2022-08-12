@@ -24,13 +24,20 @@ import { ApiPropertyItem } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import { DocBlock } from '@microsoft/tsdoc';
-import { DocHeading as DocHeading_2 } from '@microsoft/api-documenter/lib/nodes/DocHeading';
+import { DocEmphasisSpan } from '@microsoft/api-documenter/lib/nodes/DocEmphasisSpan';
+import { DocLinkTag } from '@microsoft/tsdoc';
+import { DocNode } from '@microsoft/tsdoc';
+import { DocNoteBox } from '@microsoft/api-documenter/lib/nodes/DocNoteBox';
 import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
+import { DocTable } from '@microsoft/api-documenter/lib/nodes/DocTable';
 import { Excerpt } from '@microsoft/api-extractor-model';
-import { IDocHeadingParameters as IDocHeadingParameters_2 } from '@microsoft/api-documenter/lib/nodes/DocHeading';
-import { MarkdownEmitter } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
+import { IDocNodeParameters } from '@microsoft/tsdoc';
+import { IMarkdownEmitterContext } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
+import { IMarkdownEmitterOptions } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
+import { MarkdownEmitter as MarkdownEmitter_2 } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { NewlineKind } from '@rushstack/node-core-library';
+import { StringBuilder } from '@microsoft/tsdoc';
 import { TSDocConfiguration } from '@microsoft/tsdoc';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
@@ -124,14 +131,29 @@ export interface DocExample {
 }
 
 // @public
-export class DocHeading extends DocHeading_2 {
-    // @internal
+export class DocHeading extends DocNode {
     constructor(parameters: IDocHeadingParameters);
     readonly id?: string;
+    // @override (undocumented)
+    get kind(): string;
+    readonly level?: number;
+    readonly title: string;
 }
 
 // @public
 export type DocumentBoundaries = ApiItemKind[];
+
+// @public (undocumented)
+export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
+
+// @public (undocumented)
+export interface EmitterOptions extends IMarkdownEmitterOptions {
+    // (undocumented)
+    contextApiItem: ApiItem | undefined;
+    // (undocumented)
+    getFileNameForApiItem: (apiItem: ApiItem) => string | undefined;
+    headingLevel?: number;
+}
 
 // @public
 export type FileNamePolicy = (apiItem: ApiItem) => string;
@@ -153,9 +175,7 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 export type HierarchyBoundaries = ApiItemKind[];
 
 // @public
-export interface IDocHeadingParameters extends IDocHeadingParameters_2 {
-    id?: string;
-}
+export type IDocHeadingParameters = IDocNodeParameters & Heading;
 
 // @public
 export type LinkTextPolicy = (apiItem: ApiItem) => string;
@@ -178,6 +198,27 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
 
 // @public (undocumented)
 export function markdownDocumenterConfigurationWithDefaults(partialConfig: MarkdownDocumenterConfiguration): Required<MarkdownDocumenterConfiguration>;
+
+// @public (undocumented)
+export class MarkdownEmitter extends MarkdownEmitter_2 {
+    constructor(apiModel: ApiModel);
+    // (undocumented)
+    protected readonly apiModel: ApiModel;
+    // @override (undocumented)
+    emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string;
+    // @virtual (undocumented)
+    protected writeEmphasisSpan(docEmphasisSpan: DocEmphasisSpan, context: EmitterContext, docNodeSiblings: boolean): void;
+    // @virtual (undocumented)
+    protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeSiblings: boolean): void;
+    // @virtual @override (undocumented)
+    protected writeLinkTagWithCodeDestination(docLinkTag: DocLinkTag, context: EmitterContext): void;
+    // @override (undocumented)
+    protected writeNode(docNode: DocNode, context: EmitterContext, docNodeSiblings: boolean): void;
+    // @virtual (undocumented)
+    protected writeNoteBox(docNoteBox: DocNoteBox, context: EmitterContext, docNodeSiblings: boolean): void;
+    // @virtual (undocumented)
+    protected writeTable(docTable: DocTable, context: EmitterContext, docNodeSiblings: boolean): void;
+}
 
 // @public
 export interface PolicyOptions {

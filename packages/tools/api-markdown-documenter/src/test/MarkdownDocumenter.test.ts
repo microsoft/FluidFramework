@@ -1,4 +1,3 @@
-import { CustomMarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/CustomMarkdownEmitter";
 import { ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
@@ -11,6 +10,7 @@ import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "../MarkdownDocumenterConfiguration";
+import { MarkdownEmitter } from "../MarkdownEmitter";
 import { renderModelPage, renderPackagePage } from "../rendering";
 
 /**
@@ -47,7 +47,7 @@ describe("api-markdown-documenter simple suite tests", async () => {
         const result = renderModelPage(
             config.apiModel,
             config,
-            new CustomMarkdownEmitter(config.apiModel),
+            new MarkdownEmitter(config.apiModel),
         );
         expect(result.path).to.equal("index.md");
         // TODO: snapshot
@@ -56,17 +56,13 @@ describe("api-markdown-documenter simple suite tests", async () => {
     it("Render Package page (smoke test)", () => {
         const packageItem = config.apiModel.packages[0];
 
-        const result = renderPackagePage(
-            packageItem,
-            config,
-            new CustomMarkdownEmitter(config.apiModel),
-        );
+        const result = renderPackagePage(packageItem, config, new MarkdownEmitter(config.apiModel));
         expect(result.path).to.equal("simple-suite-test.md");
         // TODO: snapshot
     });
 
     it("Ensure no duplicate file paths", () => {
-        const documents = renderDocuments(config, new CustomMarkdownEmitter(config.apiModel));
+        const documents = renderDocuments(config, new MarkdownEmitter(config.apiModel));
 
         const pathMap = new Map<string, MarkdownDocument>();
         for (const document of documents) {
@@ -88,7 +84,7 @@ describe("api-markdown-documenter simple suite tests", async () => {
      * Simple integration test that validates complete output from simple test package
      */
     it("Compare sample suite against expected", async () => {
-        await renderFiles(config, outputDirPath, new CustomMarkdownEmitter(config.apiModel));
+        await renderFiles(config, outputDirPath, new MarkdownEmitter(config.apiModel));
 
         // Verify against expected contents
         const result = await compare(outputDirPath, snapshotDirPath, { compareContent: true });

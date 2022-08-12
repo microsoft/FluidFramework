@@ -1,7 +1,7 @@
-import {
-    DocHeading as DocHeadingBase,
-    IDocHeadingParameters as IDocHeadingParametersBase,
-} from "@microsoft/api-documenter/lib/nodes/DocHeading";
+import { DocNode, IDocNodeParameters } from "@microsoft/tsdoc";
+
+import { Heading } from "../Heading";
+import { CustomDocNodeKind } from "./CustomDocNodeKind";
 
 // TODO: file issue on Rushstack github to support IDs in headings.
 // This type should be removed if such support is added natively.
@@ -9,29 +9,39 @@ import {
 /**
  * Constructor parameters for {@link DocHeading}.
  */
-export interface IDocHeadingParameters extends IDocHeadingParametersBase {
-    /**
-     * Unique heading identifier. Can be used to uniquely identify a heading on a page for links, etc.
-     * If not specified, no ID will associated with the heading.
-     */
-    id?: string;
-}
+export type IDocHeadingParameters = IDocNodeParameters & Heading;
 
 /**
  * Represents a section header similar to an HTML `<h1>` or `<h2>` element.
  */
-export class DocHeading extends DocHeadingBase {
+export class DocHeading extends DocNode {
     /**
-     * {@inheritDoc IDocHeadingParameters.id}
+     * {@inheritDoc Heading.title}
+     */
+    public readonly title: string;
+
+    /**
+     * {@inheritDoc Heading.level}
+     */
+    public readonly level?: number;
+
+    /**
+     * {@inheritDoc Heading.id}
      */
     public readonly id?: string;
 
-    /**
-     * Don't call this directly. Instead use `TSDocParser`.
-     * @internal
-     */
     constructor(parameters: IDocHeadingParameters) {
         super(parameters);
+
+        this.title = parameters.title;
+        this.level = parameters.level;
         this.id = parameters.id;
+    }
+
+    /**
+     * @override
+     */
+    public get kind(): string {
+        return CustomDocNodeKind.Heading;
     }
 }

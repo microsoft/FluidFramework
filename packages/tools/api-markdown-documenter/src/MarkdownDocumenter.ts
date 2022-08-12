@@ -1,4 +1,3 @@
-import { MarkdownEmitter } from "@microsoft/api-documenter/lib/markdown/MarkdownEmitter";
 import { ApiItem } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import * as Path from "path";
@@ -8,6 +7,7 @@ import {
     MarkdownDocumenterConfiguration,
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
+import { MarkdownEmitter } from "./MarkdownEmitter";
 import { renderApiPage, renderModelPage, renderPackagePage } from "./rendering";
 import { doesItemRequireOwnDocument } from "./utilities";
 

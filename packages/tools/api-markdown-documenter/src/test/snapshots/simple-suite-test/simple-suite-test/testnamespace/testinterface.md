@@ -1,49 +1,49 @@
 
-## TestInterface
+# TestInterface
 
 [(model)](docs/index) &gt; [simple-suite-test](docs/simple-suite-test) &gt; [TestNamespace](docs/simple-suite-test/testnamespace)
 
 Test interface
 
-## Signature
+### Signature
 
 ```typescript
 interface TestInterface 
 ```
 
-## Properties
+##### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testInterfaceProperty](docs/simple-suite-test/testnamespace/testinterface#testinterfaceproperty-PropertySignature) |  | boolean | Test interface property |
 
-## Methods
+##### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testInterfaceMethod()](docs/simple-suite-test/testnamespace/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
 
-## Details
+#### Details
 
-## Property Details
+<b>Property Details</b>
 
-## testInterfaceProperty
+<b>testInterfaceProperty</b>
 
 Test interface property
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 testInterfaceProperty: boolean;
 ```
 
-## Method Details
+<b>Method Details</b>
 
-## testInterfaceMethod
+<b>testInterfaceMethod</b>
 
 Test interface method
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 testInterfaceMethod(): void;

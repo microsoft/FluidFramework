@@ -1,79 +1,79 @@
 
-## TestClass
+# TestClass
 
 [(model)](docs/index) &gt; [simple-suite-test](docs/simple-suite-test) &gt; [TestNamespace](docs/simple-suite-test/testnamespace)
 
 Test class
 
-## Signature
+### Signature
 
 ```typescript
 class TestClass 
 ```
 
-## Constructors
+##### Constructors
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [(constructor)(testClassProperty)](docs/simple-suite-test/testnamespace/testclass#_constructor_-Constructor) |  |  | Test class constructor |
 
-## Properties
+##### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassProperty](docs/simple-suite-test/testnamespace/testclass#testclassproperty-Property) |  | string | Test interface property |
 
-## Methods
+##### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassMethod(testParameter)](docs/simple-suite-test/testnamespace/testclass#testclassmethod-Method) |  | Promise&lt;string&gt; | Test class method |
 
-## Details
+#### Details
 
-## Constructor Details
+<b>Constructor Details</b>
 
-## (constructor)
+<b>(constructor)</b>
 
 Test class constructor
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-## Parameters
+<b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | string | See  |
+|  testClassProperty | string | See [TestClass.testClassProperty](simple-suite-test/testclass.md) |
 
-## Property Details
+<b>Property Details</b>
 
-## testClassProperty
+<b>testClassProperty</b>
 
 Test interface property
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 readonly testClassProperty: string;
 ```
 
-## Method Details
+<b>Method Details</b>
 
-## testClassMethod
+<b>testClassMethod</b>
 
 Test class method
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-## Parameters
+<b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

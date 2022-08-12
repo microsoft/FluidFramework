@@ -1,11 +1,11 @@
 
-## TestClass
+# TestClass
 
 [(model)](docs/index) &gt; [simple-suite-test](docs/simple-suite-test)
 
 Test class
 
-## Signature
+### Signature
 
 ```typescript
 export declare class TestClass<TTypeParameter> 
@@ -15,13 +15,13 @@ export declare class TestClass<TTypeParameter>
 \* <b>TTypeParameter</b>: A type parameter
 
 
-## Constructors
+##### Constructors
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [(constructor)(testClassProperty, testClassEventProperty)](docs/simple-suite-test/testclass#_constructor_-Constructor) |  |  | Test class constructor |
 
-## Properties
+##### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
@@ -29,78 +29,78 @@ export declare class TestClass<TTypeParameter>
 |  [testClassGetterProperty](docs/simple-suite-test/testclass#testclassgetterproperty-Property) |  | number | Test class getter-only property |
 |  [testClassProperty](docs/simple-suite-test/testclass#testclassproperty-Property) |  | number | Test class property |
 
-## Methods
+##### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
 |  [testClassMethod(input)](docs/simple-suite-test/testclass#testclassmethod-Method) |  | TTypeParameter | Test class method |
 
-## Details
+#### Details
 
-## Constructor Details
+<b>Constructor Details</b>
 
-## (constructor)
+<b>(constructor)</b>
 
 Test class constructor
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 constructor(testClassProperty: number, testClassEventProperty: () => void);
 ```
 
-## Parameters
+<b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | number | See  |
+|  testClassProperty | number | See [TestClass.testClassProperty](simple-suite-test/testclass.md) |
 |  testClassEventProperty | () =&gt; void |  |
 
-## Property Details
+<b>Property Details</b>
 
-## testClassEventProperty
+<b>testClassEventProperty</b>
 
 Test class event property
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 readonly testClassEventProperty: () => void;
 ```
 
-## testClassGetterProperty
+<b>testClassGetterProperty</b>
 
 Test class getter-only property
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 get testClassGetterProperty(): number;
 ```
 
-## testClassProperty
+<b>testClassProperty</b>
 
 Test class property
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 readonly testClassProperty: number;
 ```
 
-## Method Details
+<b>Method Details</b>
 
-## testClassMethod
+<b>testClassMethod</b>
 
 Test class method
 
-## Signature
+<b>Signature</b>
 
 ```typescript
 testClassMethod(input: TTypeParameter): TTypeParameter;
 ```
 
-## Parameters
+<b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
