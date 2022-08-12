@@ -39,6 +39,7 @@ function patchHttpRequestToForceKeepAlive() {
     const httpAgent = new http.Agent({ keepAlive: true, scheduling: "fifo" });
     const oldRequest = http.request;
     http.request = ((url, options, callback) => {
+        // decide which param is the actual options object and add agent to it.
         let opts;
         if (options !== undefined) {
             opts = typeof options !== "function" ? options : url;
@@ -53,6 +54,7 @@ function patchHttpRequestToForceKeepAlive() {
             opts.agent = httpAgent;
             opts.headers.Connection = ["keep-alive"];
         }
+        // pass thru the param to the original function
         return oldRequest(url, options, callback);
     }) as any;
 }
