@@ -336,7 +336,7 @@ export class LoadTestDataStoreModel {
         }
     }
 
-    public async lockTask() {
+    public async volunteerForTask() {
         if (this.runtime.disposed) {
             return;
         }
@@ -359,7 +359,7 @@ export class LoadTestDataStoreModel {
                         this.runtime.once("disconnected", rejAndClear);
                     });
                 }
-                await this.taskManager.lockTask(this.taskId);
+                await this.taskManager.volunteerForTask(this.taskId);
                 this.taskStartTime = Date.now();
 
                 // We just became the writer. Add a reference to the GC data store.
@@ -472,7 +472,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                         await delay(opsGapMs + opsGapMs * random.real(0, .5, true)(config.randEng));
                     }
                 } else {
-                    await dataModel.lockTask();
+                    await dataModel.volunteerForTask();
                 }
             }
             return !this.runtime.disposed;

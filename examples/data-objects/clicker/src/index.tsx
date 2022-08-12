@@ -62,24 +62,15 @@ export class Clicker extends DataObject<{ Events: IClickerEvents; }> {
     }
 
     private setupAgent() {
-        this.taskManager.lockTask(consoleLogTaskId)
-            .then(async () => {
-                console.log(`Picked`);
-                const clickerAgent = new ClickerAgent(this.counter);
-                // Attempt to reacquire the task if we lose it
-                this.taskManager.once("lost", () => {
-                    clickerAgent.stop();
-                    this.setupAgent();
-                });
-                await clickerAgent.run();
-            }).catch(() => {
-                // We're not going to abandon our attempt, so if the promise rejects it probably means we got
-                // disconnected.  So we'll try again once we reconnect.  If it was for some other reason, we'll
-                // give up.
-                if (!this.runtime.connected) {
-                    this.runtime.once("connected", () => { this.setupAgent(); });
-                }
-            });
+        const clickerAgent = new ClickerAgent(this.counter);
+        this.taskManager.subscribeToTask(consoleLogTaskId);
+        this.taskManager.on("assigned", () => {
+            console.log("Assigned:", (this.taskManager as any).runtime.clientId);
+            void clickerAgent.run();
+        });
+        this.taskManager.on("lost", () => {
+            clickerAgent.stop();
+        });
     }
 
     private get counter() {

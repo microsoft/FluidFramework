@@ -57,12 +57,12 @@ const snapshotFileName = "header";
  *
  * ### Usage
  *
- * To volunteer for a task, use the `lockTask()` method.  This returns a Promise that will resolve once the client
- * has acquired exclusive rights to run the task, or reject if the client is removed from the queue without acquiring
- * the rights.
+ * To volunteer for a task, use the `volunteerForTask()` method.  This returns a Promise that will resolve once the
+ * client has acquired exclusive rights to run the task, or reject if the client is removed from the queue without
+ * acquiring the rights.
  *
  * ```typescript
- * taskManager.lockTask("NameOfTask")
+ * taskManager.volunteerForTask("NameOfTask")
  *     .then(() => { doTheTask(); })
  *     .catch((err) => { console.error(err); });
  * ```
@@ -139,6 +139,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
     // disconnectWatcher emits an event whenever we get disconnected.
     private readonly disconnectWatcher: EventEmitter = new EventEmitter();
+    // connectWatcher emits an event whenever we connect.
+    private readonly connectWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
     /**
@@ -254,10 +256,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.latestPendingOps.set(taskId, pendingOp);
     }
 
-    public async lockTask(taskId: string) {
+    public async volunteerForTask(taskId: string) {
         // If we have the lock, resolve immediately
         if (this.haveTaskLock(taskId)) {
-            return;
+            return true;
         }
 
         if (!this.connected) {
@@ -265,7 +267,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         }
 
         // This promise works even if we already have an outstanding volunteer op.
-        const lockAcquireP = new Promise<void>((resolve, reject) => {
+        const lockAcquireP = new Promise<boolean>((resolve, reject) => {
             const checkIfAcquiredLock = (eventTaskId: string) => {
                 if (eventTaskId !== taskId) {
                     return;
@@ -278,7 +280,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
                     this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
-                    resolve();
+                    resolve(true);
                 }
             };
 
@@ -310,6 +312,34 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             this.submitVolunteerOp(taskId);
         }
         return lockAcquireP;
+    }
+
+    public subscribeToTask(taskId: string) {
+        const disconnectHandler = () => {
+            // Wait to be connected again and then re-submit volunteer op
+            this.connectWatcher.once("connect", () => {
+                this.submitVolunteerOp(taskId);
+            });
+        };
+
+        const checkIfAbandoned = (eventTaskId: string) => {
+            if (eventTaskId !== taskId) {
+                return;
+            }
+
+            this.abandonWatcher.off("abandon", checkIfAbandoned);
+            this.disconnectWatcher.off("disconnect", disconnectHandler);
+        };
+
+        this.abandonWatcher.on("abandon", checkIfAbandoned);
+        this.disconnectWatcher.on("disconnect", disconnectHandler);
+
+        if (!this.connected) {
+            disconnectHandler();
+        } else if (!this.haveTaskLock(taskId) && !this.queued(taskId)) {
+            // TODO simulate auto-ack in detached scenario
+            this.submitVolunteerOp(taskId);
+        }
     }
 
     public abandon(taskId: string) {
@@ -392,6 +422,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
      */
     protected onDisconnect() {
         this.disconnectWatcher.emit("disconnect");
+    }
+
+    /**
+     * @internal
+     */
+    protected onConnect() {
+        this.connectWatcher.emit("connect");
     }
 
     //

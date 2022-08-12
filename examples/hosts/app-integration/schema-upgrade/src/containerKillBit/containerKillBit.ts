@@ -91,8 +91,8 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         });
     }
 
-    public async volunteerForMigration(): Promise<void> {
-        return this.taskManager.lockTask(migrateTaskName);
+    public async volunteerForMigration(): Promise<boolean> {
+        return this.taskManager.volunteerForTask(migrateTaskName);
     }
 
     public haveMigrationTask(): boolean {
