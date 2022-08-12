@@ -1,4 +1,5 @@
 import { ApiItem } from "@microsoft/api-extractor-model";
+import { StringBuilder } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 import * as Path from "path";
 
@@ -9,7 +10,7 @@ import {
 } from "./MarkdownDocumenterConfiguration";
 import { MarkdownEmitter } from "./MarkdownEmitter";
 import { renderApiPage, renderModelPage, renderPackagePage } from "./rendering";
-import { doesItemRequireOwnDocument } from "./utilities";
+import { doesItemRequireOwnDocument, getFilePathForApiItem } from "./utilities";
 
 /**
  * This module contains the primary rendering entrypoints to the system.
@@ -30,14 +31,11 @@ import { doesItemRequireOwnDocument } from "./utilities";
  * Which API members get their own documents and which get written to the contents of their parent is
  * determined by {@link PolicyOptions.documentBoundaries}.
  *
- * @param apiModel - The API model being processed.
- * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
  * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
  * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
  */
 export function renderDocuments(
     partialConfig: MarkdownDocumenterConfiguration,
-    markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument[] {
     const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
     const apiModel = config.apiModel;
@@ -47,7 +45,7 @@ export function renderDocuments(
     const documents: MarkdownDocument[] = [];
 
     // Always render Model page
-    documents.push(renderModelPage(apiModel, config, markdownEmitter));
+    documents.push(renderModelPage(apiModel, config));
 
     if (apiModel.packages.length !== 0) {
         // For each package, walk the child graph to find API items which should be rendered to their own document page
@@ -55,7 +53,7 @@ export function renderDocuments(
 
         for (const packageItem of apiModel.packages) {
             // Always render pages for packages under the model
-            documents.push(renderPackagePage(packageItem, config, markdownEmitter));
+            documents.push(renderPackagePage(packageItem, config));
 
             const packageEntryPoints = packageItem.entryPoints;
             if (packageEntryPoints.length !== 1) {
@@ -69,7 +67,7 @@ export function renderDocuments(
 
             const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
             for (const apiItem of packageDocumentItems) {
-                documents.push(renderApiPage(apiItem, config, markdownEmitter));
+                documents.push(renderApiPage(apiItem, config));
             }
         }
     }
@@ -97,26 +95,36 @@ export function renderDocuments(
  * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
  * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
  * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
- * @param markdownEmitter - The emitter to use for generating Markdown output.
+ * @param maybeMarkdownEmitter - The emitter to use for generating Markdown output.
  * If not provided, a {@link MarkdownEmitter | default implementation} will be used.
  */
 export async function renderFiles(
     partialConfig: MarkdownDocumenterConfiguration,
     outputDirectoryPath: string,
-    markdownEmitter?: MarkdownEmitter,
+    maybeMarkdownEmitter?: MarkdownEmitter,
 ): Promise<void> {
-    await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
+    const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
 
-    const documents = renderDocuments(
-        partialConfig,
-        markdownEmitter ?? new MarkdownEmitter(partialConfig.apiModel),
-    );
+    await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
+    const markdownEmitter = maybeMarkdownEmitter ?? new MarkdownEmitter(config.apiModel);
+
+    const documents = renderDocuments(config);
 
     await Promise.all(
         documents.map(async (document) => {
+            const emittedDocumentContents = markdownEmitter.emit(
+                new StringBuilder(),
+                document.contents,
+                {
+                    contextApiItem: document.apiItem,
+                    getFileNameForApiItem: (_apiItem) =>
+                        getFilePathForApiItem(_apiItem, config, /* includeExtension: */ true),
+                },
+            );
+
             const filePath = Path.join(outputDirectoryPath, document.path);
-            await FileSystem.writeFileAsync(filePath, document.contents, {
-                convertLineEndings: partialConfig.newlineKind,
+            await FileSystem.writeFileAsync(filePath, emittedDocumentContents, {
+                convertLineEndings: config.newlineKind,
                 ensureFolderExists: true,
             });
         }),

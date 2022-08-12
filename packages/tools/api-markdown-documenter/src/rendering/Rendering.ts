@@ -19,12 +19,11 @@ import {
     ApiTypeAlias,
     ApiVariable,
 } from "@microsoft/api-extractor-model";
-import { DocNode, DocSection, StringBuilder } from "@microsoft/tsdoc";
+import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocument } from "../MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
-import { MarkdownEmitter } from "../MarkdownEmitter";
-import { getFilePathForApiItem, getQualifiedApiItemName } from "../utilities";
+import { getFilePathForApiItem } from "../utilities";
 import { renderBreadcrumb, renderHeadingForApiItem } from "./helpers";
 
 /**
@@ -37,7 +36,6 @@ import { renderBreadcrumb, renderHeadingForApiItem } from "./helpers";
 export function renderModelPage(
     apiModel: ApiModel,
     config: Required<MarkdownDocumenterConfiguration>,
-    markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument {
     if (config.verbose) {
         console.log(`Rendering API Model page...`);
@@ -63,14 +61,12 @@ export function renderModelPage(
         apiModel,
         new DocSection({ configuration: config.tsdocConfiguration }, docNodes),
         config,
-        markdownEmitter,
     );
 }
 
 export function renderPackagePage(
     apiPackage: ApiPackage,
     config: Required<MarkdownDocumenterConfiguration>,
-    markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument {
     if (config.verbose) {
         console.log(`Rendering ${apiPackage.name} package page...`);
@@ -101,14 +97,12 @@ export function renderPackagePage(
         apiPackage,
         new DocSection({ configuration: config.tsdocConfiguration }, docNodes),
         config,
-        markdownEmitter,
     );
 }
 
 export function renderApiPage(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-    markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument {
     if (
         apiItem.kind === ApiItemKind.Model ||
@@ -145,23 +139,17 @@ export function renderApiPage(
         apiItem,
         new DocSection({ configuration: config.tsdocConfiguration }, docNodes),
         config,
-        markdownEmitter,
     );
 }
 
 function createMarkdownDocument(
     apiItem: ApiItem,
-    renderedContents: DocSection,
+    contents: DocSection,
     config: Required<MarkdownDocumenterConfiguration>,
-    markdownEmitter: MarkdownEmitter,
 ): MarkdownDocument {
-    const emittedContents = markdownEmitter.emit(new StringBuilder(), renderedContents, {
-        contextApiItem: apiItem,
-        getFileNameForApiItem: (_apiItem) => getFilePathForApiItem(_apiItem, config, true),
-    });
     return {
-        contents: emittedContents,
-        apiItemName: getQualifiedApiItemName(apiItem),
+        contents,
+        apiItem,
         path: getFilePathForApiItem(apiItem, config, /* includeExtension: */ true),
     };
 }

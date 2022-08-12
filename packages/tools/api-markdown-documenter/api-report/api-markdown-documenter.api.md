@@ -184,8 +184,8 @@ export type LinkTextPolicy = (apiItem: ApiItem) => string;
 
 // @public
 export interface MarkdownDocument {
-    apiItemName: string;
-    contents: string;
+    apiItem: ApiItem;
+    contents: DocSection;
     path: string;
 }
 
@@ -251,7 +251,7 @@ export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApi
 export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 
 // @public (undocumented)
-export function renderApiPage(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, markdownEmitter: MarkdownEmitter): MarkdownDocument;
+export function renderApiPage(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
 // @public (undocumented)
 function renderApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
@@ -281,7 +281,7 @@ function renderDefaultTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind,
 function renderDeprecationNotice(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration, markdownEmitter: MarkdownEmitter): MarkdownDocument[];
+export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration): MarkdownDocument[];
 
 // @public (undocumented)
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
@@ -296,7 +296,7 @@ function renderExamples(apiItem: ApiItem, config: Required<MarkdownDocumenterCon
 function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph;
 
 // @public
-export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, markdownEmitter?: MarkdownEmitter): Promise<void>;
+export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, maybeMarkdownEmitter?: MarkdownEmitter): Promise<void>;
 
 // @public (undocumented)
 function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;
@@ -399,7 +399,7 @@ function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDo
 function renderMemberTables(memberTableProperties: readonly MemberTableProperties[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-export function renderModelPage(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>, markdownEmitter: MarkdownEmitter): MarkdownDocument;
+export function renderModelPage(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
 // @public (undocumented)
 function renderModelSection(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): DocSection;
@@ -414,7 +414,7 @@ function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly Ap
 function renderNamespaceSection(apiNamespace: ApiNamespace, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-export function renderPackagePage(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>, markdownEmitter: MarkdownEmitter): MarkdownDocument;
+export function renderPackagePage(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
 // @public (undocumented)
 function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;

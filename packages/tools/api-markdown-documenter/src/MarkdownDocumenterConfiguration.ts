@@ -15,6 +15,7 @@ import { RenderingPolicies, defaultRenderingPolicies } from "./rendering";
 export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies {
     /**
      * API Model for which the documentation is being generated.
+     * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
      *
      * @remarks Beyond being the root entry for rendering, this is used to resolve member links globally, etc.
      */

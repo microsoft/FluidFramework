@@ -44,11 +44,7 @@ describe("api-markdown-documenter simple suite tests", async () => {
     });
 
     it("Render Model page (smoke test)", () => {
-        const result = renderModelPage(
-            config.apiModel,
-            config,
-            new MarkdownEmitter(config.apiModel),
-        );
+        const result = renderModelPage(config.apiModel, config);
         expect(result.path).to.equal("index.md");
         // TODO: snapshot
     });
@@ -56,13 +52,13 @@ describe("api-markdown-documenter simple suite tests", async () => {
     it("Render Package page (smoke test)", () => {
         const packageItem = config.apiModel.packages[0];
 
-        const result = renderPackagePage(packageItem, config, new MarkdownEmitter(config.apiModel));
+        const result = renderPackagePage(packageItem, config);
         expect(result.path).to.equal("simple-suite-test.md");
         // TODO: snapshot
     });
 
     it("Ensure no duplicate file paths", () => {
-        const documents = renderDocuments(config, new MarkdownEmitter(config.apiModel));
+        const documents = renderDocuments(config);
 
         const pathMap = new Map<string, MarkdownDocument>();
         for (const document of documents) {
@@ -70,8 +66,8 @@ describe("api-markdown-documenter simple suite tests", async () => {
                 expect.fail(
                     `Rendering generated multiple documents to be rendered to the same file path: "${
                         document.path
-                    }". Requested by the following items: "${document.apiItemName}" & "${
-                        pathMap.get(document.path)!.apiItemName
+                    }". Requested by the following items: "${document.apiItem.displayName}" & "${
+                        pathMap.get(document.path)!.apiItem.displayName
                     }".`,
                 );
             } else {
