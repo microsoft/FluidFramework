@@ -40,19 +40,6 @@ export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
  */
 export type ApiModuleLike = ApiPackage | ApiNamespace;
 
-export function getDisplayNameForApiItem(apiItem: ApiItem): string {
-    switch (apiItem.kind) {
-        case ApiItemKind.Constructor:
-        case ApiItemKind.ConstructSignature:
-        case ApiItemKind.Enum:
-        case ApiItemKind.EnumMember:
-            // Return scoped name to disambiguate
-            return apiItem.getScopedNameWithinPackage();
-        default:
-            return apiItem.displayName;
-    }
-}
-
 /**
  * Adjusts the name of the item as needed.
  * Accounts for method overloads by adding a suffix such as "MyClass.myMethod_2".
