@@ -42,11 +42,8 @@ export interface ITreeCursor<TResult = TreeNavigationResult> {
 
     /**
      * Moves `offset` entries in the field.
-     * May move less if Pending or NotFound.
-     * In this case the distance moved is returned, and may be less than `offset`.
-     * Iff `ok` then `moved` will equal `offset`.
      */
-    seek(offset: number): { result: TResult; moved: number; };
+    seek(offset: number): TResult;
 
     /** Select the parent of the currently selected node. */
     up(): TResult;
@@ -80,16 +77,16 @@ export function mapCursorField<T>(cursor: ITreeCursor, key: FieldKey, f: (cursor
     const output: T[] = [];
     let result = cursor.down(key, 0);
     if (result !== TreeNavigationResult.Ok) {
-        assert(result === TreeNavigationResult.NotFound, "pending not supported in mapCursorField");
+        assert(result === TreeNavigationResult.NotFound, 0x34e /* pending not supported in mapCursorField */);
         // This has to be special cased (and not fall through the code below)
         // since the call to `up` needs to be skipped.
         return [];
     }
     while (result === TreeNavigationResult.Ok) {
         output.push(f(cursor));
-        result = cursor.seek(1).result;
+        result = cursor.seek(1);
     }
-    assert(result === TreeNavigationResult.NotFound, "expected enumeration to end at end of field");
+    assert(result === TreeNavigationResult.NotFound, 0x34f /* expected enumeration to end at end of field */);
     cursor.up();
     return output;
 }

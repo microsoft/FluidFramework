@@ -21,7 +21,6 @@ export { ITreeCursor, TreeNavigationResult, IEditableForest,
     FieldLocation,
     ForestLocation,
     ITreeSubscriptionCursor,
-    ForestAnchor,
     ITreeSubscriptionCursorState,
     SynchronousNavigationResult,
 } from "./forest";
@@ -31,8 +30,8 @@ export {
     FieldSchema, ValueSchema, TreeSchema, FieldKind,
     emptyField, neverTree,
     SchemaRepository, StoredSchemaRepository,
-    rootFieldKey,
-} from "./schema";
+    rootFieldKey, TreeTypeSet,
+} from "./schema-stored";
 
 export {
     Brand,
@@ -51,8 +50,6 @@ export {
     Rebaser,
     ChangeRebaser,
     RevisionTag,
-    ChangeFromChangeRebaser,
-    FinalFromChangeRebaser,
     ChangeSetFromChangeRebaser,
 } from "./rebase";
 
@@ -67,4 +64,5 @@ export {
     buildForest,
     TextCursor,
     jsonableTreeFromCursor,
+    singleTextCursor,
 } from "./feature-libraries";

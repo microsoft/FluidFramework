@@ -48,9 +48,9 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
         this.currentIndex = -1;
     }
 
-    public seek(offset: number): { result: SynchronousNavigationResult; moved: number; } {
+    public seek(offset: number): SynchronousNavigationResult {
         if (offset === 0) {
-            return { result: TreeNavigationResult.Ok, moved: 0 };
+            return TreeNavigationResult.Ok;
         }
 
         // TODO: Measure if maintaining immediate parent in a field improves seek
@@ -59,7 +59,7 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
 
         // The only seekable key is the 'EmptyKey' of an array.
         if (this.currentKey !== EmptyKey || !Array.isArray(parent)) {
-            return { result: TreeNavigationResult.NotFound, moved: 0 };
+            return TreeNavigationResult.NotFound;
         }
 
         const newIndex = this.currentIndex + offset;
@@ -69,14 +69,13 @@ export class JsonCursor<T> implements ITreeCursor<SynchronousNavigationResult> {
             // In JSON, arrays must be dense and may not contain 'undefined' values
             // ('undefined' items are implicitly coerced to 'null' by stringify()).
             assert(0 > newIndex || newIndex >= (parent as unknown as []).length,
-                "JSON arrays must be dense / contain no 'undefined' items.");
+                0x35f /* JSON arrays must be dense / contain no 'undefined' items. */);
 
-            return { result: TreeNavigationResult.NotFound, moved: 0 };
+            return TreeNavigationResult.NotFound;
         } else {
-            const moved = newIndex - this.currentIndex;
             this.currentNode = newChild;
             this.currentIndex = newIndex;
-            return { result: TreeNavigationResult.Ok, moved };
+            return TreeNavigationResult.Ok;
         }
     }
 
@@ -205,14 +204,14 @@ export function cursorToJsonObject(reader: ITreeCursor): unknown {
         case jsonObject.name: {
             const result: any = {};
             for (const key of reader.keys) {
-                assert(reader.down(key, 0) === TreeNavigationResult.Ok, "expected navigation ok");
+                assert(reader.down(key, 0) === TreeNavigationResult.Ok, 0x360 /* expected navigation ok */);
                 result[key as string] = cursorToJsonObject(reader);
-                assert(reader.up() === TreeNavigationResult.Ok, "expected navigation ok");
+                assert(reader.up() === TreeNavigationResult.Ok, 0x361 /* expected navigation ok */);
             }
             return result;
         }
         default: {
-            assert(type === jsonNull.name, "unexpected type");
+            assert(type === jsonNull.name, 0x362 /* unexpected type */);
             return null;
         }
     }

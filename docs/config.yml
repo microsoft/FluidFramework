@@ -62,7 +62,7 @@ params:
     version: "0.50"
     urlRef: "docs/updates/v0.50.md"
     message: | # if set, this will override the release notes updates
-      [Azure Fluid Relay](/docs/deployment/azure-frs/) is available in _Public Preview_!
+      [Azure Fluid Relay](/docs/deployment/azure-frs/) is now generally available! [Learn more.](https://devblogs.microsoft.com/microsoft365dev/announcing-general-availability-of-azure-fluid-relay-service/)
 
 menu:
   main:

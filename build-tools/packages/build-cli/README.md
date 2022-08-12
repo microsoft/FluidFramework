@@ -92,7 +92,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version)
-@fluid-tools/build-cli/0.3.0 win32-x64 node-v14.19.1
+@fluid-tools/build-cli/0.3.2000 linux-x64 node-v14.20.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -102,10 +102,13 @@ USAGE
 # Command reference
 <!-- commands -->
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
+* [`flub check layers`](#flub-check-layers)
 * [`flub commands`](#flub-commands)
+* [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
 * [`flub version VERSION`](#flub-version-version)
+* [`flub version latest`](#flub-version-latest)
 
 ## `flub bump deps PACKAGE_OR_RELEASE_GROUP`
 
@@ -155,6 +158,25 @@ EXAMPLES
     $ flub bump deps server -g client -t current
 ```
 
+## `flub check layers`
+
+Checks that the dependencies between Fluid Framework packages are properly layered.
+
+```
+USAGE
+  $ flub check layers [--md <value>] [--dot <value>] [--info <value>] [--logtime] [-v]
+
+FLAGS
+  -v, --verbose   Verbose logging.
+  --dot=<value>   Generate *.dot for GraphViz
+  --info=<value>  Path to the layer graph json file
+  --logtime       Display the current time on every status message for logging
+  --md=<value>    [default: .] Generate PACKAGES.md file at this path relative to repo root
+
+DESCRIPTION
+  Checks that the dependencies between Fluid Framework packages are properly layered.
+```
+
 ## `flub commands`
 
 list all the commands
@@ -186,6 +208,23 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.0/src/commands/commands.ts)_
+
+## `flub generate packageJson`
+
+Generate mono repo package json
+
+```
+USAGE
+  $ flub generate packageJson -g client|server|azure|build-tools [-v]
+
+FLAGS
+  -g, --releaseGroup=<option>  (required) release group
+                               <options: client|server|azure|build-tools>
+  -v, --verbose                Verbose logging.
+
+DESCRIPTION
+  Generate mono repo package json
+```
 
 ## `flub help [COMMAND]`
 
@@ -225,7 +264,7 @@ DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
 
-_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/info.ts)_
+_See code: [dist/commands/info.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/info.ts)_
 
 ## `flub version VERSION`
 
@@ -265,9 +304,43 @@ EXAMPLES
   You can use ^ and ~ as a shorthand.
 
     $ flub version ^1.0.0
+
+  You can use the 'current' bump type to calculate ranges without bumping the version.
+
+    $ flub version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
+_See code: [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/version.ts)_
+
+## `flub version latest`
+
+Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+```
+USAGE
+  $ flub version latest -r <value> [--json] [--prerelease]
+
+FLAGS
+  -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
+                             multiple versions, or a space-delimited list of versions can be provided using a single
+                             argument.
+  --prerelease               Include prerelease versions. By default, prerelease versions are excluded.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+EXAMPLES
+  You can use the --versions (-r) flag multiple times.
+
+    $ flub version latest -r 2.0.0 -r 2.0.0-internal.1.0.0 -r 1.0.0 -r 0.56.1000
+
+  You can omit the repeated --versions (-r) flag and pass a space-delimited list instead.
+
+    $ flub version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
+```
 <!-- commandsstop -->
 
 ## Trademark
