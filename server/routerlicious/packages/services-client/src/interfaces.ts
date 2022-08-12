@@ -17,7 +17,7 @@ export interface ISession {
      */
     ordererUrl: string;
     // WebSocket server url of the session
-    deltaStreamServerUrl?: string;
+    deltaStreamUrl?: string;
     // Historian url of the session
     historianUrl: string;
     /**

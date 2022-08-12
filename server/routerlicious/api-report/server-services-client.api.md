@@ -342,12 +342,11 @@ export interface IPatchRefParamsExternal extends resources.IPatchRefParams {
 
 // @public
 export interface ISession {
+    deltaStreamUrl?: string;
     historianUrl: string;
     isSessionActive: boolean;
     isSessionAlive: boolean;
     ordererUrl: string;
-    // (undocumented)
-    deltaStreamServerUrl?: string;
 }
 
 // @public (undocumented)
