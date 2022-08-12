@@ -220,15 +220,11 @@ export type HierarchyBoundaries = ApiItemKind[];
 // @public
 export type IDocHeadingParameters = IDocNodeParameters & Heading;
 
-// @public (undocumented)
+// @public
 export interface Link {
-    // (undocumented)
     headingId?: string;
-    // (undocumented)
     relativeFilePath: string;
-    // (undocumented)
     text: string;
-    // (undocumented)
     uriBase: string;
 }
 

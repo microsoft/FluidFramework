@@ -1,4 +1,10 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import Colors from "colors";
+
+// TODO: move into utilities dir
 
 /**
  * Contains simple console logging utilities used by the package.

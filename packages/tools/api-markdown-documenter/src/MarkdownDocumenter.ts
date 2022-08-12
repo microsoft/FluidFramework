@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { ApiItem } from "@microsoft/api-extractor-model";
 import { StringBuilder } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";

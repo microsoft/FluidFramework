@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {

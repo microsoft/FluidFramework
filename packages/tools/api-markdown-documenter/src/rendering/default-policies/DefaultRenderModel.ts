@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 

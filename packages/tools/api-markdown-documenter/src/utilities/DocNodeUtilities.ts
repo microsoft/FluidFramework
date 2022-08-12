@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
 export function mergeSections(

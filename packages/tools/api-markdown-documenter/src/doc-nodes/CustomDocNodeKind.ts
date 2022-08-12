@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { DocEmphasisSpan } from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
 import { DocNoteBox } from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
 import { DocTable } from "@microsoft/api-documenter/lib/nodes/DocTable";

@@ -1,7 +1,32 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/**
+ * Represents a link to some documentation element.
+ * A complete URL link can be created from its components (see {@link urlFromLink}).
+ */
 export interface Link {
+    /**
+     * Link text to be rendered.
+     */
     text: string;
+
+    /**
+     * URI base of the element being linked to.
+     */
     uriBase: string;
+
+    /**
+     * Path to the document being linked to. Relative to {@link Link.uriBase}.
+     * TODO: rename.
+     */
     relativeFilePath: string;
+
+    /**
+     * Optional ID of a heading in the document being linked to.
+     */
     headingId?: string;
 }
 

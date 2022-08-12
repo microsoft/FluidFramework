@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { ApiModel } from "@microsoft/api-extractor-model";
 import { TSDocConfiguration } from "@microsoft/tsdoc";
 import { NewlineKind } from "@rushstack/node-core-library";
