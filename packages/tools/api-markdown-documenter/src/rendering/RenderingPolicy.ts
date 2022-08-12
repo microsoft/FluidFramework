@@ -28,6 +28,10 @@ import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfigurat
 import * as DefaultRenderingPolicies from "./default-policies";
 
 /**
+ * This module contains rendering-policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
+ */
+
+/**
  * TODO
  */
 export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (

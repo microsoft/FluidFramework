@@ -13,6 +13,8 @@ import { DocHeading } from "./DocHeading";
 
 /**
  * Identifies custom subclasses of `DocNode`.
+ *
+ * @internal
  */
 export const enum CustomDocNodeKind {
     EmphasisSpan = "EmphasisSpan",
@@ -24,6 +26,13 @@ export const enum CustomDocNodeKind {
     HtmlLink = "HtmlLink",
 }
 
+/**
+ * Defines the allowed configurations of `DocNode` contents.
+ *
+ * @remarks These rules are evaluated at runtime by the {@link MarkdownEmitter}.
+ *
+ * @internal
+ */
 export class CustomDocNodes {
     private static _configuration: TSDocConfiguration | undefined;
 

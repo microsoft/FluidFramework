@@ -38,8 +38,7 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
 
     /**
      * TSDoc Configuration to use when parsing source-code documentation.
-     *
-     * @defaultValue {@link CustomDocNodes.configuration}
+     * If not provided, a default configuration will be used.
      */
     readonly tsdocConfiguration?: TSDocConfiguration;
 

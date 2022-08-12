@@ -14,7 +14,15 @@
  * @packageDocumentation
  */
 
-export * from "./doc-nodes";
+export {
+    DocEmphasisSpan,
+    DocHeading,
+    DocNoteBox,
+    DocTable,
+    DocTableCell,
+    DocTableRow,
+    IDocHeadingParameters,
+} from "./doc-nodes";
 export * from "./Heading";
 export * from "./Link";
 export * from "./MarkdownDocument";

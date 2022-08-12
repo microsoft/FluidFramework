@@ -31,6 +31,7 @@ import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
 import { DocTable } from '@microsoft/api-documenter/lib/nodes/DocTable';
 import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
+import { DocTableRow } from '@microsoft/api-documenter/lib/nodes/DocTableRow';
 import { Excerpt } from '@microsoft/api-extractor-model';
 import { IDocNodeParameters } from '@microsoft/tsdoc';
 import { IMarkdownEmitterContext } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
@@ -69,30 +70,6 @@ interface ChildSectionProperties {
     items: readonly ApiItem[];
 }
 
-// @public
-export const enum CustomDocNodeKind {
-    // (undocumented)
-    EmphasisSpan = "EmphasisSpan",
-    // (undocumented)
-    Heading = "Heading",
-    // (undocumented)
-    HtmlLink = "HtmlLink",
-    // (undocumented)
-    NoteBox = "NoteBox",
-    // (undocumented)
-    Table = "Table",
-    // (undocumented)
-    TableCell = "TableCell",
-    // (undocumented)
-    TableRow = "TableRow"
-}
-
-// @public (undocumented)
-export class CustomDocNodes {
-    // (undocumented)
-    static get configuration(): TSDocConfiguration;
-}
-
 // @public (undocumented)
 export namespace DefaultPolicies {
     const defaultDocumentBoundaries: ApiItemKind[];
@@ -125,6 +102,8 @@ export { DefaultRenderingPolicies }
 // @public
 export const defaultRenderingPolicies: Required<RenderingPolicies>;
 
+export { DocEmphasisSpan }
+
 // @public (undocumented)
 interface DocExample {
     content: DocSection;
@@ -140,6 +119,14 @@ export class DocHeading extends DocNode {
     readonly level?: number;
     readonly title: string;
 }
+
+export { DocNoteBox }
+
+export { DocTable }
+
+export { DocTableCell }
+
+export { DocTableRow }
 
 // @public
 export type DocumentBoundaries = ApiItemKind[];
@@ -527,12 +514,5 @@ export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
 
 // @public
 export function urlFromLink(link: Link): string;
-
-
-export * from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";
-export * from "@microsoft/api-documenter/lib/nodes/DocNoteBox";
-export * from "@microsoft/api-documenter/lib/nodes/DocTable";
-export * from "@microsoft/api-documenter/lib/nodes/DocTableCell";
-export * from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 
 ```

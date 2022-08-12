@@ -2,6 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/**
+ * `DocNode` types and utilities.
+ */
+
 export * from "./DocHeading";
 export * from "./CustomDocNodeKind";
 

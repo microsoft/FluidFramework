@@ -9,6 +9,10 @@ import { PackageName } from "@rushstack/node-core-library";
 import { getQualifiedApiItemName } from "./utilities";
 
 /**
+ * This module contains policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
+ */
+
+/**
  * List of item kinds for which separate documents should be generated.
  * Items specified will be rendered to their own documents.
  * Items not specified will be rendered into their parent's contents.
