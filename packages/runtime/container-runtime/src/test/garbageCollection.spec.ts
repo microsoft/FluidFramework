@@ -346,7 +346,7 @@ describe("Garbage Collection Tests", () => {
                 assert.equal(gc.sessionExpiryTimeoutMs, defaultSessionExpiryDurationMs, "sessionExpiryTimeoutMs should be set even if disabled");
                 assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer should be undefined if it's disabled");
                 // (validateSweepTimeout doesn't try to handle this case)
-                assert.equal(gc.sweepTimeoutMs, undefined, "sweepTimeoutMs should be undefined if sessionExpiryTimeoutMs is undefined");
+                assert.equal(gc.sweepTimeoutMs, undefined, "sweepTimeoutMs should be undefined if SessionExpiry is disabled");
             });
         });
 
@@ -356,33 +356,33 @@ describe("Garbage Collection Tests", () => {
             });
 
             describe("shouldRunGC", () => {
-                const testCases: [{ gcEnabled: boolean; disableGC?: boolean; runGC?: boolean; }, boolean /* expectedResult */][] = [
-                    [{ gcEnabled: false, disableGC: true, runGC: true }, true],
-                    [{ gcEnabled: true, disableGC: false, runGC: false }, false],
-                    [{ gcEnabled: true, disableGC: true }, false],
-                    [{ gcEnabled: true, disableGC: false }, true],
-                    [{ gcEnabled: true }, true],
-                    [{ gcEnabled: false }, false],
+                const testCases: { gcEnabled: boolean; disableGC?: boolean; runGC?: boolean; expectedResult: boolean; }[] = [
+                    { gcEnabled: false, disableGC: true, runGC: true, expectedResult: true },
+                    { gcEnabled: true, disableGC: false, runGC: false, expectedResult: false },
+                    { gcEnabled: true, disableGC: true, expectedResult: false },
+                    { gcEnabled: true, disableGC: false, expectedResult: true },
+                    { gcEnabled: true, expectedResult: true },
+                    { gcEnabled: false, expectedResult: false },
                 ];
-                testCases.forEach(([testCase, expectedResult]) => {
+                testCases.forEach((testCase) => {
                     it(`Test Case ${JSON.stringify(testCase)}`, () => {
                         injectedSettings[runGCKey] = testCase.runGC;
                         gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: testCase.gcEnabled, disableGC: testCase.disableGC });
                         assert.equal(gc.gcEnabled, testCase.gcEnabled, "PRECONDITION: gcEnabled set incorrectly");
-                        assert.equal(gc.shouldRunGC, expectedResult, "shouldRunGC not set as expected");
+                        assert.equal(gc.shouldRunGC, testCase.expectedResult, "shouldRunGC not set as expected");
                     });
                 });
             });
             describe("shouldRunSweep", () => {
-                const testCases: [{ shouldRunGC: boolean; setSweepTimeout: boolean; sweepEnabled: boolean; runSweep?: boolean; }, boolean /* expectedResult */][] = [
-                    [{ shouldRunGC: false, setSweepTimeout: true, sweepEnabled: true, runSweep: true }, false],
-                    [{ shouldRunGC: true, setSweepTimeout: false, sweepEnabled: true, runSweep: true }, false],
-                    [{ shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, runSweep: false }, false],
-                    [{ shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, runSweep: true }, false], // true once TEMPORARY snapshotCacheExpiryMs measure is reverted
-                    [{ shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true }, false], // true once TEMPORARY snapshotCacheExpiryMs measure is reverted
-                    [{ shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false }, false],
+                const testCases: { shouldRunGC: boolean; setSweepTimeout: boolean; sweepEnabled: boolean; runSweep?: boolean; expectedResult: boolean; }[] = [
+                    { shouldRunGC: false, setSweepTimeout: true, sweepEnabled: true, runSweep: true, expectedResult: false },
+                    { shouldRunGC: true, setSweepTimeout: false, sweepEnabled: true, runSweep: true, expectedResult: false },
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, runSweep: false, expectedResult: false },
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, runSweep: true, expectedResult: false }, // { expectedResult: true } once TEMPORARY snapshotCacheExpiryMs measure is reverted
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: true, expectedResult: false }, // { expectedResult: true } once TEMPORARY snapshotCacheExpiryMs measure is reverted
+                    { shouldRunGC: true, setSweepTimeout: true, sweepEnabled: false, expectedResult: false },
                 ];
-                testCases.forEach(([testCase, expectedResult]) => {
+                testCases.forEach((testCase) => {
                     it(`Test Case ${JSON.stringify(testCase)}`, () => {
                         injectedSettings[runGCKey] = testCase.shouldRunGC;
                         injectedSettings[runSweepKey] = testCase.runSweep;
@@ -391,21 +391,25 @@ describe("Garbage Collection Tests", () => {
                         assert.equal(gc.shouldRunGC, testCase.shouldRunGC, "PRECONDITION: shouldRunGC set incorrectly");
                         assert.equal(gc.sweepTimeoutMs !== undefined, testCase.setSweepTimeout, "PRECONDITION: sweep timeout set incorrectly");
                         assert.equal(gc.sweepEnabled, testCase.sweepEnabled, "PRECONDITION: sweepEnabled set incorrectly");
-                        assert.equal(gc.shouldRunSweep, expectedResult, "shouldRunSweep not set as expected");
+                        assert.equal(gc.shouldRunSweep, testCase.expectedResult, "shouldRunSweep not set as expected");
                     });
                 });
             });
             describe("inactiveTimeoutMs", () => {
-                const testCases: [{ testOverride?: number; option?: number; }, number /* expectedResult */][] = [
-                    [{ testOverride: 123, option: 456 }, 123],
-                    [{ option: 456 }, 456],
-                    [{}, defaultInactiveTimeoutMs],
+                beforeEach(() => {
+                    // Remove setting added in outer describe block
+                    injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = undefined;
+                });
+                const testCases: { testOverride?: number; option?: number; expectedResult: number; }[] = [
+                    { testOverride: 123, option: 456, expectedResult: 123 },
+                    { option: 456, expectedResult: 456 },
+                    { expectedResult: defaultInactiveTimeoutMs },
                 ];
-                testCases.forEach(([testCase, expectedResult]) => {
+                testCases.forEach((testCase) => {
                     it(`Test Case ${JSON.stringify(testCase)}`, () => {
                         injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = testCase.testOverride;
                         gc = createGcWithPrivateMembers(undefined /* metadata */, { inactiveTimeoutMs: testCase.option });
-                        assert.equal(gc.inactiveTimeoutMs, expectedResult, "inactiveTimeoutMs not set as expected");
+                        assert.equal(gc.inactiveTimeoutMs, testCase.expectedResult, "inactiveTimeoutMs not set as expected");
                     });
                 });
                 it("inactiveTimeout must not be greater than sweepTimeout", () => {
@@ -418,17 +422,17 @@ describe("Garbage Collection Tests", () => {
                 });
             });
             describe("testMode", () => {
-                const testCases: [{ setting?: boolean; option?: boolean; }, boolean /* expectedResult */][] = [
-                    [{ setting: true, option: false }, true],
-                    [{ setting: false, option: true }, false],
-                    [{ option: true }, true],
-                    [{}, false],
+                const testCases: { setting?: boolean; option?: boolean; expectedResult: boolean; }[] = [
+                    { setting: true, option: false, expectedResult: true },
+                    { setting: false, option: true, expectedResult: false },
+                    { option: true, expectedResult: true },
+                    { expectedResult: false },
                 ];
-                testCases.forEach(([testCase, expectedResult]) => {
+                testCases.forEach((testCase) => {
                     it(`Test Case ${JSON.stringify(testCase)}`, () => {
                         injectedSettings[gcTestModeKey] = testCase.setting;
                         gc = createGcWithPrivateMembers(undefined /* metadata */, { runGCInTestMode: testCase.option });
-                        assert.equal(gc.testMode, expectedResult, "testMode not set as expected");
+                        assert.equal(gc.testMode, testCase.expectedResult, "testMode not set as expected");
                     });
                 });
             });
