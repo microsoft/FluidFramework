@@ -63,6 +63,7 @@ import {
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "./opBuilder";
 import {
     ICombiningOp,
+    IMergeTreeDeltaOp,
     IRelativePosition,
     MergeTreeDeltaType,
     ReferenceType,
@@ -1961,7 +1962,7 @@ export class MergeTree {
     /**
      * Revert an unacked local op
      */
-    public rollback(op: any, localOpMetadata: unknown) {
+    public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup) {
         if (op.type === MergeTreeDeltaType.REMOVE) {
             const pendingSegmentGroup = this.pendingSegments?.pop?.();
             if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {

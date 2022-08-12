@@ -355,7 +355,7 @@ export class Client {
      * Revert an op
      */
     public rollback?(op: any, localOpMetadata: unknown) {
-        this.mergeTree.rollback(op, localOpMetadata);
+        this.mergeTree.rollback(op as IMergeTreeDeltaOp, localOpMetadata as SegmentGroup);
     }
 
     /**

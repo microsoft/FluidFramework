@@ -244,6 +244,19 @@ describe("client.rollback", () => {
 
         assert.equal(client.getText(), "abcde");
     });
+    it("Should rollback delete and update blocks", () => {
+        const text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+        for (const c of text) {
+            client.insertTextLocal(client.getLength(), c);
+        }
+        client.removeRangeLocal(1, 4);
+        client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+        // The insertion position calculation will be wrong if the blocks aren't updated correctly
+        client.insertTextLocal(text.length - 1, "+");
+
+        const expectedText = `${text.substring(0, text.length - 1)}+${text[text.length - 1]}`;
+        assert.equal(client.getText(), expectedText, client.getText());
+    });
     it("Should rollback delete and restore local references", () => {
         client.insertTextLocal(0, "efg");
         client.insertTextLocal(0, "d");
