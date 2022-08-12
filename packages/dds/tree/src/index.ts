@@ -30,8 +30,8 @@ export {
     FieldSchema, ValueSchema, TreeSchema, FieldKind,
     emptyField, neverTree,
     SchemaRepository, StoredSchemaRepository,
-    rootFieldKey,
-} from "./schema";
+    rootFieldKey, TreeTypeSet,
+} from "./schema-stored";
 
 export {
     Brand,
@@ -66,4 +66,5 @@ export {
     buildForest,
     TextCursor,
     jsonableTreeFromCursor,
+    singleTextCursor,
 } from "./feature-libraries";

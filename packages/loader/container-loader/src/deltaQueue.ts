@@ -114,9 +114,9 @@ export class DeltaQueue<T>
         if (this.anythingToProcess() && this.processingPromise === undefined) {
             // Use a resolved promise to start the processing on a separate stack.
             this.processingPromise = Promise.resolve().then(() => {
-                assert(this.processingPromise !== undefined, "reentrancy?");
+                assert(this.processingPromise !== undefined, 0x37f /* reentrancy? */);
                 const result = this.processDeltas();
-                assert(this.processingPromise !== undefined, "reentrancy?");
+                assert(this.processingPromise !== undefined, 0x380 /* reentrancy? */);
                 // WARNING: Do not move next line to .finally() clause!
                 // It runs async and creates a race condition where incoming ensureProcessing() call observes
                 // from previous run while previous run is over (but finally clause was not scheduled yet)
@@ -128,7 +128,7 @@ export class DeltaQueue<T>
                 this.emit("error", error);
                 return { count: 0, duration: 0 };
             });
-            assert(this.processingPromise !== undefined, "processDeltas() should run async");
+            assert(this.processingPromise !== undefined, 0x381 /* processDeltas() should run async */);
         }
     }
 

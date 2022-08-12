@@ -32,6 +32,7 @@ trigger:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
@@ -51,6 +52,7 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
