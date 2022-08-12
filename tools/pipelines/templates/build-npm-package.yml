@@ -148,6 +148,7 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
+                branchName = ${{ variables['Build.SourceBranch'] }}
 
                 release=$(release)"
 
@@ -364,6 +365,9 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
+              script: |
+                echo ${{ variables['Build.SourceBranch'] }}
+                echo ${{ variables['Build.SourceBranchName'] }}
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
