@@ -64,7 +64,7 @@ export const stressOptions: IConflictFarmConfig = {
     rounds: 32,
     operations: allOperations,
     growthFunc: (input: number) => input * 2,
-}
+};
 
 // Generate a list of single character client names, support up to 69 clients
 const clientNames = generateClientNames();
