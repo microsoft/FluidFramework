@@ -2,7 +2,7 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IFluidHandle, IFluidRouter } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import Random from "random-js";
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { IRemovedHandle } from "./channelHandler";
 import { IChannelPath } from "./handlesTracker";
 import { DataObjectManyDDSes } from "./testDataObjects";
@@ -34,12 +34,12 @@ export class ContainerDataObjectManager {
 		return handle;
 	}
 
-	public async addHandle(channelPath: IChannelPath, handle: IFluidHandle, random: Random) {
+	public async addHandle(channelPath: IChannelPath, handle: IFluidHandle, random: IRandom) {
 		const dataObject = await this.getDataObjectFromRoute(this.container, channelPath.dataStoreId);
 		return dataObject.addHandleOpForChannel(channelPath.ddsId, handle, random);
 	}
 
-	public async removeHandle(handlePath: IChannelPath, random: Random): Promise<IRemovedHandle> {
+	public async removeHandle(handlePath: IChannelPath, random: IRandom): Promise<IRemovedHandle> {
 		const dataObject = await this.getDataObjectFromRoute(this.container, handlePath.dataStoreId);
 		return dataObject.removeHandleForChannel(handlePath.ddsId, random);
 	}

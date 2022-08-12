@@ -16,7 +16,7 @@ import { Ink } from "@fluidframework/ink";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IChannel, IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import Random from "random-js";
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import {
     ConsensusQueueHandler,
     ConsensusRegisterCollectionHandler,
@@ -67,12 +67,12 @@ export class DataObjectManyDDSes extends BaseTestDataObject {
     public async addHandleOpForChannel(
         ddsId: string,
         handle: IFluidHandle,
-        random: Random,
+        random: IRandom,
     ): Promise<IAddedHandle> {
         return this.handleManager.executeAddHandleOp(ddsId, handle, random);
     }
 
-    public async removeHandleForChannel(ddsId: string, random: Random): Promise<IRemovedHandle> {
+    public async removeHandleForChannel(ddsId: string, random: IRandom): Promise<IRemovedHandle> {
         return this.handleManager.executeRandomRemoveHandleOp(ddsId, random);
     }
 
@@ -156,7 +156,7 @@ export class HandleManager {
     public async executeAddHandleOp(
         ddsId: string,
         handle: IFluidHandle,
-        random: Random,
+        random: IRandom,
     ): Promise<IAddedHandle> {
         const handleOpManager = this.handleOpManagers.get(ddsId);
         assert(handleOpManager !== undefined,
@@ -167,7 +167,7 @@ export class HandleManager {
 
     public async executeRandomRemoveHandleOp(
         ddsId: string,
-        random: Random,
+        random: IRandom,
     ): Promise<IRemovedHandle> {
         const handleOpManager = this.handleOpManagers.get(ddsId);
         assert(handleOpManager !== undefined,

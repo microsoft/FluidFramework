@@ -1,4 +1,5 @@
 import { strict as assert } from "assert";
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 
 export interface IChannelPath {
 	dataStoreId: string; // which DataStore/DataObject?
@@ -83,7 +84,7 @@ export class HandleTracker {
         this.removePaths.splice(this.removePaths.indexOf(removePath), 1);
     }
 
-	public getChannelWithHandle(random: Random): IChannelPath {
+	public getChannelWithHandle(random: IRandom): IChannelPath {
 		assert(this.removePaths.length > 0, `there should be removable handles!`);
 		const channelPath = random.pick(this.removePaths);
         this.removeRemovePath(channelPath);

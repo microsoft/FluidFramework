@@ -1,4 +1,5 @@
 import { strict as assert } from "assert";
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { IChannelPath } from "./handlesTracker";
 import { DataObjectManyDDSes } from "./testDataObjects";
 
@@ -20,11 +21,11 @@ export class FluidObjectTracker {
 		return Array.from(this.handleChannels.values());
 	}
 
-	public getRandomFluidObject(random: Random): IFluidObjectPath {
+	public getRandomFluidObject(random: IRandom): IFluidObjectPath {
 		return random.pick(this.usableFluidObjects);
 	}
 
-	public getRandomHandleChannel(random: Random): IChannelPath {
+	public getRandomHandleChannel(random: IRandom): IChannelPath {
 		return random.pick(this.handleChannelPaths);
 	}
 

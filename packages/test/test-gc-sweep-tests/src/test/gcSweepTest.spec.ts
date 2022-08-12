@@ -17,8 +17,7 @@ import {
 } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import Random from "random-js";
+import { makeRandom, IRandom } from "@fluid-internal/stochastic-test-utils";
 import {
     DataObjectManyDDSes,
     testDataObjectWithEveryDDSFactory,
@@ -37,7 +36,7 @@ interface ITestAction {
     [key: string]: any;
 }
 
-describeNoCompat("GC Random tests", (getTestObjectProvider) => {
+describeNoCompat("GCIRandom tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     const runtimeOptions: IContainerRuntimeOptions = {
@@ -87,7 +86,7 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     const seed = 0.0604202162258638; // Math.random();
-    const random: Random = makeRandom(seed);
+    const random: IRandom = makeRandom(seed);
 
     const randomInteger = (min: number, max: number): number => {
         return random.integer(min, max);

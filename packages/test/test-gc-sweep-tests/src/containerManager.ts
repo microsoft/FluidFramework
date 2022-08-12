@@ -3,6 +3,7 @@ import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqu
 import { IContainer } from "@fluidframework/container-definitions";
 import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import { ContainerDataObjectManager } from "./containerDataObjectManager";
 
 export class ContainerManager {
@@ -39,7 +40,7 @@ export class ContainerManager {
         this.connectedContainers.push(container);
 	}
 
-	public closeRandomContainer(random: Random) {
+	public closeRandomContainer(random: IRandom) {
         assert(this.connectedContainers.length > 0, "Expected there to be connected containers!");
         random.pick(this.connectedContainers).close();
     }
@@ -56,7 +57,7 @@ export class ContainerManager {
 		return this.closedContainers.length;
 	}
 
-	public async getRandomContainer(random: Random): Promise<ContainerDataObjectManager> {
+	public async getRandomContainer(random: IRandom): Promise<ContainerDataObjectManager> {
 		if (!this.hasConnectedContainers()) {
             await this.loadContainer();
         }
