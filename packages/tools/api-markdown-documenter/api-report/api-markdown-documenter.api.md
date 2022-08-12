@@ -146,6 +146,15 @@ export class DocHeading extends DocNode {
 export type DocumentBoundaries = ApiItemKind[];
 
 // @public (undocumented)
+export function doesItemGenerateHierarchy(apiItem: ApiItem, hierarchyBoundaries: HierarchyBoundaries): boolean;
+
+// @public (undocumented)
+export function doesItemKindRequireOwnDocument(kind: ApiItemKind, documentBoundaries: DocumentBoundaries): boolean;
+
+// @public (undocumented)
+export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
+
+// @public (undocumented)
 export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 
 // @public (undocumented)
@@ -160,8 +169,41 @@ export interface EmitterOptions extends IMarkdownEmitterOptions {
 // @public
 export type FileNamePolicy = (apiItem: ApiItem) => string;
 
+// @public (undocumented)
+export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[];
+
+// @public
+export function getAncestralHierarchy(apiItem: ApiItem, includePredecate: (apiItem: ApiItem) => boolean, breakPredicate?: (apiItem: ApiItem) => boolean): ApiItem[];
+
 // @public
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
+
+// @public (undocumented)
+export function getFileNameForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
+
+// @public
+export function getFilePathForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, includeExtension: boolean): string;
+
+// @public
+export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined;
+
+// @public
+export function getFirstAncestorWithOwnPage(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): ApiItem;
+
+// @public (undocumented)
+export function getHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, headingLevel?: number): Heading;
+
+// @public (undocumented)
+export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string | undefined;
+
+// @public (undocumented)
+export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): Link;
+
+// @public (undocumented)
+export function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
+
+// @public
+export function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
 export interface Heading {
@@ -178,6 +220,18 @@ export type HierarchyBoundaries = ApiItemKind[];
 
 // @public
 export type IDocHeadingParameters = IDocNodeParameters & Heading;
+
+// @public (undocumented)
+export interface Link {
+    // (undocumented)
+    headingId?: string;
+    // (undocumented)
+    relativeFilePath: string;
+    // (undocumented)
+    text: string;
+    // (undocumented)
+    uriBase: string;
+}
 
 // @public
 export type LinkTextPolicy = (apiItem: ApiItem) => string;
@@ -231,6 +285,9 @@ interface MemberTableProperties {
     // (undocumented)
     items: readonly ApiItem[];
 }
+
+// @public (undocumented)
+export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public
 export interface PolicyOptions {
@@ -472,6 +529,9 @@ function renderTypeParameters(typeParameters: readonly TypeParameter[], config: 
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
+
+// @public
+export function urlFromLink(link: Link): string;
 
 
 export * from "@microsoft/api-documenter/lib/nodes/DocEmphasisSpan";

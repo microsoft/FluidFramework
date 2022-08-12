@@ -11,15 +11,14 @@
 
 export * from "./doc-nodes";
 export * from "./Heading";
+export * from "./Link";
 export * from "./MarkdownDocument";
 export * from "./MarkdownDocumenter";
 export * from "./MarkdownDocumenterConfiguration";
 export * from "./MarkdownEmitter";
 export * from "./Policies";
 export * from "./rendering";
+export * from "./utilities";
 
-export { ApiFunctionLike, ApiModuleLike, ApiSignatureLike } from "./utilities";
-
-// #region Conveinence re-exports of API model types
+// Conveinence re-exports of API model types
 export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
-// #endregion
