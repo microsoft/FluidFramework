@@ -35,6 +35,10 @@ parameters:
   type: boolean
   default: true
 
+- name: runBenchmarkTests
+  type: boolean
+  default: true # TODO: default here should be false and only pass true in the scenarios we want these to run
+
 - name: poolCG
   type: object
   default: Small
@@ -223,20 +227,19 @@ stages:
               customCommand: 'run lint'
 
         # Benchmark tests
-        - task: Npm@1
-          displayName: npm run ci:test:benchmark
-          inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'run ci:test:benchmark'
-        - task: Bash@3
-          displayName: 'Check for results'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              ls; ls benchmarkOutput;
-          condition: succeededOrFailed()
+        - ${{ if eq(parameters.runBenchmarkTests, 'true') }}:
+          - task: Npm@1
+            displayName: npm run ci:test:benchmark
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run ci:test:benchmark'
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Artifact - Benchmark tests output
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)/benchmarkOutput'
+              artifactName: 'benchmark-test-outputs'
+              condition: succeededOrFailed()
 
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
