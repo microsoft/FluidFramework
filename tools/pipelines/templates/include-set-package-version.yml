@@ -27,8 +27,12 @@ steps:
       # npm run install:build-tools
       popd
       npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
+
+      echo "##vso[task.setvariable variable=path]$(PATH):$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
+
       prefix=$(npm config get prefix)
-      ln -s "$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin/run" "$(prefix)/bin/flub"
+      echo $prefix
+      # ln -s "$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin/run" "$(prefix)/bin/flub"
 
       flub help
 
