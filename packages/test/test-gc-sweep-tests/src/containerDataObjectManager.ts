@@ -14,40 +14,40 @@ import { DataObjectManyDDSes } from "./testDataObjects";
 import { IFluidObjectPath } from "./fluidObjectTracker";
 
 export class ContainerDataObjectManager {
-	private readonly dataStoreType: string = DataObjectManyDDSes.type;
+    private readonly dataStoreType: string = DataObjectManyDDSes.type;
 
-	constructor(private readonly container: IContainer) {}
+    constructor(private readonly container: IContainer) {}
 
-	public async getDataObject(dataStoreId: string): Promise<DataObjectManyDDSes> {
-		return this.getDataObjectFromRoute(this.container, dataStoreId);
-	}
+    public async getDataObject(dataStoreId: string): Promise<DataObjectManyDDSes> {
+        return this.getDataObjectFromRoute(this.container, dataStoreId);
+    }
 
-	public async createDataObject(): Promise<DataObjectManyDDSes> {
-		const defaultDataStore = await this.getDataObjectFromRoute(this.container, "default");
+    public async createDataObject(): Promise<DataObjectManyDDSes> {
+        const defaultDataStore = await this.getDataObjectFromRoute(this.container, "default");
         const newDataStore = await defaultDataStore.containerRuntime.createDataStore(this.dataStoreType);
         const newDataObject = await this.getDataObjectFromRoute(newDataStore, "");
         return newDataObject;
-	}
+    }
 
-	public async getHandle(handlePath: IFluidObjectPath): Promise<IFluidHandle> {
-		const dataObject = await this.getDataObjectFromRoute(this.container, `/${handlePath.dataStoreId}`);
-		if (handlePath.ddsId === undefined) {
-			return dataObject.handle;
-		}
-		const handle = dataObject._root.get<IFluidHandle>(handlePath.ddsId);
-		assert(handle !== undefined, "Handle should exist in handle path! And it should be retrievable!");
-		return handle;
-	}
+    public async getHandle(handlePath: IFluidObjectPath): Promise<IFluidHandle> {
+        const dataObject = await this.getDataObjectFromRoute(this.container, `/${handlePath.dataStoreId}`);
+        if (handlePath.ddsId === undefined) {
+            return dataObject.handle;
+        }
+        const handle = dataObject._root.get<IFluidHandle>(handlePath.ddsId);
+        assert(handle !== undefined, "Handle should exist in handle path! And it should be retrievable!");
+        return handle;
+    }
 
-	public async addHandle(channelPath: IChannelPath, handle: IFluidHandle, random: IRandom) {
-		const dataObject = await this.getDataObjectFromRoute(this.container, channelPath.dataStoreId);
-		return dataObject.addHandleOpForChannel(channelPath.ddsId, handle, random);
-	}
+    public async addHandle(channelPath: IChannelPath, handle: IFluidHandle, random: IRandom) {
+        const dataObject = await this.getDataObjectFromRoute(this.container, channelPath.dataStoreId);
+        return dataObject.addHandleOpForChannel(channelPath.ddsId, handle, random);
+    }
 
-	public async removeHandle(handlePath: IChannelPath, random: IRandom): Promise<IRemovedHandle> {
-		const dataObject = await this.getDataObjectFromRoute(this.container, handlePath.dataStoreId);
-		return dataObject.removeHandleForChannel(handlePath.ddsId, random);
-	}
+    public async removeHandle(handlePath: IChannelPath, random: IRandom): Promise<IRemovedHandle> {
+        const dataObject = await this.getDataObjectFromRoute(this.container, handlePath.dataStoreId);
+        return dataObject.removeHandleForChannel(handlePath.ddsId, random);
+    }
 
     private async getDataObjectFromRoute(router: IFluidRouter, route: string) {
         const dataObject = await requestFluidObject<DataObjectManyDDSes>(router, route);
