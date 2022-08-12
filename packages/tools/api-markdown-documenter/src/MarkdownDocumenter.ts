@@ -11,13 +11,8 @@ import { MarkdownEmitter } from "./MarkdownEmitter";
 import { renderApiPage, renderModelPage, renderPackagePage } from "./rendering";
 import { doesItemRequireOwnDocument } from "./utilities";
 
-// TODOs:
-// - Handle Model and Package level separately
-// - Document assumptions around file placements: flat list of package directories
-// - `pick` types to make unit testing easier
-
 /**
- * TODO
+ * This module contains the primary rendering entrypoints to the system.
  *
  * @remarks
  * This implementation is based on API-Documenter's standard MarkdownDocumenter implementation,
@@ -29,10 +24,16 @@ import { doesItemRequireOwnDocument } from "./utilities";
  */
 
 /**
- * TODO
- * @param apiModel - TODO
- * @param partialConfig - TODO
- * @param markdownEmitter - TODO
+ * Renders the provided model and its contents to a series of {@link MarkdownDocument}s.
+ *
+ * @remarks
+ * Which API members get their own documents and which get written to the contents of their parent is
+ * determined by {@link PolicyOptions.documentBoundaries}.
+ *
+ * @param apiModel - The API model being processed.
+ * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
+ * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
+ * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
  */
 export function renderDocuments(
     partialConfig: MarkdownDocumenterConfiguration,
@@ -78,14 +79,38 @@ export function renderDocuments(
     return documents;
 }
 
+/**
+ * Renders the provided model and its contents, and writes each document to a file on disk.
+ *
+ * @remarks
+ * Which API members get their own documents and which get written to the contents of their parent is
+ * determined by {@link PolicyOptions.documentBoundaries}.
+ *
+ * The file paths under which the files will be saved is determined by the provided output path and the
+ * following configuration properties:
+ *
+ * - {@link PolicyOptions.documentBoundaries}
+ * - {@link PolicyOptions.hierarchyBoundaries}
+ * - {@link PolicyOptions.fileNamePolicy}
+ *
+ * @param apiModel - The API model being processed.
+ * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
+ * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
+ * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
+ * @param markdownEmitter - The emitter to use for generating Markdown output.
+ * If not provided, a {@link MarkdownEmitter | default implementation} will be used.
+ */
 export async function renderFiles(
     partialConfig: MarkdownDocumenterConfiguration,
     outputDirectoryPath: string,
-    markdownEmitter: MarkdownEmitter,
+    markdownEmitter?: MarkdownEmitter,
 ): Promise<void> {
     await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
-    const documents = renderDocuments(partialConfig, markdownEmitter);
+    const documents = renderDocuments(
+        partialConfig,
+        markdownEmitter ?? new MarkdownEmitter(partialConfig.apiModel),
+    );
 
     await Promise.all(
         documents.map(async (document) => {

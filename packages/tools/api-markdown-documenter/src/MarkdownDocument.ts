@@ -1,5 +1,5 @@
 /**
- * TODO
+ * Represents Markdown document contents that have not yet been written to a file.
  */
 export interface MarkdownDocument {
     /**
@@ -13,8 +13,8 @@ export interface MarkdownDocument {
     apiItemName: string;
 
     /**
-     * Output path for the document to be written to.
-     * TODO: relative
+     * Output path for the document to be written to. This path is relative to the base URI provided to the system.
+     * TODO: verify relative-ness
      */
     path: string;
 }

@@ -295,8 +295,8 @@ function renderExamples(apiItem: ApiItem, config: Required<MarkdownDocumenterCon
 // @public (undocumented)
 function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph;
 
-// @public (undocumented)
-export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, markdownEmitter: MarkdownEmitter): Promise<void>;
+// @public
+export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, markdownEmitter?: MarkdownEmitter): Promise<void>;
 
 // @public (undocumented)
 function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;
