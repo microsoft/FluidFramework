@@ -247,7 +247,7 @@ stages:
             customRegistry: 'useNpmrc'
 
         # Set version
-        - template: include-set-package-version.yml
+        - template: templates/include-set-package-version.yml
           parameters:
             buildDirectory: ${{ parameters.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
@@ -464,7 +464,7 @@ stages:
 
   # Publish stage
   - ${{ if eq(variables.publish, true) }}:
-    - template: include-publish-npm-package.yml
+    - template: templates/include-publish-npm-package.yml
       parameters:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
