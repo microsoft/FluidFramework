@@ -36,7 +36,7 @@ function patchHttpRequestToForceKeepAlive() {
 
     httpRequestPatched = true;
 
-    const httpAgent = new http.Agent({ keepAlive: true, maxFreeSockets: Infinity });
+    const httpAgent = new http.Agent({ keepAlive: true, scheduling: "fifo" });
     const oldRequest = http.request;
     http.request = ((url, options, callback) => {
         let opts;
