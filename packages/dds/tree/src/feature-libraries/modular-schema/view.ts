@@ -13,7 +13,7 @@ import {
 } from "../../schema-stored";
 import { Adapters, ViewSchemaData, AdaptedViewSchema, Compatibility } from "../../schema-view";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
-import { allowsFieldSuperset, allowsRepoSuperset, allowsTreeSuperset, isNeverTree } from "./comparison";
+import { allowsRepoSuperset, isNeverTree } from "./comparison";
 
 /**
  * A collection of View information for schema, including policy.
@@ -45,22 +45,19 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
         writeAllowingStoredSchemaUpdates: Compatibility;
     } {
         const adapted = this.adaptRepo(stored);
-        const adaptedRepo = new StoredSchemaRepository(this.policy, adapted.adaptedForViewSchema);
-        const storedRepo = new StoredSchemaRepository(this.policy, stored);
-        const viewRepo = new StoredSchemaRepository(this.policy, stored);
 
-        // TODO: use adapters
-        const read = allowsRepoSuperset(storedRepo, viewRepo)
+        const read = allowsRepoSuperset(this.policy, stored, this.schema)
             ? Compatibility.Compatible
-            : allowsRepoSuperset(adaptedRepo, viewRepo)
+            : allowsRepoSuperset(this.policy, adapted.adaptedForViewSchema, this.schema)
             ? Compatibility.RequiresAdapters
             : Compatibility.Incompatible;
         // TODO: Extract subset of adapters that are valid to use on stored
         // TODO: separate adapters from schema updates
-        const write = allowsRepoSuperset(viewRepo, storedRepo)
+        const write = allowsRepoSuperset(this.policy, this.schema, stored)
             ? Compatibility.Compatible
-            : allowsRepoSuperset(storedRepo, viewRepo)
-            ? Compatibility.RequiresAdapters // Requires schema updates. TODO: consider adapters that can update writes.
+            : allowsRepoSuperset(this.policy, this.schema, adapted.adaptedForViewSchema)
+            // TODO: IThis assumes adapters are bidirectional.
+            ? Compatibility.RequiresAdapters
             : Compatibility.Incompatible;
 
         // TODO: compute this properly (and maybe include the set of schema changes needed for it?).
@@ -71,12 +68,12 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
         let writeAllowingStoredSchemaUpdates =
             // TODO: This should consider just the updates needed
             // (ex: when view covers a subset of stored after stored has a update to that subset).
-            allowsRepoSuperset(storedRepo, viewRepo)
+            allowsRepoSuperset(this.policy, stored, this.schema)
             ? Compatibility.Compatible
             // TODO: this assumes adapters can translate in both directions. In general this will not be true.
             // TODO: this also assumes that schema updates to the adapted repo would translate to
             // updates on the stored schema, which is also likely untrue.
-            : allowsRepoSuperset(adaptedRepo, viewRepo)
+            : allowsRepoSuperset(this.policy, adapted.adaptedForViewSchema, this.schema)
             ? Compatibility.RequiresAdapters // Requires schema updates. TODO: consider adapters that can update writes.
             : Compatibility.Incompatible;
 
@@ -93,9 +90,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
      * TODO: have a way for callers to get invalidated on schema updates.
      * Maybe pass in StoredSchemaRepository and optional ObservingDependent?
      */
-    public adaptRepo(storedData: SchemaData): AdaptedViewSchema {
-        const view = new StoredSchemaRepository(this.policy, this.schema);
-        const stored = new StoredSchemaRepository(this.policy, storedData);
+    public adaptRepo(stored: SchemaData): AdaptedViewSchema {
         // Sanity check on adapters:
         // it's probably a bug it they use the never types,
         // since there never is a reason to have a never type as an adapter input,
@@ -103,36 +98,34 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
         // (unless its input is also never).
         for (const adapter of this.adapters?.tree ?? []) {
             if (
-                isNeverTree(stored, stored.lookupTreeSchema(adapter.input))
+                isNeverTree(
+                    this.policy,
+                    stored,
+                    stored.treeSchema.get(adapter.input) ?? this.policy.defaultTreeSchema,
+                )
             ) {
                 fail("tree adapter for stored that is never");
             }
             if (
-                isNeverTree(view, view.lookupTreeSchema(adapter.output))
+                isNeverTree(
+                    this.policy,
+                    this.schema,
+                    this.schema.treeSchema.get(adapter.output) ?? this.policy.defaultTreeSchema)
             ) {
                 fail("tree adapter with view that is never");
             }
         }
         const adapted = new StoredSchemaRepository(this.policy);
-        for (const [key, schema] of this.schema.globalFieldSchema) {
-            const field = this.adaptField(
+        for (const [key, schema] of stored.globalFieldSchema) {
+            const adapatedField = this.adaptField(
                 schema,
                 this.adapters,
                 this.adapters.missingField?.has(key) ?? false,
             );
-            const adapatedField = adapted.lookupGlobalFieldSchema(key);
-            if (!allowsFieldSuperset(adapted, field, adapatedField)) {
-                fail("error adapting field schema");
-            }
             adapted.updateFieldSchema(key, adapatedField);
         }
         for (const [key, schema] of stored.treeSchema) {
-            const adapatedTree = adapted.lookupTreeSchema(key);
-            if (
-                !allowsTreeSuperset(adapted, schema, adapatedTree)
-            ) {
-                fail("error adapting tree schema");
-            }
+            const adapatedTree = this.adaptTree(schema, this.adapters);
             adapted.updateTreeSchema(key, adapatedTree);
         }
 

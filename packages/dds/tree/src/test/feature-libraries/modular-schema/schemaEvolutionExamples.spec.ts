@@ -46,7 +46,8 @@ class TestSchemaRepository extends StoredSchemaRepository<FullSchemaPolicy> {
     ): boolean {
         if (
             allowsFieldSuperset(
-                this,
+                this.policy,
+                this.data,
                 this.lookupGlobalFieldSchema(identifier),
                 schema,
             )
@@ -67,7 +68,7 @@ class TestSchemaRepository extends StoredSchemaRepository<FullSchemaPolicy> {
         schema: TreeSchema,
     ): boolean {
         const original = this.lookupTreeSchema(identifier);
-        if (allowsTreeSuperset(this, original, schema)) {
+        if (allowsTreeSuperset(this.policy, this.data, original, schema)) {
             this.data.treeSchema.set(identifier, schema);
             this.invalidateDependents();
             return true;
@@ -82,7 +83,7 @@ function assertEnumEqual<TEnum extends { [key: number]: string; }>(enumObject: T
     }
 }
 
-describe("StoredSchemaRepository", () => {
+describe("Schema Evolution Examples", () => {
     // Define some schema and identifiers for them for use in these examples:
     const canvasIdentifier: TreeSchemaIdentifier = brand("86432448-8454-4c86-a39c-699afbbdb753");
     const textIdentifier: TreeSchemaIdentifier = brand("3034e643-0ff3-44a9-8b7e-aea31fe635c8");
@@ -156,7 +157,6 @@ describe("StoredSchemaRepository", () => {
             // Sadly for our application, we did not allow empty roots in our view schema,
             // nor did we provide an adapter capable of handling empty roots.
             // This means our application is unable to view this document.
-
             assertEnumEqual(Compatibility, compat.read, Compatibility.Incompatible);
 
             // And since the view schema currently excludes empty roots, its also incompatible for writing:
@@ -257,7 +257,7 @@ describe("StoredSchemaRepository", () => {
                     [positionedCanvasItemIdentifier, positionedCanvasItem2],
                 ]),
             };
-            const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
+            const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
 
             // With this new schema, we can load the document just like before:
             const compat2 = view3.checkCompatibility(stored);

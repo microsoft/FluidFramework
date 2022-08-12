@@ -6,7 +6,7 @@
 import { ChangeEncoder } from "../../change-family";
 import { ChangeRebaser } from "../../rebase";
 import {
-    FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier, SchemaPolicy, StoredSchemaRepository, fieldSchema,
+    FieldSchema, FieldKindIdentifier, TreeSchemaIdentifier, SchemaPolicy, fieldSchema, SchemaData,
 } from "../../schema-stored";
 import { isNeverField } from "./comparison";
 
@@ -54,14 +54,15 @@ export class FieldKind {
         ) {}
 
     public allowsFieldSuperset(
-        originalRepo: StoredSchemaRepository<FullSchemaPolicy>,
+        policy: FullSchemaPolicy,
+        originalData: SchemaData,
         originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
         superset: FieldSchema,
     ): boolean {
-        if (isNeverField(originalRepo, fieldSchema(this, originalTypes))) {
+        if (isNeverField(policy, originalData, fieldSchema(this, originalTypes))) {
             return true;
         }
-        if (isNeverField(originalRepo, superset)) {
+        if (isNeverField(policy, originalData, superset)) {
             return false;
         }
         return this.allowsTreeSupersetOf(originalTypes, superset);

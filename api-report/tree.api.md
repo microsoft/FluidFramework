@@ -192,7 +192,7 @@ export type FieldKey = LocalFieldKey | GlobalFieldKey;
 export class FieldKind {
     constructor(identifier: FieldKindIdentifier, multiplicity: Multiplicity, changeHandler: ChangeHandler<unknown, any, any>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
-    allowsFieldSuperset(originalRepo: StoredSchemaRepository<FullSchemaPolicy>, originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema): boolean;
+    allowsFieldSuperset(policy: FullSchemaPolicy, originalData: SchemaData, originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema): boolean;
     // (undocumented)
     readonly changeHandler: ChangeHandler<unknown, any, any>;
     // (undocumented)
@@ -339,7 +339,7 @@ export interface Invariant<T> extends Contravariant<T>, Covariant<T> {
 export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @public (undocumented)
-export function isNeverField(repo: StoredSchemaRepository<FullSchemaPolicy>, field: FieldSchema): boolean;
+export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
 
 // @public
 export interface ITreeCursor<TResult = TreeNavigationResult> {

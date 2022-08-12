@@ -50,7 +50,7 @@ function testForest(suiteName: string, factory: (schema: StoredSchemaRepository)
                     schema.updateFieldSchema(rootFieldKey, rootFieldSchema);
 
                     // Check schema is actually valid. If we forgot to add some required types this would fail.
-                    assert(!isNeverField(schema, rootFieldSchema));
+                    assert(!isNeverField(defaultSchemaPolicy, schema, rootFieldSchema));
 
                     const insertCursor = new JsonCursor(data);
                     const content: JsonableTree[] = [jsonableTreeFromCursor(insertCursor)];

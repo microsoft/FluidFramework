@@ -88,53 +88,53 @@ describe("Schema Comparison", () => {
 
     it("isNeverField", () => {
         const repo = new StoredSchemaRepository(defaultSchemaPolicy);
-        assert(isNeverField(repo, neverField));
+        assert(isNeverField(defaultSchemaPolicy, repo, neverField));
         repo.updateTreeSchema(brand("never"), neverTree);
         const neverField2: FieldSchema = fieldSchema(
             FieldKinds.value,
             [brand("never")],
         );
-        assert(isNeverField(repo, neverField2));
-        assert.equal(isNeverField(repo, emptyField), false);
-        assert.equal(isNeverField(repo, anyField), false);
+        assert(isNeverField(defaultSchemaPolicy, repo, neverField2));
+        assert.equal(isNeverField(defaultSchemaPolicy, repo, emptyField), false);
+        assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
         repo.updateTreeSchema(brand("empty"), emptyTree);
-        assert.equal(isNeverField(repo, fieldSchema(FieldKinds.value, [brand("empty")])), false);
+        assert.equal(isNeverField(defaultSchemaPolicy, repo, fieldSchema(FieldKinds.value, [brand("empty")])), false);
     });
 
     it("isNeverTree", () => {
         const repo = new StoredSchemaRepository(defaultSchemaPolicy);
-        assert(isNeverTree(repo, neverTree));
-        assert(isNeverTree(repo, {
+        assert(isNeverTree(defaultSchemaPolicy, repo, neverTree));
+        assert(isNeverTree(defaultSchemaPolicy, repo, {
             localFields: emptyMap,
             globalFields: emptySet,
             extraLocalFields: neverField,
             extraGlobalFields: false,
             value: ValueSchema.Nothing,
         }));
-        assert(isNeverTree(repo, neverTree2));
+        assert(isNeverTree(defaultSchemaPolicy, repo, neverTree2));
         repo.updateFieldSchema(brandOpaque<GlobalFieldKey>("never"), neverField);
-        assert(isNeverTree(repo, {
+        assert(isNeverTree(defaultSchemaPolicy, repo, {
             localFields: emptyMap,
             globalFields: new Set([brandOpaque<GlobalFieldKey>("never")]),
             extraLocalFields: emptyField,
             extraGlobalFields: true,
             value: ValueSchema.Serializable,
         }));
-        assert.equal(isNeverTree(repo, {
+        assert.equal(isNeverTree(defaultSchemaPolicy, repo, {
             localFields: emptyMap,
             globalFields: emptySet,
             extraLocalFields: emptyField,
             extraGlobalFields: false,
             value: ValueSchema.Nothing,
         }), false);
-        assert.equal(isNeverTree(repo, anyTree), false);
+        assert.equal(isNeverTree(defaultSchemaPolicy, repo, anyTree), false);
 
-        assert(allowsTreeSuperset(repo, repo.lookupTreeSchema(emptyTree.name), emptyTree));
+        assert(allowsTreeSuperset(defaultSchemaPolicy, repo, repo.lookupTreeSchema(emptyTree.name), emptyTree));
         repo.updateTreeSchema(emptyTree.name, emptyTree);
 
-        assert.equal(isNeverTree(repo, emptyLocalFieldTree), false);
-        assert.equal(isNeverTree(repo, valueLocalFieldTree), false);
-        assert.equal(isNeverTree(repo, optionalLocalFieldTree), false);
+        assert.equal(isNeverTree(defaultSchemaPolicy, repo, emptyLocalFieldTree), false);
+        assert.equal(isNeverTree(defaultSchemaPolicy, repo, valueLocalFieldTree), false);
+        assert.equal(isNeverTree(defaultSchemaPolicy, repo, optionalLocalFieldTree), false);
     });
 
     it("allowsValueSuperset", () => {
@@ -177,7 +177,8 @@ describe("Schema Comparison", () => {
             FieldKinds.value,
             [brand("never")],
         );
-        const compare = (a: FieldSchema, b: FieldSchema): boolean => allowsFieldSuperset(repo, a, b);
+        const compare = (a: FieldSchema, b: FieldSchema): boolean =>
+            allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
         testOrder(compare, [neverField, emptyField, anyField]);
         testPartialOrder(compare, [neverField, neverField2, emptyField, anyField], [[neverField, neverField2]]);
     });
@@ -185,7 +186,7 @@ describe("Schema Comparison", () => {
     it("allowsTreeSuperset", () => {
         const repo = new StoredSchemaRepository(defaultSchemaPolicy);
         repo.updateTreeSchema(emptyTree.name, emptyTree);
-        const compare = (a: TreeSchema, b: TreeSchema): boolean => allowsTreeSuperset(repo, a, b);
+        const compare = (a: TreeSchema, b: TreeSchema): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
         testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTree]);
         testPartialOrder(
             compare,

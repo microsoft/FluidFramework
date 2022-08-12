@@ -13,11 +13,11 @@ import { GlobalFieldKey, TreeSchemaIdentifier, SchemaPolicy, SchemaData } from "
  * How compatible a particular view schema is for some operation on some specific document.
  */
 export enum Compatibility {
-    Compatible,
+    Incompatible,
     // For write compatibility this can include compatible schema updates to stored schema.
     // TODO: separate schema updates from adapters.
     RequiresAdapters,
-    Incompatible,
+    Compatible,
 }
 
 export interface TreeAdapter {
