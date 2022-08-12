@@ -66,6 +66,12 @@ function foldInMarkList(
             } else {
                 const composedMark = composeMarks(newMark, baseMark);
                 baseMarkList.splice(iBase, 1, ...composedMark);
+                if (composedMark.length === 0) {
+                    // If we're not inserting anything then the next base mark to consider will be at
+                    // the same index. We decrement the index here to compensate the increment that
+                    // always happens below.
+                    iBase -= 1;
+                }
             }
         }
         if (nextNewMark === undefined) {

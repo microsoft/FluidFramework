@@ -290,7 +290,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, deletion);
     });
 
-    it("insert | delete", () => {
+    it("insert | delete (within insert)", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
@@ -319,6 +319,49 @@ describe("SequenceChangeFamily - Compose", () => {
                     ] }],
                     [{ type: "Insert", id: 1, content: [
                         { type, value: 3 },
+                    ] }],
+                ],
+            },
+        };
+        assert.deepEqual(actual, expected);
+    });
+
+    it("insert | delete (across inserts)", () => {
+        const insert: SequenceChangeset = {
+            marks: {
+                root: [
+                    [{ type: "Insert", id: 1, content: [
+                        { type, value: 1 },
+                        { type, value: 2 },
+                    ] }],
+                    [{ type: "Insert", id: 2, content: [
+                        { type, value: 3 },
+                        { type, value: 4 },
+                    ] }],
+                    [{ type: "Insert", id: 3, content: [
+                        { type, value: 5 },
+                        { type, value: 6 },
+                    ] }],
+                ],
+            },
+        };
+        const deletion: SequenceChangeset = {
+            marks: {
+                root: [
+                    1,
+                    { type: "Delete", id: 2, count: 4 },
+                ],
+            },
+        };
+        const actual = compose([insert, deletion]);
+        const expected: SequenceChangeset = {
+            marks: {
+                root: [
+                    [{ type: "Insert", id: 1, content: [
+                        { type, value: 1 },
+                    ] }],
+                    [{ type: "Insert", id: 3, content: [
+                        { type, value: 6 },
                     ] }],
                 ],
             },
