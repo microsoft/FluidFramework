@@ -19,10 +19,14 @@
  *      The computed version output to the console.
  */
 
-import child_process from "child_process";
-import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
+import { sort as sort_semver, gte as gte_semver, prerelease as prerelease_semver } from "semver";
 import { Logger } from "@fluidframework/build-tools";
-import { detectVersionScheme, getLatestReleaseFromList } from "@fluid-tools/version-tools";
+import {
+    detectVersionScheme,
+    getLatestReleaseFromList,
+    isInternalVersionScheme,
+    getVersionFromTag,
+} from "@fluid-tools/version-tools";
 
 function parseFileVersion(file_version: string, build_id?: number) {
     const split = file_version.split("-");
@@ -108,19 +112,6 @@ const filterTags = (prefix: TagPrefix, tags: string[]): string[] =>
     tags.filter((v) => v.startsWith(`${prefix}_v`));
 
 /**
- * Extracts versions from the output of `git tag -l` in the working directory. The returned array will be sorted
- * ascending by semver version rules.
- *
- * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
- * @returns An array of versions extracted from the output of `git tag -l`.
- */
-function getVersions(prefix: TagPrefix) {
-    const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
-    const tags = raw_tags.split(/\s+/g).map((t) => t.trim());
-    return getVersionsFromStrings(prefix, tags);
-}
-
-/**
  * Extracts versions from an array of strings, sorts them according to semver rules, and returns the sorted array.
  *
  * @param prefix - The tag prefix to filter the tags by (client, server, etc.).
@@ -144,30 +135,38 @@ export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
 export function getIsLatest(
     prefix: TagPrefix,
     current_version: string,
-    input_tags?: string[],
+    input_tags: string[],
     // eslint-disable-next-line default-param-last
     includeInternalVersions = false,
     log?: Logger,
 ) {
-    const versions =
-        input_tags === undefined ? getVersions(prefix) : getVersionsFromStrings(prefix, input_tags);
+    const versions = input_tags.filter((t) => {
+        if (t === undefined) {
+            return false;
+        }
 
-    // The last item in the array is the latest because the array is already sorted.
-    let latestTaggedRelease = includeInternalVersions
-        ? getLatestReleaseFromList(versions)
-        : versions.slice(-1)[0] ?? "0.0.0";
+        if (!t.startsWith(`${prefix}_v`)) {
+            return false;
+        }
 
-    // const hasInternalReleases = versions.some(v => isInternalVersionScheme(v));
-    // const hasInternalPrereleases = versions.some(v => isInternalVersionScheme(v, true));
-    if (includeInternalVersions) {
-        console.log(`HERE!`);
-        latestTaggedRelease = getLatestReleaseFromList(versions);
-    }
+        if (includeInternalVersions) {
+            return true;
+        }
+
+        const v = getVersionFromTag(t);
+        if (v === undefined) {
+            return false;
+        }
+
+        return !isInternalVersionScheme(v);
+    });
+    const latestTaggedRelease = getLatestReleaseFromList(versions);
 
     log?.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
-    const currentIsGreater = gt_semver(current_version, latestTaggedRelease);
-    const currentIsPrerelease =
-        prerelease_semver(current_version) !== null &&
-        detectVersionScheme(current_version) !== "internalPrerelease";
+    const currentIsGreater = gte_semver(current_version, latestTaggedRelease);
+    const currentIsPrerelease = includeInternalVersions
+        ? detectVersionScheme(current_version) === "internalPrerelease"
+        : prerelease_semver(current_version) !== null;
+
     return currentIsGreater && !currentIsPrerelease;
 }

@@ -57,6 +57,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
     static args = [{ name: "file" }];
 
     public async run(): Promise<void> {
+        const context = await this.getContext();
         const flags = this.processedFlags;
         const isRelease = flags.release === "release";
         let fileVersion = "";
@@ -101,13 +102,9 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
             this.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
         }
 
+        const tags = await context.gitRepo.getAllTags();
         if (flags.tag !== undefined) {
-            const isLatest = getIsLatest(
-                flags.tag,
-                version,
-                undefined,
-                flags.includeInternalVersions,
-            );
+            const isLatest = getIsLatest(flags.tag, version, tags, flags.includeInternalVersions);
             this.log(`isLatest=${isLatest}`);
             if (isRelease && isLatest === true) {
                 this.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);

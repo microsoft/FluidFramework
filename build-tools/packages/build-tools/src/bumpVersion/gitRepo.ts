@@ -174,6 +174,16 @@ export class GitRepo {
     }
 
     /**
+     * Get all tags matching a pattern.
+     *
+     * @param pattern pattern of tags to get
+     */
+    public async getAllTags(pattern?: string): Promise<string[]> {
+        const results = pattern === undefined ? await this.exec(`tag -l`, `get all tags`) : await this.exec(`tag -l "${pattern}"`, `get tags ${pattern}`);
+        return results.split("\n").filter(t => t !== undefined && t !== "" && t !== null);
+    }
+
+    /**
      * Execute git command
      *
      * @param command the git command

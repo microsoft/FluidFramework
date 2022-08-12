@@ -82,20 +82,16 @@ describe("getVersionsFromStrings", () => {
 
     it("highest version should be 0.59.3000", () => {
         assert.equal(versions.slice(-1)[0], "0.59.3000");
-        for (const v of versions) {
-            console.log(v);
-        }
     });
 });
 
 describe("getIsLatest", () => {
     it("basic functionality", () => {
-        assert.equal(getIsLatest("client", "0.59.4000", []), true);
-        assert.equal(getIsLatest("client", "0.59.4000-1234", []), false);
+        assert.equal(getIsLatest("client", "0.59.4000", test_tags), true);
+        assert.equal(getIsLatest("client", "0.59.4000-1234", test_tags), false);
     });
 
     it("highest version should be 0.59.3000", () => {
-        // Highest version should be 0.59.3000
         assert.equal(getIsLatest("client", "0.59.4000", test_tags), true);
         assert.equal(getIsLatest("client", "0.59.3001", test_tags), true);
         assert.equal(getIsLatest("client", "0.59.4000-1234", test_tags), false);
@@ -117,7 +113,7 @@ describe("getIsLatest", () => {
         assert.equal(getIsLatest("client", "0.59.4000", post1_tags), false);
         assert.equal(getIsLatest("client", "0.59.3001", post1_tags), false);
         assert.equal(getIsLatest("client", "2.0.0-internal.1.0.0", post1_tags, true), true);
-        // assert.equal(getIsLatest("client", "2.0.0-internal.1.0.0.12345", post1_tags, true), false);
-        // assert.equal(getIsLatest("client", "1.2.3", post1_tags), true);
+        assert.equal(getIsLatest("client", "2.0.0-internal.1.0.0.12345", post1_tags, true), false);
+        assert.equal(getIsLatest("client", "1.2.3", post1_tags), true);
     });
 });
