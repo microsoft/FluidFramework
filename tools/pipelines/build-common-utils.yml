@@ -234,9 +234,9 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run lint'
 
- - stage: teststage
-   displayName: Test Stage
-   jobs:
+  - stage: teststage
+    displayName: Test Stage
+    jobs:
       # Job - Test
       - job: testjob
         displayName: Test Job
