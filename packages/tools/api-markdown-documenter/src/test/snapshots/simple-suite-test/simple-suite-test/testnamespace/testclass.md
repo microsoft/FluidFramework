@@ -45,7 +45,7 @@ constructor(testClassProperty: string);
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | string | See [TestClass.testClassProperty](simple-suite-test/testclass.md) |
+|  testClassProperty | string | See [TestClass.testClassProperty](docs/simple-suite-test/testclass#testclassproperty-Property) |
 
 ## Property Details
 

@@ -19,9 +19,21 @@ import { logWarning } from "./LoggingUtilities";
 import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTable, DocTableCell } from "./doc-nodes";
 import { CustomDocNodeKind } from "./doc-nodes/CustomDocNodeKind";
 
+/**
+ * {@link MarkdownEmitter} options.
+ */
 export interface EmitterOptions extends BaseEmitterOptions {
+    /**
+     * The root item of the documentation node tree being emitted.
+     */
     contextApiItem: ApiItem | undefined;
-    getFileNameForApiItem: (apiItem: ApiItem) => string | undefined;
+
+    /**
+     * Callback to get the link URL for the specified API item.
+     *
+     * @remarks Used when resolving member links.
+     */
+    getLinkUrlApiItem: (apiItem: ApiItem) => string | undefined;
 
     /**
      * Contextual heading level.
@@ -36,8 +48,15 @@ export interface EmitterOptions extends BaseEmitterOptions {
     headingLevel?: number;
 }
 
+/**
+ * Context used by {@link MarkdownEmitter.emit}.
+ */
 export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 
+/**
+ * Markdown documentation emitter.
+ * Processes an input tree of documentation related to an API model, and generates Markdown content from it.
+ */
 export class MarkdownEmitter extends BaseMarkdownEmitter {
     protected readonly apiModel: ApiModel;
 
@@ -111,12 +130,10 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                 options.contextApiItem,
             );
 
-        if (result.resolvedApiItem) {
-            const filename: string | undefined = options.getFileNameForApiItem(
-                result.resolvedApiItem,
-            );
+        if (result.resolvedApiItem !== undefined) {
+            const linkUrl = options.getLinkUrlApiItem(result.resolvedApiItem);
 
-            if (filename) {
+            if (linkUrl !== undefined) {
                 let linkText: string = docLinkTag.linkText || "";
                 if (linkText.length === 0) {
                     // Generate a name such as Namespace1.Namespace2.MyClass.myMethod()
@@ -128,7 +145,7 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                     );
                     context.writer.write("[");
                     context.writer.write(encodedLinkText);
-                    context.writer.write(`](${filename!})`);
+                    context.writer.write(`](${linkUrl})`);
                 } else {
                     logWarning("Unable to determine link text");
                 }

@@ -14,7 +14,7 @@ import {
 } from "./MarkdownDocumenterConfiguration";
 import { MarkdownEmitter } from "./MarkdownEmitter";
 import { renderApiPage, renderModelPage, renderPackagePage } from "./rendering";
-import { doesItemRequireOwnDocument, getFilePathForApiItem } from "./utilities";
+import { doesItemRequireOwnDocument, getLinkUrlForApiItem } from "./utilities";
 
 /**
  * This module contains the primary rendering entrypoints to the system.
@@ -121,8 +121,7 @@ export async function renderFiles(
                 document.contents,
                 {
                     contextApiItem: document.apiItem,
-                    getFileNameForApiItem: (_apiItem) =>
-                        getFilePathForApiItem(_apiItem, config, /* includeExtension: */ true),
+                    getLinkUrlApiItem: (_apiItem) => getLinkUrlForApiItem(_apiItem, config),
                 },
             );
 

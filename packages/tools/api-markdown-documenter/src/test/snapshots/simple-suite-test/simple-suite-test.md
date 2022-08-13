@@ -23,9 +23,9 @@ And an ordered list for good measure!
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
-- Good link (no alias): [TestClass](simple-suite-test/testclass.md)
+- Good link (no alias): [TestClass](docs/simple-suite-test/testclass)
 
-- Good link (with alias): [function alias text](simple-suite-test.md)
+- Good link (with alias): [function alias text](docs/simple-suite-test#testfunction-Function)
 
 - Bad link (no alias): *InvalidItem*
 
@@ -64,7 +64,7 @@ const foo = bar;
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestMappedType](docs/simple-suite-test#testmappedtype-TypeAlias) |  | Test Mapped Type, using [TestEnum](simple-suite-test.md) |
+|  [TestMappedType](docs/simple-suite-test#testmappedtype-TypeAlias) |  | Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-Enum) |
 |  [TypeAlias](docs/simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
 
 ## Functions
@@ -92,7 +92,7 @@ const foo = bar;
 
 ### TestMappedType {#testmappedtype-TypeAlias}
 
-Test Mapped Type, using [TestEnum](simple-suite-test.md)
+Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-Enum)
 
 #### Remarks
 
@@ -128,7 +128,7 @@ Test function
 
 #### Remarks
 
-This is a test [link](simple-suite-test/testinterface.md) to another API member
+This is a test [link](docs/simple-suite-test/testinterface) to another API member
 
 #### Signature
 

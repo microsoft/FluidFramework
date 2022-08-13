@@ -62,8 +62,8 @@ constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => vo
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](simple-suite-test/testclass.md) |
-|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](simple-suite-test/testclass.md) |
+|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](docs/simple-suite-test/testclass#testclassproperty-Property) |
+|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](docs/simple-suite-test/testclass#testclasseventproperty-Property) |
 
 ## Property Details
 

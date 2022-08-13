@@ -143,15 +143,13 @@ export function doesItemKindRequireOwnDocument(kind: ApiItemKind, documentBounda
 // @public
 export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
 
-// @public (undocumented)
+// @public
 export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 
-// @public (undocumented)
+// @public
 export interface EmitterOptions extends IMarkdownEmitterOptions {
-    // (undocumented)
     contextApiItem: ApiItem | undefined;
-    // (undocumented)
-    getFileNameForApiItem: (apiItem: ApiItem) => string | undefined;
+    getLinkUrlApiItem: (apiItem: ApiItem) => string | undefined;
     headingLevel?: number;
 }
 
@@ -240,7 +238,7 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
 // @public (undocumented)
 export function markdownDocumenterConfigurationWithDefaults(partialConfig: MarkdownDocumenterConfiguration): Required<MarkdownDocumenterConfiguration>;
 
-// @public (undocumented)
+// @public
 export class MarkdownEmitter extends MarkdownEmitter_2 {
     constructor(apiModel: ApiModel);
     // (undocumented)
