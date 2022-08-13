@@ -137,22 +137,88 @@ variables:
   # running terminal.  The log output shown in Azure DevOps job runs only has
   # basic ANSI color support though, so force that in the pipeline
   - name: FORCE_COLOR
-    value: 1
-  - template: templates/include-vars.yml
-    parameters:
-      publishOverride: ${{ parameters.publishOverride }}
-      releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-      nonScopedPackages: ${{ parameters.nonScopedPackages }}
+  - group: prague-key-vault
+  - name: skipComponentGovernanceDetection
+    value: true
+  - name: testBuild
+    value: ${{ lower(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}
+  - name: shouldPublish
+    value: ${{
+      and(
+        and(
+          ne(variables['Build.Reason'], 'PullRequest'),
+          ne(variables['System.TeamProject'], 'public')
+        ),
+        or(
+          and(
+            ne(parameters.buildNumberInPatch, true),
+            startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+          ),
+          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+          variables.testBuild
+        )
+      )}}
+  - name: canRelease
+    value: ${{
+      or(
+        eq(parameters.publishOverride, 'force'),
+        or(
+          and(
+            eq(parameters.buildNumberInPatch, true),
+            eq(variables['Build.SourceBranch'], 'refs/heads/main')
+          ),
+          and(
+            ne(parameters.buildNumberInPatch, true),
+            startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+          )
+        )
+      )}}
+  - name: publish
+    value: ${{
+      or(
+        eq(parameters.publishOverride, 'force'),
+        and(
+          ne(parameters.publishOverride, 'skip'),
+          eq(variables.shouldPublish, true)
+        )
+      )}}
+  - name: componentDetection
+    value: ${{ variables.publish }}
+  - name: pushImage
+    value: ${{ variables.publish }}
+  - name: releaseImage
+    value: ${{
+      and(
+        eq(variables.pushImage, true),
+        eq(parameters.releaseImage, true)
+      )}}
+  - name: publishNonScopedPackages
+    value: ${{
+      ne(
+        length(parameters.nonScopedPackages),
+        0
+      )}}
+
+  # compute the release variable
+  - ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
+    - ${{ if eq(variables.shouldPublish, true) }}:
+      - name: release
+        value: $[variables.releaseBuild]
+    - ${{ if ne(variables.shouldPublish, true) }}:
+      - name: release
+        value: none
+  - ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
+    - name: release
+      value: ${{ parameters.releaseBuildOverride }}
 
 stages:
   # Install / Build / Test Stage
-  - stage: build
+  - stage: buildstage
     displayName: Build Stage
     jobs:
       # Job - Build
-      - job: build
-        displayName: Build
+      - job: buildjob
+        displayName: Build Job
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
