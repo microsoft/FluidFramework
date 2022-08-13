@@ -61,11 +61,11 @@ async function snapshotTest(
 }
 
 function apiTestSuite(
-    suiteName: string,
+    packageName: string,
     apiReportFilePath: string,
     configLessApiModel: Omit<MarkdownDocumenterConfiguration, "apiModel">,
 ): Suite {
-    return describe(suiteName, async () => {
+    return describe(packageName, async () => {
         let config: Required<MarkdownDocumenterConfiguration>;
         before(async () => {
             // Clear any existing test_temp data
@@ -82,14 +82,14 @@ function apiTestSuite(
 
         it("Render Model page (smoke test)", () => {
             const result = renderModelPage(config.apiModel, config);
-            expect(result.path).to.equal("index.md");
+            expect(result.path).to.equal("index.md"); // TODO: make this configurable
         });
 
         it("Render Package page (smoke test)", () => {
             const packageItem = config.apiModel.packages[0];
 
             const result = renderPackagePage(packageItem, config);
-            expect(result.path).to.equal("simple-suite-test.md");
+            expect(result.path).to.equal(`${packageName}.md`);
         });
 
         it("Ensure no duplicate file paths", () => {
@@ -113,7 +113,7 @@ function apiTestSuite(
 
         // TODO: by config
         it("Snapshot test", async () => {
-            await snapshotTest(suiteName, config);
+            await snapshotTest(packageName, config);
         });
     });
 }
@@ -131,7 +131,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 
     // Run the test suite against this package's own report
     apiTestSuite(
-        "package-report-test",
+        "api-markdown-documenter",
         // Relative to dist/test
         Path.resolve(
             __dirname,
