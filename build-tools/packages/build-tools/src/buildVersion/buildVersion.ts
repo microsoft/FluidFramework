@@ -155,36 +155,22 @@ export function getIsLatest(
     let versions = input_tags === undefined
         ? getVersions(prefix)
         : getVersionsFromStrings(prefix, input_tags);
-    // console.log(versions);
-
-    // input_tags = input_tags ??
     versions = versions.filter((v) => {
         if (v === undefined) {
             return false;
         }
 
-        // if (!t.startsWith(`${prefix}_v`)) {
-        //     return false;
-        // }
-
         if (includeInternalVersions) {
             return true;
         }
 
-        // const v = getVersionFromTag(t);
-        // if (v === undefined) {
-        //     return false;
-        // }
-
         return !isInternalVersionScheme(v);
     });
-    // console.log(versions);
-    const latestTaggedRelease = getLatestReleaseFromList(versions);
 
+    const latestTaggedRelease = getLatestReleaseFromList(versions);
     assert(latestTaggedRelease !== undefined, `latestTaggedRelease is undefined`);
 
     log?.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
-    console.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
     const currentIsGreater = gte_semver(current_version, latestTaggedRelease);
     const currentIsPrerelease = includeInternalVersions
         ? detectVersionScheme(current_version) === "internalPrerelease"

@@ -28,9 +28,6 @@ export function test() {
     assert.equal(getSimpleVersion("0.16.0-beta", "12345.0", true, false), "0.16.0-beta");
 
     // Test isLatest
-    // assert.equal(getIsLatest("client", "0.59.4000", []), true);
-    // assert.equal(getIsLatest("client", "0.59.4000-1234", []), false);
-
     // Deliberately not sorted here; highest version is 0.59.3000
     const test_tags = [
         "client_v0.59.1001-62246",
