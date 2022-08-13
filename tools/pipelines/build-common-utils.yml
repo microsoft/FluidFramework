@@ -234,6 +234,9 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run lint'
 
+        - publish: $(System.DefaultWorkingDirectory)
+          artifact: Everything
+
   - stage: teststage
     displayName: Test Stage
     jobs:
@@ -244,6 +247,9 @@ stages:
         variables:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
         steps:
+        - download: current
+          artifact: Everything
+
         # Use Node
         - task: UseNode@1
           displayName: Use Node 14.x
