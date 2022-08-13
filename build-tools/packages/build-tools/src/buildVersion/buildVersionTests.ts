@@ -28,6 +28,9 @@ export function test() {
     assert.equal(getSimpleVersion("0.16.0-beta", "12345.0", true, false), "0.16.0-beta");
 
     // Test isLatest
+    assert.equal(getIsLatest("client", "0.59.4000", []), true);
+    assert.equal(getIsLatest("client", "0.59.4000-1234", []), false);
+
     // Deliberately not sorted here; highest version is 0.59.3000
     const test_tags = [
         "client_v0.59.1001-62246",
@@ -45,9 +48,6 @@ export function test() {
 
     // Highest version should be 0.59.3000
     assert.equal(versions.slice(-1)[0], "0.59.3000");
-    for (const v of versions) {
-        console.log(v);
-    }
 
     assert.equal(getIsLatest("client", "0.59.4000", test_tags), true);
     assert.equal(getIsLatest("client", "0.59.3001", test_tags), true);
@@ -88,5 +88,5 @@ export function test() {
     assert.equal(getIsLatest("client", "2.0.0-internal.1.0.0.12345", post1_tags, true), false);
     assert.equal(getIsLatest("client", "1.2.3", post1_tags), true);
 
-    console.log("Test passed!");
+    console.log("Tests passed!");
 }

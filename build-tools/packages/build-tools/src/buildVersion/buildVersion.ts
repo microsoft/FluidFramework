@@ -148,8 +148,10 @@ export function getIsLatest(
     includeInternalVersions = false,
     log?: Logger,
 ) {
+    let latestTaggedRelease: string;
+
     if(input_tags?.length === 0) {
-        return true;
+        latestTaggedRelease = "0.0.0";
     }
 
     let versions = input_tags === undefined
@@ -167,8 +169,10 @@ export function getIsLatest(
         return !isInternalVersionScheme(v);
     });
 
-    const latestTaggedRelease = getLatestReleaseFromList(versions);
-    assert(latestTaggedRelease !== undefined, `latestTaggedRelease is undefined`);
+    latestTaggedRelease = getLatestReleaseFromList(versions);
+    if(versions.length === 0 || latestTaggedRelease === undefined) {
+        latestTaggedRelease = "0.0.0";
+    }
 
     log?.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
     const currentIsGreater = gte_semver(current_version, latestTaggedRelease);
