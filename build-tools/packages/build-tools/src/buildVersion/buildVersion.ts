@@ -17,9 +17,16 @@
  *      The computed version output to the console.
  */
 
+import {strict as assert } from "assert";
+import {
+    isInternalVersionScheme,
+    getLatestReleaseFromList,
+    detectVersionScheme,
+} from "@fluid-tools/version-tools";
 import child_process from "child_process";
 import fs from "fs";
-import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
+import { sort as sort_semver, gte as gte_semver, prerelease as prerelease_semver } from "semver";
+import { Logger } from "../common/logging";
 import { test } from "./buildVersionTests";
 
 function getFileVersion() {
@@ -109,7 +116,7 @@ const filterTags = (prefix: TagPrefix, tags: string[]): string[] => tags.filter(
  */
 function getVersions(prefix: TagPrefix) {
     const raw_tags = child_process.execSync(`git tag -l`, { encoding: "utf8" });
-    const tags = raw_tags.split(/\s+/g).map(t => t.trim());
+    const tags = raw_tags.split(/\s+/g).map(t => t.trim()).filter((t) => t !== undefined && t !== "" && t !== null);
     return getVersionsFromStrings(prefix, tags);
 }
 
@@ -133,15 +140,56 @@ export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
  * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
  * pre-release version).
  */
-export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[]) {
-    const versions = input_tags !== undefined ? getVersionsFromStrings(prefix, input_tags) : getVersions(prefix);
+export function getIsLatest(
+    prefix: TagPrefix,
+    current_version: string,
+    input_tags?: string[],
+    // eslint-disable-next-line default-param-last
+    includeInternalVersions = false,
+    log?: Logger,
+) {
+    if(input_tags?.length === 0) {
+        return true;
+    }
 
-    // The last item in the array is the latest because the array is already sorted.
-    const latestTaggedRelease = versions.slice(-1)[0] ?? "0.0.0";
+    let versions = input_tags === undefined
+        ? getVersions(prefix)
+        : getVersionsFromStrings(prefix, input_tags);
+    // console.log(versions);
 
+    // input_tags = input_tags ??
+    versions = versions.filter((v) => {
+        if (v === undefined) {
+            return false;
+        }
+
+        // if (!t.startsWith(`${prefix}_v`)) {
+        //     return false;
+        // }
+
+        if (includeInternalVersions) {
+            return true;
+        }
+
+        // const v = getVersionFromTag(t);
+        // if (v === undefined) {
+        //     return false;
+        // }
+
+        return !isInternalVersionScheme(v);
+    });
+    // console.log(versions);
+    const latestTaggedRelease = getLatestReleaseFromList(versions);
+
+    assert(latestTaggedRelease !== undefined, `latestTaggedRelease is undefined`);
+
+    log?.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
     console.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
-    const currentIsGreater = gt_semver(current_version, latestTaggedRelease);
-    const currentIsPrerelease = prerelease_semver(current_version) !== null;
+    const currentIsGreater = gte_semver(current_version, latestTaggedRelease);
+    const currentIsPrerelease = includeInternalVersions
+        ? detectVersionScheme(current_version) === "internalPrerelease"
+        : prerelease_semver(current_version) !== null;
+
     return currentIsGreater && !currentIsPrerelease;
 }
 
