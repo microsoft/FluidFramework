@@ -50,8 +50,7 @@ steps:
       echo VERSION_PATCH=$VERSION_PATCH
       echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
 
-      flub --help
-      flub generate buildVersion
+      fluid-build-version
 - task: Bash@3
   displayName: Update Package Version
   env:
