@@ -15,11 +15,10 @@ import {
 import {
     treeSchema, fieldSchema, rootFieldKey,
     FieldSchema,
-    GlobalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema, StoredSchemaRepository,
+    GlobalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema, StoredSchemaRepository, SchemaData,
 } from "../../../schema-stored";
 import {
-    Adapters, Compatibility, MissingFieldAdapter, TreeAdapter,
-    ViewSchemaData,
+    Adapters, Compatibility, TreeAdapter, FieldAdapter,
 } from "../../../schema-view";
 import { brand } from "../../../util";
 import { defaultSchemaPolicy, emptyField, FieldKinds } from "../../../feature-libraries";
@@ -116,6 +115,8 @@ describe("Schema Evolution Examples", () => {
 
     const root: FieldTypeView = new FieldTypeView(FieldKinds.value, [canvasIdentifier]);
 
+    const tolerantRoot = new FieldTypeView(FieldKinds.optional, [canvasIdentifier]);
+
     const treeViewSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema> = new Map([
         [canvasIdentifier, canvas],
         [numberIdentifier, number],
@@ -172,18 +173,16 @@ describe("Schema Evolution Examples", () => {
             // applies just the same in non-root cases, and thus the resolutions apply would also apply to other cases.
         }
 
-        // There are two ways the app could add support for handling empty documents.
-        // 1. By adjusting it's view schema for the root field to tolerate empty (by making it optional).
-        // 2. By providing a MissingFieldAdapter adapter for the root field (ex: by providing a default empty canvas).
-
-        // This example picks the first approach.
-        // Lets simulate the developers of the app making this change by modifying the view schema
-        // (instead of reloading it all).
-        const tolerantRoot = new FieldTypeView(FieldKinds.optional, [canvasIdentifier]);
-
         {
+            // There are two ways the app could add support for handling empty documents.
+            // 1. By adjusting it's view schema for the root field to tolerate empty (by making it optional).
+            // 2. By providing a MissingFieldAdapter adapter for the root field
+            //    (ex: by providing a default empty canvas).
+
+            // This example picks the first approach.
+            // Lets simulate the developers of the app making this change by modifying the view schema:
             const viewCollection2: ViewSchemaCollection = {
-                globalFieldSchema: new Map([[rootFieldKey, tolerantRoot]]),
+                globalFieldSchema: new Map([[rootFieldKey, tolerantRoot]]), // This was updated
                 treeSchema: viewCollection.treeSchema,
             };
             const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
@@ -276,6 +275,17 @@ describe("Schema Evolution Examples", () => {
         }
     });
 
+    function makeTolerantRootAdapter(view: SchemaData): FieldAdapter {
+        return {
+            field: rootFieldKey,
+            convert: (field): FieldSchema => {
+                const allowed = allowsFieldSuperset(defaultSchemaPolicy, view, field, tolerantRoot);
+                const out: FieldSchema = allowed ? root : field;
+                return out;
+            },
+        };
+    }
+
     /**
      * This shows basic usage of stored and view schema including adapters.
      */
@@ -291,7 +301,9 @@ describe("Schema Evolution Examples", () => {
         // Register an adapter that handles a missing root.
         // Currently we are just declaring that such a handler exits:
         // the API for saying what to do in this case are not done.
-        const adapters: Adapters = { missingField: new Map([[rootFieldKey, { field: rootFieldKey }]]) };
+        const adapters: Adapters = { fieldAdapters: new Map([
+            [rootFieldKey, makeTolerantRootAdapter(viewCollection)],
+        ]) };
         // Compose all the view information together.
         const view = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection);
 
@@ -308,28 +320,31 @@ describe("Schema Evolution Examples", () => {
         // And since the document schema currently excludes empty roots, its also incompatible for writing:
         assertEnumEqual(Compatibility, compat.write, Compatibility.Incompatible);
 
-        // Additionally even updating the document schema can't save this app,
-        // since the new schema would be incompatible with the existing document content.
+        // Additionally even updating the document schema can't avoid needing an adapter for the root,
+        // since the new schema would be incompatible with possible existing document content (empty documents).
         assertEnumEqual(Compatibility, compat.writeAllowingStoredSchemaUpdates, Compatibility.RequiresAdapters);
 
         // Like with the basic example,
         // the app makes a choice here about its policy for if and when to update stored schema.
         // Lets assume eventually it updates the schema, either eagerly or lazily.
-        // It will be updated to:
-        const adaptedSchema = view.adaptRepo(stored);
-        // Do the actual update:
-        // TODO
-        // for (const [key, schema] of adaptedSchema.globalFieldSchema) {
-        // 	assert(stored.tryUpdateFieldSchema(key, schema));
-        // }
-        // for (const [key, schema] of adaptedSchema.treeSchema) {
-        // 	assert(stored.tryUpdateTreeSchema(key, schema));
-        // }
+
+        // Update what schema we can (this will not update the root schema, since that would be incompatible).
+        for (const [key, schema] of view.schema.globalFieldSchema) {
+            // We expect the root update to fail, so asserting this fails
+            // (root is the only global field in the view schema);
+            assert(!stored.tryUpdateFieldSchema(key, schema));
+        }
+        for (const [key, schema] of view.schema.treeSchema) {
+            // All the tree schema in the view should be compatible with the stored schema,
+            // so for this particular case we assert these all pass.
+            assert(stored.tryUpdateTreeSchema(key, schema));
+        }
 
         // That will cause the document stored schema to change,
         // which will notify and applications with the document open.
         // They can recheck their compatibility:
         const compatNew = view.checkCompatibility(stored);
+        // We still need the adapter to handle empty documents.
         assertEnumEqual(Compatibility, compatNew.read, Compatibility.RequiresAdapters);
         // It is now possible to write our data into the document, since we have updated its stored schema.
         assertEnumEqual(Compatibility, compatNew.write, Compatibility.Compatible);
@@ -391,8 +406,8 @@ describe("Schema Evolution Examples", () => {
         const textAdapter: TreeAdapter = { input: textIdentifier, output: formattedTextIdentifier };
 
         // Include adapters for all compatibility cases: empty root and old text.
-        const rootAdapter: MissingFieldAdapter = { field: rootFieldKey };
-        const adapters: Adapters = { missingField: new Map([[rootFieldKey, rootAdapter]]), tree: [textAdapter] };
+        const rootAdapter: FieldAdapter = makeTolerantRootAdapter(viewCollection);
+        const adapters: Adapters = { fieldAdapters: new Map([[rootFieldKey, rootAdapter]]), tree: [textAdapter] };
 
         const view = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection);
 
@@ -408,13 +423,12 @@ describe("Schema Evolution Examples", () => {
         // Check this works for documents with old text
         {
             const stored = new TestSchemaRepository(defaultSchemaPolicy);
-            // This is the root type produced by the adapter for the root.
-            const tolerantRoot = fieldSchema(FieldKinds.optional, [canvasIdentifier]);
             assert(stored.tryUpdateTreeSchema(canvasIdentifier, canvas));
             assert(stored.tryUpdateTreeSchema(numberIdentifier, number));
             assert(stored.tryUpdateTreeSchema(pointIdentifier, point));
             assert(stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem));
             assert(stored.tryUpdateTreeSchema(textIdentifier, string));
+            // This is the root type produced by the adapter for the root.
             assert(stored.tryUpdateFieldSchema(rootFieldKey, tolerantRoot));
 
             const compat = view.checkCompatibility(stored);

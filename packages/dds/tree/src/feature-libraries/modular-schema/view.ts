@@ -11,7 +11,7 @@ import {
     FieldKindIdentifier,
     GlobalFieldKey,
 } from "../../schema-stored";
-import { Adapters, ViewSchemaData, AdaptedViewSchema, Compatibility } from "../../schema-view";
+import { Adapters, ViewSchemaData, AdaptedViewSchema, Compatibility, FieldAdapter } from "../../schema-view";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
 import { allowsRepoSuperset, isNeverTree } from "./comparison";
 
@@ -37,7 +37,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
      * TODO: this API violates the parse don't validate design philosophy.
      * It should be wrapped with (or replaced by) a parse style API.
      */
-     public checkCompatibility(
+    public checkCompatibility(
         stored: SchemaData,
     ): {
         read: Compatibility;
@@ -117,15 +117,11 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
         }
         const adapted = new StoredSchemaRepository(this.policy);
         for (const [key, schema] of stored.globalFieldSchema) {
-            const adapatedField = this.adaptField(
-                schema,
-                this.adapters,
-                this.adapters.missingField?.has(key) ?? false,
-            );
-            adapted.updateFieldSchema(key, adapatedField);
+            const adaptedField = this.adaptField(schema, this.adapters.fieldAdapters?.get(key));
+            adapted.updateFieldSchema(key, adaptedField);
         }
         for (const [key, schema] of stored.treeSchema) {
-            const adapatedTree = this.adaptTree(schema, this.adapters);
+            const adapatedTree = this.adaptTree(schema);
             adapted.updateTreeSchema(key, adapatedTree);
         }
 
@@ -136,42 +132,30 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
     /**
      * Adapt original such that it allows member types which can be adapted to its specified types.
      */
-    adaptField(
+    private adaptField(
         original: FieldSchema,
-        adapters: Adapters,
-        allowMissing: boolean,
+        adapter: FieldAdapter | undefined,
     ): FieldSchema {
-        const kind = this.adaptKind(this.policy.fieldKinds.get(original.kind) ?? fail("missing kind"), allowMissing);
         if (original.types) {
             const types: Set<TreeSchemaIdentifier> = new Set(original.types);
-            for (const adapter of adapters?.tree ?? []) {
-                if (original.types.has(adapter.output)) {
-                    types.add(adapter.input);
+            for (const treeAdapter of this.adapters?.tree ?? []) {
+                if (original.types.has(treeAdapter.output)) {
+                    types.add(treeAdapter.input);
                 }
             }
 
-            return { ...original, types, kind: kind.identifier };
+            return adapter?.convert?.({ kind: original.kind, types }) ?? { kind: original.kind, types };
         }
-        return { ...original, kind: kind.identifier };
+        return adapter?.convert?.(original) ?? original;
     }
 
-    adaptTree(original: TreeSchema, adapters: Adapters): TreeSchema {
+    private adaptTree(original: TreeSchema): TreeSchema {
         const localFields: Map<LocalFieldKey, FieldSchema> = new Map();
         for (const [key, schema] of original.localFields) {
             // TODO: support missing field adapters for local fields.
-            localFields.set(key, this.adaptField(schema, adapters, false));
+            localFields.set(key, this.adaptField(schema, undefined));
         }
         return { ...original, localFields };
-    }
-
-    adaptKind(original: FieldKind, allowMissing: boolean): FieldKind {
-        // TODO: implement this properly.
-        // if (allowMissing) {
-        //     return original === FieldKinds.value
-        //         ? FieldKindView.Optional
-        //         : original;
-        // }
-        return original;
     }
 }
 

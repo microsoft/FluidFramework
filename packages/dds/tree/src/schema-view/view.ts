@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GlobalFieldKey, TreeSchemaIdentifier, SchemaPolicy, SchemaData } from "../schema-stored";
+import { GlobalFieldKey, TreeSchemaIdentifier, SchemaPolicy, SchemaData, FieldSchema } from "../schema-stored";
 
 /**
  * APIs for applying `view schema` to documents.
@@ -27,10 +27,11 @@ export interface TreeAdapter {
     // TODO: include actual adapter functionality, not just what types it converts
 }
 
-export interface MissingFieldAdapter {
+export interface FieldAdapter {
     readonly field: GlobalFieldKey;
 
-    // TODO: include actual adapter functionality, not just what types it converts
+    convert(stored: FieldSchema): FieldSchema;
+    // TODO: include actual adapter functionality (to provide the missing values), not just what types it converts
 }
 
 /**
@@ -42,7 +43,10 @@ export interface MissingFieldAdapter {
  */
 export interface Adapters {
     readonly tree?: readonly TreeAdapter[];
-    readonly missingField?: ReadonlyMap<GlobalFieldKey, MissingFieldAdapter>;
+    /**
+     * Handlers for when a fields is missing.
+     */
+    readonly fieldAdapters?: ReadonlyMap<GlobalFieldKey, FieldAdapter>;
 }
 
 /**
