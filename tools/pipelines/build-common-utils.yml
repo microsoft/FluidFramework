@@ -131,8 +131,6 @@ stages:
       - job: buildjob
         displayName: Build Job
         pool: ${{ parameters.poolBuild }}
-        variables:
-          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
         steps:
         # Setup
         - checkout: self
@@ -236,6 +234,16 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run lint'
 
+ - stage: teststage
+   displayName: Test Stage
+   jobs:
+      # Job - Test
+      - job: testjob
+        displayName: Test Job
+        pool: ${{ parameters.poolBuild }}
+        variables:
+          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+        steps:
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
           # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
