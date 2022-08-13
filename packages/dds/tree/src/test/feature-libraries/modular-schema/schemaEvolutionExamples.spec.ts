@@ -334,6 +334,9 @@ describe("Schema Evolution Examples", () => {
             // (root is the only global field in the view schema);
             assert(!stored.tryUpdateFieldSchema(key, schema));
         }
+        // We can update the root to be optional:
+        // TODO: add an automated way to determine that this is an upgrade that is needed and allowed.
+        stored.tryUpdateFieldSchema(rootFieldKey, tolerantRoot);
         for (const [key, schema] of view.schema.treeSchema) {
             // All the tree schema in the view should be compatible with the stored schema,
             // so for this particular case we assert these all pass.

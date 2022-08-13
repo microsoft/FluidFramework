@@ -175,7 +175,7 @@ export const value: FieldKind = new FieldKind(
         encoder: new ValueEncoder<JsonableTree & JsonCompatibleReadOnly>(),
     },
     (types, other) =>
-        (other.kind === sequence.identifier || other.kind === value.identifier)
+        (other.kind === sequence.identifier || other.kind === value.identifier || other.kind === optional.identifier)
         && allowsTreeSchemaIdentifierSuperset(types, other.types),
     new Set(),
 );

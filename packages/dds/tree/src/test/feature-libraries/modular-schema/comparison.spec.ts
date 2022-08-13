@@ -86,6 +86,11 @@ describe("Schema Comparison", () => {
         value: ValueSchema.Nothing,
     };
 
+    const valueAnyField = fieldSchema(FieldKinds.value);
+    const valueEmptyTreeField = fieldSchema(FieldKinds.value, [emptyTree.name]);
+    const optionalAnyField = fieldSchema(FieldKinds.optional);
+    const optionalEmptyTreeField = fieldSchema(FieldKinds.optional, [emptyTree.name]);
+
     it("isNeverField", () => {
         const repo = new StoredSchemaRepository(defaultSchemaPolicy);
         assert(isNeverField(defaultSchemaPolicy, repo, neverField));
@@ -97,8 +102,13 @@ describe("Schema Comparison", () => {
         assert(isNeverField(defaultSchemaPolicy, repo, neverField2));
         assert.equal(isNeverField(defaultSchemaPolicy, repo, emptyField), false);
         assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
+        assert.equal(isNeverField(defaultSchemaPolicy, repo, valueEmptyTreeField), true);
         repo.updateTreeSchema(brand("empty"), emptyTree);
         assert.equal(isNeverField(defaultSchemaPolicy, repo, fieldSchema(FieldKinds.value, [brand("empty")])), false);
+        assert.equal(isNeverField(defaultSchemaPolicy, repo, valueAnyField), false);
+        assert.equal(isNeverField(defaultSchemaPolicy, repo, valueEmptyTreeField), false);
+        assert.equal(isNeverField(defaultSchemaPolicy, repo, optionalAnyField), false);
+        assert.equal(isNeverField(defaultSchemaPolicy, repo, optionalEmptyTreeField), false);
     });
 
     it("isNeverTree", () => {
@@ -173,14 +183,20 @@ describe("Schema Comparison", () => {
     it("allowsFieldSuperset", () => {
         const repo = new StoredSchemaRepository(defaultSchemaPolicy);
         repo.updateTreeSchema(brand("never"), neverTree);
+        repo.updateTreeSchema(emptyTree.name, emptyTree);
         const neverField2: FieldSchema = fieldSchema(
             FieldKinds.value,
             [brand("never")],
         );
         const compare = (a: FieldSchema, b: FieldSchema): boolean =>
             allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
-        testOrder(compare, [neverField, emptyField, anyField]);
-        testPartialOrder(compare, [neverField, neverField2, emptyField, anyField], [[neverField, neverField2]]);
+        testOrder(compare, [neverField, emptyField, optionalEmptyTreeField, optionalAnyField, anyField]);
+        testOrder(compare, [neverField, valueEmptyTreeField, valueAnyField, anyField]);
+        assert.equal(getOrdering(valueEmptyTreeField, emptyField, compare), Ordering.Incomparable);
+        testPartialOrder(compare, [
+            neverField, neverField2, emptyField, anyField,
+            valueEmptyTreeField, valueAnyField, valueEmptyTreeField, valueAnyField,
+        ], [[neverField, neverField2]]);
     });
 
     it("allowsTreeSuperset", () => {
