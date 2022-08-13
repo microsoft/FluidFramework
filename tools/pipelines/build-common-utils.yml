@@ -244,6 +244,12 @@ stages:
         variables:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
         steps:
+        # Use Node
+        - task: UseNode@1
+          displayName: Use Node 14.x
+          inputs:
+            version: 14.x
+
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
           # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
