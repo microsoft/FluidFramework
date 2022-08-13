@@ -79,23 +79,6 @@ parameters:
   type: string
   default: common-utils
 
-- name: releaseBuildOverride
-  displayName: Release Build (default = not released)
-  type: string
-  default: none
-  values:
-    - none
-    - prerelease
-    - release
-- name: publishOverride
-  displayName: Publish Override (default = based on branch)
-  type: string
-  default: default
-  values:
-    - default
-    - skip
-    - force
-
 trigger:
   branches:
     include:
@@ -142,74 +125,6 @@ variables:
     value: true
   - name: testBuild
     value: ${{ lower(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}
-  - name: shouldPublish
-    value: ${{
-      and(
-        and(
-          ne(variables['Build.Reason'], 'PullRequest'),
-          ne(variables['System.TeamProject'], 'public')
-        ),
-        or(
-          and(
-            ne(parameters.buildNumberInPatch, true),
-            startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
-          ),
-          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
-          variables.testBuild
-        )
-      )}}
-  - name: canRelease
-    value: ${{
-      or(
-        eq(parameters.publishOverride, 'force'),
-        or(
-          and(
-            eq(parameters.buildNumberInPatch, true),
-            eq(variables['Build.SourceBranch'], 'refs/heads/main')
-          ),
-          and(
-            ne(parameters.buildNumberInPatch, true),
-            startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
-          )
-        )
-      )}}
-  - name: publish
-    value: ${{
-      or(
-        eq(parameters.publishOverride, 'force'),
-        and(
-          ne(parameters.publishOverride, 'skip'),
-          eq(variables.shouldPublish, true)
-        )
-      )}}
-  - name: componentDetection
-    value: ${{ variables.publish }}
-  - name: pushImage
-    value: ${{ variables.publish }}
-  - name: releaseImage
-    value: ${{
-      and(
-        eq(variables.pushImage, true),
-        eq(parameters.releaseImage, true)
-      )}}
-  - name: publishNonScopedPackages
-    value: ${{
-      ne(
-        length(parameters.nonScopedPackages),
-        0
-      )}}
-
-  # compute the release variable
-  - ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
-    - ${{ if eq(variables.shouldPublish, true) }}:
-      - name: release
-        value: $[variables.releaseBuild]
-    - ${{ if ne(variables.shouldPublish, true) }}:
-      - name: release
-        value: none
-  - ${{ if ne(parameters.releaseBuildOverride, 'none') }}:
-    - name: release
-      value: ${{ parameters.releaseBuildOverride }}
 
 stages:
   # Install / Build / Test Stage
@@ -222,7 +137,6 @@ stages:
         pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
-          releaseBuildVar: $[variables.releaseBuild]
         steps:
         # Setup
         - checkout: self
@@ -239,13 +153,6 @@ stages:
               # Show all task group conditions
 
               echo "
-              Pipeline Variables:
-                releaseBuild=$(releaseBuildVar)
-
-              Override Parameters:
-                publishOverride=${{ parameters.publishOverride }}
-                releaseBuildOverride=${{ parameters.releaseBuildOverride }}
-
               Tasks Parameters:
                 BuildDir=${{ parameters.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
@@ -261,43 +168,7 @@ stages:
                 shouldPublish=${{ variables.shouldPublish }}
                 componentDetection=${{ variables.componentDetection }}
                 publish=${{ variables.publish }}
-                canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
-
-                release=$(release)"
-
-              # Error checking
-              if [[ "$(release)" == "release" ]]; then
-                if [[ "${{ variables.canRelease }}" == "False" ]]; then
-                  echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
-                  exit -1;
-                fi
-
-                if [ -f "lerna.json" ]; then
-                  grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
-                else
-                  grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
-                fi
-
-                if [[ $? == 0 ]]; then
-                  echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
-                  exit -1;
-                fi
-              fi
-
-              if [[ "$(release)" == "prerelease" ]]; then
-                if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
-                  echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
-                  exit -1;
-                fi
-              fi
-
-              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                if [[ "${{ variables.publish }}" != "True" ]]; then
-                  echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
-                  exit -1;
-                fi
-              fi
 
         # Install
         - task: UseNode@1
@@ -330,7 +201,6 @@ stages:
           name: SetVersion
           displayName: Set Package Version
           env:
-            VERSION_RELEASE: $(release)
             VERSION_BUILDNUMBER: $(Build.BuildNumber)
             TEST_BUILD: $(testBuild)
             VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
@@ -343,14 +213,11 @@ stages:
 
               echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
               echo TEST_BUILD=$TEST_BUILD
-              echo VERSION_RELEASE=$VERSION_RELEASE
               echo VERSION_PATCH=$VERSION_PATCH
 
               fluid-build-version
         - task: Bash@3
           displayName: Update Package Version
-          env:
-            VERSION_RELEASE: $(release)
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
@@ -359,11 +226,7 @@ stages:
               echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
 
               if [ -f "lerna.json" ]; then
-                if [ "$VERSION_RELEASE" = "release" ]; then
-                  npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes
-                else
-                  npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
-                fi
+                npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
               else
                 npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
               fi
@@ -555,32 +418,3 @@ stages:
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"
                 exit -1;
               fi
-
-      # Job - Component detection
-      - ${{ if eq(variables.componentDetection, true) }}:
-        - job: CG
-          displayName: Component Detection
-          pool: ${{ parameters.poolCG }}
-          steps:
-          - checkout: self
-            clean: true
-            lfs: false
-            submodules: false
-
-          - ${{ parameters.preCG }}
-
-          - task: ComponentGovernanceComponentDetection@0
-            displayName: Component Detection
-            inputs:
-              sourceScanPath: ${{ parameters.buildDirectory }}/${{ parameters.cgSubDirectory }}
-              verbosity: Verbose
-              scanType: Register
-              alertWarningLevel: High
-
-  # Publish stage
-  - ${{ if eq(variables.publish, true) }}:
-    - template: templates/include-publish-npm-package.yml
-      parameters:
-        namespace: ${{ parameters.namespace }}
-        tagName: ${{ parameters.tagName }}
-        publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
