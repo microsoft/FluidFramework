@@ -232,7 +232,7 @@ export class SummarizerNode implements IRootSummarizerNode {
             this.defaultLogger.sendTelemetryEvent({
                 eventName: "PendingSummaryNotFound",
                 proposalHandle,
-                referenceSequenceNumber: this.referenceSequenceNumber ?? undefined,
+                referenceSequenceNumber: this.referenceSequenceNumber,
                 details: JSON.stringify(props),
             });
         }
