@@ -221,7 +221,7 @@ export function adjustVersion(
  * only released versions will be returned.
  * @returns The highest version number in the list.
  */
- export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false) {
+export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false) {
     let list: string[] = [];
 
     // Check if the versionList is version strings or tag names
