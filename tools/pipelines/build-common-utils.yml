@@ -155,7 +155,7 @@ stages:
                 Lint=${{ parameters.taskLint }}
                 Test=${{ parameters.taskTest }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
-                TestCoverage=$(testCoverage)
+                TestCoverage=$(testCoverage)"
 
         # Install
         - task: UseNode@1
