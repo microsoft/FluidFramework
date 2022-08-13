@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { toDelta } from "../../changeset";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { SequenceChangeset } from "./sequenceChangeset";
@@ -21,7 +22,9 @@ function rebase(change: SequenceChangeset, over: SequenceChangeset): SequenceCha
     throw Error("Not implemented"); // TODO
 }
 
-function rebaseAnchors(anchor: AnchorSet, over: SequenceChangeset): void {}
+function rebaseAnchors(anchors: AnchorSet, over: SequenceChangeset): void {
+    anchors.applyDelta(toDelta(over));
+}
 
 export const sequenceChangeRebaser: SequenceChangeRebaser = {
     compose,
