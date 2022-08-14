@@ -228,6 +228,10 @@ export class SummarizerNode implements IRootSummarizerNode {
             const props = {
                 summaryRefSeq,
                 pendingSize: this.pendingSummaries.size ?? undefined,
+                pendingHandle: this.pendingSummaries.size > 0 ?
+                    this.pendingSummaries.keys().next().value : undefined,
+                pendingSeqNumber: this.pendingSummaries.size > 0 ?
+                    this.pendingSummaries.values().next().value : undefined,
             };
             this.defaultLogger.sendTelemetryEvent({
                 eventName: "PendingSummaryNotFound",
