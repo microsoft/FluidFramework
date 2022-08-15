@@ -218,6 +218,15 @@ describe("api-markdown-documenter full-suite tests", () => {
         },
     ];
 
+    before(async () => {
+        // Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
+        await FileSystem.ensureFolderAsync(testTempDirPath);
+        await FileSystem.ensureFolderAsync(snapshotsDirPath);
+
+        // Clear test temp dir before test run to make sure we are running from a clean state.
+        await FileSystem.ensureEmptyFolderAsync(testTempDirPath);
+    });
+
     // Run the test suite against a sample report
     apiTestSuite(
         "simple-suite-test",
