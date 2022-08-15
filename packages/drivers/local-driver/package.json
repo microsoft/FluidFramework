@@ -68,6 +68,7 @@
     "@fluidframework/server-services-client": "^0.1037.1000",
     "@fluidframework/server-services-core": "^0.1037.1000",
     "@fluidframework/server-test-utils": "^0.1037.1000",
+    "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "jsrsasign": "^10.5.25",
     "uuid": "^8.3.1"
   },
