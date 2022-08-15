@@ -29,6 +29,7 @@ describe("partial lengths", () => {
         let actualLen = 0;
 
         mergeTree.walkAllSegments(mergeBlock, (segment) => {
+            // this condition does not account for un-acked changes
             if (
                 segment.isLeaf()
                 && !(segment.removedSeq !== undefined && segment.removedSeq >= seq)
