@@ -225,34 +225,6 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
             }
         });
 
-        itExpects("Split batch",
-        [
-        ],
-        async function() {
-            const provider = getTestObjectProvider({ resetAfterEach: true });
-
-            const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
-                provider.documentServiceFactory,
-                {
-                    createDocumentService: {
-                        connectToDeltaStream: {
-                            submit: (ds) => (messages) => {
-                                const newMessages = [...messages];
-                                const batchEndIndex = newMessages.findIndex((m) => m.metadata?.batch === false);
-                                if (batchEndIndex >= 1) {
-                                    ds.submit(newMessages.slice(0, batchEndIndex - 1));
-                                    ds.submit(newMessages.slice(batchEndIndex - 1));
-                                } else {
-                                    ds.submit(newMessages);
-                                }
-                            },
-                        },
-                    },
-                });
-            // it's odd this doesn't fail.
-            await runAndValidateBatch(provider, proxyDsf, this.timeout());
-        });
-
         itExpects("force nack",
         [
             {

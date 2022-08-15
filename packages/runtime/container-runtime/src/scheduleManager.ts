@@ -312,6 +312,7 @@ class ScheduleManagerCore {
                         batchClientId: this.currentBatchClientId,
                         pauseSequenceNumber: this.pauseSequenceNumber,
                         localBatch: this.currentBatchClientId === this.clientId(),
+                        messageType: message.type,
                     });
             }
 
