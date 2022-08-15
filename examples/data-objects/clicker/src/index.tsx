@@ -64,12 +64,16 @@ export class Clicker extends DataObject<{ Events: IClickerEvents; }> {
     private setupAgent() {
         const clickerAgent = new ClickerAgent(this.counter);
         this.taskManager.subscribeToTask(consoleLogTaskId);
-        this.taskManager.on("assigned", () => {
-            console.log("Assigned:", (this.taskManager as any).runtime.clientId);
-            void clickerAgent.run();
+        this.taskManager.on("assigned", (taskId: string) => {
+            if (taskId === consoleLogTaskId) {
+                console.log("Assigned:", (this.taskManager as any).runtime.clientId);
+                void clickerAgent.run();
+            }
         });
-        this.taskManager.on("lost", () => {
-            clickerAgent.stop();
+        this.taskManager.on("lost", (taskId: string) => {
+            if (taskId === consoleLogTaskId) {
+                clickerAgent.stop();
+            }
         });
     }
 
