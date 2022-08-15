@@ -3,51 +3,24 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { IEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
     ChannelFactoryRegistry,
-    fluidEntryPoint,
-    IOpProcessingController,
-    ITestContainerConfig,
     ITestFluidObject,
     ITestObjectProvider,
     TestContainerRuntimeFactory,
     TestFluidObjectFactory,
     TestObjectProvider } from "@fluidframework/test-utils";
 import {
-    IContainer, IFluidCodeDetails, IHostLoader,
-} from "@fluidframework/container-definitions";
-import {
-    Container,
-    ILoaderProps,
     Loader,
 } from "@fluidframework/container-loader";
-import {
-    IChannelAttributes,
-    IChannelFactory,
-    IChannelStorageService,
-} from "@fluidframework/datastore-definitions";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
-import {
-    ITelemetryContext,
-    ISummaryTreeWithStats,
-    IGarbageCollectionData,
-    IContainerRuntimeBase,
-} from "@fluidframework/runtime-definitions";
-import { mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { LocalServerTestDriver } from "@fluidframework/test-drivers";
-import { MockFluidDataStoreRuntime, MockSharedObjectServices } from "@fluidframework/test-runtime-utils";
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
-import {
-    Index,
-    SharedTreeCore,
-    SummaryElement,
-    SummaryElementParser,
-    SummaryElementStringifier,
-} from "../../shared-tree-core";
-import { AnchorSet } from "../../tree";
 import { SharedTreeFactory, SharedTree } from "../../shared-tree";
+import { TransactionResult } from "../../transaction";
+import { singleTextCursor } from "../../feature-libraries";
+import { brand } from "../../util";
+import { detachedFieldAsKey } from "../../tree";
+import { TreeNavigationResult } from "../../forest";
 
 describe("SharedTree", () => {
     it("can be connected to another tree", async () => {
@@ -56,12 +29,29 @@ describe("SharedTree", () => {
         assert(treeA.isAttached());
         const treeB = await treeProvider[1];
         assert(treeB.isAttached());
+
+        treeA.runTransaction((forest, editor) => {
+            const writeCursor = singleTextCursor({ type: brand("Test"), value: "42" });
+            editor.insert({
+                parent: undefined,
+                parentField: detachedFieldAsKey(forest.rootField),
+                parentIndex: 0,
+            }, writeCursor);
+
+            return TransactionResult.Apply;
+        });
+
+        await treeProvider.provider.ensureSynchronized();
+        const readCursor = treeB.forest.allocateCursor();
+        const cursorResult = treeB.forest.tryMoveCursorTo(treeB.forest.root(treeB.forest.rootField), readCursor);
+        assert(cursorResult === TreeNavigationResult.Ok);
+        assert(readCursor.value === "42");
     });
 
     class TreeProvider {
         [tree: number]: Promise<SharedTree>;
 
-        private readonly provider: ITestObjectProvider;
+        public readonly provider: ITestObjectProvider;
         private readonly trees: SharedTree[] = [];
 
         public constructor() {

@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import {
+    IChannel,
+    IChannelAttributes,
+    IChannelFactory,
+    IChannelServices,
+    IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import {
     ForestIndex,
     ObjectForest,
@@ -52,5 +58,35 @@ export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChange
         editor: SequenceEditBuilder,
     ) => TransactionResult): TransactionResult {
         return runSynchronousTransaction(this, transaction);
+    }
+}
+
+/**
+ * A channel factory that creates {@link SharedTree}s.
+ */
+ export class SharedTreeFactory implements IChannelFactory {
+    public type: string = "SharedTree";
+
+    public attributes: IChannelAttributes = {
+		type: this.type,
+		snapshotFormatVersion: "0.0.0",
+		packageVersion: "0.0.0",
+	};
+
+    public async load(
+        runtime: IFluidDataStoreRuntime,
+        id: string,
+        services: IChannelServices,
+        channelAttributes: Readonly<IChannelAttributes>,
+    ): Promise<IChannel> {
+        const tree = new SharedTree(id, runtime, channelAttributes, "TODO");
+        await tree.load(services);
+        return tree;
+    }
+
+    public create(runtime: IFluidDataStoreRuntime, id: string): IChannel {
+        const tree = new SharedTree(id, runtime, this.attributes, "TODO");
+        tree.initializeLocal();
+        return tree;
     }
 }

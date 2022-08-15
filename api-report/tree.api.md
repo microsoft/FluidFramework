@@ -18,7 +18,7 @@ export class AnchorSet {
     isEmpty(): boolean;
     locate(anchor: Anchor): UpPath | undefined;
     moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
-    track(path: UpPath): Anchor;
+    track(path: UpPath | null): Anchor;
 }
 
 // @public
