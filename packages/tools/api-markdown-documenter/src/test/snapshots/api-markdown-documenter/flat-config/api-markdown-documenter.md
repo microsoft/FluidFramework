@@ -90,6 +90,7 @@ Akin to [API-Documenter](https://github.com/microsoft/rushstack/tree/main/apps/a
 |  --- | --- | --- |
 |  [defaultPolicyOptions](docs/api-markdown-documenter#defaultpolicyoptions-Variable) |  | Default [PolicyOptions](docs/api-markdown-documenter#policyoptions-Interface) configuration |
 |  [defaultRenderingPolicies](docs/api-markdown-documenter#defaultrenderingpolicies-Variable) |  | TODO |
+|  [maxHeadingLevel](docs/api-markdown-documenter#maxheadinglevel-Variable) |  | Maximum heading level supported by most systems. |
 
 ## Interface Details
 
@@ -2569,4 +2570,18 @@ TODO
 
 ```typescript
 defaultRenderingPolicies: Required<RenderingPolicies>
+```
+
+### maxHeadingLevel {#maxheadinglevel-Variable}
+
+Maximum heading level supported by most systems.
+
+#### Remarks
+
+This corresponds with the max HTML heading level.
+
+#### Signature
+
+```typescript
+maxHeadingLevel = 6
 ```

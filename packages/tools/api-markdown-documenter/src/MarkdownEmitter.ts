@@ -15,9 +15,16 @@ import {
 } from "@microsoft/api-extractor-model";
 import { DocLinkTag, DocNode, DocNodeKind, StringBuilder } from "@microsoft/tsdoc";
 
-import { logWarning } from "./LoggingUtilities";
+import { logError, logWarning } from "./LoggingUtilities";
 import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTable, DocTableCell } from "./doc-nodes";
 import { CustomDocNodeKind } from "./doc-nodes/CustomDocNodeKind";
+
+/**
+ * Maximum heading level supported by most systems.
+ *
+ * @remarks This corresponds with the max HTML heading level.
+ */
+export const maxHeadingLevel = 6;
 
 /**
  * {@link MarkdownEmitter} options.
@@ -188,44 +195,32 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
 
         writer.ensureSkippedLine();
 
-        let prefix: string;
-        const headingLevel = docHeading.level ?? context.options.headingLevel ?? 1;
-        switch (headingLevel) {
-            case 1:
-                prefix = "#";
-                break;
-            case 2:
-                prefix = "##";
-                break;
-            case 3:
-                prefix = "###";
-                break;
-            case 4:
-                prefix = "####";
-                break;
-            case 5:
-                prefix = "#####";
-                break;
-            case 6:
-                prefix = "######";
-                break;
-            default:
-                // If the heading level is beyond the max, we will simply render the title as bolded text
-                super.writePlainText(docHeading.title, {
-                    ...context,
-                    boldRequested: true,
-                });
-                writer.writeLine();
-                writer.writeLine();
-                return;
-        }
-        let suffix: string = "";
-        if (docHeading.id) {
-            suffix = ` {#${docHeading.id}}`;
+        let headingLevel = docHeading.level ?? context.options.headingLevel ?? 1;
+        if (headingLevel <= 0) {
+            logError(
+                `Cannot render a heading level less than 1. Got ${headingLevel}. Will use 1 instead.`,
+            );
+            headingLevel = 1;
         }
 
-        writer.writeLine(prefix + " " + this.getEscapedText(docHeading.title) + suffix);
-        writer.writeLine();
+        if (headingLevel <= maxHeadingLevel) {
+            const prefix = "#".repeat(headingLevel);
+            let suffix: string = "";
+            if (docHeading.id) {
+                suffix = ` {#${docHeading.id}}`;
+            }
+
+            writer.writeLine(prefix + " " + this.getEscapedText(docHeading.title) + suffix);
+            writer.writeLine();
+        } else {
+            // If the heading level is beyond the max, we will simply render the title as bolded text
+            super.writePlainText(docHeading.title, {
+                ...context,
+                boldRequested: true,
+            });
+            writer.writeLine();
+            writer.writeLine();
+        }
     }
 
     /**

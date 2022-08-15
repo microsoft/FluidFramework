@@ -259,6 +259,9 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
     protected writeTable(docTable: DocTable, context: EmitterContext, docNodeSiblings: boolean): void;
 }
 
+// @public
+export const maxHeadingLevel = 6;
+
 // @public (undocumented)
 interface MemberTableProperties {
     // (undocumented)

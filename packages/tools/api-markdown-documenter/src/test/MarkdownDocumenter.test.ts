@@ -145,7 +145,10 @@ function apiTestSuite(
                 });
 
                 it("Snapshot test", async () => {
-                    await snapshotTest(Path.join(modelName, configProps.configName), markdownDocumenterConfig);
+                    await snapshotTest(
+                        Path.join(modelName, configProps.configName),
+                        markdownDocumenterConfig,
+                    );
                 });
             });
         }
@@ -169,7 +172,7 @@ describe("api-markdown-documenter full-suite tests", () => {
         includeTopLevelDocumentHeading: true,
         documentBoundaries: [], // Render everything to package documents
         hierarchyBoundaries: [],
-    }
+    };
 
     const configs: ConfigTestProps[] = [
         {
@@ -178,8 +181,8 @@ describe("api-markdown-documenter full-suite tests", () => {
         },
         {
             configName: "flat-config",
-            configLessApiModel: flatConfig
-        }
+            configLessApiModel: flatConfig,
+        },
     ];
 
     // Run the test suite against a sample report
