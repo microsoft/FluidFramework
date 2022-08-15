@@ -45,11 +45,9 @@ Akin to [API-Documenter](https://github.com/microsoft/rushstack/tree/main/apps/a
 |  [ApiSignatureLike](docs/api-markdown-documenter#apisignaturelike-typealias) |  | <code>ApiItem</code> union type representing call-signature-like API kinds. |
 |  [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias) |  | List of item kinds for which separate documents should be generated. Items specified will be rendered to their own documents. Items not specified will be rendered into their parent's contents. |
 |  [EmitterContext](docs/api-markdown-documenter#emittercontext-typealias) |  | Context used by [MarkdownEmitter.emit()](docs/api-markdown-documenter#markdownemitter-emit-method)<!-- -->. |
-|  [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias) |  | Policy for naming of files / directories for API items. Must not include a file extension. |
 |  [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-typealias) |  | Policy for generating heading titles for API items. |
-|  [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.<!-- -->For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias)<!-- -->. |
+|  [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent. |
 |  [IDocHeadingParameters](docs/api-markdown-documenter#idocheadingparameters-typealias) |  | Constructor parameters for [DocHeading](docs/api-markdown-documenter#docheading-class)<!-- -->. |
-|  [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-typealias) |  | Policy for generating link text for a particular API item. |
 |  [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-typealias) |  | TODO |
 |  [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias) |  | TODO |
 |  [RenderSectionBlock](docs/api-markdown-documenter#rendersectionblock-typealias) |  | TODO |
@@ -410,12 +408,10 @@ export interface PolicyOptions
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature) |  | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias) | See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias)<!-- -->. |
-|  [fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-propertysignature) |  | [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias) | See [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias)<!-- -->. |
 |  [headingTitlePolicy](docs/api-markdown-documenter#policyoptions-headingtitlepolicy-propertysignature) |  | [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-typealias) | See [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-typealias)<!-- -->. |
 |  [hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-propertysignature) |  | [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias) | See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias)<!-- -->. |
 |  [includeBreadcrumb](docs/api-markdown-documenter#policyoptions-includebreadcrumb-propertysignature) |  | boolean | Whether or not to include a navigation breadcrumb at the top of rendered document pages. |
 |  [includeTopLevelDocumentHeading](docs/api-markdown-documenter#policyoptions-includetopleveldocumentheading-propertysignature) |  | boolean | Whether or not to include a top-level heading in rendered document pages. |
-|  [linkTextPolicy](docs/api-markdown-documenter#policyoptions-linktextpolicy-propertysignature) |  | [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-typealias) | See [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-typealias)<!-- -->. |
 |  [uriBaseOverridePolicy](docs/api-markdown-documenter#policyoptions-uribaseoverridepolicy-propertysignature) |  | [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-typealias) | See [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-typealias)<!-- -->. |
 
 #### Property Details
@@ -428,16 +424,6 @@ See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typeali
 
 ```typescript
 documentBoundaries?: DocumentBoundaries;
-```
-
-##### fileNamePolicy {#policyoptions-filenamepolicy-propertysignature}
-
-See [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias)<!-- -->.
-
-###### Signature
-
-```typescript
-fileNamePolicy?: FileNamePolicy;
 ```
 
 ##### headingTitlePolicy {#policyoptions-headingtitlepolicy-propertysignature}
@@ -486,16 +472,6 @@ If you will be rendering the document contents into some other document content 
 
 ```typescript
 includeTopLevelDocumentHeading?: boolean;
-```
-
-##### linkTextPolicy {#policyoptions-linktextpolicy-propertysignature}
-
-See [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-typealias)<!-- -->.
-
-###### Signature
-
-```typescript
-linkTextPolicy?: LinkTextPolicy;
 ```
 
 ##### uriBaseOverridePolicy {#policyoptions-uribaseoverridepolicy-propertysignature}
@@ -965,9 +941,7 @@ export declare namespace DefaultPolicies
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [defaultFileNamePolicy(apiItem)](docs/api-markdown-documenter#defaultpolicies-defaultfilenamepolicy-function) |  | string | Default [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-propertysignature)<!-- -->.<!-- -->Uses a cleaned-up version of the item's <code>displayName</code>, except for the following types:<!-- -->- Model: Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root. - Package: uses only the unscoped portion of the package name is used. |
 |  [defaultHeadingTitlePolicy(apiItem)](docs/api-markdown-documenter#defaultpolicies-defaultheadingtitlepolicy-function) |  | string | Default [PolicyOptions.headingTitlePolicy](docs/api-markdown-documenter#policyoptions-headingtitlepolicy-propertysignature)<!-- -->.<!-- -->Uses the item's <code>displayName</code>, except for <code>Model</code> items, in which case the text "API Overview" is displayed. |
-|  [defaultLinkTextPolicy(apiItem)](docs/api-markdown-documenter#defaultpolicies-defaultlinktextpolicy-function) |  | string | Default [PolicyOptions.linkTextPolicy](docs/api-markdown-documenter#policyoptions-linktextpolicy-propertysignature)<!-- -->.<!-- -->Always uses the item's <code>displayName</code>. |
 |  [defaultUriBaseOverridePolicy()](docs/api-markdown-documenter#defaultpolicies-defaulturibaseoverridepolicy-function) |  | string \| undefined | Default [PolicyOptions.uriBaseOverridePolicy](docs/api-markdown-documenter#policyoptions-uribaseoverridepolicy-propertysignature)<!-- -->.<!-- -->Always uses default URI base. |
 
 #### Variables
@@ -979,26 +953,6 @@ export declare namespace DefaultPolicies
 
 #### Function Details
 
-##### defaultFileNamePolicy {#defaultpolicies-defaultfilenamepolicy-function}
-
-Default [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-propertysignature)<!-- -->.
-
-Uses a cleaned-up version of the item's `displayName`<!-- -->, except for the following types:
-
-- Model: Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root. - Package: uses only the unscoped portion of the package name is used.
-
-###### Signature
-
-```typescript
-function defaultFileNamePolicy(apiItem: ApiItem): string;
-```
-
-###### Parameters
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  apiItem | ApiItem |  |
-
 ##### defaultHeadingTitlePolicy {#defaultpolicies-defaultheadingtitlepolicy-function}
 
 Default [PolicyOptions.headingTitlePolicy](docs/api-markdown-documenter#policyoptions-headingtitlepolicy-propertysignature)<!-- -->.
@@ -1009,24 +963,6 @@ Uses the item's `displayName`<!-- -->, except for `Model` items, in which case t
 
 ```typescript
 function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
-```
-
-###### Parameters
-
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  apiItem | ApiItem |  |
-
-##### defaultLinkTextPolicy {#defaultpolicies-defaultlinktextpolicy-function}
-
-Default [PolicyOptions.linkTextPolicy](docs/api-markdown-documenter#policyoptions-linktextpolicy-propertysignature)<!-- -->.
-
-Always uses the item's `displayName`<!-- -->.
-
-###### Signature
-
-```typescript
-function defaultLinkTextPolicy(apiItem: ApiItem): string;
 ```
 
 ###### Parameters
@@ -1976,16 +1912,6 @@ Context used by [MarkdownEmitter.emit()](docs/api-markdown-documenter#markdownem
 export declare type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 ```
 
-### FileNamePolicy {#filenamepolicy-typealias}
-
-Policy for naming of files / directories for API items. Must not include a file extension.
-
-#### Signature
-
-```typescript
-export declare type FileNamePolicy = (apiItem: ApiItem) => string;
-```
-
 ### HeadingTitlePolicy {#headingtitlepolicy-typealias}
 
 Policy for generating heading titles for API items.
@@ -1999,8 +1925,6 @@ export declare type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 ### HierarchyBoundaries {#hierarchyboundaries-typealias}
 
 List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
-
-For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias)<!-- -->.
 
 #### Signature
 
@@ -2016,16 +1940,6 @@ Constructor parameters for [DocHeading](docs/api-markdown-documenter#docheading-
 
 ```typescript
 export declare type IDocHeadingParameters = IDocNodeParameters & Heading;
-```
-
-### LinkTextPolicy {#linktextpolicy-typealias}
-
-Policy for generating link text for a particular API item.
-
-#### Signature
-
-```typescript
-export declare type LinkTextPolicy = (apiItem: ApiItem) => string;
 ```
 
 ### RenderApiItemWithChildren {#renderapiitemwithchildren-typealias}
@@ -2486,7 +2400,7 @@ Which API members get their own documents and which get written to the contents 
 
 The file paths under which the files will be saved is determined by the provided output path and the following configuration properties:
 
-- [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature) - [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-propertysignature) - [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-propertysignature)
+- [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature) - [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-propertysignature)
 
 #### Signature
 

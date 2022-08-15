@@ -45,11 +45,9 @@ Akin to [API-Documenter](https://github.com/microsoft/rushstack/tree/main/apps/a
 |  [ApiSignatureLike](docs/api-markdown-documenter/apisignaturelike-typealias) |  | <code>ApiItem</code> union type representing call-signature-like API kinds. |
 |  [DocumentBoundaries](docs/api-markdown-documenter/documentboundaries-typealias) |  | List of item kinds for which separate documents should be generated. Items specified will be rendered to their own documents. Items not specified will be rendered into their parent's contents. |
 |  [EmitterContext](docs/api-markdown-documenter/emittercontext-typealias) |  | Context used by [MarkdownEmitter.emit()](docs/api-markdown-documenter/markdownemitter-emit-method)<!-- -->. |
-|  [FileNamePolicy](docs/api-markdown-documenter/filenamepolicy-typealias) |  | Policy for naming of files / directories for API items. Must not include a file extension. |
 |  [HeadingTitlePolicy](docs/api-markdown-documenter/headingtitlepolicy-typealias) |  | Policy for generating heading titles for API items. |
-|  [HierarchyBoundaries](docs/api-markdown-documenter/hierarchyboundaries-typealias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.<!-- -->For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](docs/api-markdown-documenter/filenamepolicy-typealias)<!-- -->. |
+|  [HierarchyBoundaries](docs/api-markdown-documenter/hierarchyboundaries-typealias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent. |
 |  [IDocHeadingParameters](docs/api-markdown-documenter/idocheadingparameters-typealias) |  | Constructor parameters for [DocHeading](docs/api-markdown-documenter/docheading-class)<!-- -->. |
-|  [LinkTextPolicy](docs/api-markdown-documenter/linktextpolicy-typealias) |  | Policy for generating link text for a particular API item. |
 |  [RenderApiItemWithChildren](docs/api-markdown-documenter/renderapiitemwithchildren-typealias) |  | TODO |
 |  [RenderApiItemWithoutChildren](docs/api-markdown-documenter/renderapiitemwithoutchildren-typealias) |  | TODO |
 |  [RenderSectionBlock](docs/api-markdown-documenter/rendersectionblock-typealias) |  | TODO |

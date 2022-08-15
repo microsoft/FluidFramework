@@ -2,11 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
-import { PackageName } from "@rushstack/node-core-library";
-
-import { getQualifiedApiItemName } from "./utilities";
 
 /**
  * This module contains policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
@@ -27,8 +23,6 @@ export type DocumentBoundaries = ApiItemKind[];
 /**
  * List of item kinds for which sub-directories will be generated, and under which child item pages will be created.
  * If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
- *
- * For items specified, the name of the sub-directory will be defined by the {@link FileNamePolicy}.
  */
 export type HierarchyBoundaries = ApiItemKind[];
 
@@ -42,23 +36,6 @@ export type HierarchyBoundaries = ApiItemKind[];
  * @returns The URI base to use for the API item, or undefined if the default base should be used.
  */
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
-
-/**
- * Policy for generating link text for a particular API item.
- *
- * @param apiItem - The API item in question.
- * @returns The link text to use for the API item.
- */
-export type LinkTextPolicy = (apiItem: ApiItem) => string;
-
-/**
- * Policy for naming of files / directories for API items.
- * Must not include a file extension.
- *
- * @param apiItem - The API item in question.
- * @returns The file name to use for a document generated for the specified API item.
- */
-export type FileNamePolicy = (apiItem: ApiItem) => string;
 
 /**
  * Policy for generating heading titles for API items.
@@ -113,20 +90,6 @@ export interface PolicyOptions {
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 
     /**
-     * See {@link LinkTextPolicy}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultUriBaseOverridePolicy}
-     */
-    linkTextPolicy?: LinkTextPolicy;
-
-    /**
-     * See {@link FileNamePolicy}.
-     *
-     * @defaultValue {@link DefaultPolicies.defaultFileNamePolicy}
-     */
-    fileNamePolicy?: FileNamePolicy;
-
-    /**
      * See {@link HeadingTitlePolicy}.
      *
      * @defaultValue {@link DefaultPolicies.defaultHeadingTitlePolicy}
@@ -177,36 +140,6 @@ export namespace DefaultPolicies {
     }
 
     /**
-     * Default {@link PolicyOptions.linkTextPolicy}.
-     *
-     * Always uses the item's `displayName`.
-     */
-    export function defaultLinkTextPolicy(apiItem: ApiItem): string {
-        return apiItem.displayName;
-    }
-
-    /**
-     * Default {@link PolicyOptions.fileNamePolicy}.
-     *
-     * Uses a cleaned-up version of the item's `displayName`, except for the following types:
-     *
-     * - Model: Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root.
-     * - Package: uses only the unscoped portion of the package name is used.
-     */
-    export function defaultFileNamePolicy(apiItem: ApiItem): string {
-        switch (apiItem.kind) {
-            case ApiItemKind.Model:
-                return "index";
-            case ApiItemKind.Package:
-                return Utilities.getSafeFilenameForName(
-                    PackageName.getUnscopedName(apiItem.displayName),
-                );
-            default:
-                return getQualifiedApiItemName(apiItem);
-        }
-    }
-
-    /**
      * Default {@link PolicyOptions.headingTitlePolicy}.
      *
      * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
@@ -230,7 +163,5 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
     documentBoundaries: DefaultPolicies.defaultDocumentBoundaries,
     hierarchyBoundaries: DefaultPolicies.defaultHierarchyBoundaries,
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
-    linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
-    fileNamePolicy: DefaultPolicies.defaultFileNamePolicy,
     headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
 };

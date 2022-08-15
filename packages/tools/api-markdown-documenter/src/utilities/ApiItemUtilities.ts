@@ -17,6 +17,7 @@ import {
     ApiPackage,
     ApiParameterListMixin,
 } from "@microsoft/api-extractor-model";
+import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
 
 import { Heading } from "../Heading";
@@ -103,7 +104,7 @@ export function getLinkForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): Link {
-    const text = config.linkTextPolicy(apiItem);
+    const text = apiItem.displayName;
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
     const relativeFilePath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
     const headingId = getHeadingIdForApiItem(apiItem, config);
@@ -163,7 +164,7 @@ export function getFilePathForApiItem(
 
     let path = fileName;
     for (const hierarchyItem of documentAncestry) {
-        const segmentName = config.fileNamePolicy(hierarchyItem);
+        const segmentName = getUnscopedFileNameSegment(hierarchyItem, config);
         path = Path.join(segmentName, path);
     }
     return path;
@@ -190,7 +191,7 @@ export function getFileNameForApiItem(
 ): string {
     const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaries);
 
-    let unscopedFileName = config.fileNamePolicy(targetDocumentItem);
+    let unscopedFileName = getUnscopedFileNameSegment(targetDocumentItem, config);
 
     // For items of kinds other than `Model` or `Package` (which are handled specially file-system-wise),
     // append the item kind to disambiguate file names resulting from members whose names may conflict in a
@@ -220,7 +221,7 @@ export function getFileNameForApiItem(
         hierarchyItem.kind !== ApiItemKind.Model &&
         !doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)
     ) {
-        const segmentName = config.fileNamePolicy(hierarchyItem);
+        const segmentName = getUnscopedFileNameSegment(hierarchyItem, config);
         if (segmentName.length === 0) {
             throw new Error("Segment name must be non-empty.");
         }
@@ -235,6 +236,26 @@ export function getFileNameForApiItem(
     }
 
     return scopedFileName;
+}
+
+/**
+ * Gets the raw, unscoped file name segment for the API item.
+ * @renarjs This is generally the qualified API name, but is handled differently for `Model` and `Package` items.
+ */
+function getUnscopedFileNameSegment(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): string {
+    switch (apiItem.kind) {
+        case ApiItemKind.Model:
+            return "index";
+        case ApiItemKind.Package:
+            return Utilities.getSafeFilenameForName(
+                PackageName.getUnscopedName(apiItem.displayName),
+            );
+        default:
+            return getQualifiedApiItemName(apiItem);
+    }
 }
 
 /**

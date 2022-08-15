@@ -16,12 +16,10 @@ export interface PolicyOptions
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-propertysignature) |  | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias) | See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias)<!-- -->. |
-|  [fileNamePolicy](./api-markdown-documenter/policyoptions-interface#filenamepolicy-propertysignature) |  | [FileNamePolicy](./api-markdown-documenter#filenamepolicy-typealias) | See [FileNamePolicy](./api-markdown-documenter#filenamepolicy-typealias)<!-- -->. |
 |  [headingTitlePolicy](./api-markdown-documenter/policyoptions-interface#headingtitlepolicy-propertysignature) |  | [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-typealias) | See [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-typealias)<!-- -->. |
 |  [hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-propertysignature) |  | [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-typealias) | See [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-typealias)<!-- -->. |
 |  [includeBreadcrumb](./api-markdown-documenter/policyoptions-interface#includebreadcrumb-propertysignature) |  | boolean | Whether or not to include a navigation breadcrumb at the top of rendered document pages. |
 |  [includeTopLevelDocumentHeading](./api-markdown-documenter/policyoptions-interface#includetopleveldocumentheading-propertysignature) |  | boolean | Whether or not to include a top-level heading in rendered document pages. |
-|  [linkTextPolicy](./api-markdown-documenter/policyoptions-interface#linktextpolicy-propertysignature) |  | [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-typealias) | See [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-typealias)<!-- -->. |
 |  [uriBaseOverridePolicy](./api-markdown-documenter/policyoptions-interface#uribaseoverridepolicy-propertysignature) |  | [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-typealias) | See [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-typealias)<!-- -->. |
 
 ## Property Details
@@ -34,16 +32,6 @@ See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias)
 
 ```typescript
 documentBoundaries?: DocumentBoundaries;
-```
-
-### fileNamePolicy {#filenamepolicy-propertysignature}
-
-See [FileNamePolicy](./api-markdown-documenter#filenamepolicy-typealias)<!-- -->.
-
-#### Signature
-
-```typescript
-fileNamePolicy?: FileNamePolicy;
 ```
 
 ### headingTitlePolicy {#headingtitlepolicy-propertysignature}
@@ -92,16 +80,6 @@ If you will be rendering the document contents into some other document content 
 
 ```typescript
 includeTopLevelDocumentHeading?: boolean;
-```
-
-### linkTextPolicy {#linktextpolicy-propertysignature}
-
-See [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-typealias)<!-- -->.
-
-#### Signature
-
-```typescript
-linkTextPolicy?: LinkTextPolicy;
 ```
 
 ### uriBaseOverridePolicy {#uribaseoverridepolicy-propertysignature}

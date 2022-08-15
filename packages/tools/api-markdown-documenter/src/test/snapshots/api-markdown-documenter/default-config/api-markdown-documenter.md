@@ -45,11 +45,9 @@ Akin to [API-Documenter](https://github.com/microsoft/rushstack/tree/main/apps/a
 |  [ApiSignatureLike](./api-markdown-documenter#apisignaturelike-typealias) |  | <code>ApiItem</code> union type representing call-signature-like API kinds. |
 |  [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias) |  | List of item kinds for which separate documents should be generated. Items specified will be rendered to their own documents. Items not specified will be rendered into their parent's contents. |
 |  [EmitterContext](./api-markdown-documenter#emittercontext-typealias) |  | Context used by [MarkdownEmitter.emit()](./api-markdown-documenter/markdownemitter-class#emit-method)<!-- -->. |
-|  [FileNamePolicy](./api-markdown-documenter#filenamepolicy-typealias) |  | Policy for naming of files / directories for API items. Must not include a file extension. |
 |  [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-typealias) |  | Policy for generating heading titles for API items. |
-|  [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-typealias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.<!-- -->For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](./api-markdown-documenter#filenamepolicy-typealias)<!-- -->. |
+|  [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-typealias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent. |
 |  [IDocHeadingParameters](./api-markdown-documenter#idocheadingparameters-typealias) |  | Constructor parameters for [DocHeading](./api-markdown-documenter/docheading-class)<!-- -->. |
-|  [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-typealias) |  | Policy for generating link text for a particular API item. |
 |  [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-typealias) |  | TODO |
 |  [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias) |  | TODO |
 |  [RenderSectionBlock](./api-markdown-documenter#rendersectionblock-typealias) |  | TODO |
@@ -150,16 +148,6 @@ Context used by [MarkdownEmitter.emit()](./api-markdown-documenter/markdownemitt
 export declare type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 ```
 
-### FileNamePolicy {#filenamepolicy-typealias}
-
-Policy for naming of files / directories for API items. Must not include a file extension.
-
-#### Signature
-
-```typescript
-export declare type FileNamePolicy = (apiItem: ApiItem) => string;
-```
-
 ### HeadingTitlePolicy {#headingtitlepolicy-typealias}
 
 Policy for generating heading titles for API items.
@@ -173,8 +161,6 @@ export declare type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 ### HierarchyBoundaries {#hierarchyboundaries-typealias}
 
 List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
-
-For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](./api-markdown-documenter#filenamepolicy-typealias)<!-- -->.
 
 #### Signature
 
@@ -190,16 +176,6 @@ Constructor parameters for [DocHeading](./api-markdown-documenter/docheading-cla
 
 ```typescript
 export declare type IDocHeadingParameters = IDocNodeParameters & Heading;
-```
-
-### LinkTextPolicy {#linktextpolicy-typealias}
-
-Policy for generating link text for a particular API item.
-
-#### Signature
-
-```typescript
-export declare type LinkTextPolicy = (apiItem: ApiItem) => string;
 ```
 
 ### RenderApiItemWithChildren {#renderapiitemwithchildren-typealias}
@@ -660,7 +636,7 @@ Which API members get their own documents and which get written to the contents 
 
 The file paths under which the files will be saved is determined by the provided output path and the following configuration properties:
 
-- [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-propertysignature) - [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-propertysignature) - [PolicyOptions.fileNamePolicy](./api-markdown-documenter/policyoptions-interface#filenamepolicy-propertysignature)
+- [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-propertysignature) - [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-propertysignature)
 
 #### Signature
 

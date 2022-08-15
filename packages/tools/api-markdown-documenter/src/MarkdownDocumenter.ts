@@ -93,7 +93,6 @@ export function renderDocuments(
  *
  * - {@link PolicyOptions.documentBoundaries}
  * - {@link PolicyOptions.hierarchyBoundaries}
- * - {@link PolicyOptions.fileNamePolicy}
  *
  * @param apiModel - The API model being processed.
  * This is the output of {@link https://api-extractor.com/ | API-Extractor}.

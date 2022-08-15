@@ -9,7 +9,7 @@ Which API members get their own documents and which get written to the contents 
 
 The file paths under which the files will be saved is determined by the provided output path and the following configuration properties:
 
-- [PolicyOptions.documentBoundaries](docs/api-markdown-documenter/policyoptions-documentboundaries-propertysignature) - [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter/policyoptions-hierarchyboundaries-propertysignature) - [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter/policyoptions-filenamepolicy-propertysignature)
+- [PolicyOptions.documentBoundaries](docs/api-markdown-documenter/policyoptions-documentboundaries-propertysignature) - [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter/policyoptions-hierarchyboundaries-propertysignature)
 
 ## Signature
 
