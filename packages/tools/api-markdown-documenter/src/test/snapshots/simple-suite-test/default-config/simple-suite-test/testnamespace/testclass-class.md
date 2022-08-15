@@ -1,7 +1,7 @@
 
 # TestClass
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace)
+[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace)
 
 Test class
 
@@ -15,19 +15,19 @@ class TestClass
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass#_constructor_-Constructor) |  |  | Test class constructor |
+|  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-Constructor) |  |  | Test class constructor |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassProperty](./simple-suite-test/testnamespace/testclass#testclassproperty-Property) |  | string | Test interface property |
+|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-Property) |  | string | Test interface property |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass#testclassmethod-Method) |  | Promise&lt;string&gt; | Test class method |
+|  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-Method) |  | Promise&lt;string&gt; | Test class method |
 
 ## Constructor Details
 
@@ -45,7 +45,7 @@ constructor(testClassProperty: string);
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | string | See [TestClass.testClassProperty](./simple-suite-test/testclass#testclassproperty-Property) |
+|  testClassProperty | string | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-Property) |
 
 ## Property Details
 

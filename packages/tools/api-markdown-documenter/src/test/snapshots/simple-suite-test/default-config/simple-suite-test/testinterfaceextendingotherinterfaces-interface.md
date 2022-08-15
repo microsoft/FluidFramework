@@ -14,9 +14,9 @@ Here are some remarks about the interface
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestInterfaceWithTypeParameter<number>, TestMappedType 
 ```
-<b>Extends:</b> [TestInterface](./simple-suite-test/testinterface)
+<b>Extends:</b> [TestInterface](./simple-suite-test/testinterface-interface)
 
-, [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter)<!-- -->&lt;number&gt;
+, [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
 
 , [TestMappedType](./simple-suite-test#testmappedtype-TypeAlias)
 
@@ -25,7 +25,7 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testMethod(input)](./simple-suite-test/testinterfaceextendingotherinterfaces#testmethod-MethodSignature) |  | number | Test interface method accepting a string and returning a number. |
+|  [testMethod(input)](./simple-suite-test/testinterfaceextendingotherinterfaces-interface#testmethod-MethodSignature) |  | number | Test interface method accepting a string and returning a number. |
 
 ## Method Details
 

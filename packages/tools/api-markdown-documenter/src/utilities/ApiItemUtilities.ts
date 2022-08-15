@@ -190,16 +190,32 @@ export function getFileNameForApiItem(
 ): string {
     const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaries);
 
-    const fileName = config.fileNamePolicy(targetDocumentItem) + (includeExtension ? ".md" : "");
+    let unscopedFileName = config.fileNamePolicy(targetDocumentItem);
+
+    // For items of kinds other than `Model` or `Package` (which are handled specially file-system-wise),
+    // append the item kind to disambiguate file names resulting from members whose names may conflict in a
+    // casing-agnostic context (e.g. type "Foo" and function "foo").
+    if (
+        targetDocumentItem.kind !== ApiItemKind.Model &&
+        targetDocumentItem.kind !== ApiItemKind.Package
+    ) {
+        unscopedFileName = `${unscopedFileName}-${targetDocumentItem.kind.toLocaleLowerCase()}`;
+    }
+
+    // Append file extension if requested
+    if (includeExtension) {
+        unscopedFileName = `${unscopedFileName}.md`;
+    }
 
     // Walk parentage up until we reach the first ancestor which injects directory hierarchy.
     // Qualify generated file name to ensure no conflicts within that directory.
     let hierarchyItem = getFilteredParent(targetDocumentItem);
     if (hierarchyItem === undefined) {
         // If there is no parent item, then we can just return the file name unmodified
-        return fileName;
+        return unscopedFileName;
     }
-    let path = fileName;
+
+    let scopedFileName = unscopedFileName;
     while (
         hierarchyItem.kind !== ApiItemKind.Model &&
         !doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)
@@ -209,7 +225,7 @@ export function getFileNameForApiItem(
             throw new Error("Segment name must be non-empty.");
         }
 
-        path = `${segmentName}-${path}`;
+        scopedFileName = `${segmentName}-${scopedFileName}`;
 
         const parent = getFilteredParent(hierarchyItem);
         if (parent === undefined) {
@@ -218,7 +234,7 @@ export function getFileNameForApiItem(
         hierarchyItem = parent;
     }
 
-    return path;
+    return scopedFileName;
 }
 
 /**

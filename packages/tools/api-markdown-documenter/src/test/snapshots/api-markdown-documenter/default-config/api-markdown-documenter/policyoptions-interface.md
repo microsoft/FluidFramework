@@ -15,14 +15,14 @@ export interface PolicyOptions
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [documentBoundaries](./api-markdown-documenter/policyoptions#documentboundaries-PropertySignature) |  | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias) | See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias)<!-- -->. |
-|  [fileNamePolicy](./api-markdown-documenter/policyoptions#filenamepolicy-PropertySignature) |  | [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias) | See [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->. |
-|  [headingTitlePolicy](./api-markdown-documenter/policyoptions#headingtitlepolicy-PropertySignature) |  | [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-TypeAlias) | See [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-TypeAlias)<!-- -->. |
-|  [hierarchyBoundaries](./api-markdown-documenter/policyoptions#hierarchyboundaries-PropertySignature) |  | [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias) | See [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias)<!-- -->. |
-|  [includeBreadcrumb](./api-markdown-documenter/policyoptions#includebreadcrumb-PropertySignature) |  | boolean | Whether or not to include a navigation breadcrumb at the top of rendered document pages. |
-|  [includeTopLevelDocumentHeading](./api-markdown-documenter/policyoptions#includetopleveldocumentheading-PropertySignature) |  | boolean | Whether or not to include a top-level heading in rendered document pages. |
-|  [linkTextPolicy](./api-markdown-documenter/policyoptions#linktextpolicy-PropertySignature) |  | [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-TypeAlias) | See [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-TypeAlias)<!-- -->. |
-|  [uriBaseOverridePolicy](./api-markdown-documenter/policyoptions#uribaseoverridepolicy-PropertySignature) |  | [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-TypeAlias) | See [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-TypeAlias)<!-- -->. |
+|  [documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-PropertySignature) |  | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias) | See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias)<!-- -->. |
+|  [fileNamePolicy](./api-markdown-documenter/policyoptions-interface#filenamepolicy-PropertySignature) |  | [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias) | See [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->. |
+|  [headingTitlePolicy](./api-markdown-documenter/policyoptions-interface#headingtitlepolicy-PropertySignature) |  | [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-TypeAlias) | See [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-TypeAlias)<!-- -->. |
+|  [hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-PropertySignature) |  | [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias) | See [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias)<!-- -->. |
+|  [includeBreadcrumb](./api-markdown-documenter/policyoptions-interface#includebreadcrumb-PropertySignature) |  | boolean | Whether or not to include a navigation breadcrumb at the top of rendered document pages. |
+|  [includeTopLevelDocumentHeading](./api-markdown-documenter/policyoptions-interface#includetopleveldocumentheading-PropertySignature) |  | boolean | Whether or not to include a top-level heading in rendered document pages. |
+|  [linkTextPolicy](./api-markdown-documenter/policyoptions-interface#linktextpolicy-PropertySignature) |  | [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-TypeAlias) | See [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-TypeAlias)<!-- -->. |
+|  [uriBaseOverridePolicy](./api-markdown-documenter/policyoptions-interface#uribaseoverridepolicy-PropertySignature) |  | [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-TypeAlias) | See [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-TypeAlias)<!-- -->. |
 
 ## Property Details
 

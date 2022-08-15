@@ -26,21 +26,21 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB>
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty, testClassEventProperty)](./simple-suite-test/testclass#_constructor_-Constructor) |  |  | Test class constructor |
+|  [(constructor)(testClassProperty, testClassEventProperty)](./simple-suite-test/testclass-class#_constructor_-Constructor) |  |  | Test class constructor |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testclass#testclasseventproperty-Property) |  | () =&gt; void | Test class event property |
-|  [testClassGetterProperty](./simple-suite-test/testclass#testclassgetterproperty-Property) |  | number | Test class getter-only property |
-|  [testClassProperty](./simple-suite-test/testclass#testclassproperty-Property) |  | TTypeParameterB | Test class property |
+|  [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-Property) |  | () =&gt; void | Test class event property |
+|  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-Property) |  | number | Test class getter-only property |
+|  [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-Property) |  | TTypeParameterB | Test class property |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassMethod(input)](./simple-suite-test/testclass#testclassmethod-Method) |  | TTypeParameterA | Test class method |
+|  [testClassMethod(input)](./simple-suite-test/testclass-class#testclassmethod-Method) |  | TTypeParameterA | Test class method |
 
 ## Constructor Details
 
@@ -62,8 +62,8 @@ constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => vo
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](./simple-suite-test/testclass#testclassproperty-Property) |
-|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](./simple-suite-test/testclass#testclasseventproperty-Property) |
+|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-Property) |
+|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-Property) |
 
 ## Property Details
 

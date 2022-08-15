@@ -29,43 +29,43 @@ export declare namespace TestNamespace
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestInterface](./simple-suite-test/testnamespace/testinterface) |  | Test interface |
+|  [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) |  | Test interface |
 
 ## Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestClass](./simple-suite-test/testnamespace/testclass) |  | Test class |
+|  [TestClass](./simple-suite-test/testnamespace/testclass-class) |  | Test class |
 
 ## Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace) |  | Test sub-namespace |
+|  [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace-namespace) |  | Test sub-namespace |
 
 ## Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [TypeAlias](./simple-suite-test/testnamespace#typealias-TypeAlias) |  | Test Type-Alias |
+|  [TypeAlias](./simple-suite-test/testnamespace-namespace#typealias-TypeAlias) |  | Test Type-Alias |
 
 ## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testFunction(testParameter)](./simple-suite-test/testnamespace#testfunction-Function) |  | number | Test function |
+|  [testFunction(testParameter)](./simple-suite-test/testnamespace-namespace#testfunction-Function) |  | number | Test function |
 
 ## Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnum](./simple-suite-test/testnamespace#testenum-Enum) |  | Test Enum |
+|  [TestEnum](./simple-suite-test/testnamespace-namespace#testenum-Enum) |  | Test Enum |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestConst](./simple-suite-test/testnamespace#testconst-Variable) |  | Test Constant |
+|  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-Variable) |  | Test Constant |
 
 ## Type Details
 
@@ -113,8 +113,8 @@ enum TestEnum
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnumValue1](./simple-suite-test/testnamespace#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 |
-|  [TestEnumValue2](./simple-suite-test/testnamespace#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 |
+|  [TestEnumValue1](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 |
+|  [TestEnumValue2](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 |
 
 #### FlagDetails
 

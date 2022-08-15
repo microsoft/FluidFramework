@@ -15,9 +15,9 @@ export interface Heading
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [id](./api-markdown-documenter/heading#id-PropertySignature) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
-|  [level](./api-markdown-documenter/heading#level-PropertySignature) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
-|  [title](./api-markdown-documenter/heading#title-PropertySignature) |  | string | Heading text content. |
+|  [id](./api-markdown-documenter/heading-interface#id-PropertySignature) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
+|  [level](./api-markdown-documenter/heading-interface#level-PropertySignature) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
+|  [title](./api-markdown-documenter/heading-interface#title-PropertySignature) |  | string | Heading text content. |
 
 ## Property Details
 

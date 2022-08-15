@@ -23,7 +23,7 @@ And an ordered list for good measure!
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
-- Good link (no alias): [TestClass](./simple-suite-test/testclass)
+- Good link (no alias): [TestClass](./simple-suite-test/testclass-class)
 
 - Good link (with alias): [function alias text](./simple-suite-test#testfunction-Function)
 
@@ -43,22 +43,22 @@ const foo = bar;
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEmptyInterface](./simple-suite-test/testemptyinterface) |  | An empty interface |
-|  [TestInterface](./simple-suite-test/testinterface) |  | Test interface |
-|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces) |  | Test interface that extends other interfaces |
-|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter) |  | Test interface with generic type parameter |
+|  [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) |  | An empty interface |
+|  [TestInterface](./simple-suite-test/testinterface-interface) |  | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces-interface) |  | Test interface that extends other interfaces |
+|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface) |  | Test interface with generic type parameter |
 
 ## Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestClass](./simple-suite-test/testclass) |  | Test class |
+|  [TestClass](./simple-suite-test/testclass-class) |  | Test class |
 
 ## Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestNamespace](./simple-suite-test/testnamespace) |  | Test Namespace |
+|  [TestNamespace](./simple-suite-test/testnamespace-namespace) |  | Test Namespace |
 
 ## Types
 
@@ -73,8 +73,8 @@ const foo = bar;
 |  --- | --- | --- | --- |
 |  [testFunction(testParameter)](./simple-suite-test#testfunction-Function) |  | TTypeParameter | Test function |
 |  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-Function) |  | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-Enum)<!-- -->; } | Test function that returns an inline type |
-|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-Function) |  | [TestEmptyInterface](./simple-suite-test/testemptyinterface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter)<!-- -->&lt;number&gt; | Test function that returns an inline type |
-|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-Function) |  | string \| [TestInterface](./simple-suite-test/testinterface) | Test function that returns an inline type |
+|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-Function) |  | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
+|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-Function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
 ## Enumerations
 
@@ -128,7 +128,7 @@ Test function
 
 #### Remarks
 
-This is a test [link](./simple-suite-test/testinterface) to another API member
+This is a test [link](./simple-suite-test/testinterface-interface) to another API member
 
 #### Signature
 

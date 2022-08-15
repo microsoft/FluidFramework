@@ -17,25 +17,25 @@ export declare class MarkdownEmitter extends BaseMarkdownEmitter
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(apiModel)](./api-markdown-documenter/markdownemitter#_constructor_-Constructor) |  |  | Constructs a new instance of the <code>MarkdownEmitter</code> class |
+|  [(constructor)(apiModel)](./api-markdown-documenter/markdownemitter-class#_constructor_-Constructor) |  |  | Constructs a new instance of the <code>MarkdownEmitter</code> class |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [apiModel](./api-markdown-documenter/markdownemitter#apimodel-Property) |  | ApiModel |  |
+|  [apiModel](./api-markdown-documenter/markdownemitter-class#apimodel-Property) |  | ApiModel |  |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [emit(stringBuilder, docNode, options)](./api-markdown-documenter/markdownemitter#emit-Method) |  | string |  |
-|  [writeEmphasisSpan(docEmphasisSpan, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writeemphasisspan-Method) |  | void |  |
-|  [writeHeading(docHeading, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writeheading-Method) |  | void |  |
-|  [writeLinkTagWithCodeDestination(docLinkTag, context)](./api-markdown-documenter/markdownemitter#writelinktagwithcodedestination-Method) |  | void |  |
-|  [writeNode(docNode, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writenode-Method) |  | void |  |
-|  [writeNoteBox(docNoteBox, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writenotebox-Method) |  | void |  |
-|  [writeTable(docTable, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writetable-Method) |  | void |  |
+|  [emit(stringBuilder, docNode, options)](./api-markdown-documenter/markdownemitter-class#emit-Method) |  | string |  |
+|  [writeEmphasisSpan(docEmphasisSpan, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter-class#writeemphasisspan-Method) |  | void |  |
+|  [writeHeading(docHeading, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter-class#writeheading-Method) |  | void |  |
+|  [writeLinkTagWithCodeDestination(docLinkTag, context)](./api-markdown-documenter/markdownemitter-class#writelinktagwithcodedestination-Method) |  | void |  |
+|  [writeNode(docNode, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter-class#writenode-Method) |  | void |  |
+|  [writeNoteBox(docNoteBox, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter-class#writenotebox-Method) |  | void |  |
+|  [writeTable(docTable, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter-class#writetable-Method) |  | void |  |
 
 ## Constructor Details
 
@@ -83,7 +83,7 @@ emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): s
 |  --- | --- | --- |
 |  stringBuilder | StringBuilder |  |
 |  docNode | DocNode |  |
-|  options | [EmitterOptions](./api-markdown-documenter/emitteroptions) |  |
+|  options | [EmitterOptions](./api-markdown-documenter/emitteroptions-interface) |  |
 
 ### writeEmphasisSpan {#writeemphasisspan-Method}
 
@@ -117,7 +117,7 @@ protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeS
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  docHeading | [DocHeading](./api-markdown-documenter/docheading) |  |
+|  docHeading | [DocHeading](./api-markdown-documenter/docheading-class) |  |
 |  context | [EmitterContext](./api-markdown-documenter#emittercontext-TypeAlias) |  |
 |  docNodeSiblings | boolean |  |
 
