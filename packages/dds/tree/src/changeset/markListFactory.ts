@@ -55,8 +55,7 @@ export class MarkListFactory {
                             case "MoveIn": {
                                 const firstRightAttach = firstRight as T.Insert | T.MoveIn;
                                 if (
-                                    lastLeft.id === firstRightAttach.id
-                                    && lastLeft.heed === firstRightAttach.heed
+                                    lastLeft.heed === firstRightAttach.heed
                                     && lastLeft.tiebreak === firstRightAttach.tiebreak
                                     && lastLeft.src?.id === firstRightAttach.src?.id
                                     && lastLeft.src?.seq === firstRightAttach.src?.seq
@@ -70,6 +69,7 @@ export class MarkListFactory {
                                         const firstRightMoveIn = firstRight as T.MoveIn;
                                         lastLeft.count += firstRightMoveIn.count;
                                     }
+                                    prev.push(...mark.slice(1));
                                     return;
                                 }
                                 break;

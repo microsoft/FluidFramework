@@ -9,6 +9,8 @@ import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 
 const dummyMark: T.AttachGroup = [];
+const bounce1: T.Bounce = { type: "Bounce", id: 1 };
+const bounce2: T.Bounce = { type: "Bounce", id: 1 };
 const type: TreeSchemaIdentifier = brand("Node");
 
 describe("MarkListFactory", () => {
@@ -55,26 +57,34 @@ describe("MarkListFactory", () => {
         const factory = new MarkListFactory();
         const insert1: T.Insert = { type: "Insert", id: 0, content: [{ type, value: 1 }] };
         const insert2: T.Insert = { type: "Insert", id: 0, content: [{ type, value: 2 }] };
-        factory.pushContent([insert1]);
-        factory.pushContent([insert2]);
-        assert.deepStrictEqual(factory.list, [[{
-             type: "Insert",
-             id: 0,
-             content: [{ type, value: 1 }, { type, value: 2 }],
-        }]]);
+        factory.pushContent([bounce1, insert1]);
+        factory.pushContent([insert2, bounce2]);
+        assert.deepStrictEqual(factory.list, [[
+            bounce1,
+            {
+                type: "Insert",
+                id: 0,
+                content: [{ type, value: 1 }, { type, value: 2 }],
+            },
+            bounce2,
+        ]]);
     });
 
     it("Can merge consecutive move-ins", () => {
         const factory = new MarkListFactory();
         const move1: T.MoveIn = { type: "MoveIn", id: 0, count: 1 };
         const move2: T.MoveIn = { type: "MoveIn", id: 0, count: 1 };
-        factory.pushContent([move1]);
-        factory.pushContent([move2]);
-        assert.deepStrictEqual(factory.list, [[{
-             type: "MoveIn",
-             id: 0,
-             count: 2,
-        }]]);
+        factory.pushContent([bounce1, move1]);
+        factory.pushContent([move2, bounce2]);
+        assert.deepStrictEqual(factory.list, [[
+            bounce1,
+            {
+                type: "MoveIn",
+                id: 0,
+                count: 2,
+            },
+            bounce2,
+        ]]);
     });
 
     it("Can merge consecutive deletes", () => {
