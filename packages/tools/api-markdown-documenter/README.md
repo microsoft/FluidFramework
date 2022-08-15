@@ -22,6 +22,7 @@ The `renderDocuments` function accepts an [ApiModel](https://api.rushstack.io/pa
 These objects include information about the page item, its documentation contents, and the intended output file path the document file should be rendered to, based on provided policy options.
 
 The input `ApiModel` here will generally be the output of `API-Extractor`.
+
 ### renderFiles
 
 The `renderFiles` function operates like [renderDocuments](#renderdocuments), but actually writes the resulting documents to disk as files based on the provided policy options.
