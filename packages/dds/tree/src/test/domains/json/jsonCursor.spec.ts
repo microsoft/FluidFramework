@@ -55,10 +55,13 @@ describe("JsonCursor", () => {
         });
 
         it("array", () => {
-            // Rationale: While Object.keys(..) returns the indices of the array items, the SharedTree
-            //            models edges as a (key, index) pair.  Therefore, '.keys' returns the unnamed
-            //            key of the field representing the array's indexer.
+            // The SharedTree models edges as a (key, index) pair.  Therefore, '.keys' returns the key of
+            // the field representing the array's indexer (EmptyKey).  This behavior differs from
+            // 'Object.keys([..])', which returns the indices of items contained in the array.
+
+            // TODO: Unclear if '.keys' should include fields with length 0 (i.e., empty sequences)?
             assert.deepEqual([...new JsonCursor([]).keys], [EmptyKey]);
+
             assert.deepEqual([...new JsonCursor([0]).keys], [EmptyKey]);
             assert.deepEqual([...new JsonCursor(["test", {}]).keys], [EmptyKey]);
         });
@@ -79,7 +82,9 @@ describe("JsonCursor", () => {
         });
 
         it("null", () => {
-            // JsonCursor accepts all valid json, which includes null. Ensure null correctly lists no keys:
+            // 'ITreeCursor.keys' enumerates the keys of the current node, which in the JSON domain
+            // includes a node with value 'null'.  This behavior differs from 'Object.keys(null)',
+            // which throws a TypeError.
             assert.deepEqual([...new JsonCursor(null).keys], []);
         });
     });
