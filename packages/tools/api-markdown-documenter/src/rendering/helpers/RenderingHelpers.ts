@@ -369,9 +369,6 @@ export function renderDeprecationNotice(
             new DocNoteBox(
                 {
                     configuration: config.tsdocConfiguration,
-                    // TODO
-                    // type: 'warning',
-                    // title: 'Deprecated'
                 },
                 [...apiItem.tsdocComment.deprecatedBlock.content.nodes],
             ),

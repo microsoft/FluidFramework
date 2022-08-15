@@ -37,7 +37,7 @@ import { renderBreadcrumb, renderHeadingForApiItem } from "./helpers";
  * @param config - TODO
  * @param tsdocConfiguration - TODO
  */
-export function renderModelPage(
+export function renderModelDocument(
     apiModel: ApiModel,
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
@@ -68,7 +68,7 @@ export function renderModelPage(
     );
 }
 
-export function renderPackagePage(
+export function renderPackageDocument(
     apiPackage: ApiPackage,
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
@@ -104,7 +104,7 @@ export function renderPackagePage(
     );
 }
 
-export function renderApiPage(
+export function renderApiDocument(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {

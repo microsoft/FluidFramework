@@ -26,7 +26,7 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
     apiModel: ApiModel;
 
     /**
-     * Default root uri used when generating content links.
+     * Default root URI used when generating content links.
      */
     readonly uriRoot: string;
 

@@ -13,7 +13,7 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
 import { MarkdownEmitter } from "./MarkdownEmitter";
-import { renderApiPage, renderModelPage, renderPackagePage } from "./rendering";
+import { renderApiDocument, renderModelDocument, renderPackageDocument } from "./rendering";
 import { doesItemRequireOwnDocument, getLinkUrlForApiItem } from "./utilities";
 
 /**
@@ -49,7 +49,7 @@ export function renderDocuments(
     const documents: MarkdownDocument[] = [];
 
     // Always render Model page
-    documents.push(renderModelPage(apiModel, config));
+    documents.push(renderModelDocument(apiModel, config));
 
     if (apiModel.packages.length !== 0) {
         // For each package, walk the child graph to find API items which should be rendered to their own document page
@@ -57,7 +57,7 @@ export function renderDocuments(
 
         for (const packageItem of apiModel.packages) {
             // Always render pages for packages under the model
-            documents.push(renderPackagePage(packageItem, config));
+            documents.push(renderPackageDocument(packageItem, config));
 
             const packageEntryPoints = packageItem.entryPoints;
             if (packageEntryPoints.length !== 1) {
@@ -71,7 +71,7 @@ export function renderDocuments(
 
             const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
             for (const apiItem of packageDocumentItems) {
-                documents.push(renderApiPage(apiItem, config));
+                documents.push(renderApiDocument(apiItem, config));
             }
         }
     }

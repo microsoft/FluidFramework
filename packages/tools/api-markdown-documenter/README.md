@@ -31,6 +31,12 @@ This function also accepts a `MarkdownEmitter` object that does the conversion f
 ## Upcoming Work
 
 -   Config option for "Model" page title
+-   DocList
 -   Injext IDs for remaining headings
 -   Dynamic "Modifiers" column in tables
 -   Pre-canned policies (flat, index, adjacency)
+
+## Future work
+
+-   Replace DocNode output / MarkdownEmitter with Markdown AST trees and simple interface for rendering those trees to a stream
+-   Handle multiple package entrypoints

@@ -16,7 +16,7 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "../MarkdownDocumenterConfiguration";
 import { MarkdownEmitter } from "../MarkdownEmitter";
-import { renderModelPage, renderPackagePage } from "../rendering";
+import { renderModelDocument, renderPackageDocument } from "../rendering";
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
@@ -111,7 +111,7 @@ function apiTestSuite(
                 });
 
                 it("Render Model page (smoke test)", () => {
-                    const result = renderModelPage(
+                    const result = renderModelDocument(
                         markdownDocumenterConfig.apiModel,
                         markdownDocumenterConfig,
                     );
@@ -121,7 +121,7 @@ function apiTestSuite(
                 it("Render Package page (smoke test)", () => {
                     const packageItem = markdownDocumenterConfig.apiModel.packages[0];
 
-                    const result = renderPackagePage(packageItem, markdownDocumenterConfig);
+                    const result = renderPackageDocument(packageItem, markdownDocumenterConfig);
                     expect(result.path).to.equal(`${modelName}.md`);
                 });
 
