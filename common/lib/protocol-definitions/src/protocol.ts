@@ -45,6 +45,15 @@ export enum MessageType {
 }
 
 /**
+ * Available compression algorithms that the runtime can use to compress
+ * and decompress ops. 
+ * @experimental Not ready for use
+ */
+export enum CompressionAlgorithm {
+    LZ4 = "lz4"
+}
+
+/**
  * Messages to track latency trace
  */
 export interface ITrace {
@@ -93,6 +102,12 @@ export interface IDocumentMessage {
 
     // Traces related to the packet.
     traces?: ITrace[];
+
+    /**
+     * The compression algorithm that was used to compress the op.
+     * @experimental Not ready for use
+     */
+    compression?: CompressionAlgorithm;
 }
 
 /**
