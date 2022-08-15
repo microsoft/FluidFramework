@@ -20,6 +20,7 @@ import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISharingLinkKind } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotOptions } from '@fluidframework/odsp-driver-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
@@ -47,7 +48,7 @@ export enum ClpCompliantAppHeader {
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @public
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createLinkType?: ShareLinkTypes): IRequest;
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ShareLinkTypes | ISharingLinkKind): IRequest;
 
 // @public
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;

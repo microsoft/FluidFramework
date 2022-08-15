@@ -25,7 +25,7 @@ import { defaultSchemaPolicy, emptyField, FieldKinds } from "../../../feature-li
 
 // Allow importing specific example files:
 /* eslint-disable-next-line import/no-internal-modules */
-import { codePoint, string } from "../../schema-stored/examples/SchemaExamples";
+import { codePoint, string } from "../../schema-stored/examples/schemaExamples";
 
 class TestSchemaRepository extends StoredSchemaRepository<FullSchemaPolicy> {
     public clone(): TestSchemaRepository {

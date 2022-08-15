@@ -9,7 +9,7 @@
  * The current goal is to be able to rebase all expressible edits (see AnchorInterfaces.ts) except for cases where the
  * merge requires re-running a hierarchical command that is domain-specific (i.e., not built-in at the SharedTree
  * layer).
- * 
+ *
  * DISCLAIMER:
  * Some of the information needed to capture the intent of rebasable edits is not yet reflected in this format.
  * The missing pieces are:
@@ -17,7 +17,7 @@
  * - Constraints
  *   - Explicit constraints
  *   - Observations made by hierarchical edits
- * 
+ *
  * Remaining issues:
  *  - The active server (until then, each client locally) needs to store reversal info in the edit.
  *  - How do we update local edit in the face of peer edits and still represent them without losing intent?
@@ -34,15 +34,15 @@
  * A set of changes made to a document.
  * These changes cannot be rebased over other changes, but rebasable change can be rebased over these changes.
  */
-interface ChangeSet {
+interface Changeset {
 	/**
 	 * When specified, describes the changes made to the document, starting at the root.
-	 * Since most ChangeSets do not impact the root, a single Modify segment can be used in most cases.
+	 * Since most Changesets do not impact the root, a single Modify segment can be used in most cases.
 	 */
 	changes?: Modify | ChangeSegment[];
 	/**
 	 * Nodes that were deleted and re-created later, with possibly different data (e.g., as a result of reencoding).
-	 * Each node may have been revived several times over the course of the ChangeSet. They are ordered from earliest
+	 * Each node may have been revived several times over the course of the Changeset. They are ordered from earliest
 	 * to latest.
 	 */
 	revivals?: Map<NodeId, Revival[]>;
@@ -55,7 +55,7 @@ interface ChangeSet {
 /**
  * A set of rebasable changes made to a document.
  */
- interface RebasableChangeSet {
+ interface RebasableChangeset {
 	changes?: Modify | RebasableChangeSegment[];
 	revivals?: Map<NodeId, Revival[]>;
 	clipboard?: Map<NodeId, ClipboardEntry>;
@@ -122,7 +122,7 @@ interface RebasableDeletedModify {
 interface SequencedSegment {
 	/**
 	 * The sequence number assigned to the edit that this change was part of.
-	 * 
+	 *
 	 * Used to differentiate edits that were applied concurrently to the edit being rebased from those that were known
 	 * to the edit being rebased.
 	 */
@@ -141,13 +141,13 @@ interface RebasablePlaceOp {
 	 * Whether the attach was performed:
 	 * - after the preceding sibling or (if there are no siblings before) after the start of the trait
 	 * - before the successor sibling or (if there are no siblings after) before the end of the trait
-	 * 
+	 *
 	 * Treated as Sibling.Previous when omitted.
 	 */
 	side?: Sibling.Next;
 	 /**
 	 * Used to control the relative ordering of anchors that concurrently target the same place.
-	 * 
+	 *
 	 * Interpreted as Tiebreak.LastToFirst when omitted.
 	 */
 	tiebreak?: Tiebreak.FirstToLast;
@@ -217,8 +217,8 @@ interface Insert extends PlaceOp {
 	 * The corresponding MoveIn segment will have the ProtoNode data in its `changes` array.
 	 *
 	 * Why do we need to record the inner MoveOut at all? Can't we pretend the content was inserted at the final
-	 * location? There's no way a concurrent change being rebased on this ChangeSet would have a stowaway attached
-	 * to one of the created nodes because they didn't exist before this ChangeSet, right?
+	 * location? There's no way a concurrent change being rebased on this Changeset would have a stowaway attached
+	 * to one of the created nodes because they didn't exist before this Changeset, right?
 	 * Wrong: a rebased change could have a stowaway attached to one of the created nodes in the case of a teleport.
 	 * Event without teleports, it's possible that a change that is part of this CS might have moved existing nodes with
 	 * a destination anchor that was tied to one of the these created nodes, and it's possible that a rebased change
@@ -259,8 +259,8 @@ interface RebasableInsert extends RebasablePlaceOp {
 	 * The corresponding MoveIn segment will have the ProtoNode data in its `changes` array.
 	 *
 	 * Why do we need to record the inner MoveOut at all? Can't we pretend the content was inserted at the final
-	 * location? There's no way a concurrent change being rebased on this ChangeSet would have a stowaway attached
-	 * to one of the created nodes because they didn't exist before this ChangeSet, right?
+	 * location? There's no way a concurrent change being rebased on this Changeset would have a stowaway attached
+	 * to one of the created nodes because they didn't exist before this Changeset, right?
 	 * Wrong: a rebased change could have a stowaway attached to one of the created nodes in the case of a teleport.
 	 * Event without teleports, it's possible that a change that is part of this CS might have moved existing nodes with
 	 * a destination anchor that was tied to one of the these created nodes, and it's possible that a rebased change
@@ -275,7 +275,7 @@ interface RebasableInsert extends RebasablePlaceOp {
 interface MoveIn extends PlaceOp {
 	type?: 'MoveIn';
 	/**
-	 * Path to the corresponding MoveOut segment within this ChangeSet.
+	 * Path to the corresponding MoveOut segment within this Changeset.
 	 */
 	src: SegmentPath;
 	/**
@@ -285,7 +285,7 @@ interface MoveIn extends PlaceOp {
 	count?: number;
 	/**
 	 * Further changes made to the moved content.
-	 * 
+	 *
 	 * When inserted content gets moved, the ProtoNode data ends up here. Note that since there is one MoveOut per MoveIn we can
 	 * unambiguously trace back the source of a ProtoNode.
 	 * Having the ProtoNode here allows updating the destination trait without having to figure out the original location of the
@@ -296,7 +296,7 @@ interface MoveIn extends PlaceOp {
 interface RebasableMoveIn extends RebasablePlaceOp {
 	type?: 'MoveIn';
 	/**
-	 * Path to the corresponding MoveOut segment within this ChangeSet.
+	 * Path to the corresponding MoveOut segment within this Changeset.
 	 */
 	src: SegmentPath;
 	/**
@@ -306,7 +306,7 @@ interface RebasableMoveIn extends RebasablePlaceOp {
 	count?: number;
 	/**
 	 * Further changes made to the moved content.
-	 * 
+	 *
 	 * When inserted content gets moved, the ProtoNode data ends up here. Note that since there is one MoveOut per MoveIn we can
 	 * unambiguously trace back the source of a ProtoNode.
 	 * Having the ProtoNode here allows updating the destination trait without having to figure out the original location of the
@@ -340,14 +340,14 @@ interface RebasableMoveIn extends RebasablePlaceOp {
 interface MoveOut extends RangeOp {
 	type?: 'MoveOut';
 	/**
-	 * Path to the corresponding MoveIn segment within this ChangeSet.
+	 * Path to the corresponding MoveIn segment within this Changeset.
 	 */
 	dst: SegmentPath;
 	/**
 	 * Further changes made to the region affected by this MoveOut.
 	 * Insert and MoveIn are tracked here instead of higher up in the temporal hierarchy because they may be
 	 * targeting a place relative to a where a moved node used to be.
-	 * 
+	 *
 	 * Nested MoveOut is used to preserve information about the multiple destinations. A stowaway being attached
 	 * relative to one of the nodes being moved by the first/outer MoveOut may indeed adopt one destination but
 	 * not the other.
@@ -355,7 +355,7 @@ interface MoveOut extends RangeOp {
 	 * Nested Delete is included here because even though there's nothing left to delete, an attach operation targeting
 	 * one of the moved out nodes might not follow the move but might care that the region of the trait is then deleted.
 	 * Note: we currently have no way to allow the author of the attach operation to convey that they do care.
-	 * 
+	 *
 	 * Nested Modify is not included here because modifications made either prior to the MoveOut or between the MoveOut and
 	 * MoveIn are always on the corresponding MoveIn.
 	 */
@@ -364,14 +364,14 @@ interface MoveOut extends RangeOp {
 interface RebasableMoveOut extends RebasableRangeOp {
 	type?: 'MoveOut';
 	/**
-	 * Path to the corresponding MoveIn segment within this ChangeSet.
+	 * Path to the corresponding MoveIn segment within this Changeset.
 	 */
 	dst: SegmentPath;
 	/**
 	 * Further changes made to the region affected by this MoveOut.
 	 * Insert and MoveIn are tracked here instead of higher up in the temporal hierarchy because they may be
 	 * targeting a place relative to a where a moved node used to be.
-	 * 
+	 *
 	 * Nested MoveOut is used to preserve information about the multiple destinations. A stowaway being attached
 	 * relative to one of the nodes being moved by the first/outer MoveOut may indeed adopt one destination but
 	 * not the other.
@@ -379,7 +379,7 @@ interface RebasableMoveOut extends RebasableRangeOp {
 	 * Nested Delete is included here because even though there's nothing left to delete, an attach operation targeting
 	 * one of the moved out nodes might not follow the move but might care that the region of the trait is then deleted.
 	 * Note: we currently have no way to allow the author of the attach operation to convey that they do care.
-	 * 
+	 *
 	 * Nested Modify is not included here because modifications made either prior to the MoveOut or between the MoveOut and
 	 * MoveIn are always on the corresponding MoveIn.
 	 */
@@ -393,15 +393,15 @@ interface Delete extends RangeOp {
 	type?: 'Delete';
 	/**
 	 * Further changes made to the deleted content.
-	 * 
+	 *
 	 * Insert and MoveIn segments are included here (instead of higher up in the temporal hierarchy)
 	 * because they may be targeting a place relative to a deleted node, which someone may concurrently move.
 	 *
 	 * DeletedModify is used to preserve information about changes made below the deleted nodes.
-	 * 
+	 *
 	 * MoveOut is used to preserve information about slice-like moves that were applied after this delete.
 	 * This is needed for cases where a stowaway would adopt the inner move.
-	 * 
+	 *
 	 * Delete segments are not included because while a slice-like range might delete a portion of a trait
 	 * that had already been deleted, there is no scenario under which we care. A concurrent attach that
 	 * targets this portion may care that the node relative to which the insertion is made has been deleted
@@ -416,15 +416,15 @@ interface RebasableDelete extends RebasableRangeOp {
 	type?: 'Delete';
 	/**
 	 * Further changes made to the deleted content.
-	 * 
+	 *
 	 * Insert and MoveIn segments are included here (instead of higher up in the temporal hierarchy)
 	 * because they may be targeting a place relative to a deleted node, which someone may concurrently move.
 	 *
 	 * DeletedModify is used to preserve information about changes made below the deleted nodes.
-	 * 
+	 *
 	 * MoveOut is used to preserve information about slice-like moves that were applied after this delete.
 	 * This is needed for cases where a stowaway would adopt the inner move.
-	 * 
+	 *
 	 * Delete segments are not included because while a slice-like range might delete a portion of a trait
 	 * that had already been deleted, there is no scenario under which we care. A concurrent attach that
 	 * targets this portion may care that the node relative to which the insertion is made has been deleted
@@ -457,7 +457,7 @@ interface RebasableConstraint extends RebasableRangeOp {
 	 * even out.
 	 * For set-like ranges, each of the nodes in the original range must still exist. Note that those nodes may have
 	 * been deleted then re-inserted (as in cut & paste).
-	 * 
+	 *
 	 * NOT GOOD: if a constraint segment needs to be broken up in order to be layered on top of disjoint segments then
 	 * the reported length can only be understood when piecing together the fragments of this constraint segment. This
 	 * is not so bad for set-like range since we could update the length per fragment, but for slice-like ranges we
@@ -471,7 +471,7 @@ interface RebasableConstraint extends RebasableRangeOp {
 	 * Set when the range is constrained to contain a specific sequence of nodes (captured by a hash of their IDs).
 	 * For slice-like ranges the range must contain the same set of nodes in the same order.
 	 * For set-like ranges the nodes must still exist. This is equivalent to the `length` constraint.
-	 * 
+	 *
 	 * NOT GOOD: fragmentation makes this awkward. See `length`.
 	 */
 	identityHash?: string;
@@ -479,7 +479,7 @@ interface RebasableConstraint extends RebasableRangeOp {
 	 * Same as `identityHash` but using a deep traversal when hashing. Note that this includes scalar values.
 	 * For slice-like ranges the range must contain the same set of nodes in the same order and their contents must be the same recursively.
 	 * For set-like ranges the nodes must still exist and their contents must be the same recursively.
-	 * 
+	 *
 	 * NOT GOOD: fragmentation makes this awkward. See `length`.
 	 */
 	contentHash?: string;
@@ -528,7 +528,7 @@ interface RebasableProtoTraits {
 /**
  * A trait of a node to be created.
  * May include change segments if the trait was edited after creation.
- * 
+ *
  * Modify segments are now allowed here. Instead, modifications are reflected as follows:
  * - values are updated in place
  * - deleted nodes are replaced by a Delete segment in the relevant ProtoTrait
@@ -560,14 +560,14 @@ interface RebasableSliceBounds extends SliceBounds {
 	/**
 	 * Used to control the relative ordering of anchors that concurrently target the same place.
 	 * (For rebase only)
-	 * 
+	 *
 	 * Interpreted as Tiebreak.LastToFirst when omitted.
 	 */
 	startTiebreak?: Tiebreak.FirstToLast;
 	/**
 	 * Used to control the relative ordering of anchors that concurrently target the same place.
 	 * (For rebase only)
-	 * 
+	 *
 	 * Interpreted as Tiebreak.LastToFirst when omitted.
 	 */
 	endTiebreak?: Tiebreak.FirstToLast;
@@ -583,7 +583,7 @@ interface RebasableSliceBounds extends SliceBounds {
 
 /**
  * Represents an occurrence of a node being deleted then re-created with possibly different data (e.g., as a result of reencoding).
- * 
+ *
  * This data is used to allow stowaways to adopt the revived node as their target.
  */
 interface Revival {
@@ -611,7 +611,7 @@ interface Revival {
 
 /**
  * Describes a subtree which has been deleted but may be inserted again verbatim.
- * 
+ *
  * This structure is only used to track subtrees that have not been inserted again.
  * Had the subtree been inserted again, its deletion would be represented as a MoveOut, and its insertion as a MoveIn.
  */
@@ -622,22 +622,22 @@ interface ClipboardEntry {
 	sourceSegment: SegmentPath;
 	/**
 	 * The contents of the subtree on the clipboard.
-	 * Only specified when the subtree was created or modified over the course of this ChangeSet.
+	 * Only specified when the subtree was created or modified over the course of this Changeset.
 	 */
 	contents?: ProtoNode | Modify;
 }
 
 /**
  * A string that describes the location of a Segment in terms of its path from the root-level Modify Segment.
- * 
+ *
  * The string is represented as a concatenation of trait names and indices separated by dots ('.').
  * Note that the indices represent segments, not nodes.
- * 
- * If the root changes of the ChangeSet is a Modify segment then the path match the following JS regular expression:
+ *
+ * If the root changes of the Changeset is a Modify segment then the path match the following JS regular expression:
  * /^(\.(\w+\.)?\d+)*$/
- * If the root changes of the ChangeSet is an array then the path must match following JS regular expression:
+ * If the root changes of the Changeset is an array then the path must match following JS regular expression:
  * /^\d+(\.(\w+\.)?\d+)*$/
- * 
+ *
  * Addressing a segment within another segment is done as follows:
  *  - When the parent segment is a Modify segment, the path to the child segment is composed of the name of
  *    trait under which the child segment resides, followed by a dot ('.'), followed by the index of the
@@ -655,7 +655,7 @@ enum Tiebreak { LastToFirst, FirstToLast }
 
 namespace Swaps {
 	// Swap foo and bar nodes
-	const swap: ChangeSet = {
+	const swap: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'MoveOut', seq: 1, count: 1, dst: { bar: 1 } },
@@ -669,7 +669,7 @@ namespace Swaps {
 	};
 
 	// Swap foo and bar nodes (without the optional `type` and `count` fields)
-	const swapTerse: ChangeSet = {
+	const swapTerse: Changeset = {
 		changes: {
 			foo: [
 				{ seq: 1, dst: { bar: 1 } },
@@ -683,7 +683,7 @@ namespace Swaps {
 	};
 
 	// Swap foo and bar nodes and back again
-	const swapAndBack: ChangeSet = {
+	const swapAndBack: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'MoveOut', seq: 1, dst: { bar: 1 } },
@@ -715,7 +715,7 @@ namespace Swaps {
 	// Swap parent/child:
 	// From: A{ foo: B{ bar: C } }
 	// To:   A{ foo: C{ bar: B } }
-	const swapParentChild: ChangeSet = {
+	const swapParentChild: Changeset = {
 		changes: {
 			foo: [
 				{
@@ -757,7 +757,7 @@ namespace Swaps {
 	// Swap parent/child:
 	// From: A{ foo: B{ bar: C{ baz: D } } }
 	// To:   A{ foo: C{ bar: B{ baz: D } } }
-	const swapParentChild2: ChangeSet = {
+	const swapParentChild2: Changeset = {
 		changes: {
 			foo: [
 				{
@@ -809,7 +809,7 @@ namespace Swaps {
 			],
 		}
 	};
-	const swapParentChild2Verbose: ChangeSet = {
+	const swapParentChild2Verbose: Changeset = {
 		changes: {
 			foo: [
 				{
@@ -912,7 +912,7 @@ namespace CumulativeInsert {
 
 	// First sequenced edit (Client 1)
 	// yields state [F A B]
-	const e1: ChangeSet = {
+	const e1: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'Insert', seq: 1, contents: [{id: 'F'}]},
@@ -922,7 +922,7 @@ namespace CumulativeInsert {
 
 	// Second sequenced edit (Client 2)
 	// yields state [A U V B] (will be [F A U V B] after rebase)
-	const e2a: ChangeSet = {
+	const e2a: Changeset = {
 		changes: {
 			foo: [
 				1, // Skip over A
@@ -933,7 +933,7 @@ namespace CumulativeInsert {
 
 	// Third sequenced edit (Client 2)
 	// yields state [A U X V B] (will be [F A U X V B] after rebase)
-	const e2b: ChangeSet = {
+	const e2b: Changeset = {
 		changes: {
 			foo: [
 				2, // Skip over A U
@@ -942,9 +942,9 @@ namespace CumulativeInsert {
 		}
 	};
 
-	// Collaboration ChangeSet after e1 and e2a
+	// Collaboration Changeset after e1 and e2a
 	// yields state [F A U V B]
-	const wcs2a: ChangeSet = {
+	const wcs2a: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'Insert', seq: 1, contents: [{id: 'F'}]},
@@ -954,9 +954,9 @@ namespace CumulativeInsert {
 		}
 	};
 
-	// Collaboration ChangeSet after e1, e2a, e2b
+	// Collaboration Changeset after e1, e2a, e2b
 	// yields state [F A U X V B]
-	const wcs2b: ChangeSet = {
+	const wcs2b: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'Insert', seq: 1, contents: [{id: 'F'}]},
@@ -985,7 +985,7 @@ namespace MoveToMovedLocation {
 	//   foo: [A B C]
 	//   bar: [V]
 	//   baz: [U]
-	const e1: ChangeSet = {
+	const e1: Changeset = {
 		changes: {
 			bar: [
 				{ type: 'MoveOut', seq: 0, dst: { baz: 0 } },
@@ -1004,7 +1004,7 @@ namespace MoveToMovedLocation {
 	//   foo: [C]
 	//   bar: [V]
 	//   baz: [U A B]
-	const e2a: ChangeSet = {
+	const e2a: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'MoveOut', seq: 1, dst: { bar: 1 }, count: 2, bounds: {}},
@@ -1025,7 +1025,7 @@ namespace MoveToMovedLocation {
 	//   bar: [V]
 	//   baz: [U A X B]
 
-	const e2b: ChangeSet = {
+	const e2b: Changeset = {
 		changes: {
 			bar: [
 				2,
@@ -1035,7 +1035,7 @@ namespace MoveToMovedLocation {
 	};
 
 	// Squashed e2a and e2b
-	const e2ae2b: ChangeSet = {
+	const e2ae2b: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'MoveOut', seq: 1, dst: { bar: 1 }, count: 2, bounds: {}},
@@ -1057,7 +1057,7 @@ namespace MoveToMovedLocation {
 	};
 
 	// Rebased version of e2a
-	const e2aPrime: ChangeSet = {
+	const e2aPrime: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'MoveOut', seq: 1, dst: { baz: 1 }, count: 2, bounds: {}},
@@ -1070,7 +1070,7 @@ namespace MoveToMovedLocation {
 	};
 
 	// Rebased version of e2b if following A B
-	const e2bPrimeFollow: ChangeSet = {
+	const e2bPrimeFollow: Changeset = {
 		changes: {
 			baz: [
 				2,
@@ -1080,7 +1080,7 @@ namespace MoveToMovedLocation {
 	};
 
 	// Squash of e1 and e2a'
-	const e1e2ap: ChangeSet = {
+	const e1e2ap: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'MoveOut', seq: 1, dst: { baz: 1 }, count: 2, bounds: {}},
@@ -1094,10 +1094,10 @@ namespace MoveToMovedLocation {
 			],
 		}
 	};
-	
+
 
 	// Squash of e1, e2a', e2b' for the case where the insertion of X follows AB
-	const e1e2ape2bp_follow: ChangeSet = {
+	const e1e2ape2bp_follow: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'MoveOut', seq: 1, dst: { baz: 1 }, count: 2, bounds: {}}, // AB
@@ -1144,7 +1144,7 @@ namespace MoveToMovedLocation {
 	};
 
 	// Squash of e1, e2a', e2b' for the case where the insertion of X does not follow AB
-	const e1e2ape2bp_stay: ChangeSet = {
+	const e1e2ape2bp_stay: Changeset = {
 		changes: {
 			foo: [
 				{ type: 'MoveOut', seq: 1, dst: { baz: 1 }, count: 2, bounds: {}},
@@ -1184,7 +1184,7 @@ namespace DeleteAndInsertMix {
 	 *  - Delete C
 	 *  - Delete B
 	 */
-	const e1: ChangeSet = {
+	const e1: Changeset = {
 		changes: {
 			foo: [
 				1,
@@ -1199,7 +1199,7 @@ namespace DeleteAndInsertMix {
 	 * - Delete B C
 	 * - Insert X after B
 	 */
-	const e2: ChangeSet = {
+	const e2: Changeset = {
 		changes: {
 			foo: [
 				1,
@@ -1224,7 +1224,7 @@ namespace DeleteAndInsertMix {
 	 *  - Insert X after A
 	 *  - Delete B C
 	 */
-	const e3: ChangeSet = {
+	const e3: Changeset = {
 		changes: {
 			foo: [
 				1,

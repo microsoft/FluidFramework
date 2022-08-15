@@ -13,19 +13,12 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @public
 export class AnchorSet {
+    applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
     isEmpty(): boolean;
     locate(anchor: Anchor): UpPath | undefined;
-    moveChildren(count: number, src: undefined | {
-        path: UpPath;
-        field: FieldKey;
-        start: number;
-    }, dst: undefined | {
-        path: UpPath;
-        field: FieldKey;
-        start: number;
-    }): void;
+    moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
     track(path: UpPath): Anchor;
 }
 
@@ -40,28 +33,10 @@ export abstract class BrandedType<ValueType, Name extends string> {
 }
 
 // @public (undocumented)
-export function buildForest(schema: StoredSchemaRepository): IEditableForest;
-
-// @public (undocumented)
-export abstract class ChangeEncoder<TChange> {
-    decodeBinary(formatVersion: number, change: IsoBuffer): TChange;
-    // (undocumented)
-    abstract decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TChange;
-    encodeBinary(formatVersion: number, change: TChange): IsoBuffer;
-    // (undocumented)
-    abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleReadOnly;
-}
+export function buildForest(): IEditableForest;
 
 // @public (undocumented)
 export type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<infer TChange, any, any> ? TChange : never;
-
-// @public
-export interface ChangeHandler<TChange, TFinalChange, TChangeSet> {
-    // (undocumented)
-    readonly encoder: ChangeEncoder<TFinalChange>;
-    // (undocumented)
-    readonly rebaser: ChangeRebaser<TChange, TFinalChange, TChangeSet>;
-}
 
 // @public
 export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
@@ -80,7 +55,7 @@ export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
 }
 
 // @public (undocumented)
-export type ChangeSetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, any, infer TChangeSet> ? TChangeSet : never;
+export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> = TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
 
 // @public
 export type ChildCollection = FieldKey | RootField;
@@ -253,9 +228,6 @@ export interface FieldSchema {
     readonly kind: FieldKindIdentifier;
     readonly types?: TreeTypeSet;
 }
-
-// @public (undocumented)
-export type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, infer TFinal, any> ? TFinal : never;
 
 // @public
 const forbidden: FieldKind;
@@ -616,14 +588,14 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
 type ProtoNode = JsonableTree;
 
 // @public
-export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
+export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     constructor(rebaser: TChangeRebaser);
     discardRevision(revision: RevisionTag): void;
     // (undocumented)
     readonly empty: RevisionTag;
     // (undocumented)
-    getResolutionPath(from: RevisionTag, to: RevisionTag): ChangeSetFromChangeRebaser<TChangeRebaser>;
-    rebase(changes: ChangeFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>];
+    getResolutionPath(from: RevisionTag, to: RevisionTag): ChangesetFromChangeRebaser<TChangeRebaser>;
+    rebase(changes: ChangesetFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>];
     rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void;
     // (undocumented)
     readonly rebaser: TChangeRebaser;

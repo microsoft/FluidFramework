@@ -6,19 +6,18 @@
 import { TaskManager } from "@fluid-experimental/task-manager";
 import { Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 
-import type { IContainerKillBit } from "./interfaces";
+import type { IMigrationTool } from "./interfaces";
 
 const quorumKey = "quorum";
 const crcKey = "crc";
 const taskManagerKey = "task-manager";
-const codeDetailsProposedKey = "code";
+const newVersionKey = "newVersion";
 const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
-export class ContainerKillBit extends DataObject implements IContainerKillBit {
+export class MigrationTool extends DataObject implements IMigrationTool {
     private _quorum: Quorum | undefined;
     private _crc: ConsensusRegisterCollection<string> | undefined;
     private _taskManager: TaskManager | undefined;
@@ -54,40 +53,44 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public async setNewContainerId(id: string) {
-        // Using a consensus-type data structure here, to make it easier to validate
-        // that the setNewContainerId was ack'd and we can have confidence other clients will agree.
+        // Only permit a single container to be set as a migration destination.
+        if (this.crc.read(newContainerIdKey) !== undefined) {
+            throw new Error("New container was already established");
+        }
+
+        // Using a consensus data structure is important here, because other clients might race us to set the new
+        // value.  All clients must agree on the final value even in these race conditions so everyone ends up in the
+        // same final container.
         await this.crc.write(newContainerIdKey, id);
     }
 
-    public get codeDetailsAccepted() {
-        return this.quorum.get(codeDetailsProposedKey) !== undefined;
+    public get acceptedVersion() {
+        return this.quorum.get(newVersionKey) as string | undefined;
     }
 
-    public get acceptedCodeDetails() {
-        return this.quorum.get(codeDetailsProposedKey) as IFluidCodeDetails | undefined;
-    }
-
-    public async proposeCodeDetails(codeDetails: IFluidCodeDetails) {
-        // Early exit/resolve if already marked.
-        if (this.codeDetailsAccepted) {
-            return;
+    public async proposeVersion(newVersion: string) {
+        // Don't permit changes to the version after a new one has already been accepted.
+        // TODO: Consider whether we should throw on trying to set when a pending proposal exists -- currently
+        // the Quorum will silently drop these on the floor.
+        if (this.acceptedVersion !== undefined) {
+            throw new Error("New version was already accepted");
         }
 
-        // Note that the marking could come from another client (e.g. two clients try to mark simultaneously).
-        // Watching via the event listener will work regardless of whether our marking or a remote client's
-        // marking was the one that actually wrote the flag.
+        // Note that the accepted proposal could come from another client (e.g. two clients try to propose
+        // simultaneously).  Watching via the event listener will work regardless of whether our proposal or
+        // a remote client's proposal was the one that actually got accepted.
         return new Promise<void>((resolve, reject) => {
             const acceptedListener = (key: string) => {
-                if (key === codeDetailsProposedKey) {
+                if (key === newVersionKey) {
                     resolve();
                     this.quorum.off("accepted", acceptedListener);
                 }
             };
             this.quorum.on("accepted", acceptedListener);
             // Even if quorum.set() becomes a promise, this will remain fire-and-forget since we don't care
-            // whether our marking or a remote client's marking writes the flag (though maybe we'd do retry
-            // logic if a remote client rejects the local client's mark).
-            this.quorum.set(codeDetailsProposedKey, codeDetails);
+            // whether our proposal or a remote client's proposal is accepted (though maybe we'd do retry
+            // logic if a remote client rejects the local client's proposal).
+            this.quorum.set(newVersionKey, newVersion);
         });
     }
 
@@ -116,8 +119,8 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
         this._crc = await crcHandle.get();
 
         this.quorum.on("accepted", (key: string) => {
-            if (key === codeDetailsProposedKey) {
-                this.emit("codeDetailsAccepted");
+            if (key === newVersionKey) {
+                this.emit("newVersionAccepted");
             }
         });
 
@@ -138,10 +141,10 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const ContainerKillBitInstantiationFactory =
-    new DataObjectFactory<ContainerKillBit>(
-        "container-kill-bit",
-        ContainerKillBit,
+export const MigrationToolInstantiationFactory =
+    new DataObjectFactory<MigrationTool>(
+        "migration-tool",
+        MigrationTool,
         [
             ConsensusRegisterCollection.getFactory(),
             Quorum.getFactory(),
