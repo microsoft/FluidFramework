@@ -137,10 +137,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly queueWatcher: EventEmitter = new EventEmitter();
     // abandonWatcher emits an event whenever the local client calls abandon() on a task.
     private readonly abandonWatcher: EventEmitter = new EventEmitter();
-    // disconnectWatcher emits an event whenever we get disconnected.
-    private readonly disconnectWatcher: EventEmitter = new EventEmitter();
-    // connectWatcher emits an event whenever we connect.
-    private readonly connectWatcher: EventEmitter = new EventEmitter();
+    // connectionWatcher emits an event whenever we get connected or disconnected.
+    private readonly connectionWatcher: EventEmitter = new EventEmitter();
 
     private messageId: number = -1;
     /**
@@ -207,7 +205,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             }
         });
 
-        this.disconnectWatcher.on("disconnect", () => {
+        this.connectionWatcher.on("disconnect", () => {
             assert(this.runtime.clientId !== undefined, 0x1d3 /* "Missing client id on disconnect" */);
 
             // We don't modify the taskQueues on disconnect (they still reflect the latest known consensus state).
@@ -279,7 +277,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 if (this.haveTaskLock(taskId) && !this.latestPendingOps.has(taskId)) {
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
-                    this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
+                    this.connectionWatcher.off("disconnect", rejectOnDisconnect);
                     resolve(true);
                 }
             };
@@ -291,20 +289,20 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
-                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
+                this.connectionWatcher.off("disconnect", rejectOnDisconnect);
                 reject(new Error(`Abandoned before acquiring lock: ${taskId}`));
             };
 
             const rejectOnDisconnect = () => {
                 this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                 this.abandonWatcher.off("abandon", checkIfAbandoned);
-                this.disconnectWatcher.off("disconnect", rejectOnDisconnect);
+                this.connectionWatcher.off("disconnect", rejectOnDisconnect);
                 reject(new Error(`Disconnected before acquiring lock: ${taskId}`));
             };
 
             this.queueWatcher.on("queueChange", checkIfAcquiredLock);
             this.abandonWatcher.on("abandon", checkIfAbandoned);
-            this.disconnectWatcher.on("disconnect", rejectOnDisconnect);
+            this.connectionWatcher.on("disconnect", rejectOnDisconnect);
         });
 
         if (!this.queued(taskId)) {
@@ -317,7 +315,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     public subscribeToTask(taskId: string) {
         const disconnectHandler = () => {
             // Wait to be connected again and then re-submit volunteer op
-            this.connectWatcher.once("connect", () => {
+            this.connectionWatcher.once("connect", () => {
                 this.submitVolunteerOp(taskId);
             });
         };
@@ -328,11 +326,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             }
 
             this.abandonWatcher.off("abandon", checkIfAbandoned);
-            this.disconnectWatcher.off("disconnect", disconnectHandler);
+            this.connectionWatcher.off("disconnect", disconnectHandler);
         };
 
         this.abandonWatcher.on("abandon", checkIfAbandoned);
-        this.disconnectWatcher.on("disconnect", disconnectHandler);
+        this.connectionWatcher.on("disconnect", disconnectHandler);
 
         if (!this.connected) {
             disconnectHandler();
@@ -419,16 +417,18 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
     /**
      * @internal
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      */
     protected onDisconnect() {
-        this.disconnectWatcher.emit("disconnect");
+        this.connectionWatcher.emit("disconnect");
     }
 
     /**
      * @internal
+     * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
      */
     protected onConnect() {
-        this.connectWatcher.emit("connect");
+        this.connectionWatcher.emit("connect");
     }
 
     //
