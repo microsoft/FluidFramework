@@ -234,21 +234,4 @@ describe("api-markdown-documenter full-suite tests", () => {
         [Path.resolve(__dirname, "test-data", "simple-suite-test.json")],
         configs,
     );
-
-    // Run the test suite against this package's own report
-    apiTestSuite(
-        "api-markdown-documenter",
-        [
-            // Relative to dist/test
-            Path.resolve(
-                __dirname,
-                "..",
-                "..",
-                "_api-extractor-temp",
-                "doc-models",
-                "api-markdown-documenter.api.json",
-            ),
-        ],
-        configs,
-    );
 });
