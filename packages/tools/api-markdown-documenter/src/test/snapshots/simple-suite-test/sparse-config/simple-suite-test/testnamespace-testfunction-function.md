@@ -3,13 +3,13 @@
 
 Test function
 
-## Signature
+## Signature {#testfunction-signature}
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-## Parameters
+## Parameters {#testfunction-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

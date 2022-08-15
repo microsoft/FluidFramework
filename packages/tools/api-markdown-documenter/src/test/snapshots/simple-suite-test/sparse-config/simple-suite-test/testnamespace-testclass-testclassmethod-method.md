@@ -3,13 +3,13 @@
 
 Test class method
 
-## Signature
+## Signature {#testclassmethod-signature}
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-## Parameters
+## Parameters {#testclassmethod-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

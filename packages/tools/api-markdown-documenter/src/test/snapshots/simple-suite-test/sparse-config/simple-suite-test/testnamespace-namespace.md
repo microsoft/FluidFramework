@@ -3,11 +3,11 @@
 
 Test Namespace
 
-## Remarks
+## Remarks {#testnamespace-remarks}
 
 Here are some remarks about the namespace
 
-## Examples
+## Examples {#testnamespace-examples}
 
 ### Example 1
 
@@ -17,7 +17,7 @@ Example 1
 
 Example 2
 
-## Signature
+## Signature {#testnamespace-signature}
 
 ```typescript
 export declare namespace TestNamespace 

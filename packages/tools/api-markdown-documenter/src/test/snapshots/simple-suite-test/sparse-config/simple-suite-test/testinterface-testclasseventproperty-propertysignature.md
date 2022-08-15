@@ -3,11 +3,11 @@
 
 Test interface event property
 
-## Remarks
+## Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the event property
 
-## Signature
+## Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;

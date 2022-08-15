@@ -3,7 +3,7 @@
 
 Test Enum
 
-## Signature
+## Signature {#testenum-signature}
 
 ```typescript
 enum TestEnum 
@@ -20,14 +20,14 @@ enum TestEnum
 
 Test enum value 1
 
-### Signature
+### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = 0
 ```
 Test enum value 2
 
-### Signature
+### Signature {#testenumvalue2-signature}
 
 ```typescript
 TestEnumValue2 = 1

@@ -3,17 +3,17 @@
 
 Test class constructor
 
-## Remarks
+## Remarks {#_constructor_-remarks}
 
 Here are some remarks about the constructor
 
-## Signature
+## Signature {#_constructor_-signature}
 
 ```typescript
 constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-## Parameters
+## Parameters {#_constructor_-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

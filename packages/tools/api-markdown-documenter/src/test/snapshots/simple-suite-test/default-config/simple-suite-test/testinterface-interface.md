@@ -5,11 +5,11 @@
 
 Test interface
 
-## Remarks
+## Remarks {#testinterface-remarks}
 
 Here are some remarks about the interface
 
-## Signature
+## Signature {#testinterface-signature}
 
 ```typescript
 export interface TestInterface 
@@ -41,11 +41,11 @@ export interface TestInterface
 
 Test interface event property
 
-#### Remarks
+#### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the event property
 
-#### Signature
+#### Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;
@@ -55,11 +55,11 @@ readonly testClassEventProperty: () => void;
 
 Test interface property
 
-#### Remarks
+#### Remarks {#testinterfaceproperty-remarks}
 
 Here are some remarks about the property
 
-#### Signature
+#### Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: number;
@@ -71,11 +71,11 @@ testInterfaceProperty: number;
 
 Test interface event call signature
 
-#### Remarks
+#### Remarks {#_call_-remarks}
 
 Here are some remarks about the event call signature
 
-#### Signature
+#### Signature {#_call_-signature}
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
@@ -85,11 +85,11 @@ Here are some remarks about the event call signature
 
 Another example call signature
 
-#### Remarks
+#### Remarks {#_call__1-remarks}
 
 Here are some remarks about the event call signature
 
-#### Signature
+#### Signature {#_call__1-signature}
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
@@ -101,11 +101,11 @@ Here are some remarks about the event call signature
 
 Test interface method
 
-#### Remarks
+#### Remarks {#testinterfacemethod-remarks}
 
 Here are some remarks about the method
 
-#### Signature
+#### Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;

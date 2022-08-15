@@ -5,11 +5,11 @@
 
 Test Namespace
 
-## Remarks
+## Remarks {#testnamespace-remarks}
 
 Here are some remarks about the namespace
 
-## Examples
+## Examples {#testnamespace-examples}
 
 ### Example 1
 
@@ -19,7 +19,7 @@ Example 1
 
 Example 2
 
-## Signature
+## Signature {#testnamespace-signature}
 
 ```typescript
 export declare namespace TestNamespace 
@@ -73,7 +73,7 @@ export declare namespace TestNamespace
 
 Test Type-Alias
 
-#### Signature
+#### Signature {#typealias-signature}
 
 ```typescript
 type TypeAlias = boolean;
@@ -85,13 +85,13 @@ type TypeAlias = boolean;
 
 Test function
 
-#### Signature
+#### Signature {#testfunction-signature}
 
 ```typescript
 function testFunction(testParameter: number): number;
 ```
 
-#### Parameters
+#### Parameters {#testfunction-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
@@ -103,7 +103,7 @@ function testFunction(testParameter: number): number;
 
 Test Enum
 
-#### Signature
+#### Signature {#testenum-signature}
 
 ```typescript
 enum TestEnum 
@@ -122,7 +122,7 @@ enum TestEnum
 
 Test enum value 1
 
-###### Signature
+###### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = 0
@@ -132,7 +132,7 @@ TestEnumValue1 = 0
 
 Test enum value 2
 
-###### Signature
+###### Signature {#testenumvalue2-signature}
 
 ```typescript
 TestEnumValue2 = 1
@@ -144,7 +144,7 @@ TestEnumValue2 = 1
 
 Test Constant
 
-#### Signature
+#### Signature {#testconst-signature}
 
 ```typescript
 TestConst = "Hello world!"

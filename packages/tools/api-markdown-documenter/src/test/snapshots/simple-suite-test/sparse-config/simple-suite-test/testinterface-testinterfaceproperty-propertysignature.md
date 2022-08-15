@@ -3,11 +3,11 @@
 
 Test interface property
 
-## Remarks
+## Remarks {#testinterfaceproperty-remarks}
 
 Here are some remarks about the property
 
-## Signature
+## Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: number;

@@ -3,7 +3,7 @@
 
 Test Constant
 
-## Signature
+## Signature {#testconst-signature}
 
 ```typescript
 TestConst = "Hello world!"

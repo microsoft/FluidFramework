@@ -3,11 +3,11 @@
 
 Test Constant
 
-## Remarks
+## Remarks {#testconst-remarks}
 
 Here are some remarks about the variable
 
-## Signature
+## Signature {#testconst-signature}
 
 ```typescript
 testConst = 42

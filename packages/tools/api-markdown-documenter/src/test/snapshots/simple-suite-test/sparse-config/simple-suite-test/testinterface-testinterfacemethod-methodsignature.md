@@ -3,11 +3,11 @@
 
 Test interface method
 
-## Remarks
+## Remarks {#testinterfacemethod-remarks}
 
 Here are some remarks about the method
 
-## Signature
+## Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;

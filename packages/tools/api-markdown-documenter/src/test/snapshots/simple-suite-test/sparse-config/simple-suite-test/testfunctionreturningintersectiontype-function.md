@@ -3,7 +3,7 @@
 
 Test function that returns an inline type
 
-## Signature
+## Signature {#testfunctionreturningintersectiontype-signature}
 
 ```typescript
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;

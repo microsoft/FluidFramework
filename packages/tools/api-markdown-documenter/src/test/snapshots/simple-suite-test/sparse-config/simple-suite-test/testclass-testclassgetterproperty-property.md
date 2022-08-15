@@ -3,11 +3,11 @@
 
 Test class getter-only property
 
-## Remarks
+## Remarks {#testclassgetterproperty-remarks}
 
 Here are some remarks about the getter-only property
 
-## Signature
+## Signature {#testclassgetterproperty-signature}
 
 ```typescript
 /** @virtual */

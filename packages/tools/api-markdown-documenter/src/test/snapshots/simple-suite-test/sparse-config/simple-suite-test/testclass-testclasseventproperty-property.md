@@ -3,11 +3,11 @@
 
 Test class event property
 
-## Remarks
+## Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the property
 
-## Signature
+## Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;

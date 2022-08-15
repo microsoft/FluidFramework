@@ -5,11 +5,11 @@
 
 Test interface with generic type parameter
 
-## Remarks
+## Remarks {#testinterfacewithtypeparameter-remarks}
 
 Here are some remarks about the interface
 
-## Signature
+## Signature {#testinterfacewithtypeparameter-signature}
 
 ```typescript
 export interface TestInterfaceWithTypeParameter<T> 
@@ -31,11 +31,11 @@ export interface TestInterfaceWithTypeParameter<T>
 
 A test interface property using generic type parameter
 
-#### Remarks
+#### Remarks {#testproperty-remarks}
 
 Here are some remarks about the property
 
-#### Signature
+#### Signature {#testproperty-signature}
 
 ```typescript
 testProperty: T;

@@ -3,7 +3,7 @@
 
 Test sub-namespace
 
-## Signature
+## Signature {#testsubnamespace-signature}
 
 ```typescript
 namespace TestSubNamespace 

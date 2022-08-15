@@ -3,11 +3,11 @@
 
 Test class
 
-## Remarks
+## Remarks {#testclass-remarks}
 
 Here are some remarks about the class
 
-## Signature
+## Signature {#testclass-signature}
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> 

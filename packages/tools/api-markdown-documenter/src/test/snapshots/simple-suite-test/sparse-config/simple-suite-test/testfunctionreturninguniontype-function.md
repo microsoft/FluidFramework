@@ -3,7 +3,7 @@
 
 Test function that returns an inline type
 
-## Signature
+## Signature {#testfunctionreturninguniontype-signature}
 
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;

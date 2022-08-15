@@ -3,11 +3,11 @@
 
 A test interface property using generic type parameter
 
-## Remarks
+## Remarks {#testproperty-remarks}
 
 Here are some remarks about the property
 
-## Signature
+## Signature {#testproperty-signature}
 
 ```typescript
 testProperty: T;

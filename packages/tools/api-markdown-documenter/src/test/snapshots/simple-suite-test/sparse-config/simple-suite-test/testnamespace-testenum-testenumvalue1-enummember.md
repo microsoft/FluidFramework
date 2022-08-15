@@ -3,7 +3,7 @@
 
 Test enum value 1
 
-## Signature
+## Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = 0

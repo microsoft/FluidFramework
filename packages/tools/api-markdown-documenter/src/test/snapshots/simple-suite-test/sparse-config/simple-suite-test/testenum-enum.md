@@ -3,11 +3,11 @@
 
 Test Enum
 
-## Remarks
+## Remarks {#testenum-remarks}
 
 Here are some remarks about the enum
 
-## Examples
+## Examples {#testenum-examples}
 
 ### Example 1
 
@@ -25,7 +25,7 @@ Another example
 const bar = TestEnum.TestEnumValue2
 ```
 
-## Signature
+## Signature {#testenum-signature}
 
 ```typescript
 export declare enum TestEnum 
@@ -43,33 +43,33 @@ export declare enum TestEnum
 
 Test enum value 1 (string)
 
-### Remarks
+### Remarks {#testenumvalue1-remarks}
 
 Here are some remarks about the enum value
 
-### Signature
+### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
 ```
 Test enum value 2 (number)
 
-### Remarks
+### Remarks {#testenumvalue2-remarks}
 
 Here are some remarks about the enum value
 
-### Signature
+### Signature {#testenumvalue2-signature}
 
 ```typescript
 TestEnumValue2 = 3
 ```
 Test enum value 3 (default)
 
-### Remarks
+### Remarks {#testenumvalue3-remarks}
 
 Here are some remarks about the enum value
 
-### Signature
+### Signature {#testenumvalue3-signature}
 
 ```typescript
 TestEnumValue3 = 4

@@ -3,7 +3,7 @@
 
 Test interface
 
-## Signature
+## Signature {#testinterface-signature}
 
 ```typescript
 interface TestInterface 

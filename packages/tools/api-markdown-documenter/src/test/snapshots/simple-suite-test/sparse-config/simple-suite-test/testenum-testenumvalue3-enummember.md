@@ -3,11 +3,11 @@
 
 Test enum value 3 (default)
 
-## Remarks
+## Remarks {#testenumvalue3-remarks}
 
 Here are some remarks about the enum value
 
-## Signature
+## Signature {#testenumvalue3-signature}
 
 ```typescript
 TestEnumValue3 = 4

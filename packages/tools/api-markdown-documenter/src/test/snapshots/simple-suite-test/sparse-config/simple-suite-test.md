@@ -5,7 +5,7 @@
 
 Test package
 
-## Remarks
+## Remarks {#simple-suite-test-remarks}
 
 This remarks block includes a bulleted list!
 

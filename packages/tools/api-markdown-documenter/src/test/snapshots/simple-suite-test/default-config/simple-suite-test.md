@@ -5,7 +5,7 @@
 
 Test package
 
-## Remarks
+## Remarks {#simple-suite-test-remarks}
 
 This remarks block includes a bulleted list!
 
@@ -94,11 +94,11 @@ const foo = bar;
 
 Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
 
-#### Remarks
+#### Remarks {#testmappedtype-remarks}
 
 Here are some remarks about the mapped type
 
-#### Signature
+#### Signature {#testmappedtype-signature}
 
 ```typescript
 export declare type TestMappedType = {
@@ -110,11 +110,11 @@ export declare type TestMappedType = {
 
 Test Type-Alias
 
-#### Remarks
+#### Remarks {#typealias-remarks}
 
 Here are some remarks about the type alias
 
-#### Signature
+#### Signature {#typealias-signature}
 
 ```typescript
 export declare type TypeAlias = string;
@@ -126,17 +126,17 @@ export declare type TypeAlias = string;
 
 Test function
 
-#### Remarks
+#### Remarks {#testfunction-remarks}
 
 This is a test [link](./simple-suite-test/testinterface-interface) to another API member
 
-#### Signature
+#### Signature {#testfunction-signature}
 
 ```typescript
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter): TTypeParameter;
 ```
 
-#### Parameters
+#### Parameters {#testfunction-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
@@ -146,7 +146,7 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 
 Test function that returns an inline type
 
-#### Signature
+#### Signature {#testfunctionreturninginlinetype-signature}
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {
@@ -159,7 +159,7 @@ export declare function testFunctionReturningInlineType(): {
 
 Test function that returns an inline type
 
-#### Signature
+#### Signature {#testfunctionreturningintersectiontype-signature}
 
 ```typescript
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
@@ -169,7 +169,7 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 Test function that returns an inline type
 
-#### Signature
+#### Signature {#testfunctionreturninguniontype-signature}
 
 ```typescript
 export declare function testFunctionReturningUnionType(): string | TestInterface;
@@ -181,11 +181,11 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 Test Enum
 
-#### Remarks
+#### Remarks {#testenum-remarks}
 
 Here are some remarks about the enum
 
-#### Examples
+#### Examples {#testenum-examples}
 
 ##### Example 1
 
@@ -203,7 +203,7 @@ Another example
 const bar = TestEnum.TestEnumValue2
 ```
 
-#### Signature
+#### Signature {#testenum-signature}
 
 ```typescript
 export declare enum TestEnum 
@@ -223,11 +223,11 @@ export declare enum TestEnum
 
 Test enum value 1 (string)
 
-###### Remarks
+###### Remarks {#testenumvalue1-remarks}
 
 Here are some remarks about the enum value
 
-###### Signature
+###### Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"
@@ -237,11 +237,11 @@ TestEnumValue1 = "test-enum-value-1"
 
 Test enum value 2 (number)
 
-###### Remarks
+###### Remarks {#testenumvalue2-remarks}
 
 Here are some remarks about the enum value
 
-###### Signature
+###### Signature {#testenumvalue2-signature}
 
 ```typescript
 TestEnumValue2 = 3
@@ -251,11 +251,11 @@ TestEnumValue2 = 3
 
 Test enum value 3 (default)
 
-###### Remarks
+###### Remarks {#testenumvalue3-remarks}
 
 Here are some remarks about the enum value
 
-###### Signature
+###### Signature {#testenumvalue3-signature}
 
 ```typescript
 TestEnumValue3 = 4
@@ -267,11 +267,11 @@ TestEnumValue3 = 4
 
 Test Constant
 
-#### Remarks
+#### Remarks {#testconst-remarks}
 
 Here are some remarks about the variable
 
-#### Signature
+#### Signature {#testconst-signature}
 
 ```typescript
 testConst = 42

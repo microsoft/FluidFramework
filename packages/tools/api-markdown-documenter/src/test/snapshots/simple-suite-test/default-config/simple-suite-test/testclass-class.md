@@ -5,11 +5,11 @@
 
 Test class
 
-## Remarks
+## Remarks {#testclass-remarks}
 
 Here are some remarks about the class
 
-## Signature
+## Signature {#testclass-signature}
 
 ```typescript
 export declare class TestClass<TTypeParameterA, TTypeParameterB> 
@@ -48,17 +48,17 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB>
 
 Test class constructor
 
-#### Remarks
+#### Remarks {#_constructor_-remarks}
 
 Here are some remarks about the constructor
 
-#### Signature
+#### Signature {#_constructor_-signature}
 
 ```typescript
 constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-#### Parameters
+#### Parameters {#_constructor_-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
@@ -71,11 +71,11 @@ constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => vo
 
 Test class event property
 
-#### Remarks
+#### Remarks {#testclasseventproperty-remarks}
 
 Here are some remarks about the property
 
-#### Signature
+#### Signature {#testclasseventproperty-signature}
 
 ```typescript
 readonly testClassEventProperty: () => void;
@@ -85,11 +85,11 @@ readonly testClassEventProperty: () => void;
 
 Test class getter-only property
 
-#### Remarks
+#### Remarks {#testclassgetterproperty-remarks}
 
 Here are some remarks about the getter-only property
 
-#### Signature
+#### Signature {#testclassgetterproperty-signature}
 
 ```typescript
 /** @virtual */
@@ -100,11 +100,11 @@ get testClassGetterProperty(): number;
 
 Test class property
 
-#### Remarks
+#### Remarks {#testclassproperty-remarks}
 
 Here are some remarks about the property
 
-#### Signature
+#### Signature {#testclassproperty-signature}
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;
@@ -116,18 +116,18 @@ readonly testClassProperty: TTypeParameterB;
 
 Test class method
 
-#### Remarks
+#### Remarks {#testclassmethod-remarks}
 
 Here are some remarks about the method
 
-#### Signature
+#### Signature {#testclassmethod-signature}
 
 ```typescript
 /** @sealed */
 testClassMethod(input: TTypeParameterA): TTypeParameterA;
 ```
 
-#### Parameters
+#### Parameters {#testclassmethod-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

@@ -3,7 +3,7 @@
 
 Test Type-Alias
 
-## Signature
+## Signature {#typealias-signature}
 
 ```typescript
 type TypeAlias = boolean;

@@ -3,11 +3,11 @@
 
 Test Mapped Type, using [TestEnum](docs/simple-suite-test/testenum-enum)
 
-## Remarks
+## Remarks {#testmappedtype-remarks}
 
 Here are some remarks about the mapped type
 
-## Signature
+## Signature {#testmappedtype-signature}
 
 ```typescript
 export declare type TestMappedType = {

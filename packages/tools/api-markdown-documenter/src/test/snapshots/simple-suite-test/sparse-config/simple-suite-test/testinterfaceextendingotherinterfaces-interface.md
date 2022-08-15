@@ -3,11 +3,11 @@
 
 Test interface that extends other interfaces
 
-## Remarks
+## Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
 Here are some remarks about the interface
 
-## Signature
+## Signature {#testinterfaceextendingotherinterfaces-signature}
 
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestInterfaceWithTypeParameter<number>, TestMappedType 

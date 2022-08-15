@@ -3,11 +3,11 @@
 
 Test Type-Alias
 
-## Remarks
+## Remarks {#typealias-remarks}
 
 Here are some remarks about the type alias
 
-## Signature
+## Signature {#typealias-signature}
 
 ```typescript
 export declare type TypeAlias = string;

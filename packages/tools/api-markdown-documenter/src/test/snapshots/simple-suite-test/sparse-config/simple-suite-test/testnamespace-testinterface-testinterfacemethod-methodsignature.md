@@ -3,7 +3,7 @@
 
 Test interface method
 
-## Signature
+## Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;

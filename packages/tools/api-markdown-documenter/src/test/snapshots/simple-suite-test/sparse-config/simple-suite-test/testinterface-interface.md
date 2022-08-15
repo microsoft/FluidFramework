@@ -3,11 +3,11 @@
 
 Test interface
 
-## Remarks
+## Remarks {#testinterface-remarks}
 
 Here are some remarks about the interface
 
-## Signature
+## Signature {#testinterface-signature}
 
 ```typescript
 export interface TestInterface 

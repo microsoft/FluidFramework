@@ -38,6 +38,7 @@ import {
     getHeadingForApiItem,
     getLinkForApiItem,
     getLinkUrlForApiItem,
+    getQualifiedApiItemName,
     mergeSections,
 } from "../../utilities";
 import { renderParametersTable } from "./TablesRenderingHelpers";
@@ -48,7 +49,12 @@ export function renderSignature(
 ): DocSection | undefined {
     if (apiItem instanceof ApiDeclaredItem) {
         const docNodes: DocNode[] = [];
-        docNodes.push(renderHeading({ title: "Signature" }, config));
+        docNodes.push(
+            renderHeading(
+                { title: "Signature", id: `${getQualifiedApiItemName(apiItem)}-signature` },
+                config,
+            ),
+        );
         if (apiItem.excerpt.text.length > 0) {
             docNodes.push(
                 new DocFencedCode({
@@ -341,7 +347,10 @@ export function renderRemarks(
 ): DocSection | undefined {
     if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.remarksBlock !== undefined) {
         return new DocSection({ configuration: config.tsdocConfiguration }, [
-            renderHeading({ title: "Remarks" }, config),
+            renderHeading(
+                { title: "Remarks", id: `${getQualifiedApiItemName(apiItem)}-remarks` },
+                config,
+            ),
             apiItem.tsdocComment.remarksBlock.content,
         ]);
     }
@@ -400,7 +409,10 @@ export function renderExamples(
         const mergedSection = mergeSections(exampleSections, config.tsdocConfiguration);
 
         return new DocSection({ configuration: config.tsdocConfiguration }, [
-            renderHeading({ title: "Examples" }, config),
+            renderHeading(
+                { title: "Examples", id: `${getQualifiedApiItemName(apiItem)}-examples` },
+                config,
+            ),
             mergedSection,
         ]);
     }
@@ -442,7 +454,10 @@ export function renderParametersSection(
     }
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
-        renderHeading({ title: "Parameters" }, config),
+        renderHeading(
+            { title: "Parameters", id: `${getQualifiedApiItemName(apiFunctionLike)}-parameters` },
+            config,
+        ),
         renderParametersTable(apiFunctionLike.parameters, config),
     ]);
 }

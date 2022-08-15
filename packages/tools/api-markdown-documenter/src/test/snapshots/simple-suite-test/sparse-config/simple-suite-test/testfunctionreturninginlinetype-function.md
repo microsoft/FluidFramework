@@ -3,7 +3,7 @@
 
 Test function that returns an inline type
 
-## Signature
+## Signature {#testfunctionreturninginlinetype-signature}
 
 ```typescript
 export declare function testFunctionReturningInlineType(): {

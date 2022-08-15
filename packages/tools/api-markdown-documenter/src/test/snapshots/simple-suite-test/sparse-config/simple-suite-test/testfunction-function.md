@@ -3,17 +3,17 @@
 
 Test function
 
-## Remarks
+## Remarks {#testfunction-remarks}
 
 This is a test [link](docs/simple-suite-test/testinterface-interface) to another API member
 
-## Signature
+## Signature {#testfunction-signature}
 
 ```typescript
 export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter): TTypeParameter;
 ```
 
-## Parameters
+## Parameters {#testfunction-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

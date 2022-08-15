@@ -3,11 +3,11 @@
 
 Test enum value 1 (string)
 
-## Remarks
+## Remarks {#testenumvalue1-remarks}
 
 Here are some remarks about the enum value
 
-## Signature
+## Signature {#testenumvalue1-signature}
 
 ```typescript
 TestEnumValue1 = "test-enum-value-1"

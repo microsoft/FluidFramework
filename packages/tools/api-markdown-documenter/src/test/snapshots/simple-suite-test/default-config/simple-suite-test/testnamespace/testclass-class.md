@@ -5,7 +5,7 @@
 
 Test class
 
-## Signature
+## Signature {#testclass-signature}
 
 ```typescript
 class TestClass 
@@ -35,13 +35,13 @@ class TestClass
 
 Test class constructor
 
-#### Signature
+#### Signature {#_constructor_-signature}
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-#### Parameters
+#### Parameters {#_constructor_-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
@@ -53,7 +53,7 @@ constructor(testClassProperty: string);
 
 Test interface property
 
-#### Signature
+#### Signature {#testclassproperty-signature}
 
 ```typescript
 readonly testClassProperty: string;
@@ -65,13 +65,13 @@ readonly testClassProperty: string;
 
 Test class method
 
-#### Signature
+#### Signature {#testclassmethod-signature}
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-#### Parameters
+#### Parameters {#testclassmethod-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

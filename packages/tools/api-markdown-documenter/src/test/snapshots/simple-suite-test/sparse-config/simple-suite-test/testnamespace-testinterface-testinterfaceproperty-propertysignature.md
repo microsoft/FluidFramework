@@ -3,7 +3,7 @@
 
 Test interface property
 
-## Signature
+## Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: boolean;

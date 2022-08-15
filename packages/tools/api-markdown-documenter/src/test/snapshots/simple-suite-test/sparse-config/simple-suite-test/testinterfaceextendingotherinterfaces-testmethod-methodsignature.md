@@ -3,17 +3,17 @@
 
 Test interface method accepting a string and returning a number.
 
-## Remarks
+## Remarks {#testmethod-remarks}
 
 Here are some remarks about the method
 
-## Signature
+## Signature {#testmethod-signature}
 
 ```typescript
 testMethod(input: string): number;
 ```
 
-## Parameters
+## Parameters {#testmethod-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |

@@ -3,11 +3,11 @@
 
 Another example call signature
 
-## Remarks
+## Remarks {#_call__1-remarks}
 
 Here are some remarks about the event call signature
 
-## Signature
+## Signature {#_call__1-signature}
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;

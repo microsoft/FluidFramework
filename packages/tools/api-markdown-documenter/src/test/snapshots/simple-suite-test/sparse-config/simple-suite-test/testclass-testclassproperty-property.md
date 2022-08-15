@@ -3,11 +3,11 @@
 
 Test class property
 
-## Remarks
+## Remarks {#testclassproperty-remarks}
 
 Here are some remarks about the property
 
-## Signature
+## Signature {#testclassproperty-signature}
 
 ```typescript
 readonly testClassProperty: TTypeParameterB;

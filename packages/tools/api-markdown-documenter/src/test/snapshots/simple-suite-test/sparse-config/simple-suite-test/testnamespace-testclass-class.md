@@ -3,7 +3,7 @@
 
 Test class
 
-## Signature
+## Signature {#testclass-signature}
 
 ```typescript
 class TestClass 

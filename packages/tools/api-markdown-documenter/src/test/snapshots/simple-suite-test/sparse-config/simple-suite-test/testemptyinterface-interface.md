@@ -3,7 +3,7 @@
 
 An empty interface
 
-## Signature
+## Signature {#testemptyinterface-signature}
 
 ```typescript
 export interface TestEmptyInterface 

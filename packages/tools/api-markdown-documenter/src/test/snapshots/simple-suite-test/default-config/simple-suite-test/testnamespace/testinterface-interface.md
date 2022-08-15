@@ -5,7 +5,7 @@
 
 Test interface
 
-## Signature
+## Signature {#testinterface-signature}
 
 ```typescript
 interface TestInterface 
@@ -29,7 +29,7 @@ interface TestInterface
 
 Test interface property
 
-#### Signature
+#### Signature {#testinterfaceproperty-signature}
 
 ```typescript
 testInterfaceProperty: boolean;
@@ -41,7 +41,7 @@ testInterfaceProperty: boolean;
 
 Test interface method
 
-#### Signature
+#### Signature {#testinterfacemethod-signature}
 
 ```typescript
 testInterfaceMethod(): void;
