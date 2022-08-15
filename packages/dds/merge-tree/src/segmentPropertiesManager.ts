@@ -152,7 +152,7 @@ export class PropertiesManager {
             }
         }
 
-        return deltas; // Dummy change
+        return deltas;
     }
 
     public copyTo(
