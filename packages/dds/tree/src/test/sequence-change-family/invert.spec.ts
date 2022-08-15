@@ -25,30 +25,24 @@ function invert(change: SequenceChangeset): SequenceChangeset {
 describe("SequenceChangeFamily - Invert", () => {
     for (const nest of [false, true]) {
         describe(nest ? "Nested" : "Root", () => {
-            function asInputForest(markList: T.MarkList): SequenceChangeset {
-                return {
-                    marks: { root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList },
-                };
-            }
-
-            function asOutputForest(markList: T.MarkList): SequenceChangeset {
+            function asForest(markList: T.MarkList): SequenceChangeset {
                 return {
                     marks: { root: nest ? [{ type: "Modify", fields: { foo: markList } }] : markList },
                 };
             }
 
             it("no changes", () => {
-                const input = asInputForest([]);
-                const expected = asOutputForest([]);
+                const input = asForest([]);
+                const expected = asForest([]);
                 const actual = invert(input);
                 assert.deepEqual(actual, expected);
             });
 
             it("set value => set value", () => {
-                const input = asInputForest([
+                const input = asForest([
                     { type: "Modify", value: { id: 1, value: 42 } },
                 ]);
-                const expected = asOutputForest([
+                const expected = asForest([
                     { type: "Modify", value: { id: 1, value: DUMMY_INVERSE_VALUE } },
                 ]);
                 const actual = invert(input);
@@ -56,14 +50,14 @@ describe("SequenceChangeFamily - Invert", () => {
             });
 
             it("insert => delete", () => {
-                const input = asInputForest([
+                const input = asForest([
                     [{
                         type: "Insert",
                         id: 1,
                         content: [{ type, value: 42 }, { type, value: 43 }],
                     }],
                 ]);
-                const expected = asOutputForest([
+                const expected = asForest([
                     {
                         type: "Delete",
                         id: 1,
@@ -75,7 +69,7 @@ describe("SequenceChangeFamily - Invert", () => {
             });
 
             it("modified insert => delete", () => {
-                const input = asInputForest([
+                const input = asForest([
                     [{
                         type: "MInsert",
                         id: 1,
@@ -83,7 +77,7 @@ describe("SequenceChangeFamily - Invert", () => {
                         fields: { foo: [{ type: "Modify", value: { id: 1, value: 42 } }] },
                     }],
                 ]);
-                const expected = asOutputForest([
+                const expected = asForest([
                     {
                         type: "Delete",
                         id: 1,
@@ -95,14 +89,14 @@ describe("SequenceChangeFamily - Invert", () => {
             });
 
             it("delete => revive", () => {
-                const input = asInputForest([
+                const input = asForest([
                     {
                         type: "Delete",
                         id: 1,
                         count: 2,
                     },
                 ]);
-                const expected = asOutputForest([
+                const expected = asForest([
                     {
                         type: "Revive",
                         id: 1,
@@ -115,7 +109,7 @@ describe("SequenceChangeFamily - Invert", () => {
             });
 
             it("revive => delete", () => {
-                const input = asInputForest([
+                const input = asForest([
                     {
                         type: "Revive",
                         id: 1,
@@ -123,7 +117,7 @@ describe("SequenceChangeFamily - Invert", () => {
                         tomb: DUMMY_INVERT_TAG,
                     },
                 ]);
-                const expected = asOutputForest([
+                const expected = asForest([
                     {
                         type: "Delete",
                         id: 1,

@@ -88,14 +88,14 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, cases.no_change);
     });
 
-    it("set root | set root", () => {
+    it("set root ○ set root", () => {
         const set1 = setRootValueTo(1);
         const set2 = setRootValueTo(2);
         const actual = compose([set1, set2]);
         assert.deepEqual(actual, set2);
     });
 
-    it("set root | set child", () => {
+    it("set root ○ set child", () => {
         const set1 = setRootValueTo(1);
         const set2 = setChildValueTo(2);
         const actual = compose([set1, set2]);
@@ -119,7 +119,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("set child | set root", () => {
+    it("set child ○ set root", () => {
         const set1 = setChildValueTo(1);
         const set2 = setRootValueTo(2);
         const actual = compose([set1, set2]);
@@ -143,14 +143,14 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("set child | set child", () => {
+    it("set child ○ set child", () => {
         const set1 = setChildValueTo(1);
         const set2 = setChildValueTo(2);
         const actual = compose([set1, set2]);
         assert.deepEqual(actual, set2);
     });
 
-    it("insert | modify", () => {
+    it("insert ○ modify", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
@@ -191,7 +191,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("modify insert | modify", () => {
+    it("modify insert ○ modify", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
@@ -243,7 +243,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("delete | modify", () => {
+    it("delete ○ modify", () => {
         const deletion: SequenceChangeset = {
             marks: {
                 root: [
@@ -282,7 +282,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive | modify", () => {
+    it("revive ○ modify", () => {
         const revive: SequenceChangeset = {
             marks: {
                 root: [
@@ -323,7 +323,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("modify | modify", () => {
+    it("modify ○ modify", () => {
         const modifyA: SequenceChangeset = {
             marks: {
                 root: [{
@@ -379,7 +379,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("set | delete", () => {
+    it("set ○ delete", () => {
         const set = setRootValueTo(1);
         // Deletes ABCD--GHIJK
         const deletion: SequenceChangeset = {
@@ -393,7 +393,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, deletion);
     });
 
-    it("insert | delete (within insert)", () => {
+    it("insert ○ delete (within insert)", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
@@ -429,7 +429,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("insert | delete (across inserts)", () => {
+    it("insert ○ delete (across inserts)", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
@@ -472,7 +472,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("modify | delete", () => {
+    it("modify ○ delete", () => {
         const modify: SequenceChangeset = setChildValueTo(1);
         const deletion: SequenceChangeset = {
             marks: {
@@ -485,7 +485,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, deletion);
     });
 
-    it("delete | delete", () => {
+    it("delete ○ delete", () => {
         // Deletes ABC-----IJKLM
         const deleteA: SequenceChangeset = {
             marks: {
@@ -523,7 +523,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive | delete", () => {
+    it("revive ○ delete", () => {
         const revive: SequenceChangeset = {
             marks: {
                 root: [
@@ -554,7 +554,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("set | insert", () => {
+    it("set ○ insert", () => {
         const set = setRootValueTo(1);
         const insert: SequenceChangeset = {
             marks: {
@@ -575,7 +575,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("modify | insert", () => {
+    it("modify ○ insert", () => {
         const modify: SequenceChangeset = setChildValueTo(1);
         const insert: SequenceChangeset = {
             marks: {
@@ -607,7 +607,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("delete | insert", () => {
+    it("delete ○ insert", () => {
         const deletion: SequenceChangeset = {
             marks: {
                 root: [
@@ -635,7 +635,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive | insert", () => {
+    it("revive ○ insert", () => {
         const deletion: SequenceChangeset = {
             marks: {
                 root: [
@@ -663,7 +663,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("insert | insert", () => {
+    it("insert ○ insert", () => {
         const insertA: SequenceChangeset = {
             marks: {
                 root: [
@@ -698,7 +698,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("set | revive", () => {
+    it("set ○ revive", () => {
         const set = setRootValueTo(1);
         const revive: SequenceChangeset = {
             marks: {
@@ -720,7 +720,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("modify | revive", () => {
+    it("modify ○ revive", () => {
         const modify: SequenceChangeset = setChildValueTo(1);
         const revive: SequenceChangeset = {
             marks: {
@@ -752,7 +752,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("delete | revive", () => {
+    it("delete ○ revive", () => {
         const deletion: SequenceChangeset = {
             marks: {
                 root: [
@@ -781,7 +781,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("revive | revive", () => {
+    it("revive ○ revive", () => {
         const reviveA: SequenceChangeset = {
             marks: {
                 root: [
@@ -809,7 +809,7 @@ describe("SequenceChangeFamily - Compose", () => {
         assert.deepEqual(actual, expected);
     });
 
-    it("insert | revive", () => {
+    it("insert ○ revive", () => {
         const insert: SequenceChangeset = {
             marks: {
                 root: [
