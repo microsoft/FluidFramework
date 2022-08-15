@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { getMarkLength, isAttachGroup, isReattach, Skip, splitMark, Transposed as T } from "../../changeset";
-import { clone, fail, OffsetListFactory } from "../../util";
+import { getMarkLength, isAttachGroup, isReattach, MarkListFactory, splitMark, Transposed as T } from "../../changeset";
+import { clone, fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
 export function rebase(change: SequenceChangeset, base: SequenceChangeset): SequenceChangeset {
@@ -27,7 +27,7 @@ function rebaseFieldMarks(change: T.FieldMarks, base: T.FieldMarks): T.FieldMark
 }
 
 function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.MarkList {
-    const factory = new OffsetListFactory<Exclude<T.Mark, Skip>>();
+    const factory = new MarkListFactory();
     let iBase = 0;
     let iCurr = 0;
     let nextCurrMark: T.Mark | undefined = currMarkList[iCurr];

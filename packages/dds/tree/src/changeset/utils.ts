@@ -32,6 +32,31 @@ export function getAttachLength(attach: T.Attach): number {
     }
 }
 
+/**
+ * @returns `true` iff `lhs` and `rhs` are deeply structurally equal.
+ */
+export function isEqualGaps(lhs: T.GapEffect[] | undefined, rhs: T.GapEffect[] | undefined): boolean {
+    if (lhs === rhs) {
+        return true;
+    }
+    if (lhs === undefined || rhs === undefined || lhs.length !== rhs.length) {
+        return false;
+    }
+    for (let i = 0; i < lhs.length; ++i) {
+        const lhsEffect = lhs[i];
+        const rhsEffect = rhs[i];
+        if (
+            lhsEffect.id !== rhsEffect.id
+            || lhsEffect.type !== rhsEffect.type
+            || lhsEffect.excludePriorInsertions !== rhsEffect.excludePriorInsertions
+            || lhsEffect.includePosteriorInsertions !== rhsEffect.includePosteriorInsertions
+        ) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export function getMarkLength(mark: T.Mark): number {
     if (typeof mark === "number") {
         return mark;

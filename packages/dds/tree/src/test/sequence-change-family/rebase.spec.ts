@@ -280,8 +280,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     2,
-                    { type: "Delete", id: 2, count: 1 },
-                    { type: "Delete", id: 2, count: 1 },
+                    { type: "Delete", id: 2, count: 2 },
                 ],
             },
         };
