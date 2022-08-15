@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
@@ -174,6 +174,35 @@ describe("api-markdown-documenter full-suite tests", () => {
         hierarchyBoundaries: [],
     };
 
+    /**
+     * A sample "sparse" configuration, which renders everything to its own document.
+     */
+    const sparseConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
+        uriRoot: "docs",
+        includeBreadcrumb: false,
+        includeTopLevelDocumentHeading: true,
+        // Render everything to its own document
+        documentBoundaries: [
+            ApiItemKind.CallSignature,
+            ApiItemKind.Class,
+            ApiItemKind.ConstructSignature,
+            ApiItemKind.Constructor,
+            ApiItemKind.Enum,
+            ApiItemKind.EnumMember,
+            ApiItemKind.Function,
+            ApiItemKind.IndexSignature,
+            ApiItemKind.Interface,
+            ApiItemKind.Method,
+            ApiItemKind.MethodSignature,
+            ApiItemKind.Namespace,
+            ApiItemKind.Property,
+            ApiItemKind.PropertySignature,
+            ApiItemKind.TypeAlias,
+            ApiItemKind.Variable,
+        ],
+        hierarchyBoundaries: [],
+    };
+
     const configs: ConfigTestProps[] = [
         {
             configName: "default-config",
@@ -182,6 +211,10 @@ describe("api-markdown-documenter full-suite tests", () => {
         {
             configName: "flat-config",
             configLessApiModel: flatConfig,
+        },
+        {
+            configName: "sparse-config",
+            configLessApiModel: sparseConfig,
         },
     ];
 
