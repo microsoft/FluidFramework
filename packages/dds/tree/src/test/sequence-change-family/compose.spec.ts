@@ -164,7 +164,7 @@ describe("SequenceChangeFamily - Compose", () => {
                     type: "Modify",
                     fields: {
                         foo: [
-                            [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                            [{ type: "Insert", id: 2, content: [{ type, value: 42 }] }],
                         ],
                     },
                 }],
@@ -172,19 +172,19 @@ describe("SequenceChangeFamily - Compose", () => {
         };
         const expected: SequenceChangeset = {
             marks: {
-                root: [
-                    [{
+                root: [[
+                    {
                         type: "MInsert",
                         id: 1,
                         content: { type, value: 1 },
                         fields: {
                             foo: [
-                                [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                                [{ type: "Insert", id: 2, content: [{ type, value: 42 }] }],
                             ],
                         },
-                    }],
-                    [{ type: "Insert", id: 1, content: [{ type, value: 2 }] }],
-                ],
+                    },
+                    { type: "Insert", id: 1, content: [{ type, value: 2 }] },
+                ]],
             },
         };
         const actual = compose([insert, modify]);
@@ -419,8 +419,6 @@ describe("SequenceChangeFamily - Compose", () => {
                 root: [
                     [{ type: "Insert", id: 1, content: [
                         { type, value: 1 },
-                    ] }],
-                    [{ type: "Insert", id: 1, content: [
                         { type, value: 3 },
                     ] }],
                 ],
@@ -432,20 +430,20 @@ describe("SequenceChangeFamily - Compose", () => {
     it("insert ○ delete (across inserts)", () => {
         const insert: SequenceChangeset = {
             marks: {
-                root: [
-                    [{ type: "Insert", id: 1, content: [
+                root: [[
+                    { type: "Insert", id: 1, content: [
                         { type, value: 1 },
                         { type, value: 2 },
-                    ] }],
-                    [{ type: "Insert", id: 2, content: [
+                    ] },
+                    { type: "Insert", id: 2, content: [
                         { type, value: 3 },
                         { type, value: 4 },
-                    ] }],
-                    [{ type: "Insert", id: 3, content: [
+                    ] },
+                    { type: "Insert", id: 3, content: [
                         { type, value: 5 },
                         { type, value: 6 },
-                    ] }],
-                ],
+                    ] },
+                ]],
             },
         };
         const deletion: SequenceChangeset = {
@@ -459,14 +457,14 @@ describe("SequenceChangeFamily - Compose", () => {
         const actual = compose([insert, deletion]);
         const expected: SequenceChangeset = {
             marks: {
-                root: [
-                    [{ type: "Insert", id: 1, content: [
+                root: [[
+                    { type: "Insert", id: 1, content: [
                         { type, value: 1 },
-                    ] }],
-                    [{ type: "Insert", id: 3, content: [
+                    ] },
+                    { type: "Insert", id: 3, content: [
                         { type, value: 6 },
-                    ] }],
-                ],
+                    ] },
+                ]],
             },
         };
         assert.deepEqual(actual, expected);
@@ -545,8 +543,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 2, tomb: DUMMY_INVERT_TAG },
                     { type: "Delete", id: 4, count: 1 },
                 ],
             },
@@ -686,12 +683,16 @@ describe("SequenceChangeFamily - Compose", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    [{ type: "Insert", id: 3, content: [{ type, value: 3 }] }],
-                    [{ type: "Insert", id: 1, content: [{ type, value: 1 }] }],
+                    [
+                        { type: "Insert", id: 3, content: [{ type, value: 3 }] },
+                        { type: "Insert", id: 1, content: [{ type, value: 1 }] },
+                    ],
                     2,
-                    [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
-                    [{ type: "Insert", id: 4, content: [{ type, value: 4 }] }],
-                    [{ type: "Insert", id: 2, content: [{ type, value: 3 }] }],
+                    [
+                        { type: "Insert", id: 2, content: [{ type, value: 2 }] },
+                        { type: "Insert", id: 4, content: [{ type, value: 4 }] },
+                        { type: "Insert", id: 2, content: [{ type, value: 3 }] },
+                    ],
                 ],
             },
         };
@@ -792,7 +793,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const reviveB: SequenceChangeset = {
             marks: {
                 root: [
-                    { type: "Revive", id: 1, count: 3, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 2, count: 3, tomb: DUMMY_INVERT_TAG },
                 ],
             },
         };
@@ -800,7 +801,7 @@ describe("SequenceChangeFamily - Compose", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    { type: "Revive", id: 1, count: 3, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 2, count: 3, tomb: DUMMY_INVERT_TAG },
                     { type: "Revive", id: 1, count: 2, tomb: DUMMY_INVERT_TAG },
                 ],
             },

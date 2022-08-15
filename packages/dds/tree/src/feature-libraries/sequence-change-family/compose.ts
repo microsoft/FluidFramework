@@ -8,6 +8,7 @@ import {
     isAttachGroup,
     isDetachMark,
     isReattach,
+    MarkListFactory,
     splitMark,
     Transposed as T,
 } from "../../changeset";
@@ -28,8 +29,8 @@ function foldInFieldMarks(newFieldMarks: T.FieldMarks, baseFieldMarks: T.FieldMa
     for (const key of Object.keys(newFieldMarks)) {
         const newMarkList = newFieldMarks[key];
         baseFieldMarks[key] ??= [];
-        const baseMarkList = baseFieldMarks[key];
-        foldInMarkList(newMarkList, baseMarkList);
+        const baseMarkList = foldInMarkList(newMarkList, baseFieldMarks[key]);
+        baseFieldMarks[key] = baseMarkList;
         while (typeof baseMarkList[baseMarkList.length - 1] === "number") {
             baseMarkList.pop();
         }
@@ -41,54 +42,59 @@ function foldInFieldMarks(newFieldMarks: T.FieldMarks, baseFieldMarks: T.FieldMa
 }
 
 function foldInMarkList(
-    newMarkList: T.MarkList<T.Mark>,
-    baseMarkList: T.MarkList<T.Mark>,
-): void {
+    newMarkList: T.MarkList,
+    baseMarkList: T.MarkList,
+): T.MarkList {
+    const factory = new MarkListFactory();
     let iBase = 0;
-    let iIn = 0;
-    let nextNewMark: T.Mark | undefined = newMarkList[iIn];
+    let iNew = 0;
+    let nextBaseMark: T.Mark | undefined = baseMarkList[iBase];
+    let nextNewMark: T.Mark | undefined = newMarkList[iNew];
     while (nextNewMark !== undefined) {
         let newMark: T.Mark = nextNewMark;
+        let baseMark: T.Mark = nextBaseMark;
         nextNewMark = undefined;
-        let baseMark = baseMarkList[iBase];
+        nextBaseMark = undefined;
         if (baseMark === undefined) {
-            baseMarkList.push(clone(newMark));
+            factory.push(clone(newMark));
         } else if (isAttachGroup(newMark) || isReattach(newMark)) {
-            baseMarkList.splice(iBase, 0, clone(newMark));
+            factory.pushContent(clone(newMark));
+            nextBaseMark = baseMark;
         } else if (isDetachMark(baseMark)) {
             // TODO: match base detaches to tombs and reattach in the newMarkList
+            factory.pushContent(baseMark);
             nextNewMark = newMark;
         } else {
             const newMarkLength = getMarkLength(newMark);
             const baseMarkLength = getMarkLength(baseMark);
             if (newMarkLength < baseMarkLength) {
-                const baseMarkPair = splitMark(baseMark, newMarkLength);
-                baseMark = baseMarkPair[0];
-                baseMarkList.splice(iBase, 1, ...baseMarkPair);
+                [baseMark, nextBaseMark] = splitMark(baseMark, newMarkLength);
             } else if (newMarkLength > baseMarkLength) {
                 [newMark, nextNewMark] = splitMark(newMark, baseMarkLength);
             }
             // Passed this point, we are guaranteed that `newMark` and `baseMark` have the same length
             if (typeof baseMark === "number") {
                 // TODO: insert new tombs and reattaches without replacing the offset
-                baseMarkList.splice(iBase, 1, newMark);
+                factory.push(newMark);
             } else {
                 const composedMark = composeMarks(newMark, baseMark);
-                baseMarkList.splice(iBase, 1, ...composedMark);
-                if (composedMark.length === 0) {
-                    // If we're not inserting anything then the next base mark to consider will be at
-                    // the same index. We decrement the index here to compensate the increment that
-                    // always happens below.
-                    iBase -= 1;
-                }
+                factory.push(...composedMark);
             }
         }
-        if (nextNewMark === undefined) {
-            iIn += 1;
-            nextNewMark = newMarkList[iIn];
+        if (nextBaseMark === undefined) {
+            iBase += 1;
+            nextBaseMark = baseMarkList[iBase];
         }
-        iBase += 1;
+        if (nextNewMark === undefined) {
+            iNew += 1;
+            nextNewMark = newMarkList[iNew];
+        }
     }
+    if (nextBaseMark !== undefined) {
+        factory.push(nextBaseMark);
+    }
+    factory.push(...baseMarkList.slice(iBase + 1));
+    return factory.list;
 }
 
 function composeMarks(
