@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { getMarkLength, isAttachGroup, isReattach, MarkListFactory, splitMark, Transposed as T } from "../../changeset";
+import {
+    ChangesetTag,
+    getMarkLength,
+    isAttachGroup,
+    isReattach,
+    MarkListFactory,
+    splitMark,
+    Transposed as T,
+} from "../../changeset";
 import { clone, fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
@@ -73,6 +81,8 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
     }
     return factory.list;
 }
+
+export const DUMMY_TOMB_TAG: ChangesetTag = "Dummy Tombstone Changeset Tag";
 
 function rebaseMark(currMark: T.SizedMark, baseMark: T.SizedMark): T.SizedMark {
     if (typeof baseMark === "number") {
