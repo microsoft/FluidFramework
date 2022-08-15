@@ -99,7 +99,7 @@ function decompressInterval(interval: CompressedSerializedInterval, label?: stri
         end: interval[1],
         sequenceNumber: interval[2],
         intervalType: interval[3],
-        properties: { ...interval[4], [reservedRangeLabelsKey]: label },
+        properties: { ...interval[4], [reservedRangeLabelsKey]: [label] },
     };
 }
 
@@ -789,16 +789,22 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
             if (!interval.properties) {
                 interval.properties = createMap<any>();
             }
+
             if (props) {
                 interval.addProperties(props);
             }
-            if (interval.properties[reservedIntervalIdKey] === undefined) {
-                // Create a new ID.
-                interval.properties[reservedIntervalIdKey] = uuid();
-            }
+            interval.properties[reservedIntervalIdKey] ??= uuid();
             this.add(interval);
         }
         return interval;
+    }
+
+    private addIdToEndpoints(interval: TInterval): void {
+        const id = interval.properties[reservedIntervalIdKey];
+        if (id && interval instanceof SequenceInterval) {
+            interval.start.addProperties({ [reservedIntervalIdKey]: id });
+            interval.end.addProperties({ [reservedIntervalIdKey]: id });
+        }
     }
 
     private addIntervalToIndex(interval: TInterval) {
@@ -816,6 +822,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     public add(interval: TInterval) {
+        this.addIdToEndpoints(interval);
         this.addIntervalToIndex(interval);
         this.addIntervalListeners(interval);
     }
@@ -1656,4 +1663,32 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
         return this.localCollection.nextInterval(pos);
     }
+}
+
+/**
+ * Information that identifies an interval within a `Sequence`.
+ */
+export interface IntervalLocator {
+    /**
+     * label for the collection the interval is a part of
+     */
+    label: string;
+    /**
+     * id of the interval
+     */
+    id: string;
+}
+
+/**
+ * Returns an object that can be used to find the interval a given LocalReferencePosition belongs to.
+ * @returns undefined if the reference position is not the endpoint of any interval (e.g. it was created
+ * on the merge tree directly by app code), otherwise an {@link IntervalLocator} for the interval this
+ * endpoint is a part of.
+ */
+export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined {
+    const {
+        [reservedIntervalIdKey]: id,
+        [reservedRangeLabelsKey]: collectionNameArray,
+    } = potentialEndpoint.properties ?? {};
+    return (id && collectionNameArray.length === 1) ? { label: collectionNameArray[0], id } : undefined;
 }

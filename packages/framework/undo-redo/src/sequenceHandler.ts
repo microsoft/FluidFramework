@@ -7,7 +7,7 @@ import {
     IJSONSegment,
     ISegment,
     LocalReferenceCollection,
-    LocalReferencePosition,
+    ReferencePosition,
     matchProperties,
     MergeTreeDeltaOperationType,
     MergeTreeDeltaType,
@@ -15,7 +15,7 @@ import {
     ReferenceType,
     TrackingGroup,
 } from "@fluidframework/merge-tree";
-import { SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
+import { intervalLocatorFromEndpoint, SequenceDeltaEvent, SharedSegmentSequence } from "@fluidframework/sequence";
 import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager";
 
 /**
@@ -55,7 +55,7 @@ interface ITrackedSharedSegmentSequenceRevertible {
     trackingGroup: TrackingGroup;
     propertyDelta: PropertySet;
     operation: MergeTreeDeltaOperationType;
-    refsToRestore?: { ref: LocalReferencePosition, offset: number }[]
+    refsToRestore?: Map<ISegment, { ref: ReferencePosition; offset: number; }[]>;
 }
 
 /**
@@ -87,13 +87,21 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                         propertyDelta: range.propertyDeltas,
                         operation: event.deltaOperation,
                     };
-                    // TODO: This should be associated with each segment that
-                    if (event.deltaOperation === MergeTreeDeltaType.REMOVE) {
-                        current.refsToRestore = Array.from(range.segment.localRefs ?? []).map((ref) => ({ ref, offset: ref.getOffset() }));
-                    }
                     this.tracking.push(current);
                 }
+
+                if (event.deltaOperation === MergeTreeDeltaType.REMOVE) {
+                    this.addRemovedRefs(current, range.segment);
+                }
             }
+        }
+    }
+
+    private addRemovedRefs(current: ITrackedSharedSegmentSequenceRevertible, segment: ISegment): void {
+        const segRefs = Array.from(segment.localRefs ?? [], (ref) => ({ ref, offset: ref.getOffset() }));
+        if (segRefs.length > 0) {
+            current.refsToRestore ??= new Map();
+            current.refsToRestore.set(segment, segRefs);
         }
     }
 
@@ -121,13 +129,24 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                                 tg.link(insertSegment);
                                 tg.unlink(sg);
                             });
-                            if (insertSegment.localRefs === undefined && tracked.refsToRestore!.length > 0) {
+                            const refsToRestore = tracked.refsToRestore?.get(sg) ?? [];
+                            if (insertSegment.localRefs === undefined && refsToRestore.length > 0) {
                                 insertSegment.localRefs = new LocalReferenceCollection(insertSegment);
                             }
-                            for (const { ref, offset } of tracked.refsToRestore!) {
-                                ref.callbacks?.beforeSlide?.();
-                                insertSegment.localRefs?.addLocalRef(ref, offset);
-                                ref.callbacks?.afterSlide?.();
+
+                            for (const { ref, offset } of refsToRestore) {
+                                const pos = this.sequence.getPosition(insertSegment) + offset;
+                                const intervalLocator = intervalLocatorFromEndpoint(ref);
+                                if (intervalLocator) {
+                                    const { label, id } = intervalLocator;
+                                    const collection = this.sequence.getIntervalCollection(label);
+                                    const interval = collection.getIntervalById(id);
+                                    collection.change(
+                                        id,
+                                        ref === interval.start ? pos : undefined,
+                                        ref === interval.end ? pos : undefined,
+                                    );
+                                }
                             }
                             break;
 

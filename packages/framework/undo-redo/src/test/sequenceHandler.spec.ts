@@ -145,10 +145,22 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
     });
 
     it("Intervals endpoints are slid back to original position", () => {
-        const assertIntervalMatches = (interval: SequenceInterval, expected: { start: number; end: number }): void => {
-            assert.equal(sharedString.localReferencePositionToPosition(interval.start), expected.start, "Start mismatch");
-            assert.equal(sharedString.localReferencePositionToPosition(interval.end), expected.end, "End mismatch");
-        }
+        const assertIntervalMatches = (
+            intervalActual: SequenceInterval,
+            expected: { start: number; end: number; },
+        ): void => {
+            assert.equal(
+                sharedString.localReferencePositionToPosition(intervalActual.start),
+                expected.start,
+                "Start mismatch",
+            );
+            assert.equal(
+                sharedString.localReferencePositionToPosition(intervalActual.end),
+                expected.end,
+                "End mismatch",
+            );
+        };
+
         sharedString.insertText(0, text);
         const collection = sharedString.getIntervalCollection("test");
         const interval = collection.add(10, 20, IntervalType.SlideOnRemove);
@@ -161,6 +173,8 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
 
         while (undoRedoStack.undoOperation()) { }
 
-        assertIntervalMatches(interval, { start: 10, end: 20 });
+        const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
+        const postUndoInterval = collection.getIntervalById(id);
+        assertIntervalMatches(postUndoInterval, { start: 10, end: 20 });
     });
 });
