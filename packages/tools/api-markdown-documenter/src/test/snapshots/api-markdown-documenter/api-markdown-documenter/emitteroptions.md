@@ -1,9 +1,9 @@
 
 # EmitterOptions
 
-[(model)](docs/index) &gt; [@fluid-tools/api-markdown-documenter](docs/api-markdown-documenter)
+[(model)](./index) &gt; [@fluid-tools/api-markdown-documenter](./api-markdown-documenter)
 
-[MarkdownEmitter](docs/api-markdown-documenter/markdownemitter) options.
+[MarkdownEmitter](./api-markdown-documenter/markdownemitter) options.
 
 ## Signature
 
@@ -17,9 +17,9 @@ export interface EmitterOptions extends BaseEmitterOptions
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [contextApiItem](docs/api-markdown-documenter/emitteroptions#contextapiitem-PropertySignature) |  | ApiItem \| undefined | The root item of the documentation node tree being emitted. |
-|  [getLinkUrlApiItem](docs/api-markdown-documenter/emitteroptions#getlinkurlapiitem-PropertySignature) |  | (apiItem: ApiItem) =&gt; string \| undefined | Callback to get the link URL for the specified API item. |
-|  [headingLevel](docs/api-markdown-documenter/emitteroptions#headinglevel-PropertySignature) |  | number | Contextual heading level. Will automatically increment based on <code>Section</code> items encountered such that heading levels can be increased automatically based on content hierarchy. |
+|  [contextApiItem](./api-markdown-documenter/emitteroptions#contextapiitem-PropertySignature) |  | ApiItem \| undefined | The root item of the documentation node tree being emitted. |
+|  [getLinkUrlApiItem](./api-markdown-documenter/emitteroptions#getlinkurlapiitem-PropertySignature) |  | (apiItem: ApiItem) =&gt; string \| undefined | Callback to get the link URL for the specified API item. |
+|  [headingLevel](./api-markdown-documenter/emitteroptions#headinglevel-PropertySignature) |  | number | Contextual heading level. Will automatically increment based on <code>Section</code> items encountered such that heading levels can be increased automatically based on content hierarchy. |
 
 ## Property Details
 

@@ -1,7 +1,7 @@
 
 # PolicyOptions
 
-[(model)](docs/index) &gt; [@fluid-tools/api-markdown-documenter](docs/api-markdown-documenter)
+[(model)](./index) &gt; [@fluid-tools/api-markdown-documenter](./api-markdown-documenter)
 
 Policy configuration options
 
@@ -15,20 +15,20 @@ export interface PolicyOptions
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [documentBoundaries](docs/api-markdown-documenter/policyoptions#documentboundaries-PropertySignature) |  | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias) | See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias)<!-- -->. |
-|  [fileNamePolicy](docs/api-markdown-documenter/policyoptions#filenamepolicy-PropertySignature) |  | [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias) | See [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->. |
-|  [headingTitlePolicy](docs/api-markdown-documenter/policyoptions#headingtitlepolicy-PropertySignature) |  | [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-TypeAlias) | See [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-TypeAlias)<!-- -->. |
-|  [hierarchyBoundaries](docs/api-markdown-documenter/policyoptions#hierarchyboundaries-PropertySignature) |  | [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias) | See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias)<!-- -->. |
-|  [includeBreadcrumb](docs/api-markdown-documenter/policyoptions#includebreadcrumb-PropertySignature) |  | boolean | Whether or not to include a navigation breadcrumb at the top of rendered document pages. |
-|  [includeTopLevelDocumentHeading](docs/api-markdown-documenter/policyoptions#includetopleveldocumentheading-PropertySignature) |  | boolean | Whether or not to include a top-level heading in rendered document pages. |
-|  [linkTextPolicy](docs/api-markdown-documenter/policyoptions#linktextpolicy-PropertySignature) |  | [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-TypeAlias) | See [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-TypeAlias)<!-- -->. |
-|  [uriBaseOverridePolicy](docs/api-markdown-documenter/policyoptions#uribaseoverridepolicy-PropertySignature) |  | [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-TypeAlias) | See [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-TypeAlias)<!-- -->. |
+|  [documentBoundaries](./api-markdown-documenter/policyoptions#documentboundaries-PropertySignature) |  | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias) | See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias)<!-- -->. |
+|  [fileNamePolicy](./api-markdown-documenter/policyoptions#filenamepolicy-PropertySignature) |  | [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias) | See [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->. |
+|  [headingTitlePolicy](./api-markdown-documenter/policyoptions#headingtitlepolicy-PropertySignature) |  | [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-TypeAlias) | See [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-TypeAlias)<!-- -->. |
+|  [hierarchyBoundaries](./api-markdown-documenter/policyoptions#hierarchyboundaries-PropertySignature) |  | [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias) | See [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias)<!-- -->. |
+|  [includeBreadcrumb](./api-markdown-documenter/policyoptions#includebreadcrumb-PropertySignature) |  | boolean | Whether or not to include a navigation breadcrumb at the top of rendered document pages. |
+|  [includeTopLevelDocumentHeading](./api-markdown-documenter/policyoptions#includetopleveldocumentheading-PropertySignature) |  | boolean | Whether or not to include a top-level heading in rendered document pages. |
+|  [linkTextPolicy](./api-markdown-documenter/policyoptions#linktextpolicy-PropertySignature) |  | [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-TypeAlias) | See [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-TypeAlias)<!-- -->. |
+|  [uriBaseOverridePolicy](./api-markdown-documenter/policyoptions#uribaseoverridepolicy-PropertySignature) |  | [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-TypeAlias) | See [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-TypeAlias)<!-- -->. |
 
 ## Property Details
 
 ### documentBoundaries {#documentboundaries-PropertySignature}
 
-See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias)<!-- -->.
+See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias)<!-- -->.
 
 #### Signature
 
@@ -38,7 +38,7 @@ documentBoundaries?: DocumentBoundaries;
 
 ### fileNamePolicy {#filenamepolicy-PropertySignature}
 
-See [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->.
+See [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->.
 
 #### Signature
 
@@ -48,7 +48,7 @@ fileNamePolicy?: FileNamePolicy;
 
 ### headingTitlePolicy {#headingtitlepolicy-PropertySignature}
 
-See [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-TypeAlias)<!-- -->.
+See [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-TypeAlias)<!-- -->.
 
 #### Signature
 
@@ -58,7 +58,7 @@ headingTitlePolicy?: HeadingTitlePolicy;
 
 ### hierarchyBoundaries {#hierarchyboundaries-PropertySignature}
 
-See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias)<!-- -->.
+See [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias)<!-- -->.
 
 #### Signature
 
@@ -96,7 +96,7 @@ includeTopLevelDocumentHeading?: boolean;
 
 ### linkTextPolicy {#linktextpolicy-PropertySignature}
 
-See [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-TypeAlias)<!-- -->.
+See [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-TypeAlias)<!-- -->.
 
 #### Signature
 
@@ -106,7 +106,7 @@ linkTextPolicy?: LinkTextPolicy;
 
 ### uriBaseOverridePolicy {#uribaseoverridepolicy-PropertySignature}
 
-See [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-TypeAlias)<!-- -->.
+See [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-TypeAlias)<!-- -->.
 
 #### Signature
 

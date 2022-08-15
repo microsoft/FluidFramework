@@ -1,7 +1,7 @@
 
 # Heading
 
-[(model)](docs/index) &gt; [@fluid-tools/api-markdown-documenter](docs/api-markdown-documenter)
+[(model)](./index) &gt; [@fluid-tools/api-markdown-documenter](./api-markdown-documenter)
 
 Represents a document heading.
 
@@ -15,9 +15,9 @@ export interface Heading
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [id](docs/api-markdown-documenter/heading#id-PropertySignature) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
-|  [level](docs/api-markdown-documenter/heading#level-PropertySignature) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
-|  [title](docs/api-markdown-documenter/heading#title-PropertySignature) |  | string | Heading text content. |
+|  [id](./api-markdown-documenter/heading#id-PropertySignature) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
+|  [level](./api-markdown-documenter/heading#level-PropertySignature) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
+|  [title](./api-markdown-documenter/heading#title-PropertySignature) |  | string | Heading text content. |
 
 ## Property Details
 

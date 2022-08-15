@@ -1,7 +1,7 @@
 
 # ChildSectionProperties
 
-[(model)](docs/index) &gt; [@fluid-tools/api-markdown-documenter](docs/api-markdown-documenter) &gt; [RenderingHelpers](docs/api-markdown-documenter/renderinghelpers)
+[(model)](./index) &gt; [@fluid-tools/api-markdown-documenter](./api-markdown-documenter) &gt; [RenderingHelpers](./api-markdown-documenter/renderinghelpers)
 
 ## Signature
 
@@ -13,9 +13,9 @@ export interface ChildSectionProperties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [headingTitle](docs/api-markdown-documenter/renderinghelpers/childsectionproperties#headingtitle-PropertySignature) |  | string |  |
-|  [itemKind](docs/api-markdown-documenter/renderinghelpers/childsectionproperties#itemkind-PropertySignature) |  | ApiItemKind |  |
-|  [items](docs/api-markdown-documenter/renderinghelpers/childsectionproperties#items-PropertySignature) |  | readonly ApiItem\[\] |  |
+|  [headingTitle](./api-markdown-documenter/renderinghelpers/childsectionproperties#headingtitle-PropertySignature) |  | string |  |
+|  [itemKind](./api-markdown-documenter/renderinghelpers/childsectionproperties#itemkind-PropertySignature) |  | ApiItemKind |  |
+|  [items](./api-markdown-documenter/renderinghelpers/childsectionproperties#items-PropertySignature) |  | readonly ApiItem\[\] |  |
 
 ## Property Details
 

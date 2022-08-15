@@ -5,5 +5,5 @@
 
 |  Package | Description |
 |  --- | --- |
-|  [simple-suite-test](docs/simple-suite-test) | Test package |
+|  [simple-suite-test](./simple-suite-test) | Test package |
 

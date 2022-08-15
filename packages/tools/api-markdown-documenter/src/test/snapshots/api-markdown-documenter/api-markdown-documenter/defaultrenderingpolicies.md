@@ -1,7 +1,7 @@
 
 # DefaultRenderingPolicies
 
-[(model)](docs/index) &gt; [@fluid-tools/api-markdown-documenter](docs/api-markdown-documenter)
+[(model)](./index) &gt; [@fluid-tools/api-markdown-documenter](./api-markdown-documenter)
 
 ## Signature
 
@@ -9,16 +9,16 @@
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [renderClassSection(apiClass, config, renderChild)](docs/api-markdown-documenter/defaultrenderingpolicies#renderclasssection-Function) |  | DocSection |  |
-|  [renderEnumSection(apiEnum, config, renderChild)](docs/api-markdown-documenter/defaultrenderingpolicies#renderenumsection-Function) |  | DocSection |  |
-|  [renderFunctionLikeSection(apiFunctionLike, config)](docs/api-markdown-documenter/defaultrenderingpolicies#renderfunctionlikesection-Function) |  | DocSection |  |
-|  [renderInterfaceSection(apiInterface, config, renderChild)](docs/api-markdown-documenter/defaultrenderingpolicies#renderinterfacesection-Function) |  | DocSection |  |
-|  [renderItemWithoutChildren(apiItem, config)](docs/api-markdown-documenter/defaultrenderingpolicies#renderitemwithoutchildren-Function) |  | DocSection |  |
-|  [renderModelSection(apiModel, config)](docs/api-markdown-documenter/defaultrenderingpolicies#rendermodelsection-Function) |  | DocSection |  |
-|  [renderModuleLikeSection(apiItem, childItems, config, renderChild)](docs/api-markdown-documenter/defaultrenderingpolicies#rendermodulelikesection-Function) |  | DocSection |  |
-|  [renderNamespaceSection(apiNamespace, config, renderChild)](docs/api-markdown-documenter/defaultrenderingpolicies#rendernamespacesection-Function) |  | DocSection |  |
-|  [renderPackageSection(apiPackage, config, renderChild)](docs/api-markdown-documenter/defaultrenderingpolicies#renderpackagesection-Function) |  | DocSection |  |
-|  [renderSectionBlock(apiItem, innerSectionBody, config)](docs/api-markdown-documenter/defaultrenderingpolicies#rendersectionblock-Function) |  | DocSection | Default rendering format for API item sections. Wraps the item-kind-specific details in the following manner:<!-- -->1. Heading (if not the document-root item) 1. Beta warning (if item annotated with <code>@beta</code>) 1. Deprecation notice (if any) 1. Summary (if any) 1. Remarks (if any) 1. Examples (if any) 1. Item Signature 1. <code>innerSectionBody</code> |
+|  [renderClassSection(apiClass, config, renderChild)](./api-markdown-documenter/defaultrenderingpolicies#renderclasssection-Function) |  | DocSection |  |
+|  [renderEnumSection(apiEnum, config, renderChild)](./api-markdown-documenter/defaultrenderingpolicies#renderenumsection-Function) |  | DocSection |  |
+|  [renderFunctionLikeSection(apiFunctionLike, config)](./api-markdown-documenter/defaultrenderingpolicies#renderfunctionlikesection-Function) |  | DocSection |  |
+|  [renderInterfaceSection(apiInterface, config, renderChild)](./api-markdown-documenter/defaultrenderingpolicies#renderinterfacesection-Function) |  | DocSection |  |
+|  [renderItemWithoutChildren(apiItem, config)](./api-markdown-documenter/defaultrenderingpolicies#renderitemwithoutchildren-Function) |  | DocSection |  |
+|  [renderModelSection(apiModel, config)](./api-markdown-documenter/defaultrenderingpolicies#rendermodelsection-Function) |  | DocSection |  |
+|  [renderModuleLikeSection(apiItem, childItems, config, renderChild)](./api-markdown-documenter/defaultrenderingpolicies#rendermodulelikesection-Function) |  | DocSection |  |
+|  [renderNamespaceSection(apiNamespace, config, renderChild)](./api-markdown-documenter/defaultrenderingpolicies#rendernamespacesection-Function) |  | DocSection |  |
+|  [renderPackageSection(apiPackage, config, renderChild)](./api-markdown-documenter/defaultrenderingpolicies#renderpackagesection-Function) |  | DocSection |  |
+|  [renderSectionBlock(apiItem, innerSectionBody, config)](./api-markdown-documenter/defaultrenderingpolicies#rendersectionblock-Function) |  | DocSection | Default rendering format for API item sections. Wraps the item-kind-specific details in the following manner:<!-- -->1. Heading (if not the document-root item) 1. Beta warning (if item annotated with <code>@beta</code>) 1. Deprecation notice (if any) 1. Summary (if any) 1. Remarks (if any) 1. Examples (if any) 1. Item Signature 1. <code>innerSectionBody</code> |
 
 ## Function Details
 
@@ -35,7 +35,7 @@ export declare function renderClassSection(apiClass: ApiClass, config: Required<
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiClass | ApiClass |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
 ### renderEnumSection {#renderenumsection-Function}
@@ -51,7 +51,7 @@ export declare function renderEnumSection(apiEnum: ApiEnum, config: Required<Mar
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiEnum | ApiEnum |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
 ### renderFunctionLikeSection {#renderfunctionlikesection-Function}
@@ -66,8 +66,8 @@ export declare function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLi
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiFunctionLike | [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-TypeAlias) |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
+|  apiFunctionLike | [ApiFunctionLike](./api-markdown-documenter#apifunctionlike-TypeAlias) |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
 
 ### renderInterfaceSection {#renderinterfacesection-Function}
 
@@ -82,7 +82,7 @@ export declare function renderInterfaceSection(apiInterface: ApiInterface, confi
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiInterface | ApiInterface |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
 ### renderItemWithoutChildren {#renderitemwithoutchildren-Function}
@@ -98,7 +98,7 @@ export declare function renderItemWithoutChildren(apiItem: ApiItem, config: Requ
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
 
 ### renderModelSection {#rendermodelsection-Function}
 
@@ -113,7 +113,7 @@ export declare function renderModelSection(apiModel: ApiModel, config: Required<
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiModel | ApiModel |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
 
 ### renderModuleLikeSection {#rendermodulelikesection-Function}
 
@@ -127,9 +127,9 @@ export declare function renderModuleLikeSection(apiItem: ApiModuleLike, childIte
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiItem | [ApiModuleLike](docs/api-markdown-documenter#apimodulelike-TypeAlias) |  |
+|  apiItem | [ApiModuleLike](./api-markdown-documenter#apimodulelike-TypeAlias) |  |
 |  childItems | readonly ApiItem\[\] |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
 ### renderNamespaceSection {#rendernamespacesection-Function}
@@ -145,7 +145,7 @@ export declare function renderNamespaceSection(apiNamespace: ApiNamespace, confi
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiNamespace | ApiNamespace |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
 ### renderPackageSection {#renderpackagesection-Function}
@@ -161,7 +161,7 @@ export declare function renderPackageSection(apiPackage: ApiPackage, config: Req
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiPackage | ApiPackage |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
 ### renderSectionBlock {#rendersectionblock-Function}
@@ -182,5 +182,5 @@ export declare function renderSectionBlock(apiItem: ApiItem, innerSectionBody: D
 |  --- | --- | --- |
 |  apiItem | ApiItem | TODO |
 |  innerSectionBody | DocSection \| undefined | TODO |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; | TODO |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration)<!-- -->&gt; | TODO |
 

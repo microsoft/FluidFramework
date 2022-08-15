@@ -1,7 +1,7 @@
 
 # TestInterface
 
-[(model)](docs/index) &gt; [simple-suite-test](docs/simple-suite-test)
+[(model)](./index) &gt; [simple-suite-test](./simple-suite-test)
 
 Test interface
 
@@ -19,21 +19,21 @@ export interface TestInterface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test/testinterface#testclasseventproperty-PropertySignature) |  | () =&gt; void | Test interface event property |
-|  [testInterfaceProperty](docs/simple-suite-test/testinterface#testinterfaceproperty-PropertySignature) |  | number | Test interface property |
+|  [testClassEventProperty](./simple-suite-test/testinterface#testclasseventproperty-PropertySignature) |  | () =&gt; void | Test interface event property |
+|  [testInterfaceProperty](./simple-suite-test/testinterface#testinterfaceproperty-PropertySignature) |  | number | Test interface property |
 
 ## Call Signatures
 
 |  CallSignature | Modifiers | Description |
 |  --- | --- | --- |
-|  [(call)(event, listener)](docs/simple-suite-test/testinterface#_call_-CallSignature) |  | Test interface event call signature |
-|  [(call)(event, listener)](docs/simple-suite-test/testinterface#_call__1-CallSignature) |  | Another example call signature |
+|  [(call)(event, listener)](./simple-suite-test/testinterface#_call_-CallSignature) |  | Test interface event call signature |
+|  [(call)(event, listener)](./simple-suite-test/testinterface#_call__1-CallSignature) |  | Another example call signature |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testInterfaceMethod()](docs/simple-suite-test/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
+|  [testInterfaceMethod()](./simple-suite-test/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
 
 ## Property Details
 

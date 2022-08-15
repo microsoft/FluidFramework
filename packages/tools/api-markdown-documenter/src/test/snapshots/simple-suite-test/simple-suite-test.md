@@ -1,7 +1,7 @@
 
 # simple-suite-test
 
-[(model)](docs/index)
+[(model)](./index)
 
 Test package
 
@@ -23,9 +23,9 @@ And an ordered list for good measure!
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
-- Good link (no alias): [TestClass](docs/simple-suite-test/testclass)
+- Good link (no alias): [TestClass](./simple-suite-test/testclass)
 
-- Good link (with alias): [function alias text](docs/simple-suite-test#testfunction-Function)
+- Good link (with alias): [function alias text](./simple-suite-test#testfunction-Function)
 
 - Bad link (no alias): *InvalidItem*
 
@@ -43,56 +43,56 @@ const foo = bar;
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEmptyInterface](docs/simple-suite-test/testemptyinterface) |  | An empty interface |
-|  [TestInterface](docs/simple-suite-test/testinterface) |  | Test interface |
-|  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test/testinterfaceextendingotherinterfaces) |  | Test interface that extends other interfaces |
-|  [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter) |  | Test interface with generic type parameter |
+|  [TestEmptyInterface](./simple-suite-test/testemptyinterface) |  | An empty interface |
+|  [TestInterface](./simple-suite-test/testinterface) |  | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](./simple-suite-test/testinterfaceextendingotherinterfaces) |  | Test interface that extends other interfaces |
+|  [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter) |  | Test interface with generic type parameter |
 
 ## Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestClass](docs/simple-suite-test/testclass) |  | Test class |
+|  [TestClass](./simple-suite-test/testclass) |  | Test class |
 
 ## Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestNamespace](docs/simple-suite-test/testnamespace) |  | Test Namespace |
+|  [TestNamespace](./simple-suite-test/testnamespace) |  | Test Namespace |
 
 ## Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestMappedType](docs/simple-suite-test#testmappedtype-TypeAlias) |  | Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-Enum) |
-|  [TypeAlias](docs/simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
+|  [TestMappedType](./simple-suite-test#testmappedtype-TypeAlias) |  | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-Enum) |
+|  [TypeAlias](./simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
 
 ## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testFunction(testParameter)](docs/simple-suite-test#testfunction-Function) |  | TTypeParameter | Test function |
-|  [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-Function) |  | { foo: number; bar: [TestEnum](docs/simple-suite-test#testenum-Enum)<!-- -->; } | Test function that returns an inline type |
-|  [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-Function) |  | [TestEmptyInterface](docs/simple-suite-test/testemptyinterface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test/testinterfacewithtypeparameter)<!-- -->&lt;number&gt; | Test function that returns an inline type |
-|  [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-Function) |  | string \| [TestInterface](docs/simple-suite-test/testinterface) | Test function that returns an inline type |
+|  [testFunction(testParameter)](./simple-suite-test#testfunction-Function) |  | TTypeParameter | Test function |
+|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-Function) |  | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-Enum)<!-- -->; } | Test function that returns an inline type |
+|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-Function) |  | [TestEmptyInterface](./simple-suite-test/testemptyinterface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter)<!-- -->&lt;number&gt; | Test function that returns an inline type |
+|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-Function) |  | string \| [TestInterface](./simple-suite-test/testinterface) | Test function that returns an inline type |
 
 ## Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnum](docs/simple-suite-test#testenum-Enum) |  | Test Enum |
+|  [TestEnum](./simple-suite-test#testenum-Enum) |  | Test Enum |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [testConst](docs/simple-suite-test#testconst-Variable) |  | Test Constant |
+|  [testConst](./simple-suite-test#testconst-Variable) |  | Test Constant |
 
 ## Type Details
 
 ### TestMappedType {#testmappedtype-TypeAlias}
 
-Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-Enum)
+Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-Enum)
 
 #### Remarks
 
@@ -128,7 +128,7 @@ Test function
 
 #### Remarks
 
-This is a test [link](docs/simple-suite-test/testinterface) to another API member
+This is a test [link](./simple-suite-test/testinterface) to another API member
 
 #### Signature
 
@@ -213,9 +213,9 @@ export declare enum TestEnum
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnumValue1](docs/simple-suite-test#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 (string) |
-|  [TestEnumValue2](docs/simple-suite-test#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 (number) |
-|  [TestEnumValue3](docs/simple-suite-test#testenum-testenumvalue3-EnumMember) |  | Test enum value 3 (default) |
+|  [TestEnumValue1](./simple-suite-test#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 (string) |
+|  [TestEnumValue2](./simple-suite-test#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 (number) |
+|  [TestEnumValue3](./simple-suite-test#testenum-testenumvalue3-EnumMember) |  | Test enum value 3 (default) |
 
 #### FlagDetails
 

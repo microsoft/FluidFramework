@@ -1,7 +1,7 @@
 
 # TestInterface
 
-[(model)](docs/index) &gt; [simple-suite-test](docs/simple-suite-test) &gt; [TestNamespace](docs/simple-suite-test/testnamespace)
+[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace)
 
 Test interface
 
@@ -15,13 +15,13 @@ interface TestInterface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testInterfaceProperty](docs/simple-suite-test/testnamespace/testinterface#testinterfaceproperty-PropertySignature) |  | boolean | Test interface property |
+|  [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface#testinterfaceproperty-PropertySignature) |  | boolean | Test interface property |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testInterfaceMethod()](docs/simple-suite-test/testnamespace/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
+|  [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
 
 ## Property Details
 

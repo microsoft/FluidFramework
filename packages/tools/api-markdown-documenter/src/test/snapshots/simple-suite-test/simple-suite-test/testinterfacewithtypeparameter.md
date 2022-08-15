@@ -1,7 +1,7 @@
 
 # TestInterfaceWithTypeParameter
 
-[(model)](docs/index) &gt; [simple-suite-test](docs/simple-suite-test)
+[(model)](./index) &gt; [simple-suite-test](./simple-suite-test)
 
 Test interface with generic type parameter
 
@@ -23,7 +23,7 @@ export interface TestInterfaceWithTypeParameter<T>
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testProperty](docs/simple-suite-test/testinterfacewithtypeparameter#testproperty-PropertySignature) |  | T | A test interface property using generic type parameter |
+|  [testProperty](./simple-suite-test/testinterfacewithtypeparameter#testproperty-PropertySignature) |  | T | A test interface property using generic type parameter |
 
 ## Property Details
 

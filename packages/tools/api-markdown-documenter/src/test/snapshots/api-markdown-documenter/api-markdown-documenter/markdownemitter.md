@@ -1,7 +1,7 @@
 
 # MarkdownEmitter
 
-[(model)](docs/index) &gt; [@fluid-tools/api-markdown-documenter](docs/api-markdown-documenter)
+[(model)](./index) &gt; [@fluid-tools/api-markdown-documenter](./api-markdown-documenter)
 
 Markdown documentation emitter. Processes an input tree of documentation related to an API model, and generates Markdown content from it.
 
@@ -17,25 +17,25 @@ export declare class MarkdownEmitter extends BaseMarkdownEmitter
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(apiModel)](docs/api-markdown-documenter/markdownemitter#_constructor_-Constructor) |  |  | Constructs a new instance of the <code>MarkdownEmitter</code> class |
+|  [(constructor)(apiModel)](./api-markdown-documenter/markdownemitter#_constructor_-Constructor) |  |  | Constructs a new instance of the <code>MarkdownEmitter</code> class |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [apiModel](docs/api-markdown-documenter/markdownemitter#apimodel-Property) |  | ApiModel |  |
+|  [apiModel](./api-markdown-documenter/markdownemitter#apimodel-Property) |  | ApiModel |  |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [emit(stringBuilder, docNode, options)](docs/api-markdown-documenter/markdownemitter#emit-Method) |  | string |  |
-|  [writeEmphasisSpan(docEmphasisSpan, context, docNodeSiblings)](docs/api-markdown-documenter/markdownemitter#writeemphasisspan-Method) |  | void |  |
-|  [writeHeading(docHeading, context, docNodeSiblings)](docs/api-markdown-documenter/markdownemitter#writeheading-Method) |  | void |  |
-|  [writeLinkTagWithCodeDestination(docLinkTag, context)](docs/api-markdown-documenter/markdownemitter#writelinktagwithcodedestination-Method) |  | void |  |
-|  [writeNode(docNode, context, docNodeSiblings)](docs/api-markdown-documenter/markdownemitter#writenode-Method) |  | void |  |
-|  [writeNoteBox(docNoteBox, context, docNodeSiblings)](docs/api-markdown-documenter/markdownemitter#writenotebox-Method) |  | void |  |
-|  [writeTable(docTable, context, docNodeSiblings)](docs/api-markdown-documenter/markdownemitter#writetable-Method) |  | void |  |
+|  [emit(stringBuilder, docNode, options)](./api-markdown-documenter/markdownemitter#emit-Method) |  | string |  |
+|  [writeEmphasisSpan(docEmphasisSpan, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writeemphasisspan-Method) |  | void |  |
+|  [writeHeading(docHeading, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writeheading-Method) |  | void |  |
+|  [writeLinkTagWithCodeDestination(docLinkTag, context)](./api-markdown-documenter/markdownemitter#writelinktagwithcodedestination-Method) |  | void |  |
+|  [writeNode(docNode, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writenode-Method) |  | void |  |
+|  [writeNoteBox(docNoteBox, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writenotebox-Method) |  | void |  |
+|  [writeTable(docTable, context, docNodeSiblings)](./api-markdown-documenter/markdownemitter#writetable-Method) |  | void |  |
 
 ## Constructor Details
 
@@ -83,7 +83,7 @@ emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): s
 |  --- | --- | --- |
 |  stringBuilder | StringBuilder |  |
 |  docNode | DocNode |  |
-|  options | [EmitterOptions](docs/api-markdown-documenter/emitteroptions) |  |
+|  options | [EmitterOptions](./api-markdown-documenter/emitteroptions) |  |
 
 ### writeEmphasisSpan {#writeemphasisspan-Method}
 
@@ -100,7 +100,7 @@ protected writeEmphasisSpan(docEmphasisSpan: DocEmphasisSpan, context: EmitterCo
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docEmphasisSpan | DocEmphasisSpan |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](./api-markdown-documenter#emittercontext-TypeAlias) |  |
 |  docNodeSiblings | boolean |  |
 
 ### writeHeading {#writeheading-Method}
@@ -117,8 +117,8 @@ protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeS
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  docHeading | [DocHeading](docs/api-markdown-documenter/docheading) |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  docHeading | [DocHeading](./api-markdown-documenter/docheading) |  |
+|  context | [EmitterContext](./api-markdown-documenter#emittercontext-TypeAlias) |  |
 |  docNodeSiblings | boolean |  |
 
 ### writeLinkTagWithCodeDestination {#writelinktagwithcodedestination-Method}
@@ -136,7 +136,7 @@ protected writeLinkTagWithCodeDestination(docLinkTag: DocLinkTag, context: Emitt
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docLinkTag | DocLinkTag |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](./api-markdown-documenter#emittercontext-TypeAlias) |  |
 
 ### writeNode {#writenode-Method}
 
@@ -153,7 +153,7 @@ protected writeNode(docNode: DocNode, context: EmitterContext, docNodeSiblings: 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docNode | DocNode |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](./api-markdown-documenter#emittercontext-TypeAlias) |  |
 |  docNodeSiblings | boolean |  |
 
 ### writeNoteBox {#writenotebox-Method}
@@ -171,7 +171,7 @@ protected writeNoteBox(docNoteBox: DocNoteBox, context: EmitterContext, docNodeS
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docNoteBox | DocNoteBox |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](./api-markdown-documenter#emittercontext-TypeAlias) |  |
 |  docNodeSiblings | boolean |  |
 
 ### writeTable {#writetable-Method}
@@ -189,6 +189,6 @@ protected writeTable(docTable: DocTable, context: EmitterContext, docNodeSibling
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docTable | DocTable |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](./api-markdown-documenter#emittercontext-TypeAlias) |  |
 |  docNodeSiblings | boolean |  |
 
