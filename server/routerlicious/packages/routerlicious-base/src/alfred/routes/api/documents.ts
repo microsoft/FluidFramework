@@ -153,6 +153,7 @@ export function create(
             const session = getSession(
                 externalOrdererUrl,
                 externalHistorianUrl,
+                deltaStreamUrl,
                 tenantId,
                 documentId,
                 documentsCollection,
