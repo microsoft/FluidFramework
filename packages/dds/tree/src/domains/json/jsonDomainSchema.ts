@@ -46,7 +46,7 @@ export const jsonArray: NamedTreeSchema = {
     localFields: new Map([
         [
             brand("items"),
-            { kind: FieldKinds.sequence.identifier, types: jsonTypes },
+            fieldSchema(FieldKinds.sequence, jsonTypes),
         ],
     ]),
     value: ValueSchema.Nothing,
