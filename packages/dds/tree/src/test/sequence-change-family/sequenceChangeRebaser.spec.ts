@@ -4,9 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { isAttachGroup, Transposed as T } from "../../changeset";
+import { Transposed as T } from "../../changeset";
 import {
-    DUMMY_INVERT_TAG,
     sequenceChangeFamily,
     sequenceChangeRebaser,
     SequenceChangeset,
@@ -17,6 +16,7 @@ import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
+const tomb = "Dummy Changeset Tag";
 
 const testMarks: [string, T.Mark][] = [
     ["SetValue", { type: "Modify", value: { id: 0, value: 42 } }],
@@ -27,7 +27,7 @@ const testMarks: [string, T.Mark][] = [
         { type: "Insert", id: 1, content: [{ type, value: 43 }] },
     ]],
     ["Delete", { type: "Delete", id: 0, count: 2 }],
-    ["Revive", { type: "Revive", id: 0, count: 2, tomb: DUMMY_INVERT_TAG }],
+    ["Revive", { type: "Revive", id: 0, count: 2, tomb }],
 ];
 deepFreeze(testMarks);
 

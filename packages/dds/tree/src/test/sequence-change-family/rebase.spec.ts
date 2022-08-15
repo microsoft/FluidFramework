@@ -4,13 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { DUMMY_INVERT_TAG, sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
+import { sequenceChangeRebaser, SequenceChangeset } from "../../feature-libraries";
 import { TreeSchemaIdentifier } from "../../schema-stored";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 import { cases, setChildValueTo, setRootValueTo } from "./cases";
 
 const type: TreeSchemaIdentifier = brand("Node");
+const tomb = "Dummy Changeset Tag";
 
 function rebase(change: SequenceChangeset, base: SequenceChangeset): SequenceChangeset {
     deepFreeze(change);
@@ -84,11 +85,11 @@ describe("SequenceChangeFamily - Rebase", () => {
         const revive: SequenceChangeset = {
             marks: {
                 root: [
-                    { type: "Revive", id: 1, count: 2, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 2, tomb },
                     2,
-                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 2, count: 2, tomb },
                     4,
-                    { type: "Revive", id: 3, count: 2, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 3, count: 2, tomb },
                 ],
             },
         };
@@ -219,11 +220,11 @@ describe("SequenceChangeFamily - Rebase", () => {
         const revive: SequenceChangeset = {
             marks: {
                 root: [
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                     2,
-                    { type: "Revive", id: 2, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 2, count: 1, tomb },
                     4,
-                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 3, count: 1, tomb },
                 ],
             },
         };
@@ -240,11 +241,11 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     // Earlier revive is unaffected
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                     1, // Overlapping revive has its index reduced
-                    { type: "Revive", id: 2, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 2, count: 1, tomb },
                     2, // Later revive has its index reduced
-                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 3, count: 1, tomb },
                 ],
             },
         };
@@ -482,11 +483,11 @@ describe("SequenceChangeFamily - Rebase", () => {
         const revive: SequenceChangeset = {
             marks: {
                 root: [
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                     2,
-                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 2, count: 2, tomb },
                     2,
-                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 3, count: 1, tomb },
                 ],
             },
         };
@@ -503,11 +504,11 @@ describe("SequenceChangeFamily - Rebase", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                     2,
-                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 2, count: 2, tomb },
                     3,
-                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 3, count: 1, tomb },
                 ],
             },
         };
@@ -528,7 +529,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     2,
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                 ],
             },
         };
@@ -561,7 +562,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     2,
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                 ],
             },
         };
@@ -598,7 +599,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     3,
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                 ],
             },
         };
@@ -635,7 +636,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     1,
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                 ],
             },
         };
@@ -656,11 +657,11 @@ describe("SequenceChangeFamily - Rebase", () => {
         const reviveA: SequenceChangeset = {
             marks: {
                 root: [
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                     2,
-                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 2, count: 2, tomb },
                     2,
-                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 3, count: 1, tomb },
                 ],
             },
         };
@@ -668,7 +669,7 @@ describe("SequenceChangeFamily - Rebase", () => {
             marks: {
                 root: [
                     2,
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                 ],
             },
         };
@@ -676,11 +677,11 @@ describe("SequenceChangeFamily - Rebase", () => {
         const expected: SequenceChangeset = {
             marks: {
                 root: [
-                    { type: "Revive", id: 1, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 1, count: 1, tomb },
                     2,
-                    { type: "Revive", id: 2, count: 2, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 2, count: 2, tomb },
                     3,
-                    { type: "Revive", id: 3, count: 1, tomb: DUMMY_INVERT_TAG },
+                    { type: "Revive", id: 3, count: 1, tomb },
                 ],
             },
         };

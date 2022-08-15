@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DUMMY_INVERT_TAG, SequenceChangeset } from "../../feature-libraries";
+import { SequenceChangeset } from "../../feature-libraries";
 import { brand } from "../../util";
 import { Transposed as T, Value } from "../../changeset";
 import { TreeSchemaIdentifier } from "../../schema-stored";
@@ -39,6 +39,7 @@ export function setChildValueTo(value: Value): SequenceChangeset {
 }
 
 const type: TreeSchemaIdentifier = brand("Node");
+const tomb = "Dummy Changeset Tag";
 
 export const cases: {
     no_change: SequenceChangeset;
@@ -104,7 +105,7 @@ export const cases: {
         marks: {
             root: [
                 2,
-                { type: "Revive", id: 1, count: 2, tomb: DUMMY_INVERT_TAG },
+                { type: "Revive", id: 1, count: 2, tomb },
             ],
         },
     },
