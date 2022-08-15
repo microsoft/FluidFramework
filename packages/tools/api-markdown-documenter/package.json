@@ -42,7 +42,9 @@
     "@microsoft/api-extractor-model": "^7.23.0",
     "@microsoft/tsdoc": "^0.14.1",
     "@rushstack/node-core-library": "^3.50.1",
-    "colors": "^1.4.0"
+    "colors": "^1.4.0",
+    "mdast-builder": "^1.1.1",
+    "mdast-util-assert": "^4.0.0"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",
@@ -55,6 +57,7 @@
     "@types/chai": "^4",
     "@types/fs-extra": "^9.0.13",
     "@types/mocha": "^9.1.1",
+    "@types/unist": "^2.0.6",
     "chai": "^4.2.0",
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
