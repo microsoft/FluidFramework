@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import {
     FieldTypeView, FullSchemaPolicy, TreeViewSchema, ViewSchemaCollection, allowsFieldSuperset,
-    allowsTreeSuperset, ViewSchema,
+    allowsTreeSuperset, ViewSchema, allowsRepoSuperset,
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema";
@@ -397,6 +397,7 @@ describe("Schema Evolution Examples", () => {
                 [canvasIdentifier, canvas],
                 [numberIdentifier, number],
                 [pointIdentifier, point],
+                [codePoint.name, codePoint],
                 // Updated Schema
                 [positionedCanvasItemIdentifier, positionedCanvasItemNew],
                 // New Schema
@@ -431,26 +432,33 @@ describe("Schema Evolution Examples", () => {
             assert(stored.tryUpdateTreeSchema(pointIdentifier, point));
             assert(stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem));
             assert(stored.tryUpdateTreeSchema(textIdentifier, string));
+            assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint));
             // This is the root type produced by the adapter for the root.
             assert(stored.tryUpdateFieldSchema(rootFieldKey, tolerantRoot));
 
             const compat = view.checkCompatibility(stored);
             assertEnumEqual(Compatibility, compat.read, Compatibility.RequiresAdapters);
+            // Writing requires schema updates and/or adapters.
             assertEnumEqual(Compatibility, compat.writeAllowingStoredSchemaUpdates, Compatibility.RequiresAdapters);
 
             // Note that if/when we update the stored schema for these changes,
             // the adapters are still required, since that will just permit the new types,
             // and don't exclude the old ones.
-            const adaptedSchema = view.adaptRepo(stored);
-            for (const [key, schema] of adaptedSchema.adaptedForViewSchema.globalFieldSchema) {
-                assert(stored.tryUpdateFieldSchema(key, schema));
-            }
-            for (const [key, schema] of adaptedSchema.adaptedForViewSchema.treeSchema) {
-                assert(stored.tryUpdateTreeSchema(key, schema));
-            }
+            // TODO: add an automated way to determine that this is the needed upgrade (some way to union schema?).
+            const positionedCanvasItemTolerant = treeSchema({
+                localFields: {
+                    position: fieldSchema(FieldKinds.value, [pointIdentifier]),
+                    // Note that we are specifically supporting both formats here.
+                    content: fieldSchema(FieldKinds.value, [formattedTextIdentifier, textIdentifier]),
+                },
+                extraLocalFields: emptyField,
+            });
+            assert(stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItemTolerant));
+            assert(stored.tryUpdateTreeSchema(formattedTextIdentifier, formattedText));
 
             const compatNew = view.checkCompatibility(stored);
             assertEnumEqual(Compatibility, compatNew.read, Compatibility.RequiresAdapters);
+            // Now writing is possible:
             assertEnumEqual(Compatibility, compatNew.write, Compatibility.Compatible);
         }
     });

@@ -100,19 +100,10 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
             if (
                 isNeverTree(
                     this.policy,
-                    stored,
-                    stored.treeSchema.get(adapter.input) ?? this.policy.defaultTreeSchema,
-                )
-            ) {
-                fail("tree adapter for stored that is never");
-            }
-            if (
-                isNeverTree(
-                    this.policy,
                     this.schema,
                     this.schema.treeSchema.get(adapter.output) ?? this.policy.defaultTreeSchema)
             ) {
-                fail("tree adapter with view that is never");
+                fail(`tree adapter for stored ${adapter.output} should not be never`);
             }
         }
         const adapted = new StoredSchemaRepository(this.policy);
@@ -139,8 +130,9 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
         if (original.types) {
             const types: Set<TreeSchemaIdentifier> = new Set(original.types);
             for (const treeAdapter of this.adapters?.tree ?? []) {
-                if (original.types.has(treeAdapter.output)) {
-                    types.add(treeAdapter.input);
+                if (original.types.has(treeAdapter.input)) {
+                    types.delete(treeAdapter.input);
+                    types.add(treeAdapter.output);
                 }
             }
 
