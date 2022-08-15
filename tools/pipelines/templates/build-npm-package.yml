@@ -148,7 +148,7 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
-                targetbranchName = $(System.PullRequest.TargetBranch)
+                targetBranchName = $(System.PullRequest.TargetBranch)
 
                 release=$(release)"
 
