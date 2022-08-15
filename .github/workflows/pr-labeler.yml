@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Label base branches
     steps:
-      - uses: srvaroa/labeler@cc2f468623534d06a41e5dc591e9b6a1355a5e7b # pin@main
+      - uses: srvaroa/labeler@36ad6b8842ea13d9ce2e4d22993bbf6fc0d20b5e # pin@v0.9
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
   external_label:
