@@ -9,6 +9,7 @@ import { brand } from "../../util";
 import { detachedFieldAsKey } from "../../tree";
 import { TreeNavigationResult } from "../../forest";
 import { TestTreeProvider } from "../utils";
+import { SharedTree } from "../../shared-tree";
 
 describe("SharedTree", () => {
     it("can be connected to another tree", async () => {
@@ -18,6 +19,16 @@ describe("SharedTree", () => {
 
         const value = "42";
 
+        // Validate that the given tree has the state we create in this test
+        function validateTree(tree: SharedTree): void {
+            const readCursor = tree.forest.allocateCursor();
+            const destination = tree.forest.root(tree.forest.rootField);
+            const cursorResult = tree.forest.tryMoveCursorTo(destination, readCursor);
+            assert(cursorResult === TreeNavigationResult.Ok);
+            assert(readCursor.value === value);
+        }
+
+        // Apply an edit to the first tree which inserts a node with a value
         trees[0].runTransaction((forest, editor) => {
             const writeCursor = singleTextCursor({ type: brand("Test"), value });
             editor.insert({
@@ -29,12 +40,13 @@ describe("SharedTree", () => {
             return TransactionResult.Apply;
         });
 
+        // Ensure that the first tree has the state we expect
+        validateTree(trees[0]);
+        // Ensure that the second tree receives the expected state from the first tree
         await trees.ensureSynchronized();
-
-        const readCursor = trees[1].forest.allocateCursor();
-        const destination = trees[1].forest.root(trees[1].forest.rootField);
-        const cursorResult = trees[1].forest.tryMoveCursorTo(destination, readCursor);
-        assert(cursorResult === TreeNavigationResult.Ok);
-        assert(readCursor.value === value);
+        validateTree(trees[1]);
+        // Ensure that a tree which connects after the edit has already happened also catches up
+        const joinedLaterTree = await trees.createTree();
+        validateTree(joinedLaterTree);
     });
 });
