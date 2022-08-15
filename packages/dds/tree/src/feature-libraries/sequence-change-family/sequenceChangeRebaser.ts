@@ -11,6 +11,10 @@ import { SequenceChangeset } from "./sequenceChangeset";
 export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset>;
 
 function compose(changes: SequenceChangeset[]): SequenceChangeset {
+    if (changes.length === 1) {
+        return changes[0];
+    }
+
     throw Error("Not implemented"); // TODO
 }
 
