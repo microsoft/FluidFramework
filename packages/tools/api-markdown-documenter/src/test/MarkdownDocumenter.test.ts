@@ -18,11 +18,8 @@ import {
 import { MarkdownEmitter } from "../MarkdownEmitter";
 import { renderModelPage, renderPackagePage } from "../rendering";
 
-// TODOs:
-// - Test array of sample configurations
-
 /**
- * Temp directory under which
+ * Temp directory under which all tests that generate files will output their contents.
  */
 const testTempDirPath = Path.resolve(__dirname, "test_temp");
 
@@ -41,6 +38,13 @@ async function snapshotTest(
 ): Promise<void> {
     const outputDirPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
     const snapshotDirPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
+
+    // Ensure the output temp and snapshots directories exists (will create an empty ones if they don't).
+    await FileSystem.ensureFolderAsync(outputDirPath);
+    await FileSystem.ensureFolderAsync(snapshotDirPath);
+
+    // Clear any existing test_temp data
+    await FileSystem.ensureEmptyFolderAsync(outputDirPath);
 
     await renderFiles(config, outputDirPath, new MarkdownEmitter(config.apiModel));
 
@@ -88,12 +92,13 @@ function apiTestSuite(
 ): Suite {
     return describe(modelName, () => {
         for (const configProps of configs) {
-            return describe(configProps.configName, async () => {
+            describe(configProps.configName, async () => {
+                /**
+                 * Complete config generated in `before` hook.
+                 */
                 let markdownDocumenterConfig: Required<MarkdownDocumenterConfiguration>;
-                before(async () => {
-                    // Clear any existing test_temp data
-                    await FileSystem.ensureEmptyFolderAsync(testTempDirPath);
 
+                before(async () => {
                     const apiModel = new ApiModel();
                     for (const apiReportFilePath of apiReportFilePaths) {
                         apiModel.loadPackage(apiReportFilePath);
@@ -139,9 +144,8 @@ function apiTestSuite(
                     }
                 });
 
-                // TODO: by config
                 it("Snapshot test", async () => {
-                    await snapshotTest(modelName, markdownDocumenterConfig);
+                    await snapshotTest(Path.join(modelName, configProps.configName), markdownDocumenterConfig);
                 });
             });
         }
@@ -156,11 +160,26 @@ describe("api-markdown-documenter full-suite tests", () => {
         uriRoot: ".",
     };
 
+    /**
+     * A sample "flat" configuration, which renders everything to the package parent document.
+     */
+    const flatConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
+        uriRoot: "docs",
+        includeBreadcrumb: false,
+        includeTopLevelDocumentHeading: true,
+        documentBoundaries: [], // Render everything to package documents
+        hierarchyBoundaries: [],
+    }
+
     const configs: ConfigTestProps[] = [
         {
-            configName: "default",
+            configName: "default-config",
             configLessApiModel: defaultConfig,
         },
+        {
+            configName: "flat-config",
+            configLessApiModel: flatConfig
+        }
     ];
 
     // Run the test suite against a sample report
