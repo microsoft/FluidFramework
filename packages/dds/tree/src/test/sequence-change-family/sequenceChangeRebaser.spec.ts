@@ -20,7 +20,7 @@ const type: TreeSchemaIdentifier = brand("Node");
 
 const testMarks: [string, T.Mark][] = [
     ["SetValue", { type: "Modify", value: { id: 0, value: 42 } }],
-    ["MInsert", [{ type: "MInsert", id: 0, content: { type, value: 42 } }]],
+    ["MInsert", [{ type: "MInsert", id: 0, content: { type, value: 42 }, value: { id: 0, value: 43 } }]],
     ["Insert-1x2", [{ type: "Insert", id: 0, content: [{ type, value: 42 }, { type, value: 43 }] }]],
     ["Insert-2x1", [
         { type: "Insert", id: 0, content: [{ type, value: 42 }] },
@@ -44,22 +44,30 @@ describe("SequenceChangeFamily", () => {
     describe("A ↷ [B, B⁻¹] === A", () => {
         for (const [name1, mark1] of testMarks) {
             for (const [name2, mark2] of testMarks) {
-                if (name2 === "Delete" && !isAttachGroup(mark1)) {
+                if (name2 === "Delete") {
                     it.skip(`${name1} ↷ [${name2}, ${name2}⁻¹] => ${name1}`, () => {
                         /**
                          * These cases are currently disabled because:
                          * - Marks that affect existing content are removed instead of muted
-                         *   when rebased over the deletion of that content.
+                         *   when rebased over the deletion of that content. This prevents us
+                         *   from then reinstating the mark when rebasing over the revive.
+                         * - Tombs are not added when rebasing an insert over a gap that is
+                         *   immediately left of deleted content. This prevents us from being able to
+                         *   accurately track the position of the insert.
                          */
                     });
                 } else {
                     it(`${name1} ↷ [${name2}, ${name2}⁻¹] => ${name1}`, () => {
-                        const change1 = asForest([mark1]);
-                        const change2 = asForest([mark2]);
-                        const inv = sequenceChangeRebaser.invert(change2);
-                        const r1 = sequenceChangeRebaser.rebase(change1, change2);
-                        const r2 = sequenceChangeRebaser.rebase(r1, inv);
-                        assert.deepEqual(r2, change1);
+                        for (let offset1 = 1; offset1 <= 4; ++offset1) {
+                            for (let offset2 = 1; offset2 <= 4; ++offset2) {
+                                const change1 = asForest([offset1, mark1]);
+                                const change2 = asForest([offset2, mark2]);
+                                const inv = sequenceChangeRebaser.invert(change2);
+                                const r1 = sequenceChangeRebaser.rebase(change1, change2);
+                                const r2 = sequenceChangeRebaser.rebase(r1, inv);
+                                assert.deepEqual(r2, change1);
+                            }
+                        }
                     });
                 }
             }
@@ -78,13 +86,17 @@ describe("SequenceChangeFamily", () => {
         for (const [name1, mark1] of testMarks) {
             for (const [name2, mark2] of testMarks) {
                 it(`${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`, () => {
-                    const change1 = asForest([mark1]);
-                    const change2 = asForest([mark2]);
-                    const inverse2 = sequenceChangeRebaser.invert(change2);
-                    const r1 = sequenceChangeRebaser.rebase(change1, change2);
-                    const r2 = sequenceChangeRebaser.rebase(r1, inverse2);
-                    const r3 = sequenceChangeRebaser.rebase(r2, change2);
-                    assert.deepEqual(r3, r1);
+                    for (let offset1 = 1; offset1 <= 4; ++offset1) {
+                        for (let offset2 = 1; offset2 <= 4; ++offset2) {
+                            const change1 = asForest([offset1, mark1]);
+                            const change2 = asForest([offset2, mark2]);
+                            const inverse2 = sequenceChangeRebaser.invert(change2);
+                            const r1 = sequenceChangeRebaser.rebase(change1, change2);
+                            const r2 = sequenceChangeRebaser.rebase(r1, inverse2);
+                            const r3 = sequenceChangeRebaser.rebase(r2, change2);
+                            assert.deepEqual(r3, r1);
+                        }
+                    }
                 });
             }
         }
