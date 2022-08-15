@@ -105,10 +105,10 @@ export class DataObjectManyDDSes extends BaseTestDataObject {
         this.addChannelType(Ink.create(this.runtime));
         this.addChannelType(SharedCell.create(this.runtime));
         this.addChannelType(SharedCounter.create(this.runtime));
-        // this.addChannelType(SharedDirectory.create(this.runtime));
+        this.addChannelType(SharedDirectory.create(this.runtime));
         this.addChannelType(SharedMap.create(this.runtime));
-        // this.addChannelType(SharedMatrix.create(this.runtime));
-        // this.addChannelType(SharedString.create(this.runtime));
+        this.addChannelType(SharedMatrix.create(this.runtime));
+        this.addChannelType(SharedString.create(this.runtime));
     }
 
     private async assertedGet<T>(key: string): Promise<T> {

@@ -36,7 +36,7 @@ interface ITestAction {
     [key: string]: any;
 }
 
-describeNoCompat("GCIRandom tests", (getTestObjectProvider) => {
+describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
 
     const runtimeOptions: IContainerRuntimeOptions = {
@@ -96,7 +96,7 @@ describeNoCompat("GCIRandom tests", (getTestObjectProvider) => {
 
     // Currently for GC Sweep testing only, run with npm run test. Should not be running in CI
     // TODO: setup test to run in CI
-    it(`Planned Actions:\nSeed: ${seed}`, async () => {
+    it(`GC Randomization Test with Seed: ${seed}`, async () => {
         provider = getTestObjectProvider({
             syncSummarizer: true,
         });
