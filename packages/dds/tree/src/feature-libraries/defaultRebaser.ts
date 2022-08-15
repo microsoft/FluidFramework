@@ -8,20 +8,20 @@ import { ChangeRebaser } from "../rebase";
 import { Contravariant, Covariant, Invariant } from "../util";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../change-family";
 
-export class DefaultChangeFamily implements ChangeFamily<DefaultEditor, DefaultChangeSet> {
+export class DefaultChangeFamily implements ChangeFamily<DefaultEditor, DefaultChangeset> {
     readonly encoder = defaultChangeEncoder;
     readonly rebaser = new DefaultRebaser();
 
     buildEditor(deltaReceiver: (delta: Delta.Root) => void, anchorSet: AnchorSet): DefaultEditor {
         throw new Error("Method not implemented.");
     }
-    intoDelta(change: DefaultChangeSet): Delta.Root {
+    intoDelta(change: DefaultChangeset): Delta.Root {
         throw new Error("Method not implemented.");
     }
-    pack(change: DefaultChangeSet) {
+    pack(change: DefaultChangeset) {
         throw new Error("Method not implemented.");
     }
-    unpack(data: any): DefaultChangeSet {
+    unpack(data: any): DefaultChangeset {
         throw new Error("Method not implemented.");
     }
 }
@@ -29,44 +29,44 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditor, DefaultC
 // TODO: factor actual changeset logic out by field kind, and into some other directory.
 
 // TODO: implement
-export class DefaultRebaser implements ChangeRebaser<DefaultChangeSet> {
-    rebaseAnchors(anchor: AnchorSet, over: DefaultChangeSet): void {
+export class DefaultRebaser implements ChangeRebaser<DefaultChangeset> {
+    rebaseAnchors(anchor: AnchorSet, over: DefaultChangeset): void {
         throw new Error("Method not implemented.");
     }
-    _typeCheck?: Covariant<DefaultChangeSet> & Contravariant<DefaultChangeSet> & Invariant<DefaultChangeSet>;
-    compose(changes: DefaultChangeSet[]): DefaultChangeSet {
+    _typeCheck?: Covariant<DefaultChangeset> & Contravariant<DefaultChangeset> & Invariant<DefaultChangeset>;
+    compose(changes: DefaultChangeset[]): DefaultChangeset {
         throw new Error("Method not implemented.");
     }
-    invert(changes: DefaultChangeSet): DefaultChangeSet {
+    invert(changes: DefaultChangeset): DefaultChangeset {
         throw new Error("Method not implemented.");
     }
-    rebase(change: DefaultChangeSet, over: DefaultChangeSet): DefaultChangeSet {
+    rebase(change: DefaultChangeset, over: DefaultChangeset): DefaultChangeset {
         throw new Error("Method not implemented.");
     }
 
     // TODO: us putting editing functions here enough, or do we need some other way to expose them?
-    setValue(path: UpPath, value: Value): DefaultChangeSet {
-        return new DefaultChangeSet([new SetValue(path, value)]);
+    setValue(path: UpPath, value: Value): DefaultChangeset {
+        return new DefaultChangeset([new SetValue(path, value)]);
     }
 }
 
-class DefaultChangeEncoder extends ChangeEncoder<DefaultChangeSet> {
-    public encodeForJson(formatVersion: number, change: DefaultChangeSet): JsonCompatible {
+class DefaultChangeEncoder extends ChangeEncoder<DefaultChangeset> {
+    public encodeForJson(formatVersion: number, change: DefaultChangeset): JsonCompatible {
         throw new Error("Method not implemented.");
     }
-    public decodeJson(formatVersion: number, change: JsonCompatible): DefaultChangeSet {
+    public decodeJson(formatVersion: number, change: JsonCompatible): DefaultChangeset {
         throw new Error("Method not implemented.");
     }
 }
 
-const defaultChangeEncoder: ChangeEncoder<DefaultChangeSet> = new DefaultChangeEncoder();
+const defaultChangeEncoder: ChangeEncoder<DefaultChangeset> = new DefaultChangeEncoder();
 
 export interface DefaultEditor {}
 
 // A super basic placeholder for a real changeset type.
 // TODO: move this to be a test changeset type (in test directory) and replace with something with good features.
 
-export class DefaultChangeSet {
+export class DefaultChangeset {
     public constructor(public readonly changes: readonly Change[]) {}
 }
 

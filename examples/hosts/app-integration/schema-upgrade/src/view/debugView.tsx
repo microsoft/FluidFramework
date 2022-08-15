@@ -110,7 +110,7 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 
     return (
         <div style={{ margin: "10px 0" }}>
-            Propose code:<br />
+            Propose version:<br />
             <button onClick={ () => { proposeVersion("one"); } }>
                 "one"
             </button>

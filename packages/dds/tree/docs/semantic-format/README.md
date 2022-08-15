@@ -1,7 +1,7 @@
 # SharedTree Semantic/Temporal Edit Format
 
 This document describes the “Semantic” (a.k.a. “Temporal”) format for the
-SharedTree history. It complements the “Structural” (a.k.a. “Spatial”) ChangeSet
+SharedTree history. It complements the “Structural” (a.k.a. “Spatial”) Changeset
 format, with each format being the suitable choice for a different set of
 scenarios.
 
@@ -127,13 +127,13 @@ The Checkout interface has a runCommand method:
 checkout.runCommand({
    command: incrementDotColorCommand,
    anchors: { dot }
-});   
+});
 ```
 
 The CommandContext method has the same method, allowing commands to call other commands. Helper functions can be used to simplify the syntax:
 
 ```TypeScript
-checkout.runCommand(incrementDotColor(dot));   
+checkout.runCommand(incrementDotColor(dot));
 ```
 
 ## Edits
@@ -172,7 +172,7 @@ There is one special kind of anchor: a detached range of trees – rather than
 being specified in terms of the range nodes, these will store the identity of
 the edit that produced the detached range and, when needed, a discriminator to
 differentiate between output parameters. A command must be passed at least one
-anchor parameter, or it cannot affect the document. 
+anchor parameter, or it cannot affect the document.
 
 Parameters are simply serializable data, and will not be adjusted during
 rebases. A create operation is a special case, as its parameter (a descriptor of
@@ -195,7 +195,7 @@ each user action. The various edits in this hierarchy serve different purposes:
   which attempts to preserve that intent), and allows the command to be called
   again during a rebase operation to determine what the application would do
   under the new circumstances.
-  
+
 - The **lowest-level** edits can be called directly in order to mutate the state
   if migrating forwards. They are reversible, so their inverses can be applied
   to return to the state before the edit, during a backwards migration or
@@ -297,7 +297,7 @@ those Semantic edits are replaced with a (Structural) Changeset.
 
 Note that with the lazy loading and sharing of subtrees between snapshots and
 create edits, it is possible for the transmission to clients of large created
-trees to be mostly deferred until they demand more of the nodes. 
+trees to be mostly deferred until they demand more of the nodes.
 
 ## Open Questions
 
