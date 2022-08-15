@@ -33,25 +33,36 @@ export abstract class BrandedType<ValueType, Name extends string> {
 }
 
 // @public (undocumented)
-export function buildForest(): IEditableForest;
+export function buildForest(schema: StoredSchemaRepository): IEditableForest;
 
 // @public (undocumented)
-export type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<infer TChange, any, any> ? TChange : never;
+export abstract class ChangeEncoder<TChange> {
+    decodeBinary(formatVersion: number, change: IsoBuffer): TChange;
+    // (undocumented)
+    abstract decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TChange;
+    encodeBinary(formatVersion: number, change: TChange): IsoBuffer;
+    // (undocumented)
+    abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleReadOnly;
+}
 
 // @public
-export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
-    compose(...changes: TChangeSet[]): TChangeSet;
+export interface ChangeHandler<TChange> {
     // (undocumented)
-    export(change: TChangeSet): TFinalChange;
+    readonly encoder: ChangeEncoder<TChange>;
     // (undocumented)
-    import(change: TChange): TChangeSet;
-    invert(changes: TChangeSet): TChangeSet;
+    readonly rebaser: ChangeRebaser<TChange>;
+}
+
+// @public
+export interface ChangeRebaser<TChangeset> {
+    compose(changes: TChangeset[]): TChangeset;
     // (undocumented)
-    rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
+    invert(changes: TChangeset): TChangeset;
+    rebase(change: TChangeset, over: TChangeset): TChangeset;
     // (undocumented)
-    rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
+    rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
     // (undocumented)
-    _typeCheck?: Covariant<TChange> & Contravariant<TFinalChange> & Invariant<TChangeSet>;
+    _typeCheck?: Invariant<TChangeset>;
 }
 
 // @public (undocumented)
@@ -78,7 +89,7 @@ export interface Contravariant<T> {
 const counter: FieldKind;
 
 // @public
-const counterHandle: ChangeHandler<number, number, number>;
+const counterHandle: ChangeHandler<number>;
 
 // @public
 export interface Covariant<T> {
@@ -165,11 +176,11 @@ export type FieldKey = LocalFieldKey | GlobalFieldKey;
 
 // @public
 export class FieldKind {
-    constructor(identifier: FieldKindIdentifier, multiplicity: Multiplicity, changeHandler: ChangeHandler<unknown, any, any>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
+    constructor(identifier: FieldKindIdentifier, multiplicity: Multiplicity, changeHandler: ChangeHandler<any>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
     allowsFieldSuperset(policy: FullSchemaPolicy, originalData: SchemaData, originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema): boolean;
     // (undocumented)
-    readonly changeHandler: ChangeHandler<unknown, any, any>;
+    readonly changeHandler: ChangeHandler<any>;
     // (undocumented)
     readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>;
     // (undocumented)
@@ -406,7 +417,7 @@ function lastWriteWinsRebaser<TChange>(data: {
     noop: TChange;
     invert: (changes: TChange) => TChange;
     rebaseAnchors: (anchor: AnchorSet, over: TChange) => void;
-}): ChangeRebaser<TChange, TChange, TChange>;
+}): ChangeRebaser<TChange>;
 
 // @public
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
@@ -554,7 +565,7 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 export const neverTree: TreeSchema;
 
 // @public
-const noChangeHandle: ChangeHandler<never, 0, 0>;
+const noChangeHandle: ChangeHandler<0>;
 
 // @public
 export interface NodeData {

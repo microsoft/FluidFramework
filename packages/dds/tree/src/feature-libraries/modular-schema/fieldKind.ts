@@ -47,7 +47,7 @@ export class FieldKind {
     public constructor(
         public readonly identifier: FieldKindIdentifier,
         public readonly multiplicity: Multiplicity,
-        public readonly changeHandler: ChangeHandler<unknown, any, any>,
+        public readonly changeHandler: ChangeHandler<any>,
         private readonly allowsTreeSupersetOf:
             (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean,
         public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
@@ -90,9 +90,9 @@ export class FieldKind {
  *
  * TODO: eventually field-kinds will need to provide everything ChangeFamily requires.
  */
-export interface ChangeHandler<TChange, TFinalChange, TChangeSet> {
-    readonly rebaser: ChangeRebaser<TChange, TFinalChange, TChangeSet>;
-    readonly encoder: ChangeEncoder<TFinalChange>;
+export interface ChangeHandler<TChange> {
+    readonly rebaser: ChangeRebaser<TChange>;
+    readonly encoder: ChangeEncoder<TChange>;
     // TODO: add edit builder.
 }
 

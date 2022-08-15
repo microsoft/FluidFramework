@@ -46,14 +46,12 @@ export class UnitEncoder extends ChangeEncoder<0> {
 }
 
 function commutativeRebaser<TChange>(data: {
-    compose: (...changes: TChange[]) => TChange;
+    compose: (changes: TChange[]) => TChange;
     invert: (changes: TChange) => TChange;
     rebaseAnchors: (anchor: AnchorSet, over: TChange) => void;
-}): ChangeRebaser<TChange, TChange, TChange> {
+}): ChangeRebaser<TChange> {
     return {
         rebase: (change: TChange, over: TChange) => change,
-        import: (change: TChange) => change,
-        export: (change: TChange) => change,
         ...data,
     };
 }
@@ -68,12 +66,10 @@ export function lastWriteWinsRebaser<TChange>(data: {
     noop: TChange;
     invert: (changes: TChange) => TChange;
     rebaseAnchors: (anchor: AnchorSet, over: TChange) => void;
-}): ChangeRebaser<TChange, TChange, TChange> {
+}): ChangeRebaser<TChange> {
     return {
         rebase: (change: TChange, over: TChange) => change,
-        import: (change: TChange) => change,
-        export: (change: TChange) => change,
-        compose: (...changes: TChange[]) => changes.length >= 0 ? changes[changes.length - 1] : data.noop,
+        compose: (changes: TChange[]) => changes.length >= 0 ? changes[changes.length - 1] : data.noop,
         invert: data.invert,
         rebaseAnchors: data.rebaseAnchors,
     };
@@ -95,7 +91,7 @@ type ReplaceOp<T> = Replacement<T> | 0;
  */
 function replaceRebaser<T>(data: {
     rebaseAnchors: (anchor: AnchorSet, over: ReplaceOp<T>) => void;
-}): ChangeRebaser<ReplaceOp<T>, ReplaceOp<T>, ReplaceOp<T>> {
+}): ChangeRebaser<ReplaceOp<T>> {
     return {
         rebase: (change: ReplaceOp<T>, over: ReplaceOp<T>) => {
             if (change === 0) {
@@ -106,9 +102,7 @@ function replaceRebaser<T>(data: {
             }
             return { old: over.new, new: change.new };
         },
-        import: (change: ReplaceOp<T>) => change,
-        export: (change: ReplaceOp<T>) => change,
-        compose: (...changes: ReplaceOp<T>[]) => {
+        compose: (changes: ReplaceOp<T>[]) => {
             const f = changes.filter((c): c is Replacement<T> => c !== 0);
             if (f.length === 0) {
                 return 0;
@@ -126,14 +120,12 @@ function replaceRebaser<T>(data: {
 /**
  * ChangeHandler that does not support any changes.
  */
-export const noChangeHandle: ChangeHandler<never, 0, 0> = {
+export const noChangeHandle: ChangeHandler<0> = {
     rebaser: {
-        compose: (...changes: 0[]) => 0,
+        compose: (changes: 0[]) => 0,
         invert: (changes: 0) => 0,
         rebase: (change: 0, over: 0) => 0,
         rebaseAnchors: (anchor: AnchorSet, over: 0) => {},
-        import: (change: never) => 0,
-        export: (change: 0) => 0,
     },
     encoder: new UnitEncoder(),
 };
@@ -147,9 +139,9 @@ export const noChangeHandle: ChangeHandler<never, 0, 0> = {
  * and handling values past Number.MAX_SAFE_INTEGER (ex: via an arbitrarily large integer library)
  * or via modular arithmetic.
  */
-export const counterHandle: ChangeHandler<number, number, number> = {
+export const counterHandle: ChangeHandler<number> = {
     rebaser: commutativeRebaser({
-        compose: (...changes: number[]) => changes.reduce((a, b) => a + b, 0),
+        compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
         invert: (change: number) => -change,
         rebaseAnchors: (anchor: AnchorSet, over: number) => {},
     }),
