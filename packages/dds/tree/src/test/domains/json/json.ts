@@ -5,6 +5,18 @@
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 
+interface Canada {
+    type: "FeatureCollection";
+    features: [{
+        type: "Feature";
+        properties: { name: "Canada"; };
+        geometry: {
+            type: "Polygon";
+            coordinates: [number, number][][];
+        };
+    }];
+}
+
 // The geometry of 'canada.json' is encoded as 480 segments of varying length.
 const originalSegmentLengths = [
     14, 33, 18, 23, 10, 28, 9, 28, 279, 221, 11, 86, 28, 19, 26, 23, 24, 38, 24, 9, 30, 20, 27, 21, 19, 25, 24, 20,
@@ -31,7 +43,7 @@ const originalSegmentLengths = [
  * Generates a Jsonable tree with statistical similarities to 'canada.json':
  * https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/canada.json
  */
-export function generateCanada(segmentLengths = originalSegmentLengths, seed = 1) {
+export function generateCanada(segmentLengths = originalSegmentLengths, seed = 1): Canada {
     const random = makeRandom(seed);
 
     // Distribution parameters were calculated from 'canada.json', rounded for brevity,
@@ -61,7 +73,7 @@ export function generateCanada(segmentLengths = originalSegmentLengths, seed = 1
         return new Array(len).fill(0).map(() => [
             last_x = noise(clamp(-141, last_x + vxDist(), -52)),
             last_y = noise(clamp(41, last_y + vyDist(), 83)),
-        ]);
+        ] as [number, number]);
     });
 
     return {
