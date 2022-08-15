@@ -2,8 +2,7 @@
  * This file contains a series of utility functions intended to assist with generating random data.
  */
 
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { string } from "../../schema-stored/examples/SchemaExamples";
+import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
 
 const englishAlphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
 
@@ -44,7 +43,7 @@ export function getSizeInBytes(obj: unknown) {
 }
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
+const MARKOV_SENTENCE_BEGIN_KEY = "MARKOV_SENTENCE_BEGIN_KEY_01$#@%^#";
 // Input is expected to be a list of sentences where each sentence
 // is a list of words in the same order as the original sentence
 export function markovChainBuilder(sentences: string[][]) {
@@ -57,6 +56,11 @@ export function markovChainBuilder(sentences: string[][]) {
         sentence.forEach((word) => {
             if (prevWord === null) {
                 prevWord = word;
+                if (markovChain.get(MARKOV_SENTENCE_BEGIN_KEY)) {
+                    markovChain.get(MARKOV_SENTENCE_BEGIN_KEY)!.push(word);
+                } else {
+                    markovChain.set(MARKOV_SENTENCE_BEGIN_KEY, []);
+                }
             }
 
             // if (!dictionary.get(word)) {
@@ -76,4 +80,35 @@ export function markovChainBuilder(sentences: string[][]) {
     return markovChain;
 }
 
+export function buildTextFromMarkovChain(markovChain: Map<string, string[]>, random: IRandom, wordCount: number) {
+    // Math.floor(random.integer(0, 99999));
+    if (markovChain.size === 0 || !markovChain.get(MARKOV_SENTENCE_BEGIN_KEY) === undefined) {
+        return "";
+    }
+
+    let sentence = "";
+    const rootWordChoices = markovChain.get(MARKOV_SENTENCE_BEGIN_KEY)!;
+    if (rootWordChoices.length === 0) {
+        throw Error("Provided markov chain because it has no root words");
+    }
+    const rootWord = markovChain.get(MARKOV_SENTENCE_BEGIN_KEY)![
+        Math.floor(random.integer(0, markovChain.get(MARKOV_SENTENCE_BEGIN_KEY)!.length - 1))
+    ];
+
+    sentence += rootWord;
+    let currWordCount = 1;
+    let currWord = rootWord;
+    while (currWordCount < wordCount) {
+        // Issue will occur if a word with nothing after it occurs
+        const nextWordChoices = markovChain.get(currWord)!;
+        if (nextWordChoices.length === 0) {
+            return sentence;
+        }
+        currWord = nextWordChoices[ Math.floor(random.integer(0, nextWordChoices.length - 1))];
+        sentence += ` ${currWord}`;
+        currWordCount++;
+    }
+
+    return sentence;
+}
 /* eslint-enable */

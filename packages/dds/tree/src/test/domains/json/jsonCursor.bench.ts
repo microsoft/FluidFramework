@@ -13,7 +13,8 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./canada";
 import { generateTwitterJsonByByteSize } from "./twitter";
-import { markovChainBuilder } from "./jsonGeneratorUtils";
+import { buildTextFromMarkovChain, markovChainBuilder } from "./jsonGeneratorUtils";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -117,6 +118,7 @@ describe("ITreeCursor", () => {
     ];
 
     const chain = markovChainBuilder(sentences);
+    const sentence = buildTextFromMarkovChain(chain, makeRandom(), 4);
 
     bench("canada", () => canada);
     bench("twitter", () => twitter);
