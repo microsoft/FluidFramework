@@ -303,20 +303,16 @@ class ScheduleManagerCore {
             // Protocol messages should never show up in the middle of the batch!
             if (this.currentBatchClientId !== undefined) {
                 // We've received a system message in the middle of the batch
-                this.handleMessageFlowInconsistency(
+                throw DataProcessingError.create(
+                    "Received a system message during batch processing",
+                    "trackPending",
                     message,
-                    "SystemMessageDuringBatch",
-                    DataProcessingError.create(
-                        "Received a system message during batch processing",
-                        "trackPending",
-                        message,
-                        {
-                            runtimeVersion: pkgVersion,
-                            batchClientId: this.currentBatchClientId,
-                            pauseSequenceNumber: this.pauseSequenceNumber,
-                            localBatch: this.currentBatchClientId === this.clientId(),
-                            localMessage: message.clientId === this.clientId(),
-                        }));
+                    {
+                        runtimeVersion: pkgVersion,
+                        batchClientId: this.currentBatchClientId,
+                        pauseSequenceNumber: this.pauseSequenceNumber,
+                        localBatch: this.currentBatchClientId === this.clientId(),
+                    });
             }
 
             assert(messageState === "Individual", 0x29b /* "system op in a batch?" */);
@@ -390,7 +386,7 @@ class ScheduleManagerCore {
     ) {
         const localMessage = message.clientId === this.clientId();
         if (localMessage) {
-            // The system message originated from the current client.
+            // The message originated from the current client or is relative to the current client.
             // Aborting, so that we limit the spread of this inconsistency
             throw error;
         }
