@@ -31,5 +31,6 @@ This function also accepts a `MarkdownEmitter` object that does the conversion f
 ## Upcoming Work
 
 -   Config option for "Model" page title
--   Dynamic "Modifiers" column
+-   Injext IDs for remaining headings
+-   Dynamic "Modifiers" column in tables
 -   Pre-canned policies (flat, index, adjacency)
