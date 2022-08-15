@@ -33,6 +33,7 @@ describe("partial lengths", () => {
                 segment.isLeaf()
                 && !(segment.removedSeq !== undefined && segment.removedSeq >= seq)
                 && segment.localRemovedSeq === undefined
+                && (segment.seq === undefined || segment.seq <= seq)
             ) {
                 actualLen += segment.cachedLength;
             }
@@ -47,16 +48,24 @@ describe("partial lengths", () => {
 
     function validatePartialLengths(
         clientId: number,
-        seq: number,
-        expectedLen?: number,
+        expectedValues?: [{ seq: number; len: number; }],
         mergeBlock = mergeTree.root,
     ): void {
-        const { partialLen, actualLen } = getPartialLengths(clientId, seq, mergeBlock);
+        for (let i = mergeTree.collabWindow.minSeq + 1; i <= mergeTree.collabWindow.currentSeq; i++) {
+            const { partialLen, actualLen } = getPartialLengths(clientId, i, mergeBlock);
 
-        assert.equal(partialLen, actualLen);
+            assert.equal(partialLen, actualLen);
+        }
 
-        if (expectedLen !== undefined) {
-            assert.equal(partialLen, expectedLen);
+        if (!expectedValues) {
+            return;
+        }
+
+        for (const { seq, len } of expectedValues) {
+            const { partialLen, actualLen } = getPartialLengths(clientId, seq, mergeBlock);
+
+            assert.equal(partialLen, len);
+            assert.equal(actualLen, len);
         }
     }
 
@@ -82,7 +91,7 @@ describe("partial lengths", () => {
     });
 
     it("passes with no additional ops", () => {
-        validatePartialLengths(localClientId, 0, 12);
+        validatePartialLengths(localClientId, [{ seq: 0, len: 12 }]);
     });
 
     describe("a single inserted element", () => {
@@ -98,7 +107,7 @@ describe("partial lengths", () => {
                 { op: { type: MergeTreeDeltaType.INSERT } },
             );
 
-            validatePartialLengths(localClientId, 0, 17);
+            validatePartialLengths(localClientId, [{ seq: 1, len: 17 }]);
         });
         it("includes length of local insert for remote view", () => {
             insertText(
@@ -112,7 +121,7 @@ describe("partial lengths", () => {
                 { op: { type: MergeTreeDeltaType.INSERT } },
             );
 
-            validatePartialLengths(remoteClientId, 1, 17);
+            validatePartialLengths(remoteClientId, [{ seq: 1, len: 17 }]);
         });
         it("includes length of remote insert for local view", () => {
             insertText(
@@ -126,7 +135,7 @@ describe("partial lengths", () => {
                 { op: { type: MergeTreeDeltaType.INSERT } },
             );
 
-            validatePartialLengths(localClientId, 1, 17);
+            validatePartialLengths(localClientId, [{ seq: 1, len: 17 }]);
         });
         it("includes length of remote insert for remote view", () => {
             insertText(
@@ -140,7 +149,7 @@ describe("partial lengths", () => {
                 { op: { type: MergeTreeDeltaType.INSERT } },
             );
 
-            validatePartialLengths(remoteClientId, 0, 17);
+            validatePartialLengths(remoteClientId, [{ seq: 1, len: 17 }]);
         });
     });
 
@@ -155,7 +164,7 @@ describe("partial lengths", () => {
                 false,
                 undefined as any);
 
-            validatePartialLengths(localClientId, 0, 0);
+            validatePartialLengths(localClientId, [{ seq: 0, len: 0 }]);
         });
         it("includes result of local delete for remote view", () => {
             mergeTree.markRangeRemoved(
@@ -167,7 +176,7 @@ describe("partial lengths", () => {
                 false,
                 undefined as any);
 
-            validatePartialLengths(remoteClientId, 1, 0);
+            validatePartialLengths(remoteClientId, [{ seq: 1, len: 0 }]);
         });
         it("includes result of remote delete for local view", () => {
             mergeTree.markRangeRemoved(
@@ -179,7 +188,7 @@ describe("partial lengths", () => {
                 false,
                 undefined as any);
 
-            validatePartialLengths(localClientId, 1, 0);
+            validatePartialLengths(localClientId, [{ seq: 1, len: 0 }]);
         });
         it("includes result of remote delete for remote view", () => {
             mergeTree.markRangeRemoved(
@@ -191,7 +200,7 @@ describe("partial lengths", () => {
                 false,
                 undefined as any);
 
-            validatePartialLengths(remoteClientId, 0, 0);
+            validatePartialLengths(remoteClientId, [{ seq: 0, len: 0 }]);
         });
     });
 
@@ -230,8 +239,8 @@ describe("partial lengths", () => {
                 undefined,
             );
 
-            validatePartialLengths(localClientId, 4, 16);
-            validatePartialLengths(remoteClientId, 4, 16);
+            validatePartialLengths(localClientId, [{ seq: 4, len: 16 }]);
+            validatePartialLengths(remoteClientId, [{ seq: 4, len: 16 }]);
         });
 
         it("is correct for different heights", () => {
@@ -247,12 +256,12 @@ describe("partial lengths", () => {
                     { op: { type: MergeTreeDeltaType.INSERT } },
                 );
 
-                validatePartialLengths(localClientId, 0, i + 13);
-                validatePartialLengths(remoteClientId, i + 1, i + 13);
+                validatePartialLengths(localClientId, [{ seq: i + 1, len: i + 13 }]);
+                validatePartialLengths(remoteClientId, [{ seq: i + 1, len: i + 13 }]);
             }
 
-            validatePartialLengths(localClientId, 0, 112);
-            validatePartialLengths(remoteClientId, 100, 112);
+            validatePartialLengths(localClientId, [{ seq: 100, len: 112 }]);
+            validatePartialLengths(remoteClientId, [{ seq: 100, len: 112 }]);
         });
     });
 
@@ -277,7 +286,7 @@ describe("partial lengths", () => {
                 undefined as any,
             );
 
-            validatePartialLengths(localClientId, 1, 2);
+            validatePartialLengths(localClientId, [{ seq: 1, len: 2 }]);
         });
         it("concurrent local and remote changes are visible", () => {
             mergeTree.markRangeRemoved(
@@ -299,8 +308,8 @@ describe("partial lengths", () => {
                 undefined as any,
             );
 
-            validatePartialLengths(localClientId, 0, 2);
-            validatePartialLengths(remoteClientId, 0, 2);
+            validatePartialLengths(localClientId, [{ seq: 0, len: 2 }]);
+            validatePartialLengths(remoteClientId, [{ seq: 0, len: 2 }]);
         });
         it("concurrent remote and unsequenced local changes are visible", () => {
             mergeTree.markRangeRemoved(
@@ -322,8 +331,8 @@ describe("partial lengths", () => {
                 undefined as any,
             );
 
-            validatePartialLengths(localClientId, 0, 2);
-            validatePartialLengths(remoteClientId, 0, 2);
+            validatePartialLengths(localClientId, [{ seq: 0, len: 2 }]);
+            validatePartialLengths(remoteClientId, [{ seq: 0, len: 2 }]);
         });
     });
 });
