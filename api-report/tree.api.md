@@ -12,19 +12,12 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @public
 export class AnchorSet {
+    applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
     isEmpty(): boolean;
     locate(anchor: Anchor): UpPath | undefined;
-    moveChildren(count: number, src: undefined | {
-        path: UpPath;
-        field: FieldKey;
-        start: number;
-    }, dst: undefined | {
-        path: UpPath;
-        field: FieldKey;
-        start: number;
-    }): void;
+    moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
     track(path: UpPath): Anchor;
 }
 
@@ -42,19 +35,19 @@ export abstract class BrandedType<ValueType, Name extends string> {
 export function buildForest(): IEditableForest;
 
 // @public
-export interface ChangeRebaser<TChangeSet> {
-    compose(changes: TChangeSet[]): TChangeSet;
+export interface ChangeRebaser<TChangeset> {
+    compose(changes: TChangeset[]): TChangeset;
     // (undocumented)
-    invert(changes: TChangeSet): TChangeSet;
-    rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
+    invert(changes: TChangeset): TChangeset;
+    rebase(change: TChangeset, over: TChangeset): TChangeset;
     // (undocumented)
-    rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
+    rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
     // (undocumented)
-    _typeCheck?: Invariant<TChangeSet>;
+    _typeCheck?: Invariant<TChangeset>;
 }
 
 // @public (undocumented)
-export type ChangeSetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> = TChangeRebaser extends ChangeRebaser<infer TChangeSet> ? TChangeSet : never;
+export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> = TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
 
 // @public
 export type ChildCollection = FieldKey | RootField;
@@ -514,8 +507,8 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     // (undocumented)
     readonly empty: RevisionTag;
     // (undocumented)
-    getResolutionPath(from: RevisionTag, to: RevisionTag): ChangeSetFromChangeRebaser<TChangeRebaser>;
-    rebase(changes: ChangeSetFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, ChangeSetFromChangeRebaser<TChangeRebaser>];
+    getResolutionPath(from: RevisionTag, to: RevisionTag): ChangesetFromChangeRebaser<TChangeRebaser>;
+    rebase(changes: ChangesetFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>];
     rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void;
     // (undocumented)
     readonly rebaser: TChangeRebaser;
