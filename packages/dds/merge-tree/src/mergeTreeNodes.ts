@@ -120,6 +120,10 @@ export interface IHierBlock extends IMergeBlock {
  */
 export interface IRemovalInfo {
     /**
+     * Local seq at which this segment was removed, if the removal is yet-to-be acked.
+     */
+    localRemovedSeq?: number;
+    /**
      * Seq at which this segment was removed.
      */
     removedSeq: number;
