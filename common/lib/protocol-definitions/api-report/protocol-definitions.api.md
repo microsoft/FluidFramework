@@ -23,7 +23,7 @@ export enum FileMode {
     Symlink = "120000"
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IActorClient {
     // (undocumented)
     sub: string;
@@ -42,9 +42,7 @@ export interface IAttachment {
 
 // @public
 export interface IBlob {
-    // (undocumented)
     contents: string;
-    // (undocumented)
     encoding: "utf-8" | "base64";
 }
 
@@ -87,8 +85,6 @@ export interface IClientConfiguration {
     maxMessageSize: number;
     noopCountFrequency?: number;
     noopTimeFrequency?: number;
-    // (undocumented)
-    summary: ISummaryConfiguration;
 }
 
 // @public (undocumented)
@@ -388,7 +384,6 @@ export interface ISnapshotTree {
     trees: {
         [path: string]: ISnapshotTree;
     };
-    // (undocumented)
     unreferenced?: true;
 }
 
@@ -401,6 +396,9 @@ export interface ISnapshotTreeEx extends ISnapshotTree {
         [path: string]: ISnapshotTreeEx;
     };
 }
+
+// @public
+export type IsoDate = string;
 
 // @public
 export interface ISummaryAck {
@@ -416,46 +414,12 @@ export interface ISummaryAttachment {
     type: SummaryType.Attachment;
 }
 
-// @public (undocumented)
-export interface ISummaryAuthor {
-    // (undocumented)
-    date: string;
-    // (undocumented)
-    email: string;
-    // (undocumented)
-    name: string;
-}
-
 // @public
 export interface ISummaryBlob {
     // (undocumented)
     content: string | Uint8Array;
     // (undocumented)
     type: SummaryType.Blob;
-}
-
-// @public (undocumented)
-export interface ISummaryCommitter {
-    // (undocumented)
-    date: string;
-    // (undocumented)
-    email: string;
-    // (undocumented)
-    name: string;
-}
-
-// @public (undocumented)
-export interface ISummaryConfiguration {
-    // (undocumented)
-    disableSummaries?: boolean;
-    // (undocumented)
-    idleTime: number;
-    // (undocumented)
-    maxAckWaitTime: number;
-    // (undocumented)
-    maxOps: number;
-    // (undocumented)
-    maxTime: number;
 }
 
 // @public (undocumented)
@@ -493,7 +457,7 @@ export interface ISummaryProposal {
     summarySequenceNumber: number;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ISummaryTokenClaims {
     // (undocumented)
     act: IActorClient;
@@ -511,37 +475,27 @@ export interface ISummaryTree {
     };
     // (undocumented)
     type: SummaryType.Tree;
-    // (undocumented)
     unreferenced?: true;
 }
 
-// @public (undocumented)
+// @public
 export interface ITokenClaims {
-    // (undocumented)
     documentId: string;
-    // (undocumented)
     exp: number;
-    // (undocumented)
     iat: number;
-    // (undocumented)
     jti?: string;
-    // (undocumented)
     scopes: string[];
-    // (undocumented)
     tenantId: string;
-    // (undocumented)
     user: IUser;
-    // (undocumented)
     ver: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ITokenProvider {
-    // (undocumented)
     isValid(): boolean;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export interface ITokenService {
     // (undocumented)
     extractClaims(token: string): ITokenClaims;
@@ -561,9 +515,7 @@ export interface ITrace {
 export interface ITree {
     // (undocumented)
     entries: ITreeEntry[];
-    // (undocumented)
     id?: string;
-    // (undocumented)
     unreferenced?: true;
 }
 
@@ -590,17 +542,13 @@ export interface IUploadedSummaryDetails {
 
 // @public
 export interface IUser {
-    // (undocumented)
     id: string;
 }
 
 // @public
 export interface IVersion {
-    // (undocumented)
-    date?: string;
-    // (undocumented)
+    date?: IsoDate;
     id: string;
-    // (undocumented)
     treeId: string;
 }
 
@@ -646,20 +594,17 @@ export enum NackErrorType {
     ThrottlingError = "ThrottlingError"
 }
 
-// @public (undocumented)
+// @public
 export enum ScopeType {
-    // (undocumented)
     DocRead = "doc:read",
-    // (undocumented)
     DocWrite = "doc:write",
-    // (undocumented)
     SummaryWrite = "summary:write"
 }
 
-// @public (undocumented)
+// @public
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 
-// @public (undocumented)
+// @public
 export type SummaryTree = ISummaryTree | ISummaryHandle;
 
 // @public
@@ -678,10 +623,10 @@ export namespace SummaryType {
     const Attachment: Attachment;
 }
 
-// @public (undocumented)
+// @public
 export type SummaryType = SummaryType.Attachment | SummaryType.Blob | SummaryType.Handle | SummaryType.Tree;
 
-// @public (undocumented)
+// @public
 export type SummaryTypeNoHandle = SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment;
 
 // @public
@@ -693,7 +638,5 @@ export enum TreeEntry {
     // (undocumented)
     Tree = "Tree"
 }
-
-// (No @packageDocumentation comment for this package)
 
 ```

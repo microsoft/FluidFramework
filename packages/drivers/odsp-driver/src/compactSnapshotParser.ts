@@ -81,9 +81,11 @@ function readTreeSection(node: NodeCore) {
         if (records.value !== undefined) {
             assertBlobCoreInstance(records.value, "Blob value should be BlobCore");
             snapshotTree.blobs[path] = records.value.toString();
-        } else {
+        } else if (records.children !== undefined) {
             assertNodeCoreInstance(records.children, "Trees should be of type NodeCore");
             snapshotTree.trees[path] = readTreeSection(records.children);
+        } else {
+            snapshotTree.trees[path] = { blobs: {}, commits: {}, trees: {} };
         }
         if (records.unreferenced !== undefined) {
             assertBoolInstance(records.unreferenced, "Unreferenced flag should be bool");
@@ -131,7 +133,9 @@ export function parseCompactSnapshotResponse(buffer: ReadBuffer): ISnapshotConte
 
     assertBlobCoreInstance(records.mrv, "minReadVersion should be of BlobCore type");
     assertBlobCoreInstance(records.cv, "createVersion should be of BlobCore type");
-    assertNumberInstance(records.lsn, "lsn should be a number");
+    if (records.lsn !== undefined) {
+        assertNumberInstance(records.lsn, "lsn should be a number");
+    }
 
     assert(parseFloat(snapshotMinReadVersion) >= parseFloat(records.mrv.toString()),
         0x20f /* "Driver min read version should >= to server minReadVersion" */);

@@ -6,16 +6,20 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { gcTreeKey, ISummarizer } from "@fluidframework/container-runtime";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { defaultGCConfig } from "./gcTestConfigs";
-import { createSummarizer, summarizeNow, waitForContainerConnection } from "./gcTestSummaryUtils";
 
 /**
- * Validates this scenario: When two DDSs in the same datastore has one change, gets summarized, and then gc is called
+ * Validates this scenario: When two DDSes in the same datastore has one change, gets summarized, and then gc is called
  * from loading a new container. We do not want to allow duplicate GC routes to be created in this scenario.
  */
 describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
@@ -35,7 +39,7 @@ describeNoCompat("GC Data Store Duplicates", (getTestObjectProvider) => {
         await waitForContainerConnection(mainContainer);
     });
 
-    it("Back routes added by GC are removed when passed from data stores to DDSs", async () => {
+    it("Back routes added by GC are removed when passed from data stores to DDSes", async () => {
         const dds = SharedMap.create(mainDataStore._runtime);
         mainDataStore._root.set("dds", dds.handle);
 

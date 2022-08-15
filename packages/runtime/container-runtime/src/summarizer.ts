@@ -8,22 +8,25 @@ import { Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
-import { DriverHeader } from "@fluidframework/driver-definitions";
+import { DriverErrorType, DriverHeader } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger, IFluidErrorBase, LoggingError, wrapErrorAndLog } from "@fluidframework/telemetry-utils";
+import {
+    ChildLogger,
+    IFluidErrorBase,
+    isFluidError,
+    LoggingError,
+    wrapErrorAndLog,
+} from "@fluidframework/telemetry-utils";
 import {
     FluidObject,
     IFluidHandleContext,
     IFluidHandle,
     IRequest,
 } from "@fluidframework/core-interfaces";
-import {
-    ISequencedDocumentMessage,
-} from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "./containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
-import { SummaryCollection } from "./summaryCollection";
+import { IAckedSummary, SummaryCollection } from "./summaryCollection";
 import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
@@ -70,8 +73,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private readonly logger: ITelemetryLogger;
     private runningSummarizer?: RunningSummarizer;
-    private systemOpListener?: (op: ISequencedDocumentMessage) => void;
-    private opListener?: (error: any, op: ISequencedDocumentMessage) => void;
     private _disposed: boolean = false;
     private starting: boolean = false;
 
@@ -277,6 +278,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
             this.summaryCollection,
             runCoordinator /* cancellationToken */,
             (reason) => runCoordinator.stop(reason), /* stopSummarizerCallback */
+            this.runtime,
         );
         this.runningSummarizer = runningSummarizer;
         this.starting = false;
@@ -286,13 +288,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         this.handleSummaryAcks().catch((error) => {
             this.logger.sendErrorEvent({ eventName: "HandleSummaryAckFatalError" }, error);
         });
-
-        // Listen for ops
-        this.systemOpListener = (op: ISequencedDocumentMessage) => runningSummarizer.handleSystemOp(op);
-        this.runtime.deltaManager.inbound.on("op", this.systemOpListener);
-
-        this.opListener = (error: any, op: ISequencedDocumentMessage) => runningSummarizer.handleOp(error, op);
-        this.runtime.on("batchEnd", this.opListener);
 
         return runningSummarizer;
     }
@@ -311,12 +306,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
         if (this.runningSummarizer) {
             this.runningSummarizer.dispose();
             this.runningSummarizer = undefined;
-        }
-        if (this.systemOpListener) {
-            this.runtime.deltaManager.inbound.off("op", this.systemOpListener);
-        }
-        if (this.opListener) {
-            this.runtime.removeListener("batchEnd", this.opListener);
         }
     }
 
@@ -378,22 +367,52 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 
     private async handleSummaryAcks() {
         let refSequenceNumber = this.runtime.deltaManager.initialSequenceNumber;
+        let ack: IAckedSummary | undefined;
         while (this.runningSummarizer) {
             const summaryLogger = this.runningSummarizer.tryGetCorrelatedLogger(refSequenceNumber) ?? this.logger;
             try {
-                const ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
+                // Initialize ack with undefined if exception happens inside of waitSummaryAck on second iteration,
+                // we record undefined, not previous handles.
+                ack = undefined;
+                ack = await this.summaryCollection.waitSummaryAck(refSequenceNumber);
                 refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
-
-                await this.internalsProvider.refreshLatestSummaryAck(
-                    ack.summaryOp.contents.handle,
-                    ack.summaryAck.contents.handle,
-                    refSequenceNumber,
-                    summaryLogger,
+                const summaryOpHandle = ack.summaryOp.contents.handle;
+                const summaryAckHandle = ack.summaryAck.contents.handle;
+                // Make sure we block any summarizer from being executed/enqueued while
+                // executing the refreshLatestSummaryAck.
+                // https://dev.azure.com/fluidframework/internal/_workitems/edit/779
+                await this.runningSummarizer.lockedRefreshSummaryAckAction(async () =>
+                    this.internalsProvider.refreshLatestSummaryAck(
+                        summaryOpHandle,
+                        summaryAckHandle,
+                        refSequenceNumber,
+                        summaryLogger,
+                    ).catch(async (error) => {
+                        // If the error is 404, so maybe the fetched version no longer exists on server. We just
+                        // ignore this error in that case, as that means we will have another summaryAck for the
+                        // latest version with which we will refresh the state. However in case of single commit
+                        // summary, we might me missing a summary ack, so in that case we are still fine as the
+                        // code in `submitSummary` function in container runtime, will refresh the latest state
+                        // by calling `refreshLatestSummaryAckFromServer` and we will be fine.
+                        if (isFluidError(error)
+                            && error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError) {
+                            summaryLogger.sendTelemetryEvent({
+                                eventName: "HandleSummaryAckErrorIgnored",
+                                referenceSequenceNumber: refSequenceNumber,
+                                proposalHandle: summaryOpHandle,
+                                ackHandle: summaryAckHandle,
+                            }, error);
+                        } else {
+                            throw error;
+                        }
+                    }),
                 );
             } catch (error) {
                 summaryLogger.sendErrorEvent({
                     eventName: "HandleSummaryAckError",
                     referenceSequenceNumber: refSequenceNumber,
+                    handle: ack?.summaryOp?.contents?.handle,
+                    ackHandle: ack?.summaryAck?.contents?.handle,
                 }, error);
             }
             refSequenceNumber++;

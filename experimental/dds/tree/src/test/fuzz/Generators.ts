@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import Random from 'random-js';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
 	AsyncWeights,
+	IRandom,
 	createWeightedAsyncGenerator,
 	done,
 	makeRandom,
@@ -100,7 +100,11 @@ const defaultEditConfig: Required<EditGenerationConfig> = {
 	traitLabelPoolSize: 20,
 };
 
-const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<Operation, FuzzTestState> => {
+const makeEditGenerator = (
+	passedConfig: EditGenerationConfig,
+	passedJoinConfig: JoinGenerationConfig,
+	stashOps = false
+): AsyncGenerator<Operation, FuzzTestState> => {
 	const config = { ...defaultEditConfig, ...passedConfig };
 	const insertConfig = { ...defaultInsertConfig, ...config.insertConfig };
 	const poolRand = makeRandom(0);
@@ -288,11 +292,8 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 			const forbiddenDescendantId =
 				destination.referenceTrait?.parent ?? destination.referenceSibling ?? fail('Invalid place');
 
-			const unadjustedStartIndex: number = view.findIndexWithinTrait(start);
-			const unadjustedEndIndex: number = view.findIndexWithinTrait(end);
-			const startIndex = unadjustedStartIndex + (start.side === Side.After ? 1 : 0);
-			const endIndex = unadjustedEndIndex + (end.side === Side.After ? 1 : 0);
-
+			const startIndex = view.findIndexWithinTrait(start);
+			const endIndex = view.findIndexWithinTrait(end);
 			const idsInSource = new Set(view.getTrait(start.trait).slice(startIndex, endIndex));
 			for (
 				let current: NodeId | undefined = forbiddenDescendantId;
@@ -331,7 +332,7 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 	async function setPayloadGenerator({ dataStoreRuntime, idList, random, view }: EditState): Promise<FuzzChange> {
 		const nodeToModify = random.pick(idList);
 		const getPayloadContents = async (
-			random: Random
+			random: IRandom
 		): Promise<string | { blob: IFluidHandle<ArrayBufferLike> }> => {
 			if (random.bool()) {
 				return random.string(4);
@@ -374,6 +375,18 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 		if (contents === done) {
 			return done;
 		}
+
+		if (stashOps) {
+			const joinConfig = { ...defaultJoinConfig, ...passedJoinConfig };
+			return {
+				type: 'stash',
+				contents,
+				index,
+				summarizeHistory: random.pick(joinConfig.summarizeHistory),
+				writeFormat: random.pick(joinConfig.writeFormat),
+			};
+		}
+
 		return { type: 'edit', contents, index };
 	};
 };
@@ -381,10 +394,11 @@ const makeEditGenerator = (passedConfig: EditGenerationConfig): AsyncGenerator<O
 const defaultOpConfig: Required<OperationGenerationConfig> = {
 	editConfig: defaultEditConfig,
 	joinConfig: defaultJoinConfig,
-	editWeight: 10,
-	joinWeight: 1,
-	leaveWeight: 1,
-	synchronizeWeight: 1,
+	editWeight: 100,
+	joinWeight: 10,
+	leaveWeight: 10,
+	stashWeight: 1,
+	synchronizeWeight: 10,
 };
 
 export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncGenerator<Operation, FuzzTestState> {
@@ -404,13 +418,14 @@ export function makeOpGenerator(passedConfig: OperationGenerationConfig): AsyncG
 	const atLeastOneActiveClient: AcceptanceCondition<FuzzTestState> = ({ activeCollaborators }) =>
 		activeCollaborators.length > 0;
 	const opWeights: AsyncWeights<Operation, FuzzTestState> = [
-		[makeEditGenerator(config.editConfig), config.editWeight, atLeastOneActiveClient],
+		[makeEditGenerator(config.editConfig, config.joinConfig), config.editWeight, atLeastOneActiveClient],
 		[
 			makeJoinGenerator(config.joinConfig),
 			config.joinWeight,
 			collaboratorsMatches((count) => count < maximumCollaborators),
 		],
 		[leaveGenerator, config.leaveWeight, atLeastOneClient],
+		[makeEditGenerator(config.editConfig, config.joinConfig, true), config.stashWeight, atLeastOneActiveClient],
 		[{ type: 'synchronize' }, config.synchronizeWeight, atLeastOneClient],
 	];
 	return createWeightedAsyncGenerator(opWeights);

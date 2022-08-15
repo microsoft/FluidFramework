@@ -13,7 +13,7 @@ import {
     NetworkErrorBasic,
 } from "@fluidframework/driver-utils";
 import { assert, performance } from "@fluidframework/common-utils";
-import { ChildLogger, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
+import { ChildLogger, PerformanceEvent, TelemetryDataTag, wrapError } from "@fluidframework/telemetry-utils";
 import {
     fetchIncorrectResponse,
     throwOdspNetworkError,
@@ -27,6 +27,7 @@ import {
     isTokenFromCache,
     OdspResourceTokenFetchOptions,
     ShareLinkTypes,
+    ISharingLinkKind,
     TokenFetcher,
     ICacheEntry,
     snapshotKey,
@@ -123,7 +124,8 @@ export async function fetchHelper(
     }, (error) => {
         const online = isOnline();
         const errorText = `${error}`;
-
+        const urlRegex = /((http|https):\/\/(\S*))/i;
+        const redactedErrorText = errorText.replace(urlRegex, "REDACTED_URL");
         // This error is thrown by fetch() when AbortSignal is provided and it gets cancelled
         if (error.name === "AbortError") {
             throw new RetryableError(
@@ -143,13 +145,23 @@ export async function fetchHelper(
         if (online === OnlineStatus.Offline) {
             throw new RetryableError(
                 // pre-0.58 error message prefix: Offline
-                `ODSP fetch failure (Offline): ${errorText}`, DriverErrorType.offlineError, { driverVersion });
+                `ODSP fetch failure (Offline): ${redactedErrorText}`,
+                DriverErrorType.offlineError,
+                {
+                    driverVersion,
+                    rawErrorMessage: { value: errorText, tag: TelemetryDataTag.UserData },
+                });
         } else {
             // It is perhaps still possible that this is due to being offline, the error does not reveal enough
             // information to conclude.  Could also be DNS errors, malformed fetch request, CSP violation, etc.
             throw new RetryableError(
                 // pre-0.58 error message prefix: Fetch error
-                `ODSP fetch failure: ${errorText}`, DriverErrorType.fetchFailure, { driverVersion });
+                `ODSP fetch failure: ${redactedErrorText}`,
+                DriverErrorType.fetchFailure,
+                {
+                    driverVersion,
+                    rawErrorMessage: { value: errorText, tag: TelemetryDataTag.UserData },
+                });
         }
     });
 }
@@ -222,8 +234,10 @@ export interface INewFileInfo {
      * application can request creation of a share link along with the creation of a new file
      * by passing in an optional param to specify the kind of sharing link
      * (at the time of adding this comment Sept/2021), odsp only supports csl
+     * ShareLinkTypes will deprecated in future. Use ISharingLinkKind instead which specifies both
+     * share link type and the role type.
      */
-    createLinkType?: ShareLinkTypes;
+    createLinkType?: ShareLinkTypes | ISharingLinkKind;
 }
 
 export function getOdspResolvedUrl(resolvedUrl: IResolvedUrl): IOdspResolvedUrl {
@@ -337,3 +351,23 @@ export function createCacheSnapshotKey(odspResolvedUrl: IOdspResolvedUrl): ICach
 // 80KB is the max body size that we can put in ump post body for server to be able to accept it.
 // Keeping it 78KB to be a little cautious. As per the telemetry 99p is less than 78KB.
 export const maxUmpPostBodySize = 79872;
+
+/**
+ * Build request parameters to request for the creation of a sharing link along with the creation of the file
+ * through the /snapshot api call.
+ * @param shareLinkType - Kind of sharing link requested
+ * @returns A string of request parameters that can be concatenated with the base URI
+ */
+export function buildOdspShareLinkReqParams(shareLinkType: ShareLinkTypes | ISharingLinkKind | undefined) {
+    if (!shareLinkType) {
+        return;
+    }
+    const scope = (shareLinkType as ISharingLinkKind).scope;
+    if (!scope) {
+        return `createLinkType=${shareLinkType}`;
+    }
+    let shareLinkRequestParams = `createLinkScope=${scope}`;
+    const role = (shareLinkType as ISharingLinkKind).role;
+    shareLinkRequestParams = role ? `${shareLinkRequestParams}&createLinkRole=${role}` : shareLinkRequestParams;
+    return shareLinkRequestParams;
+}

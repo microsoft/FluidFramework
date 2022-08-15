@@ -12,6 +12,7 @@ import {
     ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
 import {
+    AliasResult,
     channelsTreeName,
     CreateChildSummarizerNodeFn,
     CreateChildSummarizerNodeParam,
@@ -28,11 +29,11 @@ import {
     ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
-     convertSnapshotTreeToSummaryTree,
-     convertToSummaryTree,
-     create404Response,
-     responseToException,
-     SummaryTreeBuilder,
+    convertSnapshotTreeToSummaryTree,
+    convertToSummaryTree,
+    create404Response,
+    responseToException,
+    SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
 import { ChildLogger, LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -55,10 +56,10 @@ import { GCNodeType } from "./garbageCollection";
 
 type PendingAliasResolve = (success: boolean) => void;
 
- /**
-  * This class encapsulates data store handling. Currently it is only used by the container runtime,
-  * but eventually could be hosted on any channel once we formalize the channel api boundary.
-  */
+/**
+ * This class encapsulates data store handling. Currently it is only used by the container runtime,
+ * but eventually could be hosted on any channel once we formalize the channel api boundary.
+ */
 export class DataStores implements IDisposable {
     // Stores tracked by the Domain
     private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -82,6 +83,7 @@ export class DataStores implements IDisposable {
     // The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
     // the container runtime to other nodes.
     private readonly containerRuntimeHandle: IFluidHandle;
+    private readonly pendingAliasMap: Map<string, Promise<AliasResult>> = new Map<string, Promise<AliasResult>>();
 
     constructor(
         private readonly baseSnapshot: ISnapshotTree | undefined,
@@ -173,8 +175,17 @@ export class DataStores implements IDisposable {
         };
     }
 
-    public aliases(): ReadonlyMap<string, string> {
+    public get aliases(): ReadonlyMap<string, string> {
         return this.aliasMap;
+    }
+
+    public get pendingAliases(): Map<string, Promise<AliasResult>> {
+        return this.pendingAliasMap;
+    }
+
+    public async waitIfPendingAlias(maybeAlias: string): Promise<AliasResult> {
+        const pendingAliasPromise = this.pendingAliases.get(maybeAlias);
+        return pendingAliasPromise === undefined ? "Success" : pendingAliasPromise;
     }
 
     public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -191,7 +202,7 @@ export class DataStores implements IDisposable {
             return;
         }
 
-         // If a non-local operation then go and create the object, otherwise mark it as officially attached.
+        // If a non-local operation then go and create the object, otherwise mark it as officially attached.
         if (this.alreadyProcessed(attachMessage.id)) {
             // TODO: dataStoreId may require a different tag from PackageData #7488
             const error = new DataCorruptionError(
@@ -201,7 +212,7 @@ export class DataStores implements IDisposable {
                     ...extractSafePropertiesFromMessage(message),
                     dataStoreId: {
                         value: attachMessage.id,
-                        tag: TelemetryDataTag.PackageData,
+                        tag: TelemetryDataTag.CodeArtifact,
                     },
                 },
             );
@@ -351,7 +362,7 @@ export class DataStores implements IDisposable {
         return context;
     }
 
-    public _createFluidDataStoreContext(pkg: string[], id: string, isRoot: boolean, props?: any) {
+    public _createFluidDataStoreContext(pkg: string[], id: string, props?: any) {
         assert(!id.includes("/"), 0x30d /* Id cannot contain slashes */);
         const context = new LocalFluidDataStoreContext({
             id,
@@ -365,7 +376,7 @@ export class DataStores implements IDisposable {
             ),
             makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
             snapshotTree: undefined,
-            isRootDataStore: isRoot,
+            isRootDataStore: false,
             writeGCDataAtRoot: this.writeGCDataAtRoot,
             disableIsolatedChannels: this.runtime.disableIsolatedChannels,
             createProps: props,
@@ -440,7 +451,7 @@ export class DataStores implements IDisposable {
                 eventName: "SignalFluidDataStoreNotFound",
                 fluidDataStoreId: {
                     value: address,
-                    tag: TelemetryDataTag.PackageData,
+                    tag: TelemetryDataTag.CodeArtifact,
                 },
             });
             return;
@@ -470,7 +481,7 @@ export class DataStores implements IDisposable {
         } else {
             eventName = "attached";
         }
-        for (const [,context] of this.contexts) {
+        for (const [, context] of this.contexts) {
             // Fire only for bounded stores.
             if (!this.contexts.isNotBound(context.id)) {
                 context.emit(eventName);
@@ -647,13 +658,13 @@ export class DataStores implements IDisposable {
     }
 
     /**
-     * Called during GC to retrieve the package path of a data store node with the given path.
+     * Called by GC to retrieve the package path of a data store node with the given path.
      */
-    public getDataStorePackagePath(nodePath: string): readonly string[] | undefined {
-        // If the node belongs to a data store, return its package path if the data store is loaded. For DDSs, we return
-        // the package path of the data store that contains it.
+    public async getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined> {
+        // If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
+        // data store that contains it.
         const context = this.contexts.get(nodePath.split("/")[1]);
-        return context?.isLoaded ? context.packagePath : undefined;
+        return (await context?.getInitialSnapshotDetails())?.pkg;
     }
 
     /**

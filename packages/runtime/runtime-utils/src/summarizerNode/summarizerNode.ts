@@ -24,9 +24,6 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { mergeStats, convertToSummaryTree, calculateStats } from "../summaryUtils";
 import { ReadAndParseBlob } from "../utils";
 import {
-    decodeSummary,
-    encodeSummary,
-    EncodeSummaryParam,
     EscapedPath,
     ICreateChildDetails,
     IInitialSummary,
@@ -63,7 +60,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 
     protected readonly children = new Map<string, SummarizerNode>();
     protected readonly pendingSummaries = new Map<string, SummaryNode>();
-    private readonly outstandingOps: ISequencedDocumentMessage[] = [];
     private wipReferenceSequenceNumber: number | undefined;
     private wipLocalPaths: { localPath: EscapedPath; additionalPath?: EscapedPath; } | undefined;
     private wipSkipRecursion = false;
@@ -112,52 +108,12 @@ export class SummarizerNode implements IRootSummarizerNode {
             }
         }
 
-        try {
-            const result = await this.summarizeInternalFn(fullTree, true, telemetryContext);
-            this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
-            if (result.pathPartsForChildren !== undefined) {
-                this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(result.pathPartsForChildren);
-            }
-            return { summary: result.summary, stats: result.stats };
-        } catch (error) {
-            if (this.throwOnError || this.trackingSequenceNumber < this._changeSequenceNumber) {
-                throw error;
-            }
-            const latestSummary = this._latestSummary;
-            const initialSummary = this.initialSummary;
-
-            let encodeParam: EncodeSummaryParam;
-            let localPath: EscapedPath;
-            if (latestSummary !== undefined) {
-                // Create using handle of latest acked summary
-                encodeParam = {
-                    fromSummary: true,
-                    summaryNode: latestSummary,
-                };
-                localPath = latestSummary.localPath;
-            } else if (initialSummary?.summary !== undefined) {
-                // Create using initial summary from attach op
-                encodeParam = {
-                    fromSummary: false,
-                    initialSummary: initialSummary.summary,
-                };
-                localPath = EscapedPath.create(initialSummary.id);
-            } else {
-                // No base summary to reference
-                throw error;
-            }
-            this.wipSummaryLogger.sendErrorEvent({
-                eventName: "SummarizingWithBasePlusOps",
-            },
-            error);
-            const summary = encodeSummary(encodeParam, this.outstandingOps);
-            this.wipLocalPaths = {
-                localPath,
-                additionalPath: summary.additionalPath,
-            };
-            this.wipSkipRecursion = true;
-            return { summary: summary.summary, stats: summary.stats };
+        const result = await this.summarizeInternalFn(fullTree, true, telemetryContext);
+        this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
+        if (result.pathPartsForChildren !== undefined) {
+            this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(result.pathPartsForChildren);
         }
+        return { summary: result.summary, stats: result.stats };
     }
 
     /**
@@ -268,6 +224,17 @@ export class SummarizerNode implements IRootSummarizerNode {
                 this.refreshLatestSummaryFromPending(proposalHandle, maybeSummaryNode.referenceSequenceNumber);
                 return { latestSummaryUpdated: true, wasSummaryTracked: true };
             }
+
+            const props = {
+                summaryRefSeq,
+                pendingSize: this.pendingSummaries.size ?? undefined,
+            };
+            this.defaultLogger.sendTelemetryEvent({
+                eventName: "PendingSummaryNotFound",
+                proposalHandle,
+                referenceSequenceNumber: this.referenceSequenceNumber,
+                details: JSON.stringify(props),
+            });
         }
 
         // If we have seen a summary same or later as the current one, ignore it.
@@ -286,7 +253,12 @@ export class SummarizerNode implements IRootSummarizerNode {
         );
         return { latestSummaryUpdated: true, wasSummaryTracked: false, snapshot: snapshotTree };
     }
-
+/**
+ * Called when we get an ack from the server for a summary we've just sent. Updates the reference state of this node
+ * from the state in the pending summary queue.
+ * @param proposalHandle - Handle for the current proposal.
+ * @param referenceSequenceNumber -  reference sequence number of sent summary.
+ */
     protected refreshLatestSummaryFromPending(
         proposalHandle: string,
         referenceSequenceNumber: number,
@@ -312,7 +284,6 @@ export class SummarizerNode implements IRootSummarizerNode {
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
         this._latestSummary = summaryNode;
-
         // Propagate update to all child nodes
         for (const child of this.children.values()) {
             child.refreshLatestSummaryFromPending(proposalHandle, referenceSequenceNumber);
@@ -334,15 +305,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 
         this.refreshLatestSummaryCore(referenceSequenceNumber);
 
-        const { baseSummary, pathParts } = decodeSummary(snapshotTree, correlatedSummaryLogger);
-
         this._latestSummary = new SummaryNode({
             referenceSequenceNumber,
             basePath,
             localPath,
         });
 
-        const { childrenTree, childrenPathPart } = parseSummaryForSubtrees(baseSummary);
+        const pathParts: string[] = [];
+        const { childrenTree, childrenPathPart } = parseSummaryForSubtrees(snapshotTree);
         if (childrenPathPart !== undefined) {
             pathParts.push(childrenPathPart);
         }
@@ -376,14 +346,6 @@ export class SummarizerNode implements IRootSummarizerNode {
                 this.pendingSummaries.delete(key);
             }
         }
-
-        // Clear earlier outstanding ops
-        while (
-            this.outstandingOps.length > 0
-            && this.outstandingOps[0].sequenceNumber <= referenceSequenceNumber
-        ) {
-            this.outstandingOps.shift();
-        }
     }
 
     public loadBaseSummaryWithoutDifferential(snapshot: ISnapshotTree) {
@@ -398,46 +360,22 @@ export class SummarizerNode implements IRootSummarizerNode {
     public async loadBaseSummary(
         snapshot: ISnapshotTree,
         readAndParseBlob: ReadAndParseBlob,
-    ): Promise<{ baseSummary: ISnapshotTree; outstandingOps: ISequencedDocumentMessage[]; }> {
-        const decodedSummary = decodeSummary(snapshot, this.defaultLogger);
-        const outstandingOps = await decodedSummary.getOutstandingOps(readAndParseBlob);
-
-        const { childrenPathPart } = parseSummaryForSubtrees(decodedSummary.baseSummary);
+    ): Promise<ISnapshotTree> {
+        const pathParts: string[] = [];
+        const { childrenPathPart } = parseSummaryForSubtrees(snapshot);
         if (childrenPathPart !== undefined) {
-            decodedSummary.pathParts.push(childrenPathPart);
+            pathParts.push(childrenPathPart);
         }
 
-        if (decodedSummary.pathParts.length > 0 && this._latestSummary !== undefined) {
-            this._latestSummary.additionalPath = EscapedPath.createAndConcat(decodedSummary.pathParts);
+        if (pathParts.length > 0 && this._latestSummary !== undefined) {
+            this._latestSummary.additionalPath = EscapedPath.createAndConcat(pathParts);
         }
 
-        // Defensive assertion: tracking number should already exceed this number.
-        // This is probably a little excessive; can remove when stable.
-        if (outstandingOps.length > 0) {
-            const newOpsLatestSeq = outstandingOps[outstandingOps.length - 1].sequenceNumber;
-            assert(
-                newOpsLatestSeq <= this.trackingSequenceNumber,
-                0x1a9 /* "When loading base summary, expected outstanding ops <= tracking sequence number" */,
-            );
-        }
-
-        return {
-            baseSummary: decodedSummary.baseSummary,
-            outstandingOps,
-        };
+        return snapshot;
     }
 
     public recordChange(op: ISequencedDocumentMessage): void {
-        const lastOp = this.outstandingOps[this.outstandingOps.length - 1];
-        if (lastOp !== undefined) {
-            assert(
-                lastOp.sequenceNumber < op.sequenceNumber,
-                0x1aa /* Out of order change recorded */,
-            );
-        }
         this.invalidate(op.sequenceNumber);
-        this.trackingSequenceNumber = op.sequenceNumber;
-        this.outstandingOps.push(op);
     }
 
     public invalidate(sequenceNumber: number): void {
@@ -460,13 +398,6 @@ export class SummarizerNode implements IRootSummarizerNode {
     }
 
     private readonly canReuseHandle: boolean;
-    private readonly throwOnError: boolean;
-    /**
-     * Sequence number of latest tracked op. This updates during recordChange,
-     * but not for invalidate since we don't have the op. If this drifts from
-     * changeSequenceNumber and we try to create a differential summary we assert.
-     */
-    private trackingSequenceNumber: number;
 
     /**
      * Do not call constructor directly.
@@ -483,11 +414,6 @@ export class SummarizerNode implements IRootSummarizerNode {
         protected wipSummaryLogger?: ITelemetryLogger,
     ) {
         this.canReuseHandle = config.canReuseHandle ?? true;
-        // BUGBUG: Seeing issues with differential summaries.
-        // this will disable them, and throw instead
-        // while we continue to investigate
-        this.throwOnError = true; // config.throwOnFailure ?? false;
-        this.trackingSequenceNumber = this._changeSequenceNumber;
     }
 
     public createChild(
@@ -517,7 +443,8 @@ export class SummarizerNode implements IRootSummarizerNode {
         );
 
         // There may be additional state that has to be updated in this child. For example, if a summary is being
-        // tracked, the child's summary tracking state needs to be updated too.
+        // tracked, the child's summary tracking state needs to be updated too. Same goes for pendingSummaries we might
+        // have outstanding on the parent in case we realize nodes in between Summary Op and Summary Ack.
         this.maybeUpdateChildState(child);
 
         this.children.set(id, child);
@@ -620,6 +547,8 @@ export class SummarizerNode implements IRootSummarizerNode {
     /**
      * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
      * summary tracking state needs to be updated too.
+     * Also, in case a child node gets realized in between Summary Op and Summary Ack, let's initialize the child's
+     * pending summary as well.
      * @param child - The child node whose state is to be updated.
      */
     protected maybeUpdateChildState(child: SummarizerNode) {
@@ -628,8 +557,23 @@ export class SummarizerNode implements IRootSummarizerNode {
         if (this.isTrackingInProgress()) {
             child.wipReferenceSequenceNumber = this.wipReferenceSequenceNumber;
         }
+        // In case we have pending summaries on the parent, let's initialize it on the child.
+        if (child._latestSummary !== undefined) {
+            for (const [key, value] of this.pendingSummaries.entries()) {
+                const newLatestSummaryNode = new SummaryNode({
+                    referenceSequenceNumber: value.referenceSequenceNumber,
+                    basePath: child._latestSummary.basePath,
+                    localPath: child._latestSummary.localPath,
+                });
+
+                child.addPendingSummary(key, newLatestSummaryNode);
+            }
+        }
     }
 
+    protected addPendingSummary(key: string, summary: SummaryNode) {
+        this.pendingSummaries.set(key, summary);
+    }
     /**
      * Tells whether summary tracking is in progress. True if "startSummary" API is called before summarize.
      */

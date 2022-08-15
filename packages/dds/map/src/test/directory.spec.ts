@@ -15,7 +15,7 @@ import {
 
 import { MapFactory } from "../map";
 import { DirectoryFactory, IDirectoryNewStorageFormat, SharedDirectory } from "../directory";
-import { IDirectory } from "../interfaces";
+import { IDirectory, IDirectoryValueChanged } from "../interfaces";
 
 function createConnectedDirectory(id: string, runtimeFactory: MockContainerRuntimeFactory) {
     const dataStoreRuntime = new MockFluidDataStoreRuntime();
@@ -723,6 +723,197 @@ describe("Directory", () => {
                 assert.equal(directory2.getWorkingDirectory("bar")?.get("testKey3"), "testValue3");
                 assert.equal(directory2.get("testKey"), "testValue4");
                 assert.equal(directory2.get("testKey2"), undefined);
+            });
+
+            it("Shouldn't clear value if there is pending set", () => {
+                const valuesChanged: IDirectoryValueChanged[] = [];
+                let clearCount = 0;
+
+                directory1.on("valueChanged", (changed, local, target) => {
+                    valuesChanged.push(changed);
+                });
+                directory1.on("clear", (local, target) => {
+                    clearCount++;
+                });
+
+                directory2.set("directory2key", "value2");
+                directory2.clear();
+                directory1.set("directory1Key", "value1");
+                directory2.clear();
+
+                if (containerRuntimeFactory.processSomeMessages === undefined) {
+                    return;
+                }
+                containerRuntimeFactory.processSomeMessages(2);
+
+                assert.equal(valuesChanged.length, 3);
+                assert.equal(valuesChanged[0].key, "directory1Key");
+                assert.equal(valuesChanged[0].previousValue, undefined);
+                assert.equal(valuesChanged[1].key, "directory2key");
+                assert.equal(valuesChanged[1].previousValue, undefined);
+                assert.equal(valuesChanged[2].key, "directory1Key");
+                assert.equal(valuesChanged[2].previousValue, undefined);
+                assert.equal(clearCount, 1);
+                assert.equal(directory1.size, 1);
+                assert.equal(directory1.get("directory1Key"), "value1");
+
+                containerRuntimeFactory.processSomeMessages(2);
+
+                assert.equal(valuesChanged.length, 3);
+                assert.equal(clearCount, 2);
+                assert.equal(directory1.size, 0);
+            });
+
+            it("Shouldn't overwrite value if there is pending set", () => {
+                const value1 = "value1";
+                const pending1 = "pending1";
+                const pending2 = "pending2";
+                directory1.set("test", value1);
+                directory2.set("test", pending1);
+                directory2.set("test", pending2);
+
+                if (containerRuntimeFactory.processSomeMessages === undefined) {
+                    return;
+                }
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedDirectory with processed message
+                assert.equal(directory1.has("test"), true, "could not find the set key");
+                assert.equal(directory1.get("test"), value1, "could not get the set key");
+
+                // Verify the SharedDirectory with 2 pending messages
+                assert.equal(directory2.has("test"), true, "could not find the set key in pending directory");
+                assert.equal(directory2.get("test"), pending2, "could not get the set key from pending directory");
+
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedDirectory gets updated from remote
+                assert.equal(directory1.has("test"), true, "could not find the set key");
+                assert.equal(directory1.get("test"), pending1, "could not get the set key");
+
+                // Verify the SharedDirectory with 1 pending message
+                assert.equal(directory2.has("test"), true, "could not find the set key in pending directory");
+                assert.equal(directory2.get("test"), pending2, "could not get the set key from pending directory");
+            });
+
+            it("Shouldn't set values when pending clear", () => {
+                const key = "test";
+                directory1.set(key, "directory1value1");
+                directory2.set(key, "directory2value2");
+                directory2.clear();
+                directory2.set(key, "directory2value3");
+                directory2.clear();
+
+                if (containerRuntimeFactory.processSomeMessages === undefined) {
+                    return;
+                }
+                // directory1.set(key, "directory1value1");
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedDirectory with processed message
+                assert.equal(directory1.has("test"), true, "could not find the set key");
+                assert.equal(directory1.get("test"), "directory1value1", "could not get the set key");
+
+                // Verify the SharedDirectory with 2 pending clears
+                assert.equal(directory2.has("test"), false, "found the set key in pending directory");
+
+                // directory2.set(key, "directory2value2");
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedDirectory gets updated from remote
+                assert.equal(directory1.has("test"), true, "could not find the set key");
+                assert.equal(directory1.get("test"), "directory2value2", "could not get the set key");
+
+                // Verify the SharedDirectory with 2 pending clears
+                assert.equal(directory2.has("test"), false, "found the set key in pending directory");
+
+                // directory2.clear();
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedDirectory gets updated from remote clear
+                assert.equal(directory1.has("test"), false, "found the set key");
+
+                // Verify the SharedDirectory with 1 pending clear
+                assert.equal(directory2.has("test"), false, "found the set key in pending directory");
+
+                // directory2.set(key, "directory2value3");
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedDirectory gets updated from remote
+                assert.equal(directory1.has("test"), true, "could not find the set key");
+                assert.equal(directory1.get("test"), "directory2value3", "could not get the set key");
+
+                // Verify the SharedDirectory with 1 pending clear
+                assert.equal(directory2.has("test"), false, "found the set key in pending directory");
+
+                // directory2.clear();
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedDirectory gets updated from remote clear
+                assert.equal(directory1.has("test"), false, "found the set key");
+
+                // Verify the SharedDirectory with no more pending clear
+                assert.equal(directory2.has("test"), false, "found the set key in pending directory");
+
+                directory1.set(key, "directory1value4");
+                containerRuntimeFactory.processSomeMessages(1);
+
+                // Verify the SharedDirectory gets updated from local
+                assert.equal(directory1.has("test"), true, "could not find the set key");
+                assert.equal(directory1.get("test"), "directory1value4", "could not get the set key");
+
+                // Verify the SharedDirectory gets updated from remote
+                assert.equal(directory1.has("test"), true, "could not find the set key");
+                assert.equal(directory1.get("test"), "directory1value4", "could not get the set key");
+            });
+
+            it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
+                const root1SubDir = directory1.createSubDirectory("testSubDir");
+                root1SubDir.set("key1", "testValue1");
+
+                directory1.deleteSubDirectory("testSubDir");
+                const root1SubDir2 = directory1.createSubDirectory("testSubDir");
+                root1SubDir2.set("key2", "testValue2");
+                directory2.createSubDirectory("testSubDir");
+
+                // After the above scenario, the consistent state using LWW would be to have testSubDir with 1 key.
+                // Right now what happens is directory B just ignores the delete Op from directory 1 because its own
+                // create is not acked and it ends up ignoring the delete op. So directory 2 ends up having 2 keys
+                // instead of one.
+                containerRuntimeFactory.processAllMessages();
+                const directory1SubDir = directory1.getSubDirectory("testSubDir");
+                const directory2SubDir = directory2.getSubDirectory("testSubDir");
+
+                assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
+                assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
+
+                assert.strictEqual(directory1SubDir.size, 1, "Dir1 1 key should exist");
+                assert.strictEqual(directory2SubDir.size, 1, "Dir2 1 key should exist");
+                assert.strictEqual(directory1SubDir.get("key2"), "testValue2", "Dir1 key value should match");
+                assert.strictEqual(directory2SubDir.get("key2"), "testValue2", "Dir2 key value should match");
+            });
+
+            it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
+                const root1SubDir = directory1.createSubDirectory("testSubDir");
+                directory2.createSubDirectory("testSubDir");
+
+                root1SubDir.set("key1", "testValue1");
+                directory2.deleteSubDirectory("testSubDir");
+                directory2.createSubDirectory("testSubDir");
+
+                // After the above scenario, the consistent state using LWW would be to have testSubDir with 0 keys.
+                // Right now what happens is directory B just sees the set Op from directory 1 and set the key while
+                // directory A sees delete and create sub directory op from B and eventually have a sub directory
+                // testSubDir with 0 keys. So the state of directory 2 ends up wrong.
+                containerRuntimeFactory.processAllMessages();
+                const directory1SubDir = directory1.getSubDirectory("testSubDir");
+                const directory2SubDir = directory2.getSubDirectory("testSubDir");
+
+                assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
+                assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
+
+                assert.strictEqual(directory1SubDir.size, 0, "Dir 1 no key should exist");
+                assert.strictEqual(directory2SubDir.size, 0, "Dir 2 no key should exist");
             });
         });
 

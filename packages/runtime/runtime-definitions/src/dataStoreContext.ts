@@ -84,7 +84,7 @@ export const VisibilityState = {
 };
 export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
-export interface IContainerRuntimeBaseEvents extends IEvent{
+export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
@@ -97,15 +97,14 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  * 'Conflict' - there is already a datastore bound to the provided alias. To acquire a handle to it,
  * use the `IContainerRuntime.getRootDataStore` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
- * 'Aliasing' (deprecated) - this value is never returned.
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  */
- export type AliasResult = "Success" | "Conflict" | "Aliasing" | "AlreadyAliased";
+export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
  * A fluid router with the capability of being assigned an alias
  */
- export interface IDataStore extends IFluidRouter {
+export interface IDataStore extends IFluidRouter {
     /**
      * Attempt to assign an alias to the datastore.
      * If the operation succeeds, the datastore can be referenced
@@ -152,14 +151,13 @@ export interface IContainerRuntimeBase extends
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, #3631
-     * @internal
-     */
+    * @deprecated 0.16 Issue #1537, #3631
+    * @internal
+    */
     _createDataStoreWithProps(
         pkg: string | string[],
         props?: any,
         id?: string,
-        isRoot?: boolean,
     ): Promise<IDataStore>;
 
     /**
@@ -172,8 +170,8 @@ export interface IContainerRuntimeBase extends
     createDataStore(pkg: string | string[]): Promise<IDataStore>;
 
     /**
-     * Creates detached data store context. only after context.attachRuntime() is called,
-     * data store initialization is considered compete.
+     * Creates detached data store context. Only after context.attachRuntime() is called,
+     * data store initialization is considered complete.
      */
     createDetachedDataStore(pkg: Readonly<string[]>): IFluidDataStoreContextDetached;
 
@@ -217,13 +215,6 @@ export interface IFluidDataStoreChannel extends
     readonly visibilityState?: VisibilityState;
 
     /**
-     * @deprecated - This is an internal method that should not be exposed.
-     * Called to bind the runtime to the container.
-     * If the container is not attached to storage, then this would also be unknown to other clients.
-     */
-    bindToContext(): void;
-
-    /**
      * @deprecated - This will be removed in favor of makeVisibleAndAttachGraph.
      * Runs through the graph and attaches the bound handles. Then binds this runtime to the container.
      */
@@ -233,7 +224,7 @@ export interface IFluidDataStoreChannel extends
      * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
      * bound handles that represent its dependencies in the container's graph.
      */
-    makeVisibleAndAttachGraph?(): void;
+    makeVisibleAndAttachGraph(): void;
 
     /**
      * Retrieves the summary used as part of the initial summary message
@@ -390,16 +381,10 @@ export interface IFluidDataStoreContext extends
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated - To be removed in favor of makeVisible.
-     * Register the runtime to the container
-     */
-    bindToContext(): void;
-
-    /**
      * Called to make the data store locally visible in the container. This happens automatically for root data stores
      * when they are marked as root. For non-root data stores, this happens when their handle is added to a visible DDS.
      */
-    makeLocallyVisible?(): void;
+    makeLocallyVisible(): void;
 
     /**
      * Call by IFluidDataStoreChannel, indicates that a channel is dirty and needs to be part of the summary.

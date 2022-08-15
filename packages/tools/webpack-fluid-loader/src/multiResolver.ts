@@ -32,47 +32,47 @@ export const tinyliciousUrls = (options: ITinyliciousRouteOptions) => {
 function getUrlResolver(options: RouteOptions): IUrlResolver {
     switch (options.mode) {
         case "docker":
-            assert(options.tenantId !== undefined, "options.tenantId is undefined");
-            assert(options.bearerSecret !== undefined, "options.bearerSecret is undefined");
+            assert(options.tenantId !== undefined, 0x31e /* options.tenantId is undefined */);
             return new InsecureUrlResolver(
                 dockerUrls.hostUrl,
                 dockerUrls.ordererUrl,
                 dockerUrls.storageUrl,
                 options.tenantId,
-                options.bearerSecret);
+                options.bearerSecret ?? "");
 
         case "r11s":
-            assert(options.tenantId !== undefined, "options.tenantId is undefined");
-            assert(options.bearerSecret !== undefined, "options.bearerSecret is undefined");
-            assert(options.fluidHost !== undefined, "options.fluidHost is undefined");
+            assert(options.tenantId !== undefined, 0x320 /* options.tenantId is undefined */);
+            assert(options.fluidHost !== undefined || options.discoveryEndpoint !== undefined
+                , 0x322 /* options.fluidHost and options.discoveryEndpoint are undefined */);
             if (options.discoveryEndpoint !== undefined) {
                 return new InsecureUrlResolver(
                     "",
                     options.discoveryEndpoint,
                     "https://dummy-historian",
                     options.tenantId,
-                    options.bearerSecret);
+                    options.bearerSecret ?? "");
             }
+
+            const fluidHost = options.fluidHost ?? "";
             return new InsecureUrlResolver(
-                options.fluidHost,
-                options.fluidHost.replace("www", "alfred"),
-                options.fluidHost.replace("www", "historian"),
+                fluidHost,
+                fluidHost.replace("www", "alfred"),
+                fluidHost.replace("www", "historian"),
                 options.tenantId,
-                options.bearerSecret);
+                options.bearerSecret ?? "");
         case "tinylicious": {
-            assert(options.bearerSecret !== undefined, "options.bearerSecret is undefined");
             const urls = tinyliciousUrls(options);
             return new InsecureUrlResolver(
                 urls.hostUrl,
                 urls.ordererUrl,
                 urls.storageUrl,
                 "tinylicious",
-                options.bearerSecret);
+                options.bearerSecret ?? "");
         }
         case "spo":
         case "spo-df":
-            assert(options.server !== undefined, "options.server is undefined");
-            assert(options.odspAccessToken !== undefined, "options.odspAccessToken is undefined");
+            assert(options.server !== undefined, 0x324 /* options.server is undefined */);
+            assert(options.odspAccessToken !== undefined, 0x325 /* options.odspAccessToken is undefined */);
             return new OdspUrlResolver(
                 options.server,
                 { accessToken: options.odspAccessToken });

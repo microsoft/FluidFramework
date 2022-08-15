@@ -37,7 +37,8 @@ const testContainerConfig: ITestContainerConfig = {
             summaryConfigOverrides: {
                 ...DefaultSummaryConfiguration,
                 ...{
-                    idleTime: 5000,
+                    minIdleTime: 5000,
+                    maxIdleTime: 5000,
                     maxTime: 5000 * 12,
                     maxAckWaitTime: 120000,
                     maxOps: 1,
@@ -128,6 +129,10 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     });
 
     it("round trip blob handle on shared string property", async function() {
+        if (provider.driver.type === "tinylicious") {
+            // Flaky test: see AB#1454
+            this.skip();
+        }
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const container2 = await provider.loadTestContainer(testContainerConfig);
         const testString = "this is a test string";
@@ -189,22 +194,6 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 
         // upload the blob twice and make sure nothing bad happens.
         await Promise.all([dataStore._runtime.uploadBlob(blob), dataStore._runtime.uploadBlob(blob)]);
-    });
-
-    it("uploadBlob() rejects when runtime is disposed", async () => {
-        const container = await provider.makeTestContainer(testContainerConfig);
-        const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-
-        const blobOpP = new Promise<void>((resolve) => container.deltaManager.on("submitOp", (op) => {
-            if (op.contents.includes("blobAttach")) {
-                (container.deltaManager as any)._inbound.pause();
-                resolve();
-            }
-        }));
-        const blobP = dataStore._runtime.uploadBlob(stringToBuffer("more text", "utf-8"));
-        await blobOpP;
-        container.close();
-        await assert.rejects(blobP, /runtime disposed/);
     });
 });
 

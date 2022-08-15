@@ -26,11 +26,11 @@ export interface IDataStoreAliasMessage {
 
 /**
  * Type guard that returns true if the given alias message is actually an instance of
- * a class which implements @see IDataStoreAliasMessage
+ * a class which implements {@link IDataStoreAliasMessage}
  * @param maybeDataStoreAliasMessage - message object to be validated
- * @returns True if the @see IDataStoreAliasMessage is fully implemented, false otherwise
+ * @returns True if the {@link IDataStoreAliasMessage} is fully implemented, false otherwise
  */
- export const isDataStoreAliasMessage = (
+export const isDataStoreAliasMessage = (
     maybeDataStoreAliasMessage: any,
 ): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
     return typeof maybeDataStoreAliasMessage?.internalId === "string"
@@ -54,6 +54,7 @@ enum AliasState {
 class DataStore implements IDataStore {
     private aliasState: AliasState = AliasState.None;
     private alias: string | undefined;
+    private readonly pendingAliases: Map<string, Promise<AliasResult>>;
     private aliasResult: Promise<AliasResult> | undefined;
 
     async trySetAlias(alias: string): Promise<AliasResult> {
@@ -65,7 +66,8 @@ class DataStore implements IDataStore {
             // If we're already aliasing, check if it's for the same value and return
             // the stored promise, otherwise return 'AlreadyAliased'
             case AliasState.Aliasing:
-                assert(this.aliasResult !== undefined, "There should be a cached promise of in-progress aliasing");
+                assert(this.aliasResult !== undefined,
+                    0x316 /* There should be a cached promise of in-progress aliasing */);
                 await this.aliasResult;
                 return this.alias === alias ? "Success" : "AlreadyAliased";
 
@@ -74,14 +76,25 @@ class DataStore implements IDataStore {
             case AliasState.Aliased:
                 return this.alias === alias ? "Success" : "AlreadyAliased";
 
-            // There is no current or past alias operation for this datastore,
-            // it is safe to continue execution
-            case AliasState.None: break;
+            case AliasState.None: {
+                const existingAlias = this.pendingAliases.get(alias);
+                if (existingAlias !== undefined) {
+                    // There is already another datastore which will be aliased
+                    // to the same name
+                    return "Conflict";
+                }
+
+                // There is no current or past alias operation for this datastore,
+                // or for this alias, so it is safe to continue execution
+                break;
+            }
+
             default: unreachableCase(this.aliasState);
         }
 
         this.aliasState = AliasState.Aliasing;
         this.aliasResult = this.trySetAliasInternal(alias);
+        this.pendingAliases.set(alias, this.aliasResult);
         return this.aliasResult;
     }
 
@@ -91,13 +104,7 @@ class DataStore implements IDataStore {
             alias,
         };
 
-        // back-compat 0.58.2000 - makeVisibleAndAttachGraph was added in this version to IFluidDataStoreChannel. For
-        // older versions, we still have to call bindToContext.
-        if (this.fluidDataStoreChannel.makeVisibleAndAttachGraph !== undefined) {
-            this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
-        } else {
-            this.fluidDataStoreChannel.bindToContext();
-        }
+        this.fluidDataStoreChannel.makeVisibleAndAttachGraph();
 
         if (this.runtime.attachState === AttachState.Detached) {
             const localResult = this.datastores.processAliasMessageCore(message);
@@ -107,34 +114,37 @@ class DataStore implements IDataStore {
             return localResult ? "Success" : "Conflict";
         }
 
-        const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-            this.runtime.submitDataStoreAliasOp(message, resolve);
-        }).then((succeeded) => {
-            // Explicitly Lock-out future attempts of aliasing,
-            // regardless of result
-            this.aliasState = AliasState.Aliased;
-            if (succeeded) {
-                this.alias = alias;
-            }
+        const aliased = await this
+            .ackBasedPromise<boolean>((resolve) => {
+                this.runtime.submitDataStoreAliasOp(message, resolve);
+            })
+            .catch((error) => {
+                this.logger.sendErrorEvent({
+                    eventName: "AliasingException",
+                    alias: {
+                        value: alias,
+                        tag: TelemetryDataTag.UserData,
+                    },
+                    internalId: {
+                        value: this.internalId,
+                        tag: TelemetryDataTag.CodeArtifact,
+                    },
+                }, error);
 
-            return succeeded;
-        }).catch((error) => {
-            this.logger.sendErrorEvent({
-                eventName: "AliasingException",
-                alias: {
-                    value: alias,
-                    tag: TelemetryDataTag.UserData,
-                },
-                internalId: {
-                    value: this.internalId,
-                    tag: TelemetryDataTag.PackageData,
-                },
-            }, error);
+                return false;
+            }).finally(() => {
+                this.pendingAliases.delete(alias);
+            });
+
+        if (!aliased) {
             this.aliasState = AliasState.None;
-            return false;
-        });
+            this.aliasResult = undefined;
+            return "Conflict";
+        }
 
-        return aliased ? "Success" : "Conflict";
+        this.alias = alias;
+        this.aliasState = AliasState.Aliased;
+        return "Success";
     }
 
     async request(request: IRequest): Promise<IResponse> {
@@ -147,12 +157,15 @@ class DataStore implements IDataStore {
         private readonly runtime: ContainerRuntime,
         private readonly datastores: DataStores,
         private readonly logger: ITelemetryLogger,
-    ) { }
+    ) {
+        this.pendingAliases = datastores.pendingAliases;
+    }
+
     public get IFluidRouter() { return this.fluidDataStoreChannel; }
 
     private async ackBasedPromise<T>(
         executor: (resolve: (value: T | PromiseLike<T>) => void,
-        reject: (reason?: any) => void) => void,
+            reject: (reason?: any) => void) => void,
     ): Promise<T> {
         let rejectBecauseDispose: () => void;
         return new Promise<T>((resolve, reject) => {

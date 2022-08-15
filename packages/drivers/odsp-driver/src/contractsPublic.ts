@@ -10,6 +10,7 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     appName?: string;
     containerPackageName?: string;
     fileVersion?: string;
+    context?: string;
 }
 
 export enum SharingLinkHeader {

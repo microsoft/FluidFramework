@@ -16,6 +16,7 @@ alfred:
   tenants: []
   key: jwt_key
   maxNumberOfClientsPerDocument: 1000000
+  numberOfMessagesPerTrace: 100
   throttling:
     restCalls:
         maxPerMs: 1000000
@@ -46,6 +47,9 @@ alfred:
 storage:
   enableWholeSummaryUpload: false
   storageUrl: storage_url
+
+session:
+  enforceDiscoveryFlow: false
 
 deli:
   name: deli

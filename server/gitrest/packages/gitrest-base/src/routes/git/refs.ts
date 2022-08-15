@@ -10,9 +10,11 @@ import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import nconf from "nconf";
 import {
+    checkSoftDeleted,
     getExternalWriterParams,
     getRepoManagerFromWriteAPI,
     getRepoManagerParamsFromRequest,
+    IFileSystemManagerFactory,
     IRepositoryManagerFactory,
     logAndThrowApiError,
 } from "../../utils";
@@ -26,6 +28,7 @@ function getRefId(id): string {
 
 export function create(
     store: nconf.Provider,
+    fileSystemManagerFactory: IFileSystemManagerFactory,
     repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
     const router: Router = Router();
@@ -36,19 +39,24 @@ export function create(
     router.get("/repos/:owner/:repo/git/refs", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
-            .then(async (repoManager) => repoManager.getRefs())
-            .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
-
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return repoManager.getRefs();
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
     router.get("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
-            .then(async (repoManager) => repoManager.getRef(
-                getRefId(request.params[0]),
-                getExternalWriterParams(request.query?.config as string),
-            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return repoManager.getRef(
+                    getRefId(request.params[0]),
+                    getExternalWriterParams(request.query?.config as string));
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
@@ -56,10 +64,13 @@ export function create(
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const createRefParams = request.body as ICreateRefParamsExternal;
         const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
-            .then(async (repoManager) => repoManager.createRef(
-                createRefParams,
-                createRefParams.config,
-            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return repoManager.createRef(
+                    createRefParams,
+                    createRefParams.config);
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response, undefined, undefined, 201);
     });
 
@@ -67,20 +78,26 @@ export function create(
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const patchRefParams = request.body as IPatchRefParamsExternal;
         const resultP = getRepoManagerFromWriteAPI(repoManagerFactory, repoManagerParams, repoPerDocEnabled)
-            .then(async (repoManager) => repoManager.patchRef(
-                getRefId(request.params[0]),
-                patchRefParams,
-                patchRefParams.config,
-            )).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return repoManager.patchRef(
+                    getRefId(request.params[0]),
+                    patchRefParams,
+                    patchRefParams.config);
+            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
         handleResponse(resultP, response);
     });
 
     router.delete("/repos/:owner/:repo/git/refs/*", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)
-            .then(async (repoManager) => repoManager.deleteRef(getRefId(request.params[0])))
+            .then(async (repoManager) => {
+                const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
+                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
+                return repoManager.deleteRef(getRefId(request.params[0]));
+            })
             .catch((error) => logAndThrowApiError(error, request, repoManagerParams));
-
         handleResponse(resultP, response, undefined, undefined, 204);
     });
     return router;

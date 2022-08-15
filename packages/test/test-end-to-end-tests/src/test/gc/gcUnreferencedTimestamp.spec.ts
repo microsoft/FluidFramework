@@ -11,14 +11,16 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { gcTreeKey } from "@fluidframework/container-runtime";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 import {
-    createSummarizer,
     getGCStateFromSummary,
-    summarizeNow,
-    waitForContainerConnection,
 } from "./gcTestSummaryUtils";
 
 /**
@@ -203,7 +205,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
      * by verifying that their unreferenced timestamps are updated correctly.
      *
      * In these tests, V = nodes and E = edges between nodes. Root nodes that are always referenced are marked as *.
-     * The nodes are data stores / DDSs represented by alphabets A, B, C and so on.
+     * The nodes are data stores / DDSes represented by alphabets A, B, C and so on.
      */
     describe("References between summaries", () => {
         /*
@@ -403,7 +405,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         });
 
         /*
-         * Validates that we can detect references that were added and removed via new root data stores.
+         * Validates that we can detect references that were added and removed via new aliased data stores.
          * 1. Summary 1 at t1. V = [A*, C]. E = []. C has unreferenced time t1.
          * 2. Root data store B is created. E = [].
          * 3. Op adds reference from A to B. E = [A -> B].
@@ -434,8 +436,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsCTime1 !== undefined, `C should have unreferenced timestamp`);
 
             // 2. Create data store B. E = [].
-            const dataStoreB = await requestFluidObject<ITestDataObject>(
-                await containerRuntime.createRootDataStore(TestDataObjectType, "dataStoreA"), "");
+            const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+            await dataStore.trySetAlias("dataStoreA");
+            const dataStoreB = await requestFluidObject<ITestDataObject>(dataStore, "");
 
             // 4. Add reference from B to C. E = [A -> B, B -> C].
             dataStoreB._root.set("dataStoreC", dataStoreC.handle);
@@ -608,7 +611,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         });
 
         /*
-         * Validates that DDSs are referenced even though we don't detect their referenced between summaries. Once we
+         * Validates that DDSes are referenced even though we don't detect their referenced between summaries. Once we
          * do GC at DDS level, this test will fail - https://github.com/microsoft/FluidFramework/issues/8470.
          * 1. Summary 1 at t1. V = [A*]. E = [].
          * 2. DDS B is created. No reference is added to it.

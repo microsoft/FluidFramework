@@ -7,6 +7,8 @@ import { strict } from "assert";
 import child_process from "child_process";
 import fs from "fs";
 import { assert, Lazy } from "@fluidframework/common-utils";
+import { MockEmptyDeltaConnection, MockFluidDataStoreRuntime, MockStorage } from "@fluidframework/test-runtime-utils";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -25,11 +27,14 @@ import {
     ITree,
     TreeEntry,
     MessageType,
+    ITreeEntry,
+    ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import {
     FileSnapshotReader,
     IFileSnapshot,
 } from "@fluidframework/replay-driver";
+import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils";
 import stringify from "json-stable-stringify";
 import {
     compareWithReferenceSnapshot,
@@ -351,10 +356,7 @@ export class ReplayTool {
 
         // GC will consider unreferenced node in old documents to be inactive. When such nodes receive ops or are
         // loaded, GC will log an error. Ignore those errors since we don't care about them when replaying old docs.
-        if (event.eventName.includes("GarbageCollector:inactiveObject_")
-            // there is something wrong with summary ops, but we don't run the summarizer, so it shouldn't matter
-            || event.eventName.includes("SummaryAckWithoutOp")
-        ) {
+        if (event.eventName.includes("GarbageCollector:inactiveObject_")) {
             return false;
         }
 
@@ -608,7 +610,6 @@ export class ReplayTool {
 
         const startOp = op - this.args.overlappingContainers * this.args.snapFreq;
         while (this.documentsWindow.length > 0
-            // eslint-disable-next-line no-unmodified-loop-condition
             && (final || this.documentsWindow[0].fromOp <= startOp)) {
             const doc = this.documentsWindow.shift();
             assert(doc.fromOp === startOp || final,
@@ -732,7 +733,40 @@ export class ReplayTool {
                 strict.deepStrictEqual(content.normalizedSnapshot, content2.normalizedSnapshot);
                 failed = false;
             } catch (e) {
-                error = e;
+                if (JSON.stringify(content.normalizedSnapshot).includes(SharedMatrixFactory.Type)) {
+                    const channels1 = content.normalizedSnapshot.tree.entries.find(
+                        (entry) => entry.path === ".channels",
+                    ).value;
+                    const channels2 = content2.normalizedSnapshot.tree.entries.find(
+                        (entry) => entry.path === ".channels",
+                    ).value;
+
+                    const withoutDds1 = content.normalizedSnapshot.tree.entries.filter(
+                        (entry) => entry.path !== ".channels",
+                    );
+                    const withoutDds2 = content2.normalizedSnapshot.tree.entries.filter(
+                        (entry) => entry.path !== ".channels",
+                    );
+
+                    try {
+                        strict.deepStrictEqual(withoutDds1, withoutDds2);
+
+                        assert("entries" in channels1, "expected tree");
+                        assert("entries" in channels2, "expected tree");
+
+                        assert(channels1.entries.length === channels2.entries.length, "not equal");
+
+                        for (let i = 0; i < channels1.entries.length; i++) {
+                            await assertDdsEqual(channels1.entries[i], channels2.entries[i]);
+                        }
+
+                        failed = false;
+                    } catch {
+                        error = e;
+                    }
+                } else {
+                    error = e;
+                }
             }
         }
 
@@ -778,6 +812,63 @@ export class ReplayTool {
                 `${filename}_expanded.json`,
                 content.snapshotExpanded,
                 { encoding: "utf-8" });
+        }
+    }
+}
+
+async function assertDdsEqual(d1: ITreeEntry | undefined, d2: ITreeEntry | undefined): Promise<void> {
+    if (d1?.type !== TreeEntry.Tree || d2?.type !== TreeEntry.Tree) {
+        strict.deepStrictEqual(d1, d2);
+        return;
+    }
+
+    const attributes = d1.value.entries.find(
+        (entry) => entry.type === TreeEntry.Blob && entry.path === ".attributes",
+    );
+
+    const parsed: { type?: string; } = attributes?.type === TreeEntry.Blob
+                                            ? JSON.parse(attributes?.value.contents)
+                                            : {};
+
+    if (parsed.type !== SharedMatrixFactory.Type) {
+        assert(d1.value.entries.length === d2.value.entries.length, "");
+        for (let i = 0; i < d1.value.entries.length; i++) {
+            await assertDdsEqual(d1.value.entries[i], d2.value.entries[i]);
+        }
+
+        return;
+    }
+
+    const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    dataStoreRuntime.local = true;
+    const deltaConnection = new MockEmptyDeltaConnection();
+
+    async function newMatrix(summary: ISummaryTree): Promise<SharedMatrix> {
+        const objectStorage = MockStorage.createFromSummary(summary);
+        const matrix = new SharedMatrix(
+            dataStoreRuntime as any,
+            "1",
+            SharedMatrixFactory.Attributes,
+        );
+        await matrix.load({
+            deltaConnection,
+            objectStorage,
+        });
+        return matrix;
+    }
+
+    const matrix1 = await newMatrix(convertToSummaryTreeWithStats(d1.value).summary);
+    const matrix2 = await newMatrix(convertToSummaryTreeWithStats(d2.value).summary);
+
+    strict.deepStrictEqual(matrix1.rowCount, matrix2.rowCount);
+    strict.deepStrictEqual(matrix1.colCount, matrix2.colCount);
+
+    for (let row = 0; row < matrix1.rowCount; row++) {
+        for (let col = 0; col < matrix1.colCount; col++) {
+            strict.deepStrictEqual(
+                JSON.stringify(matrix1.getCell(row, col)),
+                JSON.stringify(matrix2.getCell(row, col)),
+            );
         }
     }
 }

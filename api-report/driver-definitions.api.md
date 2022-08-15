@@ -25,7 +25,7 @@ import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
-export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | IDriverBasicError;
+export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
 // @public
 export enum DriverErrorType {
@@ -37,6 +37,7 @@ export enum DriverErrorType {
     genericError = "genericError",
     genericNetworkError = "genericNetworkError",
     incorrectServerResponse = "incorrectServerResponse",
+    locationRedirection = "locationRedirection",
     offlineError = "offlineError",
     throttlingError = "throttlingError",
     // (undocumented)
@@ -56,6 +57,14 @@ export enum DriverHeader {
 export interface DriverPreCheckInfo {
     codeDetailsHint?: string;
     criticalBootDomains?: string[];
+}
+
+// @public (undocumented)
+export enum FetchSource {
+    // (undocumented)
+    default = "default",
+    // (undocumented)
+    noCache = "noCache"
 }
 
 // @public (undocumented)
@@ -152,7 +161,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
     // (undocumented)
@@ -219,6 +228,14 @@ export interface IGenericNetworkError extends IDriverErrorBase {
 }
 
 // @public (undocumented)
+export interface ILocationRedirectionError extends IDriverErrorBase {
+    // (undocumented)
+    readonly errorType: DriverErrorType.locationRedirection;
+    // (undocumented)
+    readonly redirectUrl: IResolvedUrl;
+}
+
+// @public (undocumented)
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
 // @public (undocumented)
@@ -259,7 +276,6 @@ export interface IThrottlingWarning extends IDriverErrorBase {
 
 // @public (undocumented)
 export interface IUrlResolver {
-    // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;

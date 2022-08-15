@@ -216,6 +216,8 @@ export interface ICreateFileResponse {
     itemId: string;
     itemUrl: string;
     sequenceNumber: number;
+    // sharing object contains shareId, sharingLink data or error in the response
+    sharing?: any;
     sharingLink?: string;
     sharingLinkErrorReason?: string;
 }

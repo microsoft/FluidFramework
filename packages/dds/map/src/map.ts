@@ -33,7 +33,8 @@ interface IMapSerializationFormat {
 const snapshotFileName = "header";
 
 /**
- * The factory that defines the map.
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMap}.
+ *
  * @sealed
  */
 export class MapFactory implements IChannelFactory {
@@ -91,10 +92,7 @@ export class MapFactory implements IChannelFactory {
 }
 
 /**
- * The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting
- * and retrieving values that JavaScript developers are accustomed to with the
- * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
- * However, the keys of a SharedMap must be strings.
+ * {@inheritDoc ISharedMap}
  */
 export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     /**
@@ -340,7 +338,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
      * @internal
      */
-    protected onDisconnect() {}
+    protected onDisconnect() { }
 
     /**
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
@@ -355,8 +353,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * @internal
      */
     protected applyStashedOp(content: any): unknown {
-        this.kernel.tryProcessMessage(content, false, undefined);
-        return this.kernel.tryGetStashedOpLocalMetadata(content);
+        return this.kernel.tryApplyStashedOp(content);
     }
 
     /**
@@ -373,7 +370,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
      * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
      * @internal
     */
-   protected rollback(content: any, localOpMetadata: unknown) {
-       this.kernel.rollback(content, localOpMetadata);
-   }
+    protected rollback(content: any, localOpMetadata: unknown) {
+        this.kernel.rollback(content, localOpMetadata);
+    }
 }

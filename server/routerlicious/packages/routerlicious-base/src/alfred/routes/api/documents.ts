@@ -36,8 +36,9 @@ export function create(
     tenantManager: ITenantManager,
     documentsCollection: ICollection<IDocument>): Router {
     const router: Router = Router();
-    const ordererUrl = config.get("worker:serverUrl");
-    const historianUrl = config.get("worker:blobStorageUrl");
+    const externalOrdererUrl: string = config.get("worker:serverUrl");
+    const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
+    const sessionStickinessDurationMs: number | undefined = config.get("alfred:sessionStickinessDurationMs");
     // Whether to enforce server-generated document ids in create doc flow
     const enforceServerGeneratedDocumentId: boolean = config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
 
@@ -102,8 +103,8 @@ export function create(
                 sequenceNumber,
                 1,
                 crypto.randomBytes(4).toString("hex"),
-                ordererUrl,
-                historianUrl,
+                externalOrdererUrl,
+                externalHistorianUrl,
                 values,
                 enableDiscovery);
 
@@ -124,9 +125,11 @@ export function create(
                 if (enableDiscovery) {
                     // Session information
                     const session: ISession = {
-                        ordererUrl,
-                        historianUrl,
+                        ordererUrl: externalOrdererUrl,
+                        historianUrl: externalHistorianUrl,
+                        // Indicate to consumer that session was newly created.
                         isSessionAlive: false,
+                        isSessionActive: false,
                     };
                     responseBody.session = session;
                 }
@@ -146,7 +149,14 @@ export function create(
         async (request, response, next) => {
             const documentId = getParam(request.params, "id");
             const tenantId = getParam(request.params, "tenantId");
-            const session = getSession(ordererUrl, historianUrl, tenantId, documentId, documentsCollection);
+            const session = getSession(
+                externalOrdererUrl,
+                externalHistorianUrl,
+                tenantId,
+                documentId,
+                documentsCollection,
+                sessionStickinessDurationMs,
+            );
             handleResponse(session, response, false);
         });
     return router;

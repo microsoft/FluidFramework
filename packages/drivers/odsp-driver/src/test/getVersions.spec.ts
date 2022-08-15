@@ -66,6 +66,7 @@ describe("Tests for snapshot fetch", () => {
             id: "id",
             sequenceNumber: 1,
         }],
+        blobs: [],
     };
 
     const content: ISnapshotContents = {
@@ -124,6 +125,8 @@ describe("Tests for snapshot fetch", () => {
                 GetHostStoragePolicyInternal(),
                 epochTracker,
                 async () => { return {}; },
+                () => "tenantid/id",
+                undefined,
             );
         });
 
@@ -264,6 +267,7 @@ describe("Tests for snapshot fetch", () => {
                 GetHostStoragePolicyInternal(true /* isSummarizer */),
                 epochTracker,
                 async () => { return {}; },
+                () => "tenantid/id",
             );
         });
 
