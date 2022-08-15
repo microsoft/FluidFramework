@@ -304,7 +304,7 @@ class ScheduleManagerCore {
             if (this.currentBatchClientId !== undefined) {
                 // We've received a system message in the middle of the batch
                 throw DataProcessingError.create(
-                    "Received a system message during batch processing",
+                    "Received a system message during batch processing", // Formerly known as assert 0x29a
                     "trackPending",
                     message,
                     {
