@@ -19,11 +19,9 @@ import {
     KeyComparer,
     Property,
     PropertyAction,
-    ProxString,
     RedBlackTree,
     SortedDictionary,
     Stack,
-    TST,
 } from "../collections";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
 import {
@@ -51,6 +49,7 @@ import { MergeTreeTextHelper } from "../MergeTreeTextHelper";
 import { specToSegment, TestClient } from "./testClient";
 import { TestServer } from "./testServer";
 import { insertText, loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils";
+import { ProxString, TST } from "./tst";
 
 function LinearDictionary<TKey, TData>(compareKeys: KeyComparer<TKey>): SortedDictionary<TKey, TData> {
     const props: Property<TKey, TData>[] = [];

@@ -4,8 +4,8 @@
  */
 
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
+import { SharedSequence } from "@fluidframework/sequence";
 import { SharedNumberSequenceFactory } from "./sequenceFactory";
-import { SharedSequence } from "./sharedSequence";
 
 /**
  * The SharedNumberSequence holds a sequence of numbers. Each number will be stored
@@ -49,7 +49,13 @@ export class SharedNumberSequence extends SharedSequence<number> {
      * For more info, please see [Github issue 8526](https://github.com/microsoft/FluidFramework/issues/8526)
      */
     constructor(document: IFluidDataStoreRuntime, public id: string, attributes: IChannelAttributes) {
-        super(document, id, attributes, SharedNumberSequenceFactory.segmentFromSpec);
+        super(document, id, attributes, (spec) => {
+            const segment = SharedNumberSequenceFactory.segmentFromSpec(spec);
+            if (!segment) {
+                throw new Error("expected `spec` to be valid `ISegment`");
+            }
+            return segment;
+        });
     }
 
     /**

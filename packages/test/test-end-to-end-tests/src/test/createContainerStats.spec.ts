@@ -4,25 +4,26 @@
  */
 
 import assert from "assert";
+
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
     DataObject,
     DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     DefaultSummaryConfiguration,
     IAckedSummary,
     IContainerRuntimeOptions,
     SummaryCollection,
-    ISummaryConfiguration } from "@fluidframework/container-runtime";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+    ISummaryConfiguration,
+} from "@fluidframework/container-runtime";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeNoCompat } from "@fluidframework/test-version-utils";
 
 class TestDataObject extends DataObject {
     public get _root() {

@@ -6,15 +6,19 @@
 /* eslint-disable max-len */
 
 import { strict as assert } from "assert";
-import { TelemetryNullLogger, Timer, TypedEventEmitter } from "@fluidframework/common-utils";
+
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { Timer, TypedEventEmitter } from "@fluidframework/common-utils";
+import { IConnectionDetails, IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
 import { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import { IClient, IClientConfiguration, ITokenClaims } from "@fluidframework/protocol-definitions";
-import { IConnectionDetails, IDeltaManager, IDeltaManagerEvents } from "@fluidframework/container-definitions";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+
 import { SinonFakeTimers, useFakeTimers } from "sinon";
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+
+import { ICatchUpMonitor } from "../catchUpMonitor";
 import { ConnectionState } from "../connectionState";
 import { ConnectionStateHandler, IConnectionStateHandlerInputs } from "../connectionStateHandler";
-import { ICatchUpMonitor } from "../catchUpMonitor";
 
 class MockDeltaManagerForCatchingUp
     extends TypedEventEmitter<IDeltaManagerEvents>
