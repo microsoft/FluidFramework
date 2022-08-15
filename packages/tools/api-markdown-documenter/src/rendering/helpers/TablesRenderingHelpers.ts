@@ -24,9 +24,23 @@ import {
     DocPlainText,
     DocSection,
 } from "@microsoft/tsdoc";
+import {
+    heading as buildHeading,
+    code,
+    link,
+    list,
+    listItem,
+    paragraph,
+    strong,
+    table,
+    tableRow,
+    text,
+} from "mdast-builder";
+import { Node as AstNode, Parent as AstParentNode } from "unist";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
+import { SectionAstNode } from "../../markdown-ast";
 import { ApiFunctionLike, getLinkUrlForApiItem, mergeSections } from "../../utilities";
 import { renderExcerptWithHyperlinks, renderHeading } from "./RenderingHelpers";
 
@@ -36,11 +50,28 @@ export interface MemberTableProperties {
     items: readonly ApiItem[];
 }
 
+/**
+ * TODO:
+ */
+function mergeAstSections(sections: SectionAstNode[]): SectionAstNode {
+    const childNodes: AstNode[] = [];
+
+    for (const section of sections) {
+        childNodes.push(...section.children);
+    }
+
+    return {
+        // TODO: data and position?
+        children: childNodes,
+        type: "section",
+    };
+}
+
 export function renderMemberTables(
     memberTableProperties: readonly MemberTableProperties[],
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection | undefined {
-    const docSections: DocSection[] = [];
+): SectionAstNode | undefined {
+    const docSections: SectionAstNode[] = [];
 
     for (const member of memberTableProperties) {
         const renderedTable = renderTableWithHeading(member, config);
@@ -49,15 +80,13 @@ export function renderMemberTables(
         }
     }
 
-    return docSections.length === 0
-        ? undefined
-        : mergeSections(docSections, config.tsdocConfiguration);
+    return docSections.length === 0 ? undefined : mergeAstSections(docSections);
 }
 
 export function renderTableWithHeading(
     memberTableProperties: MemberTableProperties,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocSection | undefined {
+): SectionAstNode | undefined {
     const renderedTable = renderTable(
         memberTableProperties.items,
         memberTableProperties.itemKind,
@@ -66,17 +95,20 @@ export function renderTableWithHeading(
 
     return renderedTable === undefined
         ? undefined
-        : new DocSection({ configuration: config.tsdocConfiguration }, [
-              renderHeading({ title: memberTableProperties.headingTitle }, config),
-              renderedTable,
-          ]);
+        : {
+              children: [
+                  renderHeading({ title: memberTableProperties.headingTitle }),
+                  renderedTable,
+              ],
+              type: "section",
+          };
 }
 
 export function renderTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocTable | undefined {
+): AstNode | undefined {
     if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
         throw new Error(`Table rendering does not support provided API item kind: "${itemKind}".`);
     }
@@ -119,28 +151,28 @@ export function renderDefaultTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocTable | undefined {
+): AstNode | undefined {
     if (apiItems.length === 0) {
         return undefined;
     }
 
     const headerTitles = [getHeadingTitleForApiKind(itemKind), "Modifiers", "Description"];
-    const tableRows: DocTableRow[] = apiItems.map(
-        (apiItem) =>
-            new DocTableRow({ configuration: config.tsdocConfiguration }, [
-                renderApiTitleCell(apiItem, config),
-                renderModifiersCell(apiItem, config),
-                renderApiSummaryCell(apiItem, config),
-            ]),
+    const tableRows: DocTableRow[] = apiItems.map((apiItem) =>
+        tableRow([
+            renderApiTitleCell(apiItem, config),
+            renderModifiersCell(apiItem, config),
+            renderApiSummaryCell(apiItem, config),
+        ]),
     );
 
-    return new DocTable(
-        {
-            configuration: config.tsdocConfiguration,
-            headerTitles,
-        },
-        tableRows,
-    );
+    return table();
+    // return new DocTable(
+    //     {
+    //         configuration: config.tsdocConfiguration,
+    //         headerTitles,
+    //     },
+    //     tableRows,
+    // );
 }
 
 export function renderParametersTable(
@@ -361,7 +393,7 @@ export function renderParameterTitleCell(
 export function renderParameterTypeCell(
     apiParameter: Parameter,
     config: Required<MarkdownDocumenterConfiguration>,
-): DocTableCell {
+): AstNode {
     return new DocTableCell({ configuration: config.tsdocConfiguration }, [
         new DocParagraph({ configuration: config.tsdocConfiguration }, [
             renderExcerptWithHyperlinks(apiParameter.parameterTypeExcerpt, config),
