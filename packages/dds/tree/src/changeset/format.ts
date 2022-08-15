@@ -207,7 +207,7 @@ export namespace Transposed {
 	export type GapEffectType = GapEffect["type"];
 
 	export interface GapEffectSegment {
-		tombs?: ChangesetTag;
+		tomb?: ChangesetTag;
 		type: "Gap";
 		count: GapCount;
 		/**

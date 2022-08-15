@@ -115,7 +115,7 @@ export class MarkListFactory {
                     case "Gap": {
                         const prevGap = prev as T.GapEffectSegment;
                         if (
-                            mark.tombs === prevGap.tombs
+                            mark.tomb === prevGap.tomb
                             && isEqualGaps(mark.stack, prevGap.stack)
                         ) {
                             prevGap.count += mark.count;
