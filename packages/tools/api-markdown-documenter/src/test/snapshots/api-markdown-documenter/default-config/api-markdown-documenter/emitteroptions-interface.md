@@ -17,13 +17,13 @@ export interface EmitterOptions extends BaseEmitterOptions
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [contextApiItem](./api-markdown-documenter/emitteroptions-interface#contextapiitem-PropertySignature) |  | ApiItem \| undefined | The root item of the documentation node tree being emitted. |
-|  [getLinkUrlApiItem](./api-markdown-documenter/emitteroptions-interface#getlinkurlapiitem-PropertySignature) |  | (apiItem: ApiItem) =&gt; string \| undefined | Callback to get the link URL for the specified API item. |
-|  [headingLevel](./api-markdown-documenter/emitteroptions-interface#headinglevel-PropertySignature) |  | number | Contextual heading level. Will automatically increment based on <code>Section</code> items encountered such that heading levels can be increased automatically based on content hierarchy. |
+|  [contextApiItem](./api-markdown-documenter/emitteroptions-interface#contextapiitem-propertysignature) |  | ApiItem \| undefined | The root item of the documentation node tree being emitted. |
+|  [getLinkUrlApiItem](./api-markdown-documenter/emitteroptions-interface#getlinkurlapiitem-propertysignature) |  | (apiItem: ApiItem) =&gt; string \| undefined | Callback to get the link URL for the specified API item. |
+|  [headingLevel](./api-markdown-documenter/emitteroptions-interface#headinglevel-propertysignature) |  | number | Contextual heading level. Will automatically increment based on <code>Section</code> items encountered such that heading levels can be increased automatically based on content hierarchy. |
 
 ## Property Details
 
-### contextApiItem {#contextapiitem-PropertySignature}
+### contextApiItem {#contextapiitem-propertysignature}
 
 The root item of the documentation node tree being emitted.
 
@@ -33,7 +33,7 @@ The root item of the documentation node tree being emitted.
 contextApiItem: ApiItem | undefined;
 ```
 
-### getLinkUrlApiItem {#getlinkurlapiitem-PropertySignature}
+### getLinkUrlApiItem {#getlinkurlapiitem-propertysignature}
 
 Callback to get the link URL for the specified API item.
 
@@ -47,7 +47,7 @@ Used when resolving member links.
 getLinkUrlApiItem: (apiItem: ApiItem) => string | undefined;
 ```
 
-### headingLevel {#headinglevel-PropertySignature}
+### headingLevel {#headinglevel-propertysignature}
 
 Contextual heading level. Will automatically increment based on `Section` items encountered such that heading levels can be increased automatically based on content hierarchy.
 

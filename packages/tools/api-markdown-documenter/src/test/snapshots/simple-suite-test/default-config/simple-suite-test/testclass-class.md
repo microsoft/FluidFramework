@@ -26,25 +26,25 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB>
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty, testClassEventProperty)](./simple-suite-test/testclass-class#_constructor_-Constructor) |  |  | Test class constructor |
+|  [(constructor)(testClassProperty, testClassEventProperty)](./simple-suite-test/testclass-class#_constructor_-constructor) |  |  | Test class constructor |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-Property) |  | () =&gt; void | Test class event property |
-|  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-Property) |  | number | Test class getter-only property |
-|  [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-Property) |  | TTypeParameterB | Test class property |
+|  [testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property) |  | () =&gt; void | Test class event property |
+|  [testClassGetterProperty](./simple-suite-test/testclass-class#testclassgetterproperty-property) |  | number | Test class getter-only property |
+|  [testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) |  | TTypeParameterB | Test class property |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassMethod(input)](./simple-suite-test/testclass-class#testclassmethod-Method) |  | TTypeParameterA | Test class method |
+|  [testClassMethod(input)](./simple-suite-test/testclass-class#testclassmethod-method) |  | TTypeParameterA | Test class method |
 
 ## Constructor Details
 
-### (constructor) {#_constructor_-Constructor}
+### (constructor) {#_constructor_-constructor}
 
 Test class constructor
 
@@ -62,12 +62,12 @@ constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => vo
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-Property) |
-|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-Property) |
+|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) |
+|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](./simple-suite-test/testclass-class#testclasseventproperty-property) |
 
 ## Property Details
 
-### testClassEventProperty {#testclasseventproperty-Property}
+### testClassEventProperty {#testclasseventproperty-property}
 
 Test class event property
 
@@ -81,7 +81,7 @@ Here are some remarks about the property
 readonly testClassEventProperty: () => void;
 ```
 
-### testClassGetterProperty {#testclassgetterproperty-Property}
+### testClassGetterProperty {#testclassgetterproperty-property}
 
 Test class getter-only property
 
@@ -96,7 +96,7 @@ Here are some remarks about the getter-only property
 get testClassGetterProperty(): number;
 ```
 
-### testClassProperty {#testclassproperty-Property}
+### testClassProperty {#testclassproperty-property}
 
 Test class property
 
@@ -112,7 +112,7 @@ readonly testClassProperty: TTypeParameterB;
 
 ## Method Details
 
-### testClassMethod {#testclassmethod-Method}
+### testClassMethod {#testclassmethod-method}
 
 Test class method
 

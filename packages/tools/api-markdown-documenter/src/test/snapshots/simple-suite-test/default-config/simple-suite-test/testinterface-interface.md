@@ -19,25 +19,25 @@ export interface TestInterface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-PropertySignature) |  | () =&gt; void | Test interface event property |
-|  [testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-PropertySignature) |  | number | Test interface property |
+|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) |  | () =&gt; void | Test interface event property |
+|  [testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature) |  | number | Test interface property |
 
 ## Call Signatures
 
 |  CallSignature | Modifiers | Description |
 |  --- | --- | --- |
-|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-CallSignature) |  | Test interface event call signature |
-|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-CallSignature) |  | Another example call signature |
+|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-callsignature) |  | Test interface event call signature |
+|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-callsignature) |  | Another example call signature |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
+|  [testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature) |  | void | Test interface method |
 
 ## Property Details
 
-### testClassEventProperty {#testclasseventproperty-PropertySignature}
+### testClassEventProperty {#testclasseventproperty-propertysignature}
 
 Test interface event property
 
@@ -51,7 +51,7 @@ Here are some remarks about the event property
 readonly testClassEventProperty: () => void;
 ```
 
-### testInterfaceProperty {#testinterfaceproperty-PropertySignature}
+### testInterfaceProperty {#testinterfaceproperty-propertysignature}
 
 Test interface property
 
@@ -67,7 +67,7 @@ testInterfaceProperty: number;
 
 ## Call Signature Details
 
-### (call) {#_call_-CallSignature}
+### (call) {#_call_-callsignature}
 
 Test interface event call signature
 
@@ -81,7 +81,7 @@ Here are some remarks about the event call signature
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-### (call) {#_call__1-CallSignature}
+### (call) {#_call__1-callsignature}
 
 Another example call signature
 
@@ -97,7 +97,7 @@ Here are some remarks about the event call signature
 
 ## Method Details
 
-### testInterfaceMethod {#testinterfacemethod-MethodSignature}
+### testInterfaceMethod {#testinterfacemethod-methodsignature}
 
 Test interface method
 

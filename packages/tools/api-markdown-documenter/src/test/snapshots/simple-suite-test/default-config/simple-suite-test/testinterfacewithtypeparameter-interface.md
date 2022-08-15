@@ -23,11 +23,11 @@ export interface TestInterfaceWithTypeParameter<T>
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testProperty](./simple-suite-test/testinterfacewithtypeparameter-interface#testproperty-PropertySignature) |  | T | A test interface property using generic type parameter |
+|  [testProperty](./simple-suite-test/testinterfacewithtypeparameter-interface#testproperty-propertysignature) |  | T | A test interface property using generic type parameter |
 
 ## Property Details
 
-### testProperty {#testproperty-PropertySignature}
+### testProperty {#testproperty-propertysignature}
 
 A test interface property using generic type parameter
 

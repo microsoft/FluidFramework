@@ -17,20 +17,20 @@ export declare class DocHeading extends DocNode
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(parameters)](./api-markdown-documenter/docheading-class#_constructor_-Constructor) |  |  | Constructs a new instance of the <code>DocHeading</code> class |
+|  [(constructor)(parameters)](./api-markdown-documenter/docheading-class#_constructor_-constructor) |  |  | Constructs a new instance of the <code>DocHeading</code> class |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [id](./api-markdown-documenter/docheading-class#id-Property) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
-|  [kind](./api-markdown-documenter/docheading-class#kind-Property) |  | string |  |
-|  [level](./api-markdown-documenter/docheading-class#level-Property) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
-|  [title](./api-markdown-documenter/docheading-class#title-Property) |  | string | Heading text content. |
+|  [id](./api-markdown-documenter/docheading-class#id-property) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
+|  [kind](./api-markdown-documenter/docheading-class#kind-property) |  | string |  |
+|  [level](./api-markdown-documenter/docheading-class#level-property) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
+|  [title](./api-markdown-documenter/docheading-class#title-property) |  | string | Heading text content. |
 
 ## Constructor Details
 
-### (constructor) {#_constructor_-Constructor}
+### (constructor) {#_constructor_-constructor}
 
 Constructs a new instance of the `DocHeading` class
 
@@ -44,11 +44,11 @@ constructor(parameters: IDocHeadingParameters);
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  parameters | [IDocHeadingParameters](./api-markdown-documenter#idocheadingparameters-TypeAlias) |  |
+|  parameters | [IDocHeadingParameters](./api-markdown-documenter#idocheadingparameters-typealias) |  |
 
 ## Property Details
 
-### id {#id-Property}
+### id {#id-property}
 
 Heading ID. If not specified, no explicit ID will be associated with the heading.
 
@@ -58,7 +58,7 @@ Heading ID. If not specified, no explicit ID will be associated with the heading
 readonly id?: string;
 ```
 
-### kind {#kind-Property}
+### kind {#kind-property}
 
 
 #### Signature
@@ -68,7 +68,7 @@ readonly id?: string;
 get kind(): string;
 ```
 
-### level {#level-Property}
+### level {#level-property}
 
 Level of the heading. If not specified, it will be automatically generated based on context.
 
@@ -78,7 +78,7 @@ Level of the heading. If not specified, it will be automatically generated based
 readonly level?: number;
 ```
 
-### title {#title-Property}
+### title {#title-property}
 
 Heading text content.
 

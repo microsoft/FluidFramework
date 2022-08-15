@@ -13,13 +13,13 @@ export interface MemberTableProperties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [headingTitle](./api-markdown-documenter/renderinghelpers/membertableproperties-interface#headingtitle-PropertySignature) |  | string |  |
-|  [itemKind](./api-markdown-documenter/renderinghelpers/membertableproperties-interface#itemkind-PropertySignature) |  | ApiItemKind |  |
-|  [items](./api-markdown-documenter/renderinghelpers/membertableproperties-interface#items-PropertySignature) |  | readonly ApiItem\[\] |  |
+|  [headingTitle](./api-markdown-documenter/renderinghelpers/membertableproperties-interface#headingtitle-propertysignature) |  | string |  |
+|  [itemKind](./api-markdown-documenter/renderinghelpers/membertableproperties-interface#itemkind-propertysignature) |  | ApiItemKind |  |
+|  [items](./api-markdown-documenter/renderinghelpers/membertableproperties-interface#items-propertysignature) |  | readonly ApiItem\[\] |  |
 
 ## Property Details
 
-### headingTitle {#headingtitle-PropertySignature}
+### headingTitle {#headingtitle-propertysignature}
 
 #### Signature
 
@@ -27,7 +27,7 @@ export interface MemberTableProperties
 headingTitle: string;
 ```
 
-### itemKind {#itemkind-PropertySignature}
+### itemKind {#itemkind-propertysignature}
 
 #### Signature
 
@@ -35,7 +35,7 @@ headingTitle: string;
 itemKind: ApiItemKind;
 ```
 
-### items {#items-PropertySignature}
+### items {#items-propertysignature}
 
 #### Signature
 

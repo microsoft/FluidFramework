@@ -18,18 +18,18 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 , [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
 
-, [TestMappedType](./simple-suite-test#testmappedtype-TypeAlias)
+, [TestMappedType](./simple-suite-test#testmappedtype-typealias)
 
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testMethod(input)](./simple-suite-test/testinterfaceextendingotherinterfaces-interface#testmethod-MethodSignature) |  | number | Test interface method accepting a string and returning a number. |
+|  [testMethod(input)](./simple-suite-test/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) |  | number | Test interface method accepting a string and returning a number. |
 
 ## Method Details
 
-### testMethod {#testmethod-MethodSignature}
+### testMethod {#testmethod-methodsignature}
 
 Test interface method accepting a string and returning a number.
 

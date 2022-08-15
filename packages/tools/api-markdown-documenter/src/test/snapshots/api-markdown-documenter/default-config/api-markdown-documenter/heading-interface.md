@@ -15,13 +15,13 @@ export interface Heading
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [id](./api-markdown-documenter/heading-interface#id-PropertySignature) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
-|  [level](./api-markdown-documenter/heading-interface#level-PropertySignature) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
-|  [title](./api-markdown-documenter/heading-interface#title-PropertySignature) |  | string | Heading text content. |
+|  [id](./api-markdown-documenter/heading-interface#id-propertysignature) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
+|  [level](./api-markdown-documenter/heading-interface#level-propertysignature) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
+|  [title](./api-markdown-documenter/heading-interface#title-propertysignature) |  | string | Heading text content. |
 
 ## Property Details
 
-### id {#id-PropertySignature}
+### id {#id-propertysignature}
 
 Heading ID. If not specified, no explicit ID will be associated with the heading.
 
@@ -31,7 +31,7 @@ Heading ID. If not specified, no explicit ID will be associated with the heading
 id?: string;
 ```
 
-### level {#level-PropertySignature}
+### level {#level-propertysignature}
 
 Level of the heading. If not specified, it will be automatically generated based on context.
 
@@ -41,7 +41,7 @@ Level of the heading. If not specified, it will be automatically generated based
 level?: number;
 ```
 
-### title {#title-PropertySignature}
+### title {#title-propertysignature}
 
 Heading text content.
 

@@ -19,15 +19,15 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [apiModel](./api-markdown-documenter/markdowndocumenterconfiguration-interface#apimodel-PropertySignature) |  | ApiModel | API Model for which the documentation is being generated. This is the output of [API-Extractor](https://api-extractor.com/)<!-- -->. |
-|  [newlineKind](./api-markdown-documenter/markdowndocumenterconfiguration-interface#newlinekind-PropertySignature) |  | NewlineKind | Specifies what type of newlines API Documenter should use when writing output files. By default, the output files will be written with Windows-style newlines. |
-|  [tsdocConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface#tsdocconfiguration-PropertySignature) |  | TSDocConfiguration | TSDoc Configuration to use when parsing source-code documentation. If not provided, a default configuration will be used. |
-|  [uriRoot](./api-markdown-documenter/markdowndocumenterconfiguration-interface#uriroot-PropertySignature) |  | string | Default root uri used when generating content links. |
-|  [verbose](./api-markdown-documenter/markdowndocumenterconfiguration-interface#verbose-PropertySignature) |  | boolean | Whether or not verbose logging is enabled. |
+|  [apiModel](./api-markdown-documenter/markdowndocumenterconfiguration-interface#apimodel-propertysignature) |  | ApiModel | API Model for which the documentation is being generated. This is the output of [API-Extractor](https://api-extractor.com/)<!-- -->. |
+|  [newlineKind](./api-markdown-documenter/markdowndocumenterconfiguration-interface#newlinekind-propertysignature) |  | NewlineKind | Specifies what type of newlines API Documenter should use when writing output files. By default, the output files will be written with Windows-style newlines. |
+|  [tsdocConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface#tsdocconfiguration-propertysignature) |  | TSDocConfiguration | TSDoc Configuration to use when parsing source-code documentation. If not provided, a default configuration will be used. |
+|  [uriRoot](./api-markdown-documenter/markdowndocumenterconfiguration-interface#uriroot-propertysignature) |  | string | Default root uri used when generating content links. |
+|  [verbose](./api-markdown-documenter/markdowndocumenterconfiguration-interface#verbose-propertysignature) |  | boolean | Whether or not verbose logging is enabled. |
 
 ## Property Details
 
-### apiModel {#apimodel-PropertySignature}
+### apiModel {#apimodel-propertysignature}
 
 API Model for which the documentation is being generated. This is the output of [API-Extractor](https://api-extractor.com/)<!-- -->.
 
@@ -41,7 +41,7 @@ Beyond being the root entry for rendering, this is used to resolve member links 
 apiModel: ApiModel;
 ```
 
-### newlineKind {#newlinekind-PropertySignature}
+### newlineKind {#newlinekind-propertysignature}
 
 Specifies what type of newlines API Documenter should use when writing output files. By default, the output files will be written with Windows-style newlines.
 
@@ -51,7 +51,7 @@ Specifies what type of newlines API Documenter should use when writing output fi
 readonly newlineKind?: NewlineKind;
 ```
 
-### tsdocConfiguration {#tsdocconfiguration-PropertySignature}
+### tsdocConfiguration {#tsdocconfiguration-propertysignature}
 
 TSDoc Configuration to use when parsing source-code documentation. If not provided, a default configuration will be used.
 
@@ -61,7 +61,7 @@ TSDoc Configuration to use when parsing source-code documentation. If not provid
 readonly tsdocConfiguration?: TSDocConfiguration;
 ```
 
-### uriRoot {#uriroot-PropertySignature}
+### uriRoot {#uriroot-propertysignature}
 
 Default root uri used when generating content links.
 
@@ -71,7 +71,7 @@ Default root uri used when generating content links.
 readonly uriRoot: string;
 ```
 
-### verbose {#verbose-PropertySignature}
+### verbose {#verbose-propertysignature}
 
 Whether or not verbose logging is enabled.
 

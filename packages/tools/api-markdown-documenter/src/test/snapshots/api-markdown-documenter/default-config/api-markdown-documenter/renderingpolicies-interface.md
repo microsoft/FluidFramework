@@ -15,26 +15,26 @@ export interface RenderingPolicies
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [renderCallSignatureSection](./api-markdown-documenter/renderingpolicies-interface#rendercallsignaturesection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiCallSignature&gt; |  |
-|  [renderClassSection](./api-markdown-documenter/renderingpolicies-interface#renderclasssection-PropertySignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiClass&gt; |  |
-|  [renderConstructorSection](./api-markdown-documenter/renderingpolicies-interface#renderconstructorsection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiConstructSignature \| ApiConstructor&gt; |  |
-|  [renderEnumMemberSection](./api-markdown-documenter/renderingpolicies-interface#renderenummembersection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiEnumMember&gt; |  |
-|  [renderEnumSection](./api-markdown-documenter/renderingpolicies-interface#renderenumsection-PropertySignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiEnum&gt; |  |
-|  [renderFunctionSection](./api-markdown-documenter/renderingpolicies-interface#renderfunctionsection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiFunction&gt; |  |
-|  [renderIndexSignatureSection](./api-markdown-documenter/renderingpolicies-interface#renderindexsignaturesection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiIndexSignature&gt; |  |
-|  [renderInterfaceSection](./api-markdown-documenter/renderingpolicies-interface#renderinterfacesection-PropertySignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiInterface&gt; |  |
-|  [renderMethodSection](./api-markdown-documenter/renderingpolicies-interface#rendermethodsection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiMethod \| ApiMethodSignature&gt; |  |
-|  [renderModelSection](./api-markdown-documenter/renderingpolicies-interface#rendermodelsection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiModel&gt; | Policy for rendering a section describing a <code>Model</code>. |
-|  [renderNamespaceSection](./api-markdown-documenter/renderingpolicies-interface#rendernamespacesection-PropertySignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiNamespace&gt; |  |
-|  [renderPackageSection](./api-markdown-documenter/renderingpolicies-interface#renderpackagesection-PropertySignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiPackage&gt; |  |
-|  [renderPropertySection](./api-markdown-documenter/renderingpolicies-interface#renderpropertysection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiPropertyItem&gt; |  |
-|  [renderSectionBlock](./api-markdown-documenter/renderingpolicies-interface#rendersectionblock-PropertySignature) |  | [RenderSectionBlock](./api-markdown-documenter#rendersectionblock-TypeAlias) |  |
-|  [renderTypeAliasSection](./api-markdown-documenter/renderingpolicies-interface#rendertypealiassection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiTypeAlias&gt; |  |
-|  [renderVariableSection](./api-markdown-documenter/renderingpolicies-interface#rendervariablesection-PropertySignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiVariable&gt; |  |
+|  [renderCallSignatureSection](./api-markdown-documenter/renderingpolicies-interface#rendercallsignaturesection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiCallSignature&gt; |  |
+|  [renderClassSection](./api-markdown-documenter/renderingpolicies-interface#renderclasssection-propertysignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiClass&gt; |  |
+|  [renderConstructorSection](./api-markdown-documenter/renderingpolicies-interface#renderconstructorsection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiConstructSignature \| ApiConstructor&gt; |  |
+|  [renderEnumMemberSection](./api-markdown-documenter/renderingpolicies-interface#renderenummembersection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiEnumMember&gt; |  |
+|  [renderEnumSection](./api-markdown-documenter/renderingpolicies-interface#renderenumsection-propertysignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiEnum&gt; |  |
+|  [renderFunctionSection](./api-markdown-documenter/renderingpolicies-interface#renderfunctionsection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiFunction&gt; |  |
+|  [renderIndexSignatureSection](./api-markdown-documenter/renderingpolicies-interface#renderindexsignaturesection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiIndexSignature&gt; |  |
+|  [renderInterfaceSection](./api-markdown-documenter/renderingpolicies-interface#renderinterfacesection-propertysignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiInterface&gt; |  |
+|  [renderMethodSection](./api-markdown-documenter/renderingpolicies-interface#rendermethodsection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiMethod \| ApiMethodSignature&gt; |  |
+|  [renderModelSection](./api-markdown-documenter/renderingpolicies-interface#rendermodelsection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiModel&gt; | Policy for rendering a section describing a <code>Model</code>. |
+|  [renderNamespaceSection](./api-markdown-documenter/renderingpolicies-interface#rendernamespacesection-propertysignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiNamespace&gt; |  |
+|  [renderPackageSection](./api-markdown-documenter/renderingpolicies-interface#renderpackagesection-propertysignature) |  | [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiPackage&gt; |  |
+|  [renderPropertySection](./api-markdown-documenter/renderingpolicies-interface#renderpropertysection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiPropertyItem&gt; |  |
+|  [renderSectionBlock](./api-markdown-documenter/renderingpolicies-interface#rendersectionblock-propertysignature) |  | [RenderSectionBlock](./api-markdown-documenter#rendersectionblock-typealias) |  |
+|  [renderTypeAliasSection](./api-markdown-documenter/renderingpolicies-interface#rendertypealiassection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiTypeAlias&gt; |  |
+|  [renderVariableSection](./api-markdown-documenter/renderingpolicies-interface#rendervariablesection-propertysignature) |  | [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiVariable&gt; |  |
 
 ## Property Details
 
-### renderCallSignatureSection {#rendercallsignaturesection-PropertySignature}
+### renderCallSignatureSection {#rendercallsignaturesection-propertysignature}
 
 #### Signature
 
@@ -42,7 +42,7 @@ export interface RenderingPolicies
 renderCallSignatureSection?: RenderApiItemWithoutChildren<ApiCallSignature>;
 ```
 
-### renderClassSection {#renderclasssection-PropertySignature}
+### renderClassSection {#renderclasssection-propertysignature}
 
 #### Signature
 
@@ -50,7 +50,7 @@ renderCallSignatureSection?: RenderApiItemWithoutChildren<ApiCallSignature>;
 renderClassSection?: RenderApiItemWithChildren<ApiClass>;
 ```
 
-### renderConstructorSection {#renderconstructorsection-PropertySignature}
+### renderConstructorSection {#renderconstructorsection-propertysignature}
 
 #### Signature
 
@@ -58,7 +58,7 @@ renderClassSection?: RenderApiItemWithChildren<ApiClass>;
 renderConstructorSection?: RenderApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
 ```
 
-### renderEnumMemberSection {#renderenummembersection-PropertySignature}
+### renderEnumMemberSection {#renderenummembersection-propertysignature}
 
 #### Signature
 
@@ -66,7 +66,7 @@ renderConstructorSection?: RenderApiItemWithoutChildren<ApiConstructSignature | 
 renderEnumMemberSection?: RenderApiItemWithoutChildren<ApiEnumMember>;
 ```
 
-### renderEnumSection {#renderenumsection-PropertySignature}
+### renderEnumSection {#renderenumsection-propertysignature}
 
 #### Signature
 
@@ -74,7 +74,7 @@ renderEnumMemberSection?: RenderApiItemWithoutChildren<ApiEnumMember>;
 renderEnumSection?: RenderApiItemWithChildren<ApiEnum>;
 ```
 
-### renderFunctionSection {#renderfunctionsection-PropertySignature}
+### renderFunctionSection {#renderfunctionsection-propertysignature}
 
 #### Signature
 
@@ -82,7 +82,7 @@ renderEnumSection?: RenderApiItemWithChildren<ApiEnum>;
 renderFunctionSection?: RenderApiItemWithoutChildren<ApiFunction>;
 ```
 
-### renderIndexSignatureSection {#renderindexsignaturesection-PropertySignature}
+### renderIndexSignatureSection {#renderindexsignaturesection-propertysignature}
 
 #### Signature
 
@@ -90,7 +90,7 @@ renderFunctionSection?: RenderApiItemWithoutChildren<ApiFunction>;
 renderIndexSignatureSection?: RenderApiItemWithoutChildren<ApiIndexSignature>;
 ```
 
-### renderInterfaceSection {#renderinterfacesection-PropertySignature}
+### renderInterfaceSection {#renderinterfacesection-propertysignature}
 
 #### Signature
 
@@ -98,7 +98,7 @@ renderIndexSignatureSection?: RenderApiItemWithoutChildren<ApiIndexSignature>;
 renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
 ```
 
-### renderMethodSection {#rendermethodsection-PropertySignature}
+### renderMethodSection {#rendermethodsection-propertysignature}
 
 #### Signature
 
@@ -106,7 +106,7 @@ renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
 renderMethodSection?: RenderApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
 ```
 
-### renderModelSection {#rendermodelsection-PropertySignature}
+### renderModelSection {#rendermodelsection-propertysignature}
 
 Policy for rendering a section describing a `Model`<!-- -->.
 
@@ -116,7 +116,7 @@ Policy for rendering a section describing a `Model`<!-- -->.
 renderModelSection?: RenderApiItemWithoutChildren<ApiModel>;
 ```
 
-### renderNamespaceSection {#rendernamespacesection-PropertySignature}
+### renderNamespaceSection {#rendernamespacesection-propertysignature}
 
 #### Signature
 
@@ -124,7 +124,7 @@ renderModelSection?: RenderApiItemWithoutChildren<ApiModel>;
 renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
 ```
 
-### renderPackageSection {#renderpackagesection-PropertySignature}
+### renderPackageSection {#renderpackagesection-propertysignature}
 
 #### Signature
 
@@ -132,7 +132,7 @@ renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
 renderPackageSection?: RenderApiItemWithChildren<ApiPackage>;
 ```
 
-### renderPropertySection {#renderpropertysection-PropertySignature}
+### renderPropertySection {#renderpropertysection-propertysignature}
 
 #### Signature
 
@@ -140,7 +140,7 @@ renderPackageSection?: RenderApiItemWithChildren<ApiPackage>;
 renderPropertySection?: RenderApiItemWithoutChildren<ApiPropertyItem>;
 ```
 
-### renderSectionBlock {#rendersectionblock-PropertySignature}
+### renderSectionBlock {#rendersectionblock-propertysignature}
 
 #### Signature
 
@@ -148,7 +148,7 @@ renderPropertySection?: RenderApiItemWithoutChildren<ApiPropertyItem>;
 renderSectionBlock?: RenderSectionBlock;
 ```
 
-### renderTypeAliasSection {#rendertypealiassection-PropertySignature}
+### renderTypeAliasSection {#rendertypealiassection-propertysignature}
 
 #### Signature
 
@@ -156,7 +156,7 @@ renderSectionBlock?: RenderSectionBlock;
 renderTypeAliasSection?: RenderApiItemWithoutChildren<ApiTypeAlias>;
 ```
 
-### renderVariableSection {#rendervariablesection-PropertySignature}
+### renderVariableSection {#rendervariablesection-propertysignature}
 
 #### Signature
 

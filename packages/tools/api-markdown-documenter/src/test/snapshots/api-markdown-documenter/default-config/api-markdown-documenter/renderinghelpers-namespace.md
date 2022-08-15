@@ -17,42 +17,42 @@
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [renderApiSummaryCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderapisummarycell-Function) |  | DocTableCell |  |
-|  [renderApiTitleCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderapititlecell-Function) |  | DocTableCell |  |
-|  [renderBetaWarning(config)](./api-markdown-documenter/renderinghelpers-namespace#renderbetawarning-Function) |  | DocNoteBox |  |
-|  [renderBreadcrumb(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderbreadcrumb-Function) |  | DocSection |  |
-|  [renderChildDetailsSection(childSections, config, renderChild)](./api-markdown-documenter/renderinghelpers-namespace#renderchilddetailssection-Function) |  | DocSection \| undefined |  |
-|  [renderChildrenUnderHeading(childItems, headingTitle, config, renderChild)](./api-markdown-documenter/renderinghelpers-namespace#renderchildrenunderheading-Function) |  | DocSection \| undefined |  |
-|  [renderDefaultTable(apiItems, itemKind, config)](./api-markdown-documenter/renderinghelpers-namespace#renderdefaulttable-Function) |  | DocTable \| undefined |  |
-|  [renderDeprecationNotice(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderdeprecationnotice-Function) |  | DocSection \| undefined |  |
-|  [renderExample(example, config)](./api-markdown-documenter/renderinghelpers-namespace#renderexample-Function) |  | DocSection |  |
-|  [renderExamples(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderexamples-Function) |  | DocSection \| undefined |  |
-|  [renderExcerptWithHyperlinks(excerpt, config)](./api-markdown-documenter/renderinghelpers-namespace#renderexcerptwithhyperlinks-Function) |  | DocParagraph |  |
-|  [renderFunctionLikeTable(apiItems, itemKind, config)](./api-markdown-documenter/renderinghelpers-namespace#renderfunctionliketable-Function) |  | DocTable \| undefined |  |
-|  [renderHeading(heading, config)](./api-markdown-documenter/renderinghelpers-namespace#renderheading-Function) |  | [DocHeading](./api-markdown-documenter/docheading-class) |  |
-|  [renderHeadingForApiItem(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderheadingforapiitem-Function) |  | [DocHeading](./api-markdown-documenter/docheading-class) |  |
-|  [renderHeritageTypes(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderheritagetypes-Function) |  | DocSection \| undefined |  |
-|  [renderMemberTables(memberTableProperties, config)](./api-markdown-documenter/renderinghelpers-namespace#rendermembertables-Function) |  | DocSection \| undefined |  |
-|  [renderModifiersCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#rendermodifierscell-Function) |  | DocTableCell |  |
-|  [renderPackagesTable(apiPackages, config)](./api-markdown-documenter/renderinghelpers-namespace#renderpackagestable-Function) |  | DocTable \| undefined |  |
-|  [renderParametersSection(apiFunctionLike, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparameterssection-Function) |  | DocSection \| undefined |  |
-|  [renderParametersTable(apiParameters, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparameterstable-Function) |  | DocTable |  |
-|  [renderParameterSummaryCell(apiParameter, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparametersummarycell-Function) |  | DocTableCell |  |
-|  [renderParameterTitleCell(apiParameter, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparametertitlecell-Function) |  | DocTableCell |  |
-|  [renderParameterTypeCell(apiParameter, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparametertypecell-Function) |  | DocTableCell |  |
-|  [renderPropertiesTable(apiProperties, config)](./api-markdown-documenter/renderinghelpers-namespace#renderpropertiestable-Function) |  | DocTable \| undefined |  |
-|  [renderPropertyTypeCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderpropertytypecell-Function) |  | DocTableCell |  |
-|  [renderRemarks(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderremarks-Function) |  | DocSection \| undefined |  |
-|  [renderReturnTypeCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderreturntypecell-Function) |  | DocTableCell |  |
-|  [renderSignature(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#rendersignature-Function) |  | DocSection \| undefined |  |
-|  [renderSummary(apiItem)](./api-markdown-documenter/renderinghelpers-namespace#rendersummary-Function) |  | DocSection \| undefined |  |
-|  [renderTable(apiItems, itemKind, config)](./api-markdown-documenter/renderinghelpers-namespace#rendertable-Function) |  | DocTable \| undefined |  |
-|  [renderTableWithHeading(memberTableProperties, config)](./api-markdown-documenter/renderinghelpers-namespace#rendertablewithheading-Function) |  | DocSection \| undefined |  |
-|  [renderTypeParameters(typeParameters, config)](./api-markdown-documenter/renderinghelpers-namespace#rendertypeparameters-Function) |  | DocSection \| undefined |  |
+|  [renderApiSummaryCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderapisummarycell-function) |  | DocTableCell |  |
+|  [renderApiTitleCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderapititlecell-function) |  | DocTableCell |  |
+|  [renderBetaWarning(config)](./api-markdown-documenter/renderinghelpers-namespace#renderbetawarning-function) |  | DocNoteBox |  |
+|  [renderBreadcrumb(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderbreadcrumb-function) |  | DocSection |  |
+|  [renderChildDetailsSection(childSections, config, renderChild)](./api-markdown-documenter/renderinghelpers-namespace#renderchilddetailssection-function) |  | DocSection \| undefined |  |
+|  [renderChildrenUnderHeading(childItems, headingTitle, config, renderChild)](./api-markdown-documenter/renderinghelpers-namespace#renderchildrenunderheading-function) |  | DocSection \| undefined |  |
+|  [renderDefaultTable(apiItems, itemKind, config)](./api-markdown-documenter/renderinghelpers-namespace#renderdefaulttable-function) |  | DocTable \| undefined |  |
+|  [renderDeprecationNotice(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderdeprecationnotice-function) |  | DocSection \| undefined |  |
+|  [renderExample(example, config)](./api-markdown-documenter/renderinghelpers-namespace#renderexample-function) |  | DocSection |  |
+|  [renderExamples(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderexamples-function) |  | DocSection \| undefined |  |
+|  [renderExcerptWithHyperlinks(excerpt, config)](./api-markdown-documenter/renderinghelpers-namespace#renderexcerptwithhyperlinks-function) |  | DocParagraph |  |
+|  [renderFunctionLikeTable(apiItems, itemKind, config)](./api-markdown-documenter/renderinghelpers-namespace#renderfunctionliketable-function) |  | DocTable \| undefined |  |
+|  [renderHeading(heading, config)](./api-markdown-documenter/renderinghelpers-namespace#renderheading-function) |  | [DocHeading](./api-markdown-documenter/docheading-class) |  |
+|  [renderHeadingForApiItem(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderheadingforapiitem-function) |  | [DocHeading](./api-markdown-documenter/docheading-class) |  |
+|  [renderHeritageTypes(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderheritagetypes-function) |  | DocSection \| undefined |  |
+|  [renderMemberTables(memberTableProperties, config)](./api-markdown-documenter/renderinghelpers-namespace#rendermembertables-function) |  | DocSection \| undefined |  |
+|  [renderModifiersCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#rendermodifierscell-function) |  | DocTableCell |  |
+|  [renderPackagesTable(apiPackages, config)](./api-markdown-documenter/renderinghelpers-namespace#renderpackagestable-function) |  | DocTable \| undefined |  |
+|  [renderParametersSection(apiFunctionLike, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparameterssection-function) |  | DocSection \| undefined |  |
+|  [renderParametersTable(apiParameters, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparameterstable-function) |  | DocTable |  |
+|  [renderParameterSummaryCell(apiParameter, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparametersummarycell-function) |  | DocTableCell |  |
+|  [renderParameterTitleCell(apiParameter, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparametertitlecell-function) |  | DocTableCell |  |
+|  [renderParameterTypeCell(apiParameter, config)](./api-markdown-documenter/renderinghelpers-namespace#renderparametertypecell-function) |  | DocTableCell |  |
+|  [renderPropertiesTable(apiProperties, config)](./api-markdown-documenter/renderinghelpers-namespace#renderpropertiestable-function) |  | DocTable \| undefined |  |
+|  [renderPropertyTypeCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderpropertytypecell-function) |  | DocTableCell |  |
+|  [renderRemarks(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderremarks-function) |  | DocSection \| undefined |  |
+|  [renderReturnTypeCell(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#renderreturntypecell-function) |  | DocTableCell |  |
+|  [renderSignature(apiItem, config)](./api-markdown-documenter/renderinghelpers-namespace#rendersignature-function) |  | DocSection \| undefined |  |
+|  [renderSummary(apiItem)](./api-markdown-documenter/renderinghelpers-namespace#rendersummary-function) |  | DocSection \| undefined |  |
+|  [renderTable(apiItems, itemKind, config)](./api-markdown-documenter/renderinghelpers-namespace#rendertable-function) |  | DocTable \| undefined |  |
+|  [renderTableWithHeading(memberTableProperties, config)](./api-markdown-documenter/renderinghelpers-namespace#rendertablewithheading-function) |  | DocSection \| undefined |  |
+|  [renderTypeParameters(typeParameters, config)](./api-markdown-documenter/renderinghelpers-namespace#rendertypeparameters-function) |  | DocSection \| undefined |  |
 
 ## Function Details
 
-### renderApiSummaryCell {#renderapisummarycell-Function}
+### renderApiSummaryCell {#renderapisummarycell-function}
 
 #### Signature
 
@@ -67,7 +67,7 @@ export declare function renderApiSummaryCell(apiItem: ApiItem, config: Required<
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderApiTitleCell {#renderapititlecell-Function}
+### renderApiTitleCell {#renderapititlecell-function}
 
 #### Signature
 
@@ -82,7 +82,7 @@ export declare function renderApiTitleCell(apiItem: ApiItem, config: Required<Ma
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderBetaWarning {#renderbetawarning-Function}
+### renderBetaWarning {#renderbetawarning-function}
 
 #### Signature
 
@@ -96,7 +96,7 @@ export declare function renderBetaWarning(config: Required<MarkdownDocumenterCon
 |  --- | --- | --- |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderBreadcrumb {#renderbreadcrumb-Function}
+### renderBreadcrumb {#renderbreadcrumb-function}
 
 #### Signature
 
@@ -111,7 +111,7 @@ export declare function renderBreadcrumb(apiItem: ApiItem, config: Required<Mark
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderChildDetailsSection {#renderchilddetailssection-Function}
+### renderChildDetailsSection {#renderchilddetailssection-function}
 
 #### Signature
 
@@ -127,7 +127,7 @@ export declare function renderChildDetailsSection(childSections: readonly ChildS
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (apiItem: any) =&gt; DocSection |  |
 
-### renderChildrenUnderHeading {#renderchildrenunderheading-Function}
+### renderChildrenUnderHeading {#renderchildrenunderheading-function}
 
 #### Signature
 
@@ -144,7 +144,7 @@ export declare function renderChildrenUnderHeading(childItems: readonly ApiItem[
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (childItem: ApiItem) =&gt; DocSection |  |
 
-### renderDefaultTable {#renderdefaulttable-Function}
+### renderDefaultTable {#renderdefaulttable-function}
 
 #### Signature
 
@@ -160,7 +160,7 @@ export declare function renderDefaultTable(apiItems: readonly ApiItem[], itemKin
 |  itemKind | ApiItemKind |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderDeprecationNotice {#renderdeprecationnotice-Function}
+### renderDeprecationNotice {#renderdeprecationnotice-function}
 
 #### Signature
 
@@ -175,7 +175,7 @@ export declare function renderDeprecationNotice(apiItem: ApiItem, config: Requir
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderExample {#renderexample-Function}
+### renderExample {#renderexample-function}
 
 #### Signature
 
@@ -190,7 +190,7 @@ export declare function renderExample(example: DocExample, config: Required<Mark
 |  example | DocExample |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderExamples {#renderexamples-Function}
+### renderExamples {#renderexamples-function}
 
 #### Signature
 
@@ -205,7 +205,7 @@ export declare function renderExamples(apiItem: ApiItem, config: Required<Markdo
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderExcerptWithHyperlinks {#renderexcerptwithhyperlinks-Function}
+### renderExcerptWithHyperlinks {#renderexcerptwithhyperlinks-function}
 
 #### Signature
 
@@ -220,7 +220,7 @@ export declare function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Re
 |  excerpt | Excerpt |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderFunctionLikeTable {#renderfunctionliketable-Function}
+### renderFunctionLikeTable {#renderfunctionliketable-function}
 
 #### Signature
 
@@ -232,11 +232,11 @@ export declare function renderFunctionLikeTable(apiItems: readonly ApiFunctionLi
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiItems | readonly [ApiFunctionLike](./api-markdown-documenter#apifunctionlike-TypeAlias)<!-- -->\[\] |  |
+|  apiItems | readonly [ApiFunctionLike](./api-markdown-documenter#apifunctionlike-typealias)<!-- -->\[\] |  |
 |  itemKind | ApiItemKind |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderHeading {#renderheading-Function}
+### renderHeading {#renderheading-function}
 
 #### Signature
 
@@ -251,7 +251,7 @@ export declare function renderHeading(heading: Heading, config: Required<Markdow
 |  heading | [Heading](./api-markdown-documenter/heading-interface) |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderHeadingForApiItem {#renderheadingforapiitem-Function}
+### renderHeadingForApiItem {#renderheadingforapiitem-function}
 
 #### Signature
 
@@ -266,7 +266,7 @@ export declare function renderHeadingForApiItem(apiItem: ApiItem, config: Requir
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderHeritageTypes {#renderheritagetypes-Function}
+### renderHeritageTypes {#renderheritagetypes-function}
 
 #### Signature
 
@@ -281,7 +281,7 @@ export declare function renderHeritageTypes(apiItem: ApiItem, config: Required<M
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderMemberTables {#rendermembertables-Function}
+### renderMemberTables {#rendermembertables-function}
 
 #### Signature
 
@@ -296,7 +296,7 @@ export declare function renderMemberTables(memberTableProperties: readonly Membe
 |  memberTableProperties | readonly MemberTableProperties\[\] |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderModifiersCell {#rendermodifierscell-Function}
+### renderModifiersCell {#rendermodifierscell-function}
 
 #### Signature
 
@@ -311,7 +311,7 @@ export declare function renderModifiersCell(apiItem: ApiItem, config: Required<M
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderPackagesTable {#renderpackagestable-Function}
+### renderPackagesTable {#renderpackagestable-function}
 
 #### Signature
 
@@ -326,7 +326,7 @@ export declare function renderPackagesTable(apiPackages: readonly ApiPackage[], 
 |  apiPackages | readonly ApiPackage\[\] |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderParametersSection {#renderparameterssection-Function}
+### renderParametersSection {#renderparameterssection-function}
 
 #### Signature
 
@@ -338,10 +338,10 @@ export declare function renderParametersSection(apiFunctionLike: ApiFunctionLike
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiFunctionLike | [ApiFunctionLike](./api-markdown-documenter#apifunctionlike-TypeAlias) |  |
+|  apiFunctionLike | [ApiFunctionLike](./api-markdown-documenter#apifunctionlike-typealias) |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderParametersTable {#renderparameterstable-Function}
+### renderParametersTable {#renderparameterstable-function}
 
 #### Signature
 
@@ -356,7 +356,7 @@ export declare function renderParametersTable(apiParameters: readonly Parameter[
 |  apiParameters | readonly Parameter\[\] |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderParameterSummaryCell {#renderparametersummarycell-Function}
+### renderParameterSummaryCell {#renderparametersummarycell-function}
 
 #### Signature
 
@@ -371,7 +371,7 @@ export declare function renderParameterSummaryCell(apiParameter: Parameter, conf
 |  apiParameter | Parameter |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderParameterTitleCell {#renderparametertitlecell-Function}
+### renderParameterTitleCell {#renderparametertitlecell-function}
 
 #### Signature
 
@@ -386,7 +386,7 @@ export declare function renderParameterTitleCell(apiParameter: Parameter, config
 |  apiParameter | Parameter |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderParameterTypeCell {#renderparametertypecell-Function}
+### renderParameterTypeCell {#renderparametertypecell-function}
 
 #### Signature
 
@@ -401,7 +401,7 @@ export declare function renderParameterTypeCell(apiParameter: Parameter, config:
 |  apiParameter | Parameter |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderPropertiesTable {#renderpropertiestable-Function}
+### renderPropertiesTable {#renderpropertiestable-function}
 
 #### Signature
 
@@ -416,7 +416,7 @@ export declare function renderPropertiesTable(apiProperties: readonly ApiPropert
 |  apiProperties | readonly ApiPropertyItem\[\] |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderPropertyTypeCell {#renderpropertytypecell-Function}
+### renderPropertyTypeCell {#renderpropertytypecell-function}
 
 #### Signature
 
@@ -431,7 +431,7 @@ export declare function renderPropertyTypeCell(apiItem: ApiPropertyItem, config:
 |  apiItem | ApiPropertyItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderRemarks {#renderremarks-Function}
+### renderRemarks {#renderremarks-function}
 
 #### Signature
 
@@ -446,7 +446,7 @@ export declare function renderRemarks(apiItem: ApiItem, config: Required<Markdow
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderReturnTypeCell {#renderreturntypecell-Function}
+### renderReturnTypeCell {#renderreturntypecell-function}
 
 #### Signature
 
@@ -458,10 +458,10 @@ export declare function renderReturnTypeCell(apiItem: ApiFunctionLike, config: R
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiItem | [ApiFunctionLike](./api-markdown-documenter#apifunctionlike-TypeAlias) |  |
+|  apiItem | [ApiFunctionLike](./api-markdown-documenter#apifunctionlike-typealias) |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderSignature {#rendersignature-Function}
+### renderSignature {#rendersignature-function}
 
 #### Signature
 
@@ -476,7 +476,7 @@ export declare function renderSignature(apiItem: ApiItem, config: Required<Markd
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderSummary {#rendersummary-Function}
+### renderSummary {#rendersummary-function}
 
 #### Signature
 
@@ -490,7 +490,7 @@ export declare function renderSummary(apiItem: ApiItem): DocSection | undefined;
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-### renderTable {#rendertable-Function}
+### renderTable {#rendertable-function}
 
 #### Signature
 
@@ -506,7 +506,7 @@ export declare function renderTable(apiItems: readonly ApiItem[], itemKind: ApiI
 |  itemKind | ApiItemKind |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderTableWithHeading {#rendertablewithheading-Function}
+### renderTableWithHeading {#rendertablewithheading-function}
 
 #### Signature
 
@@ -521,7 +521,7 @@ export declare function renderTableWithHeading(memberTableProperties: MemberTabl
 |  memberTableProperties | MemberTableProperties |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderTypeParameters {#rendertypeparameters-Function}
+### renderTypeParameters {#rendertypeparameters-function}
 
 #### Signature
 

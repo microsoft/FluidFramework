@@ -13,23 +13,23 @@ export declare namespace DefaultPolicies
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [defaultFileNamePolicy(apiItem)](./api-markdown-documenter/defaultpolicies-namespace#defaultfilenamepolicy-Function) |  | string | Default [PolicyOptions.fileNamePolicy](./api-markdown-documenter/policyoptions-interface#filenamepolicy-PropertySignature)<!-- -->.<!-- -->Uses a cleaned-up version of the item's <code>displayName</code>, except for the following types:<!-- -->- Model: Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root. - Package: uses only the unscoped portion of the package name is used. |
-|  [defaultHeadingTitlePolicy(apiItem)](./api-markdown-documenter/defaultpolicies-namespace#defaultheadingtitlepolicy-Function) |  | string | Default [PolicyOptions.headingTitlePolicy](./api-markdown-documenter/policyoptions-interface#headingtitlepolicy-PropertySignature)<!-- -->.<!-- -->Uses the item's <code>displayName</code>, except for <code>Model</code> items, in which case the text "API Overview" is displayed. |
-|  [defaultLinkTextPolicy(apiItem)](./api-markdown-documenter/defaultpolicies-namespace#defaultlinktextpolicy-Function) |  | string | Default [PolicyOptions.linkTextPolicy](./api-markdown-documenter/policyoptions-interface#linktextpolicy-PropertySignature)<!-- -->.<!-- -->Always uses the item's <code>displayName</code>. |
-|  [defaultUriBaseOverridePolicy()](./api-markdown-documenter/defaultpolicies-namespace#defaulturibaseoverridepolicy-Function) |  | string \| undefined | Default [PolicyOptions.uriBaseOverridePolicy](./api-markdown-documenter/policyoptions-interface#uribaseoverridepolicy-PropertySignature)<!-- -->.<!-- -->Always uses default URI base. |
+|  [defaultFileNamePolicy(apiItem)](./api-markdown-documenter/defaultpolicies-namespace#defaultfilenamepolicy-function) |  | string | Default [PolicyOptions.fileNamePolicy](./api-markdown-documenter/policyoptions-interface#filenamepolicy-propertysignature)<!-- -->.<!-- -->Uses a cleaned-up version of the item's <code>displayName</code>, except for the following types:<!-- -->- Model: Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root. - Package: uses only the unscoped portion of the package name is used. |
+|  [defaultHeadingTitlePolicy(apiItem)](./api-markdown-documenter/defaultpolicies-namespace#defaultheadingtitlepolicy-function) |  | string | Default [PolicyOptions.headingTitlePolicy](./api-markdown-documenter/policyoptions-interface#headingtitlepolicy-propertysignature)<!-- -->.<!-- -->Uses the item's <code>displayName</code>, except for <code>Model</code> items, in which case the text "API Overview" is displayed. |
+|  [defaultLinkTextPolicy(apiItem)](./api-markdown-documenter/defaultpolicies-namespace#defaultlinktextpolicy-function) |  | string | Default [PolicyOptions.linkTextPolicy](./api-markdown-documenter/policyoptions-interface#linktextpolicy-propertysignature)<!-- -->.<!-- -->Always uses the item's <code>displayName</code>. |
+|  [defaultUriBaseOverridePolicy()](./api-markdown-documenter/defaultpolicies-namespace#defaulturibaseoverridepolicy-function) |  | string \| undefined | Default [PolicyOptions.uriBaseOverridePolicy](./api-markdown-documenter/policyoptions-interface#uribaseoverridepolicy-propertysignature)<!-- -->.<!-- -->Always uses default URI base. |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [defaultDocumentBoundaries](./api-markdown-documenter/defaultpolicies-namespace#defaultdocumentboundaries-Variable) |  | Default [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-PropertySignature)<!-- -->.<!-- -->Generates separate documents for the following types:<!-- -->- Model\* - Package\* - Class - Interface - Namespace |
-|  [defaultHierarchyBoundaries](./api-markdown-documenter/defaultpolicies-namespace#defaulthierarchyboundaries-Variable) |  | Default [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-PropertySignature)<!-- -->.<!-- -->Creates sub-directories for the following types:<!-- -->- Package\* - Namespace |
+|  [defaultDocumentBoundaries](./api-markdown-documenter/defaultpolicies-namespace#defaultdocumentboundaries-variable) |  | Default [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-propertysignature)<!-- -->.<!-- -->Generates separate documents for the following types:<!-- -->- Model\* - Package\* - Class - Interface - Namespace |
+|  [defaultHierarchyBoundaries](./api-markdown-documenter/defaultpolicies-namespace#defaulthierarchyboundaries-variable) |  | Default [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-propertysignature)<!-- -->.<!-- -->Creates sub-directories for the following types:<!-- -->- Package\* - Namespace |
 
 ## Function Details
 
-### defaultFileNamePolicy {#defaultfilenamepolicy-Function}
+### defaultFileNamePolicy {#defaultfilenamepolicy-function}
 
-Default [PolicyOptions.fileNamePolicy](./api-markdown-documenter/policyoptions-interface#filenamepolicy-PropertySignature)<!-- -->.
+Default [PolicyOptions.fileNamePolicy](./api-markdown-documenter/policyoptions-interface#filenamepolicy-propertysignature)<!-- -->.
 
 Uses a cleaned-up version of the item's `displayName`<!-- -->, except for the following types:
 
@@ -47,9 +47,9 @@ function defaultFileNamePolicy(apiItem: ApiItem): string;
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-### defaultHeadingTitlePolicy {#defaultheadingtitlepolicy-Function}
+### defaultHeadingTitlePolicy {#defaultheadingtitlepolicy-function}
 
-Default [PolicyOptions.headingTitlePolicy](./api-markdown-documenter/policyoptions-interface#headingtitlepolicy-PropertySignature)<!-- -->.
+Default [PolicyOptions.headingTitlePolicy](./api-markdown-documenter/policyoptions-interface#headingtitlepolicy-propertysignature)<!-- -->.
 
 Uses the item's `displayName`<!-- -->, except for `Model` items, in which case the text "API Overview" is displayed.
 
@@ -65,9 +65,9 @@ function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-### defaultLinkTextPolicy {#defaultlinktextpolicy-Function}
+### defaultLinkTextPolicy {#defaultlinktextpolicy-function}
 
-Default [PolicyOptions.linkTextPolicy](./api-markdown-documenter/policyoptions-interface#linktextpolicy-PropertySignature)<!-- -->.
+Default [PolicyOptions.linkTextPolicy](./api-markdown-documenter/policyoptions-interface#linktextpolicy-propertysignature)<!-- -->.
 
 Always uses the item's `displayName`<!-- -->.
 
@@ -83,9 +83,9 @@ function defaultLinkTextPolicy(apiItem: ApiItem): string;
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-### defaultUriBaseOverridePolicy {#defaulturibaseoverridepolicy-Function}
+### defaultUriBaseOverridePolicy {#defaulturibaseoverridepolicy-function}
 
-Default [PolicyOptions.uriBaseOverridePolicy](./api-markdown-documenter/policyoptions-interface#uribaseoverridepolicy-PropertySignature)<!-- -->.
+Default [PolicyOptions.uriBaseOverridePolicy](./api-markdown-documenter/policyoptions-interface#uribaseoverridepolicy-propertysignature)<!-- -->.
 
 Always uses default URI base.
 
@@ -97,9 +97,9 @@ function defaultUriBaseOverridePolicy(): string | undefined;
 
 ## Variable Details
 
-### defaultDocumentBoundaries {#defaultdocumentboundaries-Variable}
+### defaultDocumentBoundaries {#defaultdocumentboundaries-variable}
 
-Default [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-PropertySignature)<!-- -->.
+Default [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-propertysignature)<!-- -->.
 
 Generates separate documents for the following types:
 
@@ -111,9 +111,9 @@ Generates separate documents for the following types:
 defaultDocumentBoundaries: ApiItemKind[]
 ```
 
-### defaultHierarchyBoundaries {#defaulthierarchyboundaries-Variable}
+### defaultHierarchyBoundaries {#defaulthierarchyboundaries-variable}
 
-Default [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-PropertySignature)<!-- -->.
+Default [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-propertysignature)<!-- -->.
 
 Creates sub-directories for the following types:
 

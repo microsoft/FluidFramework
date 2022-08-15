@@ -15,13 +15,13 @@ export interface MarkdownDocument
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [apiItem](./api-markdown-documenter/markdowndocument-interface#apiitem-PropertySignature) |  | ApiItem | The API item for which the document contents were generated. |
-|  [contents](./api-markdown-documenter/markdowndocument-interface#contents-PropertySignature) |  | DocSection | Mardown document contents. |
-|  [path](./api-markdown-documenter/markdowndocument-interface#path-PropertySignature) |  | string | Output path for the document to be written to. This path is relative to the base URI provided to the system. TODO: verify relative-ness |
+|  [apiItem](./api-markdown-documenter/markdowndocument-interface#apiitem-propertysignature) |  | ApiItem | The API item for which the document contents were generated. |
+|  [contents](./api-markdown-documenter/markdowndocument-interface#contents-propertysignature) |  | DocSection | Mardown document contents. |
+|  [path](./api-markdown-documenter/markdowndocument-interface#path-propertysignature) |  | string | Output path for the document to be written to. This path is relative to the base URI provided to the system. TODO: verify relative-ness |
 
 ## Property Details
 
-### apiItem {#apiitem-PropertySignature}
+### apiItem {#apiitem-propertysignature}
 
 The API item for which the document contents were generated.
 
@@ -31,7 +31,7 @@ The API item for which the document contents were generated.
 apiItem: ApiItem;
 ```
 
-### contents {#contents-PropertySignature}
+### contents {#contents-propertysignature}
 
 Mardown document contents.
 
@@ -41,7 +41,7 @@ Mardown document contents.
 contents: DocSection;
 ```
 
-### path {#path-PropertySignature}
+### path {#path-propertysignature}
 
 Output path for the document to be written to. This path is relative to the base URI provided to the system. TODO: verify relative-ness
 

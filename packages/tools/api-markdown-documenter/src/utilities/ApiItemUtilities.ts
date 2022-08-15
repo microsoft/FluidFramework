@@ -305,7 +305,7 @@ export function getHeadingIdForApiItem(
         hierarchyItem = parent;
     }
 
-    return `${baseName}-${apiItemKind}`;
+    return `${baseName}-${apiItemKind.toLowerCase()}`;
 }
 
 /**

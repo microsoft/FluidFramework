@@ -15,17 +15,17 @@ interface TestInterface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-PropertySignature) |  | boolean | Test interface property |
+|  [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) |  | boolean | Test interface property |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-MethodSignature) |  | void | Test interface method |
+|  [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) |  | void | Test interface method |
 
 ## Property Details
 
-### testInterfaceProperty {#testinterfaceproperty-PropertySignature}
+### testInterfaceProperty {#testinterfaceproperty-propertysignature}
 
 Test interface property
 
@@ -37,7 +37,7 @@ testInterfaceProperty: boolean;
 
 ## Method Details
 
-### testInterfaceMethod {#testinterfacemethod-MethodSignature}
+### testInterfaceMethod {#testinterfacemethod-methodsignature}
 
 Test interface method
 

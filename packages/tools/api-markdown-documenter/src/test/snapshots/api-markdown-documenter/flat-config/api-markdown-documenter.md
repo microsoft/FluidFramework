@@ -13,90 +13,90 @@ Akin to [API-Documenter](https://github.com/microsoft/rushstack/tree/main/apps/a
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
-|  [EmitterOptions](docs/api-markdown-documenter#emitteroptions-Interface) |  | [MarkdownEmitter](docs/api-markdown-documenter#markdownemitter-Class) options. |
-|  [Heading](docs/api-markdown-documenter#heading-Interface) |  | Represents a document heading. |
-|  [Link](docs/api-markdown-documenter#link-Interface) |  | Represents a link to some documentation element. A complete URL link can be created from its components (see [urlFromLink()](docs/api-markdown-documenter#urlfromlink-Function)<!-- -->). |
-|  [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-Interface) |  | Represents Markdown document contents that have not yet been written to a file. |
-|  [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface) |  | Configuration options for the Markdown documenter. |
-|  [PolicyOptions](docs/api-markdown-documenter#policyoptions-Interface) |  | Policy configuration options |
-|  [RenderingPolicies](docs/api-markdown-documenter#renderingpolicies-Interface) |  | TODO |
+|  [EmitterOptions](docs/api-markdown-documenter#emitteroptions-interface) |  | [MarkdownEmitter](docs/api-markdown-documenter#markdownemitter-class) options. |
+|  [Heading](docs/api-markdown-documenter#heading-interface) |  | Represents a document heading. |
+|  [Link](docs/api-markdown-documenter#link-interface) |  | Represents a link to some documentation element. A complete URL link can be created from its components (see [urlFromLink()](docs/api-markdown-documenter#urlfromlink-function)<!-- -->). |
+|  [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-interface) |  | Represents Markdown document contents that have not yet been written to a file. |
+|  [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface) |  | Configuration options for the Markdown documenter. |
+|  [PolicyOptions](docs/api-markdown-documenter#policyoptions-interface) |  | Policy configuration options |
+|  [RenderingPolicies](docs/api-markdown-documenter#renderingpolicies-interface) |  | TODO |
 
 ## Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
-|  [DocHeading](docs/api-markdown-documenter#docheading-Class) |  | Represents a section header similar to an HTML <code>&lt;h1&gt;</code> or <code>&lt;h2&gt;</code> element. |
-|  [MarkdownEmitter](docs/api-markdown-documenter#markdownemitter-Class) |  | Markdown documentation emitter. Processes an input tree of documentation related to an API model, and generates Markdown content from it. |
+|  [DocHeading](docs/api-markdown-documenter#docheading-class) |  | Represents a section header similar to an HTML <code>&lt;h1&gt;</code> or <code>&lt;h2&gt;</code> element. |
+|  [MarkdownEmitter](docs/api-markdown-documenter#markdownemitter-class) |  | Markdown documentation emitter. Processes an input tree of documentation related to an API model, and generates Markdown content from it. |
 
 ## Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
-|  [DefaultPolicies](docs/api-markdown-documenter#defaultpolicies-Namespace) |  |  |
-|  [DefaultRenderingPolicies](docs/api-markdown-documenter#defaultrenderingpolicies-Namespace) |  |  |
-|  [RenderingHelpers](docs/api-markdown-documenter#renderinghelpers-Namespace) |  |  |
+|  [DefaultPolicies](docs/api-markdown-documenter#defaultpolicies-namespace) |  |  |
+|  [DefaultRenderingPolicies](docs/api-markdown-documenter#defaultrenderingpolicies-namespace) |  |  |
+|  [RenderingHelpers](docs/api-markdown-documenter#renderinghelpers-namespace) |  |  |
 
 ## Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-TypeAlias) |  | <code>ApiItem</code> union type representing function-like API kinds. |
-|  [ApiModuleLike](docs/api-markdown-documenter#apimodulelike-TypeAlias) |  | <code>ApiItem</code> union type representing module-like API kinds. |
-|  [ApiSignatureLike](docs/api-markdown-documenter#apisignaturelike-TypeAlias) |  | <code>ApiItem</code> union type representing call-signature-like API kinds. |
-|  [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias) |  | List of item kinds for which separate documents should be generated. Items specified will be rendered to their own documents. Items not specified will be rendered into their parent's contents. |
-|  [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  | Context used by [MarkdownEmitter.emit()](docs/api-markdown-documenter#markdownemitter-emit-Method)<!-- -->. |
-|  [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias) |  | Policy for naming of files / directories for API items. Must not include a file extension. |
-|  [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-TypeAlias) |  | Policy for generating heading titles for API items. |
-|  [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.<!-- -->For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->. |
-|  [IDocHeadingParameters](docs/api-markdown-documenter#idocheadingparameters-TypeAlias) |  | Constructor parameters for [DocHeading](docs/api-markdown-documenter#docheading-Class)<!-- -->. |
-|  [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-TypeAlias) |  | Policy for generating link text for a particular API item. |
-|  [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-TypeAlias) |  | TODO |
-|  [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias) |  | TODO |
-|  [RenderSectionBlock](docs/api-markdown-documenter#rendersectionblock-TypeAlias) |  | TODO |
-|  [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-TypeAlias) |  | Policy for overriding the URI base for a specific API item. |
+|  [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-typealias) |  | <code>ApiItem</code> union type representing function-like API kinds. |
+|  [ApiModuleLike](docs/api-markdown-documenter#apimodulelike-typealias) |  | <code>ApiItem</code> union type representing module-like API kinds. |
+|  [ApiSignatureLike](docs/api-markdown-documenter#apisignaturelike-typealias) |  | <code>ApiItem</code> union type representing call-signature-like API kinds. |
+|  [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias) |  | List of item kinds for which separate documents should be generated. Items specified will be rendered to their own documents. Items not specified will be rendered into their parent's contents. |
+|  [EmitterContext](docs/api-markdown-documenter#emittercontext-typealias) |  | Context used by [MarkdownEmitter.emit()](docs/api-markdown-documenter#markdownemitter-emit-method)<!-- -->. |
+|  [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias) |  | Policy for naming of files / directories for API items. Must not include a file extension. |
+|  [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-typealias) |  | Policy for generating heading titles for API items. |
+|  [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.<!-- -->For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias)<!-- -->. |
+|  [IDocHeadingParameters](docs/api-markdown-documenter#idocheadingparameters-typealias) |  | Constructor parameters for [DocHeading](docs/api-markdown-documenter#docheading-class)<!-- -->. |
+|  [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-typealias) |  | Policy for generating link text for a particular API item. |
+|  [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-typealias) |  | TODO |
+|  [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias) |  | TODO |
+|  [RenderSectionBlock](docs/api-markdown-documenter#rendersectionblock-typealias) |  | TODO |
+|  [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-typealias) |  | Policy for overriding the URI base for a specific API item. |
 
 ## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [doesItemGenerateHierarchy(apiItem, hierarchyBoundaries)](docs/api-markdown-documenter#doesitemgeneratehierarchy-Function) |  | boolean | Determines whether or not the specified API item is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question. |
-|  [doesItemKindGenerateHierarchy(kind, hierarchyBoundaries)](docs/api-markdown-documenter#doesitemkindgeneratehierarchy-Function) |  | boolean | Determines whether or not the specified API item kind is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question. |
-|  [doesItemKindRequireOwnDocument(kind, documentBoundaries)](docs/api-markdown-documenter#doesitemkindrequireowndocument-Function) |  | boolean | Determines whether or not the specified API item kind is one that should be rendered to its own document. |
-|  [doesItemRequireOwnDocument(apiItem, documentBoundaries)](docs/api-markdown-documenter#doesitemrequireowndocument-Function) |  | boolean | Determines whether or not the specified API item is one that should be rendered to its own document. |
-|  [filterByKind(apiItems, kinds)](docs/api-markdown-documenter#filterbykind-Function) |  | ApiItem\[\] | Filters the provided list of API items based on the provided <code>kinds</code>. |
-|  [getAncestralHierarchy(apiItem, includePredecate, breakPredicate)](docs/api-markdown-documenter#getancestralhierarchy-Function) |  | ApiItem\[\] | Gets the ancestral hierarchy of the provided API item by walking up the parentage graph and emitting any items matching the <code>includePredecate</code> until it reaches an item that matches the <code>breakPredecate</code>. |
-|  [getDocumentItems(apiItem, config)](docs/api-markdown-documenter#getdocumentitems-Function) |  | ApiItem\[\] | Walks the provided API item's member tree and reports all API items that should be rendered to their own documents. |
-|  [getFileNameForApiItem(apiItem, config, includeExtension)](docs/api-markdown-documenter#getfilenameforapiitem-Function) |  | string | Gets the file name for the specified API item. |
-|  [getFilePathForApiItem(apiItem, config, includeExtension)](docs/api-markdown-documenter#getfilepathforapiitem-Function) |  | string | Gets the file path for the specified API item. |
-|  [getFilteredParent(apiItem)](docs/api-markdown-documenter#getfilteredparent-Function) |  | ApiItem \| undefined | Gets the "filted" parent of the provided API item. This logic specifically skips items of the following kinds:<!-- -->- EntryPoint - Skipped because any given Package item will have exactly 1 EntryPoint child, making this redundant in the hierarchy. |
-|  [getFirstAncestorWithOwnPage(apiItem, documentBoundaries)](docs/api-markdown-documenter#getfirstancestorwithownpage-Function) |  | ApiItem | Gets the nearest ancestor of the provided item that will have its own rendered page. |
-|  [getHeadingForApiItem(apiItem, config, headingLevel)](docs/api-markdown-documenter#getheadingforapiitem-Function) |  | [Heading](docs/api-markdown-documenter#heading-Interface) | Generates a [Heading](docs/api-markdown-documenter#heading-Interface) for the specified API item. |
-|  [getHeadingIdForApiItem(apiItem, config)](docs/api-markdown-documenter#getheadingidforapiitem-Function) |  | string \| undefined | Generates a unique heading ID for the provided API item. |
-|  [getLinkForApiItem(apiItem, config)](docs/api-markdown-documenter#getlinkforapiitem-Function) |  | [Link](docs/api-markdown-documenter#link-Interface) | Creates a [Link](docs/api-markdown-documenter#link-Interface) for the provided API item. |
-|  [getLinkUrlForApiItem(apiItem, config)](docs/api-markdown-documenter#getlinkurlforapiitem-Function) |  | string | Creates a link URL to the specified API item. |
-|  [getQualifiedApiItemName(apiItem)](docs/api-markdown-documenter#getqualifiedapiitemname-Function) |  | string | Adjusts the name of the item as needed. Accounts for method overloads by adding a suffix such as "MyClass.myMethod\_2". |
-|  [markdownDocumenterConfigurationWithDefaults(partialConfig)](docs/api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-Function) |  | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
-|  [mergeSections(sections, tsdocConfiguration)](docs/api-markdown-documenter#mergesections-Function) |  | DocSection |  |
-|  [renderApiPage(apiItem, config)](docs/api-markdown-documenter#renderapipage-Function) |  | [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-Interface) |  |
-|  [renderDocuments(partialConfig)](docs/api-markdown-documenter#renderdocuments-Function) |  | [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-Interface)<!-- -->\[\] | Renders the provided model and its contents to a series of [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-Interface)<!-- -->s. |
-|  [renderFiles(partialConfig, outputDirectoryPath, maybeMarkdownEmitter)](docs/api-markdown-documenter#renderfiles-Function) |  | Promise&lt;void&gt; | Renders the provided model and its contents, and writes each document to a file on disk. |
-|  [renderModelPage(apiModel, config)](docs/api-markdown-documenter#rendermodelpage-Function) |  | [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-Interface) | TODO Note: no breadcrumb |
-|  [renderPackagePage(apiPackage, config)](docs/api-markdown-documenter#renderpackagepage-Function) |  | [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-Interface) |  |
-|  [urlFromLink(link)](docs/api-markdown-documenter#urlfromlink-Function) |  | string | Generates a complete URL for the provided [Link](docs/api-markdown-documenter#link-Interface) object. |
+|  [doesItemGenerateHierarchy(apiItem, hierarchyBoundaries)](docs/api-markdown-documenter#doesitemgeneratehierarchy-function) |  | boolean | Determines whether or not the specified API item is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question. |
+|  [doesItemKindGenerateHierarchy(kind, hierarchyBoundaries)](docs/api-markdown-documenter#doesitemkindgeneratehierarchy-function) |  | boolean | Determines whether or not the specified API item kind is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question. |
+|  [doesItemKindRequireOwnDocument(kind, documentBoundaries)](docs/api-markdown-documenter#doesitemkindrequireowndocument-function) |  | boolean | Determines whether or not the specified API item kind is one that should be rendered to its own document. |
+|  [doesItemRequireOwnDocument(apiItem, documentBoundaries)](docs/api-markdown-documenter#doesitemrequireowndocument-function) |  | boolean | Determines whether or not the specified API item is one that should be rendered to its own document. |
+|  [filterByKind(apiItems, kinds)](docs/api-markdown-documenter#filterbykind-function) |  | ApiItem\[\] | Filters the provided list of API items based on the provided <code>kinds</code>. |
+|  [getAncestralHierarchy(apiItem, includePredecate, breakPredicate)](docs/api-markdown-documenter#getancestralhierarchy-function) |  | ApiItem\[\] | Gets the ancestral hierarchy of the provided API item by walking up the parentage graph and emitting any items matching the <code>includePredecate</code> until it reaches an item that matches the <code>breakPredecate</code>. |
+|  [getDocumentItems(apiItem, config)](docs/api-markdown-documenter#getdocumentitems-function) |  | ApiItem\[\] | Walks the provided API item's member tree and reports all API items that should be rendered to their own documents. |
+|  [getFileNameForApiItem(apiItem, config, includeExtension)](docs/api-markdown-documenter#getfilenameforapiitem-function) |  | string | Gets the file name for the specified API item. |
+|  [getFilePathForApiItem(apiItem, config, includeExtension)](docs/api-markdown-documenter#getfilepathforapiitem-function) |  | string | Gets the file path for the specified API item. |
+|  [getFilteredParent(apiItem)](docs/api-markdown-documenter#getfilteredparent-function) |  | ApiItem \| undefined | Gets the "filted" parent of the provided API item. This logic specifically skips items of the following kinds:<!-- -->- EntryPoint - Skipped because any given Package item will have exactly 1 EntryPoint child, making this redundant in the hierarchy. |
+|  [getFirstAncestorWithOwnPage(apiItem, documentBoundaries)](docs/api-markdown-documenter#getfirstancestorwithownpage-function) |  | ApiItem | Gets the nearest ancestor of the provided item that will have its own rendered page. |
+|  [getHeadingForApiItem(apiItem, config, headingLevel)](docs/api-markdown-documenter#getheadingforapiitem-function) |  | [Heading](docs/api-markdown-documenter#heading-interface) | Generates a [Heading](docs/api-markdown-documenter#heading-interface) for the specified API item. |
+|  [getHeadingIdForApiItem(apiItem, config)](docs/api-markdown-documenter#getheadingidforapiitem-function) |  | string \| undefined | Generates a unique heading ID for the provided API item. |
+|  [getLinkForApiItem(apiItem, config)](docs/api-markdown-documenter#getlinkforapiitem-function) |  | [Link](docs/api-markdown-documenter#link-interface) | Creates a [Link](docs/api-markdown-documenter#link-interface) for the provided API item. |
+|  [getLinkUrlForApiItem(apiItem, config)](docs/api-markdown-documenter#getlinkurlforapiitem-function) |  | string | Creates a link URL to the specified API item. |
+|  [getQualifiedApiItemName(apiItem)](docs/api-markdown-documenter#getqualifiedapiitemname-function) |  | string | Adjusts the name of the item as needed. Accounts for method overloads by adding a suffix such as "MyClass.myMethod\_2". |
+|  [markdownDocumenterConfigurationWithDefaults(partialConfig)](docs/api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-function) |  | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
+|  [mergeSections(sections, tsdocConfiguration)](docs/api-markdown-documenter#mergesections-function) |  | DocSection |  |
+|  [renderApiPage(apiItem, config)](docs/api-markdown-documenter#renderapipage-function) |  | [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-interface) |  |
+|  [renderDocuments(partialConfig)](docs/api-markdown-documenter#renderdocuments-function) |  | [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-interface)<!-- -->\[\] | Renders the provided model and its contents to a series of [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-interface)<!-- -->s. |
+|  [renderFiles(partialConfig, outputDirectoryPath, maybeMarkdownEmitter)](docs/api-markdown-documenter#renderfiles-function) |  | Promise&lt;void&gt; | Renders the provided model and its contents, and writes each document to a file on disk. |
+|  [renderModelPage(apiModel, config)](docs/api-markdown-documenter#rendermodelpage-function) |  | [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-interface) | TODO Note: no breadcrumb |
+|  [renderPackagePage(apiPackage, config)](docs/api-markdown-documenter#renderpackagepage-function) |  | [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-interface) |  |
+|  [urlFromLink(link)](docs/api-markdown-documenter#urlfromlink-function) |  | string | Generates a complete URL for the provided [Link](docs/api-markdown-documenter#link-interface) object. |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [defaultPolicyOptions](docs/api-markdown-documenter#defaultpolicyoptions-Variable) |  | Default [PolicyOptions](docs/api-markdown-documenter#policyoptions-Interface) configuration |
-|  [defaultRenderingPolicies](docs/api-markdown-documenter#defaultrenderingpolicies-Variable) |  | TODO |
-|  [maxHeadingLevel](docs/api-markdown-documenter#maxheadinglevel-Variable) |  | Maximum heading level supported by most systems. |
+|  [defaultPolicyOptions](docs/api-markdown-documenter#defaultpolicyoptions-variable) |  | Default [PolicyOptions](docs/api-markdown-documenter#policyoptions-interface) configuration |
+|  [defaultRenderingPolicies](docs/api-markdown-documenter#defaultrenderingpolicies-variable) |  | TODO |
+|  [maxHeadingLevel](docs/api-markdown-documenter#maxheadinglevel-variable) |  | Maximum heading level supported by most systems. |
 
 ## Interface Details
 
-### EmitterOptions {#emitteroptions-Interface}
+### EmitterOptions {#emitteroptions-interface}
 
-[MarkdownEmitter](docs/api-markdown-documenter#markdownemitter-Class) options.
+[MarkdownEmitter](docs/api-markdown-documenter#markdownemitter-class) options.
 
 #### Signature
 
@@ -110,13 +110,13 @@ export interface EmitterOptions extends BaseEmitterOptions
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [contextApiItem](docs/api-markdown-documenter#emitteroptions-contextapiitem-PropertySignature) |  | ApiItem \| undefined | The root item of the documentation node tree being emitted. |
-|  [getLinkUrlApiItem](docs/api-markdown-documenter#emitteroptions-getlinkurlapiitem-PropertySignature) |  | (apiItem: ApiItem) =&gt; string \| undefined | Callback to get the link URL for the specified API item. |
-|  [headingLevel](docs/api-markdown-documenter#emitteroptions-headinglevel-PropertySignature) |  | number | Contextual heading level. Will automatically increment based on <code>Section</code> items encountered such that heading levels can be increased automatically based on content hierarchy. |
+|  [contextApiItem](docs/api-markdown-documenter#emitteroptions-contextapiitem-propertysignature) |  | ApiItem \| undefined | The root item of the documentation node tree being emitted. |
+|  [getLinkUrlApiItem](docs/api-markdown-documenter#emitteroptions-getlinkurlapiitem-propertysignature) |  | (apiItem: ApiItem) =&gt; string \| undefined | Callback to get the link URL for the specified API item. |
+|  [headingLevel](docs/api-markdown-documenter#emitteroptions-headinglevel-propertysignature) |  | number | Contextual heading level. Will automatically increment based on <code>Section</code> items encountered such that heading levels can be increased automatically based on content hierarchy. |
 
 #### Property Details
 
-##### contextApiItem {#emitteroptions-contextapiitem-PropertySignature}
+##### contextApiItem {#emitteroptions-contextapiitem-propertysignature}
 
 The root item of the documentation node tree being emitted.
 
@@ -126,7 +126,7 @@ The root item of the documentation node tree being emitted.
 contextApiItem: ApiItem | undefined;
 ```
 
-##### getLinkUrlApiItem {#emitteroptions-getlinkurlapiitem-PropertySignature}
+##### getLinkUrlApiItem {#emitteroptions-getlinkurlapiitem-propertysignature}
 
 Callback to get the link URL for the specified API item.
 
@@ -140,7 +140,7 @@ Used when resolving member links.
 getLinkUrlApiItem: (apiItem: ApiItem) => string | undefined;
 ```
 
-##### headingLevel {#emitteroptions-headinglevel-PropertySignature}
+##### headingLevel {#emitteroptions-headinglevel-propertysignature}
 
 Contextual heading level. Will automatically increment based on `Section` items encountered such that heading levels can be increased automatically based on content hierarchy.
 
@@ -154,7 +154,7 @@ When invoking the Emitter externally, this should be set to 0 to represent havin
 headingLevel?: number;
 ```
 
-### Heading {#heading-Interface}
+### Heading {#heading-interface}
 
 Represents a document heading.
 
@@ -168,13 +168,13 @@ export interface Heading
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [id](docs/api-markdown-documenter#heading-id-PropertySignature) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
-|  [level](docs/api-markdown-documenter#heading-level-PropertySignature) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
-|  [title](docs/api-markdown-documenter#heading-title-PropertySignature) |  | string | Heading text content. |
+|  [id](docs/api-markdown-documenter#heading-id-propertysignature) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
+|  [level](docs/api-markdown-documenter#heading-level-propertysignature) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
+|  [title](docs/api-markdown-documenter#heading-title-propertysignature) |  | string | Heading text content. |
 
 #### Property Details
 
-##### id {#heading-id-PropertySignature}
+##### id {#heading-id-propertysignature}
 
 Heading ID. If not specified, no explicit ID will be associated with the heading.
 
@@ -184,7 +184,7 @@ Heading ID. If not specified, no explicit ID will be associated with the heading
 id?: string;
 ```
 
-##### level {#heading-level-PropertySignature}
+##### level {#heading-level-propertysignature}
 
 Level of the heading. If not specified, it will be automatically generated based on context.
 
@@ -194,7 +194,7 @@ Level of the heading. If not specified, it will be automatically generated based
 level?: number;
 ```
 
-##### title {#heading-title-PropertySignature}
+##### title {#heading-title-propertysignature}
 
 Heading text content.
 
@@ -204,9 +204,9 @@ Heading text content.
 title: string;
 ```
 
-### Link {#link-Interface}
+### Link {#link-interface}
 
-Represents a link to some documentation element. A complete URL link can be created from its components (see [urlFromLink()](docs/api-markdown-documenter#urlfromlink-Function)<!-- -->).
+Represents a link to some documentation element. A complete URL link can be created from its components (see [urlFromLink()](docs/api-markdown-documenter#urlfromlink-function)<!-- -->).
 
 #### Signature
 
@@ -218,14 +218,14 @@ export interface Link
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [headingId](docs/api-markdown-documenter#link-headingid-PropertySignature) |  | string | Optional ID of a heading in the document being linked to. |
-|  [relativeFilePath](docs/api-markdown-documenter#link-relativefilepath-PropertySignature) |  | string | Path to the document being linked to. Relative to [Link.uriBase](docs/api-markdown-documenter#link-uribase-PropertySignature)<!-- -->. TODO: rename. |
-|  [text](docs/api-markdown-documenter#link-text-PropertySignature) |  | string | Link text to be rendered. |
-|  [uriBase](docs/api-markdown-documenter#link-uribase-PropertySignature) |  | string | URI base of the element being linked to. |
+|  [headingId](docs/api-markdown-documenter#link-headingid-propertysignature) |  | string | Optional ID of a heading in the document being linked to. |
+|  [relativeFilePath](docs/api-markdown-documenter#link-relativefilepath-propertysignature) |  | string | Path to the document being linked to. Relative to [Link.uriBase](docs/api-markdown-documenter#link-uribase-propertysignature)<!-- -->. TODO: rename. |
+|  [text](docs/api-markdown-documenter#link-text-propertysignature) |  | string | Link text to be rendered. |
+|  [uriBase](docs/api-markdown-documenter#link-uribase-propertysignature) |  | string | URI base of the element being linked to. |
 
 #### Property Details
 
-##### headingId {#link-headingid-PropertySignature}
+##### headingId {#link-headingid-propertysignature}
 
 Optional ID of a heading in the document being linked to.
 
@@ -235,9 +235,9 @@ Optional ID of a heading in the document being linked to.
 headingId?: string;
 ```
 
-##### relativeFilePath {#link-relativefilepath-PropertySignature}
+##### relativeFilePath {#link-relativefilepath-propertysignature}
 
-Path to the document being linked to. Relative to [Link.uriBase](docs/api-markdown-documenter#link-uribase-PropertySignature)<!-- -->. TODO: rename.
+Path to the document being linked to. Relative to [Link.uriBase](docs/api-markdown-documenter#link-uribase-propertysignature)<!-- -->. TODO: rename.
 
 ###### Signature
 
@@ -245,7 +245,7 @@ Path to the document being linked to. Relative to [Link.uriBase](docs/api-markdo
 relativeFilePath: string;
 ```
 
-##### text {#link-text-PropertySignature}
+##### text {#link-text-propertysignature}
 
 Link text to be rendered.
 
@@ -255,7 +255,7 @@ Link text to be rendered.
 text: string;
 ```
 
-##### uriBase {#link-uribase-PropertySignature}
+##### uriBase {#link-uribase-propertysignature}
 
 URI base of the element being linked to.
 
@@ -265,7 +265,7 @@ URI base of the element being linked to.
 uriBase: string;
 ```
 
-### MarkdownDocument {#markdowndocument-Interface}
+### MarkdownDocument {#markdowndocument-interface}
 
 Represents Markdown document contents that have not yet been written to a file.
 
@@ -279,13 +279,13 @@ export interface MarkdownDocument
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [apiItem](docs/api-markdown-documenter#markdowndocument-apiitem-PropertySignature) |  | ApiItem | The API item for which the document contents were generated. |
-|  [contents](docs/api-markdown-documenter#markdowndocument-contents-PropertySignature) |  | DocSection | Mardown document contents. |
-|  [path](docs/api-markdown-documenter#markdowndocument-path-PropertySignature) |  | string | Output path for the document to be written to. This path is relative to the base URI provided to the system. TODO: verify relative-ness |
+|  [apiItem](docs/api-markdown-documenter#markdowndocument-apiitem-propertysignature) |  | ApiItem | The API item for which the document contents were generated. |
+|  [contents](docs/api-markdown-documenter#markdowndocument-contents-propertysignature) |  | DocSection | Mardown document contents. |
+|  [path](docs/api-markdown-documenter#markdowndocument-path-propertysignature) |  | string | Output path for the document to be written to. This path is relative to the base URI provided to the system. TODO: verify relative-ness |
 
 #### Property Details
 
-##### apiItem {#markdowndocument-apiitem-PropertySignature}
+##### apiItem {#markdowndocument-apiitem-propertysignature}
 
 The API item for which the document contents were generated.
 
@@ -295,7 +295,7 @@ The API item for which the document contents were generated.
 apiItem: ApiItem;
 ```
 
-##### contents {#markdowndocument-contents-PropertySignature}
+##### contents {#markdowndocument-contents-propertysignature}
 
 Mardown document contents.
 
@@ -305,7 +305,7 @@ Mardown document contents.
 contents: DocSection;
 ```
 
-##### path {#markdowndocument-path-PropertySignature}
+##### path {#markdowndocument-path-propertysignature}
 
 Output path for the document to be written to. This path is relative to the base URI provided to the system. TODO: verify relative-ness
 
@@ -315,7 +315,7 @@ Output path for the document to be written to. This path is relative to the base
 path: string;
 ```
 
-### MarkdownDocumenterConfiguration {#markdowndocumenterconfiguration-Interface}
+### MarkdownDocumenterConfiguration {#markdowndocumenterconfiguration-interface}
 
 Configuration options for the Markdown documenter.
 
@@ -324,24 +324,24 @@ Configuration options for the Markdown documenter.
 ```typescript
 export interface MarkdownDocumenterConfiguration extends PolicyOptions, RenderingPolicies 
 ```
-<b>Extends:</b> [PolicyOptions](docs/api-markdown-documenter#policyoptions-Interface)
+<b>Extends:</b> [PolicyOptions](docs/api-markdown-documenter#policyoptions-interface)
 
-, [RenderingPolicies](docs/api-markdown-documenter#renderingpolicies-Interface)
+, [RenderingPolicies](docs/api-markdown-documenter#renderingpolicies-interface)
 
 
 #### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [apiModel](docs/api-markdown-documenter#markdowndocumenterconfiguration-apimodel-PropertySignature) |  | ApiModel | API Model for which the documentation is being generated. This is the output of [API-Extractor](https://api-extractor.com/)<!-- -->. |
-|  [newlineKind](docs/api-markdown-documenter#markdowndocumenterconfiguration-newlinekind-PropertySignature) |  | NewlineKind | Specifies what type of newlines API Documenter should use when writing output files. By default, the output files will be written with Windows-style newlines. |
-|  [tsdocConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-tsdocconfiguration-PropertySignature) |  | TSDocConfiguration | TSDoc Configuration to use when parsing source-code documentation. If not provided, a default configuration will be used. |
-|  [uriRoot](docs/api-markdown-documenter#markdowndocumenterconfiguration-uriroot-PropertySignature) |  | string | Default root uri used when generating content links. |
-|  [verbose](docs/api-markdown-documenter#markdowndocumenterconfiguration-verbose-PropertySignature) |  | boolean | Whether or not verbose logging is enabled. |
+|  [apiModel](docs/api-markdown-documenter#markdowndocumenterconfiguration-apimodel-propertysignature) |  | ApiModel | API Model for which the documentation is being generated. This is the output of [API-Extractor](https://api-extractor.com/)<!-- -->. |
+|  [newlineKind](docs/api-markdown-documenter#markdowndocumenterconfiguration-newlinekind-propertysignature) |  | NewlineKind | Specifies what type of newlines API Documenter should use when writing output files. By default, the output files will be written with Windows-style newlines. |
+|  [tsdocConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-tsdocconfiguration-propertysignature) |  | TSDocConfiguration | TSDoc Configuration to use when parsing source-code documentation. If not provided, a default configuration will be used. |
+|  [uriRoot](docs/api-markdown-documenter#markdowndocumenterconfiguration-uriroot-propertysignature) |  | string | Default root uri used when generating content links. |
+|  [verbose](docs/api-markdown-documenter#markdowndocumenterconfiguration-verbose-propertysignature) |  | boolean | Whether or not verbose logging is enabled. |
 
 #### Property Details
 
-##### apiModel {#markdowndocumenterconfiguration-apimodel-PropertySignature}
+##### apiModel {#markdowndocumenterconfiguration-apimodel-propertysignature}
 
 API Model for which the documentation is being generated. This is the output of [API-Extractor](https://api-extractor.com/)<!-- -->.
 
@@ -355,7 +355,7 @@ Beyond being the root entry for rendering, this is used to resolve member links 
 apiModel: ApiModel;
 ```
 
-##### newlineKind {#markdowndocumenterconfiguration-newlinekind-PropertySignature}
+##### newlineKind {#markdowndocumenterconfiguration-newlinekind-propertysignature}
 
 Specifies what type of newlines API Documenter should use when writing output files. By default, the output files will be written with Windows-style newlines.
 
@@ -365,7 +365,7 @@ Specifies what type of newlines API Documenter should use when writing output fi
 readonly newlineKind?: NewlineKind;
 ```
 
-##### tsdocConfiguration {#markdowndocumenterconfiguration-tsdocconfiguration-PropertySignature}
+##### tsdocConfiguration {#markdowndocumenterconfiguration-tsdocconfiguration-propertysignature}
 
 TSDoc Configuration to use when parsing source-code documentation. If not provided, a default configuration will be used.
 
@@ -375,7 +375,7 @@ TSDoc Configuration to use when parsing source-code documentation. If not provid
 readonly tsdocConfiguration?: TSDocConfiguration;
 ```
 
-##### uriRoot {#markdowndocumenterconfiguration-uriroot-PropertySignature}
+##### uriRoot {#markdowndocumenterconfiguration-uriroot-propertysignature}
 
 Default root uri used when generating content links.
 
@@ -385,7 +385,7 @@ Default root uri used when generating content links.
 readonly uriRoot: string;
 ```
 
-##### verbose {#markdowndocumenterconfiguration-verbose-PropertySignature}
+##### verbose {#markdowndocumenterconfiguration-verbose-propertysignature}
 
 Whether or not verbose logging is enabled.
 
@@ -395,7 +395,7 @@ Whether or not verbose logging is enabled.
 readonly verbose?: boolean;
 ```
 
-### PolicyOptions {#policyoptions-Interface}
+### PolicyOptions {#policyoptions-interface}
 
 Policy configuration options
 
@@ -409,20 +409,20 @@ export interface PolicyOptions
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-PropertySignature) |  | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias) | See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias)<!-- -->. |
-|  [fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-PropertySignature) |  | [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias) | See [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->. |
-|  [headingTitlePolicy](docs/api-markdown-documenter#policyoptions-headingtitlepolicy-PropertySignature) |  | [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-TypeAlias) | See [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-TypeAlias)<!-- -->. |
-|  [hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-PropertySignature) |  | [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias) | See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias)<!-- -->. |
-|  [includeBreadcrumb](docs/api-markdown-documenter#policyoptions-includebreadcrumb-PropertySignature) |  | boolean | Whether or not to include a navigation breadcrumb at the top of rendered document pages. |
-|  [includeTopLevelDocumentHeading](docs/api-markdown-documenter#policyoptions-includetopleveldocumentheading-PropertySignature) |  | boolean | Whether or not to include a top-level heading in rendered document pages. |
-|  [linkTextPolicy](docs/api-markdown-documenter#policyoptions-linktextpolicy-PropertySignature) |  | [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-TypeAlias) | See [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-TypeAlias)<!-- -->. |
-|  [uriBaseOverridePolicy](docs/api-markdown-documenter#policyoptions-uribaseoverridepolicy-PropertySignature) |  | [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-TypeAlias) | See [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-TypeAlias)<!-- -->. |
+|  [documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature) |  | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias) | See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias)<!-- -->. |
+|  [fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-propertysignature) |  | [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias) | See [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias)<!-- -->. |
+|  [headingTitlePolicy](docs/api-markdown-documenter#policyoptions-headingtitlepolicy-propertysignature) |  | [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-typealias) | See [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-typealias)<!-- -->. |
+|  [hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-propertysignature) |  | [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias) | See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias)<!-- -->. |
+|  [includeBreadcrumb](docs/api-markdown-documenter#policyoptions-includebreadcrumb-propertysignature) |  | boolean | Whether or not to include a navigation breadcrumb at the top of rendered document pages. |
+|  [includeTopLevelDocumentHeading](docs/api-markdown-documenter#policyoptions-includetopleveldocumentheading-propertysignature) |  | boolean | Whether or not to include a top-level heading in rendered document pages. |
+|  [linkTextPolicy](docs/api-markdown-documenter#policyoptions-linktextpolicy-propertysignature) |  | [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-typealias) | See [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-typealias)<!-- -->. |
+|  [uriBaseOverridePolicy](docs/api-markdown-documenter#policyoptions-uribaseoverridepolicy-propertysignature) |  | [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-typealias) | See [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-typealias)<!-- -->. |
 
 #### Property Details
 
-##### documentBoundaries {#policyoptions-documentboundaries-PropertySignature}
+##### documentBoundaries {#policyoptions-documentboundaries-propertysignature}
 
-See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias)<!-- -->.
+See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias)<!-- -->.
 
 ###### Signature
 
@@ -430,9 +430,9 @@ See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAli
 documentBoundaries?: DocumentBoundaries;
 ```
 
-##### fileNamePolicy {#policyoptions-filenamepolicy-PropertySignature}
+##### fileNamePolicy {#policyoptions-filenamepolicy-propertysignature}
 
-See [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->.
+See [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias)<!-- -->.
 
 ###### Signature
 
@@ -440,9 +440,9 @@ See [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias)<!-- 
 fileNamePolicy?: FileNamePolicy;
 ```
 
-##### headingTitlePolicy {#policyoptions-headingtitlepolicy-PropertySignature}
+##### headingTitlePolicy {#policyoptions-headingtitlepolicy-propertysignature}
 
-See [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-TypeAlias)<!-- -->.
+See [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-typealias)<!-- -->.
 
 ###### Signature
 
@@ -450,9 +450,9 @@ See [HeadingTitlePolicy](docs/api-markdown-documenter#headingtitlepolicy-TypeAli
 headingTitlePolicy?: HeadingTitlePolicy;
 ```
 
-##### hierarchyBoundaries {#policyoptions-hierarchyboundaries-PropertySignature}
+##### hierarchyBoundaries {#policyoptions-hierarchyboundaries-propertysignature}
 
-See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias)<!-- -->.
+See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias)<!-- -->.
 
 ###### Signature
 
@@ -460,7 +460,7 @@ See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeA
 hierarchyBoundaries?: HierarchyBoundaries;
 ```
 
-##### includeBreadcrumb {#policyoptions-includebreadcrumb-PropertySignature}
+##### includeBreadcrumb {#policyoptions-includebreadcrumb-propertysignature}
 
 Whether or not to include a navigation breadcrumb at the top of rendered document pages.
 
@@ -474,7 +474,7 @@ Note: `Model` items will never have a breadcrumb rendered, even if this is specf
 includeBreadcrumb?: boolean;
 ```
 
-##### includeTopLevelDocumentHeading {#policyoptions-includetopleveldocumentheading-PropertySignature}
+##### includeTopLevelDocumentHeading {#policyoptions-includetopleveldocumentheading-propertysignature}
 
 Whether or not to include a top-level heading in rendered document pages.
 
@@ -488,9 +488,9 @@ If you will be rendering the document contents into some other document content 
 includeTopLevelDocumentHeading?: boolean;
 ```
 
-##### linkTextPolicy {#policyoptions-linktextpolicy-PropertySignature}
+##### linkTextPolicy {#policyoptions-linktextpolicy-propertysignature}
 
-See [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-TypeAlias)<!-- -->.
+See [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-typealias)<!-- -->.
 
 ###### Signature
 
@@ -498,9 +498,9 @@ See [LinkTextPolicy](docs/api-markdown-documenter#linktextpolicy-TypeAlias)<!-- 
 linkTextPolicy?: LinkTextPolicy;
 ```
 
-##### uriBaseOverridePolicy {#policyoptions-uribaseoverridepolicy-PropertySignature}
+##### uriBaseOverridePolicy {#policyoptions-uribaseoverridepolicy-propertysignature}
 
-See [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-TypeAlias)<!-- -->.
+See [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-typealias)<!-- -->.
 
 ###### Signature
 
@@ -508,7 +508,7 @@ See [UriBaseOverridePolicy](docs/api-markdown-documenter#uribaseoverridepolicy-T
 uriBaseOverridePolicy?: UriBaseOverridePolicy;
 ```
 
-### RenderingPolicies {#renderingpolicies-Interface}
+### RenderingPolicies {#renderingpolicies-interface}
 
 TODO
 
@@ -522,26 +522,26 @@ export interface RenderingPolicies
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [renderCallSignatureSection](docs/api-markdown-documenter#renderingpolicies-rendercallsignaturesection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiCallSignature&gt; |  |
-|  [renderClassSection](docs/api-markdown-documenter#renderingpolicies-renderclasssection-PropertySignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiClass&gt; |  |
-|  [renderConstructorSection](docs/api-markdown-documenter#renderingpolicies-renderconstructorsection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiConstructSignature \| ApiConstructor&gt; |  |
-|  [renderEnumMemberSection](docs/api-markdown-documenter#renderingpolicies-renderenummembersection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiEnumMember&gt; |  |
-|  [renderEnumSection](docs/api-markdown-documenter#renderingpolicies-renderenumsection-PropertySignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiEnum&gt; |  |
-|  [renderFunctionSection](docs/api-markdown-documenter#renderingpolicies-renderfunctionsection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiFunction&gt; |  |
-|  [renderIndexSignatureSection](docs/api-markdown-documenter#renderingpolicies-renderindexsignaturesection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiIndexSignature&gt; |  |
-|  [renderInterfaceSection](docs/api-markdown-documenter#renderingpolicies-renderinterfacesection-PropertySignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiInterface&gt; |  |
-|  [renderMethodSection](docs/api-markdown-documenter#renderingpolicies-rendermethodsection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiMethod \| ApiMethodSignature&gt; |  |
-|  [renderModelSection](docs/api-markdown-documenter#renderingpolicies-rendermodelsection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiModel&gt; | Policy for rendering a section describing a <code>Model</code>. |
-|  [renderNamespaceSection](docs/api-markdown-documenter#renderingpolicies-rendernamespacesection-PropertySignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiNamespace&gt; |  |
-|  [renderPackageSection](docs/api-markdown-documenter#renderingpolicies-renderpackagesection-PropertySignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-TypeAlias)<!-- -->&lt;ApiPackage&gt; |  |
-|  [renderPropertySection](docs/api-markdown-documenter#renderingpolicies-renderpropertysection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiPropertyItem&gt; |  |
-|  [renderSectionBlock](docs/api-markdown-documenter#renderingpolicies-rendersectionblock-PropertySignature) |  | [RenderSectionBlock](docs/api-markdown-documenter#rendersectionblock-TypeAlias) |  |
-|  [renderTypeAliasSection](docs/api-markdown-documenter#renderingpolicies-rendertypealiassection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiTypeAlias&gt; |  |
-|  [renderVariableSection](docs/api-markdown-documenter#renderingpolicies-rendervariablesection-PropertySignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias)<!-- -->&lt;ApiVariable&gt; |  |
+|  [renderCallSignatureSection](docs/api-markdown-documenter#renderingpolicies-rendercallsignaturesection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiCallSignature&gt; |  |
+|  [renderClassSection](docs/api-markdown-documenter#renderingpolicies-renderclasssection-propertysignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiClass&gt; |  |
+|  [renderConstructorSection](docs/api-markdown-documenter#renderingpolicies-renderconstructorsection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiConstructSignature \| ApiConstructor&gt; |  |
+|  [renderEnumMemberSection](docs/api-markdown-documenter#renderingpolicies-renderenummembersection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiEnumMember&gt; |  |
+|  [renderEnumSection](docs/api-markdown-documenter#renderingpolicies-renderenumsection-propertysignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiEnum&gt; |  |
+|  [renderFunctionSection](docs/api-markdown-documenter#renderingpolicies-renderfunctionsection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiFunction&gt; |  |
+|  [renderIndexSignatureSection](docs/api-markdown-documenter#renderingpolicies-renderindexsignaturesection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiIndexSignature&gt; |  |
+|  [renderInterfaceSection](docs/api-markdown-documenter#renderingpolicies-renderinterfacesection-propertysignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiInterface&gt; |  |
+|  [renderMethodSection](docs/api-markdown-documenter#renderingpolicies-rendermethodsection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiMethod \| ApiMethodSignature&gt; |  |
+|  [renderModelSection](docs/api-markdown-documenter#renderingpolicies-rendermodelsection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiModel&gt; | Policy for rendering a section describing a <code>Model</code>. |
+|  [renderNamespaceSection](docs/api-markdown-documenter#renderingpolicies-rendernamespacesection-propertysignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiNamespace&gt; |  |
+|  [renderPackageSection](docs/api-markdown-documenter#renderingpolicies-renderpackagesection-propertysignature) |  | [RenderApiItemWithChildren](docs/api-markdown-documenter#renderapiitemwithchildren-typealias)<!-- -->&lt;ApiPackage&gt; |  |
+|  [renderPropertySection](docs/api-markdown-documenter#renderingpolicies-renderpropertysection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiPropertyItem&gt; |  |
+|  [renderSectionBlock](docs/api-markdown-documenter#renderingpolicies-rendersectionblock-propertysignature) |  | [RenderSectionBlock](docs/api-markdown-documenter#rendersectionblock-typealias) |  |
+|  [renderTypeAliasSection](docs/api-markdown-documenter#renderingpolicies-rendertypealiassection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiTypeAlias&gt; |  |
+|  [renderVariableSection](docs/api-markdown-documenter#renderingpolicies-rendervariablesection-propertysignature) |  | [RenderApiItemWithoutChildren](docs/api-markdown-documenter#renderapiitemwithoutchildren-typealias)<!-- -->&lt;ApiVariable&gt; |  |
 
 #### Property Details
 
-##### renderCallSignatureSection {#renderingpolicies-rendercallsignaturesection-PropertySignature}
+##### renderCallSignatureSection {#renderingpolicies-rendercallsignaturesection-propertysignature}
 
 ###### Signature
 
@@ -549,7 +549,7 @@ export interface RenderingPolicies
 renderCallSignatureSection?: RenderApiItemWithoutChildren<ApiCallSignature>;
 ```
 
-##### renderClassSection {#renderingpolicies-renderclasssection-PropertySignature}
+##### renderClassSection {#renderingpolicies-renderclasssection-propertysignature}
 
 ###### Signature
 
@@ -557,7 +557,7 @@ renderCallSignatureSection?: RenderApiItemWithoutChildren<ApiCallSignature>;
 renderClassSection?: RenderApiItemWithChildren<ApiClass>;
 ```
 
-##### renderConstructorSection {#renderingpolicies-renderconstructorsection-PropertySignature}
+##### renderConstructorSection {#renderingpolicies-renderconstructorsection-propertysignature}
 
 ###### Signature
 
@@ -565,7 +565,7 @@ renderClassSection?: RenderApiItemWithChildren<ApiClass>;
 renderConstructorSection?: RenderApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
 ```
 
-##### renderEnumMemberSection {#renderingpolicies-renderenummembersection-PropertySignature}
+##### renderEnumMemberSection {#renderingpolicies-renderenummembersection-propertysignature}
 
 ###### Signature
 
@@ -573,7 +573,7 @@ renderConstructorSection?: RenderApiItemWithoutChildren<ApiConstructSignature | 
 renderEnumMemberSection?: RenderApiItemWithoutChildren<ApiEnumMember>;
 ```
 
-##### renderEnumSection {#renderingpolicies-renderenumsection-PropertySignature}
+##### renderEnumSection {#renderingpolicies-renderenumsection-propertysignature}
 
 ###### Signature
 
@@ -581,7 +581,7 @@ renderEnumMemberSection?: RenderApiItemWithoutChildren<ApiEnumMember>;
 renderEnumSection?: RenderApiItemWithChildren<ApiEnum>;
 ```
 
-##### renderFunctionSection {#renderingpolicies-renderfunctionsection-PropertySignature}
+##### renderFunctionSection {#renderingpolicies-renderfunctionsection-propertysignature}
 
 ###### Signature
 
@@ -589,7 +589,7 @@ renderEnumSection?: RenderApiItemWithChildren<ApiEnum>;
 renderFunctionSection?: RenderApiItemWithoutChildren<ApiFunction>;
 ```
 
-##### renderIndexSignatureSection {#renderingpolicies-renderindexsignaturesection-PropertySignature}
+##### renderIndexSignatureSection {#renderingpolicies-renderindexsignaturesection-propertysignature}
 
 ###### Signature
 
@@ -597,7 +597,7 @@ renderFunctionSection?: RenderApiItemWithoutChildren<ApiFunction>;
 renderIndexSignatureSection?: RenderApiItemWithoutChildren<ApiIndexSignature>;
 ```
 
-##### renderInterfaceSection {#renderingpolicies-renderinterfacesection-PropertySignature}
+##### renderInterfaceSection {#renderingpolicies-renderinterfacesection-propertysignature}
 
 ###### Signature
 
@@ -605,7 +605,7 @@ renderIndexSignatureSection?: RenderApiItemWithoutChildren<ApiIndexSignature>;
 renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
 ```
 
-##### renderMethodSection {#renderingpolicies-rendermethodsection-PropertySignature}
+##### renderMethodSection {#renderingpolicies-rendermethodsection-propertysignature}
 
 ###### Signature
 
@@ -613,7 +613,7 @@ renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
 renderMethodSection?: RenderApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
 ```
 
-##### renderModelSection {#renderingpolicies-rendermodelsection-PropertySignature}
+##### renderModelSection {#renderingpolicies-rendermodelsection-propertysignature}
 
 Policy for rendering a section describing a `Model`<!-- -->.
 
@@ -623,7 +623,7 @@ Policy for rendering a section describing a `Model`<!-- -->.
 renderModelSection?: RenderApiItemWithoutChildren<ApiModel>;
 ```
 
-##### renderNamespaceSection {#renderingpolicies-rendernamespacesection-PropertySignature}
+##### renderNamespaceSection {#renderingpolicies-rendernamespacesection-propertysignature}
 
 ###### Signature
 
@@ -631,7 +631,7 @@ renderModelSection?: RenderApiItemWithoutChildren<ApiModel>;
 renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
 ```
 
-##### renderPackageSection {#renderingpolicies-renderpackagesection-PropertySignature}
+##### renderPackageSection {#renderingpolicies-renderpackagesection-propertysignature}
 
 ###### Signature
 
@@ -639,7 +639,7 @@ renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
 renderPackageSection?: RenderApiItemWithChildren<ApiPackage>;
 ```
 
-##### renderPropertySection {#renderingpolicies-renderpropertysection-PropertySignature}
+##### renderPropertySection {#renderingpolicies-renderpropertysection-propertysignature}
 
 ###### Signature
 
@@ -647,7 +647,7 @@ renderPackageSection?: RenderApiItemWithChildren<ApiPackage>;
 renderPropertySection?: RenderApiItemWithoutChildren<ApiPropertyItem>;
 ```
 
-##### renderSectionBlock {#renderingpolicies-rendersectionblock-PropertySignature}
+##### renderSectionBlock {#renderingpolicies-rendersectionblock-propertysignature}
 
 ###### Signature
 
@@ -655,7 +655,7 @@ renderPropertySection?: RenderApiItemWithoutChildren<ApiPropertyItem>;
 renderSectionBlock?: RenderSectionBlock;
 ```
 
-##### renderTypeAliasSection {#renderingpolicies-rendertypealiassection-PropertySignature}
+##### renderTypeAliasSection {#renderingpolicies-rendertypealiassection-propertysignature}
 
 ###### Signature
 
@@ -663,7 +663,7 @@ renderSectionBlock?: RenderSectionBlock;
 renderTypeAliasSection?: RenderApiItemWithoutChildren<ApiTypeAlias>;
 ```
 
-##### renderVariableSection {#renderingpolicies-rendervariablesection-PropertySignature}
+##### renderVariableSection {#renderingpolicies-rendervariablesection-propertysignature}
 
 ###### Signature
 
@@ -673,7 +673,7 @@ renderVariableSection?: RenderApiItemWithoutChildren<ApiVariable>;
 
 ## Classe Details
 
-### DocHeading {#docheading-Class}
+### DocHeading {#docheading-class}
 
 Represents a section header similar to an HTML `<h1>` or `<h2>` element.
 
@@ -689,20 +689,20 @@ export declare class DocHeading extends DocNode
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(parameters)](docs/api-markdown-documenter#docheading-_constructor_-Constructor) |  |  | Constructs a new instance of the <code>DocHeading</code> class |
+|  [(constructor)(parameters)](docs/api-markdown-documenter#docheading-_constructor_-constructor) |  |  | Constructs a new instance of the <code>DocHeading</code> class |
 
 #### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [id](docs/api-markdown-documenter#docheading-id-Property) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
-|  [kind](docs/api-markdown-documenter#docheading-kind-Property) |  | string |  |
-|  [level](docs/api-markdown-documenter#docheading-level-Property) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
-|  [title](docs/api-markdown-documenter#docheading-title-Property) |  | string | Heading text content. |
+|  [id](docs/api-markdown-documenter#docheading-id-property) |  | string | Heading ID. If not specified, no explicit ID will be associated with the heading. |
+|  [kind](docs/api-markdown-documenter#docheading-kind-property) |  | string |  |
+|  [level](docs/api-markdown-documenter#docheading-level-property) |  | number | Level of the heading. If not specified, it will be automatically generated based on context. |
+|  [title](docs/api-markdown-documenter#docheading-title-property) |  | string | Heading text content. |
 
 #### Constructor Details
 
-##### (constructor) {#docheading-_constructor_-Constructor}
+##### (constructor) {#docheading-_constructor_-constructor}
 
 Constructs a new instance of the `DocHeading` class
 
@@ -716,11 +716,11 @@ constructor(parameters: IDocHeadingParameters);
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  parameters | [IDocHeadingParameters](docs/api-markdown-documenter#idocheadingparameters-TypeAlias) |  |
+|  parameters | [IDocHeadingParameters](docs/api-markdown-documenter#idocheadingparameters-typealias) |  |
 
 #### Property Details
 
-##### id {#docheading-id-Property}
+##### id {#docheading-id-property}
 
 Heading ID. If not specified, no explicit ID will be associated with the heading.
 
@@ -730,7 +730,7 @@ Heading ID. If not specified, no explicit ID will be associated with the heading
 readonly id?: string;
 ```
 
-##### kind {#docheading-kind-Property}
+##### kind {#docheading-kind-property}
 
 
 ###### Signature
@@ -740,7 +740,7 @@ readonly id?: string;
 get kind(): string;
 ```
 
-##### level {#docheading-level-Property}
+##### level {#docheading-level-property}
 
 Level of the heading. If not specified, it will be automatically generated based on context.
 
@@ -750,7 +750,7 @@ Level of the heading. If not specified, it will be automatically generated based
 readonly level?: number;
 ```
 
-##### title {#docheading-title-Property}
+##### title {#docheading-title-property}
 
 Heading text content.
 
@@ -760,7 +760,7 @@ Heading text content.
 readonly title: string;
 ```
 
-### MarkdownEmitter {#markdownemitter-Class}
+### MarkdownEmitter {#markdownemitter-class}
 
 Markdown documentation emitter. Processes an input tree of documentation related to an API model, and generates Markdown content from it.
 
@@ -776,29 +776,29 @@ export declare class MarkdownEmitter extends BaseMarkdownEmitter
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(apiModel)](docs/api-markdown-documenter#markdownemitter-_constructor_-Constructor) |  |  | Constructs a new instance of the <code>MarkdownEmitter</code> class |
+|  [(constructor)(apiModel)](docs/api-markdown-documenter#markdownemitter-_constructor_-constructor) |  |  | Constructs a new instance of the <code>MarkdownEmitter</code> class |
 
 #### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [apiModel](docs/api-markdown-documenter#markdownemitter-apimodel-Property) |  | ApiModel |  |
+|  [apiModel](docs/api-markdown-documenter#markdownemitter-apimodel-property) |  | ApiModel |  |
 
 #### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [emit(stringBuilder, docNode, options)](docs/api-markdown-documenter#markdownemitter-emit-Method) |  | string |  |
-|  [writeEmphasisSpan(docEmphasisSpan, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writeemphasisspan-Method) |  | void |  |
-|  [writeHeading(docHeading, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writeheading-Method) |  | void |  |
-|  [writeLinkTagWithCodeDestination(docLinkTag, context)](docs/api-markdown-documenter#markdownemitter-writelinktagwithcodedestination-Method) |  | void |  |
-|  [writeNode(docNode, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writenode-Method) |  | void |  |
-|  [writeNoteBox(docNoteBox, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writenotebox-Method) |  | void |  |
-|  [writeTable(docTable, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writetable-Method) |  | void |  |
+|  [emit(stringBuilder, docNode, options)](docs/api-markdown-documenter#markdownemitter-emit-method) |  | string |  |
+|  [writeEmphasisSpan(docEmphasisSpan, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writeemphasisspan-method) |  | void |  |
+|  [writeHeading(docHeading, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writeheading-method) |  | void |  |
+|  [writeLinkTagWithCodeDestination(docLinkTag, context)](docs/api-markdown-documenter#markdownemitter-writelinktagwithcodedestination-method) |  | void |  |
+|  [writeNode(docNode, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writenode-method) |  | void |  |
+|  [writeNoteBox(docNoteBox, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writenotebox-method) |  | void |  |
+|  [writeTable(docTable, context, docNodeSiblings)](docs/api-markdown-documenter#markdownemitter-writetable-method) |  | void |  |
 
 #### Constructor Details
 
-##### (constructor) {#markdownemitter-_constructor_-Constructor}
+##### (constructor) {#markdownemitter-_constructor_-constructor}
 
 Constructs a new instance of the `MarkdownEmitter` class
 
@@ -816,7 +816,7 @@ constructor(apiModel: ApiModel);
 
 #### Property Details
 
-##### apiModel {#markdownemitter-apimodel-Property}
+##### apiModel {#markdownemitter-apimodel-property}
 
 ###### Signature
 
@@ -826,7 +826,7 @@ protected readonly apiModel: ApiModel;
 
 #### Method Details
 
-##### emit {#markdownemitter-emit-Method}
+##### emit {#markdownemitter-emit-method}
 
 
 ###### Signature
@@ -842,9 +842,9 @@ emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): s
 |  --- | --- | --- |
 |  stringBuilder | StringBuilder |  |
 |  docNode | DocNode |  |
-|  options | [EmitterOptions](docs/api-markdown-documenter#emitteroptions-Interface) |  |
+|  options | [EmitterOptions](docs/api-markdown-documenter#emitteroptions-interface) |  |
 
-##### writeEmphasisSpan {#markdownemitter-writeemphasisspan-Method}
+##### writeEmphasisSpan {#markdownemitter-writeemphasisspan-method}
 
 
 ###### Signature
@@ -859,10 +859,10 @@ protected writeEmphasisSpan(docEmphasisSpan: DocEmphasisSpan, context: EmitterCo
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docEmphasisSpan | DocEmphasisSpan |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-typealias) |  |
 |  docNodeSiblings | boolean |  |
 
-##### writeHeading {#markdownemitter-writeheading-Method}
+##### writeHeading {#markdownemitter-writeheading-method}
 
 
 ###### Signature
@@ -876,11 +876,11 @@ protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeS
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  docHeading | [DocHeading](docs/api-markdown-documenter#docheading-Class) |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  docHeading | [DocHeading](docs/api-markdown-documenter#docheading-class) |  |
+|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-typealias) |  |
 |  docNodeSiblings | boolean |  |
 
-##### writeLinkTagWithCodeDestination {#markdownemitter-writelinktagwithcodedestination-Method}
+##### writeLinkTagWithCodeDestination {#markdownemitter-writelinktagwithcodedestination-method}
 
 
 ###### Signature
@@ -895,9 +895,9 @@ protected writeLinkTagWithCodeDestination(docLinkTag: DocLinkTag, context: Emitt
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docLinkTag | DocLinkTag |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-typealias) |  |
 
-##### writeNode {#markdownemitter-writenode-Method}
+##### writeNode {#markdownemitter-writenode-method}
 
 
 ###### Signature
@@ -912,10 +912,10 @@ protected writeNode(docNode: DocNode, context: EmitterContext, docNodeSiblings: 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docNode | DocNode |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-typealias) |  |
 |  docNodeSiblings | boolean |  |
 
-##### writeNoteBox {#markdownemitter-writenotebox-Method}
+##### writeNoteBox {#markdownemitter-writenotebox-method}
 
 
 ###### Signature
@@ -930,10 +930,10 @@ protected writeNoteBox(docNoteBox: DocNoteBox, context: EmitterContext, docNodeS
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docNoteBox | DocNoteBox |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-typealias) |  |
 |  docNodeSiblings | boolean |  |
 
-##### writeTable {#markdownemitter-writetable-Method}
+##### writeTable {#markdownemitter-writetable-method}
 
 
 ###### Signature
@@ -948,12 +948,12 @@ protected writeTable(docTable: DocTable, context: EmitterContext, docNodeSibling
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  docTable | DocTable |  |
-|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-TypeAlias) |  |
+|  context | [EmitterContext](docs/api-markdown-documenter#emittercontext-typealias) |  |
 |  docNodeSiblings | boolean |  |
 
 ## Namespace Details
 
-### DefaultPolicies {#defaultpolicies-Namespace}
+### DefaultPolicies {#defaultpolicies-namespace}
 
 #### Signature
 
@@ -965,23 +965,23 @@ export declare namespace DefaultPolicies
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [defaultFileNamePolicy(apiItem)](docs/api-markdown-documenter#defaultpolicies-defaultfilenamepolicy-Function) |  | string | Default [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-PropertySignature)<!-- -->.<!-- -->Uses a cleaned-up version of the item's <code>displayName</code>, except for the following types:<!-- -->- Model: Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root. - Package: uses only the unscoped portion of the package name is used. |
-|  [defaultHeadingTitlePolicy(apiItem)](docs/api-markdown-documenter#defaultpolicies-defaultheadingtitlepolicy-Function) |  | string | Default [PolicyOptions.headingTitlePolicy](docs/api-markdown-documenter#policyoptions-headingtitlepolicy-PropertySignature)<!-- -->.<!-- -->Uses the item's <code>displayName</code>, except for <code>Model</code> items, in which case the text "API Overview" is displayed. |
-|  [defaultLinkTextPolicy(apiItem)](docs/api-markdown-documenter#defaultpolicies-defaultlinktextpolicy-Function) |  | string | Default [PolicyOptions.linkTextPolicy](docs/api-markdown-documenter#policyoptions-linktextpolicy-PropertySignature)<!-- -->.<!-- -->Always uses the item's <code>displayName</code>. |
-|  [defaultUriBaseOverridePolicy()](docs/api-markdown-documenter#defaultpolicies-defaulturibaseoverridepolicy-Function) |  | string \| undefined | Default [PolicyOptions.uriBaseOverridePolicy](docs/api-markdown-documenter#policyoptions-uribaseoverridepolicy-PropertySignature)<!-- -->.<!-- -->Always uses default URI base. |
+|  [defaultFileNamePolicy(apiItem)](docs/api-markdown-documenter#defaultpolicies-defaultfilenamepolicy-function) |  | string | Default [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-propertysignature)<!-- -->.<!-- -->Uses a cleaned-up version of the item's <code>displayName</code>, except for the following types:<!-- -->- Model: Returns "index" for Model items, as the hierarchy enforces there is only a single Model at the root. - Package: uses only the unscoped portion of the package name is used. |
+|  [defaultHeadingTitlePolicy(apiItem)](docs/api-markdown-documenter#defaultpolicies-defaultheadingtitlepolicy-function) |  | string | Default [PolicyOptions.headingTitlePolicy](docs/api-markdown-documenter#policyoptions-headingtitlepolicy-propertysignature)<!-- -->.<!-- -->Uses the item's <code>displayName</code>, except for <code>Model</code> items, in which case the text "API Overview" is displayed. |
+|  [defaultLinkTextPolicy(apiItem)](docs/api-markdown-documenter#defaultpolicies-defaultlinktextpolicy-function) |  | string | Default [PolicyOptions.linkTextPolicy](docs/api-markdown-documenter#policyoptions-linktextpolicy-propertysignature)<!-- -->.<!-- -->Always uses the item's <code>displayName</code>. |
+|  [defaultUriBaseOverridePolicy()](docs/api-markdown-documenter#defaultpolicies-defaulturibaseoverridepolicy-function) |  | string \| undefined | Default [PolicyOptions.uriBaseOverridePolicy](docs/api-markdown-documenter#policyoptions-uribaseoverridepolicy-propertysignature)<!-- -->.<!-- -->Always uses default URI base. |
 
 #### Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [defaultDocumentBoundaries](docs/api-markdown-documenter#defaultpolicies-defaultdocumentboundaries-Variable) |  | Default [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-PropertySignature)<!-- -->.<!-- -->Generates separate documents for the following types:<!-- -->- Model\* - Package\* - Class - Interface - Namespace |
-|  [defaultHierarchyBoundaries](docs/api-markdown-documenter#defaultpolicies-defaulthierarchyboundaries-Variable) |  | Default [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-PropertySignature)<!-- -->.<!-- -->Creates sub-directories for the following types:<!-- -->- Package\* - Namespace |
+|  [defaultDocumentBoundaries](docs/api-markdown-documenter#defaultpolicies-defaultdocumentboundaries-variable) |  | Default [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature)<!-- -->.<!-- -->Generates separate documents for the following types:<!-- -->- Model\* - Package\* - Class - Interface - Namespace |
+|  [defaultHierarchyBoundaries](docs/api-markdown-documenter#defaultpolicies-defaulthierarchyboundaries-variable) |  | Default [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-propertysignature)<!-- -->.<!-- -->Creates sub-directories for the following types:<!-- -->- Package\* - Namespace |
 
 #### Function Details
 
-##### defaultFileNamePolicy {#defaultpolicies-defaultfilenamepolicy-Function}
+##### defaultFileNamePolicy {#defaultpolicies-defaultfilenamepolicy-function}
 
-Default [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-PropertySignature)<!-- -->.
+Default [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-propertysignature)<!-- -->.
 
 Uses a cleaned-up version of the item's `displayName`<!-- -->, except for the following types:
 
@@ -999,9 +999,9 @@ function defaultFileNamePolicy(apiItem: ApiItem): string;
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-##### defaultHeadingTitlePolicy {#defaultpolicies-defaultheadingtitlepolicy-Function}
+##### defaultHeadingTitlePolicy {#defaultpolicies-defaultheadingtitlepolicy-function}
 
-Default [PolicyOptions.headingTitlePolicy](docs/api-markdown-documenter#policyoptions-headingtitlepolicy-PropertySignature)<!-- -->.
+Default [PolicyOptions.headingTitlePolicy](docs/api-markdown-documenter#policyoptions-headingtitlepolicy-propertysignature)<!-- -->.
 
 Uses the item's `displayName`<!-- -->, except for `Model` items, in which case the text "API Overview" is displayed.
 
@@ -1017,9 +1017,9 @@ function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-##### defaultLinkTextPolicy {#defaultpolicies-defaultlinktextpolicy-Function}
+##### defaultLinkTextPolicy {#defaultpolicies-defaultlinktextpolicy-function}
 
-Default [PolicyOptions.linkTextPolicy](docs/api-markdown-documenter#policyoptions-linktextpolicy-PropertySignature)<!-- -->.
+Default [PolicyOptions.linkTextPolicy](docs/api-markdown-documenter#policyoptions-linktextpolicy-propertysignature)<!-- -->.
 
 Always uses the item's `displayName`<!-- -->.
 
@@ -1035,9 +1035,9 @@ function defaultLinkTextPolicy(apiItem: ApiItem): string;
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-##### defaultUriBaseOverridePolicy {#defaultpolicies-defaulturibaseoverridepolicy-Function}
+##### defaultUriBaseOverridePolicy {#defaultpolicies-defaulturibaseoverridepolicy-function}
 
-Default [PolicyOptions.uriBaseOverridePolicy](docs/api-markdown-documenter#policyoptions-uribaseoverridepolicy-PropertySignature)<!-- -->.
+Default [PolicyOptions.uriBaseOverridePolicy](docs/api-markdown-documenter#policyoptions-uribaseoverridepolicy-propertysignature)<!-- -->.
 
 Always uses default URI base.
 
@@ -1049,9 +1049,9 @@ function defaultUriBaseOverridePolicy(): string | undefined;
 
 #### Variable Details
 
-##### defaultDocumentBoundaries {#defaultpolicies-defaultdocumentboundaries-Variable}
+##### defaultDocumentBoundaries {#defaultpolicies-defaultdocumentboundaries-variable}
 
-Default [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-PropertySignature)<!-- -->.
+Default [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature)<!-- -->.
 
 Generates separate documents for the following types:
 
@@ -1063,9 +1063,9 @@ Generates separate documents for the following types:
 defaultDocumentBoundaries: ApiItemKind[]
 ```
 
-##### defaultHierarchyBoundaries {#defaultpolicies-defaulthierarchyboundaries-Variable}
+##### defaultHierarchyBoundaries {#defaultpolicies-defaulthierarchyboundaries-variable}
 
-Default [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-PropertySignature)<!-- -->.
+Default [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-propertysignature)<!-- -->.
 
 Creates sub-directories for the following types:
 
@@ -1077,7 +1077,7 @@ Creates sub-directories for the following types:
 defaultHierarchyBoundaries: ApiItemKind[]
 ```
 
-### DefaultRenderingPolicies {#defaultrenderingpolicies-Namespace}
+### DefaultRenderingPolicies {#defaultrenderingpolicies-namespace}
 
 #### Signature
 
@@ -1085,20 +1085,20 @@ defaultHierarchyBoundaries: ApiItemKind[]
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [renderClassSection(apiClass, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-renderclasssection-Function) |  | DocSection |  |
-|  [renderEnumSection(apiEnum, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-renderenumsection-Function) |  | DocSection |  |
-|  [renderFunctionLikeSection(apiFunctionLike, config)](docs/api-markdown-documenter#defaultrenderingpolicies-renderfunctionlikesection-Function) |  | DocSection |  |
-|  [renderInterfaceSection(apiInterface, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-renderinterfacesection-Function) |  | DocSection |  |
-|  [renderItemWithoutChildren(apiItem, config)](docs/api-markdown-documenter#defaultrenderingpolicies-renderitemwithoutchildren-Function) |  | DocSection |  |
-|  [renderModelSection(apiModel, config)](docs/api-markdown-documenter#defaultrenderingpolicies-rendermodelsection-Function) |  | DocSection |  |
-|  [renderModuleLikeSection(apiItem, childItems, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-rendermodulelikesection-Function) |  | DocSection |  |
-|  [renderNamespaceSection(apiNamespace, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-rendernamespacesection-Function) |  | DocSection |  |
-|  [renderPackageSection(apiPackage, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-renderpackagesection-Function) |  | DocSection |  |
-|  [renderSectionBlock(apiItem, innerSectionBody, config)](docs/api-markdown-documenter#defaultrenderingpolicies-rendersectionblock-Function) |  | DocSection | Default rendering format for API item sections. Wraps the item-kind-specific details in the following manner:<!-- -->1. Heading (if not the document-root item) 1. Beta warning (if item annotated with <code>@beta</code>) 1. Deprecation notice (if any) 1. Summary (if any) 1. Remarks (if any) 1. Examples (if any) 1. Item Signature 1. <code>innerSectionBody</code> |
+|  [renderClassSection(apiClass, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-renderclasssection-function) |  | DocSection |  |
+|  [renderEnumSection(apiEnum, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-renderenumsection-function) |  | DocSection |  |
+|  [renderFunctionLikeSection(apiFunctionLike, config)](docs/api-markdown-documenter#defaultrenderingpolicies-renderfunctionlikesection-function) |  | DocSection |  |
+|  [renderInterfaceSection(apiInterface, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-renderinterfacesection-function) |  | DocSection |  |
+|  [renderItemWithoutChildren(apiItem, config)](docs/api-markdown-documenter#defaultrenderingpolicies-renderitemwithoutchildren-function) |  | DocSection |  |
+|  [renderModelSection(apiModel, config)](docs/api-markdown-documenter#defaultrenderingpolicies-rendermodelsection-function) |  | DocSection |  |
+|  [renderModuleLikeSection(apiItem, childItems, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-rendermodulelikesection-function) |  | DocSection |  |
+|  [renderNamespaceSection(apiNamespace, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-rendernamespacesection-function) |  | DocSection |  |
+|  [renderPackageSection(apiPackage, config, renderChild)](docs/api-markdown-documenter#defaultrenderingpolicies-renderpackagesection-function) |  | DocSection |  |
+|  [renderSectionBlock(apiItem, innerSectionBody, config)](docs/api-markdown-documenter#defaultrenderingpolicies-rendersectionblock-function) |  | DocSection | Default rendering format for API item sections. Wraps the item-kind-specific details in the following manner:<!-- -->1. Heading (if not the document-root item) 1. Beta warning (if item annotated with <code>@beta</code>) 1. Deprecation notice (if any) 1. Summary (if any) 1. Remarks (if any) 1. Examples (if any) 1. Item Signature 1. <code>innerSectionBody</code> |
 
 #### Function Details
 
-##### renderClassSection {#defaultrenderingpolicies-renderclasssection-Function}
+##### renderClassSection {#defaultrenderingpolicies-renderclasssection-function}
 
 ###### Signature
 
@@ -1111,10 +1111,10 @@ export declare function renderClassSection(apiClass: ApiClass, config: Required<
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiClass | ApiClass |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
-##### renderEnumSection {#defaultrenderingpolicies-renderenumsection-Function}
+##### renderEnumSection {#defaultrenderingpolicies-renderenumsection-function}
 
 ###### Signature
 
@@ -1127,10 +1127,10 @@ export declare function renderEnumSection(apiEnum: ApiEnum, config: Required<Mar
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiEnum | ApiEnum |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
-##### renderFunctionLikeSection {#defaultrenderingpolicies-renderfunctionlikesection-Function}
+##### renderFunctionLikeSection {#defaultrenderingpolicies-renderfunctionlikesection-function}
 
 ###### Signature
 
@@ -1142,10 +1142,10 @@ export declare function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLi
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiFunctionLike | [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-TypeAlias) |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  apiFunctionLike | [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-typealias) |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderInterfaceSection {#defaultrenderingpolicies-renderinterfacesection-Function}
+##### renderInterfaceSection {#defaultrenderingpolicies-renderinterfacesection-function}
 
 ###### Signature
 
@@ -1158,10 +1158,10 @@ export declare function renderInterfaceSection(apiInterface: ApiInterface, confi
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiInterface | ApiInterface |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
-##### renderItemWithoutChildren {#defaultrenderingpolicies-renderitemwithoutchildren-Function}
+##### renderItemWithoutChildren {#defaultrenderingpolicies-renderitemwithoutchildren-function}
 
 ###### Signature
 
@@ -1174,9 +1174,9 @@ export declare function renderItemWithoutChildren(apiItem: ApiItem, config: Requ
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderModelSection {#defaultrenderingpolicies-rendermodelsection-Function}
+##### renderModelSection {#defaultrenderingpolicies-rendermodelsection-function}
 
 ###### Signature
 
@@ -1189,9 +1189,9 @@ export declare function renderModelSection(apiModel: ApiModel, config: Required<
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiModel | ApiModel |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderModuleLikeSection {#defaultrenderingpolicies-rendermodulelikesection-Function}
+##### renderModuleLikeSection {#defaultrenderingpolicies-rendermodulelikesection-function}
 
 ###### Signature
 
@@ -1203,12 +1203,12 @@ export declare function renderModuleLikeSection(apiItem: ApiModuleLike, childIte
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiItem | [ApiModuleLike](docs/api-markdown-documenter#apimodulelike-TypeAlias) |  |
+|  apiItem | [ApiModuleLike](docs/api-markdown-documenter#apimodulelike-typealias) |  |
 |  childItems | readonly ApiItem\[\] |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
-##### renderNamespaceSection {#defaultrenderingpolicies-rendernamespacesection-Function}
+##### renderNamespaceSection {#defaultrenderingpolicies-rendernamespacesection-function}
 
 ###### Signature
 
@@ -1221,10 +1221,10 @@ export declare function renderNamespaceSection(apiNamespace: ApiNamespace, confi
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiNamespace | ApiNamespace |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
-##### renderPackageSection {#defaultrenderingpolicies-renderpackagesection-Function}
+##### renderPackageSection {#defaultrenderingpolicies-renderpackagesection-function}
 
 ###### Signature
 
@@ -1237,10 +1237,10 @@ export declare function renderPackageSection(apiPackage: ApiPackage, config: Req
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiPackage | ApiPackage |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (apiItem: ApiItem) =&gt; DocSection |  |
 
-##### renderSectionBlock {#defaultrenderingpolicies-rendersectionblock-Function}
+##### renderSectionBlock {#defaultrenderingpolicies-rendersectionblock-function}
 
 Default rendering format for API item sections. Wraps the item-kind-specific details in the following manner:
 
@@ -1258,9 +1258,9 @@ export declare function renderSectionBlock(apiItem: ApiItem, innerSectionBody: D
 |  --- | --- | --- |
 |  apiItem | ApiItem | TODO |
 |  innerSectionBody | DocSection \| undefined | TODO |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; | TODO |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; | TODO |
 
-### RenderingHelpers {#renderinghelpers-Namespace}
+### RenderingHelpers {#renderinghelpers-namespace}
 
 #### Signature
 
@@ -1268,50 +1268,50 @@ export declare function renderSectionBlock(apiItem: ApiItem, innerSectionBody: D
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
-|  [ChildSectionProperties](docs/api-markdown-documenter#renderinghelpers-childsectionproperties-Interface) |  |  |
-|  [DocExample](docs/api-markdown-documenter#renderinghelpers-docexample-Interface) |  |  |
-|  [MemberTableProperties](docs/api-markdown-documenter#renderinghelpers-membertableproperties-Interface) |  |  |
+|  [ChildSectionProperties](docs/api-markdown-documenter#renderinghelpers-childsectionproperties-interface) |  |  |
+|  [DocExample](docs/api-markdown-documenter#renderinghelpers-docexample-interface) |  |  |
+|  [MemberTableProperties](docs/api-markdown-documenter#renderinghelpers-membertableproperties-interface) |  |  |
 
 #### Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [renderApiSummaryCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderapisummarycell-Function) |  | DocTableCell |  |
-|  [renderApiTitleCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderapititlecell-Function) |  | DocTableCell |  |
-|  [renderBetaWarning(config)](docs/api-markdown-documenter#renderinghelpers-renderbetawarning-Function) |  | DocNoteBox |  |
-|  [renderBreadcrumb(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderbreadcrumb-Function) |  | DocSection |  |
-|  [renderChildDetailsSection(childSections, config, renderChild)](docs/api-markdown-documenter#renderinghelpers-renderchilddetailssection-Function) |  | DocSection \| undefined |  |
-|  [renderChildrenUnderHeading(childItems, headingTitle, config, renderChild)](docs/api-markdown-documenter#renderinghelpers-renderchildrenunderheading-Function) |  | DocSection \| undefined |  |
-|  [renderDefaultTable(apiItems, itemKind, config)](docs/api-markdown-documenter#renderinghelpers-renderdefaulttable-Function) |  | DocTable \| undefined |  |
-|  [renderDeprecationNotice(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderdeprecationnotice-Function) |  | DocSection \| undefined |  |
-|  [renderExample(example, config)](docs/api-markdown-documenter#renderinghelpers-renderexample-Function) |  | DocSection |  |
-|  [renderExamples(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderexamples-Function) |  | DocSection \| undefined |  |
-|  [renderExcerptWithHyperlinks(excerpt, config)](docs/api-markdown-documenter#renderinghelpers-renderexcerptwithhyperlinks-Function) |  | DocParagraph |  |
-|  [renderFunctionLikeTable(apiItems, itemKind, config)](docs/api-markdown-documenter#renderinghelpers-renderfunctionliketable-Function) |  | DocTable \| undefined |  |
-|  [renderHeading(heading, config)](docs/api-markdown-documenter#renderinghelpers-renderheading-Function) |  | [DocHeading](docs/api-markdown-documenter#docheading-Class) |  |
-|  [renderHeadingForApiItem(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderheadingforapiitem-Function) |  | [DocHeading](docs/api-markdown-documenter#docheading-Class) |  |
-|  [renderHeritageTypes(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderheritagetypes-Function) |  | DocSection \| undefined |  |
-|  [renderMemberTables(memberTableProperties, config)](docs/api-markdown-documenter#renderinghelpers-rendermembertables-Function) |  | DocSection \| undefined |  |
-|  [renderModifiersCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-rendermodifierscell-Function) |  | DocTableCell |  |
-|  [renderPackagesTable(apiPackages, config)](docs/api-markdown-documenter#renderinghelpers-renderpackagestable-Function) |  | DocTable \| undefined |  |
-|  [renderParametersSection(apiFunctionLike, config)](docs/api-markdown-documenter#renderinghelpers-renderparameterssection-Function) |  | DocSection \| undefined |  |
-|  [renderParametersTable(apiParameters, config)](docs/api-markdown-documenter#renderinghelpers-renderparameterstable-Function) |  | DocTable |  |
-|  [renderParameterSummaryCell(apiParameter, config)](docs/api-markdown-documenter#renderinghelpers-renderparametersummarycell-Function) |  | DocTableCell |  |
-|  [renderParameterTitleCell(apiParameter, config)](docs/api-markdown-documenter#renderinghelpers-renderparametertitlecell-Function) |  | DocTableCell |  |
-|  [renderParameterTypeCell(apiParameter, config)](docs/api-markdown-documenter#renderinghelpers-renderparametertypecell-Function) |  | DocTableCell |  |
-|  [renderPropertiesTable(apiProperties, config)](docs/api-markdown-documenter#renderinghelpers-renderpropertiestable-Function) |  | DocTable \| undefined |  |
-|  [renderPropertyTypeCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderpropertytypecell-Function) |  | DocTableCell |  |
-|  [renderRemarks(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderremarks-Function) |  | DocSection \| undefined |  |
-|  [renderReturnTypeCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderreturntypecell-Function) |  | DocTableCell |  |
-|  [renderSignature(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-rendersignature-Function) |  | DocSection \| undefined |  |
-|  [renderSummary(apiItem)](docs/api-markdown-documenter#renderinghelpers-rendersummary-Function) |  | DocSection \| undefined |  |
-|  [renderTable(apiItems, itemKind, config)](docs/api-markdown-documenter#renderinghelpers-rendertable-Function) |  | DocTable \| undefined |  |
-|  [renderTableWithHeading(memberTableProperties, config)](docs/api-markdown-documenter#renderinghelpers-rendertablewithheading-Function) |  | DocSection \| undefined |  |
-|  [renderTypeParameters(typeParameters, config)](docs/api-markdown-documenter#renderinghelpers-rendertypeparameters-Function) |  | DocSection \| undefined |  |
+|  [renderApiSummaryCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderapisummarycell-function) |  | DocTableCell |  |
+|  [renderApiTitleCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderapititlecell-function) |  | DocTableCell |  |
+|  [renderBetaWarning(config)](docs/api-markdown-documenter#renderinghelpers-renderbetawarning-function) |  | DocNoteBox |  |
+|  [renderBreadcrumb(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderbreadcrumb-function) |  | DocSection |  |
+|  [renderChildDetailsSection(childSections, config, renderChild)](docs/api-markdown-documenter#renderinghelpers-renderchilddetailssection-function) |  | DocSection \| undefined |  |
+|  [renderChildrenUnderHeading(childItems, headingTitle, config, renderChild)](docs/api-markdown-documenter#renderinghelpers-renderchildrenunderheading-function) |  | DocSection \| undefined |  |
+|  [renderDefaultTable(apiItems, itemKind, config)](docs/api-markdown-documenter#renderinghelpers-renderdefaulttable-function) |  | DocTable \| undefined |  |
+|  [renderDeprecationNotice(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderdeprecationnotice-function) |  | DocSection \| undefined |  |
+|  [renderExample(example, config)](docs/api-markdown-documenter#renderinghelpers-renderexample-function) |  | DocSection |  |
+|  [renderExamples(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderexamples-function) |  | DocSection \| undefined |  |
+|  [renderExcerptWithHyperlinks(excerpt, config)](docs/api-markdown-documenter#renderinghelpers-renderexcerptwithhyperlinks-function) |  | DocParagraph |  |
+|  [renderFunctionLikeTable(apiItems, itemKind, config)](docs/api-markdown-documenter#renderinghelpers-renderfunctionliketable-function) |  | DocTable \| undefined |  |
+|  [renderHeading(heading, config)](docs/api-markdown-documenter#renderinghelpers-renderheading-function) |  | [DocHeading](docs/api-markdown-documenter#docheading-class) |  |
+|  [renderHeadingForApiItem(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderheadingforapiitem-function) |  | [DocHeading](docs/api-markdown-documenter#docheading-class) |  |
+|  [renderHeritageTypes(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderheritagetypes-function) |  | DocSection \| undefined |  |
+|  [renderMemberTables(memberTableProperties, config)](docs/api-markdown-documenter#renderinghelpers-rendermembertables-function) |  | DocSection \| undefined |  |
+|  [renderModifiersCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-rendermodifierscell-function) |  | DocTableCell |  |
+|  [renderPackagesTable(apiPackages, config)](docs/api-markdown-documenter#renderinghelpers-renderpackagestable-function) |  | DocTable \| undefined |  |
+|  [renderParametersSection(apiFunctionLike, config)](docs/api-markdown-documenter#renderinghelpers-renderparameterssection-function) |  | DocSection \| undefined |  |
+|  [renderParametersTable(apiParameters, config)](docs/api-markdown-documenter#renderinghelpers-renderparameterstable-function) |  | DocTable |  |
+|  [renderParameterSummaryCell(apiParameter, config)](docs/api-markdown-documenter#renderinghelpers-renderparametersummarycell-function) |  | DocTableCell |  |
+|  [renderParameterTitleCell(apiParameter, config)](docs/api-markdown-documenter#renderinghelpers-renderparametertitlecell-function) |  | DocTableCell |  |
+|  [renderParameterTypeCell(apiParameter, config)](docs/api-markdown-documenter#renderinghelpers-renderparametertypecell-function) |  | DocTableCell |  |
+|  [renderPropertiesTable(apiProperties, config)](docs/api-markdown-documenter#renderinghelpers-renderpropertiestable-function) |  | DocTable \| undefined |  |
+|  [renderPropertyTypeCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderpropertytypecell-function) |  | DocTableCell |  |
+|  [renderRemarks(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderremarks-function) |  | DocSection \| undefined |  |
+|  [renderReturnTypeCell(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-renderreturntypecell-function) |  | DocTableCell |  |
+|  [renderSignature(apiItem, config)](docs/api-markdown-documenter#renderinghelpers-rendersignature-function) |  | DocSection \| undefined |  |
+|  [renderSummary(apiItem)](docs/api-markdown-documenter#renderinghelpers-rendersummary-function) |  | DocSection \| undefined |  |
+|  [renderTable(apiItems, itemKind, config)](docs/api-markdown-documenter#renderinghelpers-rendertable-function) |  | DocTable \| undefined |  |
+|  [renderTableWithHeading(memberTableProperties, config)](docs/api-markdown-documenter#renderinghelpers-rendertablewithheading-function) |  | DocSection \| undefined |  |
+|  [renderTypeParameters(typeParameters, config)](docs/api-markdown-documenter#renderinghelpers-rendertypeparameters-function) |  | DocSection \| undefined |  |
 
 #### Interface Details
 
-##### ChildSectionProperties {#renderinghelpers-childsectionproperties-Interface}
+##### ChildSectionProperties {#renderinghelpers-childsectionproperties-interface}
 
 ###### Signature
 
@@ -1323,9 +1323,9 @@ export interface ChildSectionProperties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [headingTitle](docs/api-markdown-documenter#renderinghelpers-childsectionproperties-headingtitle-PropertySignature) |  | string |  |
-|  [itemKind](docs/api-markdown-documenter#renderinghelpers-childsectionproperties-itemkind-PropertySignature) |  | ApiItemKind |  |
-|  [items](docs/api-markdown-documenter#renderinghelpers-childsectionproperties-items-PropertySignature) |  | readonly ApiItem\[\] |  |
+|  [headingTitle](docs/api-markdown-documenter#renderinghelpers-childsectionproperties-headingtitle-propertysignature) |  | string |  |
+|  [itemKind](docs/api-markdown-documenter#renderinghelpers-childsectionproperties-itemkind-propertysignature) |  | ApiItemKind |  |
+|  [items](docs/api-markdown-documenter#renderinghelpers-childsectionproperties-items-propertysignature) |  | readonly ApiItem\[\] |  |
 
 ###### Property Details
 
@@ -1353,7 +1353,7 @@ itemKind: ApiItemKind;
 items: readonly ApiItem[];
 ```
 
-##### DocExample {#renderinghelpers-docexample-Interface}
+##### DocExample {#renderinghelpers-docexample-interface}
 
 ###### Signature
 
@@ -1365,8 +1365,8 @@ export interface DocExample
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [content](docs/api-markdown-documenter#renderinghelpers-docexample-content-PropertySignature) |  | DocSection | <code>@example</code> comment body. |
-|  [exampleNumber](docs/api-markdown-documenter#renderinghelpers-docexample-examplenumber-PropertySignature) |  | number | Example number. Used to disambiguate multiple <code>@example</code> comments numerically. If not specified, example heading will not be labeled with a number. |
+|  [content](docs/api-markdown-documenter#renderinghelpers-docexample-content-propertysignature) |  | DocSection | <code>@example</code> comment body. |
+|  [exampleNumber](docs/api-markdown-documenter#renderinghelpers-docexample-examplenumber-propertysignature) |  | number | Example number. Used to disambiguate multiple <code>@example</code> comments numerically. If not specified, example heading will not be labeled with a number. |
 
 ###### Property Details
 
@@ -1390,7 +1390,7 @@ Example number. Used to disambiguate multiple `@example` comments numerically. I
 exampleNumber?: number;
 ```
 
-##### MemberTableProperties {#renderinghelpers-membertableproperties-Interface}
+##### MemberTableProperties {#renderinghelpers-membertableproperties-interface}
 
 ###### Signature
 
@@ -1402,9 +1402,9 @@ export interface MemberTableProperties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [headingTitle](docs/api-markdown-documenter#renderinghelpers-membertableproperties-headingtitle-PropertySignature) |  | string |  |
-|  [itemKind](docs/api-markdown-documenter#renderinghelpers-membertableproperties-itemkind-PropertySignature) |  | ApiItemKind |  |
-|  [items](docs/api-markdown-documenter#renderinghelpers-membertableproperties-items-PropertySignature) |  | readonly ApiItem\[\] |  |
+|  [headingTitle](docs/api-markdown-documenter#renderinghelpers-membertableproperties-headingtitle-propertysignature) |  | string |  |
+|  [itemKind](docs/api-markdown-documenter#renderinghelpers-membertableproperties-itemkind-propertysignature) |  | ApiItemKind |  |
+|  [items](docs/api-markdown-documenter#renderinghelpers-membertableproperties-items-propertysignature) |  | readonly ApiItem\[\] |  |
 
 ###### Property Details
 
@@ -1434,7 +1434,7 @@ items: readonly ApiItem[];
 
 #### Function Details
 
-##### renderApiSummaryCell {#renderinghelpers-renderapisummarycell-Function}
+##### renderApiSummaryCell {#renderinghelpers-renderapisummarycell-function}
 
 ###### Signature
 
@@ -1447,9 +1447,9 @@ export declare function renderApiSummaryCell(apiItem: ApiItem, config: Required<
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderApiTitleCell {#renderinghelpers-renderapititlecell-Function}
+##### renderApiTitleCell {#renderinghelpers-renderapititlecell-function}
 
 ###### Signature
 
@@ -1462,9 +1462,9 @@ export declare function renderApiTitleCell(apiItem: ApiItem, config: Required<Ma
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderBetaWarning {#renderinghelpers-renderbetawarning-Function}
+##### renderBetaWarning {#renderinghelpers-renderbetawarning-function}
 
 ###### Signature
 
@@ -1476,9 +1476,9 @@ export declare function renderBetaWarning(config: Required<MarkdownDocumenterCon
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderBreadcrumb {#renderinghelpers-renderbreadcrumb-Function}
+##### renderBreadcrumb {#renderinghelpers-renderbreadcrumb-function}
 
 ###### Signature
 
@@ -1491,9 +1491,9 @@ export declare function renderBreadcrumb(apiItem: ApiItem, config: Required<Mark
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderChildDetailsSection {#renderinghelpers-renderchilddetailssection-Function}
+##### renderChildDetailsSection {#renderinghelpers-renderchilddetailssection-function}
 
 ###### Signature
 
@@ -1506,10 +1506,10 @@ export declare function renderChildDetailsSection(childSections: readonly ChildS
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  childSections | readonly ChildSectionProperties\[\] |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (apiItem: any) =&gt; DocSection |  |
 
-##### renderChildrenUnderHeading {#renderinghelpers-renderchildrenunderheading-Function}
+##### renderChildrenUnderHeading {#renderinghelpers-renderchildrenunderheading-function}
 
 ###### Signature
 
@@ -1523,10 +1523,10 @@ export declare function renderChildrenUnderHeading(childItems: readonly ApiItem[
 |  --- | --- | --- |
 |  childItems | readonly ApiItem\[\] |  |
 |  headingTitle | string |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 |  renderChild | (childItem: ApiItem) =&gt; DocSection |  |
 
-##### renderDefaultTable {#renderinghelpers-renderdefaulttable-Function}
+##### renderDefaultTable {#renderinghelpers-renderdefaulttable-function}
 
 ###### Signature
 
@@ -1540,9 +1540,9 @@ export declare function renderDefaultTable(apiItems: readonly ApiItem[], itemKin
 |  --- | --- | --- |
 |  apiItems | readonly ApiItem\[\] |  |
 |  itemKind | ApiItemKind |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderDeprecationNotice {#renderinghelpers-renderdeprecationnotice-Function}
+##### renderDeprecationNotice {#renderinghelpers-renderdeprecationnotice-function}
 
 ###### Signature
 
@@ -1555,9 +1555,9 @@ export declare function renderDeprecationNotice(apiItem: ApiItem, config: Requir
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderExample {#renderinghelpers-renderexample-Function}
+##### renderExample {#renderinghelpers-renderexample-function}
 
 ###### Signature
 
@@ -1570,9 +1570,9 @@ export declare function renderExample(example: DocExample, config: Required<Mark
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  example | DocExample |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderExamples {#renderinghelpers-renderexamples-Function}
+##### renderExamples {#renderinghelpers-renderexamples-function}
 
 ###### Signature
 
@@ -1585,9 +1585,9 @@ export declare function renderExamples(apiItem: ApiItem, config: Required<Markdo
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderExcerptWithHyperlinks {#renderinghelpers-renderexcerptwithhyperlinks-Function}
+##### renderExcerptWithHyperlinks {#renderinghelpers-renderexcerptwithhyperlinks-function}
 
 ###### Signature
 
@@ -1600,9 +1600,9 @@ export declare function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Re
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  excerpt | Excerpt |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderFunctionLikeTable {#renderinghelpers-renderfunctionliketable-Function}
+##### renderFunctionLikeTable {#renderinghelpers-renderfunctionliketable-function}
 
 ###### Signature
 
@@ -1614,11 +1614,11 @@ export declare function renderFunctionLikeTable(apiItems: readonly ApiFunctionLi
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiItems | readonly [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-TypeAlias)<!-- -->\[\] |  |
+|  apiItems | readonly [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-typealias)<!-- -->\[\] |  |
 |  itemKind | ApiItemKind |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderHeading {#renderinghelpers-renderheading-Function}
+##### renderHeading {#renderinghelpers-renderheading-function}
 
 ###### Signature
 
@@ -1630,10 +1630,10 @@ export declare function renderHeading(heading: Heading, config: Required<Markdow
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  heading | [Heading](docs/api-markdown-documenter#heading-Interface) |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  heading | [Heading](docs/api-markdown-documenter#heading-interface) |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderHeadingForApiItem {#renderinghelpers-renderheadingforapiitem-Function}
+##### renderHeadingForApiItem {#renderinghelpers-renderheadingforapiitem-function}
 
 ###### Signature
 
@@ -1646,9 +1646,9 @@ export declare function renderHeadingForApiItem(apiItem: ApiItem, config: Requir
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderHeritageTypes {#renderinghelpers-renderheritagetypes-Function}
+##### renderHeritageTypes {#renderinghelpers-renderheritagetypes-function}
 
 ###### Signature
 
@@ -1661,9 +1661,9 @@ export declare function renderHeritageTypes(apiItem: ApiItem, config: Required<M
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderMemberTables {#renderinghelpers-rendermembertables-Function}
+##### renderMemberTables {#renderinghelpers-rendermembertables-function}
 
 ###### Signature
 
@@ -1676,9 +1676,9 @@ export declare function renderMemberTables(memberTableProperties: readonly Membe
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  memberTableProperties | readonly MemberTableProperties\[\] |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderModifiersCell {#renderinghelpers-rendermodifierscell-Function}
+##### renderModifiersCell {#renderinghelpers-rendermodifierscell-function}
 
 ###### Signature
 
@@ -1691,9 +1691,9 @@ export declare function renderModifiersCell(apiItem: ApiItem, config: Required<M
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderPackagesTable {#renderinghelpers-renderpackagestable-Function}
+##### renderPackagesTable {#renderinghelpers-renderpackagestable-function}
 
 ###### Signature
 
@@ -1706,9 +1706,9 @@ export declare function renderPackagesTable(apiPackages: readonly ApiPackage[], 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiPackages | readonly ApiPackage\[\] |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderParametersSection {#renderinghelpers-renderparameterssection-Function}
+##### renderParametersSection {#renderinghelpers-renderparameterssection-function}
 
 ###### Signature
 
@@ -1720,10 +1720,10 @@ export declare function renderParametersSection(apiFunctionLike: ApiFunctionLike
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiFunctionLike | [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-TypeAlias) |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  apiFunctionLike | [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-typealias) |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderParametersTable {#renderinghelpers-renderparameterstable-Function}
+##### renderParametersTable {#renderinghelpers-renderparameterstable-function}
 
 ###### Signature
 
@@ -1736,9 +1736,9 @@ export declare function renderParametersTable(apiParameters: readonly Parameter[
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiParameters | readonly Parameter\[\] |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderParameterSummaryCell {#renderinghelpers-renderparametersummarycell-Function}
+##### renderParameterSummaryCell {#renderinghelpers-renderparametersummarycell-function}
 
 ###### Signature
 
@@ -1751,9 +1751,9 @@ export declare function renderParameterSummaryCell(apiParameter: Parameter, conf
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiParameter | Parameter |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderParameterTitleCell {#renderinghelpers-renderparametertitlecell-Function}
+##### renderParameterTitleCell {#renderinghelpers-renderparametertitlecell-function}
 
 ###### Signature
 
@@ -1766,9 +1766,9 @@ export declare function renderParameterTitleCell(apiParameter: Parameter, config
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiParameter | Parameter |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderParameterTypeCell {#renderinghelpers-renderparametertypecell-Function}
+##### renderParameterTypeCell {#renderinghelpers-renderparametertypecell-function}
 
 ###### Signature
 
@@ -1781,9 +1781,9 @@ export declare function renderParameterTypeCell(apiParameter: Parameter, config:
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiParameter | Parameter |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderPropertiesTable {#renderinghelpers-renderpropertiestable-Function}
+##### renderPropertiesTable {#renderinghelpers-renderpropertiestable-function}
 
 ###### Signature
 
@@ -1796,9 +1796,9 @@ export declare function renderPropertiesTable(apiProperties: readonly ApiPropert
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiProperties | readonly ApiPropertyItem\[\] |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderPropertyTypeCell {#renderinghelpers-renderpropertytypecell-Function}
+##### renderPropertyTypeCell {#renderinghelpers-renderpropertytypecell-function}
 
 ###### Signature
 
@@ -1811,9 +1811,9 @@ export declare function renderPropertyTypeCell(apiItem: ApiPropertyItem, config:
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiPropertyItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderRemarks {#renderinghelpers-renderremarks-Function}
+##### renderRemarks {#renderinghelpers-renderremarks-function}
 
 ###### Signature
 
@@ -1826,9 +1826,9 @@ export declare function renderRemarks(apiItem: ApiItem, config: Required<Markdow
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderReturnTypeCell {#renderinghelpers-renderreturntypecell-Function}
+##### renderReturnTypeCell {#renderinghelpers-renderreturntypecell-function}
 
 ###### Signature
 
@@ -1840,10 +1840,10 @@ export declare function renderReturnTypeCell(apiItem: ApiFunctionLike, config: R
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  apiItem | [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-TypeAlias) |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  apiItem | [ApiFunctionLike](docs/api-markdown-documenter#apifunctionlike-typealias) |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderSignature {#renderinghelpers-rendersignature-Function}
+##### renderSignature {#renderinghelpers-rendersignature-function}
 
 ###### Signature
 
@@ -1856,9 +1856,9 @@ export declare function renderSignature(apiItem: ApiItem, config: Required<Markd
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderSummary {#renderinghelpers-rendersummary-Function}
+##### renderSummary {#renderinghelpers-rendersummary-function}
 
 ###### Signature
 
@@ -1872,7 +1872,7 @@ export declare function renderSummary(apiItem: ApiItem): DocSection | undefined;
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-##### renderTable {#renderinghelpers-rendertable-Function}
+##### renderTable {#renderinghelpers-rendertable-function}
 
 ###### Signature
 
@@ -1886,9 +1886,9 @@ export declare function renderTable(apiItems: readonly ApiItem[], itemKind: ApiI
 |  --- | --- | --- |
 |  apiItems | readonly ApiItem\[\] |  |
 |  itemKind | ApiItemKind |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderTableWithHeading {#renderinghelpers-rendertablewithheading-Function}
+##### renderTableWithHeading {#renderinghelpers-rendertablewithheading-function}
 
 ###### Signature
 
@@ -1901,9 +1901,9 @@ export declare function renderTableWithHeading(memberTableProperties: MemberTabl
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  memberTableProperties | MemberTableProperties |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-##### renderTypeParameters {#renderinghelpers-rendertypeparameters-Function}
+##### renderTypeParameters {#renderinghelpers-rendertypeparameters-function}
 
 ###### Signature
 
@@ -1916,11 +1916,11 @@ export declare function renderTypeParameters(typeParameters: readonly TypeParame
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  typeParameters | readonly TypeParameter\[\] |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
 ## Type Details
 
-### ApiFunctionLike {#apifunctionlike-TypeAlias}
+### ApiFunctionLike {#apifunctionlike-typealias}
 
 `ApiItem` union type representing function-like API kinds.
 
@@ -1930,7 +1930,7 @@ export declare function renderTypeParameters(typeParameters: readonly TypeParame
 export declare type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
 ```
 
-### ApiModuleLike {#apimodulelike-TypeAlias}
+### ApiModuleLike {#apimodulelike-typealias}
 
 `ApiItem` union type representing module-like API kinds.
 
@@ -1940,7 +1940,7 @@ export declare type ApiFunctionLike = ApiConstructSignature | ApiConstructor | A
 export declare type ApiModuleLike = ApiPackage | ApiNamespace;
 ```
 
-### ApiSignatureLike {#apisignaturelike-TypeAlias}
+### ApiSignatureLike {#apisignaturelike-typealias}
 
 `ApiItem` union type representing call-signature-like API kinds.
 
@@ -1950,7 +1950,7 @@ export declare type ApiModuleLike = ApiPackage | ApiNamespace;
 export declare type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 ```
 
-### DocumentBoundaries {#documentboundaries-TypeAlias}
+### DocumentBoundaries {#documentboundaries-typealias}
 
 List of item kinds for which separate documents should be generated. Items specified will be rendered to their own documents. Items not specified will be rendered into their parent's contents.
 
@@ -1966,9 +1966,9 @@ Also note that `EntryPoint` items will always be ignored by the system, even if 
 export declare type DocumentBoundaries = ApiItemKind[];
 ```
 
-### EmitterContext {#emittercontext-TypeAlias}
+### EmitterContext {#emittercontext-typealias}
 
-Context used by [MarkdownEmitter.emit()](docs/api-markdown-documenter#markdownemitter-emit-Method)<!-- -->.
+Context used by [MarkdownEmitter.emit()](docs/api-markdown-documenter#markdownemitter-emit-method)<!-- -->.
 
 #### Signature
 
@@ -1976,7 +1976,7 @@ Context used by [MarkdownEmitter.emit()](docs/api-markdown-documenter#markdownem
 export declare type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 ```
 
-### FileNamePolicy {#filenamepolicy-TypeAlias}
+### FileNamePolicy {#filenamepolicy-typealias}
 
 Policy for naming of files / directories for API items. Must not include a file extension.
 
@@ -1986,7 +1986,7 @@ Policy for naming of files / directories for API items. Must not include a file 
 export declare type FileNamePolicy = (apiItem: ApiItem) => string;
 ```
 
-### HeadingTitlePolicy {#headingtitlepolicy-TypeAlias}
+### HeadingTitlePolicy {#headingtitlepolicy-typealias}
 
 Policy for generating heading titles for API items.
 
@@ -1996,11 +1996,11 @@ Policy for generating heading titles for API items.
 export declare type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 ```
 
-### HierarchyBoundaries {#hierarchyboundaries-TypeAlias}
+### HierarchyBoundaries {#hierarchyboundaries-typealias}
 
 List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
 
-For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->.
+For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](docs/api-markdown-documenter#filenamepolicy-typealias)<!-- -->.
 
 #### Signature
 
@@ -2008,9 +2008,9 @@ For items specified, the name of the sub-directory will be defined by the [FileN
 export declare type HierarchyBoundaries = ApiItemKind[];
 ```
 
-### IDocHeadingParameters {#idocheadingparameters-TypeAlias}
+### IDocHeadingParameters {#idocheadingparameters-typealias}
 
-Constructor parameters for [DocHeading](docs/api-markdown-documenter#docheading-Class)<!-- -->.
+Constructor parameters for [DocHeading](docs/api-markdown-documenter#docheading-class)<!-- -->.
 
 #### Signature
 
@@ -2018,7 +2018,7 @@ Constructor parameters for [DocHeading](docs/api-markdown-documenter#docheading-
 export declare type IDocHeadingParameters = IDocNodeParameters & Heading;
 ```
 
-### LinkTextPolicy {#linktextpolicy-TypeAlias}
+### LinkTextPolicy {#linktextpolicy-typealias}
 
 Policy for generating link text for a particular API item.
 
@@ -2028,7 +2028,7 @@ Policy for generating link text for a particular API item.
 export declare type LinkTextPolicy = (apiItem: ApiItem) => string;
 ```
 
-### RenderApiItemWithChildren {#renderapiitemwithchildren-TypeAlias}
+### RenderApiItemWithChildren {#renderapiitemwithchildren-typealias}
 
 TODO
 
@@ -2038,7 +2038,7 @@ TODO
 export declare type RenderApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection) => DocSection;
 ```
 
-### RenderApiItemWithoutChildren {#renderapiitemwithoutchildren-TypeAlias}
+### RenderApiItemWithoutChildren {#renderapiitemwithoutchildren-typealias}
 
 TODO
 
@@ -2048,7 +2048,7 @@ TODO
 export declare type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 ```
 
-### RenderSectionBlock {#rendersectionblock-TypeAlias}
+### RenderSectionBlock {#rendersectionblock-typealias}
 
 TODO
 
@@ -2058,7 +2058,7 @@ TODO
 export declare type RenderSectionBlock = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 ```
 
-### UriBaseOverridePolicy {#uribaseoverridepolicy-TypeAlias}
+### UriBaseOverridePolicy {#uribaseoverridepolicy-typealias}
 
 Policy for overriding the URI base for a specific API item.
 
@@ -2074,13 +2074,13 @@ export declare type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undef
 
 ## Function Details
 
-### doesItemGenerateHierarchy {#doesitemgeneratehierarchy-Function}
+### doesItemGenerateHierarchy {#doesitemgeneratehierarchy-function}
 
 Determines whether or not the specified API item is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
 
 #### Remarks
 
-This is based on the item's `kind`<!-- -->. See [doesItemKindGenerateHierarchy()](docs/api-markdown-documenter#doesitemkindgeneratehierarchy-Function)<!-- -->.
+This is based on the item's `kind`<!-- -->. See [doesItemKindGenerateHierarchy()](docs/api-markdown-documenter#doesitemkindgeneratehierarchy-function)<!-- -->.
 
 #### Signature
 
@@ -2093,15 +2093,15 @@ export declare function doesItemGenerateHierarchy(apiItem: ApiItem, hierarchyBou
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  hierarchyBoundaries | [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias) |  |
+|  hierarchyBoundaries | [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias) |  |
 
-### doesItemKindGenerateHierarchy {#doesitemkindgeneratehierarchy-Function}
+### doesItemKindGenerateHierarchy {#doesitemkindgeneratehierarchy-function}
 
 Determines whether or not the specified API item kind is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
 
 #### Remarks
 
-This is essentially a wrapper around [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-PropertySignature)<!-- -->, but also enforces system-wide invariants.
+This is essentially a wrapper around [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-propertysignature)<!-- -->, but also enforces system-wide invariants.
 
 Namely...
 
@@ -2118,15 +2118,15 @@ export declare function doesItemKindGenerateHierarchy(kind: ApiItemKind, hierarc
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  kind | ApiItemKind | The kind of API item. |
-|  hierarchyBoundaries | [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias) | See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-TypeAlias) |
+|  hierarchyBoundaries | [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias) | See [HierarchyBoundaries](docs/api-markdown-documenter#hierarchyboundaries-typealias) |
 
-### doesItemKindRequireOwnDocument {#doesitemkindrequireowndocument-Function}
+### doesItemKindRequireOwnDocument {#doesitemkindrequireowndocument-function}
 
 Determines whether or not the specified API item kind is one that should be rendered to its own document.
 
 #### Remarks
 
-This is essentially a wrapper around [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-PropertySignature)<!-- -->, but also enforces system-wide invariants.
+This is essentially a wrapper around [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature)<!-- -->, but also enforces system-wide invariants.
 
 Namely...
 
@@ -2143,15 +2143,15 @@ export declare function doesItemKindRequireOwnDocument(kind: ApiItemKind, docume
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  kind | ApiItemKind | The kind of API item. |
-|  documentBoundaries | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias) | See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias) |
+|  documentBoundaries | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias) | See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias) |
 
-### doesItemRequireOwnDocument {#doesitemrequireowndocument-Function}
+### doesItemRequireOwnDocument {#doesitemrequireowndocument-function}
 
 Determines whether or not the specified API item is one that should be rendered to its own document.
 
 #### Remarks
 
-This is based on the item's `kind`<!-- -->. See [doesItemKindRequireOwnDocument()](docs/api-markdown-documenter#doesitemkindrequireowndocument-Function)<!-- -->.
+This is based on the item's `kind`<!-- -->. See [doesItemKindRequireOwnDocument()](docs/api-markdown-documenter#doesitemkindrequireowndocument-function)<!-- -->.
 
 #### Signature
 
@@ -2164,9 +2164,9 @@ export declare function doesItemRequireOwnDocument(apiItem: ApiItem, documentBou
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  documentBoundaries | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias) |  |
+|  documentBoundaries | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias) |  |
 
-### filterByKind {#filterbykind-Function}
+### filterByKind {#filterbykind-function}
 
 Filters the provided list of API items based on the provided `kinds`<!-- -->.
 
@@ -2183,7 +2183,7 @@ export declare function filterByKind(apiItems: readonly ApiItem[], kinds: ApiIte
 |  apiItems | readonly ApiItem\[\] | The list of items being filtered. |
 |  kinds | ApiItemKind\[\] | The kinds of items to consider. An item is considered a match if it matches any kind in this list. |
 
-### getAncestralHierarchy {#getancestralhierarchy-Function}
+### getAncestralHierarchy {#getancestralhierarchy-function}
 
 Gets the ancestral hierarchy of the provided API item by walking up the parentage graph and emitting any items matching the `includePredecate` until it reaches an item that matches the `breakPredecate`<!-- -->.
 
@@ -2209,7 +2209,7 @@ export declare function getAncestralHierarchy(apiItem: ApiItem, includePredecate
 |  includePredecate | (apiItem: ApiItem) =&gt; boolean | Predicate to determine which items in the hierarchy should be preserved in the returned list. The provided API item will not be included in the output, even if it would be included by this. |
 |  breakPredicate | (apiItem: ApiItem) =&gt; boolean | Predicate to determine when to break from the traversal and return. The item matching this predicate will not be included, even if it would be included by <code>includePredicate</code>. |
 
-### getDocumentItems {#getdocumentitems-Function}
+### getDocumentItems {#getdocumentitems-function}
 
 Walks the provided API item's member tree and reports all API items that should be rendered to their own documents.
 
@@ -2224,9 +2224,9 @@ export declare function getDocumentItems(apiItem: ApiItem, config: Required<Mark
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item in question. |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### getFileNameForApiItem {#getfilenameforapiitem-Function}
+### getFileNameForApiItem {#getfilenameforapiitem-function}
 
 Gets the file name for the specified API item.
 
@@ -2234,7 +2234,7 @@ Gets the file name for the specified API item.
 
 In the case of an item that does not get rendered to its own page, this will be the file name for the document of the ancestor item under which the provided item will be rendered.
 
-Note: This is strictly the name of the file, not a path to that file. To get the path, use [getFilePathForApiItem()](docs/api-markdown-documenter#getfilepathforapiitem-Function)<!-- -->.
+Note: This is strictly the name of the file, not a path to that file. To get the path, use [getFilePathForApiItem()](docs/api-markdown-documenter#getfilepathforapiitem-function)<!-- -->.
 
 #### Signature
 
@@ -2247,10 +2247,10 @@ export declare function getFileNameForApiItem(apiItem: ApiItem, config: Required
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which we are generating a file path. |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface) |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface) |
 |  includeExtension | boolean | Whether or not to include the <code>.md</code> file extension at the end of the file name. |
 
-### getFilePathForApiItem {#getfilepathforapiitem-Function}
+### getFilePathForApiItem {#getfilepathforapiitem-function}
 
 Gets the file path for the specified API item.
 
@@ -2258,7 +2258,7 @@ Gets the file path for the specified API item.
 
 In the case of an item that does not get rendered to its own page, this will point to the document of the ancestor item under which the provided item will be rendered.
 
-The generated path is relative to [MarkdownDocumenterConfiguration.uriRoot](docs/api-markdown-documenter#markdowndocumenterconfiguration-uriroot-PropertySignature)<!-- -->.
+The generated path is relative to [MarkdownDocumenterConfiguration.uriRoot](docs/api-markdown-documenter#markdowndocumenterconfiguration-uriroot-propertysignature)<!-- -->.
 
 #### Signature
 
@@ -2271,10 +2271,10 @@ export declare function getFilePathForApiItem(apiItem: ApiItem, config: Required
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which we are generating a file path. |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface) |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface) |
 |  includeExtension | boolean | Whether or not to include the <code>.md</code> file extension at the end of the path. |
 
-### getFilteredParent {#getfilteredparent-Function}
+### getFilteredParent {#getfilteredparent-function}
 
 Gets the "filted" parent of the provided API item. This logic specifically skips items of the following kinds:
 
@@ -2292,7 +2292,7 @@ export declare function getFilteredParent(apiItem: ApiItem): ApiItem | undefined
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-### getFirstAncestorWithOwnPage {#getfirstancestorwithownpage-Function}
+### getFirstAncestorWithOwnPage {#getfirstancestorwithownpage-function}
 
 Gets the nearest ancestor of the provided item that will have its own rendered page.
 
@@ -2311,11 +2311,11 @@ export declare function getFirstAncestorWithOwnPage(apiItem: ApiItem, documentBo
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which we are generating a file path. |
-|  documentBoundaries | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias) | See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-TypeAlias) |
+|  documentBoundaries | [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias) | See [DocumentBoundaries](docs/api-markdown-documenter#documentboundaries-typealias) |
 
-### getHeadingForApiItem {#getheadingforapiitem-Function}
+### getHeadingForApiItem {#getheadingforapiitem-function}
 
-Generates a [Heading](docs/api-markdown-documenter#heading-Interface) for the specified API item.
+Generates a [Heading](docs/api-markdown-documenter#heading-interface) for the specified API item.
 
 #### Signature
 
@@ -2328,10 +2328,10 @@ export declare function getHeadingForApiItem(apiItem: ApiItem, config: Required<
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which the heading is being generated. |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->. |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->. |
 |  headingLevel | number | Heading level to use. If not specified, the heading level will be automatically generated based on the item's context in the resulting document. |
 
-### getHeadingIdForApiItem {#getheadingidforapiitem-Function}
+### getHeadingIdForApiItem {#getheadingidforapiitem-function}
 
 Generates a unique heading ID for the provided API item.
 
@@ -2352,11 +2352,11 @@ export declare function getHeadingIdForApiItem(apiItem: ApiItem, config: Require
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which the heading ID is being generated. |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->. |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->. |
 
-### getLinkForApiItem {#getlinkforapiitem-Function}
+### getLinkForApiItem {#getlinkforapiitem-function}
 
-Creates a [Link](docs/api-markdown-documenter#link-Interface) for the provided API item.
+Creates a [Link](docs/api-markdown-documenter#link-interface) for the provided API item.
 
 #### Remarks
 
@@ -2373,9 +2373,9 @@ export declare function getLinkForApiItem(apiItem: ApiItem, config: Required<Mar
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which we are generating the link. |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface) |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface) |
 
-### getLinkUrlForApiItem {#getlinkurlforapiitem-Function}
+### getLinkUrlForApiItem {#getlinkurlforapiitem-function}
 
 Creates a link URL to the specified API item.
 
@@ -2394,9 +2394,9 @@ export declare function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which we are generating the link URL. |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface) |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface) |
 
-### getQualifiedApiItemName {#getqualifiedapiitemname-Function}
+### getQualifiedApiItemName {#getqualifiedapiitemname-function}
 
 Adjusts the name of the item as needed. Accounts for method overloads by adding a suffix such as "MyClass.myMethod\_2".
 
@@ -2412,7 +2412,7 @@ export declare function getQualifiedApiItemName(apiItem: ApiItem): string;
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which the qualified name is being queried. |
 
-### markdownDocumenterConfigurationWithDefaults {#markdowndocumenterconfigurationwithdefaults-Function}
+### markdownDocumenterConfigurationWithDefaults {#markdowndocumenterconfigurationwithdefaults-function}
 
 #### Signature
 
@@ -2424,9 +2424,9 @@ export declare function markdownDocumenterConfigurationWithDefaults(partialConfi
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  partialConfig | [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface) |  |
+|  partialConfig | [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface) |  |
 
-### mergeSections {#mergesections-Function}
+### mergeSections {#mergesections-function}
 
 #### Signature
 
@@ -2441,7 +2441,7 @@ export declare function mergeSections(sections: DocSection[], tsdocConfiguration
 |  sections | DocSection\[\] |  |
 |  tsdocConfiguration | TSDocConfiguration |  |
 
-### renderApiPage {#renderapipage-Function}
+### renderApiPage {#renderapipage-function}
 
 #### Signature
 
@@ -2454,15 +2454,15 @@ export declare function renderApiPage(apiItem: ApiItem, config: Required<Markdow
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderDocuments {#renderdocuments-Function}
+### renderDocuments {#renderdocuments-function}
 
-Renders the provided model and its contents to a series of [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-Interface)<!-- -->s.
+Renders the provided model and its contents to a series of [MarkdownDocument](docs/api-markdown-documenter#markdowndocument-interface)<!-- -->s.
 
 #### Remarks
 
-Which API members get their own documents and which get written to the contents of their parent is determined by [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-PropertySignature)<!-- -->.
+Which API members get their own documents and which get written to the contents of their parent is determined by [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature)<!-- -->.
 
 #### Signature
 
@@ -2474,19 +2474,19 @@ export declare function renderDocuments(partialConfig: MarkdownDocumenterConfigu
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  partialConfig | [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface) | A partial [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->. Missing values will be filled in with defaults defined by [markdownDocumenterConfigurationWithDefaults()](docs/api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-Function)<!-- -->. |
+|  partialConfig | [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface) | A partial [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->. Missing values will be filled in with defaults defined by [markdownDocumenterConfigurationWithDefaults()](docs/api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-function)<!-- -->. |
 
-### renderFiles {#renderfiles-Function}
+### renderFiles {#renderfiles-function}
 
 Renders the provided model and its contents, and writes each document to a file on disk.
 
 #### Remarks
 
-Which API members get their own documents and which get written to the contents of their parent is determined by [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-PropertySignature)<!-- -->.
+Which API members get their own documents and which get written to the contents of their parent is determined by [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature)<!-- -->.
 
 The file paths under which the files will be saved is determined by the provided output path and the following configuration properties:
 
-- [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-PropertySignature) - [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-PropertySignature) - [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-PropertySignature)
+- [PolicyOptions.documentBoundaries](docs/api-markdown-documenter#policyoptions-documentboundaries-propertysignature) - [PolicyOptions.hierarchyBoundaries](docs/api-markdown-documenter#policyoptions-hierarchyboundaries-propertysignature) - [PolicyOptions.fileNamePolicy](docs/api-markdown-documenter#policyoptions-filenamepolicy-propertysignature)
 
 #### Signature
 
@@ -2498,11 +2498,11 @@ export declare function renderFiles(partialConfig: MarkdownDocumenterConfigurati
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  partialConfig | [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface) | A partial [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->. Missing values will be filled in with defaults defined by [markdownDocumenterConfigurationWithDefaults()](docs/api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-Function)<!-- -->. |
+|  partialConfig | [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface) | A partial [MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->. Missing values will be filled in with defaults defined by [markdownDocumenterConfigurationWithDefaults()](docs/api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-function)<!-- -->. |
 |  outputDirectoryPath | string |  |
-|  maybeMarkdownEmitter | [MarkdownEmitter](docs/api-markdown-documenter#markdownemitter-Class) | The emitter to use for generating Markdown output. If not provided, a [default implementation](docs/api-markdown-documenter#markdownemitter-Class) will be used. |
+|  maybeMarkdownEmitter | [MarkdownEmitter](docs/api-markdown-documenter#markdownemitter-class) | The emitter to use for generating Markdown output. If not provided, a [default implementation](docs/api-markdown-documenter#markdownemitter-class) will be used. |
 
-### renderModelPage {#rendermodelpage-Function}
+### renderModelPage {#rendermodelpage-function}
 
 TODO Note: no breadcrumb
 
@@ -2517,9 +2517,9 @@ export declare function renderModelPage(apiModel: ApiModel, config: Required<Mar
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiModel | ApiModel | TODO |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; | TODO |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; | TODO |
 
-### renderPackagePage {#renderpackagepage-Function}
+### renderPackagePage {#renderpackagepage-function}
 
 #### Signature
 
@@ -2532,11 +2532,11 @@ export declare function renderPackagePage(apiPackage: ApiPackage, config: Requir
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiPackage | ApiPackage |  |
-|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-Interface)<!-- -->&gt; |  |
+|  config | Required&lt;[MarkdownDocumenterConfiguration](docs/api-markdown-documenter#markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### urlFromLink {#urlfromlink-Function}
+### urlFromLink {#urlfromlink-function}
 
-Generates a complete URL for the provided [Link](docs/api-markdown-documenter#link-Interface) object.
+Generates a complete URL for the provided [Link](docs/api-markdown-documenter#link-interface) object.
 
 #### Signature
 
@@ -2548,13 +2548,13 @@ export declare function urlFromLink(link: Link): string;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  link | [Link](docs/api-markdown-documenter#link-Interface) |  |
+|  link | [Link](docs/api-markdown-documenter#link-interface) |  |
 
 ## Variable Details
 
-### defaultPolicyOptions {#defaultpolicyoptions-Variable}
+### defaultPolicyOptions {#defaultpolicyoptions-variable}
 
-Default [PolicyOptions](docs/api-markdown-documenter#policyoptions-Interface) configuration
+Default [PolicyOptions](docs/api-markdown-documenter#policyoptions-interface) configuration
 
 #### Signature
 
@@ -2562,7 +2562,7 @@ Default [PolicyOptions](docs/api-markdown-documenter#policyoptions-Interface) co
 defaultPolicyOptions: Required<PolicyOptions>
 ```
 
-### defaultRenderingPolicies {#defaultrenderingpolicies-Variable}
+### defaultRenderingPolicies {#defaultrenderingpolicies-variable}
 
 TODO
 
@@ -2572,7 +2572,7 @@ TODO
 defaultRenderingPolicies: Required<RenderingPolicies>
 ```
 
-### maxHeadingLevel {#maxheadinglevel-Variable}
+### maxHeadingLevel {#maxheadinglevel-variable}
 
 Maximum heading level supported by most systems.
 

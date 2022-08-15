@@ -3,7 +3,7 @@
 
 [(model)](./index) &gt; [@fluid-tools/api-markdown-documenter](./api-markdown-documenter)
 
-Represents a link to some documentation element. A complete URL link can be created from its components (see [urlFromLink()](./api-markdown-documenter#urlfromlink-Function)<!-- -->).
+Represents a link to some documentation element. A complete URL link can be created from its components (see [urlFromLink()](./api-markdown-documenter#urlfromlink-function)<!-- -->).
 
 ## Signature
 
@@ -15,14 +15,14 @@ export interface Link
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [headingId](./api-markdown-documenter/link-interface#headingid-PropertySignature) |  | string | Optional ID of a heading in the document being linked to. |
-|  [relativeFilePath](./api-markdown-documenter/link-interface#relativefilepath-PropertySignature) |  | string | Path to the document being linked to. Relative to [Link.uriBase](./api-markdown-documenter/link-interface#uribase-PropertySignature)<!-- -->. TODO: rename. |
-|  [text](./api-markdown-documenter/link-interface#text-PropertySignature) |  | string | Link text to be rendered. |
-|  [uriBase](./api-markdown-documenter/link-interface#uribase-PropertySignature) |  | string | URI base of the element being linked to. |
+|  [headingId](./api-markdown-documenter/link-interface#headingid-propertysignature) |  | string | Optional ID of a heading in the document being linked to. |
+|  [relativeFilePath](./api-markdown-documenter/link-interface#relativefilepath-propertysignature) |  | string | Path to the document being linked to. Relative to [Link.uriBase](./api-markdown-documenter/link-interface#uribase-propertysignature)<!-- -->. TODO: rename. |
+|  [text](./api-markdown-documenter/link-interface#text-propertysignature) |  | string | Link text to be rendered. |
+|  [uriBase](./api-markdown-documenter/link-interface#uribase-propertysignature) |  | string | URI base of the element being linked to. |
 
 ## Property Details
 
-### headingId {#headingid-PropertySignature}
+### headingId {#headingid-propertysignature}
 
 Optional ID of a heading in the document being linked to.
 
@@ -32,9 +32,9 @@ Optional ID of a heading in the document being linked to.
 headingId?: string;
 ```
 
-### relativeFilePath {#relativefilepath-PropertySignature}
+### relativeFilePath {#relativefilepath-propertysignature}
 
-Path to the document being linked to. Relative to [Link.uriBase](./api-markdown-documenter/link-interface#uribase-PropertySignature)<!-- -->. TODO: rename.
+Path to the document being linked to. Relative to [Link.uriBase](./api-markdown-documenter/link-interface#uribase-propertysignature)<!-- -->. TODO: rename.
 
 #### Signature
 
@@ -42,7 +42,7 @@ Path to the document being linked to. Relative to [Link.uriBase](./api-markdown-
 relativeFilePath: string;
 ```
 
-### text {#text-PropertySignature}
+### text {#text-propertysignature}
 
 Link text to be rendered.
 
@@ -52,7 +52,7 @@ Link text to be rendered.
 text: string;
 ```
 
-### uriBase {#uribase-PropertySignature}
+### uriBase {#uribase-propertysignature}
 
 URI base of the element being linked to.
 

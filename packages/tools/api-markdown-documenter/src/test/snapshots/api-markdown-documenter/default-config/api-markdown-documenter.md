@@ -15,7 +15,7 @@ Akin to [API-Documenter](https://github.com/microsoft/rushstack/tree/main/apps/a
 |  --- | --- | --- |
 |  [EmitterOptions](./api-markdown-documenter/emitteroptions-interface) |  | [MarkdownEmitter](./api-markdown-documenter/markdownemitter-class) options. |
 |  [Heading](./api-markdown-documenter/heading-interface) |  | Represents a document heading. |
-|  [Link](./api-markdown-documenter/link-interface) |  | Represents a link to some documentation element. A complete URL link can be created from its components (see [urlFromLink()](./api-markdown-documenter#urlfromlink-Function)<!-- -->). |
+|  [Link](./api-markdown-documenter/link-interface) |  | Represents a link to some documentation element. A complete URL link can be created from its components (see [urlFromLink()](./api-markdown-documenter#urlfromlink-function)<!-- -->). |
 |  [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface) |  | Represents Markdown document contents that have not yet been written to a file. |
 |  [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) |  | Configuration options for the Markdown documenter. |
 |  [PolicyOptions](./api-markdown-documenter/policyoptions-interface) |  | Policy configuration options |
@@ -40,61 +40,61 @@ Akin to [API-Documenter](https://github.com/microsoft/rushstack/tree/main/apps/a
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [ApiFunctionLike](./api-markdown-documenter#apifunctionlike-TypeAlias) |  | <code>ApiItem</code> union type representing function-like API kinds. |
-|  [ApiModuleLike](./api-markdown-documenter#apimodulelike-TypeAlias) |  | <code>ApiItem</code> union type representing module-like API kinds. |
-|  [ApiSignatureLike](./api-markdown-documenter#apisignaturelike-TypeAlias) |  | <code>ApiItem</code> union type representing call-signature-like API kinds. |
-|  [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias) |  | List of item kinds for which separate documents should be generated. Items specified will be rendered to their own documents. Items not specified will be rendered into their parent's contents. |
-|  [EmitterContext](./api-markdown-documenter#emittercontext-TypeAlias) |  | Context used by [MarkdownEmitter.emit()](./api-markdown-documenter/markdownemitter-class#emit-Method)<!-- -->. |
-|  [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias) |  | Policy for naming of files / directories for API items. Must not include a file extension. |
-|  [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-TypeAlias) |  | Policy for generating heading titles for API items. |
-|  [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.<!-- -->For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->. |
-|  [IDocHeadingParameters](./api-markdown-documenter#idocheadingparameters-TypeAlias) |  | Constructor parameters for [DocHeading](./api-markdown-documenter/docheading-class)<!-- -->. |
-|  [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-TypeAlias) |  | Policy for generating link text for a particular API item. |
-|  [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-TypeAlias) |  | TODO |
-|  [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-TypeAlias) |  | TODO |
-|  [RenderSectionBlock](./api-markdown-documenter#rendersectionblock-TypeAlias) |  | TODO |
-|  [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-TypeAlias) |  | Policy for overriding the URI base for a specific API item. |
+|  [ApiFunctionLike](./api-markdown-documenter#apifunctionlike-typealias) |  | <code>ApiItem</code> union type representing function-like API kinds. |
+|  [ApiModuleLike](./api-markdown-documenter#apimodulelike-typealias) |  | <code>ApiItem</code> union type representing module-like API kinds. |
+|  [ApiSignatureLike](./api-markdown-documenter#apisignaturelike-typealias) |  | <code>ApiItem</code> union type representing call-signature-like API kinds. |
+|  [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias) |  | List of item kinds for which separate documents should be generated. Items specified will be rendered to their own documents. Items not specified will be rendered into their parent's contents. |
+|  [EmitterContext](./api-markdown-documenter#emittercontext-typealias) |  | Context used by [MarkdownEmitter.emit()](./api-markdown-documenter/markdownemitter-class#emit-method)<!-- -->. |
+|  [FileNamePolicy](./api-markdown-documenter#filenamepolicy-typealias) |  | Policy for naming of files / directories for API items. Must not include a file extension. |
+|  [HeadingTitlePolicy](./api-markdown-documenter#headingtitlepolicy-typealias) |  | Policy for generating heading titles for API items. |
+|  [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-typealias) |  | List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.<!-- -->For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](./api-markdown-documenter#filenamepolicy-typealias)<!-- -->. |
+|  [IDocHeadingParameters](./api-markdown-documenter#idocheadingparameters-typealias) |  | Constructor parameters for [DocHeading](./api-markdown-documenter/docheading-class)<!-- -->. |
+|  [LinkTextPolicy](./api-markdown-documenter#linktextpolicy-typealias) |  | Policy for generating link text for a particular API item. |
+|  [RenderApiItemWithChildren](./api-markdown-documenter#renderapiitemwithchildren-typealias) |  | TODO |
+|  [RenderApiItemWithoutChildren](./api-markdown-documenter#renderapiitemwithoutchildren-typealias) |  | TODO |
+|  [RenderSectionBlock](./api-markdown-documenter#rendersectionblock-typealias) |  | TODO |
+|  [UriBaseOverridePolicy](./api-markdown-documenter#uribaseoverridepolicy-typealias) |  | Policy for overriding the URI base for a specific API item. |
 
 ## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [doesItemGenerateHierarchy(apiItem, hierarchyBoundaries)](./api-markdown-documenter#doesitemgeneratehierarchy-Function) |  | boolean | Determines whether or not the specified API item is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question. |
-|  [doesItemKindGenerateHierarchy(kind, hierarchyBoundaries)](./api-markdown-documenter#doesitemkindgeneratehierarchy-Function) |  | boolean | Determines whether or not the specified API item kind is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question. |
-|  [doesItemKindRequireOwnDocument(kind, documentBoundaries)](./api-markdown-documenter#doesitemkindrequireowndocument-Function) |  | boolean | Determines whether or not the specified API item kind is one that should be rendered to its own document. |
-|  [doesItemRequireOwnDocument(apiItem, documentBoundaries)](./api-markdown-documenter#doesitemrequireowndocument-Function) |  | boolean | Determines whether or not the specified API item is one that should be rendered to its own document. |
-|  [filterByKind(apiItems, kinds)](./api-markdown-documenter#filterbykind-Function) |  | ApiItem\[\] | Filters the provided list of API items based on the provided <code>kinds</code>. |
-|  [getAncestralHierarchy(apiItem, includePredecate, breakPredicate)](./api-markdown-documenter#getancestralhierarchy-Function) |  | ApiItem\[\] | Gets the ancestral hierarchy of the provided API item by walking up the parentage graph and emitting any items matching the <code>includePredecate</code> until it reaches an item that matches the <code>breakPredecate</code>. |
-|  [getDocumentItems(apiItem, config)](./api-markdown-documenter#getdocumentitems-Function) |  | ApiItem\[\] | Walks the provided API item's member tree and reports all API items that should be rendered to their own documents. |
-|  [getFileNameForApiItem(apiItem, config, includeExtension)](./api-markdown-documenter#getfilenameforapiitem-Function) |  | string | Gets the file name for the specified API item. |
-|  [getFilePathForApiItem(apiItem, config, includeExtension)](./api-markdown-documenter#getfilepathforapiitem-Function) |  | string | Gets the file path for the specified API item. |
-|  [getFilteredParent(apiItem)](./api-markdown-documenter#getfilteredparent-Function) |  | ApiItem \| undefined | Gets the "filted" parent of the provided API item. This logic specifically skips items of the following kinds:<!-- -->- EntryPoint - Skipped because any given Package item will have exactly 1 EntryPoint child, making this redundant in the hierarchy. |
-|  [getFirstAncestorWithOwnPage(apiItem, documentBoundaries)](./api-markdown-documenter#getfirstancestorwithownpage-Function) |  | ApiItem | Gets the nearest ancestor of the provided item that will have its own rendered page. |
-|  [getHeadingForApiItem(apiItem, config, headingLevel)](./api-markdown-documenter#getheadingforapiitem-Function) |  | [Heading](./api-markdown-documenter/heading-interface) | Generates a [Heading](./api-markdown-documenter/heading-interface) for the specified API item. |
-|  [getHeadingIdForApiItem(apiItem, config)](./api-markdown-documenter#getheadingidforapiitem-Function) |  | string \| undefined | Generates a unique heading ID for the provided API item. |
-|  [getLinkForApiItem(apiItem, config)](./api-markdown-documenter#getlinkforapiitem-Function) |  | [Link](./api-markdown-documenter/link-interface) | Creates a [Link](./api-markdown-documenter/link-interface) for the provided API item. |
-|  [getLinkUrlForApiItem(apiItem, config)](./api-markdown-documenter#getlinkurlforapiitem-Function) |  | string | Creates a link URL to the specified API item. |
-|  [getQualifiedApiItemName(apiItem)](./api-markdown-documenter#getqualifiedapiitemname-Function) |  | string | Adjusts the name of the item as needed. Accounts for method overloads by adding a suffix such as "MyClass.myMethod\_2". |
-|  [markdownDocumenterConfigurationWithDefaults(partialConfig)](./api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-Function) |  | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
-|  [mergeSections(sections, tsdocConfiguration)](./api-markdown-documenter#mergesections-Function) |  | DocSection |  |
-|  [renderApiPage(apiItem, config)](./api-markdown-documenter#renderapipage-Function) |  | [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface) |  |
-|  [renderDocuments(partialConfig)](./api-markdown-documenter#renderdocuments-Function) |  | [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface)<!-- -->\[\] | Renders the provided model and its contents to a series of [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface)<!-- -->s. |
-|  [renderFiles(partialConfig, outputDirectoryPath, maybeMarkdownEmitter)](./api-markdown-documenter#renderfiles-Function) |  | Promise&lt;void&gt; | Renders the provided model and its contents, and writes each document to a file on disk. |
-|  [renderModelPage(apiModel, config)](./api-markdown-documenter#rendermodelpage-Function) |  | [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface) | TODO Note: no breadcrumb |
-|  [renderPackagePage(apiPackage, config)](./api-markdown-documenter#renderpackagepage-Function) |  | [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface) |  |
-|  [urlFromLink(link)](./api-markdown-documenter#urlfromlink-Function) |  | string | Generates a complete URL for the provided [Link](./api-markdown-documenter/link-interface) object. |
+|  [doesItemGenerateHierarchy(apiItem, hierarchyBoundaries)](./api-markdown-documenter#doesitemgeneratehierarchy-function) |  | boolean | Determines whether or not the specified API item is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question. |
+|  [doesItemKindGenerateHierarchy(kind, hierarchyBoundaries)](./api-markdown-documenter#doesitemkindgeneratehierarchy-function) |  | boolean | Determines whether or not the specified API item kind is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question. |
+|  [doesItemKindRequireOwnDocument(kind, documentBoundaries)](./api-markdown-documenter#doesitemkindrequireowndocument-function) |  | boolean | Determines whether or not the specified API item kind is one that should be rendered to its own document. |
+|  [doesItemRequireOwnDocument(apiItem, documentBoundaries)](./api-markdown-documenter#doesitemrequireowndocument-function) |  | boolean | Determines whether or not the specified API item is one that should be rendered to its own document. |
+|  [filterByKind(apiItems, kinds)](./api-markdown-documenter#filterbykind-function) |  | ApiItem\[\] | Filters the provided list of API items based on the provided <code>kinds</code>. |
+|  [getAncestralHierarchy(apiItem, includePredecate, breakPredicate)](./api-markdown-documenter#getancestralhierarchy-function) |  | ApiItem\[\] | Gets the ancestral hierarchy of the provided API item by walking up the parentage graph and emitting any items matching the <code>includePredecate</code> until it reaches an item that matches the <code>breakPredecate</code>. |
+|  [getDocumentItems(apiItem, config)](./api-markdown-documenter#getdocumentitems-function) |  | ApiItem\[\] | Walks the provided API item's member tree and reports all API items that should be rendered to their own documents. |
+|  [getFileNameForApiItem(apiItem, config, includeExtension)](./api-markdown-documenter#getfilenameforapiitem-function) |  | string | Gets the file name for the specified API item. |
+|  [getFilePathForApiItem(apiItem, config, includeExtension)](./api-markdown-documenter#getfilepathforapiitem-function) |  | string | Gets the file path for the specified API item. |
+|  [getFilteredParent(apiItem)](./api-markdown-documenter#getfilteredparent-function) |  | ApiItem \| undefined | Gets the "filted" parent of the provided API item. This logic specifically skips items of the following kinds:<!-- -->- EntryPoint - Skipped because any given Package item will have exactly 1 EntryPoint child, making this redundant in the hierarchy. |
+|  [getFirstAncestorWithOwnPage(apiItem, documentBoundaries)](./api-markdown-documenter#getfirstancestorwithownpage-function) |  | ApiItem | Gets the nearest ancestor of the provided item that will have its own rendered page. |
+|  [getHeadingForApiItem(apiItem, config, headingLevel)](./api-markdown-documenter#getheadingforapiitem-function) |  | [Heading](./api-markdown-documenter/heading-interface) | Generates a [Heading](./api-markdown-documenter/heading-interface) for the specified API item. |
+|  [getHeadingIdForApiItem(apiItem, config)](./api-markdown-documenter#getheadingidforapiitem-function) |  | string \| undefined | Generates a unique heading ID for the provided API item. |
+|  [getLinkForApiItem(apiItem, config)](./api-markdown-documenter#getlinkforapiitem-function) |  | [Link](./api-markdown-documenter/link-interface) | Creates a [Link](./api-markdown-documenter/link-interface) for the provided API item. |
+|  [getLinkUrlForApiItem(apiItem, config)](./api-markdown-documenter#getlinkurlforapiitem-function) |  | string | Creates a link URL to the specified API item. |
+|  [getQualifiedApiItemName(apiItem)](./api-markdown-documenter#getqualifiedapiitemname-function) |  | string | Adjusts the name of the item as needed. Accounts for method overloads by adding a suffix such as "MyClass.myMethod\_2". |
+|  [markdownDocumenterConfigurationWithDefaults(partialConfig)](./api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-function) |  | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
+|  [mergeSections(sections, tsdocConfiguration)](./api-markdown-documenter#mergesections-function) |  | DocSection |  |
+|  [renderApiPage(apiItem, config)](./api-markdown-documenter#renderapipage-function) |  | [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface) |  |
+|  [renderDocuments(partialConfig)](./api-markdown-documenter#renderdocuments-function) |  | [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface)<!-- -->\[\] | Renders the provided model and its contents to a series of [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface)<!-- -->s. |
+|  [renderFiles(partialConfig, outputDirectoryPath, maybeMarkdownEmitter)](./api-markdown-documenter#renderfiles-function) |  | Promise&lt;void&gt; | Renders the provided model and its contents, and writes each document to a file on disk. |
+|  [renderModelPage(apiModel, config)](./api-markdown-documenter#rendermodelpage-function) |  | [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface) | TODO Note: no breadcrumb |
+|  [renderPackagePage(apiPackage, config)](./api-markdown-documenter#renderpackagepage-function) |  | [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface) |  |
+|  [urlFromLink(link)](./api-markdown-documenter#urlfromlink-function) |  | string | Generates a complete URL for the provided [Link](./api-markdown-documenter/link-interface) object. |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [defaultPolicyOptions](./api-markdown-documenter#defaultpolicyoptions-Variable) |  | Default [PolicyOptions](./api-markdown-documenter/policyoptions-interface) configuration |
-|  [defaultRenderingPolicies](./api-markdown-documenter#defaultrenderingpolicies-Variable) |  | TODO |
-|  [maxHeadingLevel](./api-markdown-documenter#maxheadinglevel-Variable) |  | Maximum heading level supported by most systems. |
+|  [defaultPolicyOptions](./api-markdown-documenter#defaultpolicyoptions-variable) |  | Default [PolicyOptions](./api-markdown-documenter/policyoptions-interface) configuration |
+|  [defaultRenderingPolicies](./api-markdown-documenter#defaultrenderingpolicies-variable) |  | TODO |
+|  [maxHeadingLevel](./api-markdown-documenter#maxheadinglevel-variable) |  | Maximum heading level supported by most systems. |
 
 ## Type Details
 
-### ApiFunctionLike {#apifunctionlike-TypeAlias}
+### ApiFunctionLike {#apifunctionlike-typealias}
 
 `ApiItem` union type representing function-like API kinds.
 
@@ -104,7 +104,7 @@ Akin to [API-Documenter](https://github.com/microsoft/rushstack/tree/main/apps/a
 export declare type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
 ```
 
-### ApiModuleLike {#apimodulelike-TypeAlias}
+### ApiModuleLike {#apimodulelike-typealias}
 
 `ApiItem` union type representing module-like API kinds.
 
@@ -114,7 +114,7 @@ export declare type ApiFunctionLike = ApiConstructSignature | ApiConstructor | A
 export declare type ApiModuleLike = ApiPackage | ApiNamespace;
 ```
 
-### ApiSignatureLike {#apisignaturelike-TypeAlias}
+### ApiSignatureLike {#apisignaturelike-typealias}
 
 `ApiItem` union type representing call-signature-like API kinds.
 
@@ -124,7 +124,7 @@ export declare type ApiModuleLike = ApiPackage | ApiNamespace;
 export declare type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 ```
 
-### DocumentBoundaries {#documentboundaries-TypeAlias}
+### DocumentBoundaries {#documentboundaries-typealias}
 
 List of item kinds for which separate documents should be generated. Items specified will be rendered to their own documents. Items not specified will be rendered into their parent's contents.
 
@@ -140,9 +140,9 @@ Also note that `EntryPoint` items will always be ignored by the system, even if 
 export declare type DocumentBoundaries = ApiItemKind[];
 ```
 
-### EmitterContext {#emittercontext-TypeAlias}
+### EmitterContext {#emittercontext-typealias}
 
-Context used by [MarkdownEmitter.emit()](./api-markdown-documenter/markdownemitter-class#emit-Method)<!-- -->.
+Context used by [MarkdownEmitter.emit()](./api-markdown-documenter/markdownemitter-class#emit-method)<!-- -->.
 
 #### Signature
 
@@ -150,7 +150,7 @@ Context used by [MarkdownEmitter.emit()](./api-markdown-documenter/markdownemitt
 export declare type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 ```
 
-### FileNamePolicy {#filenamepolicy-TypeAlias}
+### FileNamePolicy {#filenamepolicy-typealias}
 
 Policy for naming of files / directories for API items. Must not include a file extension.
 
@@ -160,7 +160,7 @@ Policy for naming of files / directories for API items. Must not include a file 
 export declare type FileNamePolicy = (apiItem: ApiItem) => string;
 ```
 
-### HeadingTitlePolicy {#headingtitlepolicy-TypeAlias}
+### HeadingTitlePolicy {#headingtitlepolicy-typealias}
 
 Policy for generating heading titles for API items.
 
@@ -170,11 +170,11 @@ Policy for generating heading titles for API items.
 export declare type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 ```
 
-### HierarchyBoundaries {#hierarchyboundaries-TypeAlias}
+### HierarchyBoundaries {#hierarchyboundaries-typealias}
 
 List of item kinds for which sub-directories will be generated, and under which child item pages will be created. If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
 
-For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](./api-markdown-documenter#filenamepolicy-TypeAlias)<!-- -->.
+For items specified, the name of the sub-directory will be defined by the [FileNamePolicy](./api-markdown-documenter#filenamepolicy-typealias)<!-- -->.
 
 #### Signature
 
@@ -182,7 +182,7 @@ For items specified, the name of the sub-directory will be defined by the [FileN
 export declare type HierarchyBoundaries = ApiItemKind[];
 ```
 
-### IDocHeadingParameters {#idocheadingparameters-TypeAlias}
+### IDocHeadingParameters {#idocheadingparameters-typealias}
 
 Constructor parameters for [DocHeading](./api-markdown-documenter/docheading-class)<!-- -->.
 
@@ -192,7 +192,7 @@ Constructor parameters for [DocHeading](./api-markdown-documenter/docheading-cla
 export declare type IDocHeadingParameters = IDocNodeParameters & Heading;
 ```
 
-### LinkTextPolicy {#linktextpolicy-TypeAlias}
+### LinkTextPolicy {#linktextpolicy-typealias}
 
 Policy for generating link text for a particular API item.
 
@@ -202,7 +202,7 @@ Policy for generating link text for a particular API item.
 export declare type LinkTextPolicy = (apiItem: ApiItem) => string;
 ```
 
-### RenderApiItemWithChildren {#renderapiitemwithchildren-TypeAlias}
+### RenderApiItemWithChildren {#renderapiitemwithchildren-typealias}
 
 TODO
 
@@ -212,7 +212,7 @@ TODO
 export declare type RenderApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection) => DocSection;
 ```
 
-### RenderApiItemWithoutChildren {#renderapiitemwithoutchildren-TypeAlias}
+### RenderApiItemWithoutChildren {#renderapiitemwithoutchildren-typealias}
 
 TODO
 
@@ -222,7 +222,7 @@ TODO
 export declare type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 ```
 
-### RenderSectionBlock {#rendersectionblock-TypeAlias}
+### RenderSectionBlock {#rendersectionblock-typealias}
 
 TODO
 
@@ -232,7 +232,7 @@ TODO
 export declare type RenderSectionBlock = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 ```
 
-### UriBaseOverridePolicy {#uribaseoverridepolicy-TypeAlias}
+### UriBaseOverridePolicy {#uribaseoverridepolicy-typealias}
 
 Policy for overriding the URI base for a specific API item.
 
@@ -248,13 +248,13 @@ export declare type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undef
 
 ## Function Details
 
-### doesItemGenerateHierarchy {#doesitemgeneratehierarchy-Function}
+### doesItemGenerateHierarchy {#doesitemgeneratehierarchy-function}
 
 Determines whether or not the specified API item is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
 
 #### Remarks
 
-This is based on the item's `kind`<!-- -->. See [doesItemKindGenerateHierarchy()](./api-markdown-documenter#doesitemkindgeneratehierarchy-Function)<!-- -->.
+This is based on the item's `kind`<!-- -->. See [doesItemKindGenerateHierarchy()](./api-markdown-documenter#doesitemkindgeneratehierarchy-function)<!-- -->.
 
 #### Signature
 
@@ -267,15 +267,15 @@ export declare function doesItemGenerateHierarchy(apiItem: ApiItem, hierarchyBou
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  hierarchyBoundaries | [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias) |  |
+|  hierarchyBoundaries | [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-typealias) |  |
 
-### doesItemKindGenerateHierarchy {#doesitemkindgeneratehierarchy-Function}
+### doesItemKindGenerateHierarchy {#doesitemkindgeneratehierarchy-function}
 
 Determines whether or not the specified API item kind is one that should generate directory-wise hierarchy in the resulting documentation suite. I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
 
 #### Remarks
 
-This is essentially a wrapper around [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-PropertySignature)<!-- -->, but also enforces system-wide invariants.
+This is essentially a wrapper around [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-propertysignature)<!-- -->, but also enforces system-wide invariants.
 
 Namely...
 
@@ -292,15 +292,15 @@ export declare function doesItemKindGenerateHierarchy(kind: ApiItemKind, hierarc
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  kind | ApiItemKind | The kind of API item. |
-|  hierarchyBoundaries | [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias) | See [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-TypeAlias) |
+|  hierarchyBoundaries | [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-typealias) | See [HierarchyBoundaries](./api-markdown-documenter#hierarchyboundaries-typealias) |
 
-### doesItemKindRequireOwnDocument {#doesitemkindrequireowndocument-Function}
+### doesItemKindRequireOwnDocument {#doesitemkindrequireowndocument-function}
 
 Determines whether or not the specified API item kind is one that should be rendered to its own document.
 
 #### Remarks
 
-This is essentially a wrapper around [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-PropertySignature)<!-- -->, but also enforces system-wide invariants.
+This is essentially a wrapper around [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-propertysignature)<!-- -->, but also enforces system-wide invariants.
 
 Namely...
 
@@ -317,15 +317,15 @@ export declare function doesItemKindRequireOwnDocument(kind: ApiItemKind, docume
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  kind | ApiItemKind | The kind of API item. |
-|  documentBoundaries | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias) | See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias) |
+|  documentBoundaries | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias) | See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias) |
 
-### doesItemRequireOwnDocument {#doesitemrequireowndocument-Function}
+### doesItemRequireOwnDocument {#doesitemrequireowndocument-function}
 
 Determines whether or not the specified API item is one that should be rendered to its own document.
 
 #### Remarks
 
-This is based on the item's `kind`<!-- -->. See [doesItemKindRequireOwnDocument()](./api-markdown-documenter#doesitemkindrequireowndocument-Function)<!-- -->.
+This is based on the item's `kind`<!-- -->. See [doesItemKindRequireOwnDocument()](./api-markdown-documenter#doesitemkindrequireowndocument-function)<!-- -->.
 
 #### Signature
 
@@ -338,9 +338,9 @@ export declare function doesItemRequireOwnDocument(apiItem: ApiItem, documentBou
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
-|  documentBoundaries | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias) |  |
+|  documentBoundaries | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias) |  |
 
-### filterByKind {#filterbykind-Function}
+### filterByKind {#filterbykind-function}
 
 Filters the provided list of API items based on the provided `kinds`<!-- -->.
 
@@ -357,7 +357,7 @@ export declare function filterByKind(apiItems: readonly ApiItem[], kinds: ApiIte
 |  apiItems | readonly ApiItem\[\] | The list of items being filtered. |
 |  kinds | ApiItemKind\[\] | The kinds of items to consider. An item is considered a match if it matches any kind in this list. |
 
-### getAncestralHierarchy {#getancestralhierarchy-Function}
+### getAncestralHierarchy {#getancestralhierarchy-function}
 
 Gets the ancestral hierarchy of the provided API item by walking up the parentage graph and emitting any items matching the `includePredecate` until it reaches an item that matches the `breakPredecate`<!-- -->.
 
@@ -383,7 +383,7 @@ export declare function getAncestralHierarchy(apiItem: ApiItem, includePredecate
 |  includePredecate | (apiItem: ApiItem) =&gt; boolean | Predicate to determine which items in the hierarchy should be preserved in the returned list. The provided API item will not be included in the output, even if it would be included by this. |
 |  breakPredicate | (apiItem: ApiItem) =&gt; boolean | Predicate to determine when to break from the traversal and return. The item matching this predicate will not be included, even if it would be included by <code>includePredicate</code>. |
 
-### getDocumentItems {#getdocumentitems-Function}
+### getDocumentItems {#getdocumentitems-function}
 
 Walks the provided API item's member tree and reports all API items that should be rendered to their own documents.
 
@@ -400,7 +400,7 @@ export declare function getDocumentItems(apiItem: ApiItem, config: Required<Mark
 |  apiItem | ApiItem | The API item in question. |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### getFileNameForApiItem {#getfilenameforapiitem-Function}
+### getFileNameForApiItem {#getfilenameforapiitem-function}
 
 Gets the file name for the specified API item.
 
@@ -408,7 +408,7 @@ Gets the file name for the specified API item.
 
 In the case of an item that does not get rendered to its own page, this will be the file name for the document of the ancestor item under which the provided item will be rendered.
 
-Note: This is strictly the name of the file, not a path to that file. To get the path, use [getFilePathForApiItem()](./api-markdown-documenter#getfilepathforapiitem-Function)<!-- -->.
+Note: This is strictly the name of the file, not a path to that file. To get the path, use [getFilePathForApiItem()](./api-markdown-documenter#getfilepathforapiitem-function)<!-- -->.
 
 #### Signature
 
@@ -424,7 +424,7 @@ export declare function getFileNameForApiItem(apiItem: ApiItem, config: Required
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) |
 |  includeExtension | boolean | Whether or not to include the <code>.md</code> file extension at the end of the file name. |
 
-### getFilePathForApiItem {#getfilepathforapiitem-Function}
+### getFilePathForApiItem {#getfilepathforapiitem-function}
 
 Gets the file path for the specified API item.
 
@@ -432,7 +432,7 @@ Gets the file path for the specified API item.
 
 In the case of an item that does not get rendered to its own page, this will point to the document of the ancestor item under which the provided item will be rendered.
 
-The generated path is relative to [MarkdownDocumenterConfiguration.uriRoot](./api-markdown-documenter/markdowndocumenterconfiguration-interface#uriroot-PropertySignature)<!-- -->.
+The generated path is relative to [MarkdownDocumenterConfiguration.uriRoot](./api-markdown-documenter/markdowndocumenterconfiguration-interface#uriroot-propertysignature)<!-- -->.
 
 #### Signature
 
@@ -448,7 +448,7 @@ export declare function getFilePathForApiItem(apiItem: ApiItem, config: Required
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) |
 |  includeExtension | boolean | Whether or not to include the <code>.md</code> file extension at the end of the path. |
 
-### getFilteredParent {#getfilteredparent-Function}
+### getFilteredParent {#getfilteredparent-function}
 
 Gets the "filted" parent of the provided API item. This logic specifically skips items of the following kinds:
 
@@ -466,7 +466,7 @@ export declare function getFilteredParent(apiItem: ApiItem): ApiItem | undefined
 |  --- | --- | --- |
 |  apiItem | ApiItem |  |
 
-### getFirstAncestorWithOwnPage {#getfirstancestorwithownpage-Function}
+### getFirstAncestorWithOwnPage {#getfirstancestorwithownpage-function}
 
 Gets the nearest ancestor of the provided item that will have its own rendered page.
 
@@ -485,9 +485,9 @@ export declare function getFirstAncestorWithOwnPage(apiItem: ApiItem, documentBo
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which we are generating a file path. |
-|  documentBoundaries | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias) | See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-TypeAlias) |
+|  documentBoundaries | [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias) | See [DocumentBoundaries](./api-markdown-documenter#documentboundaries-typealias) |
 
-### getHeadingForApiItem {#getheadingforapiitem-Function}
+### getHeadingForApiItem {#getheadingforapiitem-function}
 
 Generates a [Heading](./api-markdown-documenter/heading-interface) for the specified API item.
 
@@ -505,7 +505,7 @@ export declare function getHeadingForApiItem(apiItem: ApiItem, config: Required<
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->. |
 |  headingLevel | number | Heading level to use. If not specified, the heading level will be automatically generated based on the item's context in the resulting document. |
 
-### getHeadingIdForApiItem {#getheadingidforapiitem-Function}
+### getHeadingIdForApiItem {#getheadingidforapiitem-function}
 
 Generates a unique heading ID for the provided API item.
 
@@ -528,7 +528,7 @@ export declare function getHeadingIdForApiItem(apiItem: ApiItem, config: Require
 |  apiItem | ApiItem | The API item for which the heading ID is being generated. |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->. |
 
-### getLinkForApiItem {#getlinkforapiitem-Function}
+### getLinkForApiItem {#getlinkforapiitem-function}
 
 Creates a [Link](./api-markdown-documenter/link-interface) for the provided API item.
 
@@ -549,7 +549,7 @@ export declare function getLinkForApiItem(apiItem: ApiItem, config: Required<Mar
 |  apiItem | ApiItem | The API item for which we are generating the link. |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) |
 
-### getLinkUrlForApiItem {#getlinkurlforapiitem-Function}
+### getLinkUrlForApiItem {#getlinkurlforapiitem-function}
 
 Creates a link URL to the specified API item.
 
@@ -570,7 +570,7 @@ export declare function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<
 |  apiItem | ApiItem | The API item for which we are generating the link URL. |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; | See [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) |
 
-### getQualifiedApiItemName {#getqualifiedapiitemname-Function}
+### getQualifiedApiItemName {#getqualifiedapiitemname-function}
 
 Adjusts the name of the item as needed. Accounts for method overloads by adding a suffix such as "MyClass.myMethod\_2".
 
@@ -586,7 +586,7 @@ export declare function getQualifiedApiItemName(apiItem: ApiItem): string;
 |  --- | --- | --- |
 |  apiItem | ApiItem | The API item for which the qualified name is being queried. |
 
-### markdownDocumenterConfigurationWithDefaults {#markdowndocumenterconfigurationwithdefaults-Function}
+### markdownDocumenterConfigurationWithDefaults {#markdowndocumenterconfigurationwithdefaults-function}
 
 #### Signature
 
@@ -600,7 +600,7 @@ export declare function markdownDocumenterConfigurationWithDefaults(partialConfi
 |  --- | --- | --- |
 |  partialConfig | [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) |  |
 
-### mergeSections {#mergesections-Function}
+### mergeSections {#mergesections-function}
 
 #### Signature
 
@@ -615,7 +615,7 @@ export declare function mergeSections(sections: DocSection[], tsdocConfiguration
 |  sections | DocSection\[\] |  |
 |  tsdocConfiguration | TSDocConfiguration |  |
 
-### renderApiPage {#renderapipage-Function}
+### renderApiPage {#renderapipage-function}
 
 #### Signature
 
@@ -630,13 +630,13 @@ export declare function renderApiPage(apiItem: ApiItem, config: Required<Markdow
 |  apiItem | ApiItem |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### renderDocuments {#renderdocuments-Function}
+### renderDocuments {#renderdocuments-function}
 
 Renders the provided model and its contents to a series of [MarkdownDocument](./api-markdown-documenter/markdowndocument-interface)<!-- -->s.
 
 #### Remarks
 
-Which API members get their own documents and which get written to the contents of their parent is determined by [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-PropertySignature)<!-- -->.
+Which API members get their own documents and which get written to the contents of their parent is determined by [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-propertysignature)<!-- -->.
 
 #### Signature
 
@@ -648,19 +648,19 @@ export declare function renderDocuments(partialConfig: MarkdownDocumenterConfigu
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  partialConfig | [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) | A partial [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->. Missing values will be filled in with defaults defined by [markdownDocumenterConfigurationWithDefaults()](./api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-Function)<!-- -->. |
+|  partialConfig | [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) | A partial [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->. Missing values will be filled in with defaults defined by [markdownDocumenterConfigurationWithDefaults()](./api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-function)<!-- -->. |
 
-### renderFiles {#renderfiles-Function}
+### renderFiles {#renderfiles-function}
 
 Renders the provided model and its contents, and writes each document to a file on disk.
 
 #### Remarks
 
-Which API members get their own documents and which get written to the contents of their parent is determined by [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-PropertySignature)<!-- -->.
+Which API members get their own documents and which get written to the contents of their parent is determined by [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-propertysignature)<!-- -->.
 
 The file paths under which the files will be saved is determined by the provided output path and the following configuration properties:
 
-- [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-PropertySignature) - [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-PropertySignature) - [PolicyOptions.fileNamePolicy](./api-markdown-documenter/policyoptions-interface#filenamepolicy-PropertySignature)
+- [PolicyOptions.documentBoundaries](./api-markdown-documenter/policyoptions-interface#documentboundaries-propertysignature) - [PolicyOptions.hierarchyBoundaries](./api-markdown-documenter/policyoptions-interface#hierarchyboundaries-propertysignature) - [PolicyOptions.fileNamePolicy](./api-markdown-documenter/policyoptions-interface#filenamepolicy-propertysignature)
 
 #### Signature
 
@@ -672,11 +672,11 @@ export declare function renderFiles(partialConfig: MarkdownDocumenterConfigurati
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  partialConfig | [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) | A partial [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->. Missing values will be filled in with defaults defined by [markdownDocumenterConfigurationWithDefaults()](./api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-Function)<!-- -->. |
+|  partialConfig | [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface) | A partial [MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->. Missing values will be filled in with defaults defined by [markdownDocumenterConfigurationWithDefaults()](./api-markdown-documenter#markdowndocumenterconfigurationwithdefaults-function)<!-- -->. |
 |  outputDirectoryPath | string |  |
 |  maybeMarkdownEmitter | [MarkdownEmitter](./api-markdown-documenter/markdownemitter-class) | The emitter to use for generating Markdown output. If not provided, a [default implementation](./api-markdown-documenter/markdownemitter-class) will be used. |
 
-### renderModelPage {#rendermodelpage-Function}
+### renderModelPage {#rendermodelpage-function}
 
 TODO Note: no breadcrumb
 
@@ -693,7 +693,7 @@ export declare function renderModelPage(apiModel: ApiModel, config: Required<Mar
 |  apiModel | ApiModel | TODO |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; | TODO |
 
-### renderPackagePage {#renderpackagepage-Function}
+### renderPackagePage {#renderpackagepage-function}
 
 #### Signature
 
@@ -708,7 +708,7 @@ export declare function renderPackagePage(apiPackage: ApiPackage, config: Requir
 |  apiPackage | ApiPackage |  |
 |  config | Required&lt;[MarkdownDocumenterConfiguration](./api-markdown-documenter/markdowndocumenterconfiguration-interface)<!-- -->&gt; |  |
 
-### urlFromLink {#urlfromlink-Function}
+### urlFromLink {#urlfromlink-function}
 
 Generates a complete URL for the provided [Link](./api-markdown-documenter/link-interface) object.
 
@@ -726,7 +726,7 @@ export declare function urlFromLink(link: Link): string;
 
 ## Variable Details
 
-### defaultPolicyOptions {#defaultpolicyoptions-Variable}
+### defaultPolicyOptions {#defaultpolicyoptions-variable}
 
 Default [PolicyOptions](./api-markdown-documenter/policyoptions-interface) configuration
 
@@ -736,7 +736,7 @@ Default [PolicyOptions](./api-markdown-documenter/policyoptions-interface) confi
 defaultPolicyOptions: Required<PolicyOptions>
 ```
 
-### defaultRenderingPolicies {#defaultrenderingpolicies-Variable}
+### defaultRenderingPolicies {#defaultrenderingpolicies-variable}
 
 TODO
 
@@ -746,7 +746,7 @@ TODO
 defaultRenderingPolicies: Required<RenderingPolicies>
 ```
 
-### maxHeadingLevel {#maxheadinglevel-Variable}
+### maxHeadingLevel {#maxheadinglevel-variable}
 
 Maximum heading level supported by most systems.
 

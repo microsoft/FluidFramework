@@ -23,9 +23,9 @@ And an ordered list for good measure!
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
-- Good link (no alias): [TestClass](docs/simple-suite-test#testclass-Class)
+- Good link (no alias): [TestClass](docs/simple-suite-test#testclass-class)
 
-- Good link (with alias): [function alias text](docs/simple-suite-test#testfunction-Function)
+- Good link (with alias): [function alias text](docs/simple-suite-test#testfunction-function)
 
 - Bad link (no alias): *InvalidItem*
 
@@ -43,54 +43,54 @@ const foo = bar;
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-Interface) |  | An empty interface |
-|  [TestInterface](docs/simple-suite-test#testinterface-Interface) |  | Test interface |
-|  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test#testinterfaceextendingotherinterfaces-Interface) |  | Test interface that extends other interfaces |
-|  [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-Interface) |  | Test interface with generic type parameter |
+|  [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) |  | An empty interface |
+|  [TestInterface](docs/simple-suite-test#testinterface-interface) |  | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test#testinterfaceextendingotherinterfaces-interface) |  | Test interface that extends other interfaces |
+|  [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface) |  | Test interface with generic type parameter |
 
 ## Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestClass](docs/simple-suite-test#testclass-Class) |  | Test class |
+|  [TestClass](docs/simple-suite-test#testclass-class) |  | Test class |
 
 ## Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestNamespace](docs/simple-suite-test#testnamespace-Namespace) |  | Test Namespace |
+|  [TestNamespace](docs/simple-suite-test#testnamespace-namespace) |  | Test Namespace |
 
 ## Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestMappedType](docs/simple-suite-test#testmappedtype-TypeAlias) |  | Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-Enum) |
-|  [TypeAlias](docs/simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
+|  [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) |  | Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum) |
+|  [TypeAlias](docs/simple-suite-test#typealias-typealias) |  | Test Type-Alias |
 
 ## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testFunction(testParameter)](docs/simple-suite-test#testfunction-Function) |  | TTypeParameter | Test function |
-|  [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-Function) |  | { foo: number; bar: [TestEnum](docs/simple-suite-test#testenum-Enum)<!-- -->; } | Test function that returns an inline type |
-|  [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-Function) |  | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-Interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-Interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
-|  [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-Function) |  | string \| [TestInterface](docs/simple-suite-test#testinterface-Interface) | Test function that returns an inline type |
+|  [testFunction(testParameter)](docs/simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
+|  [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-function) |  | { foo: number; bar: [TestEnum](docs/simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
+|  [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) |  | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
+|  [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/simple-suite-test#testinterface-interface) | Test function that returns an inline type |
 
 ## Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnum](docs/simple-suite-test#testenum-Enum) |  | Test Enum |
+|  [TestEnum](docs/simple-suite-test#testenum-enum) |  | Test Enum |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [testConst](docs/simple-suite-test#testconst-Variable) |  | Test Constant |
+|  [testConst](docs/simple-suite-test#testconst-variable) |  | Test Constant |
 
 ## Interface Details
 
-### TestEmptyInterface {#testemptyinterface-Interface}
+### TestEmptyInterface {#testemptyinterface-interface}
 
 An empty interface
 
@@ -100,7 +100,7 @@ An empty interface
 export interface TestEmptyInterface 
 ```
 
-### TestInterface {#testinterface-Interface}
+### TestInterface {#testinterface-interface}
 
 Test interface
 
@@ -118,25 +118,25 @@ export interface TestInterface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-PropertySignature) |  | () =&gt; void | Test interface event property |
-|  [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-PropertySignature) |  | number | Test interface property |
+|  [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) |  | () =&gt; void | Test interface event property |
+|  [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  | number | Test interface property |
 
 #### Call Signatures
 
 |  CallSignature | Modifiers | Description |
 |  --- | --- | --- |
-|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call_-CallSignature) |  | Test interface event call signature |
-|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call__1-CallSignature) |  | Another example call signature |
+|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call_-callsignature) |  | Test interface event call signature |
+|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call__1-callsignature) |  | Another example call signature |
 
 #### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testInterfaceMethod()](docs/simple-suite-test#testinterface-testinterfacemethod-MethodSignature) |  | void | Test interface method |
+|  [testInterfaceMethod()](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature) |  | void | Test interface method |
 
 #### Property Details
 
-##### testClassEventProperty {#testinterface-testclasseventproperty-PropertySignature}
+##### testClassEventProperty {#testinterface-testclasseventproperty-propertysignature}
 
 Test interface event property
 
@@ -150,7 +150,7 @@ Here are some remarks about the event property
 readonly testClassEventProperty: () => void;
 ```
 
-##### testInterfaceProperty {#testinterface-testinterfaceproperty-PropertySignature}
+##### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
 
 Test interface property
 
@@ -166,7 +166,7 @@ testInterfaceProperty: number;
 
 #### Call Signature Details
 
-##### (call) {#testinterface-_call_-CallSignature}
+##### (call) {#testinterface-_call_-callsignature}
 
 Test interface event call signature
 
@@ -180,7 +180,7 @@ Here are some remarks about the event call signature
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-##### (call) {#testinterface-_call__1-CallSignature}
+##### (call) {#testinterface-_call__1-callsignature}
 
 Another example call signature
 
@@ -196,7 +196,7 @@ Here are some remarks about the event call signature
 
 #### Method Details
 
-##### testInterfaceMethod {#testinterface-testinterfacemethod-MethodSignature}
+##### testInterfaceMethod {#testinterface-testinterfacemethod-methodsignature}
 
 Test interface method
 
@@ -210,7 +210,7 @@ Here are some remarks about the method
 testInterfaceMethod(): void;
 ```
 
-### TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-Interface}
+### TestInterfaceExtendingOtherInterfaces {#testinterfaceextendingotherinterfaces-interface}
 
 Test interface that extends other interfaces
 
@@ -223,22 +223,22 @@ Here are some remarks about the interface
 ```typescript
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestInterfaceWithTypeParameter<number>, TestMappedType 
 ```
-<b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-Interface)
+<b>Extends:</b> [TestInterface](docs/simple-suite-test#testinterface-interface)
 
-, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-Interface)<!-- -->&lt;number&gt;
+, [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt;
 
-, [TestMappedType](docs/simple-suite-test#testmappedtype-TypeAlias)
+, [TestMappedType](docs/simple-suite-test#testmappedtype-typealias)
 
 
 #### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testMethod(input)](docs/simple-suite-test#testinterfaceextendingotherinterfaces-testmethod-MethodSignature) |  | number | Test interface method accepting a string and returning a number. |
+|  [testMethod(input)](docs/simple-suite-test#testinterfaceextendingotherinterfaces-testmethod-methodsignature) |  | number | Test interface method accepting a string and returning a number. |
 
 #### Method Details
 
-##### testMethod {#testinterfaceextendingotherinterfaces-testmethod-MethodSignature}
+##### testMethod {#testinterfaceextendingotherinterfaces-testmethod-methodsignature}
 
 Test interface method accepting a string and returning a number.
 
@@ -258,7 +258,7 @@ testMethod(input: string): number;
 |  --- | --- | --- |
 |  input | string | A string |
 
-### TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-Interface}
+### TestInterfaceWithTypeParameter {#testinterfacewithtypeparameter-interface}
 
 Test interface with generic type parameter
 
@@ -280,11 +280,11 @@ export interface TestInterfaceWithTypeParameter<T>
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testProperty](docs/simple-suite-test#testinterfacewithtypeparameter-testproperty-PropertySignature) |  | T | A test interface property using generic type parameter |
+|  [testProperty](docs/simple-suite-test#testinterfacewithtypeparameter-testproperty-propertysignature) |  | T | A test interface property using generic type parameter |
 
 #### Property Details
 
-##### testProperty {#testinterfacewithtypeparameter-testproperty-PropertySignature}
+##### testProperty {#testinterfacewithtypeparameter-testproperty-propertysignature}
 
 A test interface property using generic type parameter
 
@@ -300,7 +300,7 @@ testProperty: T;
 
 ## Classe Details
 
-### TestClass {#testclass-Class}
+### TestClass {#testclass-class}
 
 Test class
 
@@ -325,25 +325,25 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB>
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-Constructor) |  |  | Test class constructor |
+|  [(constructor)(testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-constructor) |  |  | Test class constructor |
 
 #### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-Property) |  | () =&gt; void | Test class event property |
-|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-Property) |  | number | Test class getter-only property |
-|  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-Property) |  | TTypeParameterB | Test class property |
+|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) |  | () =&gt; void | Test class event property |
+|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) |  | number | Test class getter-only property |
+|  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) |  | TTypeParameterB | Test class property |
 
 #### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-Method) |  | TTypeParameterA | Test class method |
+|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) |  | TTypeParameterA | Test class method |
 
 #### Constructor Details
 
-##### (constructor) {#testclass-_constructor_-Constructor}
+##### (constructor) {#testclass-_constructor_-constructor}
 
 Test class constructor
 
@@ -361,12 +361,12 @@ constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => vo
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-Property) |
-|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-Property) |
+|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) |
+|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) |
 
 #### Property Details
 
-##### testClassEventProperty {#testclass-testclasseventproperty-Property}
+##### testClassEventProperty {#testclass-testclasseventproperty-property}
 
 Test class event property
 
@@ -380,7 +380,7 @@ Here are some remarks about the property
 readonly testClassEventProperty: () => void;
 ```
 
-##### testClassGetterProperty {#testclass-testclassgetterproperty-Property}
+##### testClassGetterProperty {#testclass-testclassgetterproperty-property}
 
 Test class getter-only property
 
@@ -395,7 +395,7 @@ Here are some remarks about the getter-only property
 get testClassGetterProperty(): number;
 ```
 
-##### testClassProperty {#testclass-testclassproperty-Property}
+##### testClassProperty {#testclass-testclassproperty-property}
 
 Test class property
 
@@ -411,7 +411,7 @@ readonly testClassProperty: TTypeParameterB;
 
 #### Method Details
 
-##### testClassMethod {#testclass-testclassmethod-Method}
+##### testClassMethod {#testclass-testclassmethod-method}
 
 Test class method
 
@@ -434,7 +434,7 @@ testClassMethod(input: TTypeParameterA): TTypeParameterA;
 
 ## Namespace Details
 
-### TestNamespace {#testnamespace-Namespace}
+### TestNamespace {#testnamespace-namespace}
 
 Test Namespace
 
@@ -462,47 +462,47 @@ export declare namespace TestNamespace
 
 |  Interface | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestInterface](docs/simple-suite-test#testnamespace-testinterface-Interface) |  | Test interface |
+|  [TestInterface](docs/simple-suite-test#testnamespace-testinterface-interface) |  | Test interface |
 
 #### Classes
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestClass](docs/simple-suite-test#testnamespace-testclass-Class) |  | Test class |
+|  [TestClass](docs/simple-suite-test#testnamespace-testclass-class) |  | Test class |
 
 #### Namespaces
 
 |  Namespace | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestSubNamespace](docs/simple-suite-test#testnamespace-testsubnamespace-Namespace) |  | Test sub-namespace |
+|  [TestSubNamespace](docs/simple-suite-test#testnamespace-testsubnamespace-namespace) |  | Test sub-namespace |
 
 #### Types
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [TypeAlias](docs/simple-suite-test#testnamespace-typealias-TypeAlias) |  | Test Type-Alias |
+|  [TypeAlias](docs/simple-suite-test#testnamespace-typealias-typealias) |  | Test Type-Alias |
 
 #### Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testFunction(testParameter)](docs/simple-suite-test#testnamespace-testfunction-Function) |  | number | Test function |
+|  [testFunction(testParameter)](docs/simple-suite-test#testnamespace-testfunction-function) |  | number | Test function |
 
 #### Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnum](docs/simple-suite-test#testnamespace-testenum-Enum) |  | Test Enum |
+|  [TestEnum](docs/simple-suite-test#testnamespace-testenum-enum) |  | Test Enum |
 
 #### Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestConst](docs/simple-suite-test#testnamespace-testconst-Variable) |  | Test Constant |
+|  [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) |  | Test Constant |
 
 #### Interface Details
 
-##### TestInterface {#testnamespace-testinterface-Interface}
+##### TestInterface {#testnamespace-testinterface-interface}
 
 Test interface
 
@@ -516,13 +516,13 @@ interface TestInterface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testInterfaceProperty](docs/simple-suite-test#testnamespace-testinterface-testinterfaceproperty-PropertySignature) |  | boolean | Test interface property |
+|  [testInterfaceProperty](docs/simple-suite-test#testnamespace-testinterface-testinterfaceproperty-propertysignature) |  | boolean | Test interface property |
 
 ###### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testInterfaceMethod()](docs/simple-suite-test#testnamespace-testinterface-testinterfacemethod-MethodSignature) |  | void | Test interface method |
+|  [testInterfaceMethod()](docs/simple-suite-test#testnamespace-testinterface-testinterfacemethod-methodsignature) |  | void | Test interface method |
 
 ###### Property Details
 
@@ -550,7 +550,7 @@ testInterfaceMethod(): void;
 
 #### Classe Details
 
-##### TestClass {#testnamespace-testclass-Class}
+##### TestClass {#testnamespace-testclass-class}
 
 Test class
 
@@ -564,19 +564,19 @@ class TestClass
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty)](docs/simple-suite-test#testnamespace-testclass-_constructor_-Constructor) |  |  | Test class constructor |
+|  [(constructor)(testClassProperty)](docs/simple-suite-test#testnamespace-testclass-_constructor_-constructor) |  |  | Test class constructor |
 
 ###### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassProperty](docs/simple-suite-test#testnamespace-testclass-testclassproperty-Property) |  | string | Test interface property |
+|  [testClassProperty](docs/simple-suite-test#testnamespace-testclass-testclassproperty-property) |  | string | Test interface property |
 
 ###### Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassMethod(testParameter)](docs/simple-suite-test#testnamespace-testclass-testclassmethod-Method) |  | Promise&lt;string&gt; | Test class method |
+|  [testClassMethod(testParameter)](docs/simple-suite-test#testnamespace-testclass-testclassmethod-method) |  | Promise&lt;string&gt; | Test class method |
 
 ###### Constructor Details
 
@@ -594,7 +594,7 @@ constructor(testClassProperty: string);
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | string | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-Property) |
+|  testClassProperty | string | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) |
 
 ###### Property Details
 
@@ -628,7 +628,7 @@ testClassMethod(testParameter: string): Promise<string>;
 
 #### Namespace Details
 
-##### TestSubNamespace {#testnamespace-testsubnamespace-Namespace}
+##### TestSubNamespace {#testnamespace-testsubnamespace-namespace}
 
 Test sub-namespace
 
@@ -640,7 +640,7 @@ namespace TestSubNamespace
 
 #### Type Details
 
-##### TypeAlias {#testnamespace-typealias-TypeAlias}
+##### TypeAlias {#testnamespace-typealias-typealias}
 
 Test Type-Alias
 
@@ -652,7 +652,7 @@ type TypeAlias = boolean;
 
 #### Function Details
 
-##### testFunction {#testnamespace-testfunction-Function}
+##### testFunction {#testnamespace-testfunction-function}
 
 Test function
 
@@ -670,7 +670,7 @@ function testFunction(testParameter: number): number;
 
 #### Enumeration Details
 
-##### TestEnum {#testnamespace-testenum-Enum}
+##### TestEnum {#testnamespace-testenum-enum}
 
 Test Enum
 
@@ -684,8 +684,8 @@ enum TestEnum
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnumValue1](docs/simple-suite-test#testnamespace-testenum-testenumvalue1-EnumMember) |  | Test enum value 1 |
-|  [TestEnumValue2](docs/simple-suite-test#testnamespace-testenum-testenumvalue2-EnumMember) |  | Test enum value 2 |
+|  [TestEnumValue1](docs/simple-suite-test#testnamespace-testenum-testenumvalue1-enummember) |  | Test enum value 1 |
+|  [TestEnumValue2](docs/simple-suite-test#testnamespace-testenum-testenumvalue2-enummember) |  | Test enum value 2 |
 
 ###### FlagDetails
 
@@ -711,7 +711,7 @@ TestEnumValue2 = 1
 
 #### Variable Details
 
-##### TestConst {#testnamespace-testconst-Variable}
+##### TestConst {#testnamespace-testconst-variable}
 
 Test Constant
 
@@ -723,9 +723,9 @@ TestConst = "Hello world!"
 
 ## Type Details
 
-### TestMappedType {#testmappedtype-TypeAlias}
+### TestMappedType {#testmappedtype-typealias}
 
-Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-Enum)
+Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum)
 
 #### Remarks
 
@@ -739,7 +739,7 @@ export declare type TestMappedType = {
 };
 ```
 
-### TypeAlias {#typealias-TypeAlias}
+### TypeAlias {#typealias-typealias}
 
 Test Type-Alias
 
@@ -755,13 +755,13 @@ export declare type TypeAlias = string;
 
 ## Function Details
 
-### testFunction {#testfunction-Function}
+### testFunction {#testfunction-function}
 
 Test function
 
 #### Remarks
 
-This is a test [link](docs/simple-suite-test#testinterface-Interface) to another API member
+This is a test [link](docs/simple-suite-test#testinterface-interface) to another API member
 
 #### Signature
 
@@ -775,7 +775,7 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 |  --- | --- | --- |
 |  testParameter | TTypeParameter | A test parameter |
 
-### testFunctionReturningInlineType {#testfunctionreturninginlinetype-Function}
+### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
 Test function that returns an inline type
 
@@ -788,7 +788,7 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
-### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-Function}
+### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
 Test function that returns an inline type
 
@@ -798,7 +798,7 @@ Test function that returns an inline type
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
-### testFunctionReturningUnionType {#testfunctionreturninguniontype-Function}
+### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
 Test function that returns an inline type
 
@@ -810,7 +810,7 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 ## Enumeration Details
 
-### TestEnum {#testenum-Enum}
+### TestEnum {#testenum-enum}
 
 Test Enum
 
@@ -846,13 +846,13 @@ export declare enum TestEnum
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnumValue1](docs/simple-suite-test#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 (string) |
-|  [TestEnumValue2](docs/simple-suite-test#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 (number) |
-|  [TestEnumValue3](docs/simple-suite-test#testenum-testenumvalue3-EnumMember) |  | Test enum value 3 (default) |
+|  [TestEnumValue1](docs/simple-suite-test#testenum-testenumvalue1-enummember) |  | Test enum value 1 (string) |
+|  [TestEnumValue2](docs/simple-suite-test#testenum-testenumvalue2-enummember) |  | Test enum value 2 (number) |
+|  [TestEnumValue3](docs/simple-suite-test#testenum-testenumvalue3-enummember) |  | Test enum value 3 (default) |
 
 #### FlagDetails
 
-##### TestEnumValue1 {#testenum-testenumvalue1-EnumMember}
+##### TestEnumValue1 {#testenum-testenumvalue1-enummember}
 
 Test enum value 1 (string)
 
@@ -866,7 +866,7 @@ Here are some remarks about the enum value
 TestEnumValue1 = "test-enum-value-1"
 ```
 
-##### TestEnumValue2 {#testenum-testenumvalue2-EnumMember}
+##### TestEnumValue2 {#testenum-testenumvalue2-enummember}
 
 Test enum value 2 (number)
 
@@ -880,7 +880,7 @@ Here are some remarks about the enum value
 TestEnumValue2 = 3
 ```
 
-##### TestEnumValue3 {#testenum-testenumvalue3-EnumMember}
+##### TestEnumValue3 {#testenum-testenumvalue3-enummember}
 
 Test enum value 3 (default)
 
@@ -896,7 +896,7 @@ TestEnumValue3 = 4
 
 ## Variable Details
 
-### testConst {#testconst-Variable}
+### testConst {#testconst-variable}
 
 Test Constant
 

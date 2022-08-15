@@ -25,7 +25,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Good link (no alias): [TestClass](./simple-suite-test/testclass-class)
 
-- Good link (with alias): [function alias text](./simple-suite-test#testfunction-Function)
+- Good link (with alias): [function alias text](./simple-suite-test#testfunction-function)
 
 - Bad link (no alias): *InvalidItem*
 
@@ -64,35 +64,35 @@ const foo = bar;
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestMappedType](./simple-suite-test#testmappedtype-TypeAlias) |  | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-Enum) |
-|  [TypeAlias](./simple-suite-test#typealias-TypeAlias) |  | Test Type-Alias |
+|  [TestMappedType](./simple-suite-test#testmappedtype-typealias) |  | Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum) |
+|  [TypeAlias](./simple-suite-test#typealias-typealias) |  | Test Type-Alias |
 
 ## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testFunction(testParameter)](./simple-suite-test#testfunction-Function) |  | TTypeParameter | Test function |
-|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-Function) |  | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-Enum)<!-- -->; } | Test function that returns an inline type |
-|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-Function) |  | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
-|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-Function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
+|  [testFunction(testParameter)](./simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
+|  [testFunctionReturningInlineType()](./simple-suite-test#testfunctionreturninginlinetype-function) |  | { foo: number; bar: [TestEnum](./simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
+|  [testFunctionReturningIntersectionType()](./simple-suite-test#testfunctionreturningintersectiontype-function) |  | [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](./simple-suite-test/testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
+|  [testFunctionReturningUnionType()](./simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](./simple-suite-test/testinterface-interface) | Test function that returns an inline type |
 
 ## Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnum](./simple-suite-test#testenum-Enum) |  | Test Enum |
+|  [TestEnum](./simple-suite-test#testenum-enum) |  | Test Enum |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [testConst](./simple-suite-test#testconst-Variable) |  | Test Constant |
+|  [testConst](./simple-suite-test#testconst-variable) |  | Test Constant |
 
 ## Type Details
 
-### TestMappedType {#testmappedtype-TypeAlias}
+### TestMappedType {#testmappedtype-typealias}
 
-Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-Enum)
+Test Mapped Type, using [TestEnum](./simple-suite-test#testenum-enum)
 
 #### Remarks
 
@@ -106,7 +106,7 @@ export declare type TestMappedType = {
 };
 ```
 
-### TypeAlias {#typealias-TypeAlias}
+### TypeAlias {#typealias-typealias}
 
 Test Type-Alias
 
@@ -122,7 +122,7 @@ export declare type TypeAlias = string;
 
 ## Function Details
 
-### testFunction {#testfunction-Function}
+### testFunction {#testfunction-function}
 
 Test function
 
@@ -142,7 +142,7 @@ export declare function testFunction<TTypeParameter>(testParameter: TTypeParamet
 |  --- | --- | --- |
 |  testParameter | TTypeParameter | A test parameter |
 
-### testFunctionReturningInlineType {#testfunctionreturninginlinetype-Function}
+### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 
 Test function that returns an inline type
 
@@ -155,7 +155,7 @@ export declare function testFunctionReturningInlineType(): {
 };
 ```
 
-### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-Function}
+### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
 Test function that returns an inline type
 
@@ -165,7 +165,7 @@ Test function that returns an inline type
 export declare function testFunctionReturningIntersectionType(): TestEmptyInterface & TestInterfaceWithTypeParameter<number>;
 ```
 
-### testFunctionReturningUnionType {#testfunctionreturninguniontype-Function}
+### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
 Test function that returns an inline type
 
@@ -177,7 +177,7 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 ## Enumeration Details
 
-### TestEnum {#testenum-Enum}
+### TestEnum {#testenum-enum}
 
 Test Enum
 
@@ -213,13 +213,13 @@ export declare enum TestEnum
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnumValue1](./simple-suite-test#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 (string) |
-|  [TestEnumValue2](./simple-suite-test#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 (number) |
-|  [TestEnumValue3](./simple-suite-test#testenum-testenumvalue3-EnumMember) |  | Test enum value 3 (default) |
+|  [TestEnumValue1](./simple-suite-test#testenum-testenumvalue1-enummember) |  | Test enum value 1 (string) |
+|  [TestEnumValue2](./simple-suite-test#testenum-testenumvalue2-enummember) |  | Test enum value 2 (number) |
+|  [TestEnumValue3](./simple-suite-test#testenum-testenumvalue3-enummember) |  | Test enum value 3 (default) |
 
 #### FlagDetails
 
-##### TestEnumValue1 {#testenum-testenumvalue1-EnumMember}
+##### TestEnumValue1 {#testenum-testenumvalue1-enummember}
 
 Test enum value 1 (string)
 
@@ -233,7 +233,7 @@ Here are some remarks about the enum value
 TestEnumValue1 = "test-enum-value-1"
 ```
 
-##### TestEnumValue2 {#testenum-testenumvalue2-EnumMember}
+##### TestEnumValue2 {#testenum-testenumvalue2-enummember}
 
 Test enum value 2 (number)
 
@@ -247,7 +247,7 @@ Here are some remarks about the enum value
 TestEnumValue2 = 3
 ```
 
-##### TestEnumValue3 {#testenum-testenumvalue3-EnumMember}
+##### TestEnumValue3 {#testenum-testenumvalue3-enummember}
 
 Test enum value 3 (default)
 
@@ -263,7 +263,7 @@ TestEnumValue3 = 4
 
 ## Variable Details
 
-### testConst {#testconst-Variable}
+### testConst {#testconst-variable}
 
 Test Constant
 

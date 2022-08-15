@@ -13,12 +13,12 @@ export interface DocExample
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [content](./api-markdown-documenter/renderinghelpers/docexample-interface#content-PropertySignature) |  | DocSection | <code>@example</code> comment body. |
-|  [exampleNumber](./api-markdown-documenter/renderinghelpers/docexample-interface#examplenumber-PropertySignature) |  | number | Example number. Used to disambiguate multiple <code>@example</code> comments numerically. If not specified, example heading will not be labeled with a number. |
+|  [content](./api-markdown-documenter/renderinghelpers/docexample-interface#content-propertysignature) |  | DocSection | <code>@example</code> comment body. |
+|  [exampleNumber](./api-markdown-documenter/renderinghelpers/docexample-interface#examplenumber-propertysignature) |  | number | Example number. Used to disambiguate multiple <code>@example</code> comments numerically. If not specified, example heading will not be labeled with a number. |
 
 ## Property Details
 
-### content {#content-PropertySignature}
+### content {#content-propertysignature}
 
 `@example` comment body.
 
@@ -28,7 +28,7 @@ export interface DocExample
 content: DocSection;
 ```
 
-### exampleNumber {#examplenumber-PropertySignature}
+### exampleNumber {#examplenumber-propertysignature}
 
 Example number. Used to disambiguate multiple `@example` comments numerically. If not specified, example heading will not be labeled with a number.
 

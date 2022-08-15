@@ -47,29 +47,29 @@ export declare namespace TestNamespace
 
 |  TypeAlias | Modifiers | Description |
 |  --- | --- | --- |
-|  [TypeAlias](./simple-suite-test/testnamespace-namespace#typealias-TypeAlias) |  | Test Type-Alias |
+|  [TypeAlias](./simple-suite-test/testnamespace-namespace#typealias-typealias) |  | Test Type-Alias |
 
 ## Functions
 
 |  Function | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testFunction(testParameter)](./simple-suite-test/testnamespace-namespace#testfunction-Function) |  | number | Test function |
+|  [testFunction(testParameter)](./simple-suite-test/testnamespace-namespace#testfunction-function) |  | number | Test function |
 
 ## Enumerations
 
 |  Enum | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnum](./simple-suite-test/testnamespace-namespace#testenum-Enum) |  | Test Enum |
+|  [TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum) |  | Test Enum |
 
 ## Variables
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-Variable) |  | Test Constant |
+|  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) |  | Test Constant |
 
 ## Type Details
 
-### TypeAlias {#typealias-TypeAlias}
+### TypeAlias {#typealias-typealias}
 
 Test Type-Alias
 
@@ -81,7 +81,7 @@ type TypeAlias = boolean;
 
 ## Function Details
 
-### testFunction {#testfunction-Function}
+### testFunction {#testfunction-function}
 
 Test function
 
@@ -99,7 +99,7 @@ function testFunction(testParameter: number): number;
 
 ## Enumeration Details
 
-### TestEnum {#testenum-Enum}
+### TestEnum {#testenum-enum}
 
 Test Enum
 
@@ -113,12 +113,12 @@ enum TestEnum
 
 |  Flag | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestEnumValue1](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue1-EnumMember) |  | Test enum value 1 |
-|  [TestEnumValue2](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue2-EnumMember) |  | Test enum value 2 |
+|  [TestEnumValue1](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue1-enummember) |  | Test enum value 1 |
+|  [TestEnumValue2](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue2-enummember) |  | Test enum value 2 |
 
 #### FlagDetails
 
-##### TestEnumValue1 {#testenum-testenumvalue1-EnumMember}
+##### TestEnumValue1 {#testenum-testenumvalue1-enummember}
 
 Test enum value 1
 
@@ -128,7 +128,7 @@ Test enum value 1
 TestEnumValue1 = 0
 ```
 
-##### TestEnumValue2 {#testenum-testenumvalue2-EnumMember}
+##### TestEnumValue2 {#testenum-testenumvalue2-enummember}
 
 Test enum value 2
 
@@ -140,7 +140,7 @@ TestEnumValue2 = 1
 
 ## Variable Details
 
-### TestConst {#testconst-Variable}
+### TestConst {#testconst-variable}
 
 Test Constant
 

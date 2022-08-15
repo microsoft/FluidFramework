@@ -15,23 +15,23 @@ class TestClass
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-Constructor) |  |  | Test class constructor |
+|  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-constructor) |  |  | Test class constructor |
 
 ## Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-Property) |  | string | Test interface property |
+|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) |  | string | Test interface property |
 
 ## Methods
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-Method) |  | Promise&lt;string&gt; | Test class method |
+|  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-method) |  | Promise&lt;string&gt; | Test class method |
 
 ## Constructor Details
 
-### (constructor) {#_constructor_-Constructor}
+### (constructor) {#_constructor_-constructor}
 
 Test class constructor
 
@@ -45,11 +45,11 @@ constructor(testClassProperty: string);
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | string | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-Property) |
+|  testClassProperty | string | See [TestClass.testClassProperty](./simple-suite-test/testclass-class#testclassproperty-property) |
 
 ## Property Details
 
-### testClassProperty {#testclassproperty-Property}
+### testClassProperty {#testclassproperty-property}
 
 Test interface property
 
@@ -61,7 +61,7 @@ readonly testClassProperty: string;
 
 ## Method Details
 
-### testClassMethod {#testclassmethod-Method}
+### testClassMethod {#testclassmethod-method}
 
 Test class method
 
