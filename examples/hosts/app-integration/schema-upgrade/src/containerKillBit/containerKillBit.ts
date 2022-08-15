@@ -96,7 +96,7 @@ export class ContainerKillBit extends DataObject implements IContainerKillBit {
     }
 
     public haveMigrationTask(): boolean {
-        return this.taskManager.haveTaskLock(migrateTaskName);
+        return this.taskManager.assignedTask(migrateTaskName);
     }
 
     protected async initializingFirstTime() {

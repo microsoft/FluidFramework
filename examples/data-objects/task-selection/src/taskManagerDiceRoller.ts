@@ -109,7 +109,7 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
     }
 
     public hasTask() {
-        return this.taskManager.haveTaskLock(autoRollTaskId);
+        return this.taskManager.assignedTask(autoRollTaskId);
     }
 }
 
