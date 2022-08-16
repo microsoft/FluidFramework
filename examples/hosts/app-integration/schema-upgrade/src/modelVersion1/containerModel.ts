@@ -35,7 +35,8 @@ const applyStringData = async (inventoryList: IInventoryList, stringData: string
     }
 };
 
-const exportStringData1 = async (inventoryList: IInventoryList) => {
+// Exports in version:one format (using ':' delimiter between name/quantity)
+const exportStringData = async (inventoryList: IInventoryList) => {
     const inventoryItems = inventoryList.getItems();
     const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
         return `${ inventoryItem.name.getText() }:${ inventoryItem.quantity.toString() }`;
@@ -108,7 +109,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     };
 
     public readonly exportData = async (): Promise<InventoryListContainerExportType> => {
-        return exportStringData1(this.inventoryList);
+        return exportStringData(this.inventoryList);
     };
 
     public get acceptedVersion() {
