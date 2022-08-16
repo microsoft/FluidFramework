@@ -558,20 +558,37 @@ There are several options to consider:
 
 Inline all the required repair data in the changeset being sent over the wire.
 
-##### Reference Newly Uploaded New Blobs
+##### Reference Newly Uploaded Blobs
 
 Have the issuing client upload new blobs containing the repair data,
 and include references to these blobs in the changeset being sent over the wire.
-
-##### Reference Document State History Query
-
-Have the issuing client include the query information that peers should send to
-a document state history service in order to fetch the repair information.
 
 ##### Reference Document State History Query Result Blobs
 
 Have the issuing client query a document state history service in order to fetch the repair information
 and include references to the blobs listed in the service's response.
+
+##### Document State History Query
+
+Have the issuing client include the query information that peers should send to
+a document state history service in order to fetch the repair information.
+
+##### Abstract Repair Data Description
+
+Have the issuing client include a precise characterization of what repair data is needed
+(but not the repair data itself).
+Peers are then responsible for obtaining this data,
+which they could do in a variety of ways:
+* Using a locally maintained cache of such data (synchronous)
+* Querying a document state history service (asynchronous)
+* A mix of the above (asynchronous)
+
+Note that doing this is similar to the approach described in the
+[Late Repair Data Concretization](#late-repair-data-concretization) section.
+It's an open question whether there is an incentive to adopt this approach
+(which has the issuing client perform some of the reconciliation work)
+as opposed to the
+[Late Repair Data Concretization](#late-repair-data-concretization) approach.
 
 ##### Reference Insert Blobs
 
@@ -746,7 +763,7 @@ undo ops sent over the wire are abstract in the sense that they only describe
 which prior change ought to be undone.
 The specific document changes needed to accomplish the undo are entirely
 left to the receiver to work out.
-This design makes undo ops, well, not really changesets anymore.
+This design does not use changesets to encore undo ops.
 
 * Don't preemptively include repair data in all changesets.
 * A client that issues an undo simply sends an op containing the ID of the change they want undone.
@@ -785,6 +802,10 @@ This can happen in two ways:
 Instead of making inverse changes as concrete as possible,
 we could make them as abstract a possible (i.e., containing no repair data),
 and the needed repair data could be fetched as part of the conversion to Delta.
+Such fetching could be done in a variety of ways:
+* Using a locally maintained cache of such data (synchronous)
+* Querying a document state history service (asynchronous)
+* A mix of the above (asynchronous)
 
 Pros:
 * We avoid possibly expensive repair data fetching form services in cases where it turns out such data is not needed.
