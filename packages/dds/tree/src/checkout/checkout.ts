@@ -17,5 +17,5 @@ export interface ICheckout extends IForestSubscription {
      * TODO: support nesting (perhaps via "commands"),
      * and do this in a way where there is control over which ones intermediate versions are displayed.
      */
-    runTransaction<T>(transaction: (startingForestState: IEditableForest) => T): T;
+    runTransaction<T>(transaction: (forest: IEditableForest) => T): T;
 }

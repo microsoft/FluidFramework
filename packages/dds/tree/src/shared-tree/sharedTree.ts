@@ -79,13 +79,15 @@ export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChange
         services: IChannelServices,
         channelAttributes: Readonly<IChannelAttributes>,
     ): Promise<IChannel> {
-        const tree = new SharedTree(id, runtime, channelAttributes, "TODO");
+        // TODO: What should the telemetry context be here?
+        const tree = new SharedTree(id, runtime, channelAttributes, "SharedTree");
         await tree.load(services);
         return tree;
     }
 
     public create(runtime: IFluidDataStoreRuntime, id: string): IChannel {
-        const tree = new SharedTree(id, runtime, this.attributes, "TODO");
+        // TODO: What should the telemetry context be here?
+        const tree = new SharedTree(id, runtime, this.attributes, "SharedTree");
         tree.initializeLocal();
         return tree;
     }
