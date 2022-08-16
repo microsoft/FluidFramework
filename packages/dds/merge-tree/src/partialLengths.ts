@@ -870,8 +870,9 @@ function verifyPartialLengths(
             // Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
             assert(!clientPartials, 0x058 /* "Both overlapRemoveClients and clientPartials are set!" */);
 
-            // Each overlap client count as one
-            count += partialLength.overlapRemoveClients.size();
+            // Each overlap client count as one, but the first remove to sequence was already counted.
+            // (this aligns with the logic to omit the removing client in `addClientSeqNumberFromPartial`)
+            count += partialLength.overlapRemoveClients.size() - 1;
         }
     }
     return count;
