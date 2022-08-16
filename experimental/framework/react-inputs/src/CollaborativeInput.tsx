@@ -16,6 +16,7 @@ export interface ICollaborativeInputProps {
     spellCheck?: boolean;
     className?: string;
     style?: React.CSSProperties;
+    disabled?: boolean;
     onInput?: (sharedString: SharedString) => void;
 }
 
@@ -73,6 +74,7 @@ export class CollaborativeInput
                 style={this.props.style}
                 spellCheck={this.props.spellCheck ? this.props.spellCheck : true}
                 ref={this.inputElementRef}
+                disabled={this.props.disabled}
                 onBeforeInput={this.updateSelection}
                 onKeyDown={this.updateSelection}
                 onClick={this.updateSelection}

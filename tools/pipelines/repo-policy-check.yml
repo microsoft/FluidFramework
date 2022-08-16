@@ -6,11 +6,13 @@
 trigger:
 - main
 - next
+- lts
 - release/*
 
 pr:
 - main
 - next
+- lts
 - release/*
 
 pool:

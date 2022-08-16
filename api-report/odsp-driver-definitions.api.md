@@ -19,7 +19,9 @@ export interface HostStoragePolicy {
     concurrentSnapshotFetch?: boolean;
     // @deprecated (undocumented)
     enableRedeemFallback?: boolean;
+    // @deprecated (undocumented)
     enableShareLinkWithCreate?: boolean;
+    enableSingleRequestForShareLinkWithCreate?: boolean;
     // @deprecated (undocumented)
     fetchBinarySnapshotFormat?: boolean;
     isolateSocketCache?: boolean;
@@ -132,6 +134,20 @@ export interface IPersistedCache {
     removeEntries(file: IFileEntry): Promise<void>;
 }
 
+// @public
+export interface ISharingLink extends ISharingLinkKind {
+    // (undocumented)
+    webUrl: string;
+}
+
+// @public
+export interface ISharingLinkKind {
+    // (undocumented)
+    role?: SharingLinkRole;
+    // (undocumented)
+    scope: SharingLinkScope;
+}
+
 // @public (undocumented)
 export interface ISnapshotOptions {
     // (undocumented)
@@ -179,17 +195,38 @@ export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
 // @public
 export interface ShareLinkInfoType {
     createLink?: {
-        type?: ShareLinkTypes;
-        link?: string;
+        type?: ShareLinkTypes | ISharingLinkKind;
+        link?: string | ISharingLink;
         error?: any;
+        shareId?: string;
     };
     sharingLinkToRedeem?: string;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export enum ShareLinkTypes {
     // (undocumented)
     csl = "csl"
+}
+
+// @public
+export enum SharingLinkRole {
+    // (undocumented)
+    edit = "edit",
+    // (undocumented)
+    view = "view"
+}
+
+// @public
+export enum SharingLinkScope {
+    // (undocumented)
+    anonymous = "anonymous",
+    // (undocumented)
+    default = "default",
+    // (undocumented)
+    organization = "organization",
+    // (undocumented)
+    users = "users"
 }
 
 // @public
