@@ -5,6 +5,13 @@
 
 import { DataTransformationCallback } from "./migrationInterfaces";
 
+/**
+ * Read the version of the string data, to understand how to parse it.  This is shared between versions.
+ * This format is just one example of how you might distinguish between multiple export formats, other approaches
+ * are also totally fine.
+ * @param stringData - The string data to examine
+ * @returns The version string
+ */
 export function readVersion(stringData: string) {
     const lines = stringData.split("\n");
     const [versionTag, version] = lines[0].split(":");
@@ -14,6 +21,12 @@ export function readVersion(stringData: string) {
     return version;
 }
 
+/**
+ * Parse string data in version:one format into an array of simple objects that are easily imported into an
+ * inventory list.
+ * @param stringData - version:one formatted string data
+ * @returns An array of objects, each representing a single inventory item
+ */
 export function parseStringDataVersionOne(stringData: string) {
     const version = readVersion(stringData);
     if (version !== "one") {
@@ -27,6 +40,12 @@ export function parseStringDataVersionOne(stringData: string) {
     });
 }
 
+/**
+ * Parse string data in version:two format into an array of simple objects that are easily imported into an
+ * inventory list.
+ * @param stringData - version:two formatted string data
+ * @returns An array of objects, each representing a single inventory item
+ */
 export function parseStringDataVersionTwo(stringData: string) {
     const version = readVersion(stringData);
     if (version !== "two") {

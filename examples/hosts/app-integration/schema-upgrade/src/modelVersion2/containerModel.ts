@@ -27,7 +27,7 @@ const getStateFromMigrationTool = (migrationTool: IMigrationTool) => {
     }
 };
 
-// These helper functions produce and consume the same stringified form of the data.
+// Applies string data in version:two format.
 const applyStringData = async (inventoryList: IInventoryList, stringData: string) => {
     const parsedInventoryItemData = parseStringDataVersionTwo(stringData);
     for (const { name, quantity } of parsedInventoryItemData) {
