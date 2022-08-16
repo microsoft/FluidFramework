@@ -10,7 +10,7 @@ which seem like they can best be met by collaborating on a single feature rich t
 The current feature focus is on:
 
 -   Semantics:
-    -   High quality semantic merges, including "slice" moves of parts of sequences.
+    -   High quality semantic merges, including moves of parts of sequences (called "slice moves").
     -   Transactionality.
     -   Support schema in a semantically robust way.
 -   Scalability:
