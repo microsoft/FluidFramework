@@ -41,7 +41,7 @@ import {
     getQualifiedApiItemName,
     mergeSections,
 } from "../../utilities";
-import { renderParametersTable } from "./TablesRenderingHelpers";
+import { renderParametersSummaryTable } from "./TablesRenderingHelpers";
 
 export function renderSignature(
     apiItem: ApiItem,
@@ -467,7 +467,7 @@ export function renderParametersSection(
             { title: "Parameters", id: `${getQualifiedApiItemName(apiFunctionLike)}-parameters` },
             config,
         ),
-        renderParametersTable(apiFunctionLike.parameters, config),
+        renderParametersSummaryTable(apiFunctionLike.parameters, config),
     ]);
 }
 

@@ -279,13 +279,10 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
 // @public
 export const maxHeadingLevel = 6;
 
-// @public (undocumented)
+// @public
 interface MemberTableProperties {
-    // (undocumented)
     headingTitle: string;
-    // (undocumented)
     itemKind: ApiItemKind;
-    // (undocumented)
     items: readonly ApiItem[];
 }
 
@@ -311,10 +308,10 @@ export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApi
 // @public
 export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 
-// @public (undocumented)
+// @public
 function renderApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
-// @public (undocumented)
+// @public
 function renderApiTitleCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public (undocumented)
@@ -335,8 +332,8 @@ function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle
 // @public (undocumented)
 function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
-// @public (undocumented)
-function renderDefaultTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
+// @public
+function renderDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
 // @public (undocumented)
 function renderDeprecationNotice(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
@@ -362,8 +359,8 @@ export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outp
 // @public (undocumented)
 function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
-// @public (undocumented)
-function renderFunctionLikeTable(apiItems: readonly ApiFunctionLike[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
+// @public
+function renderFunctionLikeSummaryTable(apiItems: readonly ApiFunctionLike[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
 // @public (undocumented)
 function renderHeading(heading: Heading, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
@@ -396,10 +393,10 @@ declare namespace RenderingHelpers {
         ChildSectionProperties,
         renderMemberTables,
         renderTableWithHeading,
-        renderTable,
-        renderDefaultTable,
-        renderParametersTable,
-        renderFunctionLikeTable,
+        renderSummaryTable,
+        renderDefaultSummaryTable,
+        renderParametersSummaryTable,
+        renderFunctionLikeSummaryTable,
         renderPropertiesTable,
         renderPackagesTable,
         renderApiSummaryCell,
@@ -441,7 +438,7 @@ function renderInterfaceSection(apiInterface: ApiInterface, config: Required<Mar
 // @public (undocumented)
 function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
-// @public (undocumented)
+// @public
 function renderMemberTables(memberTableProperties: readonly MemberTableProperties[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
@@ -450,7 +447,7 @@ export function renderModelDocument(apiModel: ApiModel, config: Required<Markdow
 // @public (undocumented)
 function renderModelSection(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
-// @public (undocumented)
+// @public
 function renderModifiersCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public (undocumented)
@@ -465,14 +462,14 @@ export function renderPackageDocument(apiPackage: ApiPackage, config: Required<M
 // @public (undocumented)
 function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
-// @public (undocumented)
+// @public
 function renderPackagesTable(apiPackages: readonly ApiPackage[], config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
 // @public (undocumented)
 function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
-// @public (undocumented)
-function renderParametersTable(apiParameters: readonly Parameter[], config: Required<MarkdownDocumenterConfiguration>): DocTable;
+// @public
+function renderParametersSummaryTable(apiParameters: readonly Parameter[], config: Required<MarkdownDocumenterConfiguration>): DocTable;
 
 // @public (undocumented)
 function renderParameterSummaryCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
@@ -483,7 +480,7 @@ function renderParameterTitleCell(apiParameter: Parameter, config: Required<Mark
 // @public (undocumented)
 function renderParameterTypeCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
-// @public (undocumented)
+// @public
 function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
 // @public (undocumented)
@@ -492,7 +489,7 @@ function renderPropertyTypeCell(apiItem: ApiPropertyItem, config: Required<Markd
 // @public (undocumented)
 function renderRemarks(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
-// @public (undocumented)
+// @public
 function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
@@ -504,10 +501,10 @@ function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterCo
 // @public (undocumented)
 function renderSummary(apiItem: ApiItem): DocSection | undefined;
 
-// @public (undocumented)
-function renderTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
+// @public
+function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
-// @public (undocumented)
+// @public
 function renderTableWithHeading(memberTableProperties: MemberTableProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public (undocumented)

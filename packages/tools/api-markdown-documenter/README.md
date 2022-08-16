@@ -34,7 +34,7 @@ This function also accepts a `MarkdownEmitter` object that does the conversion f
 
 ### Styling improvements
 
--   Specially denote optional parameters / properties
+-   Add more modifiers to modifiers columns (optional, etc.)
 -   Dynamic "Modifiers" column in tables
     -   I.e. only include "modifiers" column if any modifiers are detected.
 -   Better `@defaultValue` rendering.

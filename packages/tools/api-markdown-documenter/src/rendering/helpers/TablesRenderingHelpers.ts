@@ -30,12 +30,33 @@ import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
 import { ApiFunctionLike, getLinkUrlForApiItem, mergeSections } from "../../utilities";
 import { renderExcerptWithHyperlinks, renderHeading } from "./RenderingHelpers";
 
+/**
+ * Input properties for rendering a table of API members
+ */
 export interface MemberTableProperties {
+    /**
+     * Heading text to display above the table contents.
+     */
     headingTitle: string;
+
+    /**
+     * The kind of API item.
+     */
     itemKind: ApiItemKind;
+
+    /**
+     * The items to be rendered as rows in the table.
+     */
     items: readonly ApiItem[];
 }
 
+/**
+ * Renders a simple section containing a series of headings and tables, representing the API members of some parent
+ * item, organized by kind.
+ *
+ * @param memberTableProperties - List of table configurations.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderMemberTables(
     memberTableProperties: readonly MemberTableProperties[],
     config: Required<MarkdownDocumenterConfiguration>,
@@ -54,11 +75,17 @@ export function renderMemberTables(
         : mergeSections(docSections, config.tsdocConfiguration);
 }
 
+/**
+ * Renders a simple section containing a heading and a table, based on the provided properties.
+ *
+ * @param memberTableProperties - The table configuration.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderTableWithHeading(
     memberTableProperties: MemberTableProperties,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
-    const renderedTable = renderTable(
+    const renderedTable = renderSummaryTable(
         memberTableProperties.items,
         memberTableProperties.itemKind,
         config,
@@ -72,7 +99,17 @@ export function renderTableWithHeading(
           ]);
 }
 
-export function renderTable(
+/**
+ * Renders a simple summary table for API items of the specified kind.
+ * This is intended to represent a simple overview of the items.
+ *
+ * @remarks General use-case is to render a summary of child items of a given kind for some parent API item.
+ *
+ * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
+ * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderSummaryTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -91,7 +128,7 @@ export function renderTable(
         case ApiItemKind.Function:
         case ApiItemKind.Method:
         case ApiItemKind.MethodSignature:
-            return renderFunctionLikeTable(
+            return renderFunctionLikeSummaryTable(
                 apiItems.map((apiItem) => apiItem as ApiFunctionLike),
                 itemKind,
                 config,
@@ -111,11 +148,18 @@ export function renderTable(
             );
 
         default:
-            return renderDefaultTable(apiItems, itemKind, config);
+            return renderDefaultSummaryTable(apiItems, itemKind, config);
     }
 }
 
-export function renderDefaultTable(
+/**
+ * Default summary table rendering. Displays each item's name, modifiers, and description (summary) comment.
+ *
+ * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
+ * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderDefaultSummaryTable(
     apiItems: readonly ApiItem[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -143,7 +187,15 @@ export function renderDefaultTable(
     );
 }
 
-export function renderParametersTable(
+/**
+ * Renders a simple summary table for a series of parameters.
+ * Displays each parameter's name, type, and description (summary) comment.
+ *
+ * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
+ * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderParametersSummaryTable(
     apiParameters: readonly Parameter[],
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable {
@@ -166,7 +218,15 @@ export function renderParametersTable(
     );
 }
 
-export function renderFunctionLikeTable(
+/**
+ * Renders a simple summary table for function-like API items (constructors, functions, methods).
+ * Displays each item's name, modifiers, return type, and description (summary) comment.
+ *
+ * @param apiItems - The function-like items to be rendered.
+ * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderFunctionLikeSummaryTable(
     apiItems: readonly ApiFunctionLike[],
     itemKind: ApiItemKind,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -200,6 +260,14 @@ export function renderFunctionLikeTable(
     );
 }
 
+/**
+ * Renders a simple summary table for a series of properties.
+ * Displays each property's name, modifiers, type, and description (summary) comment.
+ *
+ * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
+ * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderPropertiesTable(
     apiProperties: readonly ApiPropertyItem[],
     config: Required<MarkdownDocumenterConfiguration>,
@@ -228,6 +296,14 @@ export function renderPropertiesTable(
     );
 }
 
+/**
+ * Renders a simple summary table for a list of packages.
+ * Displays each package's name and description (summary) comment.
+ *
+ * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
+ * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderPackagesTable(
     apiPackages: readonly ApiPackage[],
     config: Required<MarkdownDocumenterConfiguration>,
@@ -254,6 +330,13 @@ export function renderPackagesTable(
     );
 }
 
+/**
+ * Renders a table cell containing the description (summary) comment for the provided API item.
+ * If the item has an `@beta` release tag, the comment will be annotated as being beta content.
+ *
+ * @param apiItem - The API item whose comment will be rendered in the cell.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderApiSummaryCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -288,6 +371,14 @@ export function renderApiSummaryCell(
     return new DocTableCell({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
+/**
+ * Renders a table cell containing the type information about the provided API item.
+ * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * API suite (model).
+ *
+ * @param apiItem - The API item whose comment will be rendered in the cell.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderReturnTypeCell(
     apiItem: ApiFunctionLike,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -303,6 +394,14 @@ export function renderReturnTypeCell(
     ]);
 }
 
+/**
+ * Renders a table cell containing the name of the provided API item.
+ * @remarks This content will be rendered as a link to the section content describing the API item.
+ *
+ * @param apiItem - The API item whose name will be rendered in the cell, and to whose content the generate link
+ * will point.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderApiTitleCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -319,11 +418,20 @@ export function renderApiTitleCell(
     ]);
 }
 
+/**
+ * Renders a table cell containing a list of modifiers that apply.
+ * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * API suite (model).
+ *
+ * @param apiItem - The API item whose comment will be rendered in the cell.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderModifiersCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
     const modifierNodes: DocNode[] = [];
+
     if (ApiStaticMixin.isBaseClassOf(apiItem)) {
         if (apiItem.isStatic) {
             modifierNodes.push(
