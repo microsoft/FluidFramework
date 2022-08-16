@@ -13,6 +13,7 @@ import {
     ApiReleaseTagMixin,
     ApiReturnTypeMixin,
     ApiStaticMixin,
+    Excerpt,
     Parameter,
     ReleaseTag,
 } from "@microsoft/api-extractor-model";
@@ -168,7 +169,7 @@ export function renderDefaultSummaryTable(
         return undefined;
     }
 
-    const headerTitles = [getHeadingTitleForApiKind(itemKind), "Modifiers", "Description"];
+    const headerTitles = [getTableHeadingTitleForApiKind(itemKind), "Modifiers", "Description"];
     const tableRows: DocTableRow[] = apiItems.map(
         (apiItem) =>
             new DocTableRow({ configuration: config.tsdocConfiguration }, [
@@ -236,7 +237,7 @@ export function renderFunctionLikeSummaryTable(
     }
 
     const headerTitles = [
-        getHeadingTitleForApiKind(itemKind),
+        getTableHeadingTitleForApiKind(itemKind),
         "Modifiers",
         "Return Type",
         "Description",
@@ -351,13 +352,10 @@ export function renderApiSummaryCell(
                     [
                         new DocPlainText({
                             configuration: config.tsdocConfiguration,
-                            text: "(BETA)",
+                            text: "(BETA) ",
                         }),
                     ],
                 ),
-            );
-            docNodes.push(
-                new DocPlainText({ configuration: config.tsdocConfiguration, text: " " }),
             );
         }
     }
@@ -372,30 +370,27 @@ export function renderApiSummaryCell(
 }
 
 /**
- * Renders a table cell containing the type information about the provided API item.
+ * Renders a table cell containing the return type information for the provided function-like API item,
+ * if it specifies one. If it does not specify a type, an empty table cell will be rendered.
+ *
  * @remarks This content will be rendered as links to type signature documentation for other items local to the same
  * API suite (model).
  *
- * @param apiItem - The API item whose comment will be rendered in the cell.
+ * @param apiItem - The API item whose return type will be rendered in the cell.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderReturnTypeCell(
     apiItem: ApiFunctionLike,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const docNodes: DocNode[] = [];
-
-    if (ApiReturnTypeMixin.isBaseClassOf(apiItem)) {
-        docNodes.push(renderExcerptWithHyperlinks(apiItem.returnTypeExcerpt, config));
-    }
-
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
-        new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes),
-    ]);
+    return ApiReturnTypeMixin.isBaseClassOf(apiItem)
+        ? renderTypeExcerptCell(apiItem.returnTypeExcerpt, config)
+        : renderEmptyTableCell(config);
 }
 
 /**
  * Renders a table cell containing the name of the provided API item.
+ *
  * @remarks This content will be rendered as a link to the section content describing the API item.
  *
  * @param apiItem - The API item whose name will be rendered in the cell, and to whose content the generate link
@@ -420,10 +415,11 @@ export function renderApiTitleCell(
 
 /**
  * Renders a table cell containing a list of modifiers that apply.
+ *
  * @remarks This content will be rendered as links to type signature documentation for other items local to the same
  * API suite (model).
  *
- * @param apiItem - The API item whose comment will be rendered in the cell.
+ * @param apiItem - The API item whose modifiers will be rendered in the cell.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderModifiersCell(
@@ -443,17 +439,28 @@ export function renderModifiersCell(
     return new DocTableCell({ configuration: config.tsdocConfiguration }, modifierNodes);
 }
 
+/**
+ * Renders a table cell containing the type information about the provided property.
+ *
+ * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * API suite (model).
+ *
+ * @param apiProperty - The property whose type information will be rendered in the cell.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderPropertyTypeCell(
-    apiItem: ApiPropertyItem,
+    apiProperty: ApiPropertyItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
-        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            renderExcerptWithHyperlinks(apiItem.propertyTypeExcerpt, config),
-        ]),
-    ]);
+    return renderTypeExcerptCell(apiProperty.propertyTypeExcerpt, config);
 }
 
+/**
+ * Renders a table cell containing the name of the provided parameter as plain text.
+ *
+ * @param apiParameter - The parameter whose name will be rendered in the cell
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderParameterTitleCell(
     apiParameter: Parameter,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -465,28 +472,74 @@ export function renderParameterTitleCell(
     ]);
 }
 
+/**
+ * Renders a table cell containing the type information about the provided parameter.
+ *
+ * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * API suite (model).
+ *
+ * @param apiProperty - The parameter whose type information will be rendered in the cell.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderParameterTypeCell(
     apiParameter: Parameter,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
-        new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            renderExcerptWithHyperlinks(apiParameter.parameterTypeExcerpt, config),
-        ]),
-    ]);
+    return renderTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 }
 
+/**
+ * Renders a table cell containing the description (summary) comment of the provided parameter.
+ * If the parameter has no documentation, an empty cell will be rendered.
+ *
+ * @param apiParameter - The parameter whose comment will be rendered in the cell
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderParameterSummaryCell(
     apiParameter: Parameter,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    return new DocTableCell(
-        { configuration: config.tsdocConfiguration },
-        apiParameter.tsdocParamBlock === undefined ? [] : [apiParameter.tsdocParamBlock.content],
-    );
+    return apiParameter.tsdocParamBlock === undefined
+        ? renderEmptyTableCell(config)
+        : new DocTableCell({ configuration: config.tsdocConfiguration }, [
+              apiParameter.tsdocParamBlock.content,
+          ]);
 }
 
-function getHeadingTitleForApiKind(itemKind: ApiItemKind): string {
+/**
+ * Renders a table cell containing type information.
+ * @remarks This content will be rendered as links to type signature documentation for other items local to the same
+ * API suite (model).
+ *
+ * @param typeExcerpty - An excerpt describing the type to be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderTypeExcerptCell(
+    typeExcerpt: Excerpt,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocTableCell {
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, [
+            renderExcerptWithHyperlinks(typeExcerpt, config),
+        ]),
+    ]);
+}
+
+/**
+ * Renders and empty table cell.
+ *
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderEmptyTableCell(
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocTableCell {
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, []);
+}
+
+/**
+ * Gets the appropriate heading title for the provided item kind to be used in table entries.
+ */
+function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
     switch (itemKind) {
         case ApiItemKind.EnumMember:
             return "Flag";

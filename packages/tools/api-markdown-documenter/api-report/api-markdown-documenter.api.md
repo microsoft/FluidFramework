@@ -341,6 +341,9 @@ function renderDeprecationNotice(apiItem: ApiItem, config: Required<MarkdownDocu
 // @public
 export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration): MarkdownDocument[];
 
+// @public
+function renderEmptyTableCell(config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
+
 // @public (undocumented)
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
@@ -407,6 +410,8 @@ declare namespace RenderingHelpers {
         renderParameterTitleCell,
         renderParameterTypeCell,
         renderParameterSummaryCell,
+        renderTypeExcerptCell,
+        renderEmptyTableCell,
         MemberTableProperties
     }
 }
@@ -471,20 +476,20 @@ function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Requi
 // @public
 function renderParametersSummaryTable(apiParameters: readonly Parameter[], config: Required<MarkdownDocumenterConfiguration>): DocTable;
 
-// @public (undocumented)
+// @public
 function renderParameterSummaryCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
-// @public (undocumented)
+// @public
 function renderParameterTitleCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
-// @public (undocumented)
+// @public
 function renderParameterTypeCell(apiParameter: Parameter, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
 function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
-// @public (undocumented)
-function renderPropertyTypeCell(apiItem: ApiPropertyItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
+// @public
+function renderPropertyTypeCell(apiProperty: ApiPropertyItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public (undocumented)
 function renderRemarks(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
@@ -506,6 +511,9 @@ function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind,
 
 // @public
 function renderTableWithHeading(memberTableProperties: MemberTableProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+
+// @public
+function renderTypeExcerptCell(typeExcerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public (undocumented)
 function renderTypeParameters(typeParameters: readonly TypeParameter[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
