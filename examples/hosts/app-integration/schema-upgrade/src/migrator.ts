@@ -5,12 +5,25 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
-import { IMigratableModel, IMigrator, IMigratorEvents, MigrationState } from "./migrationInterfaces";
+import {
+    IMigratableModel,
+    IMigrator,
+    IMigratorEvents,
+    MigrationState,
+} from "./migrationInterfaces";
 import { IModelLoader } from "./modelLoading";
 
+/**
+ * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import
+ * to the new model.  The targetModel is also provided for inspection to determine the appropriate transformation
+ * to perform.
+ * TODO: Curently, we prefer to call the callback rather than proceeding with the import, even if supportsDataFormat.
+ * We could alternately check supportsDataFormat first and only use the callback if it doesn't support.  If we do
+ * that, this signature becomes (exportedData: unknown, version: string) =\> Promise\<unknown\>
+ */
 export type DataTransformationCallback = (
     exportedData: unknown,
-    targetModel: IMigratableModel,
+    targetModel: Pick<IMigratableModel, "version" | "supportsDataFormat">,
 ) => Promise<unknown>;
 
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
