@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import { fail, strict as assert } from "assert";
+import { Jsonable } from "@fluidframework/datastore-definitions";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
 import { SeqNumber } from "../../changeset";
 import { Commit, EditManager, SessionId } from "../../edit-manager";

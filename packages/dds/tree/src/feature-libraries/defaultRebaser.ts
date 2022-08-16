@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { Jsonable } from "@fluidframework/datastore-definitions";
 import { AnchorSet, Delta, UpPath, Value } from "../tree";
 import { ChangeRebaser } from "../rebase";
 import { Contravariant, Covariant, Invariant } from "../util";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../change-family";
-import { Jsonable } from "@fluidframework/datastore-definitions";
 
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditor, DefaultChangeset> {
     readonly encoder = defaultChangeEncoder;
