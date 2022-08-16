@@ -21,26 +21,6 @@ import {
 } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
 
-const readPipe: () => Promise<string | undefined> = async () => {
-    return new Promise((resolve) => {
-        const stdin = process.openStdin();
-        stdin.setEncoding("utf-8");
-
-        let data = "";
-        stdin.on("data", (chunk) => {
-            data += chunk;
-        });
-
-        stdin.on("end", () => {
-            resolve(data);
-        });
-
-        if (stdin.isTTY) {
-            resolve("");
-        }
-    });
-};
-
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
         "Checks that the dependencies between Fluid Framework packages are properly layered.";
@@ -144,13 +124,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                             this.exit(1);
                         }
 
-                        console.log(output);
+                        this.log(output);
                     }
                 });
         };
 
         const handleLine = (line: string) => {
-            this.log(line);
             const filePath = path.join(pathToGitRoot, line).trim().replace(/\\/g, "/");
 
             if (pathRegex.test(line) && fs.existsSync(filePath)) {
@@ -241,7 +220,5 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                 logStats();
             });
         }
-
-        this.log("done");
     }
 }
