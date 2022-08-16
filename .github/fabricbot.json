@@ -700,8 +700,8 @@
       "subCapability": "AutoMerge",
       "version": "1.0",
       "config": {
-        "taskName": "Automatically squash-merge pull requests in next",
-        "label": "",
+        "taskName": "Automatically merge pull requests in next",
+        "label": "msftbot: merge-next",
         "silentMode": false,
         "minMinutesOpen": "5",
         "deleteBranches": true,
@@ -712,22 +712,39 @@
         "requireAllStatuses": false,
         "conditionalMergeTypes": [
           {
-            "mergeType": "merge",
+            "mergeType": "squash",
             "condition": {
               "placeholder": "labels",
-              "operator": "contains",
-              "label_name": "main-next-integrate"
+              "operator": "notContains",
+              "label_name": "do-not-squash-merge"
             }
           },
           {
             "mergeType": "squash",
             "condition": {
               "placeholder": "labels",
+              "operator": "notContains",
+              "label_name": "main-next-integrate"
+            }
+          },
+          {
+            "mergeType": "squash",
+            "condition": {
+              "placeholder": "author",
+              "operator": "notEquals",
+              "value": "github-actions"
+            }
+          },
+          {
+            "mergeType": "merge",
+            "condition": {
+              "placeholder": "labels",
               "operator": "contains",
-              "label_name": "msftbot: merge-next"
+              "label_name": "main-next-integrate"
             }
           }
-        ]
+        ],
+        "mergeType": "squash"
       },
       "disabled": false
     },
@@ -1915,28 +1932,22 @@
       "version": "1.0",
       "config": {
         "conditions": {
-          "operator": "or",
+          "operator": "and",
           "operands": []
         },
         "eventType": "pull_request",
         "eventNames": [
           "issue_comment"
         ],
-        "taskName": "Approve pull request after a comment is added",
         "actions": [
           {
             "name": "approvePullRequest",
             "parameters": {
               "comment": "#sign-off"
             }
-          },
-          {
-            "name": "addLabel",
-            "parameters": {
-              "label": "main-next-integrate"
-            }
           }
-        ]
+        ],
+        "taskName": "Approve pull request by adding a comment"
       }
     }
   ],

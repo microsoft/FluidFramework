@@ -15,8 +15,10 @@
             "localRoot": "${workspaceFolder}",
             "remoteRoot": "/usr/src/server",
             "outFiles": [ "${workspaceFolder}/dist/**/*.js" ],
-            "protocol":"inspector",
-            "trace": "sm"
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ]
         },
         {
             "type": "node",

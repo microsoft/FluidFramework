@@ -34,6 +34,11 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | Script                     | Description                                                                                                   |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `cleanup-printed-configs`  | Clean up the printed configs. Removes the `parser` property and sorts the JSON.                               |
+| `format`                   | `npm run prettier:fix`                                                                                        |
+| `lint`                     | `npm run prettier`                                                                                            |
+| `lint:fix`                 | `npm run prettier:fix`                                                                                        |
+| `prettier`                 | `prettier --check .`                                                                                          |
+| `prettier:fix`             | `prettier --write .`                                                                                          |
 | `print-config`             | Print all the eslint configs.                                                                                 |
 | `print-config:default`     | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |
 | `print-config:minimal`     | `eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json`                  |

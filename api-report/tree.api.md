@@ -12,19 +12,12 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 
 // @public
 export class AnchorSet {
+    applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
     isEmpty(): boolean;
     locate(anchor: Anchor): UpPath | undefined;
-    moveChildren(count: number, src: undefined | {
-        path: UpPath;
-        field: FieldKey;
-        start: number;
-    }, dst: undefined | {
-        path: UpPath;
-        field: FieldKey;
-        start: number;
-    }): void;
+    moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
     track(path: UpPath): Anchor;
 }
 
@@ -41,27 +34,20 @@ export abstract class BrandedType<ValueType, Name extends string> {
 // @public (undocumented)
 export function buildForest(): IEditableForest;
 
-// @public (undocumented)
-export type ChangeFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<infer TChange, any, any> ? TChange : never;
-
 // @public
-export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
-    compose(...changes: TChangeSet[]): TChangeSet;
+export interface ChangeRebaser<TChangeset> {
+    compose(changes: TChangeset[]): TChangeset;
     // (undocumented)
-    export(change: TChangeSet): TFinalChange;
+    invert(changes: TChangeset): TChangeset;
+    rebase(change: TChangeset, over: TChangeset): TChangeset;
     // (undocumented)
-    import(change: TChange): TChangeSet;
-    invert(changes: TChangeSet): TChangeSet;
+    rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
     // (undocumented)
-    rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
-    // (undocumented)
-    rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
-    // (undocumented)
-    _typeCheck?: Covariant<TChange> & Contravariant<TFinalChange> & Invariant<TChangeSet>;
+    _typeCheck?: Invariant<TChangeset>;
 }
 
 // @public (undocumented)
-export type ChangeSetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, any, infer TChangeSet> ? TChangeSet : never;
+export type ChangesetFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any>> = TChangeRebaser extends ChangeRebaser<infer TChangeset> ? TChangeset : never;
 
 // @public
 export type ChildCollection = FieldKey | RootField;
@@ -195,11 +181,8 @@ type FieldMarks<TMark> = FieldMap_2<MarkList<TMark>>;
 export interface FieldSchema {
     // (undocumented)
     readonly kind: FieldKind;
-    readonly types?: ReadonlySet<TreeSchemaIdentifier>;
+    readonly types?: TreeTypeSet;
 }
-
-// @public (undocumented)
-export type FinalFromChangeRebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> = TChangeRebaser extends ChangeRebaser<any, infer TFinal, any> ? TFinal : never;
 
 // @public
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
@@ -518,14 +501,14 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
 type ProtoNode = JsonableTree;
 
 // @public
-export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
+export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     constructor(rebaser: TChangeRebaser);
     discardRevision(revision: RevisionTag): void;
     // (undocumented)
     readonly empty: RevisionTag;
     // (undocumented)
-    getResolutionPath(from: RevisionTag, to: RevisionTag): ChangeSetFromChangeRebaser<TChangeRebaser>;
-    rebase(changes: ChangeFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>];
+    getResolutionPath(from: RevisionTag, to: RevisionTag): ChangesetFromChangeRebaser<TChangeRebaser>;
+    rebase(changes: ChangesetFromChangeRebaser<TChangeRebaser>, from: RevisionTag, to: RevisionTag): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>];
     rebaseAnchors(anchors: AnchorSet, from: RevisionTag, to: RevisionTag): void;
     // (undocumented)
     readonly rebaser: TChangeRebaser;
@@ -667,6 +650,9 @@ export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 
 // @public (undocumented)
 export type TreeType = TreeSchemaIdentifier;
+
+// @public
+export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 // @public
 export interface TreeValue extends Serializable {
