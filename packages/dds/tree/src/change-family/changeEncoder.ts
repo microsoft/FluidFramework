@@ -11,7 +11,7 @@ import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
  * Due to data using these formats being persisted in documents,
  * any format for encoding that was ever actually used should be supported for decoding for all future versions.
  *
- * TODO: Nothing in here is specific to changes. Make make this interface more general.
+ * TODO: Nothing in here is specific to changes. Maybe make this interface more general.
  */
 export abstract class ChangeEncoder<TChange> {
     /**
