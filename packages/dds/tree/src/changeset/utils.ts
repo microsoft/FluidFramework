@@ -57,6 +57,11 @@ export function isEqualGapEffect(lhs: Readonly<T.GapEffect>, rhs: Readonly<T.Gap
         && lhs.includePosteriorInsertions === rhs.includePosteriorInsertions;
 }
 
+/**
+ * @param mark - The mark to get the length of.
+ * @returns The length of the mark in number of nodes.
+ * Note that for attaches, this represents the number of nodes being attached.
+ */
 export function getMarkLength(mark: T.Mark): number {
     if (isSkipMark(mark)) {
         return mark;
@@ -122,21 +127,21 @@ export function splitMark<TMark extends T.Mark>(mark: TMark, length: number): [T
 function splitAttachGroup<TAttach extends T.Attach>(mark: TAttach[], length: number): [TAttach[], TAttach[]] {
     const groupA: TAttach[] = [];
     const groupB: TAttach[] = [...mark];
-    let left = length;
-    while (left > 0) {
+    let groupALength = 0;
+    while (groupALength < length) {
         const attach = groupB.shift();
         if (attach === undefined) {
             fail("Discrepancy between getMarkLength and splitMark");
         }
         const len = getAttachLength(attach);
-        if (len <= left) {
+        if (groupALength + len <= length) {
             groupA.push(attach);
-            left -= len;
+            groupALength += len;
         } else {
-            const [partA, partB] = splitAttachMark(attach, left);
+            const [partA, partB] = splitAttachMark(attach, length - groupALength);
             groupA.push(partA);
             groupB.unshift(partB);
-            left = 0;
+            groupALength = length;
         }
     }
     return [groupA, groupB];
