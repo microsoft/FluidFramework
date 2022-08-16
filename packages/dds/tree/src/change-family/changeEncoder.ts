@@ -4,9 +4,11 @@
  */
 
 import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { Jsonable } from "@fluidframework/datastore-definitions";
 
 export abstract class ChangeEncoder<TChange> {
     public abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatible;
+
     /**
      * Binary encoding.
      * Override to do better than just Json.
@@ -19,7 +21,7 @@ export abstract class ChangeEncoder<TChange> {
         return IsoBuffer.from(json);
     }
 
-    public abstract decodeJson(formatVersion: number, change: JsonCompatible): TChange;
+    public abstract decodeJson<T>(formatVersion: number, change: Jsonable<T>): TChange;
 
     /**
      * Binary decoding.

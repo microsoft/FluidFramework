@@ -7,6 +7,7 @@ import { AnchorSet, Delta, UpPath, Value } from "../tree";
 import { ChangeRebaser } from "../rebase";
 import { Contravariant, Covariant, Invariant } from "../util";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../change-family";
+import { Jsonable } from "@fluidframework/datastore-definitions";
 
 export class DefaultChangeFamily implements ChangeFamily<DefaultEditor, DefaultChangeSet> {
     readonly encoder = defaultChangeEncoder;
@@ -60,7 +61,8 @@ class DefaultChangeEncoder extends ChangeEncoder<DefaultChangeSet> {
     public encodeForJson(formatVersion: number, change: DefaultChangeSet): JsonCompatible {
         throw new Error("Method not implemented.");
     }
-    public decodeJson(formatVersion: number, change: JsonCompatible): DefaultChangeSet {
+
+    public decodeJson<T>(formatVersion: number, change: Jsonable<T>): DefaultChangeSet {
         throw new Error("Method not implemented.");
     }
 }

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Jsonable } from "@fluidframework/datastore-definitions";
 import { fail, strict as assert } from "assert";
 import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
 import { SeqNumber } from "../../changeset";
@@ -179,7 +180,8 @@ class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
     public encodeForJson(formatVersion: number, change: TestChangeset): JsonCompatible {
         throw new Error("Method not implemented.");
     }
-    public decodeJson(formatVersion: number, change: JsonCompatible): TestChangeset {
+
+    public decodeJson<T>(formatVersion: number, change: Jsonable<T>): TestChangeset {
         throw new Error("Method not implemented.");
     }
 }

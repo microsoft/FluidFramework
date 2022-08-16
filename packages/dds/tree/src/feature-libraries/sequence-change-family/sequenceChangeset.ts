@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Jsonable } from "@fluidframework/datastore-definitions";
 import { ChangeEncoder, JsonCompatible } from "../../change-family";
 import { Transposed as T } from "../../changeset";
 
@@ -13,7 +14,7 @@ class SequenceChangeEncoder extends ChangeEncoder<SequenceChangeset> {
         return change as unknown as JsonCompatible;
     }
 
-    public decodeJson(formatVersion: number, change: JsonCompatible): SequenceChangeset {
+    public decodeJson<T>(formatVersion: number, change: Jsonable<T>): SequenceChangeset {
         return change as unknown as SequenceChangeset;
     }
 }
