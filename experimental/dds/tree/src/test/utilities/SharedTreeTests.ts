@@ -148,7 +148,7 @@ export function runSharedTreeOperationsTests(
 		});
 
 		describe('SharedTree in local state', () => {
-			it.only('does not emit change events for each change in a batch of changes', () => {
+			it('does not emit change events for each change in a batch of changes', () => {
 				const { sharedTree, testTree } = createSimpleTestTree();
 
 				let changeCount = 0;
