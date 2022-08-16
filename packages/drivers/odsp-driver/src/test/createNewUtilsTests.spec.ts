@@ -5,9 +5,16 @@
 
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
-import { bufferToString, TelemetryNullLogger } from "@fluidframework/common-utils";
-import { IFileEntry, IOdspResolvedUrl, ShareLinkTypes, ISharingLinkKind, SharingLinkRole,
-    SharingLinkScope } from "@fluidframework/odsp-driver-definitions";
+import { bufferToString } from "@fluidframework/common-utils";
+import {
+    IFileEntry,
+    IOdspResolvedUrl,
+    ShareLinkTypes,
+    ISharingLinkKind,
+    SharingLinkRole,
+    SharingLinkScope,
+} from "@fluidframework/odsp-driver-definitions";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { EpochTracker } from "../epochTracker";

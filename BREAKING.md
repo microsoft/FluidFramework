@@ -24,6 +24,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 - [Remove `ShareLinkTypes` interface](#Remove-ShareLinkTypes-interface)
 - [Remove `enableShareLinkWithCreate` from `HostStoragePolicy`](#Remove-enableShareLinkWithCreate-from-HostStoragePolicy)
 - [Signature from  `ISummarizerInternalsProvider.refreshLatestSummaryAck` interface has changed](#Change-ISummarizerInternalsProvider.refreshLatestSummaryAck-interface)
+- [Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package](#Move-`TelemetryNullLogger`-and-`BaseTelemetryNullLogger`-to-telemetry-utils-package)
 
 ### Remove `type` field from `ShareLinkInfoType`
 This field has been deprecated and will be removed in a future breaking change. You should be able to get the kind of sharing link from `shareLinkInfo.createLink.link` property bag.
@@ -41,7 +42,6 @@ This field has been deprecated and will be removed in a future breaking change. 
     ):
 ```
 
-
 ### Remove `enableShareLinkWithCreate` from `HostStoragePolicy`
 `enableShareLinkWithCreate` feature gate has been deprecated and will be removed in a future breaking change. If you wish to enable creation of a sharing link along with the creation of Fluid file, you will need to provide `createShareLinkType:ISharingLinkKind` input to the `createOdspCreateContainerRequest` function and enable the feature using `enableSingleRequestForShareLinkWithCreate` in `HostStoragePolicy`
 
@@ -56,6 +56,9 @@ This field has been deprecated and will be removed in a future breaking change. 
 +       options: IRefreshSummaryAckOptions,
     ):
 ```
+
+### Move `TelemetryNullLogger` and `BaseTelemetryNullLogger` to telemetry-utils package
+The utility classes `TelemetryNullLogger` and `BaseTelemetryNullLogger` are deprecated in the `@fluidframework/common-utils` package and have been moved to the `@fluidframework/telemetry-utils` package.  Please update your imports to take these from the new location.
 
 # 2.0.0
 
