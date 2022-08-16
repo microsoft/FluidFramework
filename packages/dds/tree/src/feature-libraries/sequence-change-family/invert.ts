@@ -9,6 +9,17 @@ import { SequenceChangeset } from "./sequenceChangeset";
 
 export const DUMMY_INVERT_TAG: ChangesetTag = "Dummy Invert Changeset Tag";
 
+/**
+ * Inverts a given changeset.
+ * @param change - The changeset to produce the inverse of.
+ * @returns The inverse of the given `change` such that the inverse can be applied after `change`.
+ *
+ * WARNING! This implementation is incomplete:
+ * - It is unable to produce adequate inverses for set-value and delete operations.
+ *   This is because changesets are not given IDs.
+ * - Support for moves is not implemented.
+ * - Support for slices is not implemented.
+ */
 export function invert(change: SequenceChangeset): SequenceChangeset {
     // TODO: support the input change being a squash
     const opIdToTag = (id: OpId): ChangesetTag => {

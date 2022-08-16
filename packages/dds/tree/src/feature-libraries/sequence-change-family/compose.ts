@@ -15,6 +15,17 @@ import {
 import { clone, fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
+/**
+ * Composes a sequence of changesets into a single changeset.
+ * @param changes - The changesets to be applied.
+ * Each changeset in the list is assumed to be applicable after the previous one.
+ * @returns A changeset that is equivalent to applying each of the given `changes` in order.
+ *
+ * WARNING! This implementation is incomplete:
+ * - Tombstone information is ignored.
+ * - Support for moves is not implemented.
+ * - Support for slices is not implemented.
+ */
 export function compose(changes: SequenceChangeset[]): SequenceChangeset {
     const base: SequenceChangeset = {
         marks: {},
