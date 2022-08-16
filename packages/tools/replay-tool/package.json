@@ -59,6 +59,7 @@
     "@fluidframework/sequence": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluidframework/shared-summary-block": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@fluidframework/telemetry-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/test-runtime-utils": "^1.2.2",
     "@fluidframework/tool-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "json-stable-stringify": "^1.0.1"
   },

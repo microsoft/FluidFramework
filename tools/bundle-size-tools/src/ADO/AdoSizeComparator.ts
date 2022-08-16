@@ -97,7 +97,7 @@ export class ADOSizeComparator {
 
       if (baselineBuild === undefined) {
         baselineCommit = fallbackGen?.next().value;
-        console.log(`Trying backup baseline commit ${baselineCommit}`);
+        console.log(`Trying backup baseline commit when baseline build is undefined ${baselineCommit}`);
         continue;
       }
 
@@ -143,7 +143,7 @@ export class ADOSizeComparator {
       // Successful baseline build does not have the needed build artifacts
       if (baselineZip === undefined) {
         baselineCommit = this.getFallbackCommit?.(baselineCommit).next().value;
-        console.log(`Trying backup baseline commit ${baselineCommit}`);
+        console.log(`Trying backup baseline commit when successful baseline build does not have the needed build artifacts ${baselineCommit}`);
         continue;
       }
 

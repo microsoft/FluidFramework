@@ -114,6 +114,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             // To avoid creating unnecessary extra containers.
             if (migratable.getMigrationState() === MigrationState.migrated) {
                 this._migrationP = undefined;
+                migratedModel.close();
                 this.takeAppropriateActionForCurrentMigratable();
                 return;
             }
@@ -127,12 +128,18 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             // Again, it could be the case that someone else finished the migration during our attach.
             if (migratable.getMigrationState() === MigrationState.migrated) {
                 this._migrationP = undefined;
+                migratedModel.close();
                 this.takeAppropriateActionForCurrentMigratable();
                 return;
             }
 
             // TODO: Support retry
             await migratable.finalizeMigration(containerId);
+
+            // If someone else finalized the migration before us, we should close the one we created.
+            if (migratable.newContainerId !== containerId) {
+                migratedModel.close();
+            }
 
             // Note that we do not assume the migratedModel is the correct new one, and let it fall out of scope
             // intentionally.  This is because if we don't win the race to set the container, it will be the wrong
