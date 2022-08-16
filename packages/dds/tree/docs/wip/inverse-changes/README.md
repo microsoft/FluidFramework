@@ -44,7 +44,7 @@ At most, a change that is rebased over an inverse change may accumulate some inf
 This means that the needs of our system,
 when it comes to inverse changes in rebasing,
 are entirely subsumed by the needs of undo.
-The remainder of this document therefore focuses undo,
+The remainder of this document therefore focuses on undo,
 but rebase-induced inverses are also mentioned where they deserve special consideration.
 
 ## Tip Undo vs. Collaborative Undo
@@ -52,7 +52,7 @@ but rebase-induced inverses are also mentioned where they deserve special consid
 The traditional undo model that application developers are used to is that of an undo stack.
 In this model,
 whenever the user performs an edit,
-an inverse is computed an pushed to the top of an undo stack.
+an inverse is computed and pushed to the top of an undo stack.
 When the user wishes to undo their last edit,
 the application pops the undo stack and applies the change
 (potentially pushing it into a redo stack).
@@ -97,7 +97,7 @@ At a high level, we need to have a system for accomplishing the following:
 
 In designing such a system, we need to consider the relevant computational costs and drawbacks:
 
-* Whether the semantics of undo a guaranteed
+* Whether the semantics of undo are guaranteed
 * Whether the issuer of the undo can be starved out by edits from peers
 * The size of "normal" (i.e., non-inverse) changes sent over the wire.
 * The size of inverse changes sent over the wire.
@@ -628,7 +628,7 @@ and performs just enough of the computation to ensure
 that a receiving peer could do the rest given access to relevant data as far back as the collab window extends.
 
 Such a scheme however would require a client to be able to assess which prior edits
-are within the collaboration window as opposed to the undo window.
+are within the undo window as opposed to the collaboration window.
 This is not something that the Fluid service supports,
 and it's not clear that such a thing is possible in general.
 
@@ -701,7 +701,7 @@ This design makes undo ops more like normal changesets.
 * When receiving a changeset,
   peers are able to asynchronously fetch relevant repair data as part of receiving the edits
   (as opposed to as part of processing it).
-* When receiving an undo changeset peers are may need to re-compute or update the changeset
+* When receiving an undo changeset peers may need to re-compute or update the changeset
   to account for concurrency issues.
   To do this, they may need the edit and repair data as far back as the collab window extends.
   Peers already need to cache the edit data for the collab window for general rebasing purposes.
@@ -742,7 +742,7 @@ or that a history server can be contacted to fetch this data when a peer joins t
 ### Design B: Sending Abstract Undos
 
 In this design,
-undo ops sent over the wire are abstract in the sense that they only describe,
+undo ops sent over the wire are abstract in the sense that they only describe
 which prior change ought to be undone.
 The specific document changes needed to accomplish the undo are entirely
 left to the receiver to work out.
@@ -819,7 +819,7 @@ it may make sense to automatically interpret their changes as an undo.
 Doing so would reduce the chances that a user may be surprised by the subtle differences between their action and an actual undo.
 For example,
 moving a range of nodes from one place to another and moving them back
-is different from moving them and undoing the fist move
+is different from moving them and undoing the first move
 in that the former means concurrent inserts between the nodes in the moved range would end up on either extremity of the moved nodes.
 
 Such a policy should be managed by the application and exist entirely outside
