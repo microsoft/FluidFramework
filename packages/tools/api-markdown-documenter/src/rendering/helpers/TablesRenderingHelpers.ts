@@ -148,7 +148,6 @@ export function renderParametersTable(
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable {
     const headerTitles = ["Parameter", "Type", "Description"];
-    // TODO: denote optional parameters?
     const tableRows: DocTableRow[] = apiParameters.map(
         (apiParameter) =>
             new DocTableRow({ configuration: config.tsdocConfiguration }, [

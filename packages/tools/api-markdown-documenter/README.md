@@ -36,7 +36,12 @@ This function also accepts a `MarkdownEmitter` object that does the conversion f
 -   Dynamic "Modifiers" column in tables
 -   Pre-canned policies (flat, index, adjacency)
 
-## Future work
+### Styling improvements
+
+-   Specially denote optional parameters / properties
+-   Better `@defaultValue` rendering.
+
+## Longer-term work
 
 -   Replace DocNode output / MarkdownEmitter with Markdown AST trees and simple interface for rendering those trees to a stream
 -   Handle multiple package entrypoints
