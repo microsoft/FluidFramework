@@ -4,7 +4,9 @@
  */
 
 'use strict';
+
 const getFluidTestMochaConfig = require('@fluidframework/mocha-test-setup/mocharc-common');
 
 const packageDir = __dirname;
-module.exports = getFluidTestMochaConfig(packageDir);
+const config = getFluidTestMochaConfig(packageDir)
+module.exports = config;
