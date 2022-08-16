@@ -50,6 +50,8 @@ import { renderParametersSummaryTable } from "./TablesRenderingHelpers";
  *
  * @param apiItem - The API item whose signature will be rendered.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if there was any signature content to render, otherwise `undefined`.
  */
 export function renderSignature(
     apiItem: ApiItem,
@@ -57,7 +59,7 @@ export function renderSignature(
 ): DocSection | undefined {
     if (apiItem instanceof ApiDeclaredItem) {
         const signatureExcerpt = apiItem.getExcerptWithModifiers();
-        if(signatureExcerpt !== "") {
+        if (signatureExcerpt !== "") {
             const docNodes: DocNode[] = [];
             docNodes.push(
                 renderHeading(
@@ -84,6 +86,16 @@ export function renderSignature(
     return undefined;
 }
 
+/**
+ * Renders a section listing types extended / implemented by the API item, if any.
+ *
+ * @remarks Displayed as a heading with a comma-separated list of heritage types by catagory under it.
+ *
+ * @param apiItem - The API item whose heritage types will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if there were any heritage types to render, otherwise `undefined`.
+ */
 export function renderHeritageTypes(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -144,6 +156,14 @@ export function renderHeritageTypes(
     return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
+/**
+ * Renders a labeled, comma-separated list of heritage types.
+ *
+ * @remarks Displayed as `<label>: <heritage-type>[, <heritage-type>]*`
+ * @param heritageTypes - List of types to display.
+ * @param label - Label text to display before the list of types.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 function renderHeritageTypeList(
     heritageTypes: readonly HeritageType[],
     label: string,

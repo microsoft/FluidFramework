@@ -371,7 +371,7 @@ function renderHeading(heading: Heading, config: Required<MarkdownDocumenterConf
 // @public (undocumented)
 function renderHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
 
-// @public (undocumented)
+// @public
 function renderHeritageTypes(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 declare namespace RenderingHelpers {
