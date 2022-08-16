@@ -267,29 +267,12 @@ export namespace Transposed {
 	 */
 	export interface Tombstones {
 		count: NodeCount;
-		seq: PriorSeq;
+		change: ChangesetTag;
 	}
 
 	export interface PriorOp {
-		seq: PriorSeq;
+		change: ChangesetTag;
 		id: OpId;
-	}
-
-	/**
-	 * The sequence number of the edit that caused the nodes to be detached.
-	 *
-	 * When the nodes were detached as the result of learning of a prior concurrent change
-	 * that preceded a prior change that the current change depends on, a pair of sequence
-	 * numbers is used instead were `seq[0]` is the earlier change whose effect on `seq[1]`
-	 * these tombstones represent. This can be read as "tombstones from the effect of `seq[0]`
-	 * on `seq[1]`".
-	 */
-	export type PriorSeq = ChangesetTag | [ChangesetTag, ChangesetTag];
-}
-
-export namespace Sequenced {
-	export interface Transaction extends Transposed.Transaction {
-		seq: ChangesetTag;
 	}
 }
 
@@ -314,7 +297,7 @@ export enum RangeType {
 /**
  * A monotonically increasing positive integer assigned to each change within the changeset.
  * OpIds are scoped to a single changeset, so referring to OpIds across changesets requires
- * qualifying them by sequence/commit number.
+ * qualifying them by change tag.
  *
  * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */

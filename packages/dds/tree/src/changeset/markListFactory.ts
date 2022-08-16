@@ -58,9 +58,9 @@ export class MarkListFactory {
                                     lastLeft.heed === firstRightAttach.heed
                                     && lastLeft.tiebreak === firstRightAttach.tiebreak
                                     && lastLeft.src?.id === firstRightAttach.src?.id
-                                    && lastLeft.src?.seq === firstRightAttach.src?.seq
+                                    && lastLeft.src?.change === firstRightAttach.src?.change
                                     && lastLeft.scorch?.id === firstRightAttach.scorch?.id
-                                    && lastLeft.scorch?.seq === firstRightAttach.scorch?.seq
+                                    && lastLeft.scorch?.change === firstRightAttach.scorch?.change
                                 ) {
                                     if (lastLeft.type === "Insert") {
                                         const firstRightInsert = firstRight as T.Insert;
