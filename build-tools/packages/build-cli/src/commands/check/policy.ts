@@ -9,7 +9,7 @@ import { EOL as newline } from "os";
 import * as child_process from "child_process";
 // eslint-disable-next-line unicorn/import-style
 import * as path from "path";
-import { Flags } from "@oclif/core";
+import { Flags, CliUx } from "@oclif/core";
 import {
     copyrightFileHeaderHandlers,
     npmPackageContentsHandlers,
@@ -61,7 +61,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             required: false,
             char: "p",
         }),
-        stdin: Flags.string({
+        stdin: Flags.boolean({
             description: `Get file from stdin`,
             required: false,
             char: "s",
@@ -173,7 +173,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                     );
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (result?.error) {
-                        process.exitCode = 1;
+                        this.exit(1);
                         console.log(result.error);
                     }
                 }
@@ -192,7 +192,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             }
         };
 
-        if (flags.resolve !== undefined) {
+        if (flags.resolve) {
             this.log("Resolving errors if possible.");
         }
 
@@ -204,17 +204,21 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             this.log(`Filtering file paths by regex: ${pathRegex}`);
         }
 
-        if (typeof flags.stdin === "string") {
-            // prepare to read standard input line by line
-            process.stdin.setEncoding("utf8");
-            const pipeString = await readPipe();
+        if (flags.stdin) {
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                // eslint-disable-next-line no-await-in-loop
+                const filePath: string = await CliUx.ux.prompt("1", { required: false });
+                if (filePath === "") {
+                    runPolicyCheck();
+                    logStats();
+                    break;
+                }
 
-            if (typeof pipeString === "string") {
-                this.log(pipeString);
-                // for each run handleLine
-            } else {
-                this.log(pipeString);
+                handleLine(filePath);
             }
+
+            process.on("beforeExit", logStats); // never runs
         } else {
             // eslint-disable-next-line camelcase
             pathToGitRoot = child_process
@@ -232,13 +236,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                 scriptOutput = `${scriptOutput}${data.toString()}`;
             });
             p.stdout.on("close", () => {
-                // this.log(`pipe: ${scriptOutput}`);
-                scriptOutput.split("\n").map((line:string) => handleLine(line));
+                scriptOutput.split("\n").map((line: string) => handleLine(line));
                 runPolicyCheck();
                 logStats();
             });
         }
 
-        this.log("running");
+        this.log("done");
     }
 }
