@@ -4,6 +4,10 @@
  */
 import { DocNode, DocSection, TSDocConfiguration } from "@microsoft/tsdoc";
 
+/**
+ * Merges the provided list of sections into a single section by hoisting each section's child nodes into a single,
+ * flat list under a new section.
+ */
 export function mergeSections(
     sections: DocSection[],
     tsdocConfiguration: TSDocConfiguration,

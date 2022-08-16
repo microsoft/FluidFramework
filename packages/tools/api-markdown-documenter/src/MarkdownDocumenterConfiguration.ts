@@ -45,7 +45,7 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
     /**
      * Whether or not verbose logging is enabled.
      *
-     * @defaultValue false.
+     * @defaultValue `false`
      */
     readonly verbose?: boolean;
 }

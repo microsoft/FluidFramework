@@ -5,7 +5,8 @@
 
 /**
  * Represents a link to some documentation element.
- * A complete URL link can be created from its components (see {@link urlFromLink}).
+ *
+ * @remarks A complete URL link can be created from its components (see {@link urlFromLink}).
  */
 export interface Link {
     /**

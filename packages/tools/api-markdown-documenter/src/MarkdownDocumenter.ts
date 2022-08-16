@@ -136,6 +136,7 @@ export async function renderFiles(
 
 /**
  * Walks the provided API item's member tree and reports all API items that should be rendered to their own documents.
+ *
  * @param apiItem - The API item in question.
  * @param documentBoundaryPolicy - The policy defining which items should be rendered to their own documents,
  * and which should be rendered to their parent's document.

@@ -290,7 +290,7 @@ interface MemberTableProperties {
     items: readonly ApiItem[];
 }
 
-// @public (undocumented)
+// @public
 export function mergeSections(sections: DocSection[], tsdocConfiguration: TSDocConfiguration): DocSection;
 
 // @public

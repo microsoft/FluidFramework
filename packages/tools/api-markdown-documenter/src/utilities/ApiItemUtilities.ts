@@ -240,7 +240,8 @@ export function getFileNameForApiItem(
 
 /**
  * Gets the raw, unscoped file name segment for the API item.
- * @renarjs This is generally the qualified API name, but is handled differently for `Model` and `Package` items.
+ *
+ * @remarks This is generally the qualified API name, but is handled differently for `Model` and `Package` items.
  */
 function getUnscopedFileNameSegment(
     apiItem: ApiItem,
@@ -336,6 +337,8 @@ export function getHeadingIdForApiItem(
  * - EntryPoint
  *   - Skipped because any given Package item will have exactly 1 EntryPoint child, making this
  *     redundant in the hierarchy.
+ *
+ * @param apiItem - The API item whose filtered parent will be returned.
  */
 export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
     const parent = apiItem.parent;
@@ -417,6 +420,9 @@ export function doesItemKindRequireOwnDocument(
  * Determines whether or not the specified API item is one that should be rendered to its own document.
  *
  * @remarks This is based on the item's `kind`. See {@link doesItemKindRequireOwnDocument}.
+ *
+ * @param apiItem - The API being queried.
+ * @param documentBoundaries - See {@link DocumentBoundaries}
  */
 export function doesItemRequireOwnDocument(
     apiItem: ApiItem,
@@ -463,6 +469,9 @@ export function doesItemKindGenerateHierarchy(
  * I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
  *
  * @remarks This is based on the item's `kind`. See {@link doesItemKindGenerateHierarchy}.
+ *
+ * @param apiItem - The API item being queried.
+ * @param hierarchyBoundaries - See {@link HierarchyBoundaries}
  */
 export function doesItemGenerateHierarchy(
     apiItem: ApiItem,

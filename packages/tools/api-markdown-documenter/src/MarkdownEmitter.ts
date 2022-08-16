@@ -349,6 +349,9 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     }
 }
 
+/**
+ * Generates a child context with the {@link EmitterContext.headingLevel} incremented by 1.
+ */
 function contextWithIncrementedHeadingLevel(context: EmitterContext): EmitterContext {
     return {
         ...context,
