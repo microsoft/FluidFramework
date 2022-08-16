@@ -165,5 +165,5 @@ export function renderModuleLikeSection(
 
     // Merge sections to reduce and simplify hierarchy
     const innerSectionBody = mergeSections(docSections, config.tsdocConfiguration);
-    return config.renderSectionBlock(apiItem, innerSectionBody, config);
+    return config.renderChildrenSection(apiItem, innerSectionBody, config);
 }

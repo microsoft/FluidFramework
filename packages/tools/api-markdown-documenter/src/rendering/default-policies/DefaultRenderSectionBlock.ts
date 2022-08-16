@@ -36,7 +36,7 @@ import {
  * @param tsdocConfiguration - TODO
  * @returns TODO
  */
-export function renderSectionBlock(
+export function renderChildrenSection(
     apiItem: ApiItem,
     innerSectionBody: DocSection | undefined,
     config: Required<MarkdownDocumenterConfiguration>,

@@ -94,7 +94,7 @@ declare namespace DefaultRenderingPolicies {
         renderModuleLikeSection,
         renderNamespaceSection,
         renderPackageSection,
-        renderSectionBlock
+        renderChildrenSection
     }
 }
 export { DefaultRenderingPolicies }
@@ -327,6 +327,9 @@ function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterC
 // @public (undocumented)
 function renderChildDetailsSection(childSections: readonly ChildSectionProperties[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
 
+// @public
+function renderChildrenSection(apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+
 // @public (undocumented)
 function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle: string, config: Required<MarkdownDocumenterConfiguration>, renderChild: (childItem: ApiItem) => DocSection): DocSection | undefined;
 
@@ -415,36 +418,21 @@ export { RenderingHelpers }
 
 // @public
 export interface RenderingPolicies {
-    // (undocumented)
     renderCallSignatureSection?: RenderApiItemWithoutChildren<ApiCallSignature>;
-    // (undocumented)
+    renderChildrenSection?: RenderSectionWithInnerContent;
     renderClassSection?: RenderApiItemWithChildren<ApiClass>;
-    // (undocumented)
     renderConstructorSection?: RenderApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
-    // (undocumented)
     renderEnumMemberSection?: RenderApiItemWithoutChildren<ApiEnumMember>;
-    // (undocumented)
     renderEnumSection?: RenderApiItemWithChildren<ApiEnum>;
-    // (undocumented)
     renderFunctionSection?: RenderApiItemWithoutChildren<ApiFunction>;
-    // (undocumented)
     renderIndexSignatureSection?: RenderApiItemWithoutChildren<ApiIndexSignature>;
-    // (undocumented)
     renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
-    // (undocumented)
     renderMethodSection?: RenderApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
     renderModelSection?: RenderApiItemWithoutChildren<ApiModel>;
-    // (undocumented)
     renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
-    // (undocumented)
     renderPackageSection?: RenderApiItemWithChildren<ApiPackage>;
-    // (undocumented)
     renderPropertySection?: RenderApiItemWithoutChildren<ApiPropertyItem>;
-    // (undocumented)
-    renderSectionBlock?: RenderSectionBlock;
-    // (undocumented)
     renderTypeAliasSection?: RenderApiItemWithoutChildren<ApiTypeAlias>;
-    // (undocumented)
     renderVariableSection?: RenderApiItemWithoutChildren<ApiVariable>;
 }
 
@@ -509,10 +497,7 @@ function renderRemarks(apiItem: ApiItem, config: Required<MarkdownDocumenterConf
 function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
-export type RenderSectionBlock = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
-
-// @public
-function renderSectionBlock(apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+export type RenderSectionWithInnerContent = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 
 // @public (undocumented)
 function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;

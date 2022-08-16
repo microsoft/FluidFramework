@@ -127,5 +127,5 @@ export function renderInterfaceSection(
     // Merge sections to reduce and simplify hierarchy
     const innerSectionBody = mergeSections(docSections, config.tsdocConfiguration);
 
-    return config.renderSectionBlock(apiInterface, innerSectionBody, config);
+    return config.renderChildrenSection(apiInterface, innerSectionBody, config);
 }

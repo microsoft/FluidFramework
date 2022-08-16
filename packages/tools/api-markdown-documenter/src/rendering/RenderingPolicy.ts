@@ -32,7 +32,8 @@ import * as DefaultRenderingPolicies from "./default-policies";
  */
 
 /**
- * TODO
+ * Signature for a function which renders a `DocSection` describing an API item that potentially has child items
+ * to be rendered as content under the same section.
  */
 export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (
     apiItem: TApiItem,
@@ -41,7 +42,8 @@ export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (
 ) => DocSection;
 
 /**
- * TODO
+ * Signature for a function which renders a `DocSection` describing an API item that does not have child items to
+ * be rendered.
  */
 export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (
     apiItem: TApiItem,
@@ -49,26 +51,65 @@ export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (
 ) => DocSection;
 
 /**
- * TODO
+ * Signature for a function which renders information about an API item with inner content injected into the same
+ * section.
  */
-export type RenderSectionBlock = (
+export type RenderSectionWithInnerContent = (
     apiItem: ApiItem,
     innerSectionBody: DocSection | undefined,
     config: Required<MarkdownDocumenterConfiguration>,
 ) => DocSection;
 
 /**
- * TODO
+ * Policies for rendering different kinds of API content.
+ *
+ * @remarks For any policies not explicitly provided, {@link defaultRenderingPolicies} will be used to supply default
+ * policies.
  */
 export interface RenderingPolicies {
+    /**
+     * Policy for rendering a section describing a `Call Signature`.
+     */
     renderCallSignatureSection?: RenderApiItemWithoutChildren<ApiCallSignature>;
+
+    /**
+     * Policy for rendering a section describing a `Class`.
+     */
     renderClassSection?: RenderApiItemWithChildren<ApiClass>;
+
+    /**
+     * Policy for rendering a section describing a `Constructor`.
+     */
     renderConstructorSection?: RenderApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+
+    /**
+     * Policy for rendering a section describing an `Enum`.
+     */
     renderEnumSection?: RenderApiItemWithChildren<ApiEnum>;
+
+    /**
+     * Policy for rendering a section describing an `Enum Member`.
+     */
     renderEnumMemberSection?: RenderApiItemWithoutChildren<ApiEnumMember>;
+
+    /**
+     * Policy for rendering a section describing a `Function`.
+     */
     renderFunctionSection?: RenderApiItemWithoutChildren<ApiFunction>;
+
+    /**
+     * Policy for rendering a section describing an `Index Signature`.
+     */
     renderIndexSignatureSection?: RenderApiItemWithoutChildren<ApiIndexSignature>;
+
+    /**
+     * Policy for rendering a section describing an `Interface`.
+     */
     renderInterfaceSection?: RenderApiItemWithChildren<ApiInterface>;
+
+    /**
+     * Policy for rendering a section describing a `Method`.
+     */
     renderMethodSection?: RenderApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
 
     /**
@@ -79,17 +120,45 @@ export interface RenderingPolicies {
      * These are always rendered to seperate documents from each other.
      */
     renderModelSection?: RenderApiItemWithoutChildren<ApiModel>;
+
+    /**
+     * Policy for rendering a section describing a `Namespace`.
+     */
     renderNamespaceSection?: RenderApiItemWithChildren<ApiNamespace>;
+
+    /**
+     * Policy for rendering a section describing a `Package`.
+     */
     renderPackageSection?: RenderApiItemWithChildren<ApiPackage>;
+
+    /**
+     * Policy for rendering a section describing a `Property`.
+     */
     renderPropertySection?: RenderApiItemWithoutChildren<ApiPropertyItem>;
+
+    /**
+     * Policy for rendering a section describing a `Type Alias`.
+     */
     renderTypeAliasSection?: RenderApiItemWithoutChildren<ApiTypeAlias>;
+
+    /**
+     * Policy for rendering a section describing an `ApiVariable`.
+     */
     renderVariableSection?: RenderApiItemWithoutChildren<ApiVariable>;
 
-    renderSectionBlock?: RenderSectionBlock;
+    /**
+     * Policy for rendering the child content section within a section describing an API item that potentially
+     * has children (see {@link RenderApiItemWithChildren}).
+     *
+     * @remarks This policy is used by the default policies of many of the other rendering policy options.
+     * This can be used to adjust the layout of the child rendering section of the rendering policies without
+     * having to provide new overrides for all of those content types.
+     */
+    renderChildrenSection?: RenderSectionWithInnerContent;
 }
 
 /**
- * TODO
+ * The default {@link RenderingPolicies}.
  */
 export const defaultRenderingPolicies: Required<RenderingPolicies> = {
     renderCallSignatureSection: DefaultRenderingPolicies.renderItemWithoutChildren,
@@ -108,5 +177,5 @@ export const defaultRenderingPolicies: Required<RenderingPolicies> = {
     renderTypeAliasSection: DefaultRenderingPolicies.renderItemWithoutChildren,
     renderVariableSection: DefaultRenderingPolicies.renderItemWithoutChildren,
 
-    renderSectionBlock: DefaultRenderingPolicies.renderSectionBlock,
+    renderChildrenSection: DefaultRenderingPolicies.renderChildrenSection,
 };

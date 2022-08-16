@@ -53,5 +53,5 @@ export function renderEnumSection(
 
     // Merge sections to reduce and simplify hierarchy
     const innerSectionBody = mergeSections(docSections, config.tsdocConfiguration);
-    return config.renderSectionBlock(apiEnum, innerSectionBody, config);
+    return config.renderChildrenSection(apiEnum, innerSectionBody, config);
 }

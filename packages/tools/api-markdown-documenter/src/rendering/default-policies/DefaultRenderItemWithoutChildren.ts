@@ -13,5 +13,5 @@ export function renderItemWithoutChildren(
 ): DocSection {
     // Items without children don't have much information to provide other than the default
     // rendered details.
-    return config.renderSectionBlock(apiItem, undefined, config);
+    return config.renderChildrenSection(apiItem, undefined, config);
 }

@@ -15,5 +15,5 @@ export function renderFunctionLikeSection(
     // Render parameter table (if any parameters)
     const renderedParameterTable = renderParametersSection(apiFunctionLike, config);
 
-    return config.renderSectionBlock(apiFunctionLike, renderedParameterTable, config);
+    return config.renderChildrenSection(apiFunctionLike, renderedParameterTable, config);
 }
