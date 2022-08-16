@@ -18,6 +18,7 @@ import { SequenceChangeset } from "./sequenceChangeset";
 /**
  * Composes a sequence of changesets into a single changeset.
  * @param changes - The changesets to be applied.
+ * Parts of the input may be reused in the output, but the input is not mutated.
  * Each changeset in the list is assumed to be applicable after the previous one.
  * @returns A changeset that is equivalent to applying each of the given `changes` in order.
  *
@@ -27,6 +28,9 @@ import { SequenceChangeset } from "./sequenceChangeset";
  * - Support for slices is not implemented.
  */
 export function compose(changes: SequenceChangeset[]): SequenceChangeset {
+    if (changes.length === 1) {
+        return changes[0];
+    }
     const base: SequenceChangeset = {
         marks: {},
     };
