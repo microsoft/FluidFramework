@@ -153,7 +153,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (result?.error) {
                         this.exit(1);
-                        console.log(result.error);
+                        this.log(result.error);
                     }
                 }
             }
