@@ -5,8 +5,18 @@
 
 import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 
+/**
+ * Serializes and deserializes changes.
+ * Supports both binary and JSON formats.
+ * Due to data using these formats being persisted in documents,
+ * any format for encoding that was ever actually used should be supported for decoding for all future versions.
+ */
 export abstract class ChangeEncoder<TChange> {
+    /**
+     * Encodes `change` into a JSON compatible object.
+     */
     public abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleReadOnly;
+
     /**
      * Binary encoding.
      * Override to do better than just Json.
@@ -19,6 +29,9 @@ export abstract class ChangeEncoder<TChange> {
         return IsoBuffer.from(json);
     }
 
+    /**
+     * Decodes `change` from a JSON compatible object.
+     */
     public abstract decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TChange;
 
     /**
