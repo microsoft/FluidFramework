@@ -91,8 +91,19 @@ export class FieldKind {
  * TODO: eventually field-kinds will need to provide everything ChangeFamily requires.
  */
 export interface ChangeHandler<TChange> {
+    /**
+     * Provides merge / rebase policy for handling concurrent changes.
+     *
+     * TODO: This might handle changes from other field kinds if the file kind opts into them.
+     * Sort out how to reflect this in the type parameter for this vs other uses of TChanges in this interface.
+     */
     readonly rebaser: ChangeRebaser<TChange>;
+
+    /**
+     * Handles encoding of changes.
+     */
     readonly encoder: ChangeEncoder<TChange>;
+
     // TODO: add edit builder.
 }
 

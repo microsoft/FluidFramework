@@ -45,9 +45,7 @@ export abstract class ChangeEncoder<TChange> {
 
 // @public
 export interface ChangeHandler<TChange> {
-    // (undocumented)
     readonly encoder: ChangeEncoder<TChange>;
-    // (undocumented)
     readonly rebaser: ChangeRebaser<TChange>;
 }
 
