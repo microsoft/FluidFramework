@@ -127,7 +127,9 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 // transform options).  Not all clients might agree about support if some have old ModelLoaders --
                 // these clients could use this opportunity to dispose early and try to get new ModelLoaders.
                 if (!migratedModel.supportsDataFormat(extractedData)) {
-                    throw new Error("New model doesn't support extracted data format");
+                    this.emit("migrationNotSupported", acceptedVersion);
+                    this._migrationP = undefined;
+                    return;
                 }
                 transformedData = extractedData;
             }
