@@ -15,13 +15,11 @@ import { JsonableTree } from "../tree";
 export namespace Transposed {
 	export interface Transaction extends PeerChangeset {
 		/**
-		 * The reference sequence number of the transaction that this transaction was originally
-		 * issued after.
+		 * The tag of the changeset that this transaction was originally issued after.
 		 */
 		ref: ChangesetTag;
 		/**
-		 * The reference sequence number of the transaction that this transaction has been
-		 * transposed over.
+		 * The tag of the latest changeset that this transaction has been transposed over.
 		 * Omitted on changesets that have not been transposed.
 		 */
 		newRef?: ChangesetTag;
