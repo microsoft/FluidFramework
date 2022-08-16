@@ -190,7 +190,7 @@ export function renderDefaultSummaryTable(
 
 /**
  * Renders a simple summary table for a series of parameters.
- * Displays each parameter's name, type, and description (summary) comment.
+ * Displays each parameter's name, type, and description ({@link https://tsdoc.org/pages/tags/param/ | @param}) comment.
  *
  * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
  * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
@@ -299,7 +299,8 @@ export function renderPropertiesTable(
 
 /**
  * Renders a simple summary table for a list of packages.
- * Displays each package's name and description (summary) comment.
+ * Displays each package's name and description
+ * ({@link https://tsdoc.org/pages/tags/packagedocumentation/ | @packageDocumentation}) comment.
  *
  * @param apiItems - The items to be rendered. All of these items must be of the kind specified via `itemKind`.
  * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
@@ -416,9 +417,6 @@ export function renderApiTitleCell(
 /**
  * Renders a table cell containing a list of modifiers that apply.
  *
- * @remarks This content will be rendered as links to type signature documentation for other items local to the same
- * API suite (model).
- *
  * @param apiItem - The API item whose modifiers will be rendered in the cell.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
@@ -489,7 +487,8 @@ export function renderParameterTypeCell(
 }
 
 /**
- * Renders a table cell containing the description (summary) comment of the provided parameter.
+ * Renders a table cell containing the description ({@link https://tsdoc.org/pages/tags/param/ | @param}) comment
+ * of the provided parameter.
  * If the parameter has no documentation, an empty cell will be rendered.
  *
  * @param apiParameter - The parameter whose comment will be rendered in the cell
