@@ -9,24 +9,24 @@ A wide variety of possible consumers (across several companies) have overlapping
 which seem like they can best be met by collaborating on a single feature rich tree implementation powered by Fluid.
 The current feature focus is on:
 
-- Semantics:
+-   Semantics:
     -   High quality semantic merges, including "slice" moves of parts of sequences.
     -   Transactionality.
     -   Support schema in a semantically robust way.
-- Scalability:
+-   Scalability:
     -   Support for partial checkouts: allow efficiently viewing and editing parts of larger datasets without downloading the whole thing.
     -   Ability to easily (sharing code with client) spin up optional services to improve scalability further (ex: server side summaries, indexing, permissions etc.)
     -   Efficient data encodings.
-- Expressiveness:
+-   Expressiveness:
     -   Efficient support for moves, including moves or large sections of large sequences, and large subtrees.
     -   Support history operations (ex: undo and redo).
     -   Flexible schema system that has design patterns for making schema changes over time.
-- Workflows:
-    - Good support for offline.
-    - Optional support for branching and history.
-- Extensibility: future users will have needs beyond what we can afford to support in an initial version and must be practical to accommodate. This includes things like:
-    - New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
-    - New services (ex: to support permissions, server side indexing etc.)
+-   Workflows:
+    -   Good support for offline.
+    -   Optional support for branching and history.
+-   Extensibility: future users will have needs beyond what we can afford to support in an initial version and must be practical to accommodate. This includes things like:
+    -   New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
+    -   New services (ex: to support permissions, server side indexing etc.)
 
 ## Whats missing from existing DDSes?
 
@@ -80,11 +80,11 @@ TODO: When support for multiple branches is added, do we want to have indexes fo
 When applications want access to the `tree`'s data, they do so through a [`checkout`](./src/checkout/README.md) which abstracts the indexes into nice application facing APIs.
 Checkouts may also have state from the application, including:
 
-- [`view-schema`](./src/schema-view/README.md)
-- adapters for out-of-schema data
-- request or hints for what subsets of the tree in memory
-- pending transactions
-- registrations for application callbacks / events.
+-   [`view-schema`](./src/schema-view/README.md)
+-   adapters for out-of-schema data
+-   request or hints for what subsets of the tree in memory
+-   pending transactions
+-   registrations for application callbacks / events.
 
 [`shared-tree`](./src/shared-tree/) provides a default checkout which it owns, but applications can create more if desired, which they will own.
 Since checkouts subscribe to events from `shared-tree`, explicitly disposing any additionally created ones of is required to avoid leaks.
@@ -105,12 +105,12 @@ TODO: add a diagram for this section.
 The application using the `shared-tree` to get the checkout from which it can read data (which the checkout internally gets from the indexes).
 For any given part of the application this will typically follow one of two patterns:
 
-- read the tree data as needed to create the view.
-Register invalidation call backs for when the observed parts of the tree change.
-When invalidated, reconstruct the invalidated parts of the view by rereading the tree.
-- read the tree data as needed to create the view.
-Register delta call backs for when the observed parts of the tree change.
-When a delta is received, update the view in palace according to the delta.
+-   read the tree data as needed to create the view.
+    Register invalidation call backs for when the observed parts of the tree change.
+    When invalidated, reconstruct the invalidated parts of the view by rereading the tree.
+-   read the tree data as needed to create the view.
+    Register delta call backs for when the observed parts of the tree change.
+    When a delta is received, update the view in palace according to the delta.
 
 TODO: Eventually these two approaches should be able to be mixed and matched for different parts of the application as desired, receiving scoped deltas.
 For now deltas are global.
@@ -139,8 +139,8 @@ This "command" can interactively edit the tree.
 Internally the transaction implements these edits by creating changes.
 Each change is processed in two ways:
 
-- the change is converted to a delta which is applied to the forest and any existing anchors allowing the application to read the updated tree afterwards.
-- the change is accumulated in a `ProgressiveEditBuilder` which will be used to create/encode the actual edit to send to Fluid.
+-   the change is converted to a delta which is applied to the forest and any existing anchors allowing the application to read the updated tree afterwards.
+-   the change is accumulated in a `ProgressiveEditBuilder` which will be used to create/encode the actual edit to send to Fluid.
 
 Once the command ends, the transaction is rolled back leaving the forest in a clean state.
 Then if the command did not error, a [`change-set`](./src/changeset/README.md) is created from the `ProgressiveEditBuilder`, which is encoded into a Fluid Op.
