@@ -160,6 +160,7 @@ export function renderHeritageTypes(
  * Renders a labeled, comma-separated list of heritage types.
  *
  * @remarks Displayed as `<label>: <heritage-type>[, <heritage-type>]*`
+ *
  * @param heritageTypes - List of types to display.
  * @param label - Label text to display before the list of types.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
@@ -195,6 +196,18 @@ function renderHeritageTypeList(
     return undefined;
 }
 
+/**
+ * Renders a section describing the type parameters..
+ * I.e. {@link https://tsdoc.org/pages/tags/typeparam/ | @typeParam} comment blocks.
+ *
+ * @remarks Displayed as a labeled, comma-separated list of types.
+ * Links will be generated for types that are a part of the same API suite (model).
+ *
+ * @param typeParameters - List of type
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if any type parameters were provided, otherwise `undefined`.
+ */
 export function renderTypeParameters(
     typeParameters: readonly TypeParameter[],
     config: Required<MarkdownDocumenterConfiguration>,
@@ -243,6 +256,16 @@ export function renderTypeParameters(
     return undefined;
 }
 
+/**
+ * Renders a doc paragraph for the provided TSDoc excerpt.
+ *
+ * @remarks This function is a helper to parse TSDoc excerpt token syntax into documentation with the appropriate links.
+ * It will generate links to any API members that are a part of the same API suite (model). Other token contents
+ * will be rendered as plain text.
+ *
+ * @param excerpt - The TSDoc excerpt to render.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderExcerptWithHyperlinks(
     excerpt: Excerpt,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -287,6 +310,16 @@ export function renderExcerptWithHyperlinks(
     return new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes);
 }
 
+/**
+ * Renders a simple navigation breadcrumb.
+ *
+ * @remarks Displayed as a ` > `-separated list of hierarchical page links.
+ * 1 for each element in the provided item's ancestory for which a separate document is generated
+ * (see {@link DocumentBoundaries}).
+ *
+ * @param apiItem - The API item whose ancestory will be used to generate the breadcrumb.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderBreadcrumb(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -332,6 +365,12 @@ export function renderBreadcrumb(
     ]);
 }
 
+/**
+ * Renders a heading for the API item, using the provided configuration policy for generating the link text and ID.
+ *
+ * @param apiItem - The API item for which the heading is being generated.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderHeadingForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -339,6 +378,12 @@ export function renderHeadingForApiItem(
     return renderHeading(getHeadingForApiItem(apiItem, config), config);
 }
 
+/**
+ * Helper function for rendering a heading.
+ *
+ * @param heading - The description of the heading to render.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderHeading(
     heading: Heading,
     config: Required<MarkdownDocumenterConfiguration>,

@@ -314,7 +314,7 @@ function renderApiTitleCell(apiItem: ApiItem, config: Required<MarkdownDocumente
 // @public
 function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox;
 
-// @public (undocumented)
+// @public
 function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
@@ -350,7 +350,7 @@ function renderExample(example: DocExampleProperties, config: Required<MarkdownD
 // @public
 function renderExamples(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
-// @public (undocumented)
+// @public
 function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph;
 
 // @public
@@ -362,10 +362,10 @@ function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Req
 // @public
 function renderFunctionLikeSummaryTable(apiItems: readonly ApiFunctionLike[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
-// @public (undocumented)
+// @public
 function renderHeading(heading: Heading, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
 
-// @public (undocumented)
+// @public
 function renderHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocHeading;
 
 // @public
@@ -512,7 +512,7 @@ function renderTableWithHeading(memberTableProperties: MemberTableProperties, co
 // @public
 function renderTypeExcerptCell(typeExcerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
-// @public (undocumented)
+// @public
 function renderTypeParameters(typeParameters: readonly TypeParameter[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
