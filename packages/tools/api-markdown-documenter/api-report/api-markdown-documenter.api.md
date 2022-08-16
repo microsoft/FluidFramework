@@ -326,7 +326,7 @@ function renderChildrenSection(apiItem: ApiItem, innerSectionBody: DocSection | 
 // @public
 function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle: string, config: Required<MarkdownDocumenterConfiguration>, renderChild: (childItem: ApiItem) => DocSection): DocSection | undefined;
 
-// @public (undocumented)
+// @public
 function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public
@@ -341,7 +341,7 @@ export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration):
 // @public
 function renderEmptyTableCell(config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
-// @public (undocumented)
+// @public
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public
@@ -356,7 +356,7 @@ function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<Markdown
 // @public
 export function renderFiles(partialConfig: MarkdownDocumenterConfiguration, outputDirectoryPath: string, maybeMarkdownEmitter?: MarkdownEmitter): Promise<void>;
 
-// @public (undocumented)
+// @public
 function renderFunctionLikeSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
@@ -434,10 +434,10 @@ export interface RenderingPolicies {
     renderVariableSection?: RenderApiItemWithoutChildren<ApiVariable>;
 }
 
-// @public (undocumented)
+// @public
 function renderInterfaceSection(apiInterface: ApiInterface, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
-// @public (undocumented)
+// @public
 function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
@@ -446,22 +446,22 @@ function renderMemberTables(memberTableProperties: readonly MemberTablePropertie
 // @public
 export function renderModelDocument(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
-// @public (undocumented)
+// @public
 function renderModelSection(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
 function renderModifiersCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
-// @public (undocumented)
+// @public
 function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly ApiItem[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
-// @public (undocumented)
+// @public
 function renderNamespaceSection(apiNamespace: ApiNamespace, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public
 export function renderPackageDocument(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
-// @public (undocumented)
+// @public
 function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public

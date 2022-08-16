@@ -9,6 +9,9 @@ import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfigu
 import { filterByKind, mergeSections } from "../../utilities";
 import { renderChildrenUnderHeading, renderMemberTables } from "../helpers";
 
+/**
+ * Default policy for rendering doc sections for `Enum` items.
+ */
 export function renderEnumSection(
     apiEnum: ApiEnum,
     config: Required<MarkdownDocumenterConfiguration>,

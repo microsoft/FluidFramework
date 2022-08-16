@@ -161,21 +161,83 @@ export interface RenderingPolicies {
  * The default {@link RenderingPolicies}.
  */
 export const defaultRenderingPolicies: Required<RenderingPolicies> = {
+    /**
+     * Default policy for rendering `Call Signature`s.
+     */
     renderCallSignatureSection: DefaultRenderingPolicies.renderItemWithoutChildren,
+
+    /**
+     * Default policy for rendering `Classes`.
+     */
     renderClassSection: DefaultRenderingPolicies.renderClassSection,
+
+    /**
+     * Default policy for rendering `Constructors`.
+     */
     renderConstructorSection: DefaultRenderingPolicies.renderFunctionLikeSection,
+
+    /**
+     * Default policy for rendering `Enums`.
+     */
     renderEnumSection: DefaultRenderingPolicies.renderEnumSection,
+
+    /**
+     * Default policy for rendering `Enum Members`.
+     */
     renderEnumMemberSection: DefaultRenderingPolicies.renderItemWithoutChildren,
+
+    /**
+     * Default policy for rendering `Functions`.
+     */
     renderFunctionSection: DefaultRenderingPolicies.renderFunctionLikeSection,
+
+    /**
+     * Default policy for rendering `Index Signatures`.
+     */
     renderIndexSignatureSection: DefaultRenderingPolicies.renderItemWithoutChildren,
+
+    /**
+     * Default policy for rendering `Interfaces`.
+     */
     renderInterfaceSection: DefaultRenderingPolicies.renderInterfaceSection,
+
+    /**
+     * Default policy for rendering `Methods`.
+     */
     renderMethodSection: DefaultRenderingPolicies.renderFunctionLikeSection,
+
+    /**
+     * Default policy for rendering `Models`.
+     */
     renderModelSection: DefaultRenderingPolicies.renderModelSection,
+
+    /**
+     * Default policy for rendering `Namespaces`.
+     */
     renderNamespaceSection: DefaultRenderingPolicies.renderNamespaceSection,
+
+    /**
+     * Default policy for rendering `Packages`.
+     */
     renderPackageSection: DefaultRenderingPolicies.renderPackageSection,
+
+    /**
+     * Default policy for rendering `Properties`.
+     */
     renderPropertySection: DefaultRenderingPolicies.renderItemWithoutChildren,
+
+    /**
+     * Default policy for rendering `Type Aliases`.
+     */
     renderTypeAliasSection: DefaultRenderingPolicies.renderItemWithoutChildren,
+
+    /**
+     * Default policy for rendering `Variables`.
+     */
     renderVariableSection: DefaultRenderingPolicies.renderItemWithoutChildren,
 
+    /**
+     * Default policy for rendering child content sections.
+     */
     renderChildrenSection: DefaultRenderingPolicies.renderChildrenSection,
 };

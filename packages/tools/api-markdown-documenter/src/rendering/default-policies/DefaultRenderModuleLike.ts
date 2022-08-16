@@ -20,6 +20,9 @@ import { ApiModuleLike, filterByKind, mergeSections } from "../../utilities";
 import { renderMemberTables } from "../helpers";
 import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
 
+/**
+ * Default policy for rendering doc sections for module-like API items (packages, namespaces).
+ */
 export function renderModuleLikeSection(
     apiItem: ApiModuleLike,
     childItems: readonly ApiItem[],

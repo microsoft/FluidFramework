@@ -8,6 +8,10 @@ import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfigu
 import { ApiFunctionLike } from "../../utilities";
 import { renderParametersSection } from "../helpers";
 
+/**
+ * Default policy for rendering doc sections for function-like API items
+ * (constructors, functions, methods).
+ */
 export function renderFunctionLikeSection(
     apiFunctionLike: ApiFunctionLike,
     config: Required<MarkdownDocumenterConfiguration>,

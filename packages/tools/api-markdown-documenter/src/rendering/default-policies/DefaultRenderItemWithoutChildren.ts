@@ -7,6 +7,9 @@ import { DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 
+/**
+ * Default policy for rendering doc sections for API item kinds that do not have child contents.
+ */
 export function renderItemWithoutChildren(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,

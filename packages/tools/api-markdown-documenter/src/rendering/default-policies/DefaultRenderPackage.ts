@@ -8,6 +8,9 @@ import { DocSection } from "@microsoft/tsdoc";
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { renderModuleLikeSection } from "./DefaultRenderModuleLike";
 
+/**
+ * Default policy for rendering doc sections for `Package` items.
+ */
 export function renderPackageSection(
     apiPackage: ApiPackage,
     config: Required<MarkdownDocumenterConfiguration>,

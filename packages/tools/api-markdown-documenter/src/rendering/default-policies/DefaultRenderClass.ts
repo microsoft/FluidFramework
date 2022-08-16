@@ -18,6 +18,9 @@ import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfigu
 import { filterByKind, mergeSections } from "../../utilities";
 import { renderChildDetailsSection, renderMemberTables } from "../helpers";
 
+/**
+ * Default policy for rendering doc sections for `Class` items.
+ */
 export function renderClassSection(
     apiClass: ApiClass,
     config: Required<MarkdownDocumenterConfiguration>,

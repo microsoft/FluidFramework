@@ -30,11 +30,9 @@ import {
  * 1. Item Signature
  * 1. `innerSectionBody`
  *
- * @param apiItem - TODO
- * @param innerSectionBody - TODO
- * @param config - TODO
- * @param tsdocConfiguration - TODO
- * @returns TODO
+ * @param apiItem - The API item being rendered.
+ * @param innerSectionBody - A doc section of contents to be written after the standard metadata content types.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
 export function renderChildrenSection(
     apiItem: ApiItem,

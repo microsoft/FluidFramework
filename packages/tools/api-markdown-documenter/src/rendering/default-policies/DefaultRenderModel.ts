@@ -9,6 +9,9 @@ import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfigu
 import { DocEmphasisSpan } from "../../doc-nodes";
 import { renderTableWithHeading } from "../helpers";
 
+/**
+ * Default policy for rendering doc sections for `Model` items.
+ */
 export function renderModelSection(
     apiModel: ApiModel,
     config: Required<MarkdownDocumenterConfiguration>,

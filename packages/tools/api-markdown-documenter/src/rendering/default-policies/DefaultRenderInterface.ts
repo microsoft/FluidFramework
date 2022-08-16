@@ -19,6 +19,9 @@ import { filterByKind, mergeSections } from "../../utilities";
 import { renderMemberTables } from "../helpers";
 import { renderChildDetailsSection } from "../helpers/RenderingHelpers";
 
+/**
+ * Default policy for rendering doc sections for `Interface` items.
+ */
 export function renderInterfaceSection(
     apiInterface: ApiInterface,
     config: Required<MarkdownDocumenterConfiguration>,
