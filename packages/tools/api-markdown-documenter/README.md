@@ -30,7 +30,6 @@ This function also accepts a `MarkdownEmitter` object that does the conversion f
 
 ## Upcoming Work
 
--   Config option for "Model" page title
 -   DocList
 -   Injext IDs for remaining headings
 -   Dynamic "Modifiers" column in tables
