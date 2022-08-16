@@ -10,17 +10,17 @@ import { FullSchemaPolicy } from "./modular-schema";
 /**
 * FieldSchema which is impossible for any data to be in schema with.
 */
-
 export const neverField = fieldSchema(value, []);
+
 /**
 * FieldSchema which is impossible to put anything in.
 */
 
 export const emptyField = fieldSchema(forbidden, []);
+
 /**
  * TreeSchema which is impossible for any data to be in schema with.
  */
-
 export const neverTree: TreeSchema = {
 	localFields: emptyMap,
 	globalFields: emptySet,
@@ -29,6 +29,12 @@ export const neverTree: TreeSchema = {
 	value: ValueSchema.Nothing,
 };
 
+/**
+ * FullSchemaPolicy the default field kinds, empty default fields and neverTree for the default tree schema.
+ *
+ * This requires new node types to have explicit stored schema to exist in documents,
+ * and allows adding new global fields along with their schema at any point.
+ */
 export const defaultSchemaPolicy: FullSchemaPolicy = {
 	fieldKinds: new Map([value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s])),
 	defaultTreeSchema: neverTree,
