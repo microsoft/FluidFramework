@@ -62,7 +62,7 @@ export function getQualifiedApiItemName(apiItem: ApiItem): string {
 }
 
 /**
- * Gets the nearest ancestor of the provided item that will have its own rendered page.
+ * Gets the nearest ancestor of the provided item that will have its own rendered document.
  *
  * @remarks
  * This can be useful for determining the file path the item will ultimately be rendered under,
@@ -71,18 +71,18 @@ export function getQualifiedApiItemName(apiItem: ApiItem): string {
  * @param apiItem - The API item for which we are generating a file path.
  * @param documentBoundaries - See {@link DocumentBoundaries}
  */
-export function getFirstAncestorWithOwnPage(
+export function getFirstAncestorWithOwnDocument(
     apiItem: ApiItem,
     documentBoundaries: DocumentBoundaries,
 ): ApiItem {
-    // Walk parentage until we reach an item kind that gets rendered to its own page.
-    // That is the page we will target with the generated link.
+    // Walk parentage until we reach an item kind that gets rendered to its own document.
+    // That is the document we will target with the generated link.
     let hierarchyItem: ApiItem = apiItem;
     while (!doesItemRequireOwnDocument(hierarchyItem, documentBoundaries)) {
         const parent = getFilteredParent(hierarchyItem);
         if (parent === undefined) {
             throw new Error(
-                `Walking hierarchy from "${apiItem.displayName}" does not converge on an item that is rendered to its own page.`,
+                `Walking hierarchy from "${apiItem.displayName}" does not converge on an item that is rendered to its own document.`,
             );
         }
         hierarchyItem = parent;
@@ -139,7 +139,7 @@ export function getLinkUrlForApiItem(
  * Gets the file path for the specified API item.
  *
  * @remarks
- * In the case of an item that does not get rendered to its own page, this will point to the document
+ * In the case of an item that does not get rendered to its own document, this will point to the document
  * of the ancestor item under which the provided item will be rendered.
  *
  * The generated path is relative to {@link MarkdownDocumenterConfiguration.uriRoot}.
@@ -153,7 +153,7 @@ export function getFilePathForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
     includeExtension: boolean,
 ): string {
-    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaries);
+    const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
     const fileName = getFileNameForApiItem(apiItem, config, includeExtension);
 
@@ -174,7 +174,7 @@ export function getFilePathForApiItem(
  * Gets the file name for the specified API item.
  *
  * @remarks
- * In the case of an item that does not get rendered to its own page, this will be the file name for the document
+ * In the case of an item that does not get rendered to its own document, this will be the file name for the document
  * of the ancestor item under which the provided item will be rendered.
  *
  * Note: This is strictly the name of the file, not a path to that file.
@@ -189,7 +189,7 @@ export function getFileNameForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
     includeExtension: boolean,
 ): string {
-    const targetDocumentItem = getFirstAncestorWithOwnPage(apiItem, config.documentBoundaries);
+    const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
     let unscopedFileName = getUnscopedFileNameSegment(targetDocumentItem, config);
 
@@ -320,7 +320,7 @@ export function getHeadingIdForApiItem(
         const parent = getFilteredParent(hierarchyItem);
         if (parent === undefined) {
             throw new Error(
-                "Walking site hierarchy does not converge on an item that is rendered to its own page.",
+                "Walking site hierarchy does not converge on an item that is rendered to its own document.",
             );
         }
         hierarchyItem = parent;

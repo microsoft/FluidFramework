@@ -110,7 +110,7 @@ function apiTestSuite(
                     });
                 });
 
-                it("Render Model page (smoke test)", () => {
+                it("Render Model document (smoke test)", () => {
                     const result = renderModelDocument(
                         markdownDocumenterConfig.apiModel,
                         markdownDocumenterConfig,
@@ -118,7 +118,7 @@ function apiTestSuite(
                     expect(result.path).to.equal("index.md");
                 });
 
-                it("Render Package page (smoke test)", () => {
+                it("Render Package document (smoke test)", () => {
                     const packageItem = markdownDocumenterConfig.apiModel.packages[0];
 
                     const result = renderPackageDocument(packageItem, markdownDocumenterConfig);

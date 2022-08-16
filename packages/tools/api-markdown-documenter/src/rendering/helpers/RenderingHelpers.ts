@@ -262,7 +262,7 @@ export function renderBreadcrumb(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
-    // TODO: old system generated link text "Packages" for Model page
+    // TODO: old system generated link text "Packages" for Model document
 
     const docNodes: DocNode[] = [];
 

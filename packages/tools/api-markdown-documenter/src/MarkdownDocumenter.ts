@@ -48,15 +48,15 @@ export function renderDocuments(
 
     const documents: MarkdownDocument[] = [];
 
-    // Always render Model page
+    // Always render Model document
     documents.push(renderModelDocument(apiModel, config));
 
     if (apiModel.packages.length !== 0) {
-        // For each package, walk the child graph to find API items which should be rendered to their own document page
+        // For each package, walk the child graph to find API items which should be rendered to their own document
         // per provided policy.
 
         for (const packageItem of apiModel.packages) {
-            // Always render pages for packages under the model
+            // Always render documents for packages under the model
             documents.push(renderPackageDocument(packageItem, config));
 
             const packageEntryPoints = packageItem.entryPoints;

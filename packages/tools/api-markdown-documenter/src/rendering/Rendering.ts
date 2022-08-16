@@ -42,7 +42,7 @@ export function renderModelDocument(
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
     if (config.verbose) {
-        console.log(`Rendering API Model page...`);
+        console.log(`Rendering API Model document...`);
     }
 
     const docNodes: DocNode[] = [];
@@ -52,13 +52,13 @@ export function renderModelDocument(
         docNodes.push(renderHeadingForApiItem(apiModel, config));
     }
 
-    // Do not render breadcrumb for Model page
+    // Do not render breadcrumb for Model document
 
     // Render body contents
     docNodes.push(config.renderModelSection(apiModel, config));
 
     if (config.verbose) {
-        console.log(`API Model page rendered successfully.`);
+        console.log(`API Model document rendered successfully.`);
     }
 
     return createMarkdownDocument(
@@ -73,7 +73,7 @@ export function renderPackageDocument(
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
     if (config.verbose) {
-        console.log(`Rendering ${apiPackage.name} package page...`);
+        console.log(`Rendering ${apiPackage.name} package document...`);
     }
 
     const docNodes: DocNode[] = [];
@@ -94,7 +94,7 @@ export function renderPackageDocument(
     );
 
     if (config.verbose) {
-        console.log(`Package page rendered successfully.`);
+        console.log(`Package document rendered successfully.`);
     }
 
     return createMarkdownDocument(

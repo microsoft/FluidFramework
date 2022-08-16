@@ -181,7 +181,7 @@ export function getFilePathForApiItem(apiItem: ApiItem, config: Required<Markdow
 export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined;
 
 // @public
-export function getFirstAncestorWithOwnPage(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): ApiItem;
+export function getFirstAncestorWithOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): ApiItem;
 
 // @public
 export function getHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, headingLevel?: number): Heading;

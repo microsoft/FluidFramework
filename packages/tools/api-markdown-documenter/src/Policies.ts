@@ -21,7 +21,7 @@ import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 export type DocumentBoundaries = ApiItemKind[];
 
 /**
- * List of item kinds for which sub-directories will be generated, and under which child item pages will be created.
+ * List of item kinds for which sub-directories will be generated, and under which child item documents will be created.
  * If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
  */
 export type HierarchyBoundaries = ApiItemKind[];
@@ -50,7 +50,7 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
  */
 export interface PolicyOptions {
     /**
-     * Whether or not to include a top-level heading in rendered document pages.
+     * Whether or not to include a top-level heading in rendered documents.
      *
      * @defaultValue true
      *
@@ -60,7 +60,7 @@ export interface PolicyOptions {
     includeTopLevelDocumentHeading?: boolean;
 
     /**
-     * Whether or not to include a navigation breadcrumb at the top of rendered document pages.
+     * Whether or not to include a navigation breadcrumb at the top of rendered documents.
      *
      * @defaultValue true
      *
