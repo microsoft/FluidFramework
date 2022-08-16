@@ -20,9 +20,8 @@ export interface Link {
 
     /**
      * Path to the document being linked to. Relative to {@link Link.uriBase}.
-     * TODO: rename.
      */
-    relativeFilePath: string;
+    documentPath: string;
 
     /**
      * Optional ID of a heading in the document being linked to.
@@ -35,5 +34,5 @@ export interface Link {
  */
 export function urlFromLink(link: Link): string {
     const headingPostfix = link.headingId === undefined ? "" : `#${link.headingId}`;
-    return `${link.uriBase}/${link.relativeFilePath}${headingPostfix}`;
+    return `${link.uriBase}/${link.documentPath}${headingPostfix}`;
 }

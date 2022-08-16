@@ -221,8 +221,8 @@ export interface IDocListParameters extends IDocNodeContainerParameters {
 
 // @public
 export interface Link {
+    documentPath: string;
     headingId?: string;
-    relativeFilePath: string;
     text: string;
     uriBase: string;
 }

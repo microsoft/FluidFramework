@@ -106,13 +106,13 @@ export function getLinkForApiItem(
 ): Link {
     const text = apiItem.displayName;
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    const relativeFilePath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
+    const documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
     const headingId = getHeadingIdForApiItem(apiItem, config);
 
     return {
         text,
         uriBase,
-        relativeFilePath,
+        documentPath,
         headingId,
     };
 }
