@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { StoredSchemaRepository } from "../schema-stored";
 import { AnchorSet, FieldKey, DetachedField, Delta, JsonableTree, detachedFieldAsKey, Anchor } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -11,9 +10,6 @@ import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
  * Editing APIs.
  */
 export interface IEditableForest extends IForestSubscription {
-    // Overrides field from IForestSubscription adding editing support.
-    readonly schema: StoredSchemaRepository;
-
     /**
      * Set of anchors this forest is tracking.
      *
