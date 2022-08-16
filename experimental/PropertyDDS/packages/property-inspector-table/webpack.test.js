@@ -7,6 +7,9 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
+const pkg = require("./package.json");
+const componentName = pkg.name.slice(1);
+
 module.exports = env => {
     return ({
         entry: {
@@ -22,7 +25,7 @@ module.exports = env => {
             },
             {
                 test: /\.css$/i,
-                use: ['style-loader', 'css-loader'],
+                use: [require.resolve('style-loader'), require.resolve('css-loader')],
             }]
         },
         output: {
@@ -31,7 +34,7 @@ module.exports = env => {
             library: "[name]",
             // https://github.com/webpack/webpack/issues/5767
             // https://github.com/webpack/webpack/issues/7939
-            devtoolNamespace: "fluid-example/draft-js",
+            devtoolNamespace: componentName,
             libraryTarget: "umd"
         },
         devServer: {
