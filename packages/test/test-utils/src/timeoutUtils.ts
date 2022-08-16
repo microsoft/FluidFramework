@@ -25,9 +25,10 @@ export async function timeoutAwait<T = void>(
     return Promise.race([promise, timeoutPromise<T>(() => { }, timeoutOptions)]);
 }
 
-export async function ensureContainerConnected(container: Container): Promise<void> {
+export async function ensureContainerConnected(container: Container, timeoutDurationMs?: number): Promise<void> {
     if (!container.connected) {
-        return timeoutPromise((resolve) => container.once("connected", () => resolve()));
+        return timeoutPromise((resolve) => container.once("connected", () => resolve()),
+        { durationMs: timeoutDurationMs, errorMsg: "ensureContainerConnected timeout" });
     }
 }
 

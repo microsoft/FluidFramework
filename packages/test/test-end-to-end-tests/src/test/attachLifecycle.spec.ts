@@ -6,6 +6,7 @@ import { strict as assert } from "assert";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     createLoader,
+    ensureContainerConnected,
     ITestFluidObject,
     timeoutPromise,
 } from "@fluidframework/test-utils";
@@ -18,6 +19,7 @@ import { SequenceDeltaEvent, SharedString, SharedStringFactory } from "@fluidfra
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
+import { Container } from "@fluidframework/container-loader";
 
 // during these point succeeding objects won't even exist locally
 const ContainerCreated = 0;
@@ -74,6 +76,8 @@ describeFullCompat("Validate Attach lifecycle", (getTestObjectProvider) => {
                     if (testConfig.containerSaveAfterAttach) {
                         await attachP;
                     }
+                    await ensureContainerConnected(initContainer as Container, timeoutDurationMs);
+                    provider.updateDocumentId(initContainer.resolvedUrl);
                 };
                 if (testConfig.containerAttachPoint === ContainerCreated) {
                     // point 0 - at container create, datastore and dss don't exist
