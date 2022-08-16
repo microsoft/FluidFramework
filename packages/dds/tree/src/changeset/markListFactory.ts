@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Transposed as T } from "./format";
-import { extendAttachGroup, isAttachGroup, isObjMark, tryExtendMark } from "./utils";
+import { Skip, Transposed as T } from "./format";
+import { extendAttachGroup, isAttachGroup, isObjMark, isSkipMark, tryExtendMark } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -17,9 +17,9 @@ export class MarkListFactory {
     private offset = 0;
     public readonly list: T.MarkList = [];
 
-    public push(...offsetOrContent: (number | T.Mark)[]): void {
-        for (const item of offsetOrContent) {
-            if (typeof item === "number") {
+    public push(...marks: T.Mark[]): void {
+        for (const item of marks) {
+            if (isSkipMark(item)) {
                 this.pushOffset(item);
             } else {
                 this.pushContent(item);
@@ -27,11 +27,11 @@ export class MarkListFactory {
         }
     }
 
-    public pushOffset(offset: number): void {
+    public pushOffset(offset: Skip): void {
         this.offset += offset;
     }
 
-    public pushContent(mark: T.SizedObjectMark | T.AttachGroup): void {
+    public pushContent(mark: T.ObjectMark): void {
         if (this.offset > 0) {
             this.list.push(this.offset);
             this.offset = 0;

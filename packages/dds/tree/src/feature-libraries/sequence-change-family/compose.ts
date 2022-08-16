@@ -8,6 +8,7 @@ import {
     isAttachGroup,
     isDetachMark,
     isReattach,
+    isSkipMark,
     MarkListFactory,
     splitMark,
     Transposed as T,
@@ -46,7 +47,7 @@ function foldInFieldMarks(newFieldMarks: T.FieldMarks, baseFieldMarks: T.FieldMa
         baseFieldMarks[key] ??= [];
         const baseMarkList = foldInMarkList(newMarkList, baseFieldMarks[key]);
         baseFieldMarks[key] = baseMarkList;
-        while (typeof baseMarkList[baseMarkList.length - 1] === "number") {
+        while (isSkipMark(baseMarkList[baseMarkList.length - 1])) {
             baseMarkList.pop();
         }
         if (baseMarkList.length === 0) {
@@ -88,7 +89,7 @@ function foldInMarkList(
                 [newMark, nextNewMark] = splitMark(newMark, baseMarkLength);
             }
             // Passed this point, we are guaranteed that `newMark` and `baseMark` have the same length
-            if (typeof baseMark === "number") {
+            if (isSkipMark(baseMark)) {
                 // TODO: insert new tombs and reattaches without replacing the offset
                 factory.push(newMark);
             } else {
@@ -116,7 +117,7 @@ function composeMarks(
     newMark: T.SizedMark,
     baseMark: T.SizedObjectMark | T.AttachGroup,
 ): T.Mark[] {
-    if (typeof newMark === "number") {
+    if (isSkipMark(newMark)) {
         return [baseMark];
     }
     const newType = newMark.type;

@@ -93,7 +93,7 @@ export function splitMark<TMark extends T.Mark>(mark: TMark, length: number): [T
     if (length < 1 || markLength <= length) {
         fail(`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`);
     }
-    if (typeof mark === "number") {
+    if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
     if (isAttachGroup(mark)) {

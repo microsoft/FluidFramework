@@ -8,6 +8,7 @@ import {
     getMarkLength,
     isAttachGroup,
     isReattach,
+    isSkipMark,
     MarkListFactory,
     splitMark,
     Transposed as T,
@@ -100,7 +101,7 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
 export const DUMMY_TOMB_TAG: ChangesetTag = "Dummy Tombstone Changeset Tag";
 
 function rebaseMark(currMark: T.SizedMark, baseMark: T.SizedMark): T.SizedMark {
-    if (typeof baseMark === "number") {
+    if (isSkipMark(baseMark)) {
         return clone(currMark);
     }
     const baseType = baseMark.type;

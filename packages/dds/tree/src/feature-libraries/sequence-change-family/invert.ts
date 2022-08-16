@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ChangesetTag, isAttachGroup, OpId, Transposed as T } from "../../changeset";
+import { ChangesetTag, isAttachGroup, isSkipMark, OpId, Transposed as T } from "../../changeset";
 import { fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
@@ -43,7 +43,7 @@ function invertFieldMarks(fieldMarks: T.FieldMarks, opIdToTag: (id: OpId) => Cha
 function invertMarkList(markList: T.MarkList, opIdToTag: (id: OpId) => ChangesetTag): T.MarkList {
     const inverseMarkList: T.MarkList = [];
     for (const mark of markList) {
-        if (typeof mark === "number") {
+        if (isSkipMark(mark)) {
             inverseMarkList.push(mark);
         } else if (isAttachGroup(mark)) {
             for (const attach of mark) {
