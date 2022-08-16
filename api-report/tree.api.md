@@ -81,7 +81,7 @@ export interface Contravariant<T> {
     _removeCovariance?: (_: T) => void;
 }
 
-// @public (undocumented)
+// @public
 const counter: FieldKind;
 
 // @public

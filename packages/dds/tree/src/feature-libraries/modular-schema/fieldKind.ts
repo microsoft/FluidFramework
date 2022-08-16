@@ -53,6 +53,10 @@ export class FieldKind {
         public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
         ) {}
 
+    /**
+     * @returns true iff `superset` permits a (non-strict) superset of the subtrees
+     * allowed by field made from `this` and `originalTypes`.
+     */
     public allowsFieldSuperset(
         policy: FullSchemaPolicy,
         originalData: SchemaData,

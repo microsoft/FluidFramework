@@ -39,6 +39,9 @@ export const itemsKey: LocalFieldKey = brand("items");
  */
 export const rootFieldKey = brandOpaque<GlobalFieldKey>("rootFieldKey");
 
+/**
+ * Helper for building {@link FieldSchema}.
+ */
 export function fieldSchema(
     kind: { identifier: FieldKindIdentifier; },
     types?: Iterable<TreeSchemaIdentifier>,
@@ -62,6 +65,9 @@ export interface TreeSchemaBuilder {
     readonly value?: ValueSchema;
 }
 
+/**
+ * Helper for building {@link TreeSchema}.
+ */
 export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
     const localFields = new Map();
     const local = data.localFields ?? {};
