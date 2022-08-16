@@ -314,7 +314,7 @@ function renderApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumen
 // @public
 function renderApiTitleCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
-// @public (undocumented)
+// @public
 function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox;
 
 // @public (undocumented)

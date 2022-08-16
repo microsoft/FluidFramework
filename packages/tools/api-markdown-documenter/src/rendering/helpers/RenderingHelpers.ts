@@ -349,6 +349,11 @@ export function renderHeading(
     });
 }
 
+/**
+ * Renders a simple note box containing a standard warning about beta API usage considerations.
+ *
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): DocNoteBox {
     const betaWarning: string =
         "This API is provided as a preview for developers and may change" +
