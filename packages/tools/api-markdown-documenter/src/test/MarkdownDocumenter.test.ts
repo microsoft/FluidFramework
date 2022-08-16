@@ -81,6 +81,12 @@ interface ConfigTestProps {
 
 /**
  * Runs a full-suite test for the provided Model name against the provided list of configs.
+ *
+ * @remarks
+ * Snapshots are generated under `./snapshots` within sub-directories generated for each <package-name>, <config-name>
+ * pair. These snapshots are checked in. Evaluating test diffs can be accomplished by looking at the git-wise diff.
+ * If a change in the Markdown rendering is expected, it should be checked in.
+ *
  * @param modelName - Name of the model for which the docs are being generated.
  * @param apiReportFilePaths - List of paths to package API report files to be loaded into the model.
  * @param configs - Configurations to test against.
