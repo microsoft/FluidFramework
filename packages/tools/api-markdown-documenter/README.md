@@ -44,4 +44,5 @@ This function also accepts a `MarkdownEmitter` object that does the conversion f
 ## Longer-term work
 
 -   Replace DocNode output / MarkdownEmitter with Markdown AST trees and simple interface for rendering those trees to a stream
+-   Support placing documents *within* their own hierarchy (support for the "index" model used by systems like DocFX)
 -   Handle multiple package entrypoints

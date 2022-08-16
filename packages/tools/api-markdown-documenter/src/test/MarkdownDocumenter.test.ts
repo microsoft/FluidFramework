@@ -115,7 +115,7 @@ function apiTestSuite(
                         markdownDocumenterConfig.apiModel,
                         markdownDocumenterConfig,
                     );
-                    expect(result.path).to.equal("index.md"); // TODO: make this configurable
+                    expect(result.path).to.equal("index.md");
                 });
 
                 it("Render Package page (smoke test)", () => {
