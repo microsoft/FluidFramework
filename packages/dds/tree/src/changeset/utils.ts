@@ -144,3 +144,110 @@ export function isDetachMark(mark: T.Mark | undefined): mark is T.Detach | T.Mod
     }
     return false;
 }
+
+export function isObjMark(mark: T.Mark): mark is T.ObjectMark {
+    return typeof mark === "object";
+}
+
+/**
+ * Appends the contents of the `addendum` to the `group`.
+ * @param group - The attach group to append attach marks to. Is mutated by this function.
+ * @param addendum - The array of attach marks to append. Is not mutated by this function.
+ */
+export function extendAttachGroup(group: T.AttachGroup, addendum: T.AttachGroup): void {
+    const lastLeft = group[group.length - 1];
+    const firstRight = addendum[0];
+    if (lastLeft !== undefined
+        && firstRight !== undefined
+        && lastLeft.type === firstRight.type
+        && lastLeft.id === firstRight.id) {
+        const type = lastLeft.type;
+        switch (type) {
+            case "Insert":
+            case "MoveIn": {
+                const firstRightAttach = firstRight as T.Insert | T.MoveIn;
+                if (lastLeft.heed === firstRightAttach.heed
+                    && lastLeft.tiebreak === firstRightAttach.tiebreak
+                    && lastLeft.src?.id === firstRightAttach.src?.id
+                    && lastLeft.src?.change === firstRightAttach.src?.change
+                    && lastLeft.scorch?.id === firstRightAttach.scorch?.id
+                    && lastLeft.scorch?.change === firstRightAttach.scorch?.change) {
+                    if (lastLeft.type === "Insert") {
+                        const firstRightInsert = firstRight as T.Insert;
+                        lastLeft.content.push(...firstRightInsert.content);
+                    } else {
+                        const firstRightMoveIn = firstRight as T.MoveIn;
+                        lastLeft.count += firstRightMoveIn.count;
+                    }
+                    group.push(...addendum.slice(1));
+                    return;
+                }
+                break;
+            }
+            default: break;
+        }
+    }
+    group.push(...addendum);
+}
+
+/**
+ * Attempts to extend `lhs` to include the effects of `rhs`.
+ * @param lhs - The mark to extend.
+ * @param rhs - The effect so extend `rhs` with.
+ * @returns `true` iff the function was able to mutate `lhs` to include the effects of `rhs`.
+ * When `false` is returned, `lhs` is left untouched.
+ */
+export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): boolean {
+    if (rhs.type !== lhs.type) {
+        return false;
+    }
+    const type = rhs.type;
+    switch (type) {
+        case "Delete":
+        case "MoveOut": {
+            const lhsDetach = lhs as T.Detach;
+            if (
+                rhs.id === lhsDetach.id
+                && rhs.tomb === lhsDetach.tomb
+                && isEqualGaps(rhs.gaps, lhsDetach.gaps)
+            ) {
+                lhsDetach.count += rhs.count;
+                return true;
+            }
+            break;
+        }
+        case "Revive":
+        case "Return": {
+            const lhsReattach = lhs as T.Reattach;
+            if (
+                rhs.id === lhsReattach.id
+                && rhs.tomb === lhsReattach.tomb
+            ) {
+                lhsReattach.count += rhs.count;
+                return true;
+            }
+            break;
+        }
+        case "Gap": {
+            const lhsGap = lhs as T.GapEffectSegment;
+            if (
+                rhs.tomb === lhsGap.tomb
+                && isEqualGaps(rhs.stack, lhsGap.stack)
+            ) {
+                lhsGap.count += rhs.count;
+                return true;
+            }
+            break;
+        }
+        case "Tomb": {
+            const lhsTomb = lhs as T.Tomb;
+            if (rhs.change === lhsTomb.change) {
+                lhsTomb.count += rhs.count;
+                return true;
+            }
+            break;
+        }
+        default: break;
+    }
+    return false;
+}

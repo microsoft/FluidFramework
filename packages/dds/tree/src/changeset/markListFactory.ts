@@ -4,7 +4,7 @@
  */
 
 import { Transposed as T } from "./format";
-import { isAttachGroup, isEqualGaps } from "./utils";
+import { extendAttachGroup, isAttachGroup, isObjMark, tryExtendMark } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -37,47 +37,10 @@ export class MarkListFactory {
             this.offset = 0;
         }
         const prev = this.list[this.list.length - 1];
-        if (this.offset === 0 && prev !== undefined && typeof prev === "object") {
+        if (this.offset === 0 && isObjMark(prev)) {
             if (isAttachGroup(prev)) {
                 if (isAttachGroup(mark)) {
-                    const lastLeft = prev[prev.length - 1];
-                    const firstRight = mark[0];
-                    if (
-                        lastLeft !== undefined
-                        && firstRight !== undefined
-                        && lastLeft.type === firstRight.type
-                        && lastLeft.id === firstRight.id
-                        && lastLeft.id === firstRight.id
-                    ) {
-                        const type = lastLeft.type;
-                        switch (type) {
-                            case "Insert":
-                            case "MoveIn": {
-                                const firstRightAttach = firstRight as T.Insert | T.MoveIn;
-                                if (
-                                    lastLeft.heed === firstRightAttach.heed
-                                    && lastLeft.tiebreak === firstRightAttach.tiebreak
-                                    && lastLeft.src?.id === firstRightAttach.src?.id
-                                    && lastLeft.src?.change === firstRightAttach.src?.change
-                                    && lastLeft.scorch?.id === firstRightAttach.scorch?.id
-                                    && lastLeft.scorch?.change === firstRightAttach.scorch?.change
-                                ) {
-                                    if (lastLeft.type === "Insert") {
-                                        const firstRightInsert = firstRight as T.Insert;
-                                        lastLeft.content.push(...firstRightInsert.content);
-                                    } else {
-                                        const firstRightMoveIn = firstRight as T.MoveIn;
-                                        lastLeft.count += firstRightMoveIn.count;
-                                    }
-                                    prev.push(...mark.slice(1));
-                                    return;
-                                }
-                                break;
-                            }
-                            default: break;
-                        }
-                    }
-                    prev.push(...mark);
+                    extendAttachGroup(prev, mark);
                     return;
                 }
             } else if (
@@ -85,53 +48,8 @@ export class MarkListFactory {
                 && prev.type === mark.type
             ) {
                 // Neither are attach groups
-                const type = mark.type;
-                switch (type) {
-                    case "Delete":
-                    case "MoveOut": {
-                        const prevDel = prev as T.Detach;
-                        if (
-                            mark.id === prevDel.id
-                            && mark.tomb === prevDel.tomb
-                            && isEqualGaps(mark.gaps, prevDel.gaps)
-                        ) {
-                            prevDel.count += mark.count;
-                            return;
-                        }
-                        break;
-                    }
-                    case "Revive":
-                    case "Return": {
-                        const prevRe = prev as T.Reattach;
-                        if (
-                            mark.id === prevRe.id
-                            && mark.tomb === prevRe.tomb
-                        ) {
-                            prevRe.count += mark.count;
-                            return;
-                        }
-                        break;
-                    }
-                    case "Gap": {
-                        const prevGap = prev as T.GapEffectSegment;
-                        if (
-                            mark.tomb === prevGap.tomb
-                            && isEqualGaps(mark.stack, prevGap.stack)
-                        ) {
-                            prevGap.count += mark.count;
-                            return;
-                        }
-                        break;
-                    }
-                    case "Tomb": {
-                        const prevTomb = prev as T.Tomb;
-                        if (mark.change === prevTomb.change) {
-                            prevTomb.count += mark.count;
-                            return;
-                        }
-                        break;
-                    }
-                    default: break;
+                if (tryExtendMark(prev, mark)) {
+                    return;
                 }
             }
         }
