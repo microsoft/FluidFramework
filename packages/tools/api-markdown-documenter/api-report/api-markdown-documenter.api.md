@@ -62,13 +62,10 @@ export { ApiPackage }
 // @public
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
-// @public (undocumented)
+// @public
 interface ChildSectionProperties {
-    // (undocumented)
     headingTitle: string;
-    // (undocumented)
     itemKind: ApiItemKind;
-    // (undocumented)
     items: readonly ApiItem[];
 }
 
@@ -320,7 +317,7 @@ function renderBetaWarning(config: Required<MarkdownDocumenterConfiguration>): D
 // @public (undocumented)
 function renderBreadcrumb(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
-// @public (undocumented)
+// @public
 function renderChildDetailsSection(childSections: readonly ChildSectionProperties[], config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: any) => DocSection): DocSection | undefined;
 
 // @public
@@ -390,8 +387,8 @@ declare namespace RenderingHelpers {
         renderExamples,
         renderExample,
         renderParametersSection,
-        renderChildrenUnderHeading,
         renderChildDetailsSection,
+        renderChildrenUnderHeading,
         DocExampleProperties,
         ChildSectionProperties,
         renderMemberTables,

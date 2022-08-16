@@ -563,6 +563,75 @@ export function renderParametersSection(
 }
 
 /**
+ * Represents a series API child items for which documentation sections will be generated.
+ */
+export interface ChildSectionProperties {
+    /**
+     * Heading title for the section being rendered.
+     */
+    headingTitle: string;
+
+    /**
+     * The API item kind of all child items.
+     */
+    itemKind: ApiItemKind;
+
+    /**
+     * The child items to be rendered.
+     *
+     * @remarks Every item's `kind` must be `itemKind`.
+     */
+    items: readonly ApiItem[];
+}
+
+/**
+ * Renders a section describing child items of some API item, grouped by `kind`.
+ *
+ * @remarks Displayed as a series of subsequent sub-sections.
+ *
+ * Note: Rendering here will skip any items intended to be rendered to their own documents
+ * (see {@link DocumentBoundaries}).
+ * The assumption is that this is used to render child contents to the same document as the parent.
+ *
+ * @param childSections - The child sections to be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param renderChild - Callback to render a given child item.
+ *
+ * @returns The doc section if there were any child contents to render, otherwise `undefined`.
+ */
+export function renderChildDetailsSection(
+    childSections: readonly ChildSectionProperties[],
+    config: Required<MarkdownDocumenterConfiguration>,
+    renderChild: (apiItem) => DocSection,
+): DocSection | undefined {
+    const childNodes: DocSection[] = [];
+
+    for (const childSection of childSections) {
+        // Only render contents for a section if the item kind is one that gets rendered to its parent's document
+        // (i.e. it does not get rendered to its own document).
+        // Also only render the section if it actually has contents to render (to avoid empty headings).
+        if (
+            !doesItemKindRequireOwnDocument(childSection.itemKind, config.documentBoundaries) &&
+            childSection.items.length !== 0
+        ) {
+            const renderedChildSection = renderChildrenUnderHeading(
+                childSection.items,
+                childSection.headingTitle,
+                config,
+                renderChild,
+            );
+            if (renderedChildSection !== undefined) {
+                childNodes.push(renderedChildSection);
+            }
+        }
+    }
+
+    return childNodes.length === 0
+        ? undefined
+        : mergeSections(childNodes, config.tsdocConfiguration);
+}
+
+/**
  * Renders a section containing a list of sub-sections for the provided list of child API items.
  *
  * @remarks Displayed as a heading with the provided title, followed by a series a sub-sections for each child item.
@@ -595,42 +664,4 @@ export function renderChildrenUnderHeading(
         ),
         mergeSections(childSections, config.tsdocConfiguration),
     ]);
-}
-
-export interface ChildSectionProperties {
-    headingTitle: string;
-    itemKind: ApiItemKind;
-    items: readonly ApiItem[];
-}
-
-export function renderChildDetailsSection(
-    childSections: readonly ChildSectionProperties[],
-    config: Required<MarkdownDocumenterConfiguration>,
-    renderChild: (apiItem) => DocSection,
-): DocSection | undefined {
-    const childNodes: DocSection[] = [];
-
-    for (const childSection of childSections) {
-        // Only render contents for a section if the item kind is one that gets rendered to its parent's document
-        // (i.e. it does not get rendered to its own document).
-        // Also only render the section if it actually has contents to render (to avoid empty headings).
-        if (
-            !doesItemKindRequireOwnDocument(childSection.itemKind, config.documentBoundaries) &&
-            childSection.items.length !== 0
-        ) {
-            const renderedChildSection = renderChildrenUnderHeading(
-                childSection.items,
-                childSection.headingTitle,
-                config,
-                renderChild,
-            );
-            if (renderedChildSection !== undefined) {
-                childNodes.push(renderedChildSection);
-            }
-        }
-    }
-
-    return childNodes.length === 0
-        ? undefined
-        : mergeSections(childNodes, config.tsdocConfiguration);
 }
