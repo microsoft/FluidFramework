@@ -6,6 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
+import { parseStringData2, readVersion } from "../dataTransform";
 import { MigrationState } from "../migrationInterfaces";
 import type {
     IMigrationTool,
@@ -33,29 +34,6 @@ const applyStringData = async (inventoryList: IInventoryList, stringData: string
         inventoryList.addItem(name, quantity);
     }
 };
-
-function readVersion(stringData: string) {
-    const lines = stringData.split("\n");
-    const [versionTag, version] = lines[0].split(":");
-    if (versionTag !== "version" || typeof version !== "string" || version === "") {
-        throw new Error("Can't read version");
-    }
-    return version;
-}
-
-// These helper functions produce and consume the same stringified form of the data.
-function parseStringData2(stringData: string) {
-    const version = readVersion(stringData);
-    if (version !== "two") {
-        throw new Error(`Expected to parse version two, got version ${version}`);
-    }
-    const itemStrings = stringData.split("\n");
-    itemStrings.shift(); // remove version line
-    return itemStrings.map((itemString) => {
-        const [itemNameString, itemQuantityString] = itemString.split("\t");
-        return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
-    });
-}
 
 const exportStringData2 = async (inventoryList: IInventoryList) => {
     const inventoryItems = inventoryList.getItems();
