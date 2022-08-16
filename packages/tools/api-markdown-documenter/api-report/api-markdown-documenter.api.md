@@ -251,29 +251,28 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
     readonly verbose?: boolean;
 }
 
-// @public (undocumented)
+// @public
 export function markdownDocumenterConfigurationWithDefaults(partialConfig: MarkdownDocumenterConfiguration): Required<MarkdownDocumenterConfiguration>;
 
 // @public
 export class MarkdownEmitter extends MarkdownEmitter_2 {
     constructor(apiModel: ApiModel);
-    // (undocumented)
     protected readonly apiModel: ApiModel;
-    // @override (undocumented)
+    // @virtual @override
     emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string;
-    // @virtual (undocumented)
+    // @virtual
     protected writeEmphasisSpan(docEmphasisSpan: DocEmphasisSpan, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual (undocumented)
+    // @virtual
     protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual @override (undocumented)
+    // @virtual @override
     protected writeLinkTagWithCodeDestination(docLinkTag: DocLinkTag, context: EmitterContext): void;
-    // @virtual (undocumented)
+    // @virtual
     protected writeList(docList: DocList, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @override (undocumented)
+    // @virtual @override
     protected writeNode(docNode: DocNode, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual (undocumented)
+    // @virtual
     protected writeNoteBox(docNoteBox: DocNoteBox, context: EmitterContext, docNodeSiblings: boolean): void;
-    // @virtual (undocumented)
+    // @virtual
     protected writeTable(docTable: DocTable, context: EmitterContext, docNodeSiblings: boolean): void;
 }
 

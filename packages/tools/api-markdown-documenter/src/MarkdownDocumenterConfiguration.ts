@@ -10,9 +10,6 @@ import { PolicyOptions, defaultPolicyOptions } from "./Policies";
 import { CustomDocNodes } from "./doc-nodes";
 import { RenderingPolicies, defaultRenderingPolicies } from "./rendering";
 
-// TODOs:
-// - Define "document" in terms of stream output, since we aren't necessarily writing files.
-
 /**
  * Configuration options for the Markdown documenter.
  */
@@ -50,6 +47,11 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
     readonly verbose?: boolean;
 }
 
+/**
+ * Creates a complete system configuration by filling in any optional properties with defaults.
+ * @param partialConfig - Configuration with optional properties. Any missing properties will be filled in with
+ * default values. Any specified properties will take precedence over defaults.
+ */
 export function markdownDocumenterConfigurationWithDefaults(
     partialConfig: MarkdownDocumenterConfiguration,
 ): Required<MarkdownDocumenterConfiguration> {

@@ -73,6 +73,11 @@ export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
  * Processes an input tree of documentation related to an API model, and generates Markdown content from it.
  */
 export class MarkdownEmitter extends BaseMarkdownEmitter {
+    /**
+     * The top-level model representing the code suite being processed.
+     *
+     * @remarks Can be used to resolve links between API members.
+     */
     protected readonly apiModel: ApiModel;
 
     public constructor(apiModel: ApiModel) {
@@ -81,14 +86,22 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     }
 
     /**
+     * Emits Markdown content as a `string` based on the input doc tree (`docNode`).
+     *
      * @override
+     * @virtual
      */
     public emit(stringBuilder: StringBuilder, docNode: DocNode, options: EmitterOptions): string {
         return super.emit(stringBuilder, docNode, options);
     }
 
     /**
+     * Writes Markdown content for the provided `docNode`.
+     *
+     * @remarks The `docNode`'s `kind` property is used to determine the underlying kind of doc content.
+     *
      * @override
+     * @virtual
      */
     protected writeNode(docNode: DocNode, context: EmitterContext, docNodeSiblings: boolean): void {
         switch (docNode.kind) {
@@ -128,6 +141,11 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     }
 
     /**
+     * Writes a Markdown link for the provided `docLinkTag` if possible, otherwise writes plain text (in italics) if
+     * the item being linked to cannot be resolved.
+     *
+     * @remarks {@link MarkdownEmitter.apiModel} can be used to resolve links between API members.
+     *
      * @override
      * @virtual
      */
@@ -181,6 +199,8 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     }
 
     /**
+     * Writes Markdown content for the provided `docEmphasisSpan`.
+     *
      * @virtual
      */
     protected writeEmphasisSpan(
@@ -196,6 +216,8 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     }
 
     /**
+     * Writes Markdown content for the provided `docHeading`.
+     *
      * @virtual
      */
     protected writeHeading(
@@ -236,6 +258,8 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     }
 
     /**
+     * Writes Markdown content for the provided `docList`.
+     *
      * @virtual
      */
     protected writeList(docList: DocList, context: EmitterContext, docNodeSiblings: boolean): void {
@@ -264,6 +288,8 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     }
 
     /**
+     * Writes Markdown content for the provided `docNoteBox`.
+     *
      * @virtual
      */
     protected writeNoteBox(
@@ -286,6 +312,8 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     }
 
     /**
+     * Writes Markdown content for the provided `docTable`.
+     *
      * @virtual
      */
     protected writeTable(
