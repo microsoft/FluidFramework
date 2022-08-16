@@ -8,6 +8,11 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IMigratableModel, IMigrator, IMigratorEvents, MigrationState } from "./migrationInterfaces";
 import { IModelLoader } from "./modelLoading";
 
+export type DataTransformationCallback = (
+    exportedData: unknown,
+    targetModel: IMigratableModel,
+) => Promise<unknown>;
+
 export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMigrator {
     private _currentModel: IMigratableModel;
     public get currentModel(): IMigratableModel {
@@ -39,6 +44,7 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
         private readonly modelLoader: IModelLoader<IMigratableModel>,
         initialMigratable: IMigratableModel,
         initialId: string,
+        private readonly dataTransformationCallback?: DataTransformationCallback,
     ) {
         super();
         this._currentModel = initialMigratable;
@@ -92,23 +98,27 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
                 return;
             }
 
-            const extractedData = await migratable.exportData();
-
-            // If we needed to transform the extracted data, we would do it here.  In this demo, the export/import
-            // format is unchanged between the two versions, so there's no transformation needed.
-            // TODO: think about how we might enable a transform while allowing Migrator to remain generic?
-            // E.g. have some callback with from/to version that does the transform?
-
             const createResponse = await this.modelLoader.createDetached(acceptedVersion);
             const migratedModel: IMigratableModel = createResponse.model;
-            if (!migratedModel.supportsDataFormat(extractedData)) {
-                throw new Error("New model doesn't support extracted data format");
+
+            const extractedData = await migratable.exportData();
+
+            let transformedData: unknown;
+            if (this.dataTransformationCallback !== undefined) {
+                // If we needed to transform the extracted data, we would do it here.  In this demo, the export/import
+                // format is unchanged between the two versions, so there's no transformation needed.
+                transformedData = await this.dataTransformationCallback(extractedData, migratedModel);
+            } else {
+                // TODO: Probably should also validate at proposal time that the model we're proposing will be
+                // able to import the exported format of the current container (taking into consideration our format
+                // transform options).  Not all clients might agree about support if some have old ModelLoaders --
+                // these clients could use this opportunity to dispose early and try to get new ModelLoaders.
+                if (!migratedModel.supportsDataFormat(extractedData)) {
+                    throw new Error("New model doesn't support extracted data format");
+                }
+                transformedData = extractedData;
             }
-            // TODO: Probably should also validate at proposal time that the model we're proposing will be
-            // able to import the exported format of the current container (taking into consideration our format
-            // transform options).  Not all clients might agree about support if some have old ModelLoaders -- these
-            // clients could use this opportunity to dispose early and try to get new ModelLoaders.
-            await migratedModel.importData(extractedData);
+            await migratedModel.importData(transformedData);
 
             // Before attaching, let's check to make sure no one else has already done the migration
             // To avoid creating unnecessary extra containers.
