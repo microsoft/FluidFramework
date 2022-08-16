@@ -24,7 +24,7 @@ The current feature focus is on:
 -   Workflows:
     -   Good support for offline.
     -   Optional support for branching and history.
--   Extensibility: future users will have needs beyond what we can afford to support in an initial version and must be practical to accommodate. This includes things like:
+-   Extensibility: It must be practical to accommodate future users with needs beyond what we can afford to support in the initial version. This includes needs like:
     -   New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
     -   New services (ex: to support permissions, server side indexing etc.)
 
