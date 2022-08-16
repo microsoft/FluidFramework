@@ -15,6 +15,7 @@ import { Migrator } from "./migrator";
 import { IInventoryListContainer } from "./modelInterfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import { DebugView, InventoryListContainerView } from "./view";
+import { dataTransformationCallback } from "./dataTransform";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -96,7 +97,9 @@ async function start(): Promise<void> {
 
     // The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
     // the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
-    const migrator = new Migrator(modelLoader, model, id);
+    // It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
+    // import with newly created models.
+    const migrator = new Migrator(modelLoader, model, id, dataTransformationCallback);
     migrator.on("migrated", () => {
         model.close();
         render(migrator.currentModel);

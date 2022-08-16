@@ -27,27 +27,42 @@ const getStateFromMigrationTool = (migrationTool: IMigrationTool) => {
 };
 
 // These helper functions produce and consume the same stringified form of the data.
-function parseStringData(stringData: string) {
+const applyStringData = async (inventoryList: IInventoryList, stringData: string) => {
+    const parsedInventoryItemData = parseStringData1(stringData);
+    for (const { name, quantity } of parsedInventoryItemData) {
+        inventoryList.addItem(name, quantity);
+    }
+};
+
+function readVersion(stringData: string) {
+    const lines = stringData.split("\n");
+    const [versionTag, version] = lines[0].split(":");
+    if (versionTag !== "version" || typeof version !== "string" || version === "") {
+        throw new Error("Can't read version");
+    }
+    return version;
+}
+
+// These helper functions produce and consume the same stringified form of the data.
+function parseStringData1(stringData: string) {
+    const version = readVersion(stringData);
+    if (version !== "one") {
+        throw new Error(`Expected to parse version one, got version ${version}`);
+    }
     const itemStrings = stringData.split("\n");
+    itemStrings.shift(); // remove version line
     return itemStrings.map((itemString) => {
         const [itemNameString, itemQuantityString] = itemString.split(":");
         return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
     });
 }
 
-const applyStringData = async (inventoryList: IInventoryList, stringData: string) => {
-    const parsedInventoryItemData = parseStringData(stringData);
-    for (const { name, quantity } of parsedInventoryItemData) {
-        inventoryList.addItem(name, quantity);
-    }
-};
-
-const extractStringData = async (inventoryList: IInventoryList) => {
+const exportStringData1 = async (inventoryList: IInventoryList) => {
     const inventoryItems = inventoryList.getItems();
     const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
         return `${ inventoryItem.name.getText() }:${ inventoryItem.quantity.toString() }`;
     });
-    return inventoryItemStrings.join("\n");
+    return `version:one\n${inventoryItemStrings.join("\n")}`;
 };
 
 // This type represents a stronger expectation than just any string - it needs to be in the right format.
@@ -86,12 +101,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     }
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListContainerExportType => {
-        if (typeof initialData !== "string") {
-            return false;
-        }
-        try {
-            parseStringData(initialData);
-        } catch {
+        if (typeof initialData !== "string" || readVersion(initialData) !== "one") {
             return false;
         }
         return true;
@@ -120,7 +130,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     };
 
     public readonly exportData = async (): Promise<InventoryListContainerExportType> => {
-        return extractStringData(this.inventoryList);
+        return exportStringData1(this.inventoryList);
     };
 
     public get acceptedVersion() {
