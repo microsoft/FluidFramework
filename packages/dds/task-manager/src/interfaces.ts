@@ -19,8 +19,8 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 
 export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     /**
-     * Volunteer to lock the task.  Promise resolves true when the lock is acquired, or rejects if we are removed from
-     * the queue without acquiring the lock for any reason.
+     * Volunteer to lock the task.  Promise resolves true when the lock is acquired. It rejects if we are removed from
+     * the queue without acquiring the lock for any reason, such as disconnecting or abandoning the task while in queue.
      * @param taskId - Identifier for the task
      */
     volunteerForTask(taskId: string): Promise<boolean>;
