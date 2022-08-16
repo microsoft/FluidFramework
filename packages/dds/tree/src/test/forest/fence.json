@@ -1,0 +1,5 @@
+{
+    "tags": [ "forest-test" ],
+    "exports": [ "index"],
+    "imports": ["forest"]
+}
