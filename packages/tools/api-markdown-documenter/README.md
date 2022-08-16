@@ -32,16 +32,17 @@ This function also accepts a `MarkdownEmitter` object that does the conversion f
 
 -   DocList
 -   Injext IDs for remaining headings
--   Dynamic "Modifiers" column in tables
--   Pre-canned policies (flat, index, adjacency)
 
 ### Styling improvements
 
 -   Specially denote optional parameters / properties
+-   Dynamic "Modifiers" column in tables
+    - I.e. only include "modifiers" column if any modifiers are detected.
 -   Better `@defaultValue` rendering.
 
 ## Longer-term work
 
 -   Replace DocNode output / MarkdownEmitter with Markdown AST trees and simple interface for rendering those trees to a stream
 -   Support placing documents *within* their own hierarchy (support for the "index" model used by systems like DocFX)
+-   Pre-canned policies (flat, index, adjacency)
 -   Handle multiple package entrypoints
