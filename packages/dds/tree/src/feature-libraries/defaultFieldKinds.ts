@@ -151,6 +151,22 @@ export const counterHandle: ChangeHandler<number> = {
     encoder: new ValueEncoder<number>(),
 };
 
+/**
+ * Field kind for counters.
+ * Stores a single value which corresponds to number which can be added to.
+ *
+ * This is an example of a few interesting things:
+ * - A field kind with some constraints on what can be under it type wise.
+ *      Other possible examples which would do this include sets, maps (for their keys),
+ *      or any domain specific specialized kinds.
+ * - A field kind with commutative edits.
+ *
+ * TODO:
+ * What should the subtrees under this look like?
+ * How does it prevent / interact with direct edits to the subtree (ex: set value)?
+ * How should it use its type set?
+ * How should it handle lack of associative addition due to precision and overflow?
+ */
 export const counter: FieldKind = new FieldKind(
     brand("Counter"),
     Multiplicity.Value,
