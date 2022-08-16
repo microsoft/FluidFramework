@@ -14,7 +14,8 @@ export interface TestInterfaceWithTypeParameter<T>
 ```
 <b>Type parameters:</b> 
 
-\* <b>T</b>: A type parameter
+* <b>T</b>: A type parameter
+
 
 
 ## Properties

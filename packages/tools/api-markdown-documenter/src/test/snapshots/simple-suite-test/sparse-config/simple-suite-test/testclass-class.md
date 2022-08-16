@@ -14,10 +14,12 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB>
 ```
 <b>Type parameters:</b> 
 
-\* <b>TTypeParameterA</b>: A type parameter
+* <b>TTypeParameterA</b>: A type parameter
 
 
-\* <b>TTypeParameterB</b>: Another type parameter
+
+* <b>TTypeParameterB</b>: Another type parameter
+
 
 
 ## Constructors

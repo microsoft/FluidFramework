@@ -29,7 +29,7 @@ import {
 import { Heading } from "../../Heading";
 import { Link, urlFromLink } from "../../Link";
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
-import { DocEmphasisSpan, DocHeading, DocNoteBox } from "../../doc-nodes";
+import { DocEmphasisSpan, DocHeading, DocList, DocNoteBox, ListKind } from "../../doc-nodes";
 import {
     ApiFunctionLike,
     doesItemKindRequireOwnDocument,
@@ -171,26 +171,10 @@ export function renderTypeParameters(
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     if (typeParameters.length > 0) {
-        const docNodes: DocNode[] = [];
-
-        docNodes.push(
-            new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
-                    new DocPlainText({
-                        configuration: config.tsdocConfiguration,
-                        text: "Type parameters: ",
-                    }),
-                ]),
-            ]),
-        );
-
-        // TODO: DocList type?
+        const listItemNodes: DocNode[] = [];
         for (const typeParameter of typeParameters) {
             const paragraphNodes: DocNode[] = [];
 
-            paragraphNodes.push(
-                new DocPlainText({ configuration: config.tsdocConfiguration, text: "* " }),
-            ); // List bullet
             paragraphNodes.push(
                 new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
                     new DocPlainText({
@@ -207,12 +191,25 @@ export function renderTypeParameters(
                 paragraphNodes.push(...typeParameter.tsdocTypeParamBlock.content.nodes);
             }
 
-            docNodes.push(
+            listItemNodes.push(
                 new DocParagraph({ configuration: config.tsdocConfiguration }, paragraphNodes),
             );
         }
 
-        return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
+        return new DocSection({ configuration: config.tsdocConfiguration }, [
+            new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                new DocEmphasisSpan({ configuration: config.tsdocConfiguration, bold: true }, [
+                    new DocPlainText({
+                        configuration: config.tsdocConfiguration,
+                        text: "Type parameters: ",
+                    }),
+                ]),
+            ]),
+            new DocList(
+                { configuration: config.tsdocConfiguration, listKind: ListKind.Unordered },
+                listItemNodes,
+            ),
+        ]);
     }
     return undefined;
 }

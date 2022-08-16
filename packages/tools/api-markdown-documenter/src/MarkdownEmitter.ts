@@ -16,7 +16,15 @@ import {
 import { DocLinkTag, DocNode, DocNodeKind, StringBuilder } from "@microsoft/tsdoc";
 
 import { logError, logWarning } from "./LoggingUtilities";
-import { DocEmphasisSpan, DocHeading, DocNoteBox, DocTable, DocTableCell } from "./doc-nodes";
+import {
+    DocEmphasisSpan,
+    DocHeading,
+    DocList,
+    DocNoteBox,
+    DocTable,
+    DocTableCell,
+    ListKind,
+} from "./doc-nodes";
 import { CustomDocNodeKind } from "./doc-nodes/CustomDocNodeKind";
 
 /**
@@ -95,6 +103,10 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             }
             case CustomDocNodeKind.Heading: {
                 this.writeHeading(docNode as DocHeading, context, docNodeSiblings);
+                break;
+            }
+            case CustomDocNodeKind.List: {
+                this.writeList(docNode as DocList, context, docNodeSiblings);
                 break;
             }
             case CustomDocNodeKind.NoteBox: {
@@ -219,6 +231,34 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
                 boldRequested: true,
             });
             writer.writeLine();
+            writer.writeLine();
+        }
+    }
+
+    /**
+     * @virtual
+     */
+    protected writeList(docList: DocList, context: EmitterContext, docNodeSiblings: boolean): void {
+        const writer: IndentedWriter = context.writer;
+
+        writer.ensureSkippedLine();
+
+        for (let i = 0; i < docList.nodes.length; i++) {
+            let listSymbol: string;
+            switch (docList.listKind) {
+                case ListKind.Ordered:
+                    listSymbol = `${i + 1}.`;
+                    break;
+                case ListKind.Unordered:
+                    listSymbol = "*";
+                    break;
+                default:
+                    throw new Error(`Uncrecognized ListKind value: "${docList.kind}".`);
+            }
+
+            writer.write(`${listSymbol} `);
+            this.writeNode(docList.nodes[i], context, docList.nodes.length !== 1);
+            writer.ensureNewLine();
             writer.writeLine();
         }
     }

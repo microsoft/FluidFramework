@@ -17,11 +17,14 @@
 export {
     DocEmphasisSpan,
     DocHeading,
+    DocList,
     DocNoteBox,
     DocTable,
     DocTableCell,
     DocTableRow,
     IDocHeadingParameters,
+    IDocListParameters,
+    ListKind,
 } from "./doc-nodes";
 export * from "./Heading";
 export * from "./Link";

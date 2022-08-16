@@ -10,6 +10,7 @@ import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
 import { DocNodeKind, TSDocConfiguration } from "@microsoft/tsdoc";
 
 import { DocHeading } from "./DocHeading";
+import { DocList } from "./DocList";
 
 /**
  * Identifies custom subclasses of `DocNode`.
@@ -19,6 +20,7 @@ import { DocHeading } from "./DocHeading";
 export const enum CustomDocNodeKind {
     EmphasisSpan = "EmphasisSpan",
     Heading = "Heading",
+    List = "List",
     NoteBox = "NoteBox",
     Table = "Table",
     TableCell = "TableCell",
@@ -43,6 +45,7 @@ export class CustomDocNodes {
             configuration.docNodeManager.registerDocNodes("@fluid-tools/api-markdown-documenter", [
                 { docNodeKind: CustomDocNodeKind.EmphasisSpan, constructor: DocEmphasisSpan },
                 { docNodeKind: CustomDocNodeKind.Heading, constructor: DocHeading },
+                { docNodeKind: CustomDocNodeKind.List, constructor: DocList },
                 { docNodeKind: CustomDocNodeKind.NoteBox, constructor: DocNoteBox },
                 { docNodeKind: CustomDocNodeKind.Table, constructor: DocTable },
                 { docNodeKind: CustomDocNodeKind.TableCell, constructor: DocTableCell },
@@ -56,6 +59,7 @@ export class CustomDocNodes {
 
             configuration.docNodeManager.registerAllowableChildren(DocNodeKind.Section, [
                 CustomDocNodeKind.Heading,
+                CustomDocNodeKind.List,
                 CustomDocNodeKind.NoteBox,
                 CustomDocNodeKind.Table,
                 DocNodeKind.Section,
@@ -64,11 +68,17 @@ export class CustomDocNodes {
             configuration.docNodeManager.registerAllowableChildren(DocNodeKind.Paragraph, [
                 CustomDocNodeKind.EmphasisSpan,
                 CustomDocNodeKind.Heading,
+                CustomDocNodeKind.List,
                 DocNodeKind.Paragraph,
                 CustomDocNodeKind.NoteBox,
                 CustomDocNodeKind.Table,
-                CustomDocNodeKind.Table,
                 DocNodeKind.FencedCode,
+            ]);
+
+            configuration.docNodeManager.registerAllowableChildren(CustomDocNodeKind.List, [
+                CustomDocNodeKind.EmphasisSpan,
+                DocNodeKind.Paragraph,
+                DocNodeKind.PlainText,
             ]);
 
             CustomDocNodes._configuration = configuration;

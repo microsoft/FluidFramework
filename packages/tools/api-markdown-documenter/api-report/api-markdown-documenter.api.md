@@ -26,6 +26,7 @@ import { ApiVariable } from '@microsoft/api-extractor-model';
 import { DocEmphasisSpan } from '@microsoft/api-documenter/lib/nodes/DocEmphasisSpan';
 import { DocLinkTag } from '@microsoft/tsdoc';
 import { DocNode } from '@microsoft/tsdoc';
+import { DocNodeContainer } from '@microsoft/tsdoc';
 import { DocNoteBox } from '@microsoft/api-documenter/lib/nodes/DocNoteBox';
 import { DocParagraph } from '@microsoft/tsdoc';
 import { DocSection } from '@microsoft/tsdoc';
@@ -33,6 +34,7 @@ import { DocTable } from '@microsoft/api-documenter/lib/nodes/DocTable';
 import { DocTableCell } from '@microsoft/api-documenter/lib/nodes/DocTableCell';
 import { DocTableRow } from '@microsoft/api-documenter/lib/nodes/DocTableRow';
 import { Excerpt } from '@microsoft/api-extractor-model';
+import { IDocNodeContainerParameters } from '@microsoft/tsdoc';
 import { IDocNodeParameters } from '@microsoft/tsdoc';
 import { IMarkdownEmitterContext } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
 import { IMarkdownEmitterOptions } from '@microsoft/api-documenter/lib/markdown/MarkdownEmitter';
@@ -116,6 +118,14 @@ export class DocHeading extends DocNode {
     get kind(): string;
     readonly level?: number;
     readonly title: string;
+}
+
+// @public
+export class DocList extends DocNodeContainer {
+    constructor(parameters: IDocListParameters, childNodes?: ReadonlyArray<DocNode>);
+    // @override (undocumented)
+    get kind(): string;
+    readonly listKind: ListKind;
 }
 
 export { DocNoteBox }
@@ -204,11 +214,24 @@ export type HierarchyBoundaries = ApiItemKind[];
 export type IDocHeadingParameters = IDocNodeParameters & Heading;
 
 // @public
+export interface IDocListParameters extends IDocNodeContainerParameters {
+    listKind?: ListKind;
+}
+
+// @public
 export interface Link {
     headingId?: string;
     relativeFilePath: string;
     text: string;
     uriBase: string;
+}
+
+// @public
+export enum ListKind {
+    // (undocumented)
+    Ordered = "ordered",
+    // (undocumented)
+    Unordered = "unordered"
 }
 
 // @public
@@ -243,6 +266,8 @@ export class MarkdownEmitter extends MarkdownEmitter_2 {
     protected writeHeading(docHeading: DocHeading, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual @override (undocumented)
     protected writeLinkTagWithCodeDestination(docLinkTag: DocLinkTag, context: EmitterContext): void;
+    // @virtual (undocumented)
+    protected writeList(docList: DocList, context: EmitterContext, docNodeSiblings: boolean): void;
     // @override (undocumented)
     protected writeNode(docNode: DocNode, context: EmitterContext, docNodeSiblings: boolean): void;
     // @virtual (undocumented)
@@ -277,14 +302,14 @@ export interface PolicyOptions {
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
 
+// @public (undocumented)
+export function renderApiDocument(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
+
 // @public
 export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection) => DocSection;
 
 // @public
 export type RenderApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
-
-// @public (undocumented)
-export function renderApiPage(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
 // @public (undocumented)
 function renderApiSummaryCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
@@ -432,7 +457,7 @@ function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDo
 function renderMemberTables(memberTableProperties: readonly MemberTableProperties[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-export function renderModelPage(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
+export function renderModelDocument(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
 // @public (undocumented)
 function renderModelSection(apiModel: ApiModel, config: Required<MarkdownDocumenterConfiguration>): DocSection;
@@ -447,7 +472,7 @@ function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly Ap
 function renderNamespaceSection(apiNamespace: ApiNamespace, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public (undocumented)
-export function renderPackagePage(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
+export function renderPackageDocument(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
 // @public (undocumented)
 function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
