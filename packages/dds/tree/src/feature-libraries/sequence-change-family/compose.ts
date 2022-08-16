@@ -94,7 +94,7 @@ function foldInMarkList(
                 factory.push(newMark);
             } else {
                 const composedMark = composeMarks(newMark, baseMark);
-                factory.push(...composedMark);
+                factory.push(composedMark);
             }
         }
         if (nextBaseMark === undefined) {
@@ -116,9 +116,9 @@ function foldInMarkList(
 function composeMarks(
     newMark: T.SizedMark,
     baseMark: T.SizedObjectMark | T.AttachGroup,
-): T.Mark[] {
+): T.Mark {
     if (isSkipMark(newMark)) {
-        return [baseMark];
+        return baseMark;
     }
     const newType = newMark.type;
     if (isAttachGroup(baseMark)) {
@@ -126,22 +126,22 @@ function composeMarks(
             case "Modify": {
                 const attach = baseMark[0];
                 if (attach.type === "Insert") {
-                    return [[{
+                    return [{
                         ...newMark,
                         type: "MInsert",
                         id: attach.id,
                         content: attach.content[0],
-                    }]];
+                    }];
                 } else if (attach.type === "MInsert") {
                     updateModifyLike(newMark, attach);
-                    return [[attach]];
+                    return [attach];
                 }
                 fail("Not implemented");
             }
             case "Delete": {
                 // The insertion of the previous change is subsequently deleted.
                 // TODO: preserve the insertion as muted
-                return [];
+                return 0;
             }
             default: fail("Not implemented");
         }
@@ -158,18 +158,18 @@ function composeMarks(
                 case "Modify": {
                     updateModifyLike(newMark, baseMark);
                     if (baseMark.fields === undefined && baseMark.value === undefined) {
-                        return [1];
+                        return 1;
                     }
-                    return [baseMark];
+                    return baseMark;
                 }
                 case "Delete": {
                     // For now the deletion obliterates all other modifications.
                     // In the long run we want to preserve them.
-                    return [{
+                    return {
                         type: "Delete",
                         id: newMark.id,
                         count: newMark.count,
-                    }];
+                    };
                 }
                 default: fail("Not implemented");
             }
@@ -183,11 +183,11 @@ function composeMarks(
                         tomb: baseMark.tomb,
                     };
                     updateModifyLike(newMark, modRevive);
-                    return [modRevive];
+                    return modRevive;
                 }
                 case "Delete": {
                     // The deletion undoes the revival
-                    return [];
+                    return 0;
                 }
                 default: fail("Not implemented");
             }
