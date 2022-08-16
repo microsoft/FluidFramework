@@ -86,21 +86,19 @@ function transformToTwo(stringData: string) {
     return `version:two\n${inventoryItemStrings.join("\n")}`;
 }
 
-export const dataTransformationCallback: DataTransformationCallback = async (exportedData: unknown, targetModel) => {
-    if (targetModel.supportsDataFormat(exportedData)) {
-        return exportedData;
-    }
-
+export const inventoryListDataTransformationCallback: DataTransformationCallback = async (
+    exportedData: unknown,
+    modelVersion: string,
+) => {
     if (typeof exportedData !== "string") {
         throw new Error("Unexpected data format");
     }
 
-    const targetVersion = targetModel.version;
-    if (targetVersion === "one") {
+    if (modelVersion === "one") {
         return transformToOne(exportedData);
-    } else if (targetVersion === "two") {
+    } else if (modelVersion === "two") {
         return transformToTwo(exportedData);
     } else {
-        throw new Error(`Don't know how to transform for target version ${targetVersion}`);
+        throw new Error(`Don't know how to transform for target version ${modelVersion}`);
     }
 };

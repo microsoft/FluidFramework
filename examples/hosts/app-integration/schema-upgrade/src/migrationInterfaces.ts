@@ -80,15 +80,11 @@ export interface IMigratableModel
 
 /**
  * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import
- * to the new model.  The targetModel is also provided for inspection to determine the appropriate transformation
- * to perform.
- * TODO: Curently, we prefer to call the callback rather than proceeding with the import, even if supportsDataFormat.
- * We could alternately check supportsDataFormat first and only use the callback if it doesn't support.  If we do
- * that, this signature becomes (exportedData: unknown, version: string) =\> Promise\<unknown\>
+ * to the new model.  The modelVersion is also provided to inform the appropriate transformation to perform.
  */
  export type DataTransformationCallback = (
     exportedData: unknown,
-    targetModel: Pick<IMigratableModel, "version" | "supportsDataFormat">,
+    modelVersion: string,
 ) => Promise<unknown>;
 
 export interface IMigratorEvents extends IEvent {
