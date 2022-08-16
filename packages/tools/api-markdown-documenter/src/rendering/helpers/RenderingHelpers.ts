@@ -43,19 +43,28 @@ import {
 } from "../../utilities";
 import { renderParametersSummaryTable } from "./TablesRenderingHelpers";
 
+/**
+ * Renders a section for an API signature.
+ *
+ * @remarks Displayed as a heading with a code-block under it.
+ *
+ * @param apiItem - The API item whose signature will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderSignature(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
     if (apiItem instanceof ApiDeclaredItem) {
-        const docNodes: DocNode[] = [];
-        docNodes.push(
-            renderHeading(
-                { title: "Signature", id: `${getQualifiedApiItemName(apiItem)}-signature` },
-                config,
-            ),
-        );
-        if (apiItem.excerpt.text.length > 0) {
+        const signatureExcerpt = apiItem.getExcerptWithModifiers();
+        if(signatureExcerpt !== "") {
+            const docNodes: DocNode[] = [];
+            docNodes.push(
+                renderHeading(
+                    { title: "Signature", id: `${getQualifiedApiItemName(apiItem)}-signature` },
+                    config,
+                ),
+            );
             docNodes.push(
                 new DocFencedCode({
                     configuration: config.tsdocConfiguration,
@@ -63,14 +72,14 @@ export function renderSignature(
                     language: "typescript",
                 }),
             );
-        }
 
-        const renderedHeritageTypes = renderHeritageTypes(apiItem, config);
-        if (renderedHeritageTypes !== undefined) {
-            docNodes.push(renderedHeritageTypes);
-        }
+            const renderedHeritageTypes = renderHeritageTypes(apiItem, config);
+            if (renderedHeritageTypes !== undefined) {
+                docNodes.push(renderedHeritageTypes);
+            }
 
-        return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
+            return new DocSection({ configuration: config.tsdocConfiguration }, docNodes);
+        }
     }
     return undefined;
 }

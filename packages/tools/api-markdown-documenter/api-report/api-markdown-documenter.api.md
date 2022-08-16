@@ -500,7 +500,7 @@ function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<Markdow
 // @public
 export type RenderSectionWithInnerContent = (apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>) => DocSection;
 
-// @public (undocumented)
+// @public
 function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public (undocumented)
