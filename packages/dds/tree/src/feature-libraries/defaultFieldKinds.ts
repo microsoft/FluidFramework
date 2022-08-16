@@ -45,6 +45,9 @@ export class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncode
     }
 }
 
+/**
+ * @returns a ChangeRebaser that assumes all the changes commute, meaning that order does not matter.
+ */
 function commutativeRebaser<TChange>(data: {
     compose: (changes: TChange[]) => TChange;
     invert: (changes: TChange) => TChange;
@@ -87,7 +90,7 @@ type ReplaceOp<T> = Replacement<T> | 0;
 /**
  * Picks the last value written.
  *
- * Consistant if used on valid paths with correct old states.
+ * Consistent if used on valid paths with correct old states.
  */
 function replaceRebaser<T>(data: {
     rebaseAnchors: (anchor: AnchorSet, over: ReplaceOp<T>) => void;
@@ -118,7 +121,7 @@ function replaceRebaser<T>(data: {
 }
 
 /**
- * ChangeHandler that does not support any changes.
+ * ChangeHandler that only handles no-op / identity changes.
  */
 export const noChangeHandle: ChangeHandler<0> = {
     rebaser: {

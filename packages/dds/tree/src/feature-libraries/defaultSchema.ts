@@ -4,7 +4,7 @@
  */
 
 import { fieldSchema, emptyMap, emptySet, ValueSchema, TreeSchema } from "../schema-stored";
-import { value, forbidden, optional, sequence, counter } from "./defaultFieldKinds";
+import { value, forbidden, fieldKinds } from "./defaultFieldKinds";
 import { FullSchemaPolicy } from "./modular-schema";
 
 /**
@@ -36,7 +36,7 @@ export const neverTree: TreeSchema = {
  * and allows adding new global fields along with their schema at any point.
  */
 export const defaultSchemaPolicy: FullSchemaPolicy = {
-	fieldKinds: new Map([value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s])),
+	fieldKinds,
 	defaultTreeSchema: neverTree,
 	defaultGlobalFieldSchema: emptyField,
 };
