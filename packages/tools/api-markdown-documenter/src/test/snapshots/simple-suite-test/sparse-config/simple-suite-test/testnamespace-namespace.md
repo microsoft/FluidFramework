@@ -9,11 +9,11 @@ Here are some remarks about the namespace
 
 ## Examples {#testnamespace-examples}
 
-### Example 1
+### Example 1 {#testnamespace-example1}
 
 Example 1
 
-### Example 2
+### Example 2 {#testnamespace-example2}
 
 Example 2
 

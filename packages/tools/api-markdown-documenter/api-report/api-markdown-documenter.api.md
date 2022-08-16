@@ -104,8 +104,9 @@ export const defaultRenderingPolicies: Required<RenderingPolicies>;
 
 export { DocEmphasisSpan }
 
-// @public (undocumented)
+// @public
 interface DocExample {
+    apiItem: ApiItem;
     content: DocSection;
     exampleNumber?: number;
 }

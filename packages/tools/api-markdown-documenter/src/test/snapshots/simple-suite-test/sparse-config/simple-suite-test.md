@@ -31,7 +31,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Bad link (with alias): *even though I link to an invalid item, I would still like this text to be rendered*
 
-## Example
+## Example {#simple-suite-test-example}
 
 A test example
 

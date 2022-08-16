@@ -9,7 +9,7 @@ Here are some remarks about the enum
 
 ## Examples {#testenum-examples}
 
-### Example 1
+### Example 1 {#testenum-example1}
 
 Some example
 
@@ -17,7 +17,7 @@ Some example
 const foo = TestEnum.TestEnumValue1
 ```
 
-### Example 2
+### Example 2 {#testenum-example2}
 
 Another example
 

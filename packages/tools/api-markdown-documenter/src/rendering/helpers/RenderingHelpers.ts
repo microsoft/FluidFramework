@@ -389,13 +389,16 @@ export function renderExamples(
 
         // If there is only 1 example, render it with the default (un-numbered) heading
         if (exampleBlocks.length === 1) {
-            return renderExample({ content: exampleBlocks[0].content }, config);
+            return renderExample({ apiItem, content: exampleBlocks[0].content }, config);
         }
 
         const exampleSections: DocSection[] = [];
         for (let i = 0; i < exampleBlocks.length; i++) {
             exampleSections.push(
-                renderExample({ content: exampleBlocks[i].content, exampleNumber: i + 1 }, config),
+                renderExample(
+                    { apiItem, content: exampleBlocks[i].content, exampleNumber: i + 1 },
+                    config,
+                ),
             );
         }
 
@@ -413,7 +416,15 @@ export function renderExamples(
     return undefined;
 }
 
+/**
+ * Represents a single `@example` comment block for a given API item.
+ */
 export interface DocExample {
+    /**
+     * The API item the example doc content belongs to.
+     */
+    apiItem: ApiItem;
+
     /**
      * `@example` comment body.
      */
@@ -433,8 +444,12 @@ export function renderExample(
     const headingTitle: string =
         example.exampleNumber === undefined ? "Example" : `Example ${example.exampleNumber}`;
 
+    const headingId = `${getQualifiedApiItemName(example.apiItem)}-example${
+        example.exampleNumber === undefined ? "" : example.exampleNumber
+    }`;
+
     return new DocSection({ configuration: config.tsdocConfiguration }, [
-        renderHeading({ title: headingTitle }, config),
+        renderHeading({ title: headingTitle, id: headingId }, config),
         example.content,
     ]);
 }

@@ -31,7 +31,7 @@ Also, here is a link test, including a bad link, because we should have some rea
 
 - Bad link (with alias): *even though I link to an invalid item, I would still like this text to be rendered*
 
-## Example
+## Example {#simple-suite-test-example}
 
 A test example
 
@@ -187,7 +187,7 @@ Here are some remarks about the enum
 
 #### Examples {#testenum-examples}
 
-##### Example 1
+##### Example 1 {#testenum-example1}
 
 Some example
 
@@ -195,7 +195,7 @@ Some example
 const foo = TestEnum.TestEnumValue1
 ```
 
-##### Example 2
+##### Example 2 {#testenum-example2}
 
 Another example
 
