@@ -25,8 +25,8 @@
   },
   "dependencies": {
     "@fluidframework/gitrest-base": "^0.1.0",
-    "@fluidframework/server-services-shared": "^0.1037.1000-79728",
-    "@fluidframework/server-services-utils": "^0.1037.1000-79728",
+    "@fluidframework/server-services-shared": "^0.1037.2000-85639",
+    "@fluidframework/server-services-utils": "^0.1037.2000-85639",
     "axios": "^0.26.0",
     "body-parser": "^1.17.2",
     "compression": "^1.7.3",
