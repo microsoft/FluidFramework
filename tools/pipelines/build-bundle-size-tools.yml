@@ -27,6 +27,7 @@ trigger:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - tools/bundle-size-tools
@@ -44,6 +45,7 @@ pr:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - tools/bundle-size-tools

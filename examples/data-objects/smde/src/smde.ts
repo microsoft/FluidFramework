@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreContext, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString } from "@fluidframework/sequence";
+import { getTextAndMarkers, SharedString } from "@fluidframework/sequence";
 import { IFluidHTMLOptions, IFluidHTMLView } from "@fluidframework/view-interfaces";
 import SimpleMDE from "simplemde";
 
@@ -110,7 +110,7 @@ export class Smde extends EventEmitter implements
         const smde = new SimpleMDE({ element: this.textArea });
         this.smde = smde;
 
-        const { parallelText } = this.text.getTextAndMarkers("pg");
+        const { parallelText } = getTextAndMarkers(this.text, "pg");
         const text = parallelText.join("\n");
         this.smde.value(text);
 

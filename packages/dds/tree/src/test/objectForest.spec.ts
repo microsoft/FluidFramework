@@ -12,7 +12,7 @@ import { ObjectForest } from "../feature-libraries/object-forest";
 import {
     fieldSchema, rootFieldKey,
     isNeverField, FieldKind,
-} from "../schema";
+} from "../schema-stored";
 import { IEditableForest, initializeForest, TreeNavigationResult } from "../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../domains";
 import { recordDependency } from "../dependency-tracking";

@@ -4,7 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { ChangeFamily } from "../../change-family";
+import { ChangeEncoder, ChangeFamily, JsonCompatible } from "../../change-family";
 import { SeqNumber } from "../../changeset";
 import { Commit, EditManager, SessionId } from "../../edit-manager";
 import { ChangeRebaser } from "../../rebase";
@@ -48,12 +48,12 @@ interface AnchorRebaseData {
     intentions: Set<number>;
 }
 
-class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, TestChangeset> {
+class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
     private contextCounter: number = 0;
     private intentionCounter: number = 0;
     public readonly anchorRebases: Map<AnchorSet, AnchorRebaseData> = new Map();
 
-    public compose(...changes: TestChangeset[]): TestChangeset {
+    public compose(changes: TestChangeset[]): TestChangeset {
         let inputContext: number | undefined;
         let outputContext: number | undefined;
         const intentions: number[] = [];
@@ -137,14 +137,6 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
         }
     }
 
-    public import(change: TestChangeset): TestChangeset {
-        return change;
-    }
-
-    public export(change: TestChangeset): TestChangeset {
-        return change;
-    }
-
     public mintChangeset(inputContext: number): NonEmptyTestChangeset {
         return {
             inputContext,
@@ -172,6 +164,15 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset, TestChangeset, T
         }
         // All expected intentions were present
         assert.deepEqual(intentionsSeen, intentionsExpected);
+    }
+}
+
+class TestChangeEncoder extends ChangeEncoder<TestChangeset> {
+    public encodeForJson(formatVersion: number, change: TestChangeset): JsonCompatible {
+        throw new Error("Method not implemented.");
+    }
+    public decodeJson(formatVersion: number, change: JsonCompatible): TestChangeset {
+        throw new Error("Method not implemented.");
     }
 }
 
@@ -204,6 +205,7 @@ function changeFamilyFactory(): {
     const rebaser = new TestChangeRebaser();
     const family = {
         rebaser,
+        encoder: new TestChangeEncoder(),
         buildEditor: () => assert.fail("Unexpected call to buildEditor"),
         intoDelta: () => new Map(),
     };
@@ -216,15 +218,15 @@ function editManagerFactory(): {
 } {
     const { rebaser, family } = changeFamilyFactory();
     const manager = new EditManager<TestChangeset, ChangeFamily<unknown, TestChangeset>>(
-        localSessionId,
         family,
     );
+    manager.setLocalSessionId(localSessionId);
     return { rebaser, manager };
 }
 
-const localSessionId: SessionId = brand(0);
-const peerSessionId1: SessionId = brand(1);
-const peerSessionId2: SessionId = brand(2);
+const localSessionId: SessionId = "0";
+const peerSessionId1: SessionId = "1";
+const peerSessionId2: SessionId = "2";
 
 const NUM_STEPS = 5;
 const NUM_CLIENTS = 3;
@@ -237,21 +239,21 @@ describe("EditManager", () => {
         const cs3 = rebaser.mintChangeset(cs2.outputContext);
         manager.addLocalChange(cs1);
         manager.addSequencedChange({
-            sessionId: brand(localSessionId),
+            sessionId: localSessionId,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: cs1,
         });
         manager.addLocalChange(cs2);
         manager.addSequencedChange({
-            sessionId: brand(localSessionId),
+            sessionId: localSessionId,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: cs2,
         });
         manager.addLocalChange(cs3);
         manager.addSequencedChange({
-            sessionId: brand(localSessionId),
+            sessionId: localSessionId,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: cs3,
@@ -268,19 +270,19 @@ describe("EditManager", () => {
         manager.addLocalChange(cs2);
         manager.addLocalChange(cs3);
         manager.addSequencedChange({
-            sessionId: brand(localSessionId),
+            sessionId: localSessionId,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: cs1,
         });
         manager.addSequencedChange({
-            sessionId: brand(localSessionId),
+            sessionId: localSessionId,
             seqNumber: brand(2),
             refNumber: brand(0),
             changeset: cs2,
         });
         manager.addSequencedChange({
-            sessionId: brand(localSessionId),
+            sessionId: localSessionId,
             seqNumber: brand(3),
             refNumber: brand(0),
             changeset: cs3,
@@ -294,19 +296,19 @@ describe("EditManager", () => {
         const cs2 = rebaser.mintChangeset(cs1.outputContext);
         const cs3 = rebaser.mintChangeset(cs2.outputContext);
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: cs1,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: cs2,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: cs3,
@@ -320,19 +322,19 @@ describe("EditManager", () => {
         const cs2 = rebaser.mintChangeset(cs1.outputContext);
         const cs3 = rebaser.mintChangeset(cs2.outputContext);
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: cs1,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(0),
             changeset: cs2,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(0),
             changeset: cs3,
@@ -347,25 +349,25 @@ describe("EditManager", () => {
         const cs3 = rebaser.mintChangeset(cs2.outputContext);
         const cs4 = rebaser.mintChangeset(0);
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: cs1,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: cs2,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: cs3,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(4),
             refNumber: brand(0),
             changeset: cs4,
@@ -382,37 +384,37 @@ describe("EditManager", () => {
         const cs5 = rebaser.mintChangeset(cs4.outputContext);
         const cs6 = rebaser.mintChangeset(cs5.outputContext);
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: cs1,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(2),
             refNumber: brand(1),
             changeset: cs2,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(2),
             changeset: cs3,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(4),
             refNumber: brand(0),
             changeset: cs4,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(5),
             refNumber: brand(0),
             changeset: cs5,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(6),
             refNumber: brand(0),
             changeset: cs6,
@@ -429,37 +431,37 @@ describe("EditManager", () => {
         const cs5 = rebaser.mintChangeset(cs4.outputContext);
         const cs6 = rebaser.mintChangeset(cs5.outputContext);
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: cs1,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(2),
             refNumber: brand(0),
             changeset: cs4,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(3),
             refNumber: brand(1),
             changeset: cs2,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(4),
             refNumber: brand(2),
             changeset: cs3,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(5),
             refNumber: brand(0),
             changeset: cs5,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(6),
             refNumber: brand(0),
             changeset: cs6,
@@ -478,13 +480,13 @@ describe("EditManager", () => {
         const cs7 = rebaser.mintChangeset(0);
         manager.addLocalChange(cs7);
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(1),
             refNumber: brand(0),
             changeset: cs1,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(2),
             refNumber: brand(0),
             changeset: cs4,
@@ -494,43 +496,43 @@ describe("EditManager", () => {
         const cs9 = rebaser.mintChangeset(getTipContext(manager));
         manager.addLocalChange(cs9);
         manager.addSequencedChange({
-            sessionId: brand(localSessionId),
+            sessionId: localSessionId,
             seqNumber: brand(3),
             refNumber: brand(0),
             changeset: cs7,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(4),
             refNumber: brand(1),
             changeset: cs2,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId1),
+            sessionId: peerSessionId1,
             seqNumber: brand(5),
             refNumber: brand(2),
             changeset: cs3,
         });
         manager.addSequencedChange({
-            sessionId: brand(localSessionId),
+            sessionId: localSessionId,
             seqNumber: brand(6),
             refNumber: brand(2),
             changeset: cs8,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(7),
             refNumber: brand(0),
             changeset: cs5,
         });
         manager.addSequencedChange({
-            sessionId: brand(localSessionId),
+            sessionId: localSessionId,
             seqNumber: brand(8),
             refNumber: brand(2),
             changeset: cs9,
         });
         manager.addSequencedChange({
-            sessionId: brand(peerSessionId2),
+            sessionId: peerSessionId2,
             seqNumber: brand(9),
             refNumber: brand(0),
             changeset: cs6,
@@ -639,16 +641,7 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
     const name = scenario.map((step) => `${step.type}${step.client}`).join("-");
     const { rebaser, family } = changeFamilyFactory();
     const trunk: Commit<TestChangeset>[] = [];
-    const clientData: ClientData[] = makeArray(NUM_CLIENTS, (iClient) => ({
-        manager: new EditManager<TestChangeset, TestChangeFamily>(
-            brand(iClient),
-            family,
-            new AnchorSet(),
-        ),
-        localChanges: [],
-        ref: 0,
-        intentions: new Set(),
-    }));
+    const clientData: ClientData[] = makeArray(NUM_CLIENTS, (iClient) => newClientData(family, iClient));
     for (const step of scenario) {
         // Perform the step
         {
@@ -663,7 +656,7 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
                 trunk.push({
                     changeset: local.change,
                     refNumber: brand(local.ref),
-                    sessionId: brand(step.client),
+                    sessionId: step.client.toString(),
                     seqNumber: brand(trunk.length + 1),
                 });
             } else { // step.type === "Receive"
@@ -683,6 +676,17 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
             assert.deepEqual(intentionsThatAnchorsWereRebasedOver ?? new Set(), client.intentions);
         }
     }
+}
+
+function newClientData(family: TestChangeFamily, iClient: number): ClientData {
+    const manager = new EditManager<TestChangeset, TestChangeFamily>(family, new AnchorSet());
+    manager.setLocalSessionId(iClient.toString());
+    return {
+        manager,
+        localChanges: [],
+        ref: 0,
+        intentions: new Set(),
+    };
 }
 
 function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser, intentions?: Set<number>): void {

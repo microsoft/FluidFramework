@@ -270,6 +270,12 @@ Hostnames with `ngrok`'s free tunnels are not preserved. Each run will generate 
 
 {{< /callout >}}
 
+{{< callout note >}}
+
+You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
+
+{{< /callout >}}
+
 ## Next steps
 
 ### Using AzureClient with Azure Fluid Relay

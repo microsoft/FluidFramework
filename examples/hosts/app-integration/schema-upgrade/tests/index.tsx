@@ -4,13 +4,14 @@
  */
 
 import { getSessionStorageContainer } from "@fluid-experimental/get-container";
-import { getDefaultObjectFromContainer } from "@fluidframework/aqueduct";
 
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { InventoryListView } from "../src/inventoryView";
-import { InventoryList, InventoryListContainerRuntimeFactory } from "../src/version1";
+import { InventoryListView } from "../src/view/inventoryView";
+import { InventoryListContainerRuntimeFactory } from "../src/modelVersion1";
+import { IInventoryListContainer } from "../src/modelInterfaces";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 // Since this is a single page Fluid application we are generating a new document id
 // if one was not provided
@@ -33,7 +34,11 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement,
     const container = await getSessionStorageContainer(documentId, containerRuntimeFactory, createNewFlag);
 
     // Get the Default Object from the Container
-    const inventoryList = await getDefaultObjectFromContainer<InventoryList>(container);
+    const model = await requestFluidObject<IInventoryListContainer>(
+        container,
+        { url: "", headers: { containerRef: container } },
+    );
+    const inventoryList = model.inventoryList
     // This adds the item twice on each pageload (one for each of the side-by-sides) which isn't great
     // but doesn't really matter for testing.
     inventoryList.addItem("testName", 3);
