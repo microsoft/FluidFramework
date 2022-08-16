@@ -35,13 +35,11 @@ export abstract class BrandedType<ValueType, Name extends string> {
 // @public (undocumented)
 export function buildForest(schema: StoredSchemaRepository): IEditableForest;
 
-// @public (undocumented)
+// @public
 export abstract class ChangeEncoder<TChange> {
     decodeBinary(formatVersion: number, change: IsoBuffer): TChange;
-    // (undocumented)
     abstract decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TChange;
     encodeBinary(formatVersion: number, change: TChange): IsoBuffer;
-    // (undocumented)
     abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleReadOnly;
 }
 
@@ -265,8 +263,6 @@ export interface GlobalFieldKey extends Opaque<Brand<string, "tree.GlobalFieldKe
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
     applyDelta(delta: Delta.Root): void;
-    // (undocumented)
-    readonly schema: StoredSchemaRepository;
 }
 
 // @public
