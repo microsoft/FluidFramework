@@ -120,7 +120,15 @@ export class Migrator extends TypedEventEmitter<IMigratorEvents> implements IMig
             if (this.dataTransformationCallback !== undefined) {
                 // If we needed to transform the extracted data, we would do it here.  In this demo, the export/import
                 // format is unchanged between the two versions, so there's no transformation needed.
-                transformedData = await this.dataTransformationCallback(extractedData, migratedModel);
+                try {
+                    transformedData = await this.dataTransformationCallback(extractedData, migratedModel);
+                } catch {
+                    // TODO: This implies that the contract is to throw if the data can't be transformed, which isn't
+                    // great.  How should the dataTransformationCallback indicate failure?
+                    this.emit("migrationNotSupported", acceptedVersion);
+                    this._migrationP = undefined;
+                    return;
+                }
             } else {
                 // TODO: Probably should also validate at proposal time that the model we're proposing will be
                 // able to import the exported format of the current container (taking into consideration our format
