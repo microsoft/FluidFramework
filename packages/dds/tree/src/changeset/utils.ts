@@ -5,14 +5,14 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { fail } from "../util";
-import { Transposed as T } from "./format";
+import { Skip, Transposed as T } from "./format";
 
 export function isAttachGroup(mark: T.Mark): mark is T.AttachGroup {
     return Array.isArray(mark);
 }
 
-export function isReattach(mark: T.Mark): mark is T.AttachGroup {
-    return typeof mark === "object" && "type" in mark && (mark.type === "Revive" || mark.type === "Return");
+export function isReattach(mark: T.Mark): mark is T.Reattach {
+    return isObjMark(mark) && "type" in mark && (mark.type === "Revive" || mark.type === "Return");
 }
 
 export function getAttachLength(attach: T.Attach): number {
@@ -43,28 +43,48 @@ export function isEqualGaps(lhs: T.GapEffect[] | undefined, rhs: T.GapEffect[] |
         return false;
     }
     for (let i = 0; i < lhs.length; ++i) {
-        const lhsEffect = lhs[i];
-        const rhsEffect = rhs[i];
-        if (
-            lhsEffect.id !== rhsEffect.id
-            || lhsEffect.type !== rhsEffect.type
-            || lhsEffect.excludePriorInsertions !== rhsEffect.excludePriorInsertions
-            || lhsEffect.includePosteriorInsertions !== rhsEffect.includePosteriorInsertions
-        ) {
+        if (!isEqualGapEffect(lhs[i], rhs[i])) {
             return false;
         }
     }
     return true;
 }
 
+export function isEqualGapEffect(lhs: Readonly<T.GapEffect>, rhs: Readonly<T.GapEffect>): boolean {
+    return lhs.id === rhs.id
+        && lhs.type === rhs.type
+        && lhs.excludePriorInsertions === rhs.excludePriorInsertions
+        && lhs.includePosteriorInsertions === rhs.includePosteriorInsertions;
+}
+
 export function getMarkLength(mark: T.Mark): number {
-    if (typeof mark === "number") {
+    if (isSkipMark(mark)) {
         return mark;
     }
     if (isAttachGroup(mark)) {
         return mark.reduce((prev, attach) => prev + getAttachLength(attach), 0);
     }
-    return "count" in mark ? mark.count : 1;
+    const type = mark.type;
+    switch (type) {
+        case "Modify":
+        case "MDelete":
+        case "MMoveOut":
+        case "MReturn":
+        case "MRevive":
+            return 1;
+        case "Delete":
+        case "MoveOut":
+        case "Return":
+        case "Revive":
+        case "Tomb":
+        case "Gap":
+            return mark.count;
+        default: unreachableCase(type);
+    }
+}
+
+export function isSkipMark(mark: T.Mark): mark is Skip {
+    return typeof mark === "number";
 }
 
 export function splitMark<TMark extends T.Mark>(mark: TMark, length: number): [TMark, TMark] {
@@ -79,12 +99,24 @@ export function splitMark<TMark extends T.Mark>(mark: TMark, length: number): [T
     if (isAttachGroup(mark)) {
         return splitAttachGroup(mark, length) as [TMark, TMark];
     }
-    // The linter seems to think this cast is not needed, which seems correct, but the compiled disagrees.
-    const markObj = mark as T.ObjectMark;
-    if ("count" in mark) {
-        return [{ ...markObj, count: length }, { ...markObj, count: remainder }] as [TMark, TMark];
+    const markObj = mark as T.SizedObjectMark;
+    const type = markObj.type;
+    switch (type) {
+        case "Modify":
+        case "MDelete":
+        case "MMoveOut":
+        case "MReturn":
+        case "MRevive":
+            fail(`Unable to split ${type} mark`);
+        case "Delete":
+        case "MoveOut":
+        case "Return":
+        case "Revive":
+        case "Tomb":
+        case "Gap":
+            return [{ ...markObj, count: length }, { ...markObj, count: remainder }] as [TMark, TMark];
+        default: unreachableCase(type);
     }
-    fail("Unable to split mark");
 }
 
 function splitAttachGroup<TAttach extends T.Attach>(mark: TAttach[], length: number): [TAttach[], TAttach[]] {
@@ -101,10 +133,10 @@ function splitAttachGroup<TAttach extends T.Attach>(mark: TAttach[], length: num
             groupA.push(attach);
             left -= len;
         } else {
-            const pair = splitAttachMark(attach, left);
-            groupA.push(pair[0]);
-            groupB.unshift(pair[1]);
-            left -= left;
+            const [partA, partB] = splitAttachMark(attach, left);
+            groupA.push(partA);
+            groupB.unshift(partB);
+            left = 0;
         }
     }
     return [groupA, groupB];
@@ -138,14 +170,14 @@ function splitAttachMark<TAttach extends T.Attach>(attach: TAttach, length: numb
 }
 
 export function isDetachMark(mark: T.Mark | undefined): mark is T.Detach | T.ModifyDetach {
-    if (typeof mark === "object" && "type" in mark) {
+    if (isObjMark(mark) && "type" in mark) {
         const type = mark.type;
         return type === "Delete" || type === "MDelete" || type === "MoveOut" || type === "MMoveOut";
     }
     return false;
 }
 
-export function isObjMark(mark: T.Mark): mark is T.ObjectMark {
+export function isObjMark(mark: T.Mark | undefined): mark is T.ObjectMark {
     return typeof mark === "object";
 }
 
@@ -197,7 +229,7 @@ export function extendAttachGroup(group: T.AttachGroup, addendum: T.AttachGroup)
  * @returns `true` iff the function was able to mutate `lhs` to include the effects of `rhs`.
  * When `false` is returned, `lhs` is left untouched.
  */
-export function tryExtendMark(lhs: T.ObjectMark, rhs: Readonly<T.ObjectMark>): boolean {
+export function tryExtendMark(lhs: T.SizedObjectMark, rhs: Readonly<T.SizedObjectMark>): boolean {
     if (rhs.type !== lhs.type) {
         return false;
     }

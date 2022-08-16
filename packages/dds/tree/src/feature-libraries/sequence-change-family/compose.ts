@@ -114,7 +114,7 @@ function foldInMarkList(
 
 function composeMarks(
     newMark: T.SizedMark,
-    baseMark: T.ObjectMark | T.AttachGroup,
+    baseMark: T.SizedObjectMark | T.AttachGroup,
 ): T.Mark[] {
     if (typeof newMark === "number") {
         return [baseMark];

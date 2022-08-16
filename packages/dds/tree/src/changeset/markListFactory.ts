@@ -31,7 +31,7 @@ export class MarkListFactory {
         this.offset += offset;
     }
 
-    public pushContent(mark: T.ObjectMark | T.AttachGroup): void {
+    public pushContent(mark: T.SizedObjectMark | T.AttachGroup): void {
         if (this.offset > 0) {
             this.list.push(this.offset);
             this.offset = 0;
