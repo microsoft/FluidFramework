@@ -350,15 +350,6 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
         this.rangeStacks = createMap<Stack<ReferencePosition>>();
     }
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
-    public addNodeReferences(mergeTree: MergeTree, node: IMergeNode) {
-        addNodeReferences(mergeTree, node, this.rightmostTiles, this.leftmostTiles,
-            this.rangeStacks);
-    }
-
     public hierBlock() {
         return this;
     }
@@ -379,35 +370,22 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
     }
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
  export interface ClientSeq {
     refSeq: number;
     clientId: string;
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
  export const clientSeqComparer: Comparer<ClientSeq> = {
     min: { refSeq: -1, clientId: "" },
     compare: (a, b) => a.refSeq - b.refSeq,
 };
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export interface LRUSegment {
     segment?: ISegment;
     maxSeq: number;
 }
 
 /**
- * @deprecated  for internal use only. public export will be removed.
  * @internal
  */
 export class MergeTree {
@@ -425,10 +403,6 @@ export class MergeTree {
     private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
     public readonly collabWindow = new CollaborationWindow();
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
     public pendingSegments: List<SegmentGroup> | undefined;
     private segmentsToScour: Heap<LRUSegment> | undefined;
     /**
@@ -1071,7 +1045,7 @@ export class MergeTree {
     public referencePositionToLocalPosition(
         refPos: ReferencePosition,
         refSeq = this.collabWindow.currentSeq,
-        clientId = this.collabWindow.clientId) {
+        clientId = this.collabWindow.clientId): number {
         const seg = refPos.getSegment();
         if (seg?.parent === undefined) {
             return DetachedReferencePosition;
@@ -1086,10 +1060,7 @@ export class MergeTree {
         }
         return DetachedReferencePosition;
     }
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
+
     public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
         const searchInfo: IMarkerSearchRangeInfo = {
             mergeTree: this,
@@ -1129,6 +1100,8 @@ export class MergeTree {
             }
             return { tile: searchInfo.tile, pos };
         }
+
+        return undefined;
     }
 
     private search<TClientData>(
@@ -1252,7 +1225,7 @@ export class MergeTree {
         if (pendingSegmentGroup !== undefined) {
             const deltaSegments: IMergeTreeSegmentDelta[] = [];
             pendingSegmentGroup.segments.map((pendingSegment) => {
-                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs, this);
+                const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
                 overwrite = overlappingRemove || overwrite;
 
                 if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
@@ -1313,7 +1286,7 @@ export class MergeTree {
     }
 
     // TODO: error checking
-    public getMarkerFromId(id: string) {
+    public getMarkerFromId(id: string): ISegment | undefined {
         return this.idToSegment.get(id);
     }
 
@@ -2263,10 +2236,6 @@ export class MergeTree {
         this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
     }
 
-    /**
-     * @deprecated  for internal use only. public export will be removed.
-     * @internal
-     */
     public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
         while (!stateStack.empty()) {
             // We already check the stack is not empty

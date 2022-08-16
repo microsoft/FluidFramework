@@ -199,8 +199,7 @@ IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
         const tree = dataStoreContext.baseSnapshot;
 
         this.channelsBaseGCDetails = new LazyPromise(async () => {
-            const baseGCDetails = await
-                (this.dataStoreContext.getBaseGCDetails?.() ?? this.dataStoreContext.getInitialGCSummaryDetails());
+            const baseGCDetails = await this.dataStoreContext.getBaseGCDetails();
             return unpackChildNodesGCDetails(baseGCDetails);
         });
 

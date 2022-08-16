@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "../runWithRetry";
 
 const _setTimeout = global.setTimeout;

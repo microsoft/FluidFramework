@@ -4,9 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -20,9 +20,12 @@ import {
     SummarizerStopReason,
     SummaryCollection,
 } from "@fluidframework/container-runtime";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
     ITestFluidObject,
     ITestObjectProvider,
@@ -32,8 +35,6 @@ import {
     waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 /**
   * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.
@@ -154,12 +155,11 @@ async function submitAndAckSummary(
     const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
     // Update the container runtime with the given ack. We have to do this manually because there is no summarizer
     // client in these tests that takes care of this.
-    await summarizerClient.containerRuntime.refreshLatestSummaryAck(
-        ackedSummary.summaryOp.contents.handle,
-        ackedSummary.summaryAck.contents.handle,
-        ackedSummary.summaryOp.referenceSequenceNumber,
-        logger,
-    );
+    await summarizerClient.containerRuntime.refreshLatestSummaryAck({
+        proposalHandle: ackedSummary.summaryOp.contents.handle,
+        ackHandle: ackedSummary.summaryAck.contents.handle,
+        summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
+        summaryLogger: logger });
     return { ackedSummary, summarySequenceNumber };
 }
 
