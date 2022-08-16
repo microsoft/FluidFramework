@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
-import { parseStringData2, readVersion } from "../dataTransform";
+import { parseStringDataVersionTwo, readVersion } from "../dataTransform";
 import { MigrationState } from "../migrationInterfaces";
 import type {
     IMigrationTool,
@@ -29,7 +29,7 @@ const getStateFromMigrationTool = (migrationTool: IMigrationTool) => {
 
 // These helper functions produce and consume the same stringified form of the data.
 const applyStringData = async (inventoryList: IInventoryList, stringData: string) => {
-    const parsedInventoryItemData = parseStringData2(stringData);
+    const parsedInventoryItemData = parseStringDataVersionTwo(stringData);
     for (const { name, quantity } of parsedInventoryItemData) {
         inventoryList.addItem(name, quantity);
     }

@@ -14,7 +14,7 @@ export function readVersion(stringData: string) {
     return version;
 }
 
-export function parseStringData1(stringData: string) {
+export function parseStringDataVersionOne(stringData: string) {
     const version = readVersion(stringData);
     if (version !== "one") {
         throw new Error(`Expected to parse version one, got version ${version}`);
@@ -27,7 +27,7 @@ export function parseStringData1(stringData: string) {
     });
 }
 
-export function parseStringData2(stringData: string) {
+export function parseStringDataVersionTwo(stringData: string) {
     const version = readVersion(stringData);
     if (version !== "two") {
         throw new Error(`Expected to parse version two, got version ${version}`);
@@ -43,9 +43,9 @@ export function parseStringData2(stringData: string) {
 function parseStringData(stringData: string) {
     const version = readVersion(stringData);
     if (version === "one") {
-        return parseStringData1(stringData);
+        return parseStringDataVersionOne(stringData);
     } else if (version === "two") {
-        return parseStringData2(stringData);
+        return parseStringDataVersionTwo(stringData);
     } else {
         throw new Error(`Don't know how to parse version ${version}`);
     }
