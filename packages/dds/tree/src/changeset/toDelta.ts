@@ -329,7 +329,7 @@ const ERR_RETURN_ON_INSERT = "Encountered a Return mark in an inserted field";
  * Modifications to a subtree as described by a Changeset.
  */
 interface ChangesetMods {
-    value?: T.ValueMark;
+    value?: T.SetValue;
     fields?: T.FieldMarks;
 }
 

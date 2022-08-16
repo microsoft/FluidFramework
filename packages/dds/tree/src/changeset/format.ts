@@ -75,8 +75,6 @@ export namespace Transposed {
 		count: number;
 	}
 
-	export type ValueMark = SetValue;
-
 	export interface SetValue extends HasOpId {
 		/** Can be left unset to represent the value being cleared. */
 		value?: Value;
@@ -85,7 +83,7 @@ export namespace Transposed {
 	export interface Modify {
 		type: "Modify";
 		tomb?: ChangesetTag;
-		value?: ValueMark;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
@@ -153,7 +151,7 @@ export namespace Transposed {
 	export interface ModifyInsert extends HasOpId, HasPlaceFields {
 		type: "MInsert";
 		content: ProtoNode;
-		value?: ValueMark;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
@@ -194,7 +192,7 @@ export namespace Transposed {
 
 	export interface ModifyMoveIn extends HasOpId, HasPlaceFields {
 		type: "MMoveIn";
-		value?: ValueMark;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
@@ -242,7 +240,7 @@ export namespace Transposed {
 	export interface ModifyDetach extends HasOpId {
 		type: "MDelete" | "MMoveOut";
 		tomb?: ChangesetTag;
-		value?: ValueMark;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
@@ -254,7 +252,7 @@ export namespace Transposed {
 	export interface ModifyReattach extends HasOpId {
 		type: "MRevive" | "MReturn";
 		tomb: ChangesetTag;
-		value?: ValueMark;
+		value?: SetValue;
 		fields?: FieldMarks;
 	}
 
