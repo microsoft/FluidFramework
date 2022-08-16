@@ -105,7 +105,7 @@ export const defaultRenderingPolicies: Required<RenderingPolicies>;
 export { DocEmphasisSpan }
 
 // @public
-interface DocExample {
+interface DocExampleProperties {
     apiItem: ApiItem;
     content: DocSection;
     exampleNumber?: number;
@@ -326,7 +326,7 @@ function renderChildDetailsSection(childSections: readonly ChildSectionPropertie
 // @public
 function renderChildrenSection(apiItem: ApiItem, innerSectionBody: DocSection | undefined, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
-// @public (undocumented)
+// @public
 function renderChildrenUnderHeading(childItems: readonly ApiItem[], headingTitle: string, config: Required<MarkdownDocumenterConfiguration>, renderChild: (childItem: ApiItem) => DocSection): DocSection | undefined;
 
 // @public (undocumented)
@@ -335,7 +335,7 @@ function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumen
 // @public
 function renderDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
-// @public (undocumented)
+// @public
 function renderDeprecationNotice(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
@@ -347,10 +347,10 @@ function renderEmptyTableCell(config: Required<MarkdownDocumenterConfiguration>)
 // @public (undocumented)
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
-// @public (undocumented)
-function renderExample(example: DocExample, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+// @public
+function renderExample(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
-// @public (undocumented)
+// @public
 function renderExamples(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public (undocumented)
@@ -392,7 +392,7 @@ declare namespace RenderingHelpers {
         renderParametersSection,
         renderChildrenUnderHeading,
         renderChildDetailsSection,
-        DocExample,
+        DocExampleProperties,
         ChildSectionProperties,
         renderMemberTables,
         renderTableWithHeading,
@@ -470,7 +470,7 @@ function renderPackageSection(apiPackage: ApiPackage, config: Required<MarkdownD
 // @public
 function renderPackagesTable(apiPackages: readonly ApiPackage[], config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
-// @public (undocumented)
+// @public
 function renderParametersSection(apiFunctionLike: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
@@ -491,7 +491,7 @@ function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], config
 // @public
 function renderPropertyTypeCell(apiProperty: ApiPropertyItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
-// @public (undocumented)
+// @public
 function renderRemarks(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
@@ -503,7 +503,7 @@ export type RenderSectionWithInnerContent = (apiItem: ApiItem, innerSectionBody:
 // @public
 function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
-// @public (undocumented)
+// @public
 function renderSummary(apiItem: ApiItem): DocSection | undefined;
 
 // @public

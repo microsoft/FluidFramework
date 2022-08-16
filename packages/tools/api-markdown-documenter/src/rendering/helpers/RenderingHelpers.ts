@@ -366,12 +366,26 @@ export function renderBetaWarning(config: Required<MarkdownDocumenterConfigurati
     ]);
 }
 
+/**
+ * Renders a section containing the API item's summary comment if it has one.
+ */
 export function renderSummary(apiItem: ApiItem): DocSection | undefined {
     return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
         ? apiItem.tsdocComment.summarySection
         : undefined;
 }
 
+/**
+ * Renders a section containing the {@link https://tsdoc.org/pages/tags/remarks/ | @remarks} documentation of the
+ * provided API item if it has any.
+ *
+ * @remarks Displayed as a heading, with the documentation contents under it.
+ *
+ * @param apiItem - The API item whose `@remarks` documentation will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
+ */
 export function renderRemarks(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -388,6 +402,17 @@ export function renderRemarks(
     return undefined;
 }
 
+/**
+ * Renders a section containing the {@link https://tsdoc.org/pages/tags/deprecated/ | @deprecated} notice documentation
+ * of the provided API item if it has any.
+ *
+ * @remarks Displayed as a simple note box containing the deprecation notice comment.
+ *
+ * @param apiItem - The API item whose `@deprecated` documentation will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
+ */
 export function renderDeprecationNotice(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -408,6 +433,20 @@ export function renderDeprecationNotice(
     return undefined;
 }
 
+/**
+ * Renders a section containing any {@link https://tsdoc.org/pages/tags/example/ | @example} documentation of the
+ * provided API item if it has any.
+ *
+ * @remarks Displayed as 1 or more headings (1 for each example), with the example contents under them.
+ * If there is more than 1 example comment, each example will be parented under a numbered heading under
+ * an "Examples" heading.
+ * If there is only 1 example comment, that comment will be rendered under a single "Example" heading.
+ *
+ * @param apiItem - The API item whose `@example` documentation will be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if the API item had any `@example` comment blocks, otherwise `undefined`.
+ */
 export function renderExamples(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -451,9 +490,9 @@ export function renderExamples(
 }
 
 /**
- * Represents a single `@example` comment block for a given API item.
+ * Represents a single {@link https://tsdoc.org/pages/tags/example/ | @example} comment block for a given API item.
  */
-export interface DocExample {
+export interface DocExampleProperties {
     /**
      * The API item the example doc content belongs to.
      */
@@ -465,14 +504,22 @@ export interface DocExample {
     content: DocSection;
 
     /**
-     * Example number. Used to disambiguate multiple `@example` comments numerically.
+     * Example number. Used to disambiguate multiple `@example` comment headings numerically.
      * If not specified, example heading will not be labeled with a number.
      */
     exampleNumber?: number;
 }
 
+/**
+ * Renders a section containing a single {@link https://tsdoc.org/pages/tags/example/ | @example} documentation comment.
+ *
+ * @remarks Displayed as a heading with the example comment under it.
+ *
+ * @param example - The example to render.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
 export function renderExample(
-    example: DocExample,
+    example: DocExampleProperties,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
     const headingTitle: string =
@@ -488,6 +535,16 @@ export function renderExample(
     ]);
 }
 
+/**
+ * Renders a section describing the list of parameters (if any) of a function-like API item.
+ *
+ * @remarks Displayed as a heading with a table representing the different parameters under it.
+ *
+ * @param apiFunctionLike - The function-like API item whose parameters will be described.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The doc section if the item had any parameters, otherwise `undefined`.
+ */
 export function renderParametersSection(
     apiFunctionLike: ApiFunctionLike,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -505,6 +562,18 @@ export function renderParametersSection(
     ]);
 }
 
+/**
+ * Renders a section containing a list of sub-sections for the provided list of child API items.
+ *
+ * @remarks Displayed as a heading with the provided title, followed by a series a sub-sections for each child item.
+ *
+ * @param childItems - The child API items to be displayed as sub-contents.
+ * @param headingTitle - The title of the section-root heading.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param renderChild - Callback for rendering each child item as a sub-section.
+ *
+ * @returns The doc section if there were any child items provided, otherwise `undefined`.
+ */
 export function renderChildrenUnderHeading(
     childItems: readonly ApiItem[],
     headingTitle: string,
