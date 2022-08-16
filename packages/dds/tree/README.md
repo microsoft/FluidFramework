@@ -67,6 +67,8 @@ This typically means the client side "business logic" or "view" part of some gra
 
 ### Ownership and Lifetimes
 
+TODO: add a diagram for this section.
+
 `tree` is a DDS, and therefore is stores its persisted data in a Fluid Container, and is also owned by that same container.
 When nothing in that container references the DDS anymore, it may get garbage collected by the Fluid GC.
 
@@ -94,6 +96,8 @@ could be added in the future.
 ### Data Flow
 
 #### Viewing
+
+TODO: add a diagram for this section.
 
 [`shared-tree`](./src/shared-tree/) configures [`shared-tree-core`](./src/shared-tree-core/README.md) with a set of indexes.
 `shared-tree-core` downloads the summary data from the Fluid Container, feeding the summary data (and any future edits) into the indexes.
@@ -126,6 +130,8 @@ The system for doing this is called "schematize" and is currently not implemente
 When it is more designed, some details for how it works belong in this section (as well as the section below).
 
 ### Editing
+
+TODO: add a diagram for this section.
 
 The application can use their view to locate places they want to edit.
 The application passes a "command" to the checkout which create a transaction that runs the command.
