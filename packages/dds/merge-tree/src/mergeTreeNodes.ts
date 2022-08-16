@@ -15,6 +15,7 @@ import {
 } from "./constants";
 import {
      LocalReferenceCollection,
+     LocalReferencePosition,
 } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
@@ -295,6 +296,7 @@ export interface MergeTreeStats {
 export interface SegmentGroup {
     segments: ISegment[];
     previousProps?: PropertySet[];
+    removedReferences?: LocalReferencePosition[];
     localSeq: number;
 }
 
