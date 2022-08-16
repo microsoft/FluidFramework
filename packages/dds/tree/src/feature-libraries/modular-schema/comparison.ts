@@ -118,7 +118,7 @@ export function allowsValueSuperset(
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
- export function allowsFieldSuperset(
+export function allowsFieldSuperset(
     policy: FullSchemaPolicy,
     originalData: SchemaData,
     original: FieldSchema,

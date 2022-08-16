@@ -35,7 +35,7 @@ export class UnitEncoder extends ChangeEncoder<0> {
 /**
  * Encoder for changesets which are just a json compatible value.
  */
- export class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
+export class ValueEncoder<T extends JsonCompatibleReadOnly> extends ChangeEncoder<T> {
     public encodeForJson(formatVersion: number, change: T): JsonCompatibleReadOnly {
         return change;
     }

@@ -57,7 +57,7 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 /**
  * @returns false iff any of the call backs returned false.
  */
- export function compareSets<T>(
+export function compareSets<T>(
     a: ReadonlySet<T> | ReadonlyMap<T, unknown>,
     b: ReadonlySet<T> | ReadonlyMap<T, unknown>,
     aExtra: (t: T) => boolean,

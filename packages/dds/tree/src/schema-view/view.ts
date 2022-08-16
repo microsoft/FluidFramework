@@ -80,7 +80,7 @@ export abstract class ViewSchemaData<TPolicy extends SchemaPolicy = SchemaPolicy
 /**
  * A collection of View information for schema, including policy.
  */
- export class AdaptedViewSchema {
+export class AdaptedViewSchema {
     public constructor(
         public readonly adapters: Adapters,
         public readonly adaptedForViewSchema: SchemaData,

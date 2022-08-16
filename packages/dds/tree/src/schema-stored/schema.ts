@@ -214,7 +214,7 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
  */
- export interface SchemaDataReader {
+export interface SchemaDataReader {
     readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
@@ -223,7 +223,7 @@ export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
  */
- export interface SchemaPolicy {
+export interface SchemaPolicy {
     /**
      * Schema used when there is no schema explicitly specified for an identifier.
      * Typically a "never" schema which forbids any nodes with that type.
