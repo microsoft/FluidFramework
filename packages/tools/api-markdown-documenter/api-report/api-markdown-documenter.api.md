@@ -302,8 +302,8 @@ export interface PolicyOptions {
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
 
-// @public (undocumented)
-export function renderApiDocument(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
+// @public
+export function renderApiItemDocument(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
 // @public
 export type RenderApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection) => DocSection;
@@ -459,7 +459,7 @@ function renderModuleLikeSection(apiItem: ApiModuleLike, childItems: readonly Ap
 // @public (undocumented)
 function renderNamespaceSection(apiNamespace: ApiNamespace, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
-// @public (undocumented)
+// @public
 export function renderPackageDocument(apiPackage: ApiPackage, config: Required<MarkdownDocumenterConfiguration>): MarkdownDocument;
 
 // @public (undocumented)

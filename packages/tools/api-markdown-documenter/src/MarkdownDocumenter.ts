@@ -13,7 +13,7 @@ import {
     markdownDocumenterConfigurationWithDefaults,
 } from "./MarkdownDocumenterConfiguration";
 import { MarkdownEmitter } from "./MarkdownEmitter";
-import { renderApiDocument, renderModelDocument, renderPackageDocument } from "./rendering";
+import { renderApiItemDocument, renderModelDocument, renderPackageDocument } from "./rendering";
 import { doesItemRequireOwnDocument, getLinkUrlForApiItem } from "./utilities";
 
 /**
@@ -71,7 +71,7 @@ export function renderDocuments(
 
             const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
             for (const apiItem of packageDocumentItems) {
-                documents.push(renderApiDocument(apiItem, config));
+                documents.push(renderApiItemDocument(apiItem, config));
             }
         }
     }

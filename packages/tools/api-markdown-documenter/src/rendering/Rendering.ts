@@ -27,15 +27,16 @@ import { DocNode, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocument } from "../MarkdownDocument";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
-import { getFilePathForApiItem } from "../utilities";
+import { doesItemRequireOwnDocument, getFilePathForApiItem } from "../utilities";
 import { renderBreadcrumb, renderHeadingForApiItem } from "./helpers";
 
 /**
- * TODO
- * Note: no breadcrumb
- * @param apiModel - TODO
- * @param config - TODO
- * @param tsdocConfiguration - TODO
+ * Generates a {@link MarkdownDocument} for the specified `apiModel`.
+ *
+ * @param apiModel - The API model content to be rendered. Represents the root of the API suite.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The rendered Markdown document.
  */
 export function renderModelDocument(
     apiModel: ApiModel,
@@ -68,6 +69,14 @@ export function renderModelDocument(
     );
 }
 
+/**
+ * Generates a {@link MarkdownDocument} for the specified `apiPackage`.
+ *
+ * @param apiPackage - The package content to be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The rendered Markdown document.
+ */
 export function renderPackageDocument(
     apiPackage: ApiPackage,
     config: Required<MarkdownDocumenterConfiguration>,
@@ -104,16 +113,44 @@ export function renderPackageDocument(
     );
 }
 
-export function renderApiDocument(
+/**
+ * Generates a {@link MarkdownDocument} for the specified `apiItem`.
+ *
+ * @remarks This should only be called for API item kinds that are intended to be rendered to their own document
+ * (as opposed to being rendered to the same document as their parent) per the provided `config`
+ * (see {@link PolicyOptions.documentBoundaries}).
+ *
+ * Also note that this should not be called for the following item kinds, which must be handled specially:
+ *
+ * - `Model`: Use {@link renderModelDocument}
+ * - `Package`: Use {@link renderPackageDocument}
+ * - `EntryPoint`: No content is currently rendered for this type of content.
+ *
+ * @param apiItem - The API item to be rendered.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ *
+ * @returns The rendered Markdown document.
+ */
+export function renderApiItemDocument(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): MarkdownDocument {
+    if (apiItem.kind === ApiItemKind.None) {
+        throw new Error(`Encountered API item with a kind of "None".`);
+    }
+
     if (
         apiItem.kind === ApiItemKind.Model ||
         apiItem.kind === ApiItemKind.Package ||
         apiItem.kind === ApiItemKind.EntryPoint
     ) {
         throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
+    }
+
+    if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
+        throw new Error(
+            `"renderApiDocument" called for an API item kind that is not intended to be rendered to its own document. Provided item kind: "${apiItem.kind}".`,
+        );
     }
 
     if (config.verbose) {
@@ -146,6 +183,9 @@ export function renderApiDocument(
     );
 }
 
+/**
+ * Helper for generating a {@link MarkdownDocument} from an API item and its rendered doc contents.
+ */
 function createMarkdownDocument(
     apiItem: ApiItem,
     contents: DocSection,
@@ -158,15 +198,27 @@ function createMarkdownDocument(
     };
 }
 
+/**
+ * Renders a section for the specified `apiItem`.
+ *
+ * @remarks Must not be called for the following API item kinds, which must be handled specially:
+ *
+ * - `Model`
+ * - `Package`
+ * - `EntryPoint`
+ */
 function renderApiSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
+    if (apiItem.kind === ApiItemKind.None) {
+        throw new Error(`Encountered API item with a kind of "None".`);
+    }
+
     if (
         apiItem.kind === ApiItemKind.Model ||
         apiItem.kind === ApiItemKind.Package ||
-        apiItem.kind === ApiItemKind.EntryPoint ||
-        apiItem.kind === ApiItemKind.None
+        apiItem.kind === ApiItemKind.EntryPoint
     ) {
         throw new Error(`Provided API item kind must be handled specially: "${apiItem.kind}".`);
     }
