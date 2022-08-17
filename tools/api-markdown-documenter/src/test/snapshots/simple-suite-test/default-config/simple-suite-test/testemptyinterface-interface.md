@@ -1,7 +1,7 @@
 
 # TestEmptyInterface
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test)
+[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestEmptyInterface](./simple-suite-test/testemptyinterface-interface)
 
 An empty interface
 

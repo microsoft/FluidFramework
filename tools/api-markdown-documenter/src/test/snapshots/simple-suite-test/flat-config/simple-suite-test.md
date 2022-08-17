@@ -1,7 +1,7 @@
 
 # simple-suite-test
 
-[(model)](docs/index)
+[(model)](docs/index) &gt; [simple-suite-test](docs/simple-suite-test)
 
 Test package
 

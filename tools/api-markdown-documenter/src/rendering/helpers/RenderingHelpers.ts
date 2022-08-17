@@ -343,15 +343,16 @@ export function renderBreadcrumb(
         });
     }
 
+    const separator = new DocPlainText({
+        configuration: config.tsdocConfiguration,
+        text: " > ",
+    });
+
+    // Render ancestry links
     let writtenAnythingYet = false;
     for (const hierarchyItem of ancestry) {
         if (writtenAnythingYet) {
-            docNodes.push(
-                new DocPlainText({
-                    configuration: config.tsdocConfiguration,
-                    text: " > ",
-                }),
-            );
+            docNodes.push(separator);
         }
 
         const link = getLinkForApiItem(hierarchyItem, config);
@@ -359,6 +360,13 @@ export function renderBreadcrumb(
 
         writtenAnythingYet = true;
     }
+
+    // Render entry for the item itself
+    if (writtenAnythingYet) {
+        docNodes.push(separator);
+    }
+    const link = getLinkForApiItem(apiItem, config);
+    docNodes.push(createLinkTag(link));
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
         new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes),
