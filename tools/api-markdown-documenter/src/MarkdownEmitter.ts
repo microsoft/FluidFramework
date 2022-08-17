@@ -304,16 +304,15 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     ): void {
         const writer: IndentedWriter = context.writer;
 
-        writer.ensureNewLine();
+        writer.ensureSkippedLine();
 
         writer.increaseIndent("> ");
 
         this.writeNode(docNoteBox.content, context, docNodeSiblings);
-        writer.ensureNewLine();
 
         writer.decreaseIndent();
 
-        writer.writeLine();
+        writer.ensureSkippedLine();
     }
 
     /**
