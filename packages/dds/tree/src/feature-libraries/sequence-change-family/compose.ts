@@ -88,7 +88,7 @@ function foldInMarkList(
             } else if (newMarkLength > baseMarkLength) {
                 [newMark, nextNewMark] = splitMark(newMark, baseMarkLength);
             }
-            // Passed this point, we are guaranteed that `newMark` and `baseMark` have the same length
+            // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length
             if (isSkipMark(baseMark)) {
                 // TODO: insert new tombs and reattaches without replacing the offset
                 factory.push(newMark);

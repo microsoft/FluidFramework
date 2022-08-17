@@ -78,7 +78,7 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
                 [currMark, nextCurrMark] = splitMark(currMark, baseMarkLength);
             }
             const rebasedMark = rebaseMark(currMark, baseMark);
-            // Passed this point, we are guaranteed that:
+            // Past this point, we are guaranteed that:
             //  * `currMark` and `baseMark` have the same length
             //  * `currMark` and `baseMark` are `T.SizedMark`s
             factory.push(rebasedMark);
