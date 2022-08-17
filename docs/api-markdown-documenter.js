@@ -1,4 +1,4 @@
-const { readModel, renderDocuments, emitMarkdown } = require("@fluid-tools/api-markdown-documenter");
+const { loadModel, renderDocuments, emitMarkdown } = require("@fluid-tools/api-markdown-documenter");
 const fs = require("fs-extra");
 const path = require("path");
 
@@ -17,7 +17,7 @@ async function main() {
 
     // Process API reports
     console.log("Generating API model...");
-    const apiModel = await readModel(apiReportsDirectoryPath);
+    const apiModel = await loadModel(apiReportsDirectoryPath);
 
     const config = {
         apiModel,

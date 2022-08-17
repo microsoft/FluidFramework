@@ -30,7 +30,7 @@
     "start": "npm run build:md-magic && hugo server"
   },
   "dependencies": {
-    "@fluid-tools/api-markdown-documenter": "file:../packages/tools/api-markdown-documenter",
+    "@fluid-tools/api-markdown-documenter": "file:../tools/api-markdown-documenter",
     "@microsoft/api-extractor-model": "^7.23.0",
     "@tylerbu/custom-api-documenter": "~0.3.4-7",
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
