@@ -83,6 +83,7 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -468,6 +469,7 @@ declare function get_current_InterfaceDeclaration_IConnectableRuntime():
 declare function use_old_InterfaceDeclaration_IConnectableRuntime(
     use: TypeOnly<old.IConnectableRuntime>);
 use_old_InterfaceDeclaration_IConnectableRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectableRuntime());
 
 /*
@@ -787,26 +789,14 @@ use_old_InterfaceDeclaration_IPendingMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingRuntimeState": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IPendingRuntimeState": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IPendingRuntimeState():
-    TypeOnly<old.IPendingRuntimeState>;
-declare function use_current_InterfaceDeclaration_IPendingRuntimeState(
-    use: TypeOnly<current.IPendingRuntimeState>);
-use_current_InterfaceDeclaration_IPendingRuntimeState(
-    get_old_InterfaceDeclaration_IPendingRuntimeState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPendingRuntimeState": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IPendingRuntimeState": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IPendingRuntimeState():
-    TypeOnly<current.IPendingRuntimeState>;
-declare function use_old_InterfaceDeclaration_IPendingRuntimeState(
-    use: TypeOnly<old.IPendingRuntimeState>);
-use_old_InterfaceDeclaration_IPendingRuntimeState(
-    get_current_InterfaceDeclaration_IPendingRuntimeState());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1119,6 +1109,7 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>);
 use_old_InterfaceDeclaration_ISummarizerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*

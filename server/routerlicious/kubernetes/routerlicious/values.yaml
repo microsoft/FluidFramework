@@ -48,6 +48,9 @@ storage:
   enableWholeSummaryUpload: false
   storageUrl: storage_url
 
+session:
+  enforceDiscoveryFlow: false
+
 deli:
   name: deli
   replicas: 8

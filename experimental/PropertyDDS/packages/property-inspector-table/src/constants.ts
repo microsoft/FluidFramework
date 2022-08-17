@@ -21,9 +21,9 @@ export const minRowWidth: number = 0.125;
  */
 export const InspectorMessages: { [key: string]: string; } = {
   CONSTANT_PROPERTY: "This property is a constant. It and its children can't be modified.",
-  EMPTY_WORKSPACE: "To get started, add some data to this repository.",
-  NO_DATA: "To get started, create a new repository or connect to an existing one.",
-  NO_WORKSPACE: "To get started, insert this property into a valid workspace.",
+  EMPTY_WORKSPACE: "To get started, add some data to this document.",
+  NO_DATA: "To get started, create a new document or connect to an existing one.",
+  NO_WORKSPACE: "To get started, insert this property into a valid document.",
 };
 
 export const icon24 = "24px";

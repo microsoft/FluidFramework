@@ -30,8 +30,8 @@ export {
     FieldSchema, ValueSchema, TreeSchema, FieldKind,
     emptyField, neverTree,
     SchemaRepository, StoredSchemaRepository,
-    rootFieldKey,
-} from "./schema";
+    rootFieldKey, TreeTypeSet,
+} from "./schema-stored";
 
 export {
     Brand,
@@ -50,9 +50,7 @@ export {
     Rebaser,
     ChangeRebaser,
     RevisionTag,
-    ChangeFromChangeRebaser,
-    FinalFromChangeRebaser,
-    ChangeSetFromChangeRebaser,
+    ChangesetFromChangeRebaser,
 } from "./rebase";
 
 export {
@@ -66,4 +64,5 @@ export {
     buildForest,
     TextCursor,
     jsonableTreeFromCursor,
+    singleTextCursor,
 } from "./feature-libraries";
