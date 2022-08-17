@@ -13,7 +13,7 @@ import { TelemetryNullLogger } from "@fluidframework/common-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import {
     IContainerRuntimeOptions,
@@ -87,9 +87,17 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
      * @returns the sequence number of the summary
      */
      async function waitForSummary(): Promise<number> {
-        await provider.ensureSynchronized();
+        // create the timeout error message since the timeout reason in local test is still not clear
+        // (Bug 1556 on sprint board)
+        await timeoutAwait(provider.ensureSynchronized(), {
+            durationMs: 2000,
+            errorMsg: "Timeout happened on provider synchronization",
+        });
         const sequenceNumber = mainContainer.deltaManager.lastSequenceNumber;
-        await summaryCollection.waitSummaryAck(sequenceNumber);
+        await timeoutAwait(summaryCollection.waitSummaryAck(sequenceNumber), {
+            durationMs: 2000,
+            errorMsg: "Timeout happened on waitSummaryAck",
+        });
         return sequenceNumber;
     }
 
