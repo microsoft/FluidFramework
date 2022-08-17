@@ -361,6 +361,39 @@ describe("TaskManager", () => {
 
                 assert.throws(() => { taskManager1.abandon(taskId); }, ".abandon() should throw when disconnected");
             });
+
+            it("Can subscribe while disconnected", async () => {
+                const taskId = "taskId";
+                containerRuntime1.connected = false;
+                containerRuntimeFactory.processAllMessages();
+
+                taskManager1.subscribeToTask(taskId);
+                assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+                assert.ok(!taskManager1.assignedTask(taskId), "Should not be assigned");
+                containerRuntimeFactory.processAllMessages();
+                assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+                assert.ok(!taskManager1.assignedTask(taskId), "Should not be assigned");
+
+                containerRuntime1.connected = true;
+                containerRuntimeFactory.processAllMessages();
+                assert.ok(taskManager1.queued(taskId), "Should be queued");
+                assert.ok(taskManager1.assignedTask(taskId), "Should be assigned");
+            });
+
+            it("Can abandon subscription while disconnected", async () => {
+                const taskId = "taskId";
+                containerRuntime1.connected = false;
+                containerRuntimeFactory.processAllMessages();
+
+                taskManager1.subscribeToTask(taskId);
+                taskManager1.abandon(taskId);
+                containerRuntimeFactory.processAllMessages();
+
+                containerRuntime1.connected = true;
+                containerRuntimeFactory.processAllMessages();
+                assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+                assert.ok(!taskManager1.assignedTask(taskId), "Should not be assigned");
+            });
         });
 
         describe("Behavior transitioning to connected", () => {

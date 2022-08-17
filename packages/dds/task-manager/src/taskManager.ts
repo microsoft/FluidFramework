@@ -313,11 +313,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public subscribeToTask(taskId: string) {
+        const submitVolunteerOp = () => {
+            this.submitVolunteerOp(taskId);
+        };
+
         const disconnectHandler = () => {
             // Wait to be connected again and then re-submit volunteer op
-            this.connectionWatcher.once("connect", () => {
-                this.submitVolunteerOp(taskId);
-            });
+            this.connectionWatcher.once("connect", submitVolunteerOp);
         };
 
         const checkIfAbandoned = (eventTaskId: string) => {
@@ -327,6 +329,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
             this.abandonWatcher.off("abandon", checkIfAbandoned);
             this.connectionWatcher.off("disconnect", disconnectHandler);
+            this.connectionWatcher.off("connect", submitVolunteerOp);
         };
 
         this.abandonWatcher.on("abandon", checkIfAbandoned);
@@ -336,17 +339,13 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             disconnectHandler();
         } else if (!this.assignedTask(taskId) && !this.queued(taskId)) {
             // TODO simulate auto-ack in detached scenario
-            this.submitVolunteerOp(taskId);
+            submitVolunteerOp();
         }
     }
 
     public abandon(taskId: string) {
-        // Nothing to do if we're not at least trying to get the lock.
-        if (!this.queued(taskId)) {
-            return;
-        }
-        // TODO simulate auto-ack in detached scenario
-        if (!this.isAttached()) {
+        // Nothing to do if we're connected and not trying to get the lock.
+        if (this.connected && !this.queued(taskId)) {
             return;
         }
 
