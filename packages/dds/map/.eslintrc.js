@@ -10,9 +10,7 @@ module.exports = {
     "parserOptions": {
         "project": [
             "./tsconfig.json",
-            "./src/test/mocha/tsconfig.json",
-            "./src/test/memory/tsconfig.json",
-            "./src/test/types/tsconfig.json",
+            "./src/test/tsconfig.json",
         ]
     },
     "rules": {
