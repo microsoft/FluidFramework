@@ -26,9 +26,9 @@ export class FieldKind {
     /**
      * @param identifier - Globally scoped identifier.
      * @param multiplicity - bound on the number of children fields of this kind may have.
-     * TODO: replace with with numeric upper and lowe bounds.
+     * TODO: replace with numeric upper and lower bounds.
      * @param changeHandler - Change handling policy.
-     * @param allowsTreeSupersetOf - returns true iff `superset` supports all this this does,
+     * @param allowsTreeSupersetOf - returns true iff `superset` supports all that this does,
      * and such a schema change is an allowed upgrade. Does not have to handle the `never` cases.
      * See {@link isNeverField}.
      * to this one without risk of any possible data becoming out of schema.

@@ -41,7 +41,7 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
  * for how to handle (ex: edit and merge edits to) fields marked with this kind.
  * Persisted in documents as part of stored schema.
  */
- export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
+export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
 /**
  * SchemaIdentifier for a Field "global field",
