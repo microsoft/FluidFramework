@@ -26,15 +26,17 @@ export {
     IDocListParameters,
     ListKind,
 } from "./doc-nodes";
+export * from "./rendering";
+export * from "./utilities";
+
 export * from "./Heading";
 export * from "./Link";
+export * from "./LoadModel";
 export * from "./MarkdownDocument";
 export * from "./MarkdownDocumenter";
 export * from "./MarkdownDocumenterConfiguration";
 export * from "./MarkdownEmitter";
 export * from "./Policies";
-export * from "./rendering";
-export * from "./utilities";
 
 // Conveinence re-exports of API model types
 export { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";
