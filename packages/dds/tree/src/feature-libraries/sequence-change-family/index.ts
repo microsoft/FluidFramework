@@ -7,4 +7,4 @@ export * from "./sequenceChangeFamily";
 export * from "./sequenceChangeRebaser";
 export * from "./sequenceChangeset";
 export * from "./sequenceEditBuilder";
-export * from "./invert";
+export { DUMMY_INVERSE_VALUE, DUMMY_INVERT_TAG } from "./invert";
