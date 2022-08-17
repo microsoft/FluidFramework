@@ -150,6 +150,9 @@ export function doesItemKindRequireOwnDocument(kind: ApiItemKind, documentBounda
 export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
 
 // @public
+export function emitMarkdown(document: MarkdownDocument, partialConfig: MarkdownDocumenterConfiguration, maybeEmitter?: MarkdownEmitter): string;
+
+// @public
 export type EmitterContext = IMarkdownEmitterContext<EmitterOptions>;
 
 // @public
@@ -231,6 +234,9 @@ export enum ListKind {
     // (undocumented)
     Unordered = "unordered"
 }
+
+// @public
+export function loadModel(reportsDirectoryPath: string): Promise<ApiModel>;
 
 // @public
 export interface MarkdownDocument {
