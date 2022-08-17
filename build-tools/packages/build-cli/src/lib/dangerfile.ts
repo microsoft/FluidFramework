@@ -9,7 +9,6 @@ import {
     bundlesContainNoChanges,
     getAzureDevopsApi,
 } from "@fluidframework/bundle-size-tools";
-import { Logger } from "@fluidframework/build-tools";
 
 // Handle weirdness with Danger import.  The current module setup prevents us
 // from using this file directly, and the js transpilation renames the danger
@@ -27,15 +26,15 @@ const adoConstants = {
 const localReportPath = "./artifacts/bundleAnalysis";
 
 export async function dangerfile() {
-    if (process.env["ADO_API_TOKEN"] == undefined) {
+    if (process.env.ADO_API_TOKEN === undefined) {
         throw new Error("no env ado api token provided");
     }
 
-    if (process.env["DANGER_GITHUB_API_TOKEN"] == undefined) {
+    if (process.env.DANGER_GITHUB_API_TOKEN === undefined) {
         throw new Error("no env github api token provided");
     }
 
-    const adoConnection = getAzureDevopsApi(process.env["ADO_API_TOKEN"], adoConstants.orgUrl);
+    const adoConnection = getAzureDevopsApi(process.env.ADO_API_TOKEN, adoConstants.orgUrl);
     const sizeComparator = new ADOSizeComparator(
         adoConstants,
         adoConnection,
@@ -55,4 +54,4 @@ export async function dangerfile() {
     }
 }
 
-dangerfile();
+dangerfile().catch((error: unknown) => console.error(error));

@@ -21,6 +21,6 @@ export default class BundleAnalysesRun extends BaseCommand<typeof BundleAnalyses
 
     public async run(): Promise<void> {
         const flags = this.processedFlags;
-        execSync(`npx danger ci -d ${flags.dirname}/dangerfile.js`, { stdio: "inherit" });
+        execSync(`npx danger ci -d ${flags.dirname}/lib/dangerfile.js`, { stdio: "inherit" });
     }
 }
