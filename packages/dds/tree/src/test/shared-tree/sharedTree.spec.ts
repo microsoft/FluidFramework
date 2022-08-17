@@ -13,9 +13,9 @@ import { SharedTree } from "../../shared-tree";
 
 describe("SharedTree", () => {
     it("can be connected to another tree", async () => {
-        const trees = await TestTreeProvider.createTrees(2);
-        assert(trees[0].isAttached());
-        assert(trees[1].isAttached());
+        const provider = await TestTreeProvider.create(2);
+        assert(provider.trees[0].isAttached());
+        assert(provider.trees[1].isAttached());
 
         const value = "42";
 
@@ -29,7 +29,7 @@ describe("SharedTree", () => {
         }
 
         // Apply an edit to the first tree which inserts a node with a value
-        trees[0].runTransaction((forest, editor) => {
+        provider.trees[0].runTransaction((forest, editor) => {
             const writeCursor = singleTextCursor({ type: brand("Test"), value });
             editor.insert({
                 parent: undefined,
@@ -41,12 +41,12 @@ describe("SharedTree", () => {
         });
 
         // Ensure that the first tree has the state we expect
-        validateTree(trees[0]);
+        validateTree(provider.trees[0]);
         // Ensure that the second tree receives the expected state from the first tree
-        await trees.ensureSynchronized();
-        validateTree(trees[1]);
+        await provider.ensureSynchronized();
+        validateTree(provider.trees[1]);
         // Ensure that a tree which connects after the edit has already happened also catches up
-        const joinedLaterTree = await trees.createTree();
+        const joinedLaterTree = await provider.createTree();
         validateTree(joinedLaterTree);
     });
 });

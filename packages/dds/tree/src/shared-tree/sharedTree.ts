@@ -68,10 +68,10 @@ export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChange
     public type: string = "SharedTree";
 
     public attributes: IChannelAttributes = {
-		type: this.type,
-		snapshotFormatVersion: "0.0.0",
-		packageVersion: "0.0.0",
-	};
+        type: this.type,
+        snapshotFormatVersion: "0.0.0",
+        packageVersion: "0.0.0",
+    };
 
     public async load(
         runtime: IFluidDataStoreRuntime,
@@ -79,14 +79,12 @@ export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChange
         services: IChannelServices,
         channelAttributes: Readonly<IChannelAttributes>,
     ): Promise<IChannel> {
-        // TODO: What should the telemetry context be here?
         const tree = new SharedTree(id, runtime, channelAttributes, "SharedTree");
         await tree.load(services);
         return tree;
     }
 
     public create(runtime: IFluidDataStoreRuntime, id: string): IChannel {
-        // TODO: What should the telemetry context be here?
         const tree = new SharedTree(id, runtime, this.attributes, "SharedTree");
         tree.initializeLocal();
         return tree;
