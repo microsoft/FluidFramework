@@ -261,7 +261,7 @@ describe("Pending State Manager", () => {
                     type: MessageType.Operation,
                     clientSequenceNumber: 0,
                     referenceSequenceNumber: 0,
-                }
+                },
             ];
 
             submitBatch(messages);
