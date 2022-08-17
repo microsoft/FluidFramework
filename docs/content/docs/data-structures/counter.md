@@ -26,44 +26,42 @@ For a semantic data type like a counter, this can result in undesirable behavior
 
 Let's illustrate the issue with an example.
 
-Here, we will use a [SharedMap][] to store our shared integer value.
-For simplicity, it will be stored under a static key: `counter-key`.
+Consider a polling widget.
+The widget displays a list of options and allows users to click a checkbox to vote for a given option.
+Next to each option in the list, a live counter is displayed that shows the number of votes for that item.
 
-Let's say that two users are collaborating on an app with a counter widget.
-We will refer to these users as User A and User B.
-The current value of that widget is 42.
+Whenever a user checks an option, all users should see the counter corresponding to that option increment by 1.
 
-What if User A and User B both simultaneously press the `+` button in their UI to increment the current value by 1?
-Behind the scenes, this increment is implemented by writing the updated value to the map.
-Each edit is then sequenced and broadcast to other collaborators.
+In this example, the application is storing its vote counts in a [SharedMap][], where the map keys are `strings` representing the IDs of the options, and the values are `numbers` representing the associated vote counts.
 
-For the purpose of this example, we are ignoring the fact that two operations will never really occur at exactly the same time.
-This is intentional.
-Since increments and decrements are [commutative](https://en.wikipedia.org/wiki/Commutative_property), it shouldn't matter in what order two nearly concurrent increment operations occur; the result _should_ be the same.
+For simplicity, we will look at a scenario in which 2 users vote for the same option at around the same time.
 
-Here, we would expect that, after both users have processed all incoming edits, the resulting value of the counter would be 44.
-Each user pressed the `+` button once.
-42 + 1 + 1 = **44**, right?
-Again, note that we are ignoring which `+ 1` came from which user, as the order should not matter.
+Specifically, **User A** clicks the checkbox for option **Foo**, which currently has **0** votes.
+The application then optimistically updates the vote count for that object by writing the updated counter value of **1** for option **Foo** to its `SharedMap`.
 
-Unfortunately, because `SharedMap` employs a _last-write-wins_ merge strategy, if User A and User B make their edits at the same time, one of the two updates will be sequnced after the other, and that value will win.
-Regardless of which user's edit was sequenced first and which was sequenced last, each user's client will update their map entry to be 42 (the current value they see) + 1 = **43**, and the latter of the two operations to be sequenced will clobber the first.
+The value change operation (op) is then transmitted to the service to be sequenced and eventually sent to other users in the collaborative session.
 
-So in this case, both users would see the value 43, rather than 44.
+At around the same time, **User B** clicks the checkbox for option **Foo**, which in their view currently has **0** votes.
+Similarly to before, the application optimistically updates the associated counter value to **1**, and transmits its own update op.
 
-This is a problem!
-If this shared counter value was being used to track store inventory, for example, that inventory would now be incorrect!
+The service receives the op from **User A** first, and sequences their op updating **Foo** to **1** as **op 0**. **User B**'s op is received second, and is sequenced as **op 1**.
 
-The solution to this problem is a specialized DDS that tracks changes to the shared value as _increments_ and _decrements_, which can be summed together in any order and still reach eventual consistency.
+Both users then receive acknowledgement of their update, and receive **op 0** and **op 1** to be applied in order.
+Both clients apply **op 0** by setting **Foo** to **1**.
+Then both clients apply **op 1** by setting **Foo** to **1**.
 
-{{% callout tip %}}
+But this isn't right.
+Two different users voted for option **Foo**, but the counter now displays **1**.
 
-You may be asking yourself: but wouldn't the counter incrementing by 2 after the user pressed the increment button just once confuse the user?
-How do I make clear to the user that the additional increment was the result of a collaborator's actions?
+`SharedCounter` solves this problem by expressing its operations in terms of *increments* and *decrements* rather than as direct value updates.
 
-Check out [User presence and audience]({{< relref "audience.md" >}}) for an overview of Fluid's APIs for working with user presence!
+So for the scenario above, if the system was using `SharedCounter`s to represent the vote counts, **User A** would submit an op *incrementing* **Foo** by **+1**, rather than updating the value of **Foo** from **0** to **1**.
+At around the same time, **User B** would submit their own **+1** op for **Foo**.
 
-{{% /callout %}}
+Assuming the same sequencing, both users first apply **op 0** and increment their counter for **Foo** by **+1** (from **0** to **1**).
+Next, they both apply **op 1** and increment their counter for **Foo** by **+1** a second time (from **1** to **2**).
+
+Now both users see the right vote count for `Foo`!
 
 ## Usage
 
