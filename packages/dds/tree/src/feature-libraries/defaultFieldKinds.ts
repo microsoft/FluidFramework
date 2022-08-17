@@ -85,8 +85,6 @@ export interface Replacement<T> {
 
 type ReplaceOp<T> = Replacement<T> | 0;
 
-// function isIdentity<T>(op: ReplaceOp<T>):
-
 /**
  * Picks the last value written.
  *
@@ -207,9 +205,8 @@ export const optional: FieldKind = new FieldKind(
 );
 
 /**
-// * 0 or more items.
-// */
-// export const Sequence = new FieldKind("Sequence");
+ * 0 or more items.
+ */
 export const sequence: FieldKind = new FieldKind(
     brand("Sequence"),
     Multiplicity.Sequence,
