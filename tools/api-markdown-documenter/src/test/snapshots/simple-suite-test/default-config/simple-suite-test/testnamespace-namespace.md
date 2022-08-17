@@ -65,7 +65,7 @@ export declare namespace TestNamespace
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) |  | Test Constant |
+|  [TestConst](./simple-suite-test/testnamespace-namespace#testconst-variable) | readonly | Test Constant |
 
 ## Type Details
 

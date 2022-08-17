@@ -17,7 +17,7 @@ export interface TestInterface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) |  | () =&gt; void | Test interface event property |
+|  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
 |  [testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature) |  | number | Test interface property |
 
 ## Call Signatures

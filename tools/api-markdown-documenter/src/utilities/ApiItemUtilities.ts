@@ -14,8 +14,11 @@ import {
     ApiMethod,
     ApiMethodSignature,
     ApiNamespace,
+    ApiOptionalMixin,
     ApiPackage,
     ApiParameterListMixin,
+    ApiReadonlyMixin,
+    ApiStaticMixin,
 } from "@microsoft/api-extractor-model";
 import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
@@ -44,6 +47,26 @@ export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
  * `ApiItem` union type representing module-like API kinds.
  */
 export type ApiModuleLike = ApiPackage | ApiNamespace;
+
+/**
+ * Represents an API item modifier.
+ */
+export enum ApiModifier {
+    /**
+     * Indicates an `optional` parameter or property.
+     */
+    Optional = "optional",
+
+    /**
+     * Indicates a `readonly` parameter or property.
+     */
+    Readonly = "readonly",
+
+    /**
+     * Indicates a `static` member of a `class` or `interface`.
+     */
+    Static = "static",
+}
 
 /**
  * Adjusts the name of the item as needed.
@@ -485,8 +508,38 @@ export function doesItemGenerateHierarchy(
  *
  * @param apiItems - The list of items being filtered.
  * @param kinds - The kinds of items to consider. An item is considered a match if it matches any kind in this list.
+ *
  * @returns - The filtered list of items.
  */
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[] {
     return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));
+}
+
+/**
+ * Gets the {@link ApiModifier}s that apply to the provided API item.
+ *
+ * @param apiItem - The API item being queried.
+ */
+export function getModifiers(apiItem: ApiItem): ApiModifier[] {
+    const modifiers: ApiModifier[] = [];
+
+    if (ApiOptionalMixin.isBaseClassOf(apiItem)) {
+        if (apiItem.isOptional) {
+            modifiers.push(ApiModifier.Optional);
+        }
+    }
+
+    if (ApiReadonlyMixin.isBaseClassOf(apiItem)) {
+        if (apiItem.isReadonly) {
+            modifiers.push(ApiModifier.Readonly);
+        }
+    }
+
+    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
+        if (apiItem.isStatic) {
+            modifiers.push(ApiModifier.Static);
+        }
+    }
+
+    return modifiers;
 }

@@ -21,7 +21,7 @@ class TestClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) |  | string | Test interface property |
+|  [testClassProperty](./simple-suite-test/testnamespace/testclass-class#testclassproperty-property) | readonly | string | Test interface property |
 
 ## Methods
 

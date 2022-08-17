@@ -33,10 +33,10 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](docs/simple-suite-test/testclass-abstractpropertygetter-property) |  | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) |  | () =&gt; void | Test class event property |
-|  [testClassGetterProperty](docs/simple-suite-test/testclass-testclassgetterproperty-property) |  | number | Test class getter-only property |
-|  [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) |  | TTypeParameterB | Test class property |
+|  [abstractPropertyGetter](docs/simple-suite-test/testclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test/testmappedtype-typealias) | A test abstract getter property. |
+|  [testClassEventProperty](docs/simple-suite-test/testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
+|  [testClassGetterProperty](docs/simple-suite-test/testclass-testclassgetterproperty-property) | readonly | number | Test class getter-only property |
+|  [testClassProperty](docs/simple-suite-test/testclass-testclassproperty-property) | readonly | TTypeParameterB | Test class property |
 
 ## Methods
 

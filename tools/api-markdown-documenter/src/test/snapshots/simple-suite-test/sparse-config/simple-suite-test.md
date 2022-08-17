@@ -87,5 +87,5 @@ const foo = bar;
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [testConst](docs/simple-suite-test/testconst-variable) |  | Test Constant |
+|  [testConst](docs/simple-suite-test/testconst-variable) | readonly | Test Constant |
 

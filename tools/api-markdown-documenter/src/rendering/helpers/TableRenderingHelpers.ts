@@ -12,7 +12,6 @@ import {
     ApiPropertyItem,
     ApiReleaseTagMixin,
     ApiReturnTypeMixin,
-    ApiStaticMixin,
     Excerpt,
     Parameter,
     ReleaseTag,
@@ -21,7 +20,12 @@ import { DocLinkTag, DocNode, DocParagraph, DocPlainText, DocSection } from "@mi
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
-import { ApiFunctionLike, getLinkUrlForApiItem, mergeSections } from "../../utilities";
+import {
+    ApiFunctionLike,
+    getLinkUrlForApiItem,
+    getModifiers,
+    mergeSections,
+} from "../../utilities";
 import { renderExcerptWithHyperlinks, renderHeading } from "./RenderingHelpers";
 
 /**
@@ -417,19 +421,19 @@ export function renderModifiersCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const modifierNodes: DocNode[] = [];
+    const modifiers = getModifiers(apiItem);
 
-    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.isStatic) {
-            modifierNodes.push(
-                new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                    new DocPlainText({ configuration: config.tsdocConfiguration, text: "static" }),
-                ]),
-            );
-        }
+    if (modifiers.length === 0) {
+        return renderEmptyTableCell(config);
     }
 
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, modifierNodes);
+    const modifiersList = modifiers.join(", ");
+
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, [
+            new DocPlainText({ configuration: config.tsdocConfiguration, text: modifiersList }),
+        ]),
+    ]);
 }
 
 /**

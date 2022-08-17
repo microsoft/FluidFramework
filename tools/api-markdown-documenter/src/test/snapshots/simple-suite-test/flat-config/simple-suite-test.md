@@ -87,7 +87,7 @@ const foo = bar;
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [testConst](docs/simple-suite-test#testconst-variable) |  | Test Constant |
+|  [testConst](docs/simple-suite-test#testconst-variable) | readonly | Test Constant |
 
 ## Interface Details
 
@@ -119,7 +119,7 @@ export interface TestInterface
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) |  | () =&gt; void | Test interface event property |
+|  [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
 |  [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  | number | Test interface property |
 
 #### Call Signatures
@@ -321,8 +321,8 @@ export declare abstract class TestAbstractClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](docs/simple-suite-test#testabstractclass-abstractpropertygetter-property) |  | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property) |  | [TestEnum](docs/simple-suite-test#testenum-enum) | A test protected property. |
+|  [abstractPropertyGetter](docs/simple-suite-test#testabstractclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property) | readonly | [TestEnum](docs/simple-suite-test#testenum-enum) | A test protected property. |
 
 #### Methods
 
@@ -441,10 +441,10 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) |  | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) |  | () =&gt; void | Test class event property |
-|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) |  | number | Test class getter-only property |
-|  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) |  | TTypeParameterB | Test class property |
+|  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) | readonly | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) | readonly | () =&gt; void | Test class event property |
+|  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) | readonly | number | Test class getter-only property |
+|  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) | readonly | TTypeParameterB | Test class property |
 
 #### Methods
 
@@ -644,7 +644,7 @@ export declare namespace TestNamespace
 
 |  Variable | Modifiers | Description |
 |  --- | --- | --- |
-|  [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) |  | Test Constant |
+|  [TestConst](docs/simple-suite-test#testnamespace-testconst-variable) | readonly | Test Constant |
 
 #### Interface Details
 
@@ -716,7 +716,7 @@ class TestClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [testClassProperty](docs/simple-suite-test#testnamespace-testclass-testclassproperty-property) |  | string | Test interface property |
+|  [testClassProperty](docs/simple-suite-test#testnamespace-testclass-testclassproperty-property) | readonly | string | Test interface property |
 
 ###### Methods
 

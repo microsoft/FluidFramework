@@ -55,6 +55,13 @@ export { ApiItemKind }
 export { ApiModel }
 
 // @public
+export enum ApiModifier {
+    Optional = "optional",
+    Readonly = "readonly",
+    Static = "static"
+}
+
+// @public
 export type ApiModuleLike = ApiPackage | ApiNamespace;
 
 export { ApiPackage }
@@ -194,6 +201,9 @@ export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDoc
 
 // @public
 export function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
+
+// @public
+export function getModifiers(apiItem: ApiItem): ApiModifier[];
 
 // @public
 export function getQualifiedApiItemName(apiItem: ApiItem): string;

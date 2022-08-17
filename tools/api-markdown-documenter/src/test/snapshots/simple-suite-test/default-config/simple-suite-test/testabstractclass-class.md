@@ -21,8 +21,8 @@ export declare abstract class TestAbstractClass
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [abstractPropertyGetter](./simple-suite-test/testabstractclass-class#abstractpropertygetter-property) |  | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
-|  [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property) |  | [TestEnum](./simple-suite-test#testenum-enum) | A test protected property. |
+|  [abstractPropertyGetter](./simple-suite-test/testabstractclass-class#abstractpropertygetter-property) | readonly | [TestMappedType](./simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [protectedProperty](./simple-suite-test/testabstractclass-class#protectedproperty-property) | readonly | [TestEnum](./simple-suite-test#testenum-enum) | A test protected property. |
 
 ## Methods
 
