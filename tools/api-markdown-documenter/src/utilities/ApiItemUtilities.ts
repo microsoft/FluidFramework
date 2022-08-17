@@ -70,7 +70,7 @@ export enum ApiModifier {
 
 /**
  * Adjusts the name of the item as needed.
- * Accounts for method overloads by adding a suffix such as "MyClass.myMethod_2".
+ * Accounts for method overloads by adding a suffix such as "myMethod_2".
  *
  * @param apiItem - The API item for which the qualified name is being queried.
  */
