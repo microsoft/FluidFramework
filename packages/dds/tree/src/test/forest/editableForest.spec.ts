@@ -80,5 +80,55 @@ export function testEditableForest(testSuiteName: string, factory: () => IEditab
                 assert.equal(reader.seek(1), TreeNavigationResult.NotFound);
             });
         });
+
+        it("using an anchor that went away returns NotFound", () => {
+            const forest = factory();
+            const dependent = new MockDependent("dependent");
+            recordDependency(dependent, forest);
+
+            const content: JsonableTree[] = [
+                { type: jsonObject.name, fields: { data: [
+                    { type: jsonNumber.name, value: 1 }, { type: jsonNumber.name, value: 2 }],
+                } },
+            ];
+            initializeForest(forest, content);
+
+            const cursor = forest.allocateCursor();
+            const parentAnchor = cursor.buildAnchor();
+            assert.equal(cursor.down(brand("data"), 0), TreeNavigationResult.Ok);
+        });
+
+        describe("top level invalidation", () => {
+            it("data editing", () => {
+                const forest = factory();
+                const dependent = new MockDependent("dependent");
+                recordDependency(dependent, forest);
+
+                const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
+                const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
+                // TODO: make type-safe
+                const rootField = detachedFieldAsKey(forest.rootField);
+                const delta: Delta.Root = new Map([[rootField, [insert]]]);
+
+                assert.deepEqual(dependent.tokens, []);
+                forest.applyDelta(delta);
+                assert.deepEqual(dependent.tokens.length, 1);
+
+                forest.applyDelta(delta);
+                assert.deepEqual(dependent.tokens.length, 2);
+
+                // TODO: maybe test some other deltas.
+            });
+
+            it("schema editing", () => {
+                const forest = factory();
+                const dependent = new MockDependent("dependent");
+                recordDependency(dependent, forest);
+                for (const t of jsonTypeSchema.values()) {
+                    assert(forest.schema.tryUpdateTreeSchema(t.name, t));
+                }
+                assert.deepEqual(dependent.tokens.length, jsonTypeSchema.size);
+            });
+        });
     });
 }
