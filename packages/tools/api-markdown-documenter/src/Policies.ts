@@ -4,6 +4,9 @@
  */
 import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
+// TODOs:
+// - use `kind` not `type` (and link to ApiModel docs)
+
 /**
  * This module contains policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
  */
@@ -17,12 +20,18 @@ import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
  * not specified.
  *
  * Also note that `EntryPoint` items will always be ignored by the system, even if specified here.
+ *
+ * @example
+ * TODO
  */
 export type DocumentBoundaries = ApiItemKind[];
 
 /**
  * List of item kinds for which sub-directories will be generated, and under which child item documents will be created.
  * If not specified for an item kind, any children of items of that kind will be generated adjacent to the parent.
+ *
+ * @example
+ * TODO
  */
 export type HierarchyBoundaries = ApiItemKind[];
 
@@ -31,6 +40,9 @@ export type HierarchyBoundaries = ApiItemKind[];
  *
  * @remarks This can be used to match on particular item kinds, package names, etc., and adjust the links generated
  * in the documentation accordingly.
+ *
+ * @example
+ * TODO
  *
  * @param apiItem - The API item in question.
  * @returns The URI base to use for the API item, or undefined if the default base should be used.
