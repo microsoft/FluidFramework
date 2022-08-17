@@ -41,7 +41,7 @@ import {
     getQualifiedApiItemName,
     mergeSections,
 } from "../../utilities";
-import { renderParametersSummaryTable } from "./TablesRenderingHelpers";
+import { renderParametersSummaryTable } from "./TableRenderingHelpers";
 
 /**
  * Renders a section for an API signature.
