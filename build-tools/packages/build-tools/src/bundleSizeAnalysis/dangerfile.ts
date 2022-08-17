@@ -25,7 +25,7 @@ const adoConstants = {
 
 const localReportPath = "./artifacts/bundleAnalysis";
 
-export async function dangerfile() {
+(async function () {
     if (process.env["ADO_API_TOKEN"] == undefined) {
         throw new Error("no env ado api token provided");
     }
@@ -51,6 +51,4 @@ export async function dangerfile() {
     } else {
         console.log("No size changes detected, skipping posting PR comment");
     }
-}
-
-dangerfile();
+})();

@@ -7,15 +7,14 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-import { DemoCodeLoader, DemoModelCodeLoader } from "./demoLoaders";
+import { DemoCodeLoader } from "./demoLoaders";
 import { ModelLoader } from "./modelLoading";
 import { externalDataSource } from "./externalData";
 import { IMigratableModel, IVersionedModel } from "./migrationInterfaces";
 import { Migrator } from "./migrator";
-import { InventoryListContainer as InventoryListContainer1 } from "./modelVersion1";
-import { InventoryListContainer as InventoryListContainer2 } from "./modelVersion2";
-import { DebugView, InventoryListContainerView } from "./view";
+import { IInventoryListContainer } from "./modelInterfaces";
 import { TinyliciousService } from "./tinyliciousService";
+import { DebugView, InventoryListContainerView } from "./view";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -25,12 +24,8 @@ const updateTabForId = (id: string) => {
     document.title = id;
 };
 
-const isInventoryListContainer1 = (model: IVersionedModel): model is InventoryListContainer1 => {
-    return model.version === "one";
-};
-
-const isInventoryListContainer2 = (model: IVersionedModel): model is InventoryListContainer2 => {
-    return model.version === "two";
+const isIInventoryListContainer = (model: IVersionedModel): model is IInventoryListContainer => {
+    return model.version === "one" || model.version === "two";
 };
 
 const getUrlForContainerId = (containerId: string) => `/#${containerId}`;
@@ -41,7 +36,7 @@ const render = (model: IVersionedModel) => {
     // This demo uses the same view for both versions 1 & 2 - if we wanted to use different views for different model
     // versions, we could check its version here and select the appropriate view.  Or we could even write ourselves a
     // view code loader to pull in the view dynamically based on the version we discover.
-    if (isInventoryListContainer1(model) || isInventoryListContainer2(model)) {
+    if (isIInventoryListContainer(model)) {
         ReactDOM.render(
             React.createElement(InventoryListContainerView, { model }),
             appDiv,
@@ -73,7 +68,6 @@ async function start(): Promise<void> {
         urlResolver: tinyliciousService.urlResolver,
         documentServiceFactory: tinyliciousService.documentServiceFactory,
         codeLoader: new DemoCodeLoader(),
-        modelCodeLoader: new DemoModelCodeLoader(),
         generateCreateNewRequest: createTinyliciousCreateNewRequest,
     });
 

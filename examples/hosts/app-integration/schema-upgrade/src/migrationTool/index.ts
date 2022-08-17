@@ -3,10 +3,5 @@
  * Licensed under the MIT License.
  */
 
-'use strict';
-
-const config = {
-	require: ['@fluidframework/mocha-test-setup'],
-};
-
-module.exports = config;
+export * from "./migrationTool";
+export * from "./interfaces";

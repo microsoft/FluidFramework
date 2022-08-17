@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { toDelta } from "../../changeset";
 import { ChangeRebaser } from "../../rebase";
 import { AnchorSet } from "../../tree";
 import { SequenceChangeset } from "./sequenceChangeset";
 
-export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset, SequenceChangeset, SequenceChangeset>;
+export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset>;
 
-function compose(...changes: SequenceChangeset[]): SequenceChangeset {
+function compose(changes: SequenceChangeset[]): SequenceChangeset {
     throw Error("Not implemented"); // TODO
 }
 
@@ -21,14 +22,8 @@ function rebase(change: SequenceChangeset, over: SequenceChangeset): SequenceCha
     throw Error("Not implemented"); // TODO
 }
 
-function rebaseAnchors(anchor: AnchorSet, over: SequenceChangeset): void {}
-
-function importChange(change: SequenceChangeset): SequenceChangeset {
-    return change;
-}
-
-function exportChange(change: SequenceChangeset): SequenceChangeset {
-    return change;
+function rebaseAnchors(anchors: AnchorSet, over: SequenceChangeset): void {
+    anchors.applyDelta(toDelta(over));
 }
 
 export const sequenceChangeRebaser: SequenceChangeRebaser = {
@@ -36,6 +31,4 @@ export const sequenceChangeRebaser: SequenceChangeRebaser = {
     invert,
     rebase,
     rebaseAnchors,
-    import: importChange,
-    export: exportChange,
 };

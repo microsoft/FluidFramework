@@ -3,15 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { exec, MonoRepo, Package, VersionBag } from "@fluidframework/build-tools";
-import {
-    adjustVersion,
-    incRange,
-    isVersionBumpType,
-    isVersionBumpTypeExtended,
-    VersionChangeType,
-    VersionScheme,
-} from "@fluid-tools/version-tools";
+import { MonoRepo, Package, VersionBag } from "@fluidframework/build-tools";
+import { incRange, isVersionBumpTypeExtended } from "@fluid-tools/version-tools";
 import * as semver from "semver";
 
 /** A mapping of {@link Package} to a version range string or a bump type. This interface is used for convenience. */

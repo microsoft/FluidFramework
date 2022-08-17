@@ -22,7 +22,7 @@ import { brand } from "../../util";
 
 // Allow importing specific example files:
 /* eslint-disable-next-line import/no-internal-modules */
-import { codePoint, string } from "./examples/SchemaExamples";
+import { codePoint, string } from "./examples/schemaExamples";
 
 class ViewSchemaRepository extends StoredSchemaRepository {
 	public clone(): ViewSchemaRepository {

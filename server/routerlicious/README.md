@@ -39,7 +39,7 @@ below steps if you'd like to run a local version of the service or need to make 
 
 #### For Development
 
-* [Node v12.x](https://nodejs.org/en/) (v12.17 or above is required)
+* [Node v14.x](https://nodejs.org/en/)
 * [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
     * (Notes for Windows users, **not** using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)):
         * The easiest way to install the dependencies is with windows-build-tools: `npm install --global --production windows-build-tools`

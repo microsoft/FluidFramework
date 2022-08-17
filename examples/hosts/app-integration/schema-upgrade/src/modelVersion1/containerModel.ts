@@ -4,34 +4,22 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { AttachState, IContainer } from "@fluidframework/container-definitions";
 
 import { MigrationState } from "../migrationInterfaces";
 import type {
-    IContainerKillBit,
-} from "../containerKillBit";
+    IMigrationTool,
+} from "../migrationTool";
 import type {
     IInventoryListContainer,
     IInventoryListContainerEvents,
     IInventoryList,
 } from "../modelInterfaces";
-import { containerKillBitId } from "./containerCode";
 
-async function getInventoryListFromContainer(container: IContainer): Promise<IInventoryList> {
-    // Our inventory list is available at the URL "/".
-    return requestFluidObject<IInventoryList>(container, { url: "/" });
-}
-
-async function getContainerKillBitFromContainer(container: IContainer): Promise<IContainerKillBit> {
-    // Our kill bit is available at the URL containerKillBitId.
-    return requestFluidObject<IContainerKillBit>(container, { url: containerKillBitId });
-}
-
-const getStateFromKillBit = (containerKillBit: IContainerKillBit) => {
-    if (containerKillBit.migrated) {
+const getStateFromMigrationTool = (migrationTool: IMigrationTool) => {
+    if (migrationTool.migrated) {
         return MigrationState.migrated;
-    } else if (containerKillBit.codeDetailsAccepted) {
+    } else if (migrationTool.acceptedVersion !== undefined) {
         return MigrationState.migrating;
     } else {
         return MigrationState.collaborating;
@@ -80,37 +68,22 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         return this._migrationState;
     }
 
-    private _inventoryList: IInventoryList | undefined;
+    private readonly _inventoryList: IInventoryList;
     public get inventoryList() {
-        if (this._inventoryList === undefined) {
-            throw new Error("Initialize InventoryListContainer before using");
-        }
         return this._inventoryList;
     }
 
-    private _containerKillBit: IContainerKillBit | undefined;
-    private get containerKillBit() {
-        if (this._containerKillBit === undefined) {
-            throw new Error("Initialize InventoryListContainer before using");
-        }
-        return this._containerKillBit;
-    }
-
-    public constructor(private readonly container: IContainer) {
+    public constructor(
+        inventoryList: IInventoryList,
+        private readonly migrationTool: IMigrationTool,
+        private readonly container: IContainer,
+    ) {
         super();
+        this._inventoryList = inventoryList;
+        this._migrationState = getStateFromMigrationTool(this.migrationTool);
+        this.migrationTool.on("newVersionAccepted", this.onNewVersionAccepted);
+        this.migrationTool.on("migrated", this.onMigrated);
     }
-
-    /**
-     * Initialize must be called after constructing the InventoryListContainer.  This is where we do whatever async
-     * stuff is needed to prepare a sync API surface on the InventoryListContainer.
-     */
-    public readonly initialize = async () => {
-        this._inventoryList = await getInventoryListFromContainer(this.container);
-        this._containerKillBit = await getContainerKillBitFromContainer(this.container);
-        this._migrationState = getStateFromKillBit(this._containerKillBit);
-        this.containerKillBit.on("codeDetailsAccepted", this.onCodeDetailsAccepted);
-        this.containerKillBit.on("migrated", this.onMigrated);
-    };
 
     public readonly supportsDataFormat = (initialData: unknown): initialData is InventoryListContainerExportType => {
         if (typeof initialData !== "string") {
@@ -136,7 +109,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         await applyStringData(this.inventoryList, initialData);
     };
 
-    private readonly onCodeDetailsAccepted = () => {
+    private readonly onNewVersionAccepted = () => {
         this._migrationState = MigrationState.migrating;
         this.emit("migrating");
     };
@@ -151,30 +124,26 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     };
 
     public get acceptedVersion() {
-        const version = this.containerKillBit.acceptedCodeDetails?.package;
+        const version = this.migrationTool.acceptedVersion;
         if (typeof version !== "string" && version !== undefined) {
             throw new Error("Unexpected code detail format");
         }
         return version;
     }
 
-    public readonly proposeCodeDetails = (codeDetails: IFluidCodeDetails) => {
-        this.containerKillBit.proposeCodeDetails(codeDetails).catch(console.error);
-    };
-
-    public readonly proposeVersion = (version: string) => {
-        this.containerKillBit.proposeCodeDetails({ package: version }).catch(console.error);
+    public readonly proposeVersion = (newVersion: string) => {
+        this.migrationTool.proposeVersion(newVersion).catch(console.error);
     };
 
     public get newContainerId() {
-        return this.containerKillBit.newContainerId;
+        return this.migrationTool.newContainerId;
     }
 
     public readonly finalizeMigration = async (newContainerId: string) => {
         if (this.newContainerId !== undefined) {
             throw new Error("The migration has already been finalized.");
         }
-        return this.containerKillBit.setNewContainerId(newContainerId);
+        return this.migrationTool.setNewContainerId(newContainerId);
     };
 
     public close() {
