@@ -99,7 +99,6 @@ The vast majority of these options have default values that have been crafted to
 
 ### TODOs before merging PR:
 
--   Include item itself in breadcrumb
 -   Better constructor heading rendering
 -   Fix links to the same file (only need heading component, not file path)
 
