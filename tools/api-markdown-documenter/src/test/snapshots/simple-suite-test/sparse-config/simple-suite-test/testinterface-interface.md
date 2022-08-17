@@ -19,6 +19,7 @@ export interface TestInterface
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](docs/simple-suite-test/testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
 |  [testInterfaceProperty](docs/simple-suite-test/testinterface-testinterfaceproperty-propertysignature) |  | number | Test interface property |
+|  [testOptionalInterfaceProperty](docs/simple-suite-test/testinterface-testoptionalinterfaceproperty-propertysignature) | optional | number | Test optional property |
 
 ## Call Signatures
 

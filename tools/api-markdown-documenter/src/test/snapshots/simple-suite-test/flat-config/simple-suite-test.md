@@ -72,7 +72,7 @@ const foo = bar;
 
 |  Function | Return Type | Description |
 |  --- | --- | --- |
-|  [testFunction(testParameter)](docs/simple-suite-test#testfunction-function) | TTypeParameter | Test function |
+|  [testFunction(testParameter, testOptionalParameter)](docs/simple-suite-test#testfunction-function) | TTypeParameter | Test function |
 |  [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-function) | { foo: number; bar: [TestEnum](docs/simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
 |  [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
 |  [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-function) | string \| [TestInterface](docs/simple-suite-test#testinterface-interface) | Test function that returns an inline type |
@@ -121,6 +121,7 @@ export interface TestInterface
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](docs/simple-suite-test#testinterface-testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
 |  [testInterfaceProperty](docs/simple-suite-test#testinterface-testinterfaceproperty-propertysignature) |  | number | Test interface property |
+|  [testOptionalInterfaceProperty](docs/simple-suite-test#testinterface-testoptionalinterfaceproperty-propertysignature) | optional | number | Test optional property |
 
 #### Call Signatures
 
@@ -163,6 +164,16 @@ Here are some remarks about the property
 
 ```typescript
 testInterfaceProperty: number;
+```
+
+##### testOptionalInterfaceProperty {#testinterface-testoptionalinterfaceproperty-propertysignature}
+
+Test optional property
+
+###### Signature {#testoptionalinterfaceproperty-signature}
+
+```typescript
+testOptionalInterfaceProperty?: number;
 ```
 
 #### Call Signature Details
@@ -912,14 +923,15 @@ This is a test [link](docs/simple-suite-test#testinterface-interface) to another
 #### Signature {#testfunction-signature}
 
 ```typescript
-export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter): TTypeParameter;
+export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
 
 #### Parameters {#testfunction-parameters}
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  testParameter | TTypeParameter | A test parameter |
+|  Parameter | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  testParameter |  | TTypeParameter | A test parameter |
+|  testOptionalParameter | optional | TTypeParameter |  |
 
 ### testFunctionReturningInlineType {#testfunctionreturninginlinetype-function}
 

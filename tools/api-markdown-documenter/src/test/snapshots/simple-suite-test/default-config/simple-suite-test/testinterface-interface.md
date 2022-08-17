@@ -21,6 +21,7 @@ export interface TestInterface
 |  --- | --- | --- | --- |
 |  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | readonly | () =&gt; void | Test interface event property |
 |  [testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature) |  | number | Test interface property |
+|  [testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature) | optional | number | Test optional property |
 
 ## Call Signatures
 
@@ -63,6 +64,16 @@ Here are some remarks about the property
 
 ```typescript
 testInterfaceProperty: number;
+```
+
+### testOptionalInterfaceProperty {#testoptionalinterfaceproperty-propertysignature}
+
+Test optional property
+
+#### Signature {#testoptionalinterfaceproperty-signature}
+
+```typescript
+testOptionalInterfaceProperty?: number;
 ```
 
 ## Call Signature Details
