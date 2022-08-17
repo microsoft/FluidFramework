@@ -18,13 +18,9 @@ They are not presented in any particular order.
 - [Github Wiki](https://github.com/microsoft/FluidFramework/wiki)
   - This is the contributor-facing wiki for the [fluid-framework](https://github.com/microsoft/FluidFramework) repository.
   - It primarily contains documentation relevant to the open-source community, including contribution guidelines.
-- (Microsoft Internal) [EngHub Wiki](https://eng.ms/docs/experiences-devices/oxo/office-shared/wacbohemia/fluid-framework-platform-internal/ff-platform-docs/docs/overview)
-  - This is our Microsoft-internal only wiki.
-    It is used to house documentation that is confidential or irrelevant to our open-source community.
 - Source-code documentation
   - In addition to the above, our source-code is also a vital component to our overall documentation story.
   - A tailored selection of our generated API documentation can be found on `fluidframework.com` [here](https://fluidframework.com/docs/apis/).
-  - (Microsoft Internal) The complete suite of our generated API documentation can also be found on our `EngHub` wiki [here](https://eng.ms/docs/experiences-devices/oxo/office-shared/wacbohemia/fluid-framework-platform-internal/ff-platform-docs/docs/apis/main).
 
 ## Where should I put new documentation?
 
@@ -33,21 +29,12 @@ Nor does it help us determine where new documentation should be created.
 
 When adding new documentation, please consider the following:
 
-### Microsoft-confidential documentation
+### Microsoft-internal documentation
 
-Internal / confidential documentation **_must_** be published to a secure location.
-If you have any questions about this, please refer to [Microsoft's privacy policy (Microsoft internal)](https://microsoft.sharepoint.com/sites/privacy).
+For our Microsoft contributors, remember that internal / confidential documentation **_must_** be published to a secure location.
+If you have any questions about this, please refer to policy outlined on our `EngHub Wiki`.
 
-Generally, if such documentation is useful to the larger Fluid team, we recommend publishing it to our `EngHub Wiki`.
-
-### Team process / policy documentation
-
-Generally speaking, Fluid team-specific policy and process documentation is not relevant to our open source community.
-For this reason, we generally recommend putting such documentation on the `EngHub Wiki`.
-
-This includes things like our release-process, meeting notes, etc.
-
-That said, if there is a compelling reason to make this sort of information more public, and so long as it does not include internal / confidential information, it is also fine to put that information on the `Github Wiki`.
+Additionally, documentation like Microsoft team processes and policies should generally be published to an internal location like our `EngHub Wiki`, unless it is relevant to our open-source community.
 
 ### API-specific documentation
 
