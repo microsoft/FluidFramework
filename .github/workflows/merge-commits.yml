@@ -127,8 +127,10 @@ jobs:
               > - Acknowledge the pull request by adding a comment -- "Actively working on it".
               > - Resolve any merge conflicts between this branch and next (and push the resolution to this branch). Merge next into this branch if needed. **Do NOT rebase or squash this branch: its history must be preserved**.
               > - Ensure CI is passing for this PR, fixing any issues. Please don't look into resolving **Real service e2e test** and **Stress test** failures as they are **non-required** CI failures.
+              > - Once the PR is ready for merge, please add a comment @mentioning the reviewers to get this PR merged in. Thank you!!
 
-              For more information about how to resolve merge conflicts and CI failures, visit [this wiki page](https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation).`;
+              For more information about how to resolve merge conflicts and CI failures, visit [this wiki page]
+              (https://github.com/microsoft/FluidFramework/wiki/Main-next-Automation).`;
             const octokit = new Octokit({ auth: token })
             const newPr = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
               owner: 'microsoft',
