@@ -37,7 +37,6 @@ import {
     getAncestralHierarchy,
     getHeadingForApiItem,
     getLinkForApiItem,
-    getLinkUrlForApiItem,
     getQualifiedApiItemName,
     mergeSections,
 } from "../../utilities";
@@ -286,12 +285,14 @@ export function renderExcerptWithHyperlinks(
 
             if (apiItemResult.resolvedApiItem) {
                 docNodes.push(
-                    new DocLinkTag({
-                        configuration: config.tsdocConfiguration,
-                        tagName: "@link",
-                        linkText: unwrappedTokenText,
-                        urlDestination: getLinkUrlForApiItem(apiItemResult.resolvedApiItem, config),
-                    }),
+                    renderLink(
+                        getLinkForApiItem(
+                            apiItemResult.resolvedApiItem,
+                            config,
+                            unwrappedTokenText,
+                        ),
+                        config,
+                    ),
                 );
                 wroteHyperlink = true;
             }
@@ -333,16 +334,6 @@ export function renderBreadcrumb(
         doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries),
     ).reverse(); // Reverse from ascending to descending order
 
-    function createLinkTag(link: Link): DocLinkTag {
-        const linkUrl = urlFromLink(link);
-        return new DocLinkTag({
-            configuration: config.tsdocConfiguration,
-            tagName: "@link",
-            linkText: link.text,
-            urlDestination: linkUrl,
-        });
-    }
-
     const separator = new DocPlainText({
         configuration: config.tsdocConfiguration,
         text: " > ",
@@ -356,7 +347,7 @@ export function renderBreadcrumb(
         }
 
         const link = getLinkForApiItem(hierarchyItem, config);
-        docNodes.push(createLinkTag(link));
+        docNodes.push(renderLink(link, config));
 
         writtenAnythingYet = true;
     }
@@ -366,7 +357,7 @@ export function renderBreadcrumb(
         docNodes.push(separator);
     }
     const link = getLinkForApiItem(apiItem, config);
-    docNodes.push(createLinkTag(link));
+    docNodes.push(renderLink(link, config));
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
         new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes),
@@ -717,4 +708,21 @@ export function renderChildrenUnderHeading(
         ),
         mergeSections(childSections, config.tsdocConfiguration),
     ]);
+}
+
+/**
+ * Renders a Link tag for the provided link.
+ * @param link - The link to render.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderLink(
+    link: Link,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocLinkTag {
+    return new DocLinkTag({
+        configuration: config.tsdocConfiguration,
+        tagName: "@link",
+        linkText: link.text,
+        urlDestination: urlFromLink(link),
+    });
 }

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
-import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
     ApiDocumentedItem,
     ApiItem,
@@ -16,17 +15,12 @@ import {
     Parameter,
     ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { DocLinkTag, DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
+import { DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
-import {
-    ApiFunctionLike,
-    getLinkUrlForApiItem,
-    getModifiers,
-    mergeSections,
-} from "../../utilities";
-import { renderExcerptWithHyperlinks, renderHeading } from "./RenderingHelpers";
+import { ApiFunctionLike, getLinkForApiItem, getModifiers, mergeSections } from "../../utilities";
+import { renderExcerptWithHyperlinks, renderHeading, renderLink } from "./RenderingHelpers";
 
 /**
  * Input properties for rendering a table of API members
@@ -451,14 +445,10 @@ export function renderApiTitleCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
+    const itemLink = getLinkForApiItem(apiItem, config);
     return new DocTableCell({ configuration: config.tsdocConfiguration }, [
         new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            new DocLinkTag({
-                configuration: config.tsdocConfiguration,
-                tagName: "@link",
-                linkText: Utilities.getConciseSignature(apiItem),
-                urlDestination: getLinkUrlForApiItem(apiItem, config),
-            }),
+            renderLink(itemLink, config),
         ]),
     ]);
 }

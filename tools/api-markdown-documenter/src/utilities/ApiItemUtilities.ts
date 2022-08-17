@@ -122,12 +122,14 @@ export function getFirstAncestorWithOwnDocument(
  *
  * @param apiItem - The API item for which we are generating the link.
  * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param textOverride - Text to use in the link. If not provided, the default item name/signature will be used.
  */
 export function getLinkForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
+    textOverride?: string,
 ): Link {
-    const text = apiItem.displayName;
+    const text = textOverride ?? Utilities.getConciseSignature(apiItem);
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
     const documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
     const headingId = getHeadingIdForApiItem(apiItem, config);

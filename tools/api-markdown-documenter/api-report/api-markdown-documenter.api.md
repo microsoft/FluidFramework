@@ -197,7 +197,7 @@ export function getHeadingForApiItem(apiItem: ApiItem, config: Required<Markdown
 export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string | undefined;
 
 // @public
-export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): Link;
+export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, textOverride?: string): Link;
 
 // @public
 export function getLinkUrlForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
@@ -405,6 +405,7 @@ declare namespace RenderingHelpers {
         renderParametersSection,
         renderChildDetailsSection,
         renderChildrenUnderHeading,
+        renderLink,
         DocExampleProperties,
         ChildSectionProperties,
         renderMemberTables,
@@ -455,6 +456,9 @@ function renderInterfaceSection(apiInterface: ApiInterface, config: Required<Mar
 
 // @public
 function renderItemWithoutChildren(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+
+// @public
+function renderLink(link: Link, config: Required<MarkdownDocumenterConfiguration>): DocLinkTag;
 
 // @public
 function renderMemberTables(memberTableProperties: readonly MemberTableProperties[], config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
