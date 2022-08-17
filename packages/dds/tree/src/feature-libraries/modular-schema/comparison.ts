@@ -44,11 +44,11 @@ export function allowsTreeSuperset(
         return false;
     }
     if (
-        !compareSets(
-            original.globalFields,
-            superset.globalFields,
+        !compareSets({
+            a: original.globalFields,
+            b: superset.globalFields,
             // true iff the original field must always be empty, or superset supports extra global fields.
-            (originalField) =>
+            aExtra: (originalField) =>
                 superset.extraGlobalFields ||
                 allowsFieldSuperset(
                     policy,
@@ -57,43 +57,43 @@ export function allowsTreeSuperset(
                     policy.defaultGlobalFieldSchema,
                 ),
             // true iff the new field can be empty, since it may be empty in original
-            (supersetField) =>
+           bExtra: (supersetField) =>
                 allowsFieldSuperset(
                     policy,
                     originalData,
                     policy.defaultGlobalFieldSchema,
                     originalData.globalFieldSchema.get(supersetField) ?? policy.defaultGlobalFieldSchema,
                 ),
-        )
+        })
     ) {
         return false;
     }
 
     if (
-        !compareSets(
-            original.localFields,
-            superset.localFields,
-            (originalField) =>
+        !compareSets({
+            a: original.localFields,
+            b: superset.localFields,
+            aExtra: (originalField) =>
                 allowsFieldSuperset(
                     policy,
                     originalData,
                     original.localFields.get(originalField) ?? fail("missing expected field"),
                     superset.extraLocalFields,
                 ),
-            (supersetField) =>
+            bExtra: (supersetField) =>
                 allowsFieldSuperset(
                     policy,
                     originalData,
                     original.extraLocalFields,
                     superset.localFields.get(supersetField) ?? fail("missing expected field"),
                 ),
-            (sameField) => allowsFieldSuperset(
+            same: (sameField) => allowsFieldSuperset(
                 policy,
                     originalData,
                 original.localFields.get(sameField) ?? fail("missing expected field"),
                 superset.localFields.get(sameField) ?? fail("missing expected field"),
             ),
-        )
+        })
     ) {
         return false;
     }
