@@ -289,7 +289,6 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             writer.write(`${listSymbol} `);
             this.writeNode(docList.nodes[i], context, docList.nodes.length !== 1);
             writer.ensureNewLine();
-            writer.writeLine();
         }
     }
 

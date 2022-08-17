@@ -277,7 +277,6 @@ export interface TestInterfaceWithTypeParameter<T>
 * <b>T</b>: A type parameter
 
 
-
 #### Properties
 
 |  Property | Modifiers | Type | Description |
@@ -429,9 +428,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 * <b>TTypeParameterA</b>: A type parameter
 
 
-
 * <b>TTypeParameterB</b>: Another type parameter
-
 
 
 #### Constructors

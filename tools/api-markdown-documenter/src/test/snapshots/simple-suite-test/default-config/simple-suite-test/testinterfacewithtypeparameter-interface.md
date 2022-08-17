@@ -19,7 +19,6 @@ export interface TestInterfaceWithTypeParameter<T>
 * <b>T</b>: A type parameter
 
 
-
 ## Properties
 
 |  Property | Modifiers | Type | Description |

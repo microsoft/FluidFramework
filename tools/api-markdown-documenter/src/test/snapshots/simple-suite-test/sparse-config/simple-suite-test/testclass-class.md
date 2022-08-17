@@ -20,9 +20,7 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 * <b>TTypeParameterA</b>: A type parameter
 
 
-
 * <b>TTypeParameterB</b>: Another type parameter
-
 
 
 ## Constructors
