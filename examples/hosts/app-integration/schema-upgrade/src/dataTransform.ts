@@ -90,7 +90,7 @@ function transformToTwo(stringData: string) {
  * In this example, we can transform back and forth between versions one and two for demo purposes.  This way the
  * example can show migration multiple times.  However, in production scenarios it is not required to permit
  * backwards transformation -- more likely you'll want to take a daisy-chaining approach to convert data forwards
- * (1->2, 2->3, 3->4, etc.).  This way only one new transform function needs to be produced and tested for each new
+ * (1-\>2, 2-\>3, 3-\>4, etc.).  This way only one new transform function needs to be produced and tested for each new
  * format used.
  */
 export const inventoryListDataTransformationCallback: DataTransformationCallback = async (
