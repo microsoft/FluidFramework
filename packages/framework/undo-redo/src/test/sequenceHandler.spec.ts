@@ -46,135 +46,208 @@ describe("SharedSegmentSequenceUndoRedoHandler", () => {
     let sharedString: SharedString;
     let undoRedoStack: UndoRedoStackManager;
 
-    beforeEach(() => {
-        const dataStoreRuntime = new MockFluidDataStoreRuntime();
+    describe("In a local state", () => {
+        beforeEach(() => {
+            const dataStoreRuntime = new MockFluidDataStoreRuntime();
 
-        containerRuntimeFactory = new MockContainerRuntimeFactory();
-        const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-        const services = {
-            deltaConnection: containerRuntime.createDeltaConnection(),
-            objectStorage: new MockStorage(undefined),
-        };
+            containerRuntimeFactory = new MockContainerRuntimeFactory();
+            const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+            const services = {
+                deltaConnection: containerRuntime.createDeltaConnection(),
+                objectStorage: new MockStorage(undefined),
+            };
 
-        sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
-        sharedString.initializeLocal();
-        sharedString.bindToContext();
-        sharedString.connect(services);
+            sharedString = new SharedString(dataStoreRuntime, documentId, SharedStringFactory.Attributes);
+            sharedString.initializeLocal();
+            sharedString.bindToContext();
+            sharedString.connect(services);
 
-        undoRedoStack = new UndoRedoStackManager();
+            undoRedoStack = new UndoRedoStackManager();
+        });
+
+        it("Undo and Redo Delete", () => {
+            insertTextAsChunks(sharedString);
+            const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
+            handler.attachSequence(sharedString);
+
+            deleteTextByChunk(sharedString);
+
+            assert.equal(sharedString.getText(), "");
+
+            while (undoRedoStack.undoOperation()) { }
+
+            assert.equal(sharedString.getText(), text);
+
+            while (undoRedoStack.redoOperation()) { }
+
+            assert.equal(sharedString.getText(), "");
+        });
+
+        it("Undo and Redo Insert", () => {
+            const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
+            handler.attachSequence(sharedString);
+            insertTextAsChunks(sharedString);
+
+            assert.equal(sharedString.getText(), text);
+
+            while (undoRedoStack.undoOperation()) { }
+
+            assert.equal(sharedString.getText(), "");
+
+            while (undoRedoStack.redoOperation()) { }
+
+            assert.equal(sharedString.getText(), text);
+        });
+
+        it("Undo and Redo Insert & Delete", () => {
+            const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
+            handler.attachSequence(sharedString);
+            for (let i = 1; i < text.length; i *= 2) {
+                insertTextAsChunks(sharedString, text.length - i);
+                deleteTextByChunk(sharedString, i);
+            }
+            const finalText = sharedString.getText();
+
+            assert.equal(sharedString.getText(), finalText);
+
+            while (undoRedoStack.undoOperation()) { }
+
+            assert.equal(sharedString.getText(), "");
+
+            while (undoRedoStack.redoOperation()) { }
+
+            assert.equal(sharedString.getText(), finalText, sharedString.getText());
+        });
+
+        it("Undo and redo insert of split segment", () => {
+            const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
+            handler.attachSequence(sharedString);
+
+            // insert all text as a single segment
+            sharedString.insertText(0, text);
+
+            containerRuntimeFactory.processAllMessages();
+
+            // this will split that into three segment
+            sharedString.walkSegments(
+                () => true,
+                20,
+                30,
+                undefined,
+                true);
+
+            assert.equal(sharedString.getText(), text);
+
+            // undo and redo split insert
+            undoRedoStack.undoOperation();
+            undoRedoStack.redoOperation();
+
+            assert.equal(sharedString.getText(), text);
+        });
+
+        it("Intervals endpoints are slid back to original position", () => {
+            const assertIntervalMatches = (
+                intervalActual: SequenceInterval,
+                expected: { start: number; end: number; },
+            ): void => {
+                assert.equal(
+                    sharedString.localReferencePositionToPosition(intervalActual.start),
+                    expected.start,
+                    "Start mismatch",
+                );
+                assert.equal(
+                    sharedString.localReferencePositionToPosition(intervalActual.end),
+                    expected.end,
+                    "End mismatch",
+                );
+            };
+
+            sharedString.insertText(0, text);
+            const collection = sharedString.getIntervalCollection("test");
+            const interval = collection.add(10, 20, IntervalType.SlideOnRemove);
+
+            const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
+            handler.attachSequence(sharedString);
+
+            sharedString.removeRange(5, 15);
+            assertIntervalMatches(interval, { start: 5, end: 10 });
+
+            while (undoRedoStack.undoOperation()) { }
+
+            const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
+            const postUndoInterval = collection.getIntervalById(id);
+            assertIntervalMatches(postUndoInterval, { start: 10, end: 20 });
+        });
     });
 
-    it("Undo and Redo Delete", () => {
-        insertTextAsChunks(sharedString);
-        const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
-        handler.attachSequence(sharedString);
+    describe("With concurrent remote edits", () => {
+        let sharedString2: SharedString;
 
-        deleteTextByChunk(sharedString);
+        beforeEach(() => {
+            containerRuntimeFactory = new MockContainerRuntimeFactory();
 
-        assert.equal(sharedString.getText(), "");
+            // Connect the first SharedString.
+            const dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
+            const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+            const services1 = {
+                deltaConnection: containerRuntime1.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
+            sharedString = new SharedString(dataStoreRuntime1, "shared-string-1", SharedStringFactory.Attributes);
+            sharedString.initializeLocal();
+            sharedString.connect(services1);
 
-        while (undoRedoStack.undoOperation()) { }
+            // Create and connect a second SharedString.
+            const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
+            const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+            const services2 = {
+                deltaConnection: containerRuntime2.createDeltaConnection(),
+                objectStorage: new MockStorage(),
+            };
 
-        assert.equal(sharedString.getText(), text);
+            sharedString2 = new SharedString(dataStoreRuntime2, "shared-string-2", SharedStringFactory.Attributes);
+            sharedString2.initializeLocal();
+            sharedString2.connect(services2);
 
-        while (undoRedoStack.redoOperation()) { }
+            undoRedoStack = new UndoRedoStackManager();
+        });
 
-        assert.equal(sharedString.getText(), "");
-    });
+        it("Intervals endpoints are slid back to original position", () => {
+            const assertIntervalMatches = (
+                intervalActual: SequenceInterval,
+                expected: { start: number; end: number; },
+            ): void => {
+                assert.equal(
+                    sharedString.localReferencePositionToPosition(intervalActual.start),
+                    expected.start,
+                    "Start mismatch",
+                );
+                assert.equal(
+                    sharedString.localReferencePositionToPosition(intervalActual.end),
+                    expected.end,
+                    "End mismatch",
+                );
+            };
 
-    it("Undo and Redo Insert", () => {
-        const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
-        handler.attachSequence(sharedString);
-        insertTextAsChunks(sharedString);
+            sharedString.insertText(0, text);
+            const collection = sharedString.getIntervalCollection("test");
+            const interval = collection.add(10, 20, IntervalType.SlideOnRemove);
+            containerRuntimeFactory.processAllMessages();
 
-        assert.equal(sharedString.getText(), text);
+            const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
+            handler.attachSequence(sharedString);
 
-        while (undoRedoStack.undoOperation()) { }
+            sharedString.removeRange(5, 15);
+            sharedString2.annotateRange(8, 16, { foo: "bar" });
+            assertIntervalMatches(interval, { start: 5, end: 10 });
 
-        assert.equal(sharedString.getText(), "");
+            containerRuntimeFactory.processAllMessages();
 
-        while (undoRedoStack.redoOperation()) { }
+            while (undoRedoStack.undoOperation()) { }
 
-        assert.equal(sharedString.getText(), text);
-    });
-
-    it("Undo and Redo Insert & Delete", () => {
-        const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
-        handler.attachSequence(sharedString);
-        for (let i = 1; i < text.length; i *= 2) {
-            insertTextAsChunks(sharedString, text.length - i);
-            deleteTextByChunk(sharedString, i);
-        }
-        const finalText = sharedString.getText();
-
-        assert.equal(sharedString.getText(), finalText);
-
-        while (undoRedoStack.undoOperation()) { }
-
-        assert.equal(sharedString.getText(), "");
-
-        while (undoRedoStack.redoOperation()) { }
-
-        assert.equal(sharedString.getText(), finalText, sharedString.getText());
-    });
-
-    it("Undo and redo insert of split segment", () => {
-        const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
-        handler.attachSequence(sharedString);
-
-        // insert all text as a single segment
-        sharedString.insertText(0, text);
-
-        containerRuntimeFactory.processAllMessages();
-
-        // this will split that into three segment
-        sharedString.walkSegments(
-            () => true,
-            20,
-            30,
-            undefined,
-            true);
-
-        assert.equal(sharedString.getText(), text);
-
-        // undo and redo split insert
-        undoRedoStack.undoOperation();
-        undoRedoStack.redoOperation();
-
-        assert.equal(sharedString.getText(), text);
-    });
-
-    it("Intervals endpoints are slid back to original position", () => {
-        const assertIntervalMatches = (
-            intervalActual: SequenceInterval,
-            expected: { start: number; end: number; },
-        ): void => {
-            assert.equal(
-                sharedString.localReferencePositionToPosition(intervalActual.start),
-                expected.start,
-                "Start mismatch",
-            );
-            assert.equal(
-                sharedString.localReferencePositionToPosition(intervalActual.end),
-                expected.end,
-                "End mismatch",
-            );
-        };
-
-        sharedString.insertText(0, text);
-        const collection = sharedString.getIntervalCollection("test");
-        const interval = collection.add(10, 20, IntervalType.SlideOnRemove);
-
-        const handler = new SharedSegmentSequenceUndoRedoHandler(undoRedoStack);
-        handler.attachSequence(sharedString);
-
-        sharedString.removeRange(5, 15);
-        assertIntervalMatches(interval, { start: 5, end: 10 });
-
-        while (undoRedoStack.undoOperation()) { }
-
-        const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
-        const postUndoInterval = collection.getIntervalById(id);
-        assertIntervalMatches(postUndoInterval, { start: 10, end: 20 });
+            const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
+            const postUndoInterval = collection.getIntervalById(id);
+            assertIntervalMatches(postUndoInterval, { start: 10, end: 20 });
+        });
     });
 });

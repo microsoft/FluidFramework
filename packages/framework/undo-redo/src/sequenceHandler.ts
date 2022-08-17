@@ -77,7 +77,6 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
                 if (current !== undefined
                     && current.operation === event.deltaOperation
                     && matchProperties(current.propertyDelta, range.propertyDeltas)) {
-                        // TODO: Figure out if this case applies for removed segs
                     current.trackingGroup.link(range.segment);
                 } else {
                     const tg = new TrackingGroup();
