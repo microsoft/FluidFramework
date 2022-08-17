@@ -75,13 +75,13 @@ export class ReplayRuntimeFactory extends RuntimeFactoryHelper {
 // factories are unavailable to us. they will be excluded
 // from comparison
 export const excludeChannelContentDdsFactories: IChannelFactory[] = [
-    SharedMatrix.getFactory(),
     SharedSummaryBlock.getFactory(),
     new UnknownChannelFactory("https://graph.microsoft.com/types/SharedArray"),
     new UnknownChannelFactory("https://graph.microsoft.com/types/signal"),
 ];
 const allDdsFactories: IChannelFactory[] = [
     ... excludeChannelContentDdsFactories,
+    SharedMatrix.getFactory(),
     SharedMap.getFactory(),
     SharedString.getFactory(),
     Ink.getFactory(),

@@ -121,6 +121,10 @@ export class TextSegment extends BaseSegment {
 }
 
 export interface IMergeTreeTextHelper{
+    /**
+     * @deprecated - If consuming via sequence, use `getTextAndMarkers` exported from \@fluidframework/sequence.
+     * Otherwise, define your own accumulation model and use `Client.walkSegments`.
+     */
     getTextAndMarkers(refSeq: number, clientId: number, label: string, start?: number, end?: number): {
         parallelText: string[];
         parallelMarkers: Marker[]; };
