@@ -52,6 +52,7 @@ const foo = bar;
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
+|  [TestAbstractClass](./simple-suite-test/testabstractclass-class) |  | A test abstract class. |
 |  [TestClass](./simple-suite-test/testclass-class) |  | Test class |
 
 ## Namespaces
@@ -156,6 +157,9 @@ export declare function testFunctionReturningInlineType(): {
 ```
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
+
+> This is a test deprecation notice. Here is a [link](./simple-suite-test#testfunctionreturninguniontype-function) to something else!
+> 
 
 Test function that returns an inline type
 

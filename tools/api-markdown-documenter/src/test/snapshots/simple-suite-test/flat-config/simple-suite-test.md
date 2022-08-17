@@ -52,6 +52,7 @@ const foo = bar;
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
+|  [TestAbstractClass](docs/simple-suite-test#testabstractclass-class) |  | A test abstract class. |
 |  [TestClass](docs/simple-suite-test#testclass-class) |  | Test class |
 
 ## Namespaces
@@ -301,6 +302,112 @@ testProperty: T;
 
 ## Classe Details
 
+### TestAbstractClass {#testabstractclass-class}
+
+A test abstract class.
+
+#### Signature {#testabstractclass-signature}
+
+```typescript
+export declare abstract class TestAbstractClass 
+```
+
+#### Constructors
+
+|  Constructor | Modifiers | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test#testabstractclass-_constructor_-constructor) |  |  | This is a constructor. |
+
+#### Properties
+
+|  Property | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  [abstractPropertyGetter](docs/simple-suite-test#testabstractclass-abstractpropertygetter-property) |  | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
+|  [protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property) |  | [TestEnum](docs/simple-suite-test#testenum-enum) | A test protected property. |
+
+#### Methods
+
+|  Method | Modifiers | Return Type | Description |
+|  --- | --- | --- | --- |
+|  [publicAbstractMethod()](docs/simple-suite-test#testabstractclass-publicabstractmethod-method) |  | void | A test public abstract method. |
+|  [sealedMethod()](docs/simple-suite-test#testabstractclass-sealedmethod-method) |  | string | A test <code>@sealed</code> method. |
+|  [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method) |  | number | A test <code>@virtual</code> method. |
+
+#### Constructor Details
+
+##### (constructor) {#testabstractclass-_constructor_-constructor}
+
+This is a constructor.
+
+###### Signature {#_constructor_-signature}
+
+```typescript
+protected constructor(privateProperty: number, protectedProperty: TestEnum);
+```
+
+###### Parameters {#_constructor_-parameters}
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  privateProperty | number |  |
+|  protectedProperty | [TestEnum](docs/simple-suite-test#testenum-enum) |  |
+
+#### Property Details
+
+##### abstractPropertyGetter {#testabstractclass-abstractpropertygetter-property}
+
+A test abstract getter property.
+
+###### Signature {#abstractpropertygetter-signature}
+
+```typescript
+abstract get abstractPropertyGetter(): TestMappedType;
+```
+
+##### protectedProperty {#testabstractclass-protectedproperty-property}
+
+A test protected property.
+
+###### Signature {#protectedproperty-signature}
+
+```typescript
+protected readonly protectedProperty: TestEnum;
+```
+
+#### Method Details
+
+##### publicAbstractMethod {#testabstractclass-publicabstractmethod-method}
+
+A test public abstract method.
+
+###### Signature {#publicabstractmethod-signature}
+
+```typescript
+abstract publicAbstractMethod(): void;
+```
+
+##### sealedMethod {#testabstractclass-sealedmethod-method}
+
+A test `@sealed` method.
+
+###### Signature {#sealedmethod-signature}
+
+```typescript
+/** @sealed */
+protected sealedMethod(): string;
+```
+
+##### virtualMethod {#testabstractclass-virtualmethod-method}
+
+A test `@virtual` method.
+
+###### Signature {#virtualmethod-signature}
+
+```typescript
+/** @virtual */
+protected virtualMethod(): number;
+```
+
 ### TestClass {#testclass-class}
 
 Test class
@@ -312,8 +419,11 @@ Here are some remarks about the class
 #### Signature {#testclass-signature}
 
 ```typescript
-export declare class TestClass<TTypeParameterA, TTypeParameterB> 
+export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass 
 ```
+<b>Extends:</b> [TestAbstractClass](docs/simple-suite-test#testabstractclass-class)
+
+
 <b>Type parameters:</b> 
 
 * <b>TTypeParameterA</b>: A type parameter
@@ -328,12 +438,13 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB>
 
 |  Constructor | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-constructor) |  |  | Test class constructor |
+|  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-constructor) |  |  | Test class constructor |
 
 #### Properties
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
+|  [abstractPropertyGetter](docs/simple-suite-test#testclass-abstractpropertygetter-property) |  | [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | A test abstract getter property. |
 |  [testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) |  | () =&gt; void | Test class event property |
 |  [testClassGetterProperty](docs/simple-suite-test#testclass-testclassgetterproperty-property) |  | number | Test class getter-only property |
 |  [testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) |  | TTypeParameterB | Test class property |
@@ -342,7 +453,9 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB>
 
 |  Method | Modifiers | Return Type | Description |
 |  --- | --- | --- | --- |
+|  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
 |  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) |  | TTypeParameterA | Test class method |
+|  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
 
 #### Constructor Details
 
@@ -357,17 +470,29 @@ Here are some remarks about the constructor
 ###### Signature {#_constructor_-signature}
 
 ```typescript
-constructor(testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
+constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
 ###### Parameters {#_constructor_-parameters}
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property) |
-|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property) |
+|  privateProperty | number | See [TestAbstractClass](docs/simple-suite-test#testabstractclass-class)<!-- -->'s constructor. |
+|  protectedProperty | [TestEnum](docs/simple-suite-test#testenum-enum) | See [TestAbstractClass.protectedProperty](docs/simple-suite-test#testabstractclass-protectedproperty-property)<!-- -->. |
+|  testClassProperty | TTypeParameterB | See [TestClass.testClassProperty](docs/simple-suite-test#testclass-testclassproperty-property)<!-- -->. |
+|  testClassEventProperty | () =&gt; void | See [TestClass.testClassEventProperty](docs/simple-suite-test#testclass-testclasseventproperty-property)<!-- -->. |
 
 #### Property Details
+
+##### abstractPropertyGetter {#testclass-abstractpropertygetter-property}
+
+A test abstract getter property.
+
+###### Signature {#abstractpropertygetter-signature}
+
+```typescript
+get abstractPropertyGetter(): TestMappedType;
+```
 
 ##### testClassEventProperty {#testclass-testclasseventproperty-property}
 
@@ -414,6 +539,16 @@ readonly testClassProperty: TTypeParameterB;
 
 #### Method Details
 
+##### publicAbstractMethod {#testclass-publicabstractmethod-method}
+
+A test public abstract method.
+
+###### Signature {#publicabstractmethod-signature}
+
+```typescript
+publicAbstractMethod(): void;
+```
+
 ##### testClassMethod {#testclass-testclassmethod-method}
 
 Test class method
@@ -434,6 +569,17 @@ testClassMethod(input: TTypeParameterA): TTypeParameterA;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  input | TTypeParameterA |  |
+
+##### virtualMethod {#testclass-virtualmethod-method}
+
+Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->.
+
+###### Signature {#virtualmethod-signature}
+
+```typescript
+/** @override */
+protected virtualMethod(): number;
+```
 
 ## Namespace Details
 
@@ -792,6 +938,9 @@ export declare function testFunctionReturningInlineType(): {
 ```
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
+
+> This is a test deprecation notice. Here is a [link](docs/simple-suite-test#testfunctionreturninguniontype-function) to something else!
+> 
 
 Test function that returns an inline type
 

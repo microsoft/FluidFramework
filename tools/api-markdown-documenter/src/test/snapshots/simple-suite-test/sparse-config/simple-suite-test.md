@@ -52,6 +52,7 @@ const foo = bar;
 
 |  Class | Modifiers | Description |
 |  --- | --- | --- |
+|  [TestAbstractClass](docs/simple-suite-test/testabstractclass-class) |  | A test abstract class. |
 |  [TestClass](docs/simple-suite-test/testclass-class) |  | Test class |
 
 ## Namespaces
