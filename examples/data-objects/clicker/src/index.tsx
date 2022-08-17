@@ -64,8 +64,8 @@ export class Clicker extends DataObject<{ Events: IClickerEvents; }> {
     private setupAgent() {
         // We want to make sure that at any given time there is one (and only one) client executing the console log
         // task. Each client will enter the queue on startup.
-        // Additionally, we use subscribeToTask() instead of volunteerForTask() since we want to re-enter the queue
-        // automatically if we disconnect.
+        // Additionally, we use subscribeToTask() instead of volunteerForTask() since we always want to stay
+        // volunteered because this is an ongoing and not a one-time task.
         const clickerAgent = new ClickerAgent(this.counter);
         this.taskManager.subscribeToTask(consoleLogTaskId);
         this.taskManager.on("assigned", (taskId: string) => {
