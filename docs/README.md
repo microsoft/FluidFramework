@@ -204,8 +204,6 @@ The site theme/template lives in `themes/thxvscode`.
 | `build` | Build the site; outputs to `public/` by default. |
 | `build:api` | `npm run build:uber-package && npm run build:api-documenter` |
 | `build:api-documenter` | Convert API JSON into Markdown. |
-| `build:api-documenter:default` | --- |
-| `build:api-documenter:win32` | --- |
 | `build:api-rollup` | Runs `rollup-api-json.js` to produce rolled-up API data. See the script for more details. |
 | `build:fast` | Builds the site in a fast, but incomplete way. Useful for testing and iteration. |
 | `build:md-magic` | Updates generated content in Markdown files. |
