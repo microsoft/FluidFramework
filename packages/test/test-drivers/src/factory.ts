@@ -83,7 +83,7 @@ export async function createFluidTestDriver(
 
         case "t9s":
         case "tinylicious":
-            patchHttpRequestToForceKeepAlive();
+            // patchHttpRequestToForceKeepAlive();
             return new TinyliciousTestDriver(api.RouterliciousDriverApi);
 
         case "r11s":
