@@ -5,6 +5,12 @@ const path = require("path");
 const apiReportsDirectoryPath = path.resolve(__dirname, "_api-extractor-temp", "_build");
 const apiDocsDirectoryPath = path.resolve(__dirname, "content", "docs", "apis");
 
+// TODOs:
+// - Hugo frontmatter
+// - why aren't links working?
+// - Landing page replacement issues
+// - Styling (in particular, tables)
+
 // function appendHugoFrontMatter(document) {
 
 // }
@@ -23,6 +29,7 @@ async function main() {
         apiModel,
         newlineKind: "lf",
         uriRoot: "/docs/apis",
+        includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
     };
 
     console.log("Generating API docs...");
