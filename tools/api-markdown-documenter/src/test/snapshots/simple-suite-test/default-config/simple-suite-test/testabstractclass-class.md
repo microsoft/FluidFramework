@@ -13,9 +13,9 @@ export declare abstract class TestAbstractClass
 
 ## Constructors
 
-|  Constructor | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [(constructor)(privateProperty, protectedProperty)](./simple-suite-test/testabstractclass-class#_constructor_-constructor) |  |  | This is a constructor. |
+|  Constructor | Return Type | Description |
+|  --- | --- | --- |
+|  [(constructor)(privateProperty, protectedProperty)](./simple-suite-test/testabstractclass-class#_constructor_-constructor) |  | This is a constructor. |
 
 ## Properties
 
@@ -26,11 +26,11 @@ export declare abstract class TestAbstractClass
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [publicAbstractMethod()](./simple-suite-test/testabstractclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
-|  [sealedMethod()](./simple-suite-test/testabstractclass-class#sealedmethod-method) |  | string | A test <code>@sealed</code> method. |
-|  [virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method) |  | number | A test <code>@virtual</code> method. |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [publicAbstractMethod()](./simple-suite-test/testabstractclass-class#publicabstractmethod-method) | void | A test public abstract method. |
+|  [sealedMethod()](./simple-suite-test/testabstractclass-class#sealedmethod-method) | string | A test <code>@sealed</code> method. |
+|  [virtualMethod()](./simple-suite-test/testabstractclass-class#virtualmethod-method) | number | A test <code>@virtual</code> method. |
 
 ## Constructor Details
 

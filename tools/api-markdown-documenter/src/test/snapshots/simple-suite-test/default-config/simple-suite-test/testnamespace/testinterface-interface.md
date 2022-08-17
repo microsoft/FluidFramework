@@ -13,15 +13,15 @@ interface TestInterface
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) |  | boolean | Test interface property |
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceProperty](./simple-suite-test/testnamespace/testinterface-interface#testinterfaceproperty-propertysignature) | boolean | Test interface property |
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) |  | void | Test interface method |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceMethod()](./simple-suite-test/testnamespace/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
 
 ## Property Details
 

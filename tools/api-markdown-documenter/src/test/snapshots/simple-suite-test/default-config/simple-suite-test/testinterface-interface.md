@@ -24,16 +24,16 @@ export interface TestInterface
 
 ## Call Signatures
 
-|  CallSignature | Modifiers | Description |
-|  --- | --- | --- |
-|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-callsignature) |  | Test interface event call signature |
-|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-callsignature) |  | Another example call signature |
+|  CallSignature | Description |
+|  --- | --- |
+|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
+|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature) |  | void | Test interface method |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
 
 ## Property Details
 

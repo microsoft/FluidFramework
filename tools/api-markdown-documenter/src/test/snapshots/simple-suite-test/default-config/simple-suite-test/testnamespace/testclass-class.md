@@ -13,9 +13,9 @@ class TestClass
 
 ## Constructors
 
-|  Constructor | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-constructor) |  |  | Test class constructor |
+|  Constructor | Return Type | Description |
+|  --- | --- | --- |
+|  [(constructor)(testClassProperty)](./simple-suite-test/testnamespace/testclass-class#_constructor_-constructor) |  | Test class constructor |
 
 ## Properties
 
@@ -25,9 +25,9 @@ class TestClass
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-method) |  | Promise&lt;string&gt; | Test class method |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testClassMethod(testParameter)](./simple-suite-test/testnamespace/testclass-class#testclassmethod-method) | Promise&lt;string&gt; | Test class method |
 
 ## Constructor Details
 

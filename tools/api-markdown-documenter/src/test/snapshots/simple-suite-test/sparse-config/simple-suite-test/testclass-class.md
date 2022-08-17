@@ -25,9 +25,9 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 ## Constructors
 
-|  Constructor | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test/testclass-_constructor_-constructor) |  |  | Test class constructor |
+|  Constructor | Return Type | Description |
+|  --- | --- | --- |
+|  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test/testclass-_constructor_-constructor) |  | Test class constructor |
 
 ## Properties
 
@@ -40,9 +40,9 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [publicAbstractMethod()](docs/simple-suite-test/testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
-|  [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) |  | TTypeParameterA | Test class method |
-|  [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method)<!-- -->. |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [publicAbstractMethod()](docs/simple-suite-test/testclass-publicabstractmethod-method) | void | A test public abstract method. |
+|  [testClassMethod(input)](docs/simple-suite-test/testclass-testclassmethod-method) | TTypeParameterA | Test class method |
+|  [virtualMethod()](docs/simple-suite-test/testclass-virtualmethod-method) | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test/testabstractclass-virtualmethod-method)<!-- -->. |
 

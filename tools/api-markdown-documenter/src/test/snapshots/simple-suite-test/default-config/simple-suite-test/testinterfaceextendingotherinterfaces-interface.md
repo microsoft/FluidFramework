@@ -23,9 +23,9 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testMethod(input)](./simple-suite-test/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) |  | number | Test interface method accepting a string and returning a number. |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testMethod(input)](./simple-suite-test/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
 ## Method Details
 

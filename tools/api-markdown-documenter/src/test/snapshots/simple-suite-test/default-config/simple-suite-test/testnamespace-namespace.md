@@ -27,39 +27,39 @@ export declare namespace TestNamespace
 
 ## Interfaces
 
-|  Interface | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) |  | Test interface |
+|  Interface | Description |
+|  --- | --- |
+|  [TestInterface](./simple-suite-test/testnamespace/testinterface-interface) | Test interface |
 
 ## Classes
 
-|  Class | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestClass](./simple-suite-test/testnamespace/testclass-class) |  | Test class |
+|  Class | Description |
+|  --- | --- |
+|  [TestClass](./simple-suite-test/testnamespace/testclass-class) | Test class |
 
 ## Namespaces
 
-|  Namespace | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace-namespace) |  | Test sub-namespace |
+|  Namespace | Description |
+|  --- | --- |
+|  [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace-namespace) | Test sub-namespace |
 
 ## Types
 
-|  TypeAlias | Modifiers | Description |
-|  --- | --- | --- |
-|  [TypeAlias](./simple-suite-test/testnamespace-namespace#typealias-typealias) |  | Test Type-Alias |
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TypeAlias](./simple-suite-test/testnamespace-namespace#typealias-typealias) | Test Type-Alias |
 
 ## Functions
 
-|  Function | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testFunction(testParameter)](./simple-suite-test/testnamespace-namespace#testfunction-function) |  | number | Test function |
+|  Function | Return Type | Description |
+|  --- | --- | --- |
+|  [testFunction(testParameter)](./simple-suite-test/testnamespace-namespace#testfunction-function) | number | Test function |
 
 ## Enumerations
 
-|  Enum | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum) |  | Test Enum |
+|  Enum | Description |
+|  --- | --- |
+|  [TestEnum](./simple-suite-test/testnamespace-namespace#testenum-enum) | Test Enum |
 
 ## Variables
 
@@ -111,10 +111,10 @@ enum TestEnum
 
 #### Flags
 
-|  Flag | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEnumValue1](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue1-enummember) |  | Test enum value 1 |
-|  [TestEnumValue2](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue2-enummember) |  | Test enum value 2 |
+|  Flag | Description |
+|  --- | --- |
+|  [TestEnumValue1](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue1-enummember) | Test enum value 1 |
+|  [TestEnumValue2](./simple-suite-test/testnamespace-namespace#testenum-testenumvalue2-enummember) | Test enum value 2 |
 
 #### FlagDetails
 

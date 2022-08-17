@@ -41,47 +41,47 @@ const foo = bar;
 
 ## Interfaces
 
-|  Interface | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) |  | An empty interface |
-|  [TestInterface](docs/simple-suite-test#testinterface-interface) |  | Test interface |
-|  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test#testinterfaceextendingotherinterfaces-interface) |  | Test interface that extends other interfaces |
-|  [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface) |  | Test interface with generic type parameter |
+|  Interface | Description |
+|  --- | --- |
+|  [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) | An empty interface |
+|  [TestInterface](docs/simple-suite-test#testinterface-interface) | Test interface |
+|  [TestInterfaceExtendingOtherInterfaces](docs/simple-suite-test#testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+|  [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
 ## Classes
 
-|  Class | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestAbstractClass](docs/simple-suite-test#testabstractclass-class) |  | A test abstract class. |
-|  [TestClass](docs/simple-suite-test#testclass-class) |  | Test class |
+|  Class | Description |
+|  --- | --- |
+|  [TestAbstractClass](docs/simple-suite-test#testabstractclass-class) | A test abstract class. |
+|  [TestClass](docs/simple-suite-test#testclass-class) | Test class |
 
 ## Namespaces
 
-|  Namespace | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestNamespace](docs/simple-suite-test#testnamespace-namespace) |  | Test Namespace |
+|  Namespace | Description |
+|  --- | --- |
+|  [TestNamespace](docs/simple-suite-test#testnamespace-namespace) | Test Namespace |
 
 ## Types
 
-|  TypeAlias | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) |  | Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum) |
-|  [TypeAlias](docs/simple-suite-test#typealias-typealias) |  | Test Type-Alias |
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TestMappedType](docs/simple-suite-test#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/simple-suite-test#testenum-enum) |
+|  [TypeAlias](docs/simple-suite-test#typealias-typealias) | Test Type-Alias |
 
 ## Functions
 
-|  Function | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testFunction(testParameter)](docs/simple-suite-test#testfunction-function) |  | TTypeParameter | Test function |
-|  [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-function) |  | { foo: number; bar: [TestEnum](docs/simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
-|  [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) |  | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
-|  [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/simple-suite-test#testinterface-interface) | Test function that returns an inline type |
+|  Function | Return Type | Description |
+|  --- | --- | --- |
+|  [testFunction(testParameter)](docs/simple-suite-test#testfunction-function) | TTypeParameter | Test function |
+|  [testFunctionReturningInlineType()](docs/simple-suite-test#testfunctionreturninginlinetype-function) | { foo: number; bar: [TestEnum](docs/simple-suite-test#testenum-enum)<!-- -->; } | Test function that returns an inline type |
+|  [testFunctionReturningIntersectionType()](docs/simple-suite-test#testfunctionreturningintersectiontype-function) | [TestEmptyInterface](docs/simple-suite-test#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/simple-suite-test#testinterfacewithtypeparameter-interface)<!-- -->&lt;number&gt; | Test function that returns an inline type |
+|  [testFunctionReturningUnionType()](docs/simple-suite-test#testfunctionreturninguniontype-function) | string \| [TestInterface](docs/simple-suite-test#testinterface-interface) | Test function that returns an inline type |
 
 ## Enumerations
 
-|  Enum | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEnum](docs/simple-suite-test#testenum-enum) |  | Test Enum |
+|  Enum | Description |
+|  --- | --- |
+|  [TestEnum](docs/simple-suite-test#testenum-enum) | Test Enum |
 
 ## Variables
 
@@ -124,16 +124,16 @@ export interface TestInterface
 
 #### Call Signatures
 
-|  CallSignature | Modifiers | Description |
-|  --- | --- | --- |
-|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call_-callsignature) |  | Test interface event call signature |
-|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call__1-callsignature) |  | Another example call signature |
+|  CallSignature | Description |
+|  --- | --- |
+|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call_-callsignature) | Test interface event call signature |
+|  [(call)(event, listener)](docs/simple-suite-test#testinterface-_call__1-callsignature) | Another example call signature |
 
 #### Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testInterfaceMethod()](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature) |  | void | Test interface method |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceMethod()](docs/simple-suite-test#testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
 
 #### Property Details
 
@@ -233,9 +233,9 @@ export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, Te
 
 #### Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testMethod(input)](docs/simple-suite-test#testinterfaceextendingotherinterfaces-testmethod-methodsignature) |  | number | Test interface method accepting a string and returning a number. |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testMethod(input)](docs/simple-suite-test#testinterfaceextendingotherinterfaces-testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
 #### Method Details
 
@@ -279,9 +279,9 @@ export interface TestInterfaceWithTypeParameter<T>
 
 #### Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testProperty](docs/simple-suite-test#testinterfacewithtypeparameter-testproperty-propertysignature) |  | T | A test interface property using generic type parameter |
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  [testProperty](docs/simple-suite-test#testinterfacewithtypeparameter-testproperty-propertysignature) | T | A test interface property using generic type parameter |
 
 #### Property Details
 
@@ -313,9 +313,9 @@ export declare abstract class TestAbstractClass
 
 #### Constructors
 
-|  Constructor | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test#testabstractclass-_constructor_-constructor) |  |  | This is a constructor. |
+|  Constructor | Return Type | Description |
+|  --- | --- | --- |
+|  [(constructor)(privateProperty, protectedProperty)](docs/simple-suite-test#testabstractclass-_constructor_-constructor) |  | This is a constructor. |
 
 #### Properties
 
@@ -326,11 +326,11 @@ export declare abstract class TestAbstractClass
 
 #### Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [publicAbstractMethod()](docs/simple-suite-test#testabstractclass-publicabstractmethod-method) |  | void | A test public abstract method. |
-|  [sealedMethod()](docs/simple-suite-test#testabstractclass-sealedmethod-method) |  | string | A test <code>@sealed</code> method. |
-|  [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method) |  | number | A test <code>@virtual</code> method. |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [publicAbstractMethod()](docs/simple-suite-test#testabstractclass-publicabstractmethod-method) | void | A test public abstract method. |
+|  [sealedMethod()](docs/simple-suite-test#testabstractclass-sealedmethod-method) | string | A test <code>@sealed</code> method. |
+|  [virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method) | number | A test <code>@virtual</code> method. |
 
 #### Constructor Details
 
@@ -433,9 +433,9 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 #### Constructors
 
-|  Constructor | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-constructor) |  |  | Test class constructor |
+|  Constructor | Return Type | Description |
+|  --- | --- | --- |
+|  [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/simple-suite-test#testclass-_constructor_-constructor) |  | Test class constructor |
 
 #### Properties
 
@@ -448,11 +448,11 @@ export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbs
 
 #### Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
-|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) |  | TTypeParameterA | Test class method |
-|  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) |  | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [publicAbstractMethod()](docs/simple-suite-test#testclass-publicabstractmethod-method) | void | A test public abstract method. |
+|  [testClassMethod(input)](docs/simple-suite-test#testclass-testclassmethod-method) | TTypeParameterA | Test class method |
+|  [virtualMethod()](docs/simple-suite-test#testclass-virtualmethod-method) | number | Overrides [TestAbstractClass.virtualMethod()](docs/simple-suite-test#testabstractclass-virtualmethod-method)<!-- -->. |
 
 #### Constructor Details
 
@@ -606,39 +606,39 @@ export declare namespace TestNamespace
 
 #### Interfaces
 
-|  Interface | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestInterface](docs/simple-suite-test#testnamespace-testinterface-interface) |  | Test interface |
+|  Interface | Description |
+|  --- | --- |
+|  [TestInterface](docs/simple-suite-test#testnamespace-testinterface-interface) | Test interface |
 
 #### Classes
 
-|  Class | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestClass](docs/simple-suite-test#testnamespace-testclass-class) |  | Test class |
+|  Class | Description |
+|  --- | --- |
+|  [TestClass](docs/simple-suite-test#testnamespace-testclass-class) | Test class |
 
 #### Namespaces
 
-|  Namespace | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestSubNamespace](docs/simple-suite-test#testnamespace-testsubnamespace-namespace) |  | Test sub-namespace |
+|  Namespace | Description |
+|  --- | --- |
+|  [TestSubNamespace](docs/simple-suite-test#testnamespace-testsubnamespace-namespace) | Test sub-namespace |
 
 #### Types
 
-|  TypeAlias | Modifiers | Description |
-|  --- | --- | --- |
-|  [TypeAlias](docs/simple-suite-test#testnamespace-typealias-typealias) |  | Test Type-Alias |
+|  TypeAlias | Description |
+|  --- | --- |
+|  [TypeAlias](docs/simple-suite-test#testnamespace-typealias-typealias) | Test Type-Alias |
 
 #### Functions
 
-|  Function | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testFunction(testParameter)](docs/simple-suite-test#testnamespace-testfunction-function) |  | number | Test function |
+|  Function | Return Type | Description |
+|  --- | --- | --- |
+|  [testFunction(testParameter)](docs/simple-suite-test#testnamespace-testfunction-function) | number | Test function |
 
 #### Enumerations
 
-|  Enum | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEnum](docs/simple-suite-test#testnamespace-testenum-enum) |  | Test Enum |
+|  Enum | Description |
+|  --- | --- |
+|  [TestEnum](docs/simple-suite-test#testnamespace-testenum-enum) | Test Enum |
 
 #### Variables
 
@@ -660,15 +660,15 @@ interface TestInterface
 
 ###### Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testInterfaceProperty](docs/simple-suite-test#testnamespace-testinterface-testinterfaceproperty-propertysignature) |  | boolean | Test interface property |
+|  Property | Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceProperty](docs/simple-suite-test#testnamespace-testinterface-testinterfaceproperty-propertysignature) | boolean | Test interface property |
 
 ###### Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testInterfaceMethod()](docs/simple-suite-test#testnamespace-testinterface-testinterfacemethod-methodsignature) |  | void | Test interface method |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceMethod()](docs/simple-suite-test#testnamespace-testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
 
 ###### Property Details
 
@@ -708,9 +708,9 @@ class TestClass
 
 ###### Constructors
 
-|  Constructor | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [(constructor)(testClassProperty)](docs/simple-suite-test#testnamespace-testclass-_constructor_-constructor) |  |  | Test class constructor |
+|  Constructor | Return Type | Description |
+|  --- | --- | --- |
+|  [(constructor)(testClassProperty)](docs/simple-suite-test#testnamespace-testclass-_constructor_-constructor) |  | Test class constructor |
 
 ###### Properties
 
@@ -720,9 +720,9 @@ class TestClass
 
 ###### Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassMethod(testParameter)](docs/simple-suite-test#testnamespace-testclass-testclassmethod-method) |  | Promise&lt;string&gt; | Test class method |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testClassMethod(testParameter)](docs/simple-suite-test#testnamespace-testclass-testclassmethod-method) | Promise&lt;string&gt; | Test class method |
 
 ###### Constructor Details
 
@@ -828,10 +828,10 @@ enum TestEnum
 
 ###### Flags
 
-|  Flag | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEnumValue1](docs/simple-suite-test#testnamespace-testenum-testenumvalue1-enummember) |  | Test enum value 1 |
-|  [TestEnumValue2](docs/simple-suite-test#testnamespace-testenum-testenumvalue2-enummember) |  | Test enum value 2 |
+|  Flag | Description |
+|  --- | --- |
+|  [TestEnumValue1](docs/simple-suite-test#testnamespace-testenum-testenumvalue1-enummember) | Test enum value 1 |
+|  [TestEnumValue2](docs/simple-suite-test#testnamespace-testenum-testenumvalue2-enummember) | Test enum value 2 |
 
 ###### FlagDetails
 
@@ -993,11 +993,11 @@ export declare enum TestEnum
 
 #### Flags
 
-|  Flag | Modifiers | Description |
-|  --- | --- | --- |
-|  [TestEnumValue1](docs/simple-suite-test#testenum-testenumvalue1-enummember) |  | Test enum value 1 (string) |
-|  [TestEnumValue2](docs/simple-suite-test#testenum-testenumvalue2-enummember) |  | Test enum value 2 (number) |
-|  [TestEnumValue3](docs/simple-suite-test#testenum-testenumvalue3-enummember) |  | Test enum value 3 (default) |
+|  Flag | Description |
+|  --- | --- |
+|  [TestEnumValue1](docs/simple-suite-test#testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
+|  [TestEnumValue2](docs/simple-suite-test#testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
+|  [TestEnumValue3](docs/simple-suite-test#testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
 
 #### FlagDetails
 
