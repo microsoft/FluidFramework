@@ -17,14 +17,7 @@ import {
     Parameter,
     ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import {
-    DocCodeSpan,
-    DocLinkTag,
-    DocNode,
-    DocParagraph,
-    DocPlainText,
-    DocSection,
-} from "@microsoft/tsdoc";
+import { DocLinkTag, DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
@@ -429,7 +422,9 @@ export function renderModifiersCell(
     if (ApiStaticMixin.isBaseClassOf(apiItem)) {
         if (apiItem.isStatic) {
             modifierNodes.push(
-                new DocCodeSpan({ configuration: config.tsdocConfiguration, code: "static" }),
+                new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                    new DocPlainText({ configuration: config.tsdocConfiguration, text: "static" }),
+                ]),
             );
         }
     }
