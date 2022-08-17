@@ -223,7 +223,7 @@ export function repeat<T, TState = void>(t: T): Generator<T, TState> {
 }
 
 /**
- * Returns a generator which produces a categorial distribution with the provided weights.
+ * Returns a generator which produces a categorical distribution with the provided weights.
  * (see https://en.wikipedia.org/wiki/Categorical_distribution)
  *
  * @param weights - Object defining either values or async generators to yield from with corresponding likelihoods.

@@ -382,6 +382,24 @@ describe("Summary Manager", () => {
             assertState(SummaryManagerState.Running, "summarizer should be running");
         });
 
+        it("Should bypass initial delay if enough ops pass and summarize if disconnected", async () => {
+            mockDeltaManager.lastSequenceNumber = 1001; // seq > opsToBypass
+            createSummaryManager({
+                initialDelayMs: 0,
+                opsToBypassInitialDelay: 1000,
+                connected: true,
+            });
+            clientElection.electClient(thisClientId);
+            connectedState.disconnect(); // To enforce stopReasonCanRunLastSummary == true.
+            await flushPromises();
+            mockDeltaManager.emit("op", summaryOp);
+            await flushPromises();
+            assertRequests(1, "should request summarizer and run the last summary.");
+            completeSummarizerRequest();
+            await flushPromises();
+            assertState(SummaryManagerState.Running, "summarizer should be running");
+        });
+
         it("Should create last summary when summarizer created without delay, then disconnected", async () => {
             throttler.delayMs = 0;
             createSummaryManager({

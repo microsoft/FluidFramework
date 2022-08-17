@@ -31,7 +31,7 @@ export class OdspDeltaStorageService {
     }
 
     /**
-     * Retrieves ops from cache
+     * Retrieves ops from storage
      * @param from - inclusive
      * @param to - exclusive
      * @param telemetryProps - properties to add when issuing telemetry events

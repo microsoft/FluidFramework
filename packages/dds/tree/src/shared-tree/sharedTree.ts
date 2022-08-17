@@ -4,7 +4,7 @@
  */
 
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { DefaultChangeSet, DefaultRebaser, ForestIndex, ObjectForest, SchemaIndex } from "../feature-libraries";
+import { DefaultChangeFamily, DefaultChangeset, ForestIndex, ObjectForest, SchemaIndex } from "../feature-libraries";
 import { Index, SharedTreeCore } from "../shared-tree-core";
 import { AnchorSet } from "../tree";
 
@@ -14,7 +14,7 @@ import { AnchorSet } from "../tree";
  *
  * TODO: detail compatibility requirements.
  */
-export class SharedTree extends SharedTreeCore<DefaultRebaser> {
+export class SharedTree extends SharedTreeCore<DefaultChangeset, DefaultChangeFamily> {
     public constructor(
         id: string,
         runtime: IFluidDataStoreRuntime,
@@ -22,13 +22,13 @@ export class SharedTree extends SharedTreeCore<DefaultRebaser> {
         telemetryContextPrefix: string) {
             const anchors = new AnchorSet();
             const forest = new ObjectForest(anchors);
-            const indexes: Index<DefaultChangeSet>[] = [
+            const indexes: Index<DefaultChangeset>[] = [
                 new SchemaIndex(runtime, forest.schema),
                 new ForestIndex(runtime, forest),
             ];
             super(
                 indexes,
-                new DefaultRebaser(), anchors, id, runtime, attributes, telemetryContextPrefix,
+                new DefaultChangeFamily(), anchors, id, runtime, attributes, telemetryContextPrefix,
                 );
 
             // Could save a reference to this to allow use as part of a default checkout.
