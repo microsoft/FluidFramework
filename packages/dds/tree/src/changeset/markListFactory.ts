@@ -37,7 +37,7 @@ export class MarkListFactory {
             this.offset = 0;
         }
         const prev = this.list[this.list.length - 1];
-        if (this.offset === 0 && isObjMark(prev)) {
+        if (isObjMark(prev)) {
             if (isAttachGroup(prev)) {
                 if (isAttachGroup(mark)) {
                     extendAttachGroup(prev, mark);
