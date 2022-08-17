@@ -11,13 +11,6 @@ import {
 import { isNeverField } from "./comparison";
 
 /**
- * This logic lives in feature-libraries since using it is technically optional.
- *
- * This is all helper code for doing a dependency in version implementations of
- * change rebasers, edit builders and such more modular.
- */
-
-/**
  * Functionality for FieldKinds that is stable,
  * meaning that it can not change in any measurable way without providing a new identifier.
  *

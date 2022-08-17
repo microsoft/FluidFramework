@@ -16,3 +16,7 @@ including schema upgrades and cross field kind moves.
 
 These combined schema (made up of the field kinds) also need to support being used as view-schema,
 including strongly typed schema related APIs, so some code and types for that are included as well.
+
+Since this module provides functionality for implementing change-families, rebasers, schema languages etc,
+and thus is only used for implementing [`feature-libraries`](../README.md), it can live in `feature-libraries`.
+As this module matures and gets actually used, it likely should get moved out of `feature-libraries` and become canonical way to implement change-families.
