@@ -18,7 +18,7 @@
                 },
                 "odsp-odsp-df":{
                     "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [0, 1],
+                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
                         "Fluid.Container.summarizeProtocolTree": [true, false]
                     }
                 }
@@ -102,7 +102,7 @@
             "optionOverrides":{
                 "odsp":{
                     "configurations":{
-                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [1]
+                        "Fluid.Driver.Odsp.snapshotFormatFetchType": [2]
                     }
                 }
             }
