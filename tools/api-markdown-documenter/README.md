@@ -107,7 +107,12 @@ The vast majority of these options have default values that have been crafted to
 
 ### Styling improvements
 
+-   Remove leading blank line in documents
+-   Excessive blank lines in Signature sections
 -   Include item itself in breadcrumb
+-   Better constructor heading rendering
+-   Fix deprecation notice
+-   Fix links to the same file (only need heading component, not file path)
 -   Add more modifiers to modifiers columns (optional, etc.)
 -   Dynamic "Modifiers" column in tables
     -   I.e. only include "modifiers" column if any modifiers are detected.
