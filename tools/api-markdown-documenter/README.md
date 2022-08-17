@@ -97,10 +97,6 @@ The vast majority of these options have default values that have been crafted to
 
 ## Upcoming Work
 
-### TODOs before merging PR:
-
--   No "modifiers" column for classe, interface, namespace tables
-
 ### Documentation Improvements
 
 -   Intro sandbox (api report)
