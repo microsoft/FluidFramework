@@ -618,6 +618,7 @@ export interface IRelativePosition {
 
 // @public
 export interface IRemovalInfo {
+    localRemovedSeq?: number;
     removedClientIds: number[];
     removedSeq: number;
 }
@@ -1129,6 +1130,8 @@ export interface SegmentGroup {
     localSeq: number;
     // (undocumented)
     previousProps?: PropertySet[];
+    // (undocumented)
+    removedReferences?: LocalReferencePosition[];
     // (undocumented)
     segments: ISegment[];
 }
