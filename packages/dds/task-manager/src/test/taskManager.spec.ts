@@ -198,7 +198,7 @@ describe("TaskManager", () => {
             assert.ok(taskManager1.assignedTask(taskId), "Should be assigned");
         });
 
-        it("Can attempt to lock task twice and abandon twice (after ack)", async () => {
+        it("Can attempt to volunteer for task twice and abandon twice (after ack)", async () => {
             const taskId = "taskId";
             const volunteerTaskP1 = taskManager1.volunteerForTask(taskId);
             assert.ok(taskManager1.queued(taskId), "Should be queued");
