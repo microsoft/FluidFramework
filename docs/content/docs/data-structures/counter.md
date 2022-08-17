@@ -119,7 +119,10 @@ Finally, if you would like to dynamically create `SharedCounter` instances as pa
 
 ```javascript
 const schema = {
-    /*...*/,
+    initialObjects: {
+        sharedCounter: SharedCounter,
+        /*...*/
+    },
     dynamicObjectTypes: [ SharedCounter ]
 }
 
