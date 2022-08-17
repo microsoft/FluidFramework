@@ -55,4 +55,4 @@ export async function dangerfile() {
     }
 }
 
-dangerfile().catch((error: unknown) => console.error(error));
+dangerfile().catch((error: string) => logger.logError(error));
