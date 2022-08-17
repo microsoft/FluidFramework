@@ -137,6 +137,7 @@ export class TestDocumentStorage implements IDocumentStorage {
             ordererUrl,
             historianUrl,
             isSessionAlive: true,
+            isSessionActive: true,
         };
 
         const result = await collection.findOrCreate(

@@ -10,6 +10,7 @@ import {
     ValueSchema,
     FieldSchema,
     FieldKind,
+    TreeTypeSet,
 } from "./schema";
 import { emptyField } from "./builders";
 
@@ -130,14 +131,26 @@ export function allowsFieldSuperset(
     if (original.kind === FieldKind.Forbidden) {
         return true;
     }
-    if (superset.types === undefined) {
+    return allowsTreeSchemaIdentifierSuperset(original.types, superset.types);
+}
+
+/**
+ * @returns true iff `superset` is a superset of `original`.
+ *
+ * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ */
+export function allowsTreeSchemaIdentifierSuperset(
+    original: TreeTypeSet,
+    superset: TreeTypeSet,
+): boolean {
+    if (superset === undefined) {
         return true;
     }
-    if (original.types === undefined) {
+    if (original === undefined) {
         return false;
     }
-    for (const originalType of original.types) {
-        if (!superset.types.has(originalType)) {
+    for (const originalType of original) {
+        if (!superset.has(originalType)) {
             return false;
         }
     }

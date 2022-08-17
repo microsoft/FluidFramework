@@ -54,7 +54,7 @@
     "@fluidframework/driver-utils": "^1.0.1",
     "@fluidframework/fluid-static": "^1.0.1",
     "@fluidframework/map": "^1.0.1",
-    "@fluidframework/protocol-definitions": "^1.0.0-83669",
+    "@fluidframework/protocol-definitions": "^1.0.0",
     "@fluidframework/routerlicious-driver": "^1.0.1",
     "@fluidframework/runtime-utils": "^1.0.1",
     "@fluidframework/server-services-client": "^0.1037.1000-0",

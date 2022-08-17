@@ -30,7 +30,7 @@ export {
     FieldSchema, ValueSchema, TreeSchema, FieldKind,
     emptyField, neverTree,
     SchemaRepository, StoredSchemaRepository,
-    rootFieldKey,
+    rootFieldKey, TreeTypeSet,
 } from "./schema-stored";
 
 export {
@@ -50,9 +50,7 @@ export {
     Rebaser,
     ChangeRebaser,
     RevisionTag,
-    ChangeFromChangeRebaser,
-    FinalFromChangeRebaser,
-    ChangeSetFromChangeRebaser,
+    ChangesetFromChangeRebaser,
 } from "./rebase";
 
 export {

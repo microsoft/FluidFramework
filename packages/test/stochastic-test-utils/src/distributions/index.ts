@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-'use strict';
-
-const config = {
-	require: ['@fluidframework/mocha-test-setup'],
-};
-
-module.exports = config;
+export { integer } from "./integer";
+export { normal } from "./normal";
+export { real } from "./real";

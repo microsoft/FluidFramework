@@ -101,14 +101,14 @@ interface ModifyLike {
 function visitFieldMarks(fields: Delta.FieldMarks<Delta.Mark>, props: PassProps, func: Pass): void {
     for (const [key, field] of fields) {
         props.visitor.enterField(key);
-        func(field, props);
+        func(field, { ...props, startIndex: 0 });
         props.visitor.exitField(key);
     }
 }
 
 function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
     const { startIndex, visitor } = props;
-    visitor.enterNode(startIndex || 0);
+    visitor.enterNode(startIndex ?? 0);
     // Note that the `in` operator return true for properties that are present on the object even if they
     // are set to `undefined. This is leveraged here to represent the fact that the value should be set to
     // `undefined` as opposed to leaving the value untouched.
@@ -118,7 +118,7 @@ function visitModify(modify: ModifyLike, props: PassProps, func: Pass): void {
     if (modify.fields !== undefined) {
         visitFieldMarks(modify.fields, props, func);
     }
-    visitor.exitNode(startIndex || 0);
+    visitor.exitNode(startIndex ?? 0);
 }
 
 function firstPass(delta: Delta.MarkList, props: PassProps): void {
@@ -184,8 +184,8 @@ function secondPass(delta: Delta.MarkList, props: PassProps): void {
             const type = mark.type;
             switch (type) {
                 case Delta.MarkType.ModifyAndDelete:
-                case Delta.MarkType.Delete:
                 case Delta.MarkType.ModifyAndMoveOut:
+                case Delta.MarkType.Delete:
                 case Delta.MarkType.MoveOut:
                     // Handled in the first pass
                     break;

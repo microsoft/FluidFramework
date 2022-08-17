@@ -48,6 +48,7 @@
     "axios": "^0.26.0",
     "fastest-json-copy": "^1.0.1",
     "lodash": "^4.17.21",
+    "lz4js": "^0.2.0",
     "msgpackr": "^1.4.7",
     "pako": "^2.0.4",
     "uuid": "^8.3.1"

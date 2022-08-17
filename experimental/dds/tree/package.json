@@ -27,6 +27,7 @@
     "format": "npm run prettier:fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
+    "postpack": "cd dist && tar -cvf ../experimental-tree.test-files.tar ./test",
     "perf": "cross-env FLUID_TEST_VERBOSE=1 mocha \"dist/**/*.tests.js\" --node-option unhandled-rejections=strict,expose-gc --exit -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000",
     "perf:measure": "npm run perf -- --fgrep @Measurement",
     "prettier": "prettier --check \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\"",
@@ -34,6 +35,7 @@
     "test": "nyc npm run test:mocha",
     "test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
     "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+    "test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true npm run test:mocha",
     "tsc": "tsc"
   },
   "dependencies": {
