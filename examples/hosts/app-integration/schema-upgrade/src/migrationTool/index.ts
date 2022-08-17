@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export * from "./containerKillBit";
+export * from "./migrationTool";
 export * from "./interfaces";

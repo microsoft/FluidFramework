@@ -148,6 +148,7 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
+                targetBranchName = $(System.PullRequest.TargetBranch)
 
                 release=$(release)"
 
@@ -359,10 +360,13 @@ stages:
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+              TARGET_BRANCH_NAME: $(System.PullRequest.TargetBranch)
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
+              script: |
+                echo $(System.PullRequest.TargetBranch)
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:

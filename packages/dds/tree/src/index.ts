@@ -50,7 +50,7 @@ export {
     Rebaser,
     ChangeRebaser,
     RevisionTag,
-    ChangeSetFromChangeRebaser,
+    ChangesetFromChangeRebaser,
 } from "./rebase";
 
 export {
