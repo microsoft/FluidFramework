@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -41,24 +40,28 @@ export class MockDependent extends SimpleObservingDependent {
 }
 
 /**
+ * Manages the creation, connection, and retrieval of SharedTrees and related components for ease of testing.
+ * Satisfies the {@link ITestObjectProvider} interface.
+ */
+export type ITestTreeProvider = TestTreeProvider & ITestObjectProvider;
+
+/**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
  * class are created via {@link create} and satisfy the {@link ITestObjectProvider} interface.
  */
 export class TestTreeProvider {
     private static readonly treeId = "TestSharedTree";
 
-    [tree: number]: SharedTree;
-
     private readonly provider: ITestObjectProvider;
-    private readonly trees: SharedTree[] = [];
+    private readonly _trees: SharedTree[] = [];
+    private readonly _containers: IContainer[] = [];
 
-    /**
-     * Create a new {@link TestTreeProvider}. The provider can be populated with trees via subsequent calls to
-     * {@link createTree}. If the number of trees used by a test is known ahead of time, consider using
-     * {@link createTrees} instead.
-     */
-    public static async create(): Promise<TestTreeProvider & ITestObjectProvider> {
-        return new TestTreeProvider() as TestTreeProvider & ITestObjectProvider;
+    public get trees(): readonly SharedTree[] {
+        return this._trees;
+    }
+
+    public get containers(): readonly IContainer[] {
+        return this._containers;
     }
 
     /**
@@ -68,13 +71,13 @@ export class TestTreeProvider {
      *
      * @example
      * ```ts
-     * const trees = await TestTreeProvider.createTrees(2);
-     * assert(trees[0].isAttached());
-     * assert(trees[1].isAttached());
+     * const provider = await TestTreeProvider.create(2);
+     * assert(provider.trees[0].isAttached());
+     * assert(provider.trees[1].isAttached());
      * await trees.ensureSynchronized();
      * ```
      */
-    public static async createTrees(trees: number): Promise<TestTreeProvider & ITestObjectProvider> {
+    public static async create(trees = 0): Promise<TestTreeProvider & ITestObjectProvider> {
         const provider = await this.create();
         for (let i = 0; i < trees; i++) {
             await provider.createTree();
@@ -88,7 +91,12 @@ export class TestTreeProvider {
      * _i_ is the index of the tree in order of creation.
      */
     public async createTree(): Promise<SharedTree> {
-        return this.createTreeAtIndex(this.trees.length);
+        const container = this.trees.length === 0
+        ? await this.provider.makeTestContainer()
+        : await this.provider.loadTestContainer();
+
+        const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+        return this._trees[this.trees.length] = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
     }
 
     public [Symbol.iterator](): IterableIterator<SharedTree> {
@@ -110,15 +118,6 @@ export class TestTreeProvider {
 
         return new Proxy(this, {
             get: (target, prop, receiver) => {
-                // Intercept numbers and retrieve the associated tree, e.g. `testTreeProvider[0]`;
-                if (typeof prop === "string") {
-                    const treeIndex = Number.parseInt(prop, 10);
-                    if (!Number.isNaN(treeIndex)) {
-                        assert(treeIndex < this.trees.length, `treeIndex out of bounds (${treeIndex})`);
-                        return this.trees[treeIndex];
-                    }
-                }
-
                 // Route all properties that are on the `TestTreeProvider` itself
                 if ((target as never)[prop] !== undefined) {
                     return Reflect.get(target, prop, receiver) as unknown;
@@ -128,21 +127,5 @@ export class TestTreeProvider {
                 return Reflect.get(this.provider, prop, receiver) as unknown;
             },
         });
-    }
-
-    private async createTreeAtIndex(treeIndex: number): Promise<SharedTree> {
-        assert(treeIndex >= 0, `treeIndex out of bounds (${treeIndex})`);
-        if (treeIndex < this.trees.length) {
-            return this.trees[treeIndex];
-        }
-        assert(treeIndex === this.trees.length, `treeIndex out of bounds (${treeIndex})`);
-
-        const container = treeIndex === 0
-        ? await this.provider.makeTestContainer()
-        : await this.provider.loadTestContainer();
-
-        const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
-        this.trees[treeIndex] = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
-        return this.trees[treeIndex];
     }
 }

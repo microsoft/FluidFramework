@@ -9,8 +9,8 @@ import { IForestSubscription, IEditableForest } from "../forest";
 
 export interface ICheckout extends IForestSubscription {
     /**
-     * Run `f` as a transaction editing this forest.
-     * While `f` is running, its intermediate states will be visible on the IForestSubscription.
+     * Run `transaction` to edit this forest.
+     * While `transaction` is running, its intermediate states will be visible on the IForestSubscription.
      *
      * TODO: provide ways to run transactions separate from checkout, to allow async (with rebase) transactions,
      * and concurrent transactions.

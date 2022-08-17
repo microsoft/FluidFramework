@@ -68,10 +68,10 @@ export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChange
     public type: string = "SharedTree";
 
     public attributes: IChannelAttributes = {
-		type: this.type,
-		snapshotFormatVersion: "0.0.0",
-		packageVersion: "0.0.0",
-	};
+        type: this.type,
+        snapshotFormatVersion: "0.0.0",
+        packageVersion: "0.0.0",
+    };
 
     public async load(
         runtime: IFluidDataStoreRuntime,
