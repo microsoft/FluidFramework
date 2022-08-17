@@ -28,10 +28,11 @@ export class FieldKind {
      * @param multiplicity - bound on the number of children that fields of this kind may have.
      * TODO: replace with numeric upper and lower bounds.
      * @param changeHandler - Change handling policy.
-     * @param allowsTreeSupersetOf - returns true iff `superset` supports all that this does,
-     * and such a schema change is an allowed upgrade. Does not have to handle the `never` cases.
+     * @param allowsTreeSupersetOf - returns true iff `superset` supports all that this does
+     * and `superset` is an allowed upgrade. Does not have to handle the `never` cases.
      * See {@link isNeverField}.
-     * to this one without risk of any possible data becoming out of schema.
+     * TODO: when used as a method (instead of a free function like the other superset related functions),
+     * this name is/signature is confusing and seems backwards.
      * @param handlesEditsFrom - Kinds (in addition to this) whose edits can be processed by changeHandler.
      * If the kind of a field changes, and edits are rebased across that kind change,
      * listing the other old kind here can prevent those edits from being conflicted and
