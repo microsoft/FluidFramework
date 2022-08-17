@@ -9,8 +9,6 @@ const { merge } = require("webpack-merge");
 const webpack = require("webpack");
 
 module.exports = env => {
-    const isProduction = env && env.production;
-
     return {
         mode: "production",
         entry: {
