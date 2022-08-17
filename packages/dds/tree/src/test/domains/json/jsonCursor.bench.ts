@@ -12,7 +12,8 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./canada";
-import { generateTwitterJsonByByteSize } from "./twitter";
+import { generateTwitterJsonByByteSize, isEscapeChar, isKanji, miniTwitterJson,
+     parseTwitterStatusesSentences, twitterRawJson } from "./twitter";
 import { buildTextFromMarkovChain, markovChainBuilder } from "./jsonGeneratorUtils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 
@@ -120,6 +121,14 @@ describe("ITreeCursor", () => {
     const chain = markovChainBuilder(sentences);
     const sentence = buildTextFromMarkovChain(chain, makeRandom(), 4);
 
+    const parsedSentences = parseTwitterStatusesSentences(miniTwitterJson());
+
+
+    /* eslint-disable no-useless-escape, @typescript-eslint/no-non-null-assertion */
+    const newlineCode = "\n".codePointAt(0)!;
+    const codePString = `${String.fromCodePoint(newlineCode)}`;
+    const stringified = JSON.stringify(codePString);
+    /* eslint-enable */
     bench("canada", () => canada);
     bench("twitter", () => twitter);
 });
