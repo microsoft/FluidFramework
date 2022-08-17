@@ -358,8 +358,6 @@ describe("TaskManager", () => {
                 containerRuntimeFactory.processAllMessages();
                 assert.ok(!taskManager1.queued(taskId), "Should not be queued");
                 assert.ok(!taskManager1.assignedTask(taskId), "Should not be assigned");
-
-                assert.throws(() => { taskManager1.abandon(taskId); }, ".abandon() should throw when disconnected");
             });
 
             it("Can subscribe while disconnected", async () => {
