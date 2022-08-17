@@ -56,6 +56,15 @@ If this shared counter value was being used to track store inventory, for exampl
 
 The solution to this problem is a specialized DDS that tracks changes to the shared value as _increments_ and _decrements_, which can be summed together in any order and still reach eventual consistency.
 
+{{% callout tip %}}
+
+You may be asking yourself: but wouldn't the counter incrementing by 2 after the user pressed the increment button just once confuse the user?
+How do I make clear to the user that the additional increment was the result of a collaborator's actions?
+
+Check out [User presence and audience]({{< relref "audience.md" >}}) for an overview of Fluid's APIs for working with user presence!
+
+{{% /callout %}}
+
 ## Creation
 
 The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it.
