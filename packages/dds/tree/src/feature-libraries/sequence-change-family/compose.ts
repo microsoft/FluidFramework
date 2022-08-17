@@ -44,13 +44,9 @@ export function compose(changes: SequenceChangeset[]): SequenceChangeset {
 function foldInFieldMarks(newFieldMarks: T.FieldMarks, baseFieldMarks: T.FieldMarks) {
     for (const key of Object.keys(newFieldMarks)) {
         const newMarkList = newFieldMarks[key];
-        baseFieldMarks[key] ??= [];
-        const baseMarkList = foldInMarkList(newMarkList, baseFieldMarks[key]);
-        baseFieldMarks[key] = baseMarkList;
-        while (isSkipMark(baseMarkList[baseMarkList.length - 1])) {
-            baseMarkList.pop();
-        }
-        if (baseMarkList.length === 0) {
+        const baseMarkList = baseFieldMarks[key] ?? [];
+        baseFieldMarks[key] = foldInMarkList(newMarkList, baseMarkList);
+        if (baseFieldMarks[key].length === 0) {
             // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete baseFieldMarks[key];
         }
