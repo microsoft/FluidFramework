@@ -325,7 +325,7 @@ export class LoadTestDataStoreModel {
         if (this.runtime.disposed) {
             return false;
         }
-        return this.taskManager.assignedTask(this.taskId);
+        return this.taskManager.assigned(this.taskId);
     }
 
     public abandonTask() {

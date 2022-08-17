@@ -216,7 +216,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // We don't modify the taskQueues on disconnect (they still reflect the latest known consensus state).
             // After reconnect these will get cleaned up by observing the clientLeaves.
             // However we do need to recognize that we lost the lock if we had it.  Calls to .queued() and
-            // .assignedTask() are also connection-state-aware to be consistent.
+            // .assigned() are also connection-state-aware to be consistent.
             for (const [taskId, clientQueue] of this.taskQueues.entries()) {
                 if (clientQueue[0] === this.runtime.clientId) {
                     this.emit("lost", taskId);
@@ -261,7 +261,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
     public async volunteerForTask(taskId: string) {
         // If we have the lock, resolve immediately
-        if (this.assignedTask(taskId)) {
+        if (this.assigned(taskId)) {
             return true;
         }
 
@@ -279,7 +279,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
                 // Also check pending ops here because it's possible we are currently in the queue from a previous
                 // lock attempt, but have an outstanding abandon AND the outstanding volunteer for this lock attempt.
                 // If we reach the head of the queue based on the previous lock attempt, we don't want to resolve.
-                if (this.assignedTask(taskId) && !this.latestPendingOps.has(taskId)) {
+                if (this.assigned(taskId) && !this.latestPendingOps.has(taskId)) {
                     this.queueWatcher.off("queueChange", checkIfAcquiredLock);
                     this.abandonWatcher.off("abandon", checkIfAbandoned);
                     this.connectionWatcher.off("disconnect", rejectOnDisconnect);
@@ -348,7 +348,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 
         if (!this.connected) {
             disconnectHandler();
-        } else if (!this.assignedTask(taskId) && !this.queued(taskId)) {
+        } else if (!this.assigned(taskId) && !this.queued(taskId)) {
             // TODO simulate auto-ack in detached scenario
             submitVolunteerOp();
         }
@@ -365,7 +365,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         this.abandonWatcher.emit("abandon", taskId);
     }
 
-    public assignedTask(taskId: string) {
+    public assigned(taskId: string) {
         if (!this.connected) {
             return false;
         }

@@ -44,7 +44,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
      * would release the lock.
      * @param taskId - Identifier for the task
      */
-    assignedTask(taskId: string): boolean;
+    assigned(taskId: string): boolean;
 
     /**
      * Check whether this client is either the current assignee for the task or is waiting in line or we expect they
