@@ -31,9 +31,9 @@ import { RootDataObject } from "./rootDataObject";
  * () => void;
  * ```
  *
- * ### "dispose"
+ * ### "disposed"
  *
- * The "dispose" event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
+ * The "disposed" event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
  *
  * #### Listener signature
  *
