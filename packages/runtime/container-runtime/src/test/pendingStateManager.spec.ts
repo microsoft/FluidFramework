@@ -6,10 +6,10 @@
 import assert from "assert";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { PendingStateManager } from "../pendingStateManager";
-import { ContainerMessageType } from "..";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
+import { PendingStateManager } from "../pendingStateManager";
+import { ContainerMessageType } from "..";
 
 describe("Pending State Manager", () => {
     describe("Rollback", () => {
@@ -113,7 +113,7 @@ describe("Pending State Manager", () => {
         });
     });
 
-    describe.only("Op processing", () => {
+    describe("Op processing", () => {
         let pendingStateManager;
         let closeError: ICriticalContainerError | undefined;
         const clientId = "clientId";
@@ -132,7 +132,7 @@ describe("Pending State Manager", () => {
             }, FlushMode.TurnBased, undefined);
         });
 
-        const submitBatch = (messages: Partial<ISequencedDocumentMessage>[], flush: boolean = true) => {
+        const submitBatch = (messages: Partial<ISequencedDocumentMessage>[]) => {
             messages.forEach((message) => {
                 pendingStateManager.onSubmitMessage(
                     message.type,
@@ -141,9 +141,7 @@ describe("Pending State Manager", () => {
                     message.metadata);
             });
 
-            if (flush) {
-                pendingStateManager.onFlush();
-            }
+            pendingStateManager.onFlush();
         };
 
         const process = (messages: Partial<ISequencedDocumentMessage>[]) =>
