@@ -92,6 +92,12 @@ extends:
         command: 'custom'
         customCommand: 'run build:compile'
         workingDir: '$(Build.SourcesDirectory)/build-tools'
+    - task: Npm@1
+      displayName: 'npm run build:full'
+      inputs:
+        command: 'custom'
+        customCommand: 'run build:full'
+        workingDir: '$(Build.SourcesDirectory)/build-tools'
     - task: Bash@3
       displayName: 'Generate Mono repo package json'
       inputs:
