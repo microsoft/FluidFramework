@@ -97,15 +97,17 @@ The vast majority of these options have default values that have been crafted to
 
 ## Upcoming Work
 
--   Intro sandbox (api report)
-
 ### TODOs before merging PR:
 
--   Quickstart guide
 -   No "modifiers" column for classe, interface, namespace tables
+
+### Documentation Improvements
+
+-   Intro sandbox (api report)
 
 ### Styling improvements
 
+-   Include item itself in breadcrumb
 -   Add more modifiers to modifiers columns (optional, etc.)
 -   Dynamic "Modifiers" column in tables
     -   I.e. only include "modifiers" column if any modifiers are detected.
