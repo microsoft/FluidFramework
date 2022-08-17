@@ -11,8 +11,22 @@ export function isAttachGroup(mark: T.Mark): mark is T.AttachGroup {
     return Array.isArray(mark);
 }
 
-export function isReattach(mark: T.Mark): mark is T.Reattach {
-    return isObjMark(mark) && "type" in mark && (mark.type === "Revive" || mark.type === "Return");
+export function isReattach(mark: T.Mark): mark is T.Reattach | T.ModifyReattach {
+    return isObjMark(mark) && "type" in mark &&
+        (
+            mark.type === "Revive"
+            || mark.type === "MRevive"
+            || mark.type === "Return"
+            || mark.type === "MReturn"
+        );
+}
+
+export function isTomb(mark: T.Mark): mark is T.Tomb {
+    return isObjMark(mark) && "type" in mark && mark.type === "Tomb";
+}
+
+export function isGapEffectMark(mark: T.Mark): mark is T.GapEffectSegment {
+    return isObjMark(mark) && "type" in mark && mark.type === "Gap";
 }
 
 export function getAttachLength(attach: T.Attach): number {

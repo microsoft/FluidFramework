@@ -8,8 +8,10 @@ import {
     getOutputLength,
     isAttachGroup,
     isDetachMark,
+    isGapEffectMark,
     isReattach,
     isSkipMark,
+    isTomb,
     MarkListFactory,
     splitMarkOnInput,
     splitMarkOnOutput,
@@ -74,15 +76,47 @@ function composeMarkLists(
         nextNewMark = undefined;
         nextBaseMark = undefined;
         if (baseMark === undefined) {
+            // We have reached an region of the field that the base change does not affect.
+            // We therefore adopt the new mark as is.
             factory.push(clone(newMark));
-        } else if (isAttachGroup(newMark) || isReattach(newMark)) {
+        } else if (isAttachGroup(newMark)) {
+            // Content that is being attached by the new changeset cannot interact with base changes.
+            // Note that attach marks from different changesets can only target the same gap if they are concurrent.
+            // If two concurrent changesets A and B were targeting the same gap, the changeset that is sequenced later
+            // would bet rebased over the first, resulting in a Skip mark being introduced in the later changeset.
+            // Since compose only deals with changes that are rebased in this way,
+            // we don't have to deal with tie-breaking issues.
+            factory.pushContent(clone(newMark));
+            nextBaseMark = baseMark;
+        } else if (isReattach(newMark)) {
+            // Content that is being re-attached by the new changeset can interact with base changes.
+            // This can happen in two cases:
+            // - The base change contains the detach that the re-attach is the inverse of.
+            // - The base change contains a tombstone for the detach that the re-attach is the inverse of.
+            // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
+            // reattached content and concurrently attached content is not preserved.
+            // TODO: properly compose reattach marks with their matching base marks if any.
             factory.pushContent(clone(newMark));
             nextBaseMark = baseMark;
         } else if (isDetachMark(baseMark)) {
-            // TODO: match base detaches to tombs and reattach in the newMarkList
+            // Content that is being detached by the base changeset can interact with the new changes.
+            // This can happen in two cases:
+            // - The new change contains reattach marks for this detach. (see above)
+            // - The new change contains tombs for this detach.
+            // We're ignoring these cases for now. The impact of ignoring them is that the relative order of
+            // reattached content and concurrently attached content is not preserved.
+            // TODO: properly compose detach marks with their matching new marks if any.
             factory.pushContent(baseMark);
             nextNewMark = newMark;
+        } else if (isTomb(baseMark) || isGapEffectMark(baseMark) || isTomb(newMark) || isGapEffectMark(newMark)) {
+            // We don't currently support Tomb and Gap marks (and don't offer ways to generate them).
+            fail("TODO: support Tomb and Gap marks");
         } else {
+            // If we've reached this branch then `baseMark` and `newMark` start at the same location
+            // in the document field at the revision after the base changes and before the new changes.
+            // Despite that, it's not necessarily true that they affect the same range in that document
+            // field because they may be of different lengths.
+            // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getOutputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
@@ -90,14 +124,11 @@ function composeMarkLists(
             } else if (newMarkLength > baseMarkLength) {
                 [newMark, nextNewMark] = splitMarkOnInput(newMark, baseMarkLength);
             }
-            // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length
-            if (isSkipMark(baseMark)) {
-                // TODO: insert new tombs and reattaches without replacing the offset
-                factory.push(newMark);
-            } else {
-                const composedMark = composeMarks(baseMark, newMark);
-                factory.push(composedMark);
-            }
+            // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
+            // start at the same location in the revision after the base changes.
+            // They therefore refer to the same range for that revision.
+            const composedMark = composeMarks(baseMark, newMark);
+            factory.push(composedMark);
         }
         if (nextBaseMark === undefined) {
             iBase += 1;
@@ -108,6 +139,7 @@ function composeMarkLists(
             nextNewMark = newMarkList[iNew];
         }
     }
+    // Push the remaining base marks if any
     if (nextBaseMark !== undefined) {
         factory.push(nextBaseMark);
     }
@@ -123,40 +155,18 @@ function composeMarkLists(
  * Its output range should be the same as `newMark`'s input range.
  * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
  */
-function composeMarks(
-    baseMark: T.ObjectMark,
-    newMark: T.SizedMark,
-): T.Mark {
+function composeMarks(baseMark: T.Mark, newMark: T.SizedMark): T.Mark {
+    if (isSkipMark(baseMark)) {
+        return clone(newMark);
+    }
     if (isSkipMark(newMark)) {
         return baseMark;
     }
-    const newType = newMark.type;
     if (isAttachGroup(baseMark)) {
-        switch (newType) {
-            case "Modify": {
-                const attach = baseMark[0];
-                if (attach.type === "Insert") {
-                    return [{
-                        ...newMark,
-                        type: "MInsert",
-                        id: attach.id,
-                        content: attach.content[0],
-                    }];
-                } else if (attach.type === "MInsert") {
-                    updateModifyLike(newMark, attach);
-                    return [attach];
-                }
-                fail("Not implemented");
-            }
-            case "Delete": {
-                // The insertion of the previous change is subsequently deleted.
-                // TODO: preserve the insertion as muted
-                return 0;
-            }
-            default: fail("Not implemented");
-        }
+        return composeWithAttachGroup(baseMark, newMark);
     }
     const baseType = baseMark.type;
+    const newType = newMark.type;
     if (newType === "MDelete" || baseType === "MDelete") {
         // This should not occur yet because we discard all modifications to deleted subtrees
         // In the long run we want to preserve them.
@@ -175,11 +185,7 @@ function composeMarks(
                 case "Delete": {
                     // For now the deletion obliterates all other modifications.
                     // In the long run we want to preserve them.
-                    return {
-                        type: "Delete",
-                        id: newMark.id,
-                        count: newMark.count,
-                    };
+                    return clone(newMark);
                 }
                 default: fail("Not implemented");
             }
@@ -205,6 +211,37 @@ function composeMarks(
         default: fail("Not implemented");
     }
 }
+
+function composeWithAttachGroup(baseMark: T.AttachGroup, newMark: T.SizedObjectMark): T.Mark {
+    const newType = newMark.type;
+    switch (newType) {
+        case "Modify": {
+            const attach = baseMark[0];
+            const baseType = attach.type;
+            switch (baseType) {
+                case "Insert":
+                    return [{
+                        ...newMark,
+                        type: "MInsert",
+                        id: attach.id,
+                        content: attach.content[0],
+                    }];
+                case "MInsert": {
+                    updateModifyLike(newMark, attach);
+                    return [attach];
+                }
+                default: fail("Not implemented");
+            }
+        }
+        case "Delete": {
+            // The insertion of the previous change is subsequently deleted.
+            // TODO: preserve the insertion as muted
+            return 0;
+        }
+        default: fail("Not implemented");
+    }
+}
+
 function updateModifyLike(curr: T.Modify, base: T.ModifyInsert | T.Modify | T.ModifyReattach) {
     if (curr.fields !== undefined) {
         base.fields = composeFieldMarks(base.fields ?? {}, curr.fields);
