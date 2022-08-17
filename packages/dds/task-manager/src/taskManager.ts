@@ -147,6 +147,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     private readonly latestPendingOps: Map<string, IPendingOp> = new Map();
 
     /**
+     * Tracks tasks that are this client is currently subscribed to.
+     */
+    private readonly subscribedTasks: Map<string, boolean> = new Map();
+
+    /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
      * be provided
      *
@@ -313,6 +318,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public subscribeToTask(taskId: string) {
+        if (this.subscribed(taskId)) {
+            return;
+        }
+
         const submitVolunteerOp = () => {
             this.submitVolunteerOp(taskId);
         };
@@ -330,6 +339,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             this.abandonWatcher.off("abandon", checkIfAbandoned);
             this.connectionWatcher.off("disconnect", disconnectHandler);
             this.connectionWatcher.off("connect", submitVolunteerOp);
+
+            this.subscribedTasks.set(taskId, false);
         };
 
         this.abandonWatcher.on("abandon", checkIfAbandoned);
@@ -341,6 +352,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // TODO simulate auto-ack in detached scenario
             submitVolunteerOp();
         }
+        this.subscribedTasks.set(taskId, true);
     }
 
     public abandon(taskId: string) {
@@ -379,6 +391,10 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             && !this.latestPendingOps.has(taskId)
         )
             || this.latestPendingOps.get(taskId)?.type === "volunteer";
+    }
+
+    public subscribed(taskId: string): boolean {
+        return (this.subscribedTasks.get(taskId) ?? false);
     }
 
     /**

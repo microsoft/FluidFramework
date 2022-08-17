@@ -52,4 +52,10 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
      * @param taskId - Identifier for the task
      */
     queued(taskId: string): boolean;
+
+    /**
+     * Check whether this client is subscribed for the task.
+     * @param taskId - Identifier for the task
+     */
+    subscribed(taskId: string): boolean;
 }

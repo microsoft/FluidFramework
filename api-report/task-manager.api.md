@@ -20,6 +20,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     abandon(taskId: string): void;
     assignedTask(taskId: string): boolean;
     queued(taskId: string): boolean;
+    subscribed(taskId: string): boolean;
     subscribeToTask(taskId: string): void;
     volunteerForTask(taskId: string): Promise<boolean>;
 }
@@ -56,6 +57,8 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     queued(taskId: string): boolean;
     // @internal
     protected reSubmitCore(): void;
+    // (undocumented)
+    subscribed(taskId: string): boolean;
     // (undocumented)
     subscribeToTask(taskId: string): void;
     // @internal
