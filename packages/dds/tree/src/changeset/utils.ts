@@ -59,10 +59,9 @@ export function isEqualGapEffect(lhs: Readonly<T.GapEffect>, rhs: Readonly<T.Gap
 
 /**
  * @param mark - The mark to get the length of.
- * @returns The length of the mark in number of nodes.
- * Note that for attaches, this represents the number of nodes being attached.
+ * @returns The number of nodes within the output context of the mark.
  */
-export function getMarkLength(mark: T.Mark): number {
+export function getOutputLength(mark: T.Mark): number {
     if (isSkipMark(mark)) {
         return mark;
     }
@@ -71,19 +70,50 @@ export function getMarkLength(mark: T.Mark): number {
     }
     const type = mark.type;
     switch (type) {
+        case "Tomb":
+        case "Gap":
+        case "Revive":
+        case "Return":
+            return mark.count;
+        case "MReturn":
+        case "MRevive":
+        case "Modify":
+            return 1;
+        case "Delete":
+        case "MDelete":
+        case "MoveOut":
+        case "MMoveOut":
+            return 0;
+        default: unreachableCase(type);
+    }
+}
+
+/**
+ * @param mark - The mark to get the length of.
+ * @returns The number of nodes within the input context of the mark.
+ */
+export function getInputLength(mark: T.Mark): number {
+    if (isSkipMark(mark)) {
+        return mark;
+    }
+    if (isAttachGroup(mark)) {
+        return 0;
+    }
+    const type = mark.type;
+    switch (type) {
+        case "Tomb":
+        case "Gap":
+        case "Revive":
+        case "Return":
+        case "Delete":
+        case "MoveOut":
+            return mark.count;
+        case "MReturn":
+        case "MRevive":
         case "Modify":
         case "MDelete":
         case "MMoveOut":
-        case "MReturn":
-        case "MRevive":
             return 1;
-        case "Delete":
-        case "MoveOut":
-        case "Return":
-        case "Revive":
-        case "Tomb":
-        case "Gap":
-            return mark.count;
         default: unreachableCase(type);
     }
 }
@@ -92,10 +122,53 @@ export function isSkipMark(mark: T.Mark): mark is Skip {
     return typeof mark === "number";
 }
 
-export function splitMark<TMark extends T.Mark>(mark: TMark, length: number): [TMark, TMark] {
-    const markLength = getMarkLength(mark);
+/**
+ * Splits the `mark` into two marks such that the first returned mark has input length `length`.
+ * @param mark - The mark to split.
+ * @param length - The desired length for the first of the two returned marks.
+ * @returns A pair of marks equivalent to the original `mark`
+ * such that the first returned mark has input length `length`.
+ */
+export function splitMarkOnInput<TMark extends T.SizedMark>(mark: TMark, length: number): [TMark, TMark] {
+    const markLength = getInputLength(mark);
     const remainder = markLength - length;
-    if (length < 1 || markLength <= length) {
+    if (length < 1 || remainder < 1) {
+        fail(`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`);
+    }
+    if (isSkipMark(mark)) {
+        return [length, remainder] as [TMark, TMark];
+    }
+    const markObj = mark as T.SizedObjectMark;
+    const type = markObj.type;
+    switch (type) {
+        case "Modify":
+        case "MDelete":
+        case "MMoveOut":
+        case "MReturn":
+        case "MRevive":
+            fail(`Unable to split ${type} mark of length 1`);
+        case "Delete":
+        case "MoveOut":
+        case "Return":
+        case "Revive":
+        case "Tomb":
+        case "Gap":
+            return [{ ...markObj, count: length }, { ...markObj, count: remainder }] as [TMark, TMark];
+        default: unreachableCase(type);
+    }
+}
+
+/**
+ * Splits the `mark` into two marks such that the first returned mark has output length `length`.
+ * @param mark - The mark to split.
+ * @param length - The desired length for the first of the two returned marks.
+ * @returns A pair of marks equivalent to the original `mark`
+ * such that the first returned mark has output length `length`.
+ */
+export function splitMarkOnOutput<TMark extends T.Mark>(mark: TMark, length: number): [TMark, TMark] {
+    const markLength = getOutputLength(mark);
+    const remainder = markLength - length;
+    if (length < 1 || remainder < 1) {
         fail(`Unable to split mark of length ${markLength} into marks of lengths ${length} and ${remainder}`);
     }
     if (isSkipMark(mark)) {
@@ -108,13 +181,14 @@ export function splitMark<TMark extends T.Mark>(mark: TMark, length: number): [T
     const type = markObj.type;
     switch (type) {
         case "Modify":
-        case "MDelete":
-        case "MMoveOut":
         case "MReturn":
         case "MRevive":
-            fail(`Unable to split ${type} mark`);
+            fail(`Unable to split ${type} mark of length 1`);
+        case "MDelete":
+        case "MMoveOut":
         case "Delete":
         case "MoveOut":
+            fail(`Unable to split ${type} mark of length 0`);
         case "Return":
         case "Revive":
         case "Tomb":

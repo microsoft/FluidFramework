@@ -5,12 +5,13 @@
 
 import {
     ChangesetTag,
-    getMarkLength,
+    getInputLength,
+    getOutputLength,
     isAttachGroup,
     isReattach,
     isSkipMark,
     MarkListFactory,
-    splitMark,
+    splitMarkOnInput,
     Transposed as T,
 } from "../../changeset";
 import { clone, fail } from "../../util";
@@ -67,15 +68,15 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             factory.pushContent(clone(currMark));
             nextBaseMark = baseMark;
         } else if (isAttachGroup(baseMark) || isReattach(baseMark)) {
-            factory.pushOffset(getMarkLength(baseMark));
+            factory.pushOffset(getOutputLength(baseMark));
             nextCurrMark = currMark;
         } else {
-            const currMarkLength = getMarkLength(currMark);
-            const baseMarkLength = getMarkLength(baseMark);
+            const currMarkLength = getInputLength(currMark);
+            const baseMarkLength = getInputLength(baseMark);
             if (currMarkLength < baseMarkLength) {
-                [baseMark, nextBaseMark] = splitMark(baseMark, currMarkLength);
+                [baseMark, nextBaseMark] = splitMarkOnInput(baseMark, currMarkLength);
             } else if (currMarkLength > baseMarkLength) {
-                [currMark, nextCurrMark] = splitMark(currMark, baseMarkLength);
+                [currMark, nextCurrMark] = splitMarkOnInput(currMark, baseMarkLength);
             }
             const rebasedMark = rebaseMark(currMark, baseMark);
             // Past this point, we are guaranteed that:

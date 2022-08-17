@@ -4,13 +4,15 @@
  */
 
 import {
-    getMarkLength,
+    getInputLength,
+    getOutputLength,
     isAttachGroup,
     isDetachMark,
     isReattach,
     isSkipMark,
     MarkListFactory,
-    splitMark,
+    splitMarkOnInput,
+    splitMarkOnOutput,
     Transposed as T,
 } from "../../changeset";
 import { clone, fail } from "../../util";
@@ -32,30 +34,34 @@ export function compose(changes: SequenceChangeset[]): SequenceChangeset {
     if (changes.length === 1) {
         return changes[0];
     }
-    const base: SequenceChangeset = {
-        marks: {},
-    };
+    let composedFieldMarks: T.FieldMarks = {};
     for (const change of changes) {
-        foldInFieldMarks(change.marks, base.marks);
+        composedFieldMarks = composeFieldMarks(composedFieldMarks, change.marks);
     }
-    return base;
+    return {
+        marks: composedFieldMarks,
+    };
 }
 
-function foldInFieldMarks(newFieldMarks: T.FieldMarks, baseFieldMarks: T.FieldMarks) {
+function composeFieldMarks(baseFieldMarks: T.FieldMarks, newFieldMarks: T.FieldMarks): T.FieldMarks {
+    const composed: T.FieldMarks = {};
     for (const key of Object.keys(newFieldMarks)) {
-        const newMarkList = newFieldMarks[key];
-        const baseMarkList = baseFieldMarks[key] ?? [];
-        baseFieldMarks[key] = foldInMarkList(newMarkList, baseMarkList);
-        if (baseFieldMarks[key].length === 0) {
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete baseFieldMarks[key];
+        const composedMarkList = composeMarkLists(baseFieldMarks[key] ?? [], newFieldMarks[key]);
+        if (composedMarkList.length > 0) {
+            composed[key] = composedMarkList;
         }
     }
+    for (const key of Object.keys(baseFieldMarks)) {
+        if (!(key in newFieldMarks)) {
+            composed[key] = baseFieldMarks[key];
+        }
+    }
+    return composed;
 }
 
-function foldInMarkList(
-    newMarkList: T.MarkList,
+function composeMarkLists(
     baseMarkList: T.MarkList,
+    newMarkList: T.MarkList,
 ): T.MarkList {
     const factory = new MarkListFactory();
     let iBase = 0;
@@ -77,19 +83,19 @@ function foldInMarkList(
             factory.pushContent(baseMark);
             nextNewMark = newMark;
         } else {
-            const newMarkLength = getMarkLength(newMark);
-            const baseMarkLength = getMarkLength(baseMark);
+            const newMarkLength = getInputLength(newMark);
+            const baseMarkLength = getOutputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
-                [baseMark, nextBaseMark] = splitMark(baseMark, newMarkLength);
+                [baseMark, nextBaseMark] = splitMarkOnOutput(baseMark, newMarkLength);
             } else if (newMarkLength > baseMarkLength) {
-                [newMark, nextNewMark] = splitMark(newMark, baseMarkLength);
+                [newMark, nextNewMark] = splitMarkOnInput(newMark, baseMarkLength);
             }
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length
             if (isSkipMark(baseMark)) {
                 // TODO: insert new tombs and reattaches without replacing the offset
                 factory.push(newMark);
             } else {
-                const composedMark = composeMarks(newMark, baseMark);
+                const composedMark = composeMarks(baseMark, newMark);
                 factory.push(composedMark);
             }
         }
@@ -109,9 +115,17 @@ function foldInMarkList(
     return factory.list;
 }
 
+/**
+ * Composes two marks where `newMark` is based on the state produced by `baseMark`.
+ * @param newMark - The mark to compose with `baseMark`.
+ * Its input range should be the same as `baseMark`'s output range.
+ * @param baseMark - The mark to compose with `newMark`.
+ * Its output range should be the same as `newMark`'s input range.
+ * @returns A mark that is equivalent to applying both `baseMark` and `newMark` successively.
+ */
 function composeMarks(
+    baseMark: T.ObjectMark,
     newMark: T.SizedMark,
-    baseMark: T.SizedObjectMark | T.AttachGroup,
 ): T.Mark {
     if (isSkipMark(newMark)) {
         return baseMark;
@@ -193,8 +207,7 @@ function composeMarks(
 }
 function updateModifyLike(curr: T.Modify, base: T.ModifyInsert | T.Modify | T.ModifyReattach) {
     if (curr.fields !== undefined) {
-        base.fields ??= {};
-        foldInFieldMarks(curr.fields, base.fields);
+        base.fields = composeFieldMarks(base.fields ?? {}, curr.fields);
         if (Object.keys(base.fields).length === 0) {
             delete base.fields;
         }
