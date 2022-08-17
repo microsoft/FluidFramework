@@ -4,6 +4,8 @@
  */
 
 import http from "http";
+import * as path from "path";
+import Axios from "axios";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalServerTestDriver } from "./localServerTestDriver";
@@ -25,6 +27,28 @@ export const DriverApi: DriverApiType = {
     OdspDriverApi,
     RouterliciousDriverApi,
 };
+
+let httpAgentTinylicious: http.Agent | undefined;
+function setKeepAlive(api: RouterliciousDriverApiType) {
+    // Each TCP connect has a delay to disallow it to be reused after close, and unit test make a lot of connection,
+    // which might cause port exhaustion.
+
+    // For drivers that use Axios (t9s and r11s), keep the TCP connection open so that they can be reused
+    // TODO: no solution for node-fetch used by ODSP driver.
+    // TODO: currently the driver use a global setting.  Might want to make this encapsulated.
+
+    // create the keepAlive httpAgent only once
+    if (httpAgentTinylicious === undefined) {
+        httpAgentTinylicious = new http.Agent({ keepAlive: true });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const axios = api.modulePath === "" ? Axios : require(path.join(api.modulePath, "node_modules", "axios"));
+    // Don't override it if there is already one
+    if (axios.defaults.httpAgent === undefined) {
+        axios.defaults.httpAgent = httpAgentTinylicious;
+    }
+}
 
 let httpRequestPatched = false;
 function patchHttpRequestToForceKeepAlive() {
@@ -83,7 +107,7 @@ export async function createFluidTestDriver(
 
         case "t9s":
         case "tinylicious":
-            patchHttpRequestToForceKeepAlive();
+            setKeepAlive(api.RouterliciousDriverApi);
             return new TinyliciousTestDriver(api.RouterliciousDriverApi);
 
         case "r11s":

@@ -45,7 +45,7 @@ class SocketIoSocket implements IWebSocket {
     }
 
     public disconnect(close?: boolean): void {
-        this.socket.disconnect(close);
+        return;
     }
 }
 
