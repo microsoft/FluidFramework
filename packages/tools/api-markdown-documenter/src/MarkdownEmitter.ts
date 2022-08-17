@@ -16,6 +16,11 @@ import {
 import { DocLinkTag, DocNode, DocNodeKind, StringBuilder } from "@microsoft/tsdoc";
 
 import { logError, logWarning } from "./LoggingUtilities";
+import { MarkdownDocument } from "./MarkdownDocument";
+import {
+    MarkdownDocumenterConfiguration,
+    markdownDocumenterConfigurationWithDefaults,
+} from "./MarkdownDocumenterConfiguration";
 import {
     DocEmphasisSpan,
     DocHeading,
@@ -26,6 +31,7 @@ import {
     ListKind,
 } from "./doc-nodes";
 import { CustomDocNodeKind } from "./doc-nodes/CustomDocNodeKind";
+import { getLinkUrlForApiItem } from "./utilities";
 
 /**
  * Maximum heading level supported by most systems.
@@ -388,4 +394,28 @@ function contextWithIncrementedHeadingLevel(context: EmitterContext): EmitterCon
             headingLevel: (context.options.headingLevel ?? 0) + 1,
         },
     };
+}
+
+/**
+ * Emits Markdown content for the specified `docNode`
+ *
+ * @param document - The document to be emitted.
+ * @param partialConfig - See {@link MarkdownDocumenterConfiguration}.
+ * @param maybeEmitter - An optional {@link MarkdownEmitter} instance.
+ * Can be used to provide a custom emitter implementation.
+ * If not provided, a new instance of `MarkdownEmitter` will be used.
+ */
+export function emitMarkdown(
+    document: MarkdownDocument,
+    partialConfig: MarkdownDocumenterConfiguration,
+    maybeEmitter?: MarkdownEmitter,
+): string {
+    const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
+
+    const emitter: MarkdownEmitter = maybeEmitter ?? new MarkdownEmitter(config.apiModel);
+
+    return emitter.emit(new StringBuilder(), document.contents, {
+        contextApiItem: document.apiItem,
+        getLinkUrlApiItem: (_apiItem) => getLinkUrlForApiItem(_apiItem, config),
+    });
 }

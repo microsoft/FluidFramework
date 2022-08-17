@@ -20,7 +20,7 @@ export interface MarkdownDocumenterConfiguration extends PolicyOptions, Renderin
      *
      * @remarks Beyond being the root entry for rendering, this is used to resolve member links globally, etc.
      *
-     * If you need to generate a model from API reports on disk, see {@link readModel}.
+     * If you need to generate a model from API reports on disk, see {@link loadModel}.
      */
     apiModel: ApiModel;
 
