@@ -799,11 +799,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
         return interval;
     }
 
-    private addIdToEndpoints(interval: TInterval): void {
-        const id = interval.properties[reservedIntervalIdKey];
-        if (id && interval instanceof SequenceInterval) {
-            interval.start.addProperties({ [reservedIntervalIdKey]: id });
-            interval.end.addProperties({ [reservedIntervalIdKey]: id });
+    private linkEndpointsToInterval(interval: TInterval): void {
+        if (interval instanceof SequenceInterval) {
+            interval.start.addProperties({ interval });
+            interval.end.addProperties({ interval });
         }
     }
 
@@ -822,7 +821,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
     }
 
     public add(interval: TInterval) {
-        this.addIdToEndpoints(interval);
+        this.linkEndpointsToInterval(interval);
         this.addIntervalToIndex(interval);
         this.addIntervalListeners(interval);
     }
@@ -1670,13 +1669,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
  */
 export interface IntervalLocator {
     /**
-     * label for the collection the interval is a part of
+     * Label for the collection the interval is a part of
      */
     label: string;
     /**
-     * id of the interval
+     * Interval within that collection
      */
-    id: string;
+    interval: SequenceInterval;
 }
 
 /**
@@ -1687,8 +1686,8 @@ export interface IntervalLocator {
  */
 export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined {
     const {
-        [reservedIntervalIdKey]: id,
+        interval,
         [reservedRangeLabelsKey]: collectionNameArray,
     } = potentialEndpoint.properties ?? {};
-    return (id && collectionNameArray.length === 1) ? { label: collectionNameArray[0], id } : undefined;
+    return (interval && collectionNameArray?.length === 1) ? { label: collectionNameArray[0], interval } : undefined;
 }

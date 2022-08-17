@@ -199,7 +199,7 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 
 // @public
 export interface IntervalLocator {
-    id: string;
+    interval: SequenceInterval;
     label: string;
 }
 

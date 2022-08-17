@@ -148,10 +148,10 @@ describe("IntervalCollection snapshotting", () => {
         it("intervals can be retrieved from endpoints", async () => {
             const interval1 = collection.getIntervalById(id) ?? assert.fail("collection should have interval");
             const locator1 = intervalLocatorFromEndpoint(interval1.start);
-            assert.deepEqual(locator1, { id, label: "test" });
+            assert.deepEqual(locator1, { interval: interval1, label: "test" });
             const interval2 = collection.add(1, 2, IntervalType.SlideOnRemove);
             const locator2 = intervalLocatorFromEndpoint(interval2.start);
-            assert.deepEqual(locator2, { id: interval2.getIntervalId(), label: "test" });
+            assert.deepEqual(locator2, { interval: interval2, label: "test" });
         });
     });
 });
