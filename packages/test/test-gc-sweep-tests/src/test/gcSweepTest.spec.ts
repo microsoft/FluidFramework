@@ -3,76 +3,41 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable max-len */
 import { strict as assert } from "assert";
 import {
     ContainerRuntimeFactoryWithDefaultDataStore,
-    DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
-import { IRequest } from "@fluidframework/core-interfaces";
-import { EventAndErrorTrackingLogger, ITestObjectProvider } from "@fluidframework/test-utils";
+import { ContainerErrorType } from "@fluidframework/container-definitions";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 import {
     IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryBaseEvent, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
-import { TestDataObject } from "../testDataObjects";
+import { makeRandom, IRandom } from "@fluid-internal/stochastic-test-utils";
+import {
+    DataObjectManyDDSes,
+    testDataObjectWithEveryDDSFactory,
+} from "../testDataObjects";
 import { mockConfigProvider } from "../mockConfigProvider";
+import { IgnoreErrorLogger } from "../ignoreErrorLogger";
+import { ContainerManager } from "../containerManager";
+import { HandleTracker } from "../handlesTracker";
+import { FluidObjectTracker } from "../fluidObjectTracker";
+import { ContainerDataObjectManager } from "../containerDataObjectManager";
 
-enum ReferenceState {
-    Unreferenced,
-    Referenced,
-    Root,
+interface ITestAction {
+    actionNumber: number;
+    action: () => Promise<void>;
+    name: string;
+    [key: string]: any;
 }
 
-class TestNode {
-    public readonly parents: Set<string> = new Set();
-    public readonly children: Set<string> = new Set();
-    public referenceState: ReferenceState;
-    constructor(public readonly id: string, referenceState = ReferenceState.Unreferenced) {
-        this.referenceState = referenceState;
-    }
-}
-
-class IgnoreErrorLogger extends EventAndErrorTrackingLogger {
-    private readonly ignoredEvents: Map<string, ITelemetryGenericEvent> = new Map();
-
-    public ignoreExpectedEventTypes(... anyIgnoredEvents: ITelemetryGenericEvent[]) {
-        for (const event of anyIgnoredEvents) {
-            this.ignoredEvents.set(event.eventName, event);
-        }
-    }
-
-    send(event: ITelemetryBaseEvent): void {
-        if (this.ignoredEvents.has(event.eventName)) {
-            let matches = true;
-            const ie = this.ignoredEvents.get(event.eventName);
-            assert(ie !== undefined);
-            for (const key of Object.keys(ie)) {
-                if (ie[key] !== event[key]) {
-                    matches = false;
-                    break;
-                }
-            }
-            if (matches) {
-                event.category = "generic";
-            }
-        }
-
-        super.send(event);
-    }
-}
-
-describeNoCompat("GC Random tests", (getTestObjectProvider) => {
+describeNoCompat("GC Sweep tests", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
-    const dataObjectFactory = new DataObjectFactory(
-        "TestDataObject",
-        TestDataObject,
-        [],
-        []);
 
     const runtimeOptions: IContainerRuntimeOptions = {
         summaryOptions: {
@@ -81,12 +46,12 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
                 initialSummarizerDelayMs: 0,
                 summarizerClientElection: true,
                 maxAckWaitTime: 5000,
-                maxOpsSinceLastSummary: 10,
-                idleTime: 1000,
+                maxOpsSinceLastSummary: 100,
+                idleTime: 100,
                 minIdleTime: 0,
-                maxIdleTime: 2000,
+                maxIdleTime: 300,
                 maxTime: 4000,
-                maxOps: 5,
+                maxOps: 100,
                 minOpsForLastSummaryAttempt: 1,
                 runtimeOpWeight: 1,
                 nonRuntimeOpWeight: 1,
@@ -99,9 +64,9 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
     const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
         runtime.IFluidHandleContext.resolveHandle(request);
     const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-        dataObjectFactory,
+        testDataObjectWithEveryDDSFactory,
         [
-            [dataObjectFactory.type, Promise.resolve(dataObjectFactory)],
+            [testDataObjectWithEveryDDSFactory.type, Promise.resolve(testDataObjectWithEveryDDSFactory)],
         ],
         undefined,
         [innerRequestHandler],
@@ -119,196 +84,153 @@ describeNoCompat("GC Random tests", (getTestObjectProvider) => {
 
     let overrideLogger: IgnoreErrorLogger;
 
-    let mainContainer: IContainer;
-    let connectedContainers: IContainer[];
-    let closedContainers: IContainer[];
-    let testNodes: Map<string, TestNode>;
-
-    const createContainer = async (): Promise<IContainer> => {
-        return provider.createContainer(runtimeFactory, { configProvider });
-    };
-    const loadContainer = async (): Promise<IContainer> => {
-        return provider.loadContainer(runtimeFactory, { configProvider });
-    };
-
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-    const seed = Math.random();
-    const random = makeRandom(seed);
-
-    beforeEach(async () => {
-        provider = getTestObjectProvider({
-            syncSummarizer: true,
-        });
-        overrideLogger = new IgnoreErrorLogger(provider.logger);
-        provider.logger = overrideLogger;
-
-        // Create a Container for the first client.
-        mainContainer = await createContainer();
-        const mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
-        connectedContainers = [];
-        closedContainers = [];
-        testNodes = new Map();
-        testNodes.set(mainDataStore.id, new TestNode(mainDataStore.id, ReferenceState.Root));
-    });
+    const seed = 0.0604202162258638; // Math.random();
+    const random: IRandom = makeRandom(seed);
 
     const randomInteger = (min: number, max: number): number => {
         return random.integer(min, max);
     };
 
-    const loadNewContainer = async () => {
-        const newContainer = await loadContainer();
-        newContainer.on("closed", () => {
-            const index = connectedContainers.indexOf(newContainer);
-            assert(index >= 0, "Expected container to have been added to connectedContainers");
-            closedContainers.push(connectedContainers[index]);
-            connectedContainers.splice(index, 1);
+    const testTime = 10 * 1000; // 1 minute
+
+    // Currently for GC Sweep testing only, run with npm run test. Should not be running in CI
+    // TODO: setup test to run in CI
+    it(`GC Randomization Test with Seed: ${seed}`, async () => {
+        provider = getTestObjectProvider({
+            syncSummarizer: true,
         });
-        connectedContainers.push(newContainer);
-    };
-
-    const closeRandomContainer = async () => {
-        if (connectedContainers.length <= 0) {
-            return;
-        }
-        random.pick(connectedContainers).close();
-    };
-
-    const createDataStoreForContainer = async (container: IContainer, dataStoreType: string = "TestDataObject") => {
-        const defaultDataStore = await requestFluidObject<TestDataObject>(container, "default");
-        const newDataStore = await defaultDataStore.containerRuntime.createDataStore(dataStoreType);
-        const newDataObject = await requestFluidObject<TestDataObject>(newDataStore, "");
-        testNodes.set(newDataObject.id, new TestNode(newDataObject.id));
-        return newDataObject;
-    };
-
-    const createDataStoreForRandomContainer = async () => {
-        if (connectedContainers.length <= 0) {
-            return;
-        }
-        await createDataStoreForContainer(getRandomContainer());
-    };
-
-    const getTestNode = (id: string): TestNode => {
-        const testNode = testNodes.get(id);
-        assert(testNode !== undefined, `Datastore ${id} not found in TestNode map!`);
-        return testNode;
-    };
-
-    const trackDataStoreAsReferenced = (id: string) => {
-        const testNode = getTestNode(id);
-        if (testNode.referenceState === ReferenceState.Unreferenced) {
-            testNode.referenceState = ReferenceState.Referenced;
-            for (const childId of testNode.children) {
-                trackDataStoreAsReferenced(childId);
-            }
-        }
-    };
-
-    const hasReferencedParent = (id: string): boolean => {
-        for (const parentNodeId of getTestNode(id).parents) {
-            const parentNode = getTestNode(parentNodeId);
-            if (parentNode.referenceState !== ReferenceState.Unreferenced) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    const updateUnreferencedDataStores = (id: string) => {
-        const testNode = getTestNode(id);
-        if (testNode.referenceState === ReferenceState.Referenced && !hasReferencedParent(id)) {
-            testNode.referenceState = ReferenceState.Unreferenced;
-            for (const childId of testNode.children) {
-                updateUnreferencedDataStores(childId);
-            }
-        }
-    };
-
-    const referenceDataStore = (dataStore: TestDataObject, parentDataStore: TestDataObject) => {
-        parentDataStore._root.set(dataStore.id, dataStore.handle);
-        const parentNode = getTestNode(parentDataStore.id);
-        parentNode.children.add(dataStore.id);
-        getTestNode(dataStore.id).parents.add(parentDataStore.id);
-        if (parentNode.referenceState !== ReferenceState.Unreferenced) {
-            trackDataStoreAsReferenced(dataStore.id);
-        }
-    };
-
-    const unreferenceDataStore = (dataStore: TestDataObject, parentDataStore: TestDataObject) => {
-        parentDataStore._root.delete(dataStore.id);
-        getTestNode(parentDataStore.id).children.delete(dataStore.id);
-        getTestNode(dataStore.id).parents.delete(parentDataStore.id);
-        updateUnreferencedDataStores(dataStore.id);
-    };
-
-    const getRandomContainer = (): IContainer => {
-        return random.pick(connectedContainers);
-    };
-
-    const getRandomDataStoreFromContainer = async (container: IContainer) => {
-        const dataStoreId = random.pick(Array.from(testNodes.values())).id;
-        return requestFluidObject<TestDataObject>(container, dataStoreId);
-    };
-
-    const getRandomParentForDataStore = async (dataStore: TestDataObject, container: IContainer) => {
-        const parents = getTestNode(dataStore.id).parents;
-        if (parents.size <= 0) {
-            return undefined;
-        }
-        const parentId = random.pick(Array.from(parents.values()));
-        return requestFluidObject<TestDataObject>(container, parentId);
-    };
-
-    const referenceRandomDataStore = async () => {
-        if (connectedContainers.length <= 0 || testNodes.size <= 0) {
-            return;
-        }
-        const container = getRandomContainer();
-        const dataStore = await getRandomDataStoreFromContainer(container);
-        const parent = await getRandomDataStoreFromContainer(container);
-        referenceDataStore(dataStore, parent);
-    };
-
-    const unreferenceRandomDataStore = async () => {
-        if (connectedContainers.length <= 0 || testNodes.size <= 0) {
-            return;
-        }
-        const container = getRandomContainer();
-        const dataStore = await getRandomDataStoreFromContainer(container);
-        const parentDataStore = await getRandomParentForDataStore(dataStore, container);
-        if (parentDataStore === undefined) {
-            return;
-        }
-        unreferenceDataStore(dataStore, parentDataStore);
-    };
-
-    const actionsList: (() => Promise<void>)[] = [
-        loadNewContainer,
-        closeRandomContainer,
-        createDataStoreForRandomContainer,
-        referenceRandomDataStore,
-        unreferenceRandomDataStore,
-    ];
-    const testTime = 60 * 1000; // 1 minute
-
-    it.skip(`Create and reference and unreference datastores with multiple containers. Seed: ${seed}`, async () => {
+        overrideLogger = new IgnoreErrorLogger(provider.logger);
+        provider.logger = overrideLogger;
         overrideLogger.ignoreExpectedEventTypes({
             eventName: "fluid:telemetry:Container:ContainerClose",
             errorType: ContainerErrorType.clientSessionExpiredError,
         });
 
-        const testEnd = Date.now() + testTime;
-        const errorList: any[] = [];
-        while (Date.now() < testEnd) {
-            const sleepTime: number = randomInteger(0, defaultSessionExpiryDurationMs + 1000);
-            const action = random.pick(actionsList);
+        const containerManager = new ContainerManager(runtimeFactory, configProvider, provider);
+        const mainContainer = await containerManager.createContainer();
+        const mainDataObject = await requestFluidObject<DataObjectManyDDSes>(mainContainer, "default");
+        const testStart = Date.now();
+        const handleTracker = new HandleTracker(testStart);
+        const fluidObjectTracker = new FluidObjectTracker();
+        fluidObjectTracker.trackDataObject(mainDataObject);
 
-            action().catch((error) => {
-                errorList.push(error);
+        const loadNewContainer = async () => {
+            await containerManager.loadContainer();
+        };
+        const closeRandomContainer = async () => { containerManager.closeRandomContainer(random); };
+
+        const referenceHandle = async (containerDataObjectManager: ContainerDataObjectManager, handle: IFluidHandle) => {
+            const channelPath = fluidObjectTracker.getRandomHandleChannel(random);
+            const parentDataObject = await containerDataObjectManager.getDataObject(channelPath.dataStoreId);
+            const addedHandle = await parentDataObject.addHandleOpForChannel(channelPath.ddsId, handle, random);
+            handleTracker.addHandlePath({
+                dataStoreId: channelPath.dataStoreId,
+                ddsId: channelPath.ddsId,
+                handleKey: addedHandle.addedHandleKey,
+                handlePath: handle.absolutePath,
+                actionNumber,
             });
-            await sleep(sleepTime);
+            if (addedHandle.removedHandle !== undefined) {
+                handleTracker.removeHandlePath({
+                    dataStoreId: channelPath.dataStoreId,
+                    ddsId: channelPath.ddsId,
+                    handleKey: addedHandle.removedHandle.key,
+                    handlePath: addedHandle.removedHandle.handle.absolutePath,
+                    actionNumber,
+                });
+                handleTracker.removeRemovePath({
+                    dataStoreId: channelPath.dataStoreId,
+                    ddsId: channelPath.ddsId,
+                });
+            }
+        };
+
+        const createDataStoreForRandomContainer = async () => {
+            const containerDataObjectManager = await containerManager.getRandomContainer(random);
+            const dataObject = await containerDataObjectManager.createDataObject();
+            await referenceHandle(containerDataObjectManager, dataObject.handle);
+            fluidObjectTracker.trackDataObject(dataObject);
+        };
+
+        const referenceRandomHandle = async () => {
+            const containerDataObjectManager = await containerManager.getRandomContainer(random);
+            const handlePath = fluidObjectTracker.getRandomFluidObject(random);
+            const handle = await containerDataObjectManager.getHandle(handlePath);
+            await referenceHandle(containerDataObjectManager, handle);
+        };
+
+        const unreferenceRandomHandle = async () => {
+            const containerDataObjectManager = await containerManager.getRandomContainer(random);
+            const channelPath = handleTracker.getChannelWithHandle(random);
+            const removedHandle = await containerDataObjectManager.removeHandle(channelPath, random);
+            handleTracker.removeHandlePath({
+                dataStoreId: channelPath.dataStoreId,
+                ddsId: channelPath.ddsId,
+                handleKey: removedHandle.key,
+                handlePath: removedHandle.handle.absolutePath,
+                actionNumber,
+            });
+        };
+
+        const errorList: any[] = [];
+        const actionsList: ITestAction[] = [];
+        let actionNumber = 0;
+        const actionStats = {
+            loadNewContainer: 0,
+            closeRandomContainer: 0,
+            createDataStoreForRandomContainer: 0,
+            referenceRandomHandle: 0,
+            unreferenceRandomHandle: 0,
+        };
+        while (testStart + testTime > Date.now()) {
+            actionNumber++;
+            const availableActions: ITestAction[] = [];
+            availableActions.push({ name: loadNewContainer.name, action: loadNewContainer, actionNumber });
+            if (containerManager.hasConnectedContainers()) {
+                availableActions.push({ name: closeRandomContainer.name, action: closeRandomContainer, actionNumber });
+                availableActions.push({ name: createDataStoreForRandomContainer.name, action: createDataStoreForRandomContainer, actionNumber });
+                availableActions.push({ name: referenceRandomHandle.name, action: referenceRandomHandle, actionNumber, add: handleTracker.addedPaths, remove: handleTracker.removablePaths });
+                if (handleTracker.hasHandlePaths()) {
+                    availableActions.push({ name: unreferenceRandomHandle.name, action: unreferenceRandomHandle, actionNumber, add: handleTracker.addedPaths, remove: handleTracker.removablePaths });
+                }
+            }
+
+            const action: ITestAction = random.pick(availableActions);
+            actionsList.push(action);
+
+            if (actionNumber === 22) {
+                console.log("test");
+            }
+            action.action().catch((error: any) => {
+                const errorDebug = {
+                    actionNumber: action.actionNumber,
+                    action: action.name,
+                    error,
+                    message: error.message,
+                    stack: error.stack,
+                };
+
+                errorList.push(errorDebug);
+            });
+            actionStats[action.name]++;
+            await sleep(randomInteger(0, 100));
         }
-        assert(errorList.length === 0, `${errorList}`);
+        const debugObject = {
+            actionCount: actionsList.length,
+            actionsList,
+            errorCount: errorList.length,
+            errorList,
+            ...actionStats,
+            handleRecord: handleTracker.handleActionRecord,
+        };
+        assert(errorList.length === 0, `Errors occurred!\nDebug: ${JSON.stringify(debugObject)}`);
+        const minimumExpectedActions = 100;
+        const minimumExpectedActionsPerActionType = minimumExpectedActions / 10;
+        assert(actionsList.length > minimumExpectedActions, `Very few actions!\nDebug: ${JSON.stringify(debugObject)}`);
+        Object.entries(actionStats).forEach(([name, stat]) => {
+            assert(stat >= minimumExpectedActionsPerActionType, `There are less than ${minimumExpectedActionsPerActionType} calls to ${name}!`);
+        });
     }).timeout(100 * 1000); // Add 40s of leeway
 
     // pick random runtime options (maybe a certain distribution as well)

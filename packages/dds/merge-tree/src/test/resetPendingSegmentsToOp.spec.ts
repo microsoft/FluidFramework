@@ -52,6 +52,38 @@ describe("resetPendingSegmentsToOp", () => {
             assert(client.mergeTree.pendingSegments?.empty());
         });
 
+        it("only computes localPartialLengths once", () => {
+            // This test helps verify the asymptotic correctness of rebase.
+            // Since local partial length information is reasonably expensive to store and compute compared to how
+            // frequently it's used (i.e. only on reconnect), mergeTree has some logic to only do so when requested,
+            // and invalidates that info whenever a segment update occurs.
+            // This test verifies that local partial length information only gets computed once when regenerating
+            // a number of ops for reconnection.
+            let localPartialsComputeCount = 0;
+            const spiedMergeTree =
+                client.mergeTree as unknown as { localPartialsComputed: boolean; _localPartialsComputed: boolean; };
+            spiedMergeTree._localPartialsComputed = spiedMergeTree.localPartialsComputed;
+            Object.defineProperty(
+                client.mergeTree as unknown as { localPartialsComputed: boolean; },
+                "localPartialsComputed",
+                {
+                    get() {
+                        return this._localPartialsComputed as boolean;
+                    },
+                    set(newValue) {
+                        if (newValue) {
+                            localPartialsComputeCount++;
+                        }
+                        this._localPartialsComputed = newValue;
+                    },
+                },
+            );
+            const oldops = opList;
+            opList = oldops.map((op) => client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first()!));
+            applyOpList(client);
+            assert.equal(localPartialsComputeCount, 1);
+        });
+
         it("nacked insertSegment", async () => {
             const oldops = opList;
             opList = oldops.map((op) => client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first()!));

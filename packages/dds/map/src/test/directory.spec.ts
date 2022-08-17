@@ -866,6 +866,55 @@ describe("Directory", () => {
                 assert.equal(directory1.has("test"), true, "could not find the set key");
                 assert.equal(directory1.get("test"), "directory1value4", "could not get the set key");
             });
+
+            it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
+                const root1SubDir = directory1.createSubDirectory("testSubDir");
+                root1SubDir.set("key1", "testValue1");
+
+                directory1.deleteSubDirectory("testSubDir");
+                const root1SubDir2 = directory1.createSubDirectory("testSubDir");
+                root1SubDir2.set("key2", "testValue2");
+                directory2.createSubDirectory("testSubDir");
+
+                // After the above scenario, the consistent state using LWW would be to have testSubDir with 1 key.
+                // Right now what happens is directory B just ignores the delete Op from directory 1 because its own
+                // create is not acked and it ends up ignoring the delete op. So directory 2 ends up having 2 keys
+                // instead of one.
+                containerRuntimeFactory.processAllMessages();
+                const directory1SubDir = directory1.getSubDirectory("testSubDir");
+                const directory2SubDir = directory2.getSubDirectory("testSubDir");
+
+                assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
+                assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
+
+                assert.strictEqual(directory1SubDir.size, 1, "Dir1 1 key should exist");
+                assert.strictEqual(directory2SubDir.size, 1, "Dir2 1 key should exist");
+                assert.strictEqual(directory1SubDir.get("key2"), "testValue2", "Dir1 key value should match");
+                assert.strictEqual(directory2SubDir.get("key2"), "testValue2", "Dir2 key value should match");
+            });
+
+            it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
+                const root1SubDir = directory1.createSubDirectory("testSubDir");
+                directory2.createSubDirectory("testSubDir");
+
+                root1SubDir.set("key1", "testValue1");
+                directory2.deleteSubDirectory("testSubDir");
+                directory2.createSubDirectory("testSubDir");
+
+                // After the above scenario, the consistent state using LWW would be to have testSubDir with 0 keys.
+                // Right now what happens is directory B just sees the set Op from directory 1 and set the key while
+                // directory A sees delete and create sub directory op from B and eventually have a sub directory
+                // testSubDir with 0 keys. So the state of directory 2 ends up wrong.
+                containerRuntimeFactory.processAllMessages();
+                const directory1SubDir = directory1.getSubDirectory("testSubDir");
+                const directory2SubDir = directory2.getSubDirectory("testSubDir");
+
+                assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
+                assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
+
+                assert.strictEqual(directory1SubDir.size, 0, "Dir 1 no key should exist");
+                assert.strictEqual(directory2SubDir.size, 0, "Dir 2 no key should exist");
+            });
         });
 
         describe("SubDirectory", () => {
