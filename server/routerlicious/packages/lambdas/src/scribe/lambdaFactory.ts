@@ -26,7 +26,7 @@ import {
 import { IDocumentSystemMessage, ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import { LumberEventName } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda, createSessionMetric } from "../utils";
+import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
@@ -89,10 +89,26 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 this.documentCollection.findOne({ documentId, tenantId }),
             ]);
 
-            // If the document doesn't exist or is marked for deletion then we trivially accept every message
-            if (!document || document.scheduledDeletionTime) {
-                context.log?.info(`Creating NoOpLambda due to missing document`, { messageMetaData });
+            if (!isDocumentValid(document)) {
+                // Document sessions can be joined (via Alfred) after a document is functionally deleted.
+                // If the document doesn't exist or is marked for deletion then we trivially accept every message.
+                context.log?.error(
+                    `Received attempt to connect to a missing/deleted document.`,
+                    { messageMetaData },
+                );
                 return new NoOpLambda(context);
+            }
+            if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
+                // Session for this document is either nonexistent or exists in a different location.
+                const errMsg =
+                    `Received attempt to connect to invalid session: ${JSON.stringify(document.session)}`;
+                context.log?.error(errMsg, { messageMetaData });
+                if (this.serviceConfiguration.enforceDiscoveryFlow) {
+                    // This can/will prevent any users from creating a valid session in this location
+                    // for the liftime of this NoOpLambda. This is not ideal; however, throwing an error
+                    // to prevent lambda creation would mark the document as corrupted, which is worse.
+                    return new NoOpLambda(context);
+                }
             }
 
             // Fetch pending ops from scribeDeltas collection
