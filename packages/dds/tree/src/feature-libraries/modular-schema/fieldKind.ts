@@ -25,7 +25,7 @@ import { isNeverField } from "./comparison";
 export class FieldKind {
     /**
      * @param identifier - Globally scoped identifier.
-     * @param multiplicity - bound on the number of children fields of this kind may have.
+     * @param multiplicity - bound on the number of children that fields of this kind may have.
      * TODO: replace with numeric upper and lower bounds.
      * @param changeHandler - Change handling policy.
      * @param allowsTreeSupersetOf - returns true iff `superset` supports all that this does,
