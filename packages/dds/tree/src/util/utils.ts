@@ -85,7 +85,7 @@ export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
     }
     for (const item of b.keys()) {
         if (!a.has(item)) {
-            if (bExtra && !!bExtra(item)) {
+            if (bExtra && !bExtra(item)) {
                 return false;
             }
         }
