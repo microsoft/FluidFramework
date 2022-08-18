@@ -228,6 +228,17 @@ stages:
 
         # Benchmark tests
         - ${{ if eq(parameters.runBenchmarkTests, 'true') }}:
+          # Auth to private npm feeds
+          - task: npmAuthenticate@0
+            displayName: 'npm authenticate (internal feed)'
+            inputs:
+              workingFile: ${{ parameters.buildDirectory }}/tools/write-perf-to-kusto/.npmrc
+          - task: npmAuthenticate@0
+            displayName: 'npm authenticate (office feed)'
+            inputs:
+              workingFile: ${{ parameters.buildDirectory }}/tools/write-perf-to-kusto/.npmrc
+              customEndpoint: 'Office Packages - Readonly'
+          # Run tests and process results
           - task: Npm@1
             displayName: Run performance benchmarks - runtime
             inputs:
