@@ -107,7 +107,7 @@ describe("SequenceChangeFamily", () => {
             if (name === "SetValue" || name === "Delete") {
                 it.skip(`${name} ○ ${name}⁻¹ === ε`, () => {
                     /**
-                     * These cases are currently disabled because the inverses of SetValue Delete
+                     * These cases are currently disabled because the inverses of SetValue and Delete
                      * do not capture which prior change they are reverting.
                      */
                 });

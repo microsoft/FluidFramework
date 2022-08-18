@@ -152,6 +152,8 @@ export function splitMarkOnInput<TMark extends T.SizedMark>(mark: TMark, length:
     if (isSkipMark(mark)) {
         return [length, remainder] as [TMark, TMark];
     }
+    // The compiler seems to think the case below is necessary
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const markObj = mark as T.SizedObjectMark;
     const type = markObj.type;
     switch (type) {
