@@ -20,10 +20,8 @@ const logger = getTestLogger?.();
 
 const filesToProcess: string[] = [];
 
-const dirs = [
-    "/workspaces/FluidFramework/experimental/dds/tree/benchOutput",
-    "/workspaces/FluidFramework/packages/dds/tree/benchOutput",
-];
+const dirs = process.argv.slice(2);
+
 while (dirs.length > 0) {
     const dir = dirs.pop()!;
     const files = fs.readdirSync(dir, { withFileTypes: true });
