@@ -1,7 +1,7 @@
 
 # TestInterface
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterface](./simple-suite-test/testinterface-interface)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterface](./simple-suite-test/testinterface-interface)
 
 Test interface
 

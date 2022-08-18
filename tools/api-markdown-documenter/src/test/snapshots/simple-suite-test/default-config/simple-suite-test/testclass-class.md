@@ -1,7 +1,7 @@
 
 # TestClass
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestClass](./simple-suite-test/testclass-class)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestClass](./simple-suite-test/testclass-class)
 
 Test class
 

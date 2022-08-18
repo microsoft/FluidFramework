@@ -81,6 +81,7 @@ export namespace DefaultPolicies {
     const defaultDocumentBoundaries: ApiItemKind[];
     const defaultHierarchyBoundaries: ApiItemKind[];
     export function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
+    export function defaultLinkTextPolicy(apiItem: ApiItem): string;
     export function defaultUriBaseOverridePolicy(): string | undefined;
 }
 
@@ -238,6 +239,9 @@ export interface Link {
 }
 
 // @public
+export type LinkTextPolicy = (apiItem: ApiItem) => string;
+
+// @public
 export enum ListKind {
     // (undocumented)
     Ordered = "ordered",
@@ -309,6 +313,7 @@ export interface PolicyOptions {
     hierarchyBoundaries?: HierarchyBoundaries;
     includeBreadcrumb?: boolean;
     includeTopLevelDocumentHeading?: boolean;
+    linkTextPolicy?: LinkTextPolicy;
     uriBaseOverridePolicy?: UriBaseOverridePolicy;
 }
 

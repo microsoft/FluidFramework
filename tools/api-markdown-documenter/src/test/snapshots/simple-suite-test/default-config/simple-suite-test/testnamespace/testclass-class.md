@@ -1,7 +1,7 @@
 
 # TestClass
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace) &gt; [TestClass](./simple-suite-test/testnamespace/testclass-class)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace) &gt; [TestClass](./simple-suite-test/testnamespace/testclass-class)
 
 Test class
 

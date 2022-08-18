@@ -1,7 +1,7 @@
 
 # TestInterface
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace) &gt; [TestInterface](./simple-suite-test/testnamespace/testinterface-interface)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace) &gt; [TestInterface](./simple-suite-test/testnamespace/testinterface-interface)
 
 Test interface
 

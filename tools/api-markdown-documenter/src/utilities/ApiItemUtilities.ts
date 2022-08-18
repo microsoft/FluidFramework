@@ -129,7 +129,7 @@ export function getLinkForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
     textOverride?: string,
 ): Link {
-    const text = textOverride ?? Utilities.getConciseSignature(apiItem);
+    const text = textOverride ?? config.linkTextPolicy(apiItem);
     const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
     const documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
     const headingId = getHeadingIdForApiItem(apiItem, config);
