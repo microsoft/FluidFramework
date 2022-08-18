@@ -86,16 +86,16 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
      * synchronizes all containers and waits for a summary that contains the last processed sequence number.
      * @returns the sequence number of the summary
      */
-     async function waitForSummary(this: any): Promise<number> {
+     async function waitForSummary(timeout: number): Promise<number> {
         // create the timeout error message since the timeout reason in local test is still not clear
         // (Bug 1556 on sprint board)
         await timeoutAwait(provider.ensureSynchronized(), {
-            durationMs: this.timeout() / 3,
+            durationMs: timeout / 3,
             errorMsg: "Timeout happened on provider synchronization",
         });
         const sequenceNumber = mainContainer.deltaManager.lastSequenceNumber;
         await timeoutAwait(summaryCollection.waitSummaryAck(sequenceNumber), {
-            durationMs: this.timeout() / 3,
+            durationMs: timeout / 3,
             errorMsg: "Timeout happened on waitSummaryAck",
         });
         return sequenceNumber;
@@ -129,7 +129,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         summaryCollection = new SummaryCollection(mainContainer.deltaManager, new TelemetryNullLogger());
     });
 
-    it("should generate correct summary stats with summarizing once", async () => {
+    it("should generate correct summary stats with summarizing once", async function() {
         const directoryKey = "dataStore2";
 
         // Create a second data store (dataStore2) and add its handle to mark it as referenced.
@@ -137,7 +137,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         mainDataStore._root.set(directoryKey, dataStore2.handle);
 
         // Wait for summary that contains the above set.
-        const sequenceNumber = await waitForSummary();
+        const sequenceNumber = await waitForSummary(this.timeout());
 
         const summaryEvent = getGenerateSummaryEvent(sequenceNumber);
         assert(summaryEvent !== undefined, "generate summary event is undefined");
@@ -145,7 +145,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         assert.strictEqual(summaryEvent.summarizedDataStoreCount, 2, "summarized data store count is wrong");
     });
 
-    it("should generate correct summary stats with changed and unchanged data stores", async () => {
+    it("should generate correct summary stats with changed and unchanged data stores", async function() {
         // Create 5 data stores and add their handles to mark it as referenced.
         const dataStore2 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
         const dataStore3 = await dataObjectFactory.createInstance(mainDataStore._context.containerRuntime);
@@ -160,7 +160,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         mainDataStore._root.set("dataStore6", dataStore6.handle);
 
         // Wait for summary that contains the above set.
-        let sequenceNumber = await waitForSummary();
+        let sequenceNumber = await waitForSummary(this.timeout());
         let summaryEvent = getGenerateSummaryEvent(sequenceNumber);
         assert(summaryEvent !== undefined, "generate summary event is undefined");
         assert.strictEqual(summaryEvent.dataStoreCount, 6, "wrong data store count");
@@ -168,7 +168,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 
         mainDataStore._root.delete("dataStore2");
 
-        sequenceNumber = await waitForSummary();
+        sequenceNumber = await waitForSummary(this.timeout());
         summaryEvent = getGenerateSummaryEvent(sequenceNumber);
         assert(summaryEvent !== undefined, "generate summary event is undefined");
         // all dataStores
@@ -180,7 +180,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         mainDataStore._root.delete("dataStore4");
         mainDataStore._root.delete("dataStore5");
 
-        sequenceNumber = await waitForSummary();
+        sequenceNumber = await waitForSummary(this.timeout());
         summaryEvent = getGenerateSummaryEvent(sequenceNumber);
         assert(summaryEvent !== undefined, "generate summary event is undefined");
         // all dataStores
