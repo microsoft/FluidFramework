@@ -254,7 +254,7 @@ stages:
                 cd tools/write-perf-to-kusto;
                 npm i;
                 npm run tsc;
-                node dist/index.js '${{ parameters.buildDirectory }}/benchmarkOutput';
+                node dist/index.js '../../benchmarkOutput';
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Benchmark tests output
             inputs:
