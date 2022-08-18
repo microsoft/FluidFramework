@@ -157,7 +157,10 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
                 {},
                 registryEntries,
             );
-        super([rootDataObjectFactory.registryEntry], undefined, [defaultRouteRequestHandler(rootDataStoreId)],
+        super(
+            [rootDataObjectFactory.registryEntry],
+            undefined,
+            [defaultRouteRequestHandler(rootDataStoreId)],
             // temporary workaround to disable message batching until the message batch size issue is resolved
             // resolution progress is tracked by the Feature 465 work item in AzDO
             { flushMode: FlushMode.Immediate },
