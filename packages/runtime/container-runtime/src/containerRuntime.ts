@@ -548,7 +548,8 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 }
 
 export function unpackRuntimeMessage(message: ISequencedDocumentMessage) {
-    if (message.metadata?.compressed) {
+    if (message.metadata?.compressed &&
+        message.contents.type !== RuntimeMessage.ChunkedOp) {
         const contents = IsoBuffer.from(message.contents.contents, "base64");
         const decompressedMessage = decompress(contents);
         const intoString = new TextDecoder().decode(decompressedMessage);
@@ -2475,7 +2476,15 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             const newMessage = { ...message };
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const serializedContent = this.chunkMap.get(clientId)!.join("");
-            newMessage.contents = JSON.parse(serializedContent);
+            let maybeDecompressedContent: string;
+            if (newMessage.metadata?.compressed) {
+                const contents = IsoBuffer.from(serializedContent, "base64");
+                const decompressedMessage = decompress(contents);
+                maybeDecompressedContent = new TextDecoder().decode(decompressedMessage);
+            } else {
+                maybeDecompressedContent = serializedContent;
+            }
+            newMessage.contents = JSON.parse(maybeDecompressedContent);
             newMessage.type = chunkedContent.originalType;
             this.clearPartialChunks(clientId);
             return newMessage;
@@ -2601,17 +2610,52 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         serializedContent: string,
         serverMaxOpSize: number,
         batch: boolean,
-        opMetadataInternal: unknown = undefined,
+        opMetadataInternal: any = undefined,
     ): number {
+        let maybeCompressedContent: any;
+        let metadata: any;
+
+        if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
+            serializedContent &&
+            serializedContent.length > this.runtimeOptions.compressionOptions.minimumSize
+        ) {
+            this.compressedOpCount++;
+
+            const compressionStart = Date.now();
+            const contentsAsBuffer = new TextEncoder().encode(serializedContent);
+            const compressedContents = compress(contentsAsBuffer);
+            const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+            const duration = Date.now() - compressionStart;
+
+            if (this.compressedOpCount % 100) {
+                this.mc.logger.sendPerformanceEvent({
+                    eventName: "compressedOp",
+                    duration,
+                    sizeBeforeCompression: serializedContent.length,
+                    sizeAfterCompression: compressedContent.length,
+                });
+            }
+
+            if (serializedContent.length < compressedContent.length) {
+                maybeCompressedContent = content;
+                metadata = opMetadataInternal;
+            } else {
+                maybeCompressedContent = compressedContent;
+                metadata = { ...opMetadataInternal, compressed: true };
+            }
+        } else {
+            maybeCompressedContent = content;
+            metadata = opMetadataInternal;
+        }
+
+        // submitRuntimeMessage is expecting contents as an object
         if (this._maxOpSizeInBytes >= 0) {
             // Chunking disabled
             if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
                 return this.submitRuntimeMessage(type,
-                                                 content,
+                                                 maybeCompressedContent,
                                                  batch,
-                                                 serializedContent?.length ?? 0,
-                                                 serializedContent,
-                                                 opMetadataInternal);
+                                                 metadata);
             }
 
             // When chunking is disabled, we ignore the server max message size
@@ -2631,17 +2675,21 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         // and split the content accordingly
         if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
             return this.submitRuntimeMessage(type,
-                                             content,
+                                             maybeCompressedContent,
                                              batch,
-                                             serializedContent?.length ?? 0,
-                                             serializedContent,
-                                             opMetadataInternal);
+                                             metadata);
         }
 
-        return this.submitChunkedMessage(type, serializedContent, serverMaxOpSize);
+        // submitChunkedMessage expects content as a string
+        return this.submitChunkedMessage(type,
+                                         typeof maybeCompressedContent === "string" ?
+                                            maybeCompressedContent :
+                                            serializedContent,
+                                         serverMaxOpSize,
+                                         metadata);
     }
 
-    private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number): number {
+    private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number, md: any): number {
         const contentLength = content.length;
         const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
         let offset = 0;
@@ -2655,18 +2703,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             };
             offset += maxOpSize;
 
-            let serializedChunkedOp: string | undefined;
-            if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
-                maxOpSize > this.runtimeOptions.compressionOptions.minimumSize) {
-                serializedChunkedOp = JSON.stringify(chunkedOp);
-            }
-
             clientSequenceNumber = this.submitRuntimeMessage(
                 ContainerMessageType.ChunkedOp,
                 chunkedOp,
                 false,
-                serializedChunkedOp !== undefined ? serializedChunkedOp.length : chunkedOp.contents.length,
-                serializedChunkedOp);
+                md);
         }
         return clientSequenceNumber;
     }
@@ -2695,48 +2736,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
         type: ContainerMessageType,
         contents: any,
         batch: boolean,
-        contentLength: number,
-        serializedContent?: string,
         appData?: any,
     ) {
         this.verifyNotClosed();
         assert(this.connected, 0x259 /* "Container disconnected when trying to submit system message" */);
-
-        if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
-            serializedContent &&
-            contentLength > this.runtimeOptions.compressionOptions.minimumSize
-        ) {
-            this.compressedOpCount++;
-
-            const compressionStart = Date.now();
-            const contentsAsBuffer = new TextEncoder().encode(serializedContent);
-            const compressedContents = compress(contentsAsBuffer);
-            const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
-            const duration = Date.now() - compressionStart;
-
-            if (this.compressedOpCount % 100) {
-                this.mc.logger.sendPerformanceEvent({
-                    eventName: "compressedOp",
-                    duration,
-                    sizeBeforeCompression: contentLength,
-                    sizeAfterCompression: compressedContent.length,
-                });
-            }
-
-            // Only compress the payload if it's actually smaller after compression
-            const shouldCompress = contentLength > compressedContent.length;
-            const compressedPayload: ContainerRuntimeMessage = {
-                type,
-                contents: shouldCompress ? compressedContent : contents,
-            };
-
-            return this.context.submitFn(
-                MessageType.Operation,
-                compressedPayload,
-                batch,
-                { ...appData, compressed: shouldCompress });
-        }
-
         const payload: ContainerRuntimeMessage = { type, contents };
         return this.context.submitFn(
             MessageType.Operation,
