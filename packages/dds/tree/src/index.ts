@@ -74,4 +74,5 @@ export {
     Multiplicity,
     isNeverField,
     FullSchemaPolicy,
+    proxifyForest,
 } from "./feature-libraries";

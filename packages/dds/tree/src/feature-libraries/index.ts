@@ -4,6 +4,7 @@
  */
 
 export * from "./object-forest";
+export * from "./forest-proxy";
 export * from "./defaultRebaser";
 export * from "./forestIndex";
 export * from "./schemaIndex";
