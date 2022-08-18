@@ -413,7 +413,7 @@ export function renderBetaWarning(config: Required<MarkdownDocumenterConfigurati
 /**
  * Renders a section containing the API item's summary comment if it has one.
  */
-export function renderSummary(apiItem: ApiItem): DocSection | undefined {
+export function renderSummarySection(apiItem: ApiItem): DocSection | undefined {
     return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
         ? apiItem.tsdocComment.summarySection
         : undefined;
@@ -430,7 +430,7 @@ export function renderSummary(apiItem: ApiItem): DocSection | undefined {
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
-export function renderRemarks(
+export function renderRemarksSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
@@ -457,7 +457,7 @@ export function renderRemarks(
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
-export function renderDeprecationNotice(
+export function renderDeprecationNoticeSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
@@ -491,7 +491,7 @@ export function renderDeprecationNotice(
  *
  * @returns The doc section if the API item had any `@example` comment blocks, otherwise `undefined`.
  */
-export function renderExamples(
+export function renderExamplesSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
@@ -506,13 +506,13 @@ export function renderExamples(
 
         // If there is only 1 example, render it with the default (un-numbered) heading
         if (exampleBlocks.length === 1) {
-            return renderExample({ apiItem, content: exampleBlocks[0].content }, config);
+            return renderExampleSection({ apiItem, content: exampleBlocks[0].content }, config);
         }
 
         const exampleSections: DocSection[] = [];
         for (let i = 0; i < exampleBlocks.length; i++) {
             exampleSections.push(
-                renderExample(
+                renderExampleSection(
                     { apiItem, content: exampleBlocks[i].content, exampleNumber: i + 1 },
                     config,
                 ),
@@ -562,7 +562,7 @@ export interface DocExampleProperties {
  * @param example - The example to render.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderExample(
+export function renderExampleSection(
     example: DocExampleProperties,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {

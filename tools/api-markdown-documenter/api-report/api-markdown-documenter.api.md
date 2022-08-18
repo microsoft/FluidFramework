@@ -352,7 +352,7 @@ function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumen
 function renderDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
 // @public
-function renderDeprecationNotice(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderDeprecationNoticeSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 export function renderDocuments(partialConfig: MarkdownDocumenterConfiguration): MarkdownDocument[];
@@ -364,10 +364,10 @@ function renderEmptyTableCell(config: Required<MarkdownDocumenterConfiguration>)
 function renderEnumSection(apiEnum: ApiEnum, config: Required<MarkdownDocumenterConfiguration>, renderChild: (apiItem: ApiItem) => DocSection): DocSection;
 
 // @public
-function renderExample(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection;
+function renderExampleSection(example: DocExampleProperties, config: Required<MarkdownDocumenterConfiguration>): DocSection;
 
 // @public
-function renderExamples(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderExamplesSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderExcerptWithHyperlinks(excerpt: Excerpt, config: Required<MarkdownDocumenterConfiguration>): DocParagraph;
@@ -400,11 +400,11 @@ declare namespace RenderingHelpers {
         renderHeadingForApiItem,
         renderHeading,
         renderBetaWarning,
-        renderSummary,
-        renderRemarks,
-        renderDeprecationNotice,
-        renderExamples,
-        renderExample,
+        renderSummarySection,
+        renderRemarksSection,
+        renderDeprecationNoticeSection,
+        renderExamplesSection,
+        renderExampleSection,
         renderParametersSection,
         renderChildDetailsSection,
         renderChildrenUnderHeading,
@@ -512,7 +512,7 @@ function renderPropertiesTable(apiProperties: readonly ApiPropertyItem[], config
 function renderPropertyTypeCell(apiProperty: ApiPropertyItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
 
 // @public
-function renderRemarks(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
+function renderRemarksSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
 function renderReturnTypeCell(apiItem: ApiFunctionLike, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
@@ -524,7 +524,7 @@ export type RenderSectionWithInnerContent = (apiItem: ApiItem, innerSectionBody:
 function renderSignature(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
-function renderSummary(apiItem: ApiItem): DocSection | undefined;
+function renderSummarySection(apiItem: ApiItem): DocSection | undefined;
 
 // @public
 function renderSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
