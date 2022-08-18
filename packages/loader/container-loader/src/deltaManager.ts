@@ -25,6 +25,8 @@ import {
     normalizeError,
     logIfFalse,
     safeRaiseEvent,
+    MonitoringContext,
+    loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import {
     IDocumentDeltaStorageService,
@@ -90,10 +92,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
     private pending: ISequencedDocumentMessage[] = [];
     private fetchReason: string | undefined;
 
+    private readonly mc: MonitoringContext;
+
     // A boolean used to assert that ops are not being sent while processing another op.
     private opsCurrentlyProcessing: boolean = false;
-    // Delta manager option enabling the above assertion
-    private readonly preventConcurrentOpSend: boolean = false;
+
+    // Feature gate that closes a container when sending an op if the container is
+    // concurrently processing another op manager Loader option enabling the above assertion
+    private preventConcurrentOpSend: boolean = false;
+
     // The minimum sequence number and last sequence number received from the server
     private minSequenceNumber: number = 0;
 
@@ -302,7 +309,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
         };
 
         this.connectionManager = createConnectionManager(props);
-
+        this.mc = loggerToMonitoringContext(logger);
+        this.preventConcurrentOpSend = this.mc.config.getBoolean("Fluid.Container.ConcurrentOpSend") ?? false;
         this._inbound = new DeltaQueue<ISequencedDocumentMessage>(
             (op) => {
                 this.processInboundMessage(op);
