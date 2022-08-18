@@ -5,7 +5,12 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { AttachState, IContainer, ConnectionState } from "@fluidframework/container-definitions";
+import {
+    AttachState,
+    IContainer,
+    ICriticalContainerError,
+    ConnectionState,
+} from "@fluidframework/container-definitions";
 import { LoadableObjectClass, LoadableObjectRecord } from "./types";
 import { RootDataObject } from "./rootDataObject";
 
@@ -26,9 +31,9 @@ import { RootDataObject } from "./rootDataObject";
  * () => void;
  * ```
  *
- * ### "dispose"
+ * ### "disposed"
  *
- * The "dispose" event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
+ * The "disposed" event is emitted when the `IFluidContainer` is disposed, which permanently disables it.
  *
  * #### Listener signature
  *
@@ -68,7 +73,22 @@ import { RootDataObject } from "./rootDataObject";
  * ```
  */
 export interface IFluidContainerEvents extends IEvent {
-    (event: "connected" | "dispose" | "disconnected" | "saved" | "dirty", listener: () => void): void;
+    /**
+     * **connected** & **disconnected** events reflect connection state changes against the (delta)
+     * service acknowledging ops/edits.
+     */
+    (event: "connected" | "disconnected", listener: () => void): void;
+    /**
+     * **saved** event is raised when all local changes/edits have been acknowledged by the service.
+     * **dirty** event is raised when first local change has been made, following a "saved" state.
+     */
+    // eslint-disable-next-line @typescript-eslint/unified-signatures
+    (event: "saved" | "dirty", listener: () => void): void;
+    /**
+     * Disposed event is raised when container is closed. If container was closed due to error
+     * (vs explicit **dispose** action), optional argument contains further details about the error.
+     */
+    (event: "disposed", listener: (error?: ICriticalContainerError) => void);
 }
 
 /**
@@ -177,7 +197,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 export class FluidContainer extends TypedEventEmitter<IFluidContainerEvents> implements IFluidContainer {
     private readonly connectedHandler = () => this.emit("connected");
     private readonly disconnectedHandler = () => this.emit("disconnected");
-    private readonly disposedHandler = () => this.emit("disposed");
+    private readonly disposedHandler = (error?: ICriticalContainerError) => this.emit("disposed", error);
     private readonly savedHandler = () => this.emit("saved");
     private readonly dirtyHandler = () => this.emit("dirty");
 
