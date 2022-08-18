@@ -341,6 +341,9 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
     beforeEach(() => {
         provider = getTestObjectProvider();
     });
+    afterEach(async () => reset());
+
+    const reset = async () => provider.reset();
 
     let container: Container;
     let dataObject: ITestFluidObject;
@@ -380,10 +383,17 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
             clearEventCount++;
         });
     });
-    describe.only("Concurrent op processing", () => {
+    describe("Concurrent op processing", () => {
         let container2: Container;
         let dataObject2: ITestFluidObject;
         let sharedMap2: SharedMap;
+
+        beforeEach(async () => {
+            await reset();
+            provider = getTestObjectProvider();
+        });
+
+        afterEach(async () => reset());
 
         const setupContainers = async (
             containerConfig: ITestContainerConfig,
