@@ -20,22 +20,18 @@ export interface IQuorumEvents extends ISharedObjectEvents {
  * the set message.  As a result, the value goes through two phases - "pending" state where the local client has seen
  * the set, but not all connected clients have, and "accepted" where all connected clients have seen the set.
  */
-export interface IQuorum extends ISharedObject<IQuorumEvents> {
+export interface IQuorum<T = any> extends ISharedObject<IQuorumEvents> {
     /**
      * Gets the accepted value for the given key.
      * @param key - The key to retrieve from
      */
-    // TODO: this should be updated to return something other than `any` (unknown)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    get(key: string): any;
+    get(key: string): T | undefined;
 
     /**
      * Gets the pending value for the given key.
      * @param key - The key to retrieve from
      */
-    // TODO: this should be updated to return something other than `any` (unknown)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getPending(key: string): any;
+    getPending(key: string): T | undefined;
 
     /**
      * Sets the value for the given key.  After setting the value, it will be in "pending" state until all connected
@@ -43,7 +39,7 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
      * @param key - The key to set
      * @param value - The value to store
      */
-    set(key: string, value: unknown): void;
+    set(key: string, value: T | undefined): void;
 
     /**
      * Deletes the key/value pair at the given key.  After issuing the delete, the delete is in "pending" state until

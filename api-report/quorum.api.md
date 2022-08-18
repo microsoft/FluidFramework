@@ -16,11 +16,11 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
-export interface IQuorum extends ISharedObject<IQuorumEvents> {
+export interface IQuorum<T = any> extends ISharedObject<IQuorumEvents> {
     delete(key: string): void;
-    get(key: string): any;
-    getPending(key: string): any;
-    set(key: string, value: unknown): void;
+    get(key: string): T | undefined;
+    getPending(key: string): T | undefined;
+    set(key: string, value: T | undefined): void;
 }
 
 // @public
@@ -29,15 +29,15 @@ export interface IQuorumEvents extends ISharedObjectEvents {
 }
 
 // @public
-export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
+export class Quorum<T = any> extends SharedObject<IQuorumEvents> implements IQuorum<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     applyStashedOp(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): Quorum;
     delete(key: string): void;
-    get(key: string): any;
+    get(key: string): T | undefined;
     static getFactory(): IChannelFactory;
-    getPending(key: string): any;
+    getPending(key: string): T | undefined;
     // @internal (undocumented)
     protected initializeLocalCore(): void;
     // @internal (undocumented)
@@ -48,7 +48,7 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     // @internal (undocumented)
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    set(key: string, value: unknown): void;
+    set(key: string, value: T | undefined): void;
     // @internal
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
