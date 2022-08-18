@@ -205,6 +205,9 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     next(): IteratorResult<TInterval>;
 }
 
+// @public (undocumented)
+export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
+
 // @public
 export interface IntervalLocator {
     interval: SequenceInterval;
@@ -213,9 +216,6 @@ export interface IntervalLocator {
 
 // @public
 export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
-
-// @public (undocumented)
-export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 // @public (undocumented)
 export enum IntervalType {
