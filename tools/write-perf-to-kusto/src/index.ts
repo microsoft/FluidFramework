@@ -67,7 +67,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 (async () => {
     await logger.flush();
-    await delay(1000);
+    await delay(3000);
     console.log("Done");
     process.exit(0);
 })().catch(e => {
