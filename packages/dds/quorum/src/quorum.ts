@@ -172,8 +172,8 @@ export class Quorum<T = any> extends SharedObject<IQuorumEvents> implements IQuo
 
     private readonly values: Map<string, QuorumValue<T>> = new Map();
 
-    // disconnectWatcher emits an event whenever we get disconnected.
-    private readonly disconnectWatcher: EventEmitter = new EventEmitter();
+    // connectionWatcher emits an event whenever we get disconnected.
+    private readonly connectionWatcher: EventEmitter = new EventEmitter();
 
     private readonly incomingOp: EventEmitter = new EventEmitter();
 
@@ -193,7 +193,7 @@ export class Quorum<T = any> extends SharedObject<IQuorumEvents> implements IQuo
 
         this.runtime.getQuorum().on("removeMember", this.handleQuorumRemoveMember);
 
-        this.disconnectWatcher.on("disconnect", () => {
+        this.connectionWatcher.on("disconnect", () => {
             // TODO: Consider if disconnect watching is needed for promise-based API.
         });
     }
@@ -435,7 +435,7 @@ export class Quorum<T = any> extends SharedObject<IQuorumEvents> implements IQuo
      * @internal
      */
     protected onDisconnect(): void {
-        this.disconnectWatcher.emit("disconnect");
+        this.connectionWatcher.emit("disconnect");
     }
 
     /**
