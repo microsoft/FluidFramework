@@ -64,6 +64,10 @@ export class MigrationTool extends DataObject implements IMigrationTool {
         await this.crc.write(newContainerIdKey, id);
     }
 
+    public get proposedVersion() {
+        return (this.quorum.getPending(newVersionKey) ?? this.quorum.get(newVersionKey)) as string | undefined;
+    }
+
     public get acceptedVersion() {
         return this.quorum.get(newVersionKey) as string | undefined;
     }
@@ -117,6 +121,12 @@ export class MigrationTool extends DataObject implements IMigrationTool {
 
         const crcHandle = this.root.get(crcKey);
         this._crc = await crcHandle.get();
+
+        this.quorum.on("pending", (key: string) => {
+            if (key === newVersionKey) {
+                this.emit("newVersionProposed");
+            }
+        });
 
         this.quorum.on("accepted", (key: string) => {
             if (key === newVersionKey) {
