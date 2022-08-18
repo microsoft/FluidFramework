@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
     ContainerSchema,
@@ -156,7 +157,9 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
                 {},
                 registryEntries,
             );
-        super([rootDataObjectFactory.registryEntry], undefined, [defaultRouteRequestHandler(rootDataStoreId)]);
+        super([rootDataObjectFactory.registryEntry], undefined, [defaultRouteRequestHandler(rootDataStoreId)],
+            { flushMode: FlushMode.Immediate },
+        );
         this.rootDataObjectFactory = rootDataObjectFactory;
         this.initialObjects = schema.initialObjects;
     }
