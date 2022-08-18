@@ -9,12 +9,12 @@ import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfigu
 import { doesItemRequireOwnDocument, mergeSections } from "../../utilities";
 import {
     renderBetaWarning,
-    renderDeprecationNotice,
-    renderExamples,
+    renderDeprecationNoticeSection,
+    renderExamplesSection,
     renderHeadingForApiItem,
-    renderRemarks,
+    renderRemarksSection,
     renderSignature,
-    renderSummary,
+    renderSummarySection,
 } from "../helpers";
 
 /**
@@ -51,25 +51,25 @@ export function renderChildrenSection(
     }
 
     // Render deprecation notice (if any)
-    const renderedDeprecationNotice = renderDeprecationNotice(apiItem, config);
+    const renderedDeprecationNotice = renderDeprecationNoticeSection(apiItem, config);
     if (renderedDeprecationNotice !== undefined) {
         docSections.push(renderedDeprecationNotice);
     }
 
     // Render summary comment (if any)
-    const renderedSummary = renderSummary(apiItem);
+    const renderedSummary = renderSummarySection(apiItem);
     if (renderedSummary !== undefined) {
         docSections.push(renderedSummary);
     }
 
     // Render @remarks content (if any)
-    const renderedRemarks = renderRemarks(apiItem, config);
+    const renderedRemarks = renderRemarksSection(apiItem, config);
     if (renderedRemarks !== undefined) {
         docSections.push(renderedRemarks);
     }
 
     // Render examples (if any)
-    const renderedExamples = renderExamples(apiItem, config);
+    const renderedExamples = renderExamplesSection(apiItem, config);
     if (renderedExamples !== undefined) {
         docSections.push(renderedExamples);
     }

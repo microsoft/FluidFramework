@@ -1,7 +1,7 @@
 
 # TestSubNamespace
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestNamespace](./simple-suite-test/testnamespace-namespace) &gt; [TestSubNamespace](./simple-suite-test/testnamespace/testsubnamespace-namespace)
 
 Test sub-namespace
 

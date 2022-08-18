@@ -1,7 +1,7 @@
 
 # TestInterface
 
-[(model)](./index) &gt; [simple-suite-test](./simple-suite-test)
+[Packages](./index) &gt; [simple-suite-test](./simple-suite-test) &gt; [TestInterface](./simple-suite-test/testinterface-interface)
 
 Test interface
 
@@ -17,23 +17,24 @@ export interface TestInterface
 
 ## Properties
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) |  | () =&gt; void | Test interface event property |
-|  [testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature) |  | number | Test interface property |
+|  Property | Modifiers | Default Value | Type | Description |
+|  --- | --- | --- | --- | --- |
+|  [testClassEventProperty](./simple-suite-test/testinterface-interface#testclasseventproperty-propertysignature) | readonly |  | () =&gt; void | Test interface event property |
+|  [testInterfaceProperty](./simple-suite-test/testinterface-interface#testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
+|  [testOptionalInterfaceProperty](./simple-suite-test/testinterface-interface#testoptionalinterfaceproperty-propertysignature) | optional | 0 | number | Test optional property |
 
 ## Call Signatures
 
-|  CallSignature | Modifiers | Description |
-|  --- | --- | --- |
-|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-callsignature) |  | Test interface event call signature |
-|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-callsignature) |  | Another example call signature |
+|  CallSignature | Description |
+|  --- | --- |
+|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call_-callsignature) | Test interface event call signature |
+|  [(call)(event, listener)](./simple-suite-test/testinterface-interface#_call__1-callsignature) | Another example call signature |
 
 ## Methods
 
-|  Method | Modifiers | Return Type | Description |
-|  --- | --- | --- | --- |
-|  [testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature) |  | void | Test interface method |
+|  Method | Return Type | Description |
+|  --- | --- | --- |
+|  [testInterfaceMethod()](./simple-suite-test/testinterface-interface#testinterfacemethod-methodsignature) | void | Test interface method |
 
 ## Property Details
 
@@ -63,6 +64,16 @@ Here are some remarks about the property
 
 ```typescript
 testInterfaceProperty: number;
+```
+
+### testOptionalInterfaceProperty {#testoptionalinterfaceproperty-propertysignature}
+
+Test optional property
+
+#### Signature {#testoptionalinterfaceproperty-signature}
+
+```typescript
+testOptionalInterfaceProperty?: number;
 ```
 
 ## Call Signature Details

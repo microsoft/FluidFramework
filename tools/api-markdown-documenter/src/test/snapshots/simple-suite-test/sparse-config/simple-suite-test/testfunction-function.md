@@ -10,12 +10,13 @@ This is a test [link](docs/simple-suite-test/testinterface-interface) to another
 ## Signature {#testfunction-signature}
 
 ```typescript
-export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter): TTypeParameter;
+export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;
 ```
 
 ## Parameters {#testfunction-parameters}
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  testParameter | TTypeParameter | A test parameter |
+|  Parameter | Modifiers | Type | Description |
+|  --- | --- | --- | --- |
+|  testParameter |  | TTypeParameter | A test parameter |
+|  testOptionalParameter | optional | TTypeParameter |  |
 

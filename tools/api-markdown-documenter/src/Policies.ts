@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import { ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
 // TODOs:
@@ -52,10 +53,18 @@ export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
 /**
  * Policy for generating heading titles for API items.
  *
- * @param apiItem - The API item in question.
+ * @param apiItem - The API item for which the heading is being generated.
  * @returns The heading title for the API item.
  */
 export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
+
+/**
+ * Policy for generating text in links to API items.
+ *
+ * @param apiItem - The API item for which the link is being generated.
+ * @returns The text to use in the link to the API item.
+ */
+export type LinkTextPolicy = (apiItem: ApiItem) => string;
 
 /**
  * Policy configuration options
@@ -107,6 +116,13 @@ export interface PolicyOptions {
      * @defaultValue {@link DefaultPolicies.defaultHeadingTitlePolicy}
      */
     headingTitlePolicy?: HeadingTitlePolicy;
+
+    /**
+     * See {@link LinkTextPolicy}.
+     *
+     * @defaultValue {@link DefaultPolicies.defaultLinkTextPolicy}
+     */
+    linkTextPolicy?: LinkTextPolicy;
 }
 
 export namespace DefaultPolicies {
@@ -164,6 +180,20 @@ export namespace DefaultPolicies {
                 return apiItem.displayName;
         }
     }
+
+    /**
+     * Default {@link PolicyOptions.headingTitlePolicy}.
+     *
+     * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
+     */
+    export function defaultLinkTextPolicy(apiItem: ApiItem): string {
+        switch (apiItem.kind) {
+            case ApiItemKind.Model:
+                return "Packages";
+            default:
+                return Utilities.getConciseSignature(apiItem);
+        }
+    }
 }
 
 /**
@@ -176,4 +206,5 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
     hierarchyBoundaries: DefaultPolicies.defaultHierarchyBoundaries,
     uriBaseOverridePolicy: DefaultPolicies.defaultUriBaseOverridePolicy,
     headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
+    linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
 };

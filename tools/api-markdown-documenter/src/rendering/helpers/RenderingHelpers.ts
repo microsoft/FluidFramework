@@ -27,7 +27,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import { Heading } from "../../Heading";
-import { Link, urlFromLink } from "../../Link";
+import { Link } from "../../Link";
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocHeading, DocList, DocNoteBox, ListKind } from "../../doc-nodes";
 import {
@@ -37,11 +37,10 @@ import {
     getAncestralHierarchy,
     getHeadingForApiItem,
     getLinkForApiItem,
-    getLinkUrlForApiItem,
     getQualifiedApiItemName,
     mergeSections,
 } from "../../utilities";
-import { renderParametersSummaryTable } from "./TablesRenderingHelpers";
+import { renderParametersSummaryTable } from "./TableRenderingHelpers";
 
 /**
  * Renders a section for an API signature.
@@ -286,12 +285,14 @@ export function renderExcerptWithHyperlinks(
 
             if (apiItemResult.resolvedApiItem) {
                 docNodes.push(
-                    new DocLinkTag({
-                        configuration: config.tsdocConfiguration,
-                        tagName: "@link",
-                        linkText: unwrappedTokenText,
-                        urlDestination: getLinkUrlForApiItem(apiItemResult.resolvedApiItem, config),
-                    }),
+                    renderLink(
+                        getLinkForApiItem(
+                            apiItemResult.resolvedApiItem,
+                            config,
+                            unwrappedTokenText,
+                        ),
+                        config,
+                    ),
                 );
                 wroteHyperlink = true;
             }
@@ -333,32 +334,30 @@ export function renderBreadcrumb(
         doesItemRequireOwnDocument(hierarchyItem, config.documentBoundaries),
     ).reverse(); // Reverse from ascending to descending order
 
-    function createLinkTag(link: Link): DocLinkTag {
-        const linkUrl = urlFromLink(link);
-        return new DocLinkTag({
-            configuration: config.tsdocConfiguration,
-            tagName: "@link",
-            linkText: link.text,
-            urlDestination: linkUrl,
-        });
-    }
+    const separator = new DocPlainText({
+        configuration: config.tsdocConfiguration,
+        text: " > ",
+    });
 
+    // Render ancestry links
     let writtenAnythingYet = false;
     for (const hierarchyItem of ancestry) {
         if (writtenAnythingYet) {
-            docNodes.push(
-                new DocPlainText({
-                    configuration: config.tsdocConfiguration,
-                    text: " > ",
-                }),
-            );
+            docNodes.push(separator);
         }
 
         const link = getLinkForApiItem(hierarchyItem, config);
-        docNodes.push(createLinkTag(link));
+        docNodes.push(renderLink(link, config));
 
         writtenAnythingYet = true;
     }
+
+    // Render entry for the item itself
+    if (writtenAnythingYet) {
+        docNodes.push(separator);
+    }
+    const link = getLinkForApiItem(apiItem, config);
+    docNodes.push(renderLink(link, config));
 
     return new DocSection({ configuration: config.tsdocConfiguration }, [
         new DocParagraph({ configuration: config.tsdocConfiguration }, docNodes),
@@ -414,7 +413,7 @@ export function renderBetaWarning(config: Required<MarkdownDocumenterConfigurati
 /**
  * Renders a section containing the API item's summary comment if it has one.
  */
-export function renderSummary(apiItem: ApiItem): DocSection | undefined {
+export function renderSummarySection(apiItem: ApiItem): DocSection | undefined {
     return apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined
         ? apiItem.tsdocComment.summarySection
         : undefined;
@@ -431,7 +430,7 @@ export function renderSummary(apiItem: ApiItem): DocSection | undefined {
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
-export function renderRemarks(
+export function renderRemarksSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
@@ -458,7 +457,7 @@ export function renderRemarks(
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
-export function renderDeprecationNotice(
+export function renderDeprecationNoticeSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
@@ -492,7 +491,7 @@ export function renderDeprecationNotice(
  *
  * @returns The doc section if the API item had any `@example` comment blocks, otherwise `undefined`.
  */
-export function renderExamples(
+export function renderExamplesSection(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection | undefined {
@@ -507,13 +506,13 @@ export function renderExamples(
 
         // If there is only 1 example, render it with the default (un-numbered) heading
         if (exampleBlocks.length === 1) {
-            return renderExample({ apiItem, content: exampleBlocks[0].content }, config);
+            return renderExampleSection({ apiItem, content: exampleBlocks[0].content }, config);
         }
 
         const exampleSections: DocSection[] = [];
         for (let i = 0; i < exampleBlocks.length; i++) {
             exampleSections.push(
-                renderExample(
+                renderExampleSection(
                     { apiItem, content: exampleBlocks[i].content, exampleNumber: i + 1 },
                     config,
                 ),
@@ -563,7 +562,7 @@ export interface DocExampleProperties {
  * @param example - The example to render.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  */
-export function renderExample(
+export function renderExampleSection(
     example: DocExampleProperties,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocSection {
@@ -709,4 +708,21 @@ export function renderChildrenUnderHeading(
         ),
         mergeSections(childSections, config.tsdocConfiguration),
     ]);
+}
+
+/**
+ * Renders a Link tag for the provided link.
+ * @param link - The link to render.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderLink(
+    link: Link,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocLinkTag {
+    return new DocLinkTag({
+        configuration: config.tsdocConfiguration,
+        tagName: "@link",
+        linkText: link.text,
+        urlDestination: link.url,
+    });
 }

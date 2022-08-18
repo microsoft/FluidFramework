@@ -289,7 +289,6 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
             writer.write(`${listSymbol} `);
             this.writeNode(docList.nodes[i], context, docList.nodes.length !== 1);
             writer.ensureNewLine();
-            writer.writeLine();
         }
     }
 
@@ -305,16 +304,15 @@ export class MarkdownEmitter extends BaseMarkdownEmitter {
     ): void {
         const writer: IndentedWriter = context.writer;
 
-        writer.ensureNewLine();
+        writer.ensureSkippedLine();
 
         writer.increaseIndent("> ");
 
         this.writeNode(docNoteBox.content, context, docNodeSiblings);
-        writer.ensureNewLine();
 
         writer.decreaseIndent();
 
-        writer.writeLine();
+        writer.ensureSkippedLine();
     }
 
     /**

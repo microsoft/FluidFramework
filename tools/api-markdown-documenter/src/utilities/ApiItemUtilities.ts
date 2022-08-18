@@ -7,6 +7,7 @@ import {
     ApiCallSignature,
     ApiConstructSignature,
     ApiConstructor,
+    ApiDocumentedItem,
     ApiFunction,
     ApiIndexSignature,
     ApiItem,
@@ -14,14 +15,19 @@ import {
     ApiMethod,
     ApiMethodSignature,
     ApiNamespace,
+    ApiOptionalMixin,
     ApiPackage,
     ApiParameterListMixin,
+    ApiReadonlyMixin,
+    ApiStaticMixin,
 } from "@microsoft/api-extractor-model";
+import { DocSection } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
 
 import { Heading } from "../Heading";
-import { Link, urlFromLink } from "../Link";
+import { Link } from "../Link";
+import { logError } from "../LoggingUtilities";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
 
@@ -46,8 +52,28 @@ export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 export type ApiModuleLike = ApiPackage | ApiNamespace;
 
 /**
+ * Represents an API item modifier.
+ */
+export enum ApiModifier {
+    /**
+     * Indicates an `optional` parameter or property.
+     */
+    Optional = "optional",
+
+    /**
+     * Indicates a `readonly` parameter or property.
+     */
+    Readonly = "readonly",
+
+    /**
+     * Indicates a `static` member of a `class` or `interface`.
+     */
+    Static = "static",
+}
+
+/**
  * Adjusts the name of the item as needed.
- * Accounts for method overloads by adding a suffix such as "MyClass.myMethod_2".
+ * Accounts for method overloads by adding a suffix such as "myMethod_2".
  *
  * @param apiItem - The API item for which the qualified name is being queried.
  */
@@ -99,21 +125,18 @@ export function getFirstAncestorWithOwnDocument(
  *
  * @param apiItem - The API item for which we are generating the link.
  * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param textOverride - Text to use in the link. If not provided, the default item name/signature will be used.
  */
 export function getLinkForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
+    textOverride?: string,
 ): Link {
-    const text = apiItem.displayName;
-    const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    const documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
-    const headingId = getHeadingIdForApiItem(apiItem, config);
-
+    const text = textOverride ?? config.linkTextPolicy(apiItem);
+    const url = getLinkUrlForApiItem(apiItem, config);
     return {
         text,
-        uriBase,
-        documentPath,
-        headingId,
+        url,
     };
 }
 
@@ -124,15 +147,24 @@ export function getLinkForApiItem(
  * If that item is one that will be rendered to a parent document, it will contain the necessary heading identifier
  * information to link to the appropriate heading.
  *
- * @param apiItem - The API item for which we are generating the link URL.
+ * @param apiItem - The API item for which we are generating the link.
  * @param config - See {@link MarkdownDocumenterConfiguration}
  */
 export function getLinkUrlForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): string {
-    const link = getLinkForApiItem(apiItem, config);
-    return urlFromLink(link);
+    const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
+    const documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
+
+    // Don't bother with heading ID if we are linking to the root item of a document
+    let headingPostfix = "";
+    if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
+        const headingId = getHeadingIdForApiItem(apiItem, config);
+        headingPostfix = `#${headingId}`;
+    }
+
+    return `${uriBase}/${documentPath}${headingPostfix}`;
 }
 
 /**
@@ -273,9 +305,14 @@ export function getHeadingForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
     headingLevel?: number,
 ): Heading {
+    // Don't generate an ID for the root heading
+    const id = doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
+        ? undefined
+        : getHeadingIdForApiItem(apiItem, config);
+
     return {
         title: config.headingTitlePolicy(apiItem),
-        id: getHeadingIdForApiItem(apiItem, config),
+        id,
         level: headingLevel,
     };
 }
@@ -299,13 +336,7 @@ export function getHeadingForApiItem(
 export function getHeadingIdForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): string | undefined {
-    if (doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
-        // If this API item is being rendered to its own document, then links to it do not require
-        // a heading ID.
-        return undefined;
-    }
-
+): string {
     let baseName: string | undefined;
     const apiItemKind: ApiItemKind = apiItem.kind;
 
@@ -485,8 +516,82 @@ export function doesItemGenerateHierarchy(
  *
  * @param apiItems - The list of items being filtered.
  * @param kinds - The kinds of items to consider. An item is considered a match if it matches any kind in this list.
+ *
  * @returns - The filtered list of items.
  */
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[] {
     return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));
+}
+
+/**
+ * Gets any custom-tag comment blocks on the API item matching the provided tag name, if any.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ * @param tagName - The TSDoc tag name being queried for.
+ * Must start with "@". See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ *
+ * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
+ */
+function getCustomBlockSections(apiItem: ApiItem, tagName: string): DocSection[] {
+    if (!tagName.startsWith("@")) {
+        throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
+    }
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
+        const defaultValueBlocks = apiItem.tsdocComment.customBlocks.filter(
+            (block) => block.blockTag.tagName === tagName,
+        );
+        return defaultValueBlocks.map((block) => block.content);
+    }
+    return [];
+}
+
+/**
+ * Gets the `@defaultValue` comment block from the API item if it has one.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
+ */
+export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined {
+    const blocks = getCustomBlockSections(apiItem, "@defaultValue");
+    if (blocks.length === 0) {
+        return undefined;
+    }
+
+    if (blocks !== undefined && blocks.length > 1) {
+        logError(
+            `API item ${apiItem.displayName} has multiple "@defaultValue" comment blocks. This is not supported.`,
+        );
+    }
+
+    return blocks[0];
+}
+
+/**
+ * Gets the {@link ApiModifier}s that apply to the provided API item.
+ *
+ * @param apiItem - The API item being queried.
+ */
+export function getModifiers(apiItem: ApiItem): ApiModifier[] {
+    const modifiers: ApiModifier[] = [];
+
+    if (ApiOptionalMixin.isBaseClassOf(apiItem)) {
+        if (apiItem.isOptional) {
+            modifiers.push(ApiModifier.Optional);
+        }
+    }
+
+    if (ApiReadonlyMixin.isBaseClassOf(apiItem)) {
+        if (apiItem.isReadonly) {
+            modifiers.push(ApiModifier.Readonly);
+        }
+    }
+
+    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
+        if (apiItem.isStatic) {
+            modifiers.push(ApiModifier.Static);
+        }
+    }
+
+    return modifiers;
 }

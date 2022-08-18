@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { DocTableRow } from "@microsoft/api-documenter/lib/nodes/DocTableRow";
-import { Utilities } from "@microsoft/api-documenter/lib/utils/Utilities";
 import {
     ApiDocumentedItem,
     ApiItem,
@@ -12,17 +11,22 @@ import {
     ApiPropertyItem,
     ApiReleaseTagMixin,
     ApiReturnTypeMixin,
-    ApiStaticMixin,
     Excerpt,
     Parameter,
     ReleaseTag,
 } from "@microsoft/api-extractor-model";
-import { DocLinkTag, DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
+import { DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdoc";
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
-import { ApiFunctionLike, getLinkUrlForApiItem, mergeSections } from "../../utilities";
-import { renderExcerptWithHyperlinks, renderHeading } from "./RenderingHelpers";
+import {
+    ApiFunctionLike,
+    getDefaultValueBlock,
+    getLinkForApiItem,
+    getModifiers,
+    mergeSections,
+} from "../../utilities";
+import { renderExcerptWithHyperlinks, renderHeading, renderLink } from "./RenderingHelpers";
 
 /**
  * Input properties for rendering a table of API members
@@ -162,15 +166,25 @@ export function renderDefaultSummaryTable(
         return undefined;
     }
 
-    const headerTitles = [getTableHeadingTitleForApiKind(itemKind), "Modifiers", "Description"];
-    const tableRows: DocTableRow[] = apiItems.map(
-        (apiItem) =>
-            new DocTableRow({ configuration: config.tsdocConfiguration }, [
-                renderApiTitleCell(apiItem, config),
-                renderModifiersCell(apiItem, config),
-                renderApiSummaryCell(apiItem, config),
-            ]),
-    );
+    // Only display "Modifiers" column if there are any modifiers to display.
+    const hasModifiers = apiItems.some((apiItem) => getModifiers(apiItem).length !== 0);
+
+    const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
+    if (hasModifiers) {
+        headerTitles.push("Modifiers");
+    }
+    headerTitles.push("Description");
+
+    const tableRows: DocTableRow[] = [];
+    for (const apiItem of apiItems) {
+        const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
+        if (hasModifiers) {
+            rowCells.push(renderModifiersCell(apiItem, config));
+        }
+        rowCells.push(renderApiSummaryCell(apiItem, config));
+
+        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+    }
 
     return new DocTable(
         {
@@ -193,15 +207,40 @@ export function renderParametersSummaryTable(
     apiParameters: readonly Parameter[],
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTable {
-    const headerTitles = ["Parameter", "Type", "Description"];
-    const tableRows: DocTableRow[] = apiParameters.map(
-        (apiParameter) =>
-            new DocTableRow({ configuration: config.tsdocConfiguration }, [
-                renderParameterTitleCell(apiParameter, config),
-                renderParameterTypeCell(apiParameter, config),
-                renderParameterSummaryCell(apiParameter, config),
-            ]),
-    );
+    // Only display "Modifiers" column if there are any optional parameters present.
+    const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
+
+    const headerTitles: string[] = ["Parameter"];
+    if (hasOptionalParameters) {
+        headerTitles.push("Modifiers");
+    }
+    headerTitles.push("Type");
+    headerTitles.push("Description");
+
+    function renderModifierCell(apiParameter: Parameter): DocTableCell {
+        return apiParameter.isOptional
+            ? new DocTableCell({ configuration: config.tsdocConfiguration }, [
+                  new DocParagraph({ configuration: config.tsdocConfiguration }, [
+                      new DocPlainText({
+                          configuration: config.tsdocConfiguration,
+                          text: "optional",
+                      }),
+                  ]),
+              ])
+            : renderEmptyTableCell(config);
+    }
+
+    const tableRows: DocTableRow[] = [];
+    for (const apiParameter of apiParameters) {
+        const rowCells: DocTableCell[] = [renderParameterTitleCell(apiParameter, config)];
+        if (hasOptionalParameters) {
+            rowCells.push(renderModifierCell(apiParameter));
+        }
+        rowCells.push(renderParameterTypeCell(apiParameter, config));
+        rowCells.push(renderParameterSummaryCell(apiParameter, config));
+
+        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+    }
 
     return new DocTable(
         {
@@ -229,21 +268,27 @@ export function renderFunctionLikeSummaryTable(
         return undefined;
     }
 
-    const headerTitles = [
-        getTableHeadingTitleForApiKind(itemKind),
-        "Modifiers",
-        "Return Type",
-        "Description",
-    ];
-    const tableRows: DocTableRow[] = apiItems.map(
-        (apiItem) =>
-            new DocTableRow({ configuration: config.tsdocConfiguration }, [
-                renderApiTitleCell(apiItem, config),
-                renderModifiersCell(apiItem, config),
-                renderReturnTypeCell(apiItem, config),
-                renderApiSummaryCell(apiItem, config),
-            ]),
-    );
+    // Only display "Modifiers" column if there are any modifiers to display.
+    const hasModifiers = apiItems.some((apiItem) => getModifiers(apiItem).length !== 0);
+
+    const headerTitles: string[] = [getTableHeadingTitleForApiKind(itemKind)];
+    if (hasModifiers) {
+        headerTitles.push("Modifiers");
+    }
+    headerTitles.push("Return Type");
+    headerTitles.push("Description");
+
+    const tableRows: DocTableRow[] = [];
+    for (const apiItem of apiItems) {
+        const rowCells: DocTableCell[] = [renderApiTitleCell(apiItem, config)];
+        if (hasModifiers) {
+            rowCells.push(renderModifiersCell(apiItem, config));
+        }
+        rowCells.push(renderReturnTypeCell(apiItem, config));
+        rowCells.push(renderApiSummaryCell(apiItem, config));
+
+        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+    }
 
     return new DocTable(
         {
@@ -270,16 +315,36 @@ export function renderPropertiesTable(
         return undefined;
     }
 
-    const headerTitles = ["Property", "Modifiers", "Type", "Description"];
-    const tableRows: DocTableRow[] = apiProperties.map(
-        (apiProperty) =>
-            new DocTableRow({ configuration: config.tsdocConfiguration }, [
-                renderApiTitleCell(apiProperty, config),
-                renderModifiersCell(apiProperty, config),
-                renderPropertyTypeCell(apiProperty, config),
-                renderApiSummaryCell(apiProperty, config),
-            ]),
+    // Only display "Modifiers" column if there are any modifiers to display.
+    const hasModifiers = apiProperties.some((apiItem) => getModifiers(apiItem).length !== 0);
+    const hasDefaultValues = apiProperties.some(
+        (apiItem) => getDefaultValueBlock(apiItem) !== undefined,
     );
+
+    const headerTitles: string[] = ["Property"];
+    if (hasModifiers) {
+        headerTitles.push("Modifiers");
+    }
+    if (hasDefaultValues) {
+        headerTitles.push("Default Value");
+    }
+    headerTitles.push("Type");
+    headerTitles.push("Description");
+
+    const tableRows: DocTableRow[] = [];
+    for (const apiProperty of apiProperties) {
+        const rowCells: DocTableCell[] = [renderApiTitleCell(apiProperty, config)];
+        if (hasModifiers) {
+            rowCells.push(renderModifiersCell(apiProperty, config));
+        }
+        if (hasDefaultValues) {
+            rowCells.push(renderDefaultValueCell(apiProperty, config));
+        }
+        rowCells.push(renderPropertyTypeCell(apiProperty, config));
+        rowCells.push(renderApiSummaryCell(apiProperty, config));
+
+        tableRows.push(new DocTableRow({ configuration: config.tsdocConfiguration }, rowCells));
+    }
 
     return new DocTable(
         {
@@ -309,10 +374,10 @@ export function renderPackagesTable(
 
     const headerTitles = ["Package", "Description"];
     const tableRows: DocTableRow[] = apiPackages.map(
-        (apiProperty) =>
+        (apiPackage) =>
             new DocTableRow({ configuration: config.tsdocConfiguration }, [
-                renderApiTitleCell(apiProperty, config),
-                renderApiSummaryCell(apiProperty, config),
+                renderApiTitleCell(apiPackage, config),
+                renderApiSummaryCell(apiPackage, config),
             ]),
     );
 
@@ -395,14 +460,10 @@ export function renderApiTitleCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
+    const itemLink = getLinkForApiItem(apiItem, config);
     return new DocTableCell({ configuration: config.tsdocConfiguration }, [
         new DocParagraph({ configuration: config.tsdocConfiguration }, [
-            new DocLinkTag({
-                configuration: config.tsdocConfiguration,
-                tagName: "@link",
-                linkText: Utilities.getConciseSignature(apiItem),
-                urlDestination: getLinkUrlForApiItem(apiItem, config),
-            }),
+            renderLink(itemLink, config),
         ]),
     ]);
 }
@@ -417,19 +478,38 @@ export function renderModifiersCell(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): DocTableCell {
-    const modifierNodes: DocNode[] = [];
+    const modifiers = getModifiers(apiItem);
 
-    if (ApiStaticMixin.isBaseClassOf(apiItem)) {
-        if (apiItem.isStatic) {
-            modifierNodes.push(
-                new DocParagraph({ configuration: config.tsdocConfiguration }, [
-                    new DocPlainText({ configuration: config.tsdocConfiguration, text: "static" }),
-                ]),
-            );
-        }
+    if (modifiers.length === 0) {
+        return renderEmptyTableCell(config);
     }
 
-    return new DocTableCell({ configuration: config.tsdocConfiguration }, modifierNodes);
+    const modifiersList = modifiers.join(", ");
+
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [
+        new DocParagraph({ configuration: config.tsdocConfiguration }, [
+            new DocPlainText({ configuration: config.tsdocConfiguration, text: modifiersList }),
+        ]),
+    ]);
+}
+
+/**
+ * Renders a table cell containing the `@defaultValue` comment of the API item if it has one.
+ *
+ * @param apiItem - The API item whose `@defaultValue` comment will be rendered in the cell.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderDefaultValueCell(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocTableCell {
+    const defaultValueSection = getDefaultValueBlock(apiItem);
+
+    if (defaultValueSection === undefined) {
+        return renderEmptyTableCell(config);
+    }
+
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [defaultValueSection]);
 }
 
 /**
