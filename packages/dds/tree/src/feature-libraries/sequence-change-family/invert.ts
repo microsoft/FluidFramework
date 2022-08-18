@@ -7,7 +7,17 @@ import { ChangesetTag, isAttachGroup, isSkipMark, OpId, Transposed as T } from "
 import { fail } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
-export const DUMMY_INVERT_TAG: ChangesetTag = "Dummy Invert Changeset Tag";
+/**
+ * Dummy value used in place of the actual tag.
+ * TODO: give `invert` access real tag data.
+ */
+ export const DUMMY_INVERT_TAG: ChangesetTag = "Dummy Invert Changeset Tag";
+
+/**
+ * Dummy value used in place of actual repair data.
+ * TODO: give `invert` access real repair data.
+ */
+export const DUMMY_INVERSE_VALUE = "Dummy inverse value";
 
 /**
  * Inverts a given changeset.
@@ -25,13 +35,14 @@ export function invert(change: SequenceChangeset): SequenceChangeset {
     const opIdToTag = (id: OpId): ChangesetTag => {
         return DUMMY_INVERT_TAG;
     };
-    const total: SequenceChangeset = {
+    return {
         marks: invertFieldMarks(change.marks, opIdToTag),
     };
-    return total;
 }
 
-function invertFieldMarks(fieldMarks: T.FieldMarks, opIdToTag: (id: OpId) => ChangesetTag): T.FieldMarks {
+type IdToTagLookup = (id: OpId) => ChangesetTag;
+
+function invertFieldMarks(fieldMarks: T.FieldMarks, opIdToTag: IdToTagLookup): T.FieldMarks {
     const inverseFieldMarks: T.FieldMarks = {};
     for (const key of Object.keys(fieldMarks)) {
         const markList = fieldMarks[key];
@@ -40,79 +51,68 @@ function invertFieldMarks(fieldMarks: T.FieldMarks, opIdToTag: (id: OpId) => Cha
     return inverseFieldMarks;
 }
 
-function invertMarkList(markList: T.MarkList, opIdToTag: (id: OpId) => ChangesetTag): T.MarkList {
+function invertMarkList(markList: T.MarkList, opIdToTag: IdToTagLookup): T.MarkList {
     const inverseMarkList: T.MarkList = [];
     for (const mark of markList) {
-        if (isSkipMark(mark)) {
-            inverseMarkList.push(mark);
-        } else if (isAttachGroup(mark)) {
-            for (const attach of mark) {
-                const type = attach.type;
-                switch (type) {
-                    case "Insert": {
-                        inverseMarkList.push({
-                            type: "Delete",
-                            id: attach.id,
-                            count: attach.content.length,
-                        });
-                        break;
-                    }
-                    case "MInsert": {
-                        inverseMarkList.push({
-                            type: "Delete",
-                            id: attach.id,
-                            count: 1,
-                        });
-                        break;
-                    }
-                    default: fail("Not implemented");
-                }
-            }
-        } else {
-            const type = mark.type;
-            switch (type) {
-                case "Delete": {
-                    inverseMarkList.push({
-                        type: "Revive",
-                        id: mark.id,
-                        tomb: opIdToTag(mark.id),
-                        count: mark.count,
-                    });
-                    break;
-                }
-                case "Revive": {
-                    inverseMarkList.push({
+        const inverseMarks = invertMark(mark, opIdToTag);
+        inverseMarkList.push(...inverseMarks);
+    }
+    return inverseMarkList;
+}
+
+function invertMark(mark: T.Mark, opIdToTag: IdToTagLookup): T.Mark[] {
+    if (isSkipMark(mark)) {
+        return [mark];
+    } else if (isAttachGroup(mark)) {
+        const inverseMarks: T.Mark[] = [];
+        for (const attach of mark) {
+            switch (attach.type) {
+                case "Insert":
+                case "MInsert": {
+                    inverseMarks.push({
                         type: "Delete",
-                        id: mark.id,
-                        count: mark.count,
+                        id: attach.id,
+                        count: attach.type === "Insert" ? attach.content.length : 1
                     });
-                    break;
-                }
-                case "Modify": {
-                    const modify: T.Modify = {
-                        type: "Modify",
-                    };
-                    if (mark.value !== undefined) {
-                        modify.value = {
-                            id: mark.value.id,
-                            value: DUMMY_INVERSE_VALUE,
-                        };
-                    }
-                    if (mark.fields !== undefined) {
-                        modify.fields = invertFieldMarks(mark.fields, opIdToTag);
-                    }
-                    inverseMarkList.push(modify);
                     break;
                 }
                 default: fail("Not implemented");
             }
         }
+        return inverseMarks;
+    } else {
+        switch (mark.type) {
+            case "Delete": {
+                return [{
+                    type: "Revive",
+                    id: mark.id,
+                    tomb: opIdToTag(mark.id),
+                    count: mark.count,
+                }];
+            }
+            case "Revive": {
+                return [{
+                    type: "Delete",
+                    id: mark.id,
+                    count: mark.count,
+                }];
+            }
+            case "Modify": {
+                const modify: T.Modify = {
+                    type: "Modify",
+                };
+                if (mark.value !== undefined) {
+                    modify.value = {
+                        id: mark.value.id,
+                        value: DUMMY_INVERSE_VALUE,
+                    };
+                }
+                if (mark.fields !== undefined) {
+                    modify.fields = invertFieldMarks(mark.fields, opIdToTag);
+                }
+                return [modify];
+            }
+            default: fail("Not implemented");
+        }
     }
-    return inverseMarkList;
 }
-
-/**
- * Dummy value used in place of actual repair data.
- * TODO: have `invert` access real repair data.
- */
-export const DUMMY_INVERSE_VALUE = "Dummy inverse value";
