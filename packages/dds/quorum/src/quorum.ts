@@ -139,6 +139,12 @@ const snapshotFileName = "header";
  * becomes "accepted".  Once the value is accepted, it once again becomes possible to set the value, again with
  * consensus-like FWW resolution.
  *
+ * Since all connected clients must explicitly accept the new value, it is important that all connected clients
+ * have the Quorum loaded, including e.g. the summarizing client.  Otherwise, those clients who have not loaded
+ * the Quorum will not be responding to proposals and delay their acceptance (until they disconnect, which implicitly
+ * removes them from consideration).  The easiest way to ensure all clients load the Quorum is to instantiate it
+ * as part of instantiating the IRuntime for the container (containerHasInitialized if using Aqueduct).
+ *
  * ### Eventing
  *
  * `Quorum` is an `EventEmitter`, and will emit events when a new value is accepted for a key.
