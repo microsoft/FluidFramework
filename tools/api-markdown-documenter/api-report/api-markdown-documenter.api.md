@@ -177,6 +177,9 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
 export function getAncestralHierarchy(apiItem: ApiItem, includePredecate: (apiItem: ApiItem) => boolean, breakPredicate?: (apiItem: ApiItem) => boolean): ApiItem[];
 
 // @public
+export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined;
+
+// @public
 export function getDocumentItems(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): ApiItem[];
 
 // @public
@@ -352,6 +355,9 @@ function renderClassSection(apiClass: ApiClass, config: Required<MarkdownDocumen
 function renderDefaultSummaryTable(apiItems: readonly ApiItem[], itemKind: ApiItemKind, config: Required<MarkdownDocumenterConfiguration>): DocTable | undefined;
 
 // @public
+function renderDefaultValueCell(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocTableCell;
+
+// @public
 function renderDeprecationNoticeSection(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): DocSection | undefined;
 
 // @public
@@ -423,6 +429,7 @@ declare namespace RenderingHelpers {
         renderReturnTypeCell,
         renderApiTitleCell,
         renderModifiersCell,
+        renderDefaultValueCell,
         renderPropertyTypeCell,
         renderParameterTitleCell,
         renderParameterTypeCell,

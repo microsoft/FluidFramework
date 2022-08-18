@@ -7,6 +7,7 @@ import {
     ApiCallSignature,
     ApiConstructSignature,
     ApiConstructor,
+    ApiDocumentedItem,
     ApiFunction,
     ApiIndexSignature,
     ApiItem,
@@ -20,11 +21,13 @@ import {
     ApiReadonlyMixin,
     ApiStaticMixin,
 } from "@microsoft/api-extractor-model";
+import { DocSection } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
 
 import { Heading } from "../Heading";
 import { Link } from "../Link";
+import { logError } from "../LoggingUtilities";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
 
@@ -518,6 +521,50 @@ export function doesItemGenerateHierarchy(
  */
 export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[]): ApiItem[] {
     return apiItems.filter((apiMember) => kinds.includes(apiMember.kind));
+}
+
+/**
+ * Gets any custom-tag comment blocks on the API item matching the provided tag name, if any.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ * @param tagName - The TSDoc tag name being queried for.
+ * Must start with "@". See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
+ *
+ * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
+ */
+function getCustomBlockSections(apiItem: ApiItem, tagName: string): DocSection[] {
+    if (!tagName.startsWith("@")) {
+        throw new Error("Invalid TSDoc tag name. Tag names must start with `@`.");
+    }
+    if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment?.customBlocks !== undefined) {
+        const defaultValueBlocks = apiItem.tsdocComment.customBlocks.filter(
+            (block) => block.blockTag.tagName === tagName,
+        );
+        return defaultValueBlocks.map((block) => block.content);
+    }
+    return [];
+}
+
+/**
+ * Gets the `@defaultValue` comment block from the API item if it has one.
+ *
+ * @param apiItem - The API item whose documentation is being queried.
+ *
+ * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
+ */
+export function getDefaultValueBlock(apiItem: ApiItem): DocSection | undefined {
+    const blocks = getCustomBlockSections(apiItem, "@defaultValue");
+    if (blocks.length === 0) {
+        return undefined;
+    }
+
+    if (blocks !== undefined && blocks.length > 1) {
+        logError(
+            `API item ${apiItem.displayName} has multiple "@defaultValue" comment blocks. This is not supported.`,
+        );
+    }
+
+    return blocks[0];
 }
 
 /**

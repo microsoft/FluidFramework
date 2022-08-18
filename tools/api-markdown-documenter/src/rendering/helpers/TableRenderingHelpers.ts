@@ -19,7 +19,13 @@ import { DocNode, DocParagraph, DocPlainText, DocSection } from "@microsoft/tsdo
 
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocTable, DocTableCell } from "../../doc-nodes";
-import { ApiFunctionLike, getLinkForApiItem, getModifiers, mergeSections } from "../../utilities";
+import {
+    ApiFunctionLike,
+    getDefaultValueBlock,
+    getLinkForApiItem,
+    getModifiers,
+    mergeSections,
+} from "../../utilities";
 import { renderExcerptWithHyperlinks, renderHeading, renderLink } from "./RenderingHelpers";
 
 /**
@@ -311,10 +317,16 @@ export function renderPropertiesTable(
 
     // Only display "Modifiers" column if there are any modifiers to display.
     const hasModifiers = apiProperties.some((apiItem) => getModifiers(apiItem).length !== 0);
+    const hasDefaultValues = apiProperties.some(
+        (apiItem) => getDefaultValueBlock(apiItem) !== undefined,
+    );
 
     const headerTitles: string[] = ["Property"];
     if (hasModifiers) {
         headerTitles.push("Modifiers");
+    }
+    if (hasDefaultValues) {
+        headerTitles.push("Default Value");
     }
     headerTitles.push("Type");
     headerTitles.push("Description");
@@ -324,6 +336,9 @@ export function renderPropertiesTable(
         const rowCells: DocTableCell[] = [renderApiTitleCell(apiProperty, config)];
         if (hasModifiers) {
             rowCells.push(renderModifiersCell(apiProperty, config));
+        }
+        if (hasDefaultValues) {
+            rowCells.push(renderDefaultValueCell(apiProperty, config));
         }
         rowCells.push(renderPropertyTypeCell(apiProperty, config));
         rowCells.push(renderApiSummaryCell(apiProperty, config));
@@ -476,6 +491,25 @@ export function renderModifiersCell(
             new DocPlainText({ configuration: config.tsdocConfiguration, text: modifiersList }),
         ]),
     ]);
+}
+
+/**
+ * Renders a table cell containing the `@defaultValue` comment of the API item if it has one.
+ *
+ * @param apiItem - The API item whose `@defaultValue` comment will be rendered in the cell.
+ * @param config - See {@link MarkdownDocumenterConfiguration}.
+ */
+export function renderDefaultValueCell(
+    apiItem: ApiItem,
+    config: Required<MarkdownDocumenterConfiguration>,
+): DocTableCell {
+    const defaultValueSection = getDefaultValueBlock(apiItem);
+
+    if (defaultValueSection === undefined) {
+        return renderEmptyTableCell(config);
+    }
+
+    return new DocTableCell({ configuration: config.tsdocConfiguration }, [defaultValueSection]);
 }
 
 /**
