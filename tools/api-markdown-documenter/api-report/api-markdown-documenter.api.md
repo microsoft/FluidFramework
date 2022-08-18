@@ -195,7 +195,7 @@ export function getFirstAncestorWithOwnDocument(apiItem: ApiItem, documentBounda
 export function getHeadingForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, headingLevel?: number): Heading;
 
 // @public
-export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string | undefined;
+export function getHeadingIdForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>): string;
 
 // @public
 export function getLinkForApiItem(apiItem: ApiItem, config: Required<MarkdownDocumenterConfiguration>, textOverride?: string): Link;
@@ -232,10 +232,8 @@ export interface IDocListParameters extends IDocNodeContainerParameters {
 
 // @public
 export interface Link {
-    documentPath: string;
-    headingId?: string;
     text: string;
-    uriBase: string;
+    url: string;
 }
 
 // @public
@@ -542,8 +540,5 @@ function renderTypeParameters(typeParameters: readonly TypeParameter[], config: 
 
 // @public
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
-
-// @public
-export function urlFromLink(link: Link): string;
 
 ```

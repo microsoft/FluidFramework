@@ -27,7 +27,7 @@ import {
 } from "@microsoft/tsdoc";
 
 import { Heading } from "../../Heading";
-import { Link, urlFromLink } from "../../Link";
+import { Link } from "../../Link";
 import { MarkdownDocumenterConfiguration } from "../../MarkdownDocumenterConfiguration";
 import { DocEmphasisSpan, DocHeading, DocList, DocNoteBox, ListKind } from "../../doc-nodes";
 import {
@@ -723,6 +723,6 @@ export function renderLink(
         configuration: config.tsdocConfiguration,
         tagName: "@link",
         linkText: link.text,
-        urlDestination: urlFromLink(link),
+        urlDestination: link.url,
     });
 }

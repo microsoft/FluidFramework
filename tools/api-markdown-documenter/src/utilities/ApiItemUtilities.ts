@@ -24,7 +24,7 @@ import { PackageName } from "@rushstack/node-core-library";
 import * as Path from "path";
 
 import { Heading } from "../Heading";
-import { Link, urlFromLink } from "../Link";
+import { Link } from "../Link";
 import { MarkdownDocumenterConfiguration } from "../MarkdownDocumenterConfiguration";
 import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
 
@@ -130,15 +130,10 @@ export function getLinkForApiItem(
     textOverride?: string,
 ): Link {
     const text = textOverride ?? config.linkTextPolicy(apiItem);
-    const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
-    const documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
-    const headingId = getHeadingIdForApiItem(apiItem, config);
-
+    const url = getLinkUrlForApiItem(apiItem, config);
     return {
         text,
-        uriBase,
-        documentPath,
-        headingId,
+        url,
     };
 }
 
@@ -149,15 +144,24 @@ export function getLinkForApiItem(
  * If that item is one that will be rendered to a parent document, it will contain the necessary heading identifier
  * information to link to the appropriate heading.
  *
- * @param apiItem - The API item for which we are generating the link URL.
+ * @param apiItem - The API item for which we are generating the link.
  * @param config - See {@link MarkdownDocumenterConfiguration}
  */
 export function getLinkUrlForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
 ): string {
-    const link = getLinkForApiItem(apiItem, config);
-    return urlFromLink(link);
+    const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
+    const documentPath = getFilePathForApiItem(apiItem, config, /* includeExtension: */ false);
+
+    // Don't bother with heading ID if we are linking to the root item of a document
+    let headingPostfix = "";
+    if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
+        const headingId = getHeadingIdForApiItem(apiItem, config);
+        headingPostfix = `#${headingId}`;
+    }
+
+    return `${uriBase}/${documentPath}${headingPostfix}`;
 }
 
 /**
@@ -298,9 +302,14 @@ export function getHeadingForApiItem(
     config: Required<MarkdownDocumenterConfiguration>,
     headingLevel?: number,
 ): Heading {
+    // Don't generate an ID for the root heading
+    const id = doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
+        ? undefined
+        : getHeadingIdForApiItem(apiItem, config);
+
     return {
         title: config.headingTitlePolicy(apiItem),
-        id: getHeadingIdForApiItem(apiItem, config),
+        id,
         level: headingLevel,
     };
 }
@@ -324,13 +333,7 @@ export function getHeadingForApiItem(
 export function getHeadingIdForApiItem(
     apiItem: ApiItem,
     config: Required<MarkdownDocumenterConfiguration>,
-): string | undefined {
-    if (doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
-        // If this API item is being rendered to its own document, then links to it do not require
-        // a heading ID.
-        return undefined;
-    }
-
+): string {
     let baseName: string | undefined;
     const apiItemKind: ApiItemKind = apiItem.kind;
 
