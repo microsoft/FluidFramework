@@ -86,16 +86,16 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
      * synchronizes all containers and waits for a summary that contains the last processed sequence number.
      * @returns the sequence number of the summary
      */
-     async function waitForSummary(): Promise<number> {
+     async function waitForSummary(this: any): Promise<number> {
         // create the timeout error message since the timeout reason in local test is still not clear
         // (Bug 1556 on sprint board)
         await timeoutAwait(provider.ensureSynchronized(), {
-            durationMs: 2000,
+            durationMs: this.timeout() / 3,
             errorMsg: "Timeout happened on provider synchronization",
         });
         const sequenceNumber = mainContainer.deltaManager.lastSequenceNumber;
         await timeoutAwait(summaryCollection.waitSummaryAck(sequenceNumber), {
-            durationMs: 2000,
+            durationMs: this.timeout() / 3,
             errorMsg: "Timeout happened on waitSummaryAck",
         });
         return sequenceNumber;
