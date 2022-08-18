@@ -17,7 +17,7 @@ import {
     splitMarkOnOutput,
     Transposed as T,
 } from "../../changeset";
-import { clone, fail } from "../../util";
+import { clone, fail, StackyIterator } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
 /**
@@ -66,15 +66,10 @@ function composeMarkLists(
     newMarkList: T.MarkList,
 ): T.MarkList {
     const factory = new MarkListFactory();
-    let iBase = 0;
-    let iNew = 0;
-    let nextBaseMark: T.Mark | undefined = baseMarkList[iBase];
-    let nextNewMark: T.Mark | undefined = newMarkList[iNew];
-    while (nextNewMark !== undefined) {
-        let newMark: T.Mark = nextNewMark;
-        let baseMark: T.Mark = nextBaseMark;
-        nextNewMark = undefined;
-        nextBaseMark = undefined;
+    const baseIter = new StackyIterator(baseMarkList);
+    const newIter = new StackyIterator(newMarkList);
+    for (let newMark of newIter) {
+        let baseMark: T.Mark | undefined = baseIter.pop();
         if (baseMark === undefined) {
             // We have reached an region of the field that the base change does not affect.
             // We therefore adopt the new mark as is.
@@ -87,7 +82,7 @@ function composeMarkLists(
             // Since compose only deals with changes that are rebased in this way,
             // we don't have to deal with tie-breaking issues.
             factory.pushContent(clone(newMark));
-            nextBaseMark = baseMark;
+            baseIter.push(baseMark);
         } else if (isReattach(newMark)) {
             // Content that is being re-attached by the new changeset can interact with base changes.
             // This can happen in two cases:
@@ -97,7 +92,7 @@ function composeMarkLists(
             // reattached content and concurrently attached content is not preserved.
             // TODO: properly compose reattach marks with their matching base marks if any.
             factory.pushContent(clone(newMark));
-            nextBaseMark = baseMark;
+            baseIter.push(baseMark);
         } else if (isDetachMark(baseMark)) {
             // Content that is being detached by the base changeset can interact with the new changes.
             // This can happen in two cases:
@@ -107,7 +102,7 @@ function composeMarkLists(
             // reattached content and concurrently attached content is not preserved.
             // TODO: properly compose detach marks with their matching new marks if any.
             factory.pushContent(baseMark);
-            nextNewMark = newMark;
+            newIter.push(newMark);
         } else if (isTomb(baseMark) || isGapEffectMark(baseMark) || isTomb(newMark) || isGapEffectMark(newMark)) {
             // We don't currently support Tomb and Gap marks (and don't offer ways to generate them).
             fail("TODO: support Tomb and Gap marks");
@@ -120,9 +115,13 @@ function composeMarkLists(
             const newMarkLength = getInputLength(newMark);
             const baseMarkLength = getOutputLength(baseMark);
             if (newMarkLength < baseMarkLength) {
+                let nextBaseMark;
                 [baseMark, nextBaseMark] = splitMarkOnOutput(baseMark, newMarkLength);
+                baseIter.push(nextBaseMark);
             } else if (newMarkLength > baseMarkLength) {
+                let nextNewMark;
                 [newMark, nextNewMark] = splitMarkOnInput(newMark, baseMarkLength);
+                newIter.push(nextNewMark);
             }
             // Past this point, we are guaranteed that `newMark` and `baseMark` have the same length and
             // start at the same location in the revision after the base changes.
@@ -130,20 +129,11 @@ function composeMarkLists(
             const composedMark = composeMarks(baseMark, newMark);
             factory.push(composedMark);
         }
-        if (nextBaseMark === undefined) {
-            iBase += 1;
-            nextBaseMark = baseMarkList[iBase];
-        }
-        if (nextNewMark === undefined) {
-            iNew += 1;
-            nextNewMark = newMarkList[iNew];
-        }
     }
     // Push the remaining base marks if any
-    if (nextBaseMark !== undefined) {
-        factory.push(nextBaseMark);
+    for (const baseMark of baseIter) {
+        factory.push(baseMark);
     }
-    factory.push(...baseMarkList.slice(iBase + 1));
     return factory.list;
 }
 
