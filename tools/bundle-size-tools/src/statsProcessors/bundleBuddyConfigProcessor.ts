@@ -26,7 +26,7 @@ export function getBundleBuddyConfigProcessor(options: BundleBuddyConfigProcesso
     bundleBuddyConfig.chunksToAnalyze.forEach((chunk) => {
       const chunkAnalysis = getChunkAndDependencySizes(stats, chunk.name);
 
-      // Right now we log the size of the chunk plus all it's dependencies. We could support logging just the chunk via a configuration
+      // Right now we log the size of the chunk plus all its dependencies. We could support logging just the chunk via a configuration
       const parsedSize = chunkAnalysis.dependencies.reduce((prev, current) => prev + current.size, chunkAnalysis.size);
 
       const metricName = options.metricNameProvider ? options.metricNameProvider(chunk) : chunk.name;
