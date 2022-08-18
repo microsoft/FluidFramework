@@ -18,7 +18,7 @@ const migrateTaskName = "migrate";
 const newContainerIdKey = "newContainerId";
 
 export class MigrationTool extends DataObject implements IMigrationTool {
-    private _quorum: Quorum | undefined;
+    private _quorum: Quorum<string> | undefined;
     private _crc: ConsensusRegisterCollection<string> | undefined;
     private _taskManager: TaskManager | undefined;
     private _newContainerId: string | undefined;
@@ -65,11 +65,11 @@ export class MigrationTool extends DataObject implements IMigrationTool {
     }
 
     public get proposedVersion() {
-        return (this.quorum.getPending(newVersionKey) ?? this.quorum.get(newVersionKey)) as string | undefined;
+        return this.quorum.getPending(newVersionKey) ?? this.quorum.get(newVersionKey);
     }
 
     public get acceptedVersion() {
-        return this.quorum.get(newVersionKey) as string | undefined;
+        return this.quorum.get(newVersionKey);
     }
 
     public async proposeVersion(newVersion: string) {
