@@ -13,6 +13,7 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
+import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
@@ -77,7 +78,7 @@ export interface IFluidContainerEvents extends IEvent {
     // @eventProperty
     (event: "connected", listener: () => void): void;
     // @eventProperty
-    (event: "dispose", listener: () => void): void;
+    (event: "dispose", listener: (error?: ICriticalContainerError) => void): void;
     // @eventProperty
     (event: "disconnected", listener: () => void): void;
     // @eventProperty
