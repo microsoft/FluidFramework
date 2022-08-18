@@ -196,13 +196,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     }
 
     /**
-     * {@inheritDoc IQuorum.has}
-     */
-    public has(key: string): boolean {
-        return this.values.get(key)?.accepted !== undefined;
-    }
-
-    /**
      * {@inheritDoc IQuorum.get}
      */
     // TODO: this should be updated to return something other than `any` (unknown)

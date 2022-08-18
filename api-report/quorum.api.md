@@ -20,7 +20,6 @@ export interface IQuorum extends ISharedObject<IQuorumEvents> {
     delete(key: string): void;
     get(key: string): any;
     getPending(key: string): any;
-    has(key: string): boolean;
     set(key: string, value: unknown): void;
 }
 
@@ -39,7 +38,6 @@ export class Quorum extends SharedObject<IQuorumEvents> implements IQuorum {
     get(key: string): any;
     static getFactory(): IChannelFactory;
     getPending(key: string): any;
-    has(key: string): boolean;
     // @internal (undocumented)
     protected initializeLocalCore(): void;
     // @internal (undocumented)

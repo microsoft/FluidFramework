@@ -22,12 +22,6 @@ export interface IQuorumEvents extends ISharedObjectEvents {
  */
 export interface IQuorum extends ISharedObject<IQuorumEvents> {
     /**
-     * Checks if the quorum has an accepted value for the given key.
-     * @param key - The key to check
-     */
-    has(key: string): boolean;
-
-    /**
      * Gets the accepted value for the given key.
      * @param key - The key to retrieve from
      */
