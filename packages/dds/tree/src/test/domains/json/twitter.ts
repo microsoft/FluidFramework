@@ -485,8 +485,13 @@ function getRandomDateString(random = makeRandom(), start: Date, end: Date) {
         `${dateS.substring(28, 33)} ${dateS.substring(11, 15)}`;
 }
 
-export function isKanji(ch: string) {
-    return (ch >= "\u3040" && ch <= "\u9faf") || (ch >= "\u3400" && ch <= "\u4dbf");
+export function isJapanese(ch: string) {
+    // Japanese hiragana Alphabet
+    return (ch >= "\u304B" && ch <= "\u3087"
+    // Japanese Katakana Alphabet
+    || ch >= "\u30F3" && ch <= "\u30AA"
+    // Japanese Kanji Alphabet (CJK Unified Ideographs)
+    || ch >= "\u4E00" && ch <= "\u9FBF");
 }
 
 export function isAlphaLatin(ch: string) {
@@ -536,7 +541,7 @@ export function parseTwitterStatusesSentences(twitterJson: TwitterJson) {
 
     twitterJson.statuses.forEach((status) => {
         const sentenceWords: Word[] = [];
-        const spaceSeparatedWords = status.text.split(" ");
+        const spaceSeparatedWords = status.source.split(" ");
 
         spaceSeparatedWords.forEach((potentialWord) => {
             const innerWords: Word[] = [];
@@ -558,7 +563,7 @@ export function parseTwitterStatusesSentences(twitterJson: TwitterJson) {
                     currentWord += currentChar;
                     wordAlphabet = "Latin";
                 }
-                else if (isKanji(currentChar)) {
+                else if (isJapanese(currentChar)) {
                     if (currentWord.length > 0) {
                         innerWords.push({ value: `${currentWord}`, alphabet: wordAlphabet });
                     }
@@ -574,6 +579,61 @@ export function parseTwitterStatusesSentences(twitterJson: TwitterJson) {
 
             if (currentWord.length > 0) {
                 innerWords.push({ value: currentWord, alphabet: wordAlphabet });
+            }
+
+            innerWords.forEach((word) => sentenceWords.push(word));
+            wordAlphabet = "Unknown";
+        });
+
+        sentences.push(sentenceWords);
+    });
+
+    return sentences;
+}
+
+export function parseTwitterStatusesSentencesClassic(twitterJson: TwitterJson) {
+    const sentences: string[][] = [];
+
+    twitterJson.statuses.forEach((status) => {
+        const sentenceWords: string[] = [];
+        const spaceSeparatedWords = status.text.split(" ");
+
+        spaceSeparatedWords.forEach((potentialWord) => {
+            const innerWords: string[] = [];
+            let previousChar: string | null = null;
+            let currentWord = "";
+            let wordAlphabet: "Latin" | "Japanese" | "Unknown" = "Unknown";
+            for (let i = 0; i < potentialWord.length; i++) {
+                const currentChar = potentialWord.charAt(i);
+                if (isEscapeChar(currentChar)) {
+                    if (previousChar && !isEscapeChar(previousChar)) {
+                        innerWords.push(`${currentWord}`);
+                        currentWord = currentChar;
+                        wordAlphabet = "Unknown";
+                    } else {
+                        currentWord += currentChar;
+                    }
+                }
+                else if (isAlphaLatin(currentChar)) {
+                    currentWord += currentChar;
+                    wordAlphabet = "Latin";
+                }
+                else if (isJapanese(currentChar)) {
+                    if (currentWord.length > 0) {
+                        innerWords.push(`${currentWord}`);
+                    }
+                    innerWords.push(`${currentChar}`);
+                    currentWord = "";
+                    wordAlphabet = "Unknown";
+                }
+                else {
+                    currentWord += currentChar;
+                }
+                previousChar = currentChar;
+            }
+
+            if (currentWord.length > 0) {
+                innerWords.push(currentWord);
             }
 
             innerWords.forEach((word) => sentenceWords.push(word));

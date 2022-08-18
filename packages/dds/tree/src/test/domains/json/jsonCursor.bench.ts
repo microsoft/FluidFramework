@@ -6,16 +6,17 @@
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { Jsonable } from "@fluidframework/datastore-definitions";
+import { makeRandom, PerformanceMarkovChain, SpaceEfficientMarkovChain } from "@fluid-internal/stochastic-test-utils";
 import { buildForest, ITreeCursor, jsonableTreeFromCursor, singleTextCursor } from "../../..";
 import { initializeForest, TreeNavigationResult } from "../../../forest";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./canada";
-import { generateTwitterJsonByByteSize, isEscapeChar, isKanji, miniTwitterJson,
-     parseTwitterStatusesSentences, twitterRawJson } from "./twitter";
-import { buildTextFromMarkovChain, markovChainBuilder } from "./jsonGeneratorUtils";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { generateTwitterJsonByByteSize, isEscapeChar, miniTwitterJson,
+     parseTwitterStatusesSentences, parseTwitterStatusesSentencesClassic, twitterRawJson } from "./twitter";
+import { buildTextFromMarkovChain, buildTextFromMarkovChainV2, buildTextFromMarkovChainV3,
+    getSizeInBytes, markovChainBuilder, markovChainBuilderV2 } from "./jsonGeneratorUtils";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -112,23 +113,46 @@ const canada = generateCanada(
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true, true);
 describe("ITreeCursor", () => {
-    const sentences = [
-        ["hello", "my", "freind"],
-        ["hello", "my", "friend", "daniel"],
-        ["hello", "you", "my", "friend"],
-    ];
+    // const sentences = [
+    //     ["hello", "my", "freind"],
+    //     ["hello", "my", "friend", "daniel"],
+    //     ["hello", "you", "my", "friend"],
+    // ];
 
-    const chain = markovChainBuilder(sentences);
-    const sentence = buildTextFromMarkovChain(chain, makeRandom(), 4);
+    // const chain = markovChainBuilder(sentences);
+    // const sentence = buildTextFromMarkovChain(chain, makeRandom(), 4);
 
-    const parsedSentences = parseTwitterStatusesSentences(miniTwitterJson());
+    const parsedSentences = parseTwitterStatusesSentences(twitterRawJson());
+    const twitterMarkovChainWordBased = markovChainBuilderV2(parsedSentences);
+    const twitterWordMarkovSize = getSizeInBytes(JSON.stringify(Array.from(twitterMarkovChainWordBased.entries())));
+    const twitterSentence = buildTextFromMarkovChainV2(twitterMarkovChainWordBased, makeRandom(), 20);
+
+    const parsedSentencesClassic = parseTwitterStatusesSentencesClassic(twitterRawJson());
+    const twitterMarkovChainClassic = markovChainBuilder(parsedSentencesClassic);
+    const twitterSentenceClassic = buildTextFromMarkovChainV3(twitterMarkovChainClassic, makeRandom());
+    const twitterClassicMarkovSize = getSizeInBytes(JSON.stringify(Array.from(twitterMarkovChainClassic.entries())));
 
 
-    /* eslint-disable no-useless-escape, @typescript-eslint/no-non-null-assertion */
-    const newlineCode = "\n".codePointAt(0)!;
-    const codePString = `${String.fromCodePoint(newlineCode)}`;
-    const stringified = JSON.stringify(codePString);
-    /* eslint-enable */
+    const performanceMarkovChain = new PerformanceMarkovChain(makeRandom());
+    console.time("performanceMarkovChain.initialize()");
+    performanceMarkovChain.initialize(parsedSentencesClassic);
+    console.timeEnd("performanceMarkovChain.initialize()");
+    const performanceSentence = performanceMarkovChain.generateSentence();
+    const performanceMarkovChainSize =
+    getSizeInBytes(JSON.stringify(Array.from(performanceMarkovChain.chain.entries())));
+
+
+    const spaceEfficientMarkovChain = new SpaceEfficientMarkovChain(makeRandom());
+    console.time("spaceEfficientMarkovChain.initialize()");
+    spaceEfficientMarkovChain.initialize(parsedSentencesClassic);
+    console.timeEnd("spaceEfficientMarkovChain.initialize()");
+    const spaceEfficientSentence = spaceEfficientMarkovChain.generateSentence();
+    const chainMapArr = [];
+    Array.from(spaceEfficientMarkovChain.chain.entries()).forEach((array) => {
+        chainMapArr.push([array[0], Array.from(array[1].entries())]);
+    });
+    const spaceEfficientMarkovChainSize = getSizeInBytes(chainMapArr);
+
     bench("canada", () => canada);
     bench("twitter", () => twitter);
 });
