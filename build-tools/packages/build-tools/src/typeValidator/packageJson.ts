@@ -84,7 +84,7 @@ export async function getAndUpdatePackageDetails(packageDir: string, updateOptio
         return  {skipReason: "Skipping package: type validation disabled"}
     }
 
-        // normalize the version to remove any pre-release version info,
+    // normalize the version to remove any pre-release version info,
     // as we shouldn't change the type validation version for pre-release versions
     const normalizedVersion =
         packageDetails.pkg.version.includes("-") ?
