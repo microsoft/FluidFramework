@@ -72,7 +72,7 @@ function invertMark(mark: T.Mark, opIdToTag: IdToTagLookup): T.Mark[] {
                     inverseMarks.push({
                         type: "Delete",
                         id: attach.id,
-                        count: attach.type === "Insert" ? attach.content.length : 1
+                        count: attach.type === "Insert" ? attach.content.length : 1,
                     });
                     break;
                 }
