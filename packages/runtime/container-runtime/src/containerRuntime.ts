@@ -164,6 +164,8 @@ import {
 } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
 import { ISerializedBaseSnapshotBlobs, SerializedSnapshotStorage } from "./serializedSnapshotStorage";
+import { buildSummaryStorageAdapter } from "./summaryStorageAdapter";
+import { Algorithms, CompressionSummaryStorageHooks } from "./summaryStorageCompressionHooks";
 
 export enum ContainerMessageType {
     // An op to be delivered to store
@@ -906,9 +908,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
         const baseSnapshot: ISnapshotTree | undefined = pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
-        const storage = !pendingRuntimeState ?
+        const storage = buildSummaryStorageAdapter(!pendingRuntimeState ?
             context.storage :
-            new SerializedSnapshotStorage(() => { return context.storage; }, pendingRuntimeState.snapshotBlobs);
+            new SerializedSnapshotStorage(() => { return context.storage; }, pendingRuntimeState.snapshotBlobs),
+            [new CompressionSummaryStorageHooks(Algorithms.LZ4)],
+        );
 
         const registry = new FluidDataStoreRegistry(registryEntries);
 
