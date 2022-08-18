@@ -229,11 +229,21 @@ stages:
         # Benchmark tests
         - ${{ if eq(parameters.runBenchmarkTests, 'true') }}:
           - task: Npm@1
-            displayName: npm run ci:test:benchmark
+            displayName: Run performance benchmarks - runtime
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ci:test:benchmark'
+          - task: Bash@3
+            displayName: Write runtime perf benchmarks to Aria/Kusto
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                cd tools/write-perf-to-kusto;
+                npm i;
+                npm run tsc;
+                node dist/index.js '${{ parameters.buildDirectory }}/benchmarkOutput';
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Benchmark tests output
             inputs:
