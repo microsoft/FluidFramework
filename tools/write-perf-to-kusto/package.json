@@ -32,7 +32,8 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@ff-internal/aria-logger": "0.0.9"
+    "@ff-internal/aria-logger": "0.0.9",
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "@fluidframework/build-common": "^0.24.0",

@@ -9,15 +9,42 @@
  * change, so please be cognizant of changes made here.
  */
 
+//import { v4 as uuid } from "uuid";
 import fs from "fs";
+import path from "path";
 import "@ff-internal/aria-logger";
+// import { AriaLogger } from "@ff-internal/aria-logger";
 
+// const logger = new AriaLogger("mySessionId20220816_2");
 const logger = getTestLogger?.();
 
-(async () => {
+const filesToProcess: string[] = [];
+
+const dirs = [
+    "/workspaces/FluidFramework/experimental/dds/tree/benchOutput",
+    "/workspaces/FluidFramework/packages/dds/tree/benchOutput",
+];
+while (dirs.length > 0) {
+    const dir = dirs.pop()!;
+    const files = fs.readdirSync(dir, { withFileTypes: true });
+    files.forEach((dirent) => {
+        const direntFullPath = path.join(dir!, dirent.name);
+        if (dirent.isDirectory()) {
+            dirs.push(direntFullPath);
+            return;
+        }
+        if (!dirent.name.endsWith(".json")) {
+            return;
+        }
+        filesToProcess.push(direntFullPath);
+    });
+}
+
+filesToProcess.forEach((fullPath) => {
     try {
-        const data = JSON.parse(fs.readFileSync('../../packages/dds/tree/benchOutput/ITreeCursor_perfresult.json', 'utf8'));
-        console.log(data);
+        console.log(`Processing file '${fullPath}'`);
+        const data = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+        //console.log(data);
         data.benchmarks.forEach(b => {
             const props = {
                 suiteName: data.suiteName,
@@ -29,15 +56,20 @@ const logger = getTestLogger?.();
             console.log(JSON.stringify(props));
             logger.send({
                 category: "generic",
-                eventName: "alejandrovi-test-for-benchmark-telemetry",
+                eventName: "testevents",
                 ...props
             });
         });
     } catch (err) {
         console.error(err);
     }
+});
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+(async () => {
     await logger.flush();
+    await delay(1000);
     console.log("Done");
     process.exit(0);
 })().catch(e => {
