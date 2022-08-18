@@ -141,7 +141,11 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
         assertMapValues(dataObject2map, messageCount, largeString);
     });
 
-    it("Batched small ops pass when batch is larger than max op size", async () => {
+    it("Batched small ops pass when batch is larger than max op size", async function() {
+        // flush mode is not applicable for the local driver
+        if (provider.driver.type === "local") {
+            this.skip();
+        }
         await setupContainers({ ...testContainerConfig, runtimeOptions: { flushMode: FlushMode.Immediate } }, {});
         const largeString = generateStringOfSize(500000);
         const messageCount = 10;
