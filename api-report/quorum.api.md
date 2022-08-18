@@ -20,6 +20,7 @@ export interface IQuorum<T = any> extends ISharedObject<IQuorumEvents> {
     delete(key: string): void;
     get(key: string): T | undefined;
     getPending(key: string): T | undefined;
+    isPending(key: string): boolean;
     set(key: string, value: T | undefined): void;
 }
 
@@ -40,6 +41,7 @@ export class Quorum<T = any> extends SharedObject<IQuorumEvents> implements IQuo
     getPending(key: string): T | undefined;
     // @internal (undocumented)
     protected initializeLocalCore(): void;
+    isPending(key: string): boolean;
     // @internal (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // @internal (undocumented)

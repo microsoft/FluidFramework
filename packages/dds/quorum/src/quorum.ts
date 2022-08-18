@@ -206,11 +206,16 @@ export class Quorum<T = any> extends SharedObject<IQuorumEvents> implements IQuo
     }
 
     /**
+     * {@inheritDoc IQuorum.isPending}
+     */
+    public isPending(key: string): boolean {
+        return this.values.get(key)?.pending !== undefined;
+    }
+
+    /**
      * {@inheritDoc IQuorum.getPending}
      */
     public getPending(key: string): T | undefined {
-        // TODO: Should this return differently for "nothing pending" vs. "delete pending"?
-        // Maybe return the QuorumValue itself?
         return this.values.get(key)?.pending?.value;
     }
 

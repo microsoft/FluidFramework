@@ -28,6 +28,13 @@ export interface IQuorum<T = any> extends ISharedObject<IQuorumEvents> {
     get(key: string): T | undefined;
 
     /**
+     * Returns whether there is a pending value for the given key.  Can be used to distinguish a pending delete vs.
+     * nothing pending when getPending would just return undefined.
+     * @param key - The key to check
+     */
+    isPending(key: string): boolean;
+
+    /**
      * Gets the pending value for the given key.
      * @param key - The key to retrieve from
      */
