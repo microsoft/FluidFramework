@@ -97,10 +97,6 @@ The vast majority of these options have default values that have been crafted to
 
 ## Upcoming Work
 
-### TODOs before merging PR:
-
--   Fix links to the same file (only need heading component, not file path)
-
 ### Documentation Improvements
 
 -   Intro sandbox (api report)
@@ -109,14 +105,12 @@ The vast majority of these options have default values that have been crafted to
 
 -   Remove leading blank line in documents
 -   Excessive blank lines in Signature sections
--   Add more modifiers to modifiers columns (optional, etc.)
--   Dynamic "Modifiers" column in tables
-    -   I.e. only include "modifiers" column if any modifiers are detected.
+-   Fix links to the same file (only need heading component, not file path)
+    -   This will require plumbing down a context document item, so we can easily determine if the document to which the link is being generated is the same as the document being linked to.
 -   Better `@defaultValue` rendering.
 
 ## Longer-term work
 
--   Don't require API reports to be in a flat list (support glob patterns, etc.)
 -   Replace DocNode output / MarkdownEmitter with Markdown AST trees and simple interface for rendering those trees to a stream
 -   Support placing documents _within_ their own hierarchy (support for the "index" model used by systems like DocFX)
 -   Pre-canned policies (flat, index, adjacency)
