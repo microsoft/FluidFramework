@@ -43,6 +43,8 @@ export {
     Covariant,
     ExtractFromOpaque,
     isAny,
+    brand,
+    brandOpaque,
 } from "./util";
 
 export { ChangeEncoder, JsonCompatibleReadOnly, JsonCompatible } from "./change-family";
@@ -74,4 +76,5 @@ export {
     Multiplicity,
     isNeverField,
     FullSchemaPolicy,
+    defaultSchemaPolicy,
 } from "./feature-libraries";

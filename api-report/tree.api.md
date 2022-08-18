@@ -26,11 +26,17 @@ export class AnchorSet {
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @public
+export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
+
+// @public
 export abstract class BrandedType<ValueType, Name extends string> {
     protected readonly _type_brand: Name;
     // (undocumented)
     protected _typeCheck?: Invariant<ValueType>;
 }
+
+// @public
+export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
 
 // @public (undocumented)
 export function buildForest(schema: StoredSchemaRepository): IEditableForest;
@@ -95,6 +101,9 @@ export interface Covariant<T> {
 
 // @public
 export function cursorToJsonObject(reader: ITreeCursor): unknown;
+
+// @public
+export const defaultSchemaPolicy: FullSchemaPolicy;
 
 // @public
 interface Delete {
