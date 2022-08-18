@@ -4,7 +4,6 @@
  */
 
 import {
-    ChangesetTag,
     getInputLength,
     getOutputLength,
     isAttachGroup,
@@ -63,14 +62,46 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
         nextCurrMark = undefined;
         nextBaseMark = undefined;
 
-        if (isAttachGroup(currMark) || isReattach(currMark)) {
-            // TODO: respect tiebreak
+        if (isAttachGroup(currMark)) {
+            // We currently ignore the ways in which base marks could affect attaches.
+            // These are:
+            // 1. Slices with which the attach would commute.
+            // 2. Attaches that target the same gap.
+            // We ignore #1 because slices are not yet supported.
+            // We ignore #2 because we do not yet support specifying the tiebreak.
             factory.pushContent(clone(currMark));
             nextBaseMark = baseMark;
-        } else if (isAttachGroup(baseMark) || isReattach(baseMark)) {
+        } else if (isReattach(currMark)) {
+            // We currently ignore the ways in which base marks could affect re-attaches.
+            // These are:
+            // 1. A reattach that targets the same tombs.
+            // 2. Attaches that target the same gap.
+            // We ignore #1 because it could only occur if undo were supported.
+            // We ignore #2 because we do not yet support specifying the tiebreak.
+            factory.pushContent(clone(currMark));
+            nextBaseMark = baseMark;
+        } else if (isReattach(baseMark)) {
+            // We currently ignore the ways in which curr marks overlap with this re-attach.
+            // These are:
+            // 1. A reattach that matches this re-attach.
+            // 2. A tomb that matches this re-attach.
+            // We ignore #1 because it could only occur if undo were supported.
+            // We ignore #2 because we do not yet produce tombs.
+            factory.pushOffset(getOutputLength(baseMark));
+            nextCurrMark = currMark;
+        } else if (isAttachGroup(baseMark)) {
+            // We currently ignore the ways in which curr marks overlap with these attaches.
+            // These are:
+            // 1. Slice ranges that include prior insertions
+            // We ignore #1 because we do not yet support slices.
             factory.pushOffset(getOutputLength(baseMark));
             nextCurrMark = currMark;
         } else {
+            // If we've reached this branch then `baseMark` and `currMark` start at the same location
+            // in the document field at the revision to which both changesets apply.
+            // Despite that, it's not necessarily true that they affect the same range in that document
+            // field because they may be of different lengths.
+            // We perform any necessary splitting in order to end up with a pair of marks that do have the same length.
             const currMarkLength = getInputLength(currMark);
             const baseMarkLength = getInputLength(baseMark);
             if (currMarkLength < baseMarkLength) {
@@ -78,10 +109,10 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             } else if (currMarkLength > baseMarkLength) {
                 [currMark, nextCurrMark] = splitMarkOnInput(currMark, baseMarkLength);
             }
+            // Past this point, we are guaranteed that `baseMark` and `currMark` have the same length and
+            // start at the same location at the revision to which both changesets apply.
+            // They therefore refer to the same range for that revision.
             const rebasedMark = rebaseMark(currMark, baseMark);
-            // Past this point, we are guaranteed that:
-            //  * `currMark` and `baseMark` have the same length
-            //  * `currMark` and `baseMark` are `T.SizedMark`s
             factory.push(rebasedMark);
         }
         if (nextCurrMark === undefined) {
@@ -98,8 +129,6 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
     }
     return factory.list;
 }
-
-export const DUMMY_TOMB_TAG: ChangesetTag = "Dummy Tombstone Changeset Tag";
 
 function rebaseMark(currMark: T.SizedMark, baseMark: T.SizedMark): T.SizedMark {
     if (isSkipMark(baseMark)) {
