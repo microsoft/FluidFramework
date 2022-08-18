@@ -96,6 +96,7 @@
   "oclif": {
     "bin": "flub",
     "dirname": "flub",
+    "flexibleTaxonomy": true,
     "commands": "./dist/commands",
     "additionalHelpFlags": [
       "-h"

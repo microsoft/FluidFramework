@@ -102,10 +102,10 @@ USAGE
 # Command reference
 <!-- commands -->
 * [`flub bump deps PACKAGE_OR_RELEASE_GROUP`](#flub-bump-deps-package_or_release_group)
-* [`flub bundleAnalyses collect`](#flub-bundleanalyses-collect)
-* [`flub bundleAnalyses run`](#flub-bundleanalyses-run)
 * [`flub check layers`](#flub-check-layers)
+* [`flub collect bundleanalyses`](#flub-collect-bundleanalyses)
 * [`flub commands`](#flub-commands)
+* [`flub generate bundleanalyses`](#flub-generate-bundleanalyses)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub help [COMMAND]`](#flub-help-command)
 * [`flub info`](#flub-info)
@@ -160,45 +160,6 @@ EXAMPLES
     $ flub bump deps server -g client -t current
 ```
 
-## `flub bundleAnalyses collect`
-
-Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption
-
-```
-USAGE
-  $ flub bundleAnalyses collect [--lernaOutput <value>] [--hasSmallAssetError] [--smallestAssetSize <value>] [-v]
-
-FLAGS
-  -v, --verbose                Verbose logging.
-  --hasSmallAssetError
-  --lernaOutput=<value>        [default: npx lerna list --all --json] Lerna Output
-  --smallestAssetSize=<value>  [default: 100] The smallest asset size that we deems to be correct. Adjust if we are
-                               testing for assets that are smaller.
-
-DESCRIPTION
-  Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
-  consumption
-```
-
-## `flub bundleAnalyses run`
-
-Run to report the bundle analysis. Do not run Danger directly at the root of the
-
-```
-USAGE
-  $ flub bundleAnalyses run [--dirname <value>] [-v]
-
-FLAGS
-  -v, --verbose      Verbose logging.
-  --dirname=<value>  [default: C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\dist\commands
-                     \bundleAnalyses] Directory
-
-DESCRIPTION
-  Run to report the bundle analysis. Do not run Danger directly at the root of the
-
-  repo as this better isolates its usage and dependencies
-```
-
 ## `flub check layers`
 
 Checks that the dependencies between Fluid Framework packages are properly layered.
@@ -216,6 +177,25 @@ FLAGS
 
 DESCRIPTION
   Checks that the dependencies between Fluid Framework packages are properly layered.
+```
+
+## `flub collect bundleanalyses`
+
+Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption
+
+```
+USAGE
+  $ flub collect bundleanalyses [--lernaOutput <value>] [--smallestAssetSize <value>] [-v]
+
+FLAGS
+  -v, --verbose                Verbose logging.
+  --lernaOutput=<value>...     [default: npx lerna list --all --json] Lerna Output
+  --smallestAssetSize=<value>  [default: 100] The smallest asset size in bytes that we deems to be correct. Adjust if we
+                               are testing for assets that are smaller.
+
+DESCRIPTION
+  Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
+  consumption
 ```
 
 ## `flub commands`
@@ -249,6 +229,26 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.0/src/commands/commands.ts)_
+
+## `flub generate bundleanalyses`
+
+Run to report the bundle analysis. Do not run Danger directly at the root of the
+
+```
+USAGE
+  $ flub generate bundleanalyses [--dirname <value>] [-v]
+
+FLAGS
+  -v, --verbose      Verbose logging.
+  --dirname=<value>  [default:
+                     C:\Users\sdeshpande\Documents\FluidFramework\build-tools\packages\build-cli\dist\commands\generate]
+                     Directory
+
+DESCRIPTION
+  Run to report the bundle analysis. Do not run Danger directly at the root of the
+
+  repo as this better isolates its usage and dependencies
+```
 
 ## `flub generate packageJson`
 

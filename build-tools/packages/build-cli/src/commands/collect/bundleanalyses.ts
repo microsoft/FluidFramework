@@ -7,20 +7,17 @@ import { existsSync, copySync, readJSONSync } from "fs-extra";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
 
-export default class BundleAnalysesCollect extends BaseCommand<typeof BundleAnalysesCollect.flags> {
+export default class CollectBundleanalyses extends BaseCommand<typeof CollectBundleanalyses.flags> {
     static description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
     static flags = {
         lernaOutput: Flags.string({
             description: "Lerna Output",
             default: `npx lerna list --all --json`,
             required: false,
-        }),
-        hasSmallAssetError: Flags.boolean({
-            default: false,
-            required: false,
+            multiple: true,
         }),
         smallestAssetSize: Flags.integer({
-            description: `The smallest asset size that we deems to be correct. Adjust if we are testing for assets that are smaller.`,
+            description: `The smallest asset size in bytes that we deems to be correct. Adjust if we are testing for assets that are smaller.`,
             default: 100,
             required: false,
         }),
@@ -36,6 +33,7 @@ export default class BundleAnalysesCollect extends BaseCommand<typeof BundleAnal
 
         // Check each package location for a bundleAnalysis folder
         // and copy it to a central location
+        let hasSmallAssetError = false;
         const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
 
         // eslint-disable-next-line unicorn/no-array-for-each
@@ -70,7 +68,7 @@ export default class BundleAnalysesCollect extends BaseCommand<typeof BundleAnal
 
                     if (asset.size < flags.smallestAssetSize) {
                         this.warn(`${pkg.name}: asset ${asset.name} (${asset.size}) is too small`);
-                        flags.hasSmallAssetError = true;
+                        hasSmallAssetError = true;
                     }
                 }
 
@@ -80,7 +78,7 @@ export default class BundleAnalysesCollect extends BaseCommand<typeof BundleAnal
             }
         });
 
-        if (flags.hasSmallAssetError) {
+        if (hasSmallAssetError) {
             this.error(
                 `Found assets are too small (<${flags.smallestAssetSize} bytes). Webpack bundle analysis is probably not correct.`,
             );

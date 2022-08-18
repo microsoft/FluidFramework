@@ -4,15 +4,15 @@
  */
 import { expect, test } from "@oclif/test";
 
-describe("bundleAnalyses/run", () => {
+describe("collect/bundleanalyses", () => {
     test.stdout()
-        .command(["bundleAnalyses run"])
+        .command(["collect/bundleanalyses"])
         .it("runs hello", (ctx) => {
             expect(ctx.stdout).to.contain("hello world");
         });
 
     test.stdout()
-        .command(["bundleAnalyses run", "--name", "jeff"])
+        .command(["collect/bundleanalyses", "--name", "jeff"])
         .it("runs hello --name jeff", (ctx) => {
             expect(ctx.stdout).to.contain("hello jeff");
         });

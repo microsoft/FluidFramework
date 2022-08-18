@@ -6,7 +6,7 @@ import { execSync } from "child_process";
 import { Flags } from "@oclif/core";
 import { BaseCommand } from "../../base";
 
-export default class BundleAnalysesRun extends BaseCommand<typeof BundleAnalysesRun.flags> {
+export default class RunBundleanalyses extends BaseCommand<typeof RunBundleanalyses.flags> {
     static description = `Run to report the bundle analysis. Do not run Danger directly at the root of the
     repo as this better isolates its usage and dependencies`;
 
