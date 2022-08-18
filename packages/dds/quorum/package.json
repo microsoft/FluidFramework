@@ -1,5 +1,5 @@
 {
-  "name": "@fluid-internal/quorum",
+  "name": "@fluid-experimental/quorum",
   "version": "2.0.0-internal.1.1.0",
   "private": true,
   "description": "Distributed data structure for key-value pairs using quorum consensus",

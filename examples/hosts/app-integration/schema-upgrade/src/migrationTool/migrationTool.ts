@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IQuorum, Quorum } from "@fluid-experimental/quorum";
 import { ITaskManager, TaskManager } from "@fluid-experimental/task-manager";
-import { IQuorum, Quorum } from "@fluid-internal/quorum";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ConsensusRegisterCollection, IConsensusRegisterCollection } from "@fluidframework/register-collection";
