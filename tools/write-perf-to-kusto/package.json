@@ -1,5 +1,5 @@
 {
-  "name": "@ff-internal/write-perf-to-kusto",
+  "name": "@ff-tools/write-perf-to-kusto",
   "version": "1.0.0",
   "description": "Tool to take performance benchmark output files and write them to kusto",
   "repository": {
@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@fluidframework/common-definitions": "^0.20.1",
-    "@fluidframework/test-driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0"
+    "@fluidframework/test-driver-definitions": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
     "@fluidframework/eslint-config-fluid": "^0.28.2000",
