@@ -140,9 +140,6 @@ stages:
               cat << EOF >> .npmrc
                 registry=https://registry.npmjs.org
                 always-auth=false
-                @fluidframework:registry=${{ variables.feed }}
-                @fluid-experimental:registry=${{ variables.feed }}
-                @fluid-internal:registry=${{ variables.feed }}
                 @ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
                 @microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
                 always-auth=true
