@@ -300,7 +300,7 @@ export class Client {
         action: (segment: ISegment, accum?: TClientData) => boolean,
         accum?: TClientData,
     ): boolean {
-        return this._mergeTree.walkAllSegments(this._mergeTree.root, action, accum);
+        return this._mergeTree.walkAllSegments(action, accum);
     }
 
     /**
@@ -310,7 +310,6 @@ export class Client {
      */
     public serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void {
         this._mergeTree.walkAllSegments(
-            this._mergeTree.root,
             (seg) => {
                 // Only serialize segments that have not been removed.
                 if (seg.removedSeq === undefined) {

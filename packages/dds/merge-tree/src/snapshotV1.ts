@@ -239,7 +239,7 @@ export class SnapshotV1 {
             return true;
         };
 
-        mergeTree.walkAllSegments(mergeTree.root, extractSegment, this);
+        mergeTree.walkAllSegments(extractSegment, this);
 
         // If the last segment in the walk was coalescable, push it now.
         pushSeg(prev);

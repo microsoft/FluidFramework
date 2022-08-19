@@ -316,7 +316,7 @@ describe("MergeTree.insertingWalk", () => {
         );
 
         const segments: string[] = [];
-        mergeTree.walkAllSegments(mergeTree.root, (seg) => {
+        mergeTree.walkAllSegments( (seg) => {
             if (TextSegment.is(seg)) {
                 if (seg.localRemovedSeq !== undefined || seg.removedSeq !== undefined) {
                     segments.push(`(${seg.text})`);
