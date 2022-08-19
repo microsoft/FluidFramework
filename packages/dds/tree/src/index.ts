@@ -45,6 +45,8 @@ export {
     isAny,
     brand,
     brandOpaque,
+    ValueFromBranded,
+    NameFromBranded,
 } from "./util";
 
 export { ChangeEncoder, JsonCompatibleReadOnly, JsonCompatible } from "./change-family";
