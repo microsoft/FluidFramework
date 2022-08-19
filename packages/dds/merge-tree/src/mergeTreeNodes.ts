@@ -492,7 +492,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
                 leafSegment.parent = this.parent;
 
                 // Give the leaf a temporary yet valid ordinal.
-                // when this segment is put in the tree, it will get it's real ordinal,
+                // when this segment is put in the tree, it will get its real ordinal,
                 // but this ordinal meets all the necessary invariants for now.
                 leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
 
