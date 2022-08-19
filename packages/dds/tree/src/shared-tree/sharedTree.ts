@@ -8,18 +8,13 @@ import {
     IChannelAttributes,
     IChannelFactory,
     IChannelServices,
-    IFluidDataStoreRuntime,
+    IFluidDataStoreRuntime
 } from "@fluidframework/datastore-definitions";
 import {
-    ForestIndex,
-    ObjectForest,
-    SchemaIndex,
-    sequenceChangeFamily,
-    SequenceChangeFamily,
-    SequenceChangeset,
-    SequenceEditBuilder,
+    defaultSchemaPolicy, ForestIndex, ObjectForest, SchemaIndex, SequenceChangeFamily, SequenceChangeset, SequenceEditBuilder,
 } from "../feature-libraries";
 import { IEditableForest, IForestSubscription } from "../forest";
+import { StoredSchemaRepository } from "../schema-stored";
 import { Index, SharedTreeCore } from "../shared-tree-core";
 import { Checkout, runSynchronousTransaction, TransactionResult } from "../transaction";
 import { AnchorSet } from "../tree";
@@ -40,9 +35,10 @@ export class SharedTree extends SharedTreeCore<SequenceChangeset, SequenceChange
         attributes: IChannelAttributes,
         telemetryContextPrefix: string) {
             const anchors = new AnchorSet();
-            const forest = new ObjectForest(anchors);
+            const schema = new StoredSchemaRepository(defaultSchemaPolicy);
+            const forest = new ObjectForest(schema, anchors);
             const indexes: Index<SequenceChangeset>[] = [
-                new SchemaIndex(runtime, forest.schema),
+                new SchemaIndex(runtime, schema),
                 new ForestIndex(runtime, forest),
             ];
             super(

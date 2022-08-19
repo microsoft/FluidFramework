@@ -71,7 +71,7 @@ export interface DeltaVisitor {
     onMoveIn(index: number, count: number, id: Delta.MoveId): void;
     onSetValue(value: Value): void;
     // TODO: better align this with ITreeCursor:
-    // maybe rename it's up and down to enter / exit? Maybe Also)?
+    // maybe rename its up and down to enter / exit? Maybe Also)?
     // Maybe also have cursor have "current field key" state to allow better handling of empty fields and better match
     // this visitor?
     enterNode(index: number): void;
