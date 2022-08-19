@@ -71,7 +71,7 @@ stages:
         pool: ${{ parameters.poolBuild }}
         variables:
           releaseBuildVar: $[variables.releaseBuild]
-          toolFolder: ${{ parameters.buildDirectory }}/tools/write-perf-to-kusto/
+          toolFolder: ${{ variables.buildDirectory }}/tools/write-perf-to-kusto/
         steps:
         # Setup
         - checkout: self
@@ -83,7 +83,7 @@ stages:
           displayName: Parameters
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
+            workingDirectory: ${{ variables.buildDirectory }}
             script: |
               # Show all task group conditions
 
@@ -92,7 +92,7 @@ stages:
                 releaseBuild=$(releaseBuildVar)
 
               Tasks Parameters:
-                BuildDir=${{ parameters.buildDirectory }}
+                BuildDir=${{ variables.buildDirectory }}
                 Build=${{ parameters.taskBuild }}"
 
         # Install
@@ -104,14 +104,14 @@ stages:
           displayName: npm ci
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
+            workingDir: ${{ variables.buildDirectory }}
             customCommand: 'ci --unsafe-perm'
             customRegistry: 'useNpmrc'
 
         # Set version
         - template: include-set-package-version.yml
           parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
+            buildDirectory: ${{ variables.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
             tagName: ${{ parameters.tagName }}
 
@@ -121,7 +121,7 @@ stages:
             displayName: npm run ${{ parameters.taskBuild }}
             inputs:
               command: 'custom'
-              workingDir: ${{ parameters.buildDirectory }}
+              workingDir: ${{ variables.buildDirectory }}
               customCommand: 'run ${{ parameters.taskBuild }}'
 
         # Run performance tests
@@ -173,14 +173,14 @@ stages:
           displayName: 'Run performance benchmarks - runtime'
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
+            workingDir: ${{ variables.buildDirectory }}
             customCommand: 'run test:benchmark:report -- --require node_modules/@ff-internal/aria-logger'
 
         - task: Npm@1
           displayName: 'Consolidate output files - runtime'
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
+            workingDir: ${{ variables.buildDirectory }}
             customCommand: 'run test:benchmark:copyresults'
 
         - task: Bash@3
@@ -196,6 +196,6 @@ stages:
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Benchmark tests output
           inputs:
-            targetPath: '${{ parameters.buildDirectory }}/benchmarkOutput'
+            targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
             artifactName: 'benchmark-test-outputs'
             condition: succeededOrFailed()
