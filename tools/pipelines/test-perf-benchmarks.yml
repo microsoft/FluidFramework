@@ -1,112 +1,200 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# test-real-service-e2e pipeline
 
 name: $(Build.BuildId)
 
-trigger: none
-pr: none
+# trigger:
+#   branches:
+#     include:
+#     - main
+#     - next
+#     - lts
+#     - release/*
+#   paths:
+#     include:
+#     - packages
+#     - examples
+#     - experimental
+#     - package.json
+#     - package-lock.json
+#     - lerna.json
+#     - lerna-package-lock.json
+#     - tools/pipelines/test-perf-benchmarks.yml
+#     - tools/pipelines/templates/include-set-package-version.yml
 
-resources:
-  pipelines:
-  - pipeline: client   # Name of the pipeline resource
-    source: Build - client packages
-    # trigger:
-    #   branches:
-    #   - release/*
-    #   - main
-    #   - next
-    #   - lts
+# extends:
+#   template: templates/build-npm-package.yml
+#   parameters:
+#     tagName: client
+
+parameters:
+- name: taskBuild
+  type: string
+  default: ci:build
+
+- name: poolBuild
+  type: object
+  default: Small
+
+- name: checkoutSubmodules
+  type: boolean
+  default: false
+
+- name: buildNumberInPatch
+  type: string
+  default:
+
+- name: tagName
+  type: string
+
+trigger: none
 
 variables:
-- group: prague-key-vault
-- name: testWorkspace
-  value: $(Pipeline.Workspace)/test
+  # We use 'chalk' to colorize output, which auto-detects color support in the
+  # running terminal.  The log output shown in Azure DevOps job runs only has
+  # basic ANSI color support though, so force that in the pipeline
+  - name: FORCE_COLOR
+    value: 1
+  - name: buildDirectory
+    value: "."
+
 
 stages:
-  # end-to-end tests local server
-  - stage:
-    displayName: Runtime perf - SharedTree
-    dependsOn: []
+  # Install / Build / Test Stage
+  - stage: build
+    displayName: Run tests
     jobs:
-    - template: templates/include-test-perf-benchmarks.yml
-      parameters:
-        poolBuild: Small
-        testWorkspace: ${{ variables.testWorkspace }}
-        benchmarkTestParams:
-        - jobName: "@fluid-experimental/tree runtime benchmark"
-          packageToTest: "@fluid-experimental/tree"
-          command: pwd; ls; ls dist; npx mocha "dist/**/*.tests.js" --node-option unhandled-rejections=strict,expose-gc --exit -r ${{ variables.testWorkspace }}/node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ${{ variables.testWorkspace }}/node_modules/@fluid-tools/benchmark/dist/MochaReporter.js --timeout 30000 --reporterOptions reportDir=./benchmarkOutput
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+      - job: build
+        displayName: Run performance tests
+        pool: ${{ parameters.poolBuild }}
+        variables:
+          releaseBuildVar: $[variables.releaseBuild]
+          toolFolder: ${{ parameters.buildDirectory }}/tools/write-perf-to-kusto/
+        steps:
+        # Setup
+        - checkout: self
+          clean: true
+          lfs: ${{ parameters.checkoutSubmodules }}
+          submodules: ${{ parameters.checkoutSubmodules }}
 
-  # # end-to-end tests routerlicious
-  # - stage:
-  #   displayName: e2e - routerlicious
-  #   dependsOn: []
-  #   jobs:
-  #   - template: templates/include-test-perf-benchmarks.yml
-  #     parameters:
-  #       poolBuild: Small
-  #       packageToTest: "@fluidframework/test-end-to-end-tests"
-  #       testWorkspace: ${{ variables.testWorkspace }}
-  #       testCommand: test:realsvc:routerlicious:report
-  #       continueOnError: true
-  #       env:
-  #         fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
-  #         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        - task: Bash@3
+          displayName: Parameters
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              # Show all task group conditions
 
-  # # end-to-end tests frs
-  # - stage:
-  #   displayName: e2e - frs
-  #   dependsOn: []
-  #   jobs:
-  #   - template: templates/include-test-perf-benchmarks.yml
-  #     parameters:
-  #       poolBuild: Small
-  #       packageToTest: "@fluidframework/test-end-to-end-tests"
-  #       testWorkspace: ${{ variables.testWorkspace }}
-  #       timeoutInMinutes: 360
-  #       continueOnError: true
-  #       testCommand: test:realsvc:frs:report
-  #       splitTestVariants:
-  #         - name: Non-compat
-  #           flags: --compatVersion=0
-  #         - name: N-1
-  #           flags: --compatVersion=-1
-  #         - name: N-2
-  #           flags: --compatVersion=-2
-  #         - name: LTS
-  #           flags: --compatVersion=LTS
-  #       env:
-  #         fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
-  #         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+              echo "
+              Pipeline Variables:
+                releaseBuild=$(releaseBuildVar)
 
-  # # end-to-end tests odsp
-  # - stage:
-  #   displayName:  e2e - odsp
-  #   dependsOn: []
-  #   jobs:
-  #   - template: templates/include-test-perf-benchmarks.yml
-  #     parameters:
-  #       poolBuild: Small
-  #       packageToTest: "@fluidframework/test-end-to-end-tests"
-  #       testWorkspace: ${{ variables.testWorkspace }}
-  #       timeoutInMinutes: 360
-  #       continueOnError: true
-  #       testCommand: test:realsvc:odsp:report
-  #       splitTestVariants:
-  #         - name: Non-compat
-  #           flags: --compatVersion=0 --tenantIndex=0
-  #         - name: N-1
-  #           flags: --compatVersion=-1 --tenantIndex=1
-  #         - name: N-2
-  #           flags: --compatVersion=-2 --tenantIndex=2
-  #         - name: LTS
-  #           flags: --compatVersion=LTS --tenantIndex=3
-  #       env:
-  #         login__microsoft__clientId: $(login-microsoft-clientId)
-  #         login__microsoft__secret: $(login-microsoft-secret)
-  #         login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
-  #         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+              Tasks Parameters:
+                BuildDir=${{ parameters.buildDirectory }}
+                Build=${{ parameters.taskBuild }}"
+
+        # Install
+        - task: UseNode@1
+          displayName: Use Node 14.x
+          inputs:
+            version: 14.x
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.buildDirectory }}
+            customCommand: 'ci --unsafe-perm'
+            customRegistry: 'useNpmrc'
+
+        # Set version
+        - template: include-set-package-version.yml
+          parameters:
+            buildDirectory: ${{ parameters.buildDirectory }}
+            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            tagName: ${{ parameters.tagName }}
+
+        # Build
+        - ${{ if ne(parameters.taskBuild, 'false') }}:
+          - task: Npm@1
+            displayName: npm run ${{ parameters.taskBuild }}
+            inputs:
+              command: 'custom'
+              workingDir: ${{ parameters.buildDirectory }}
+              customCommand: 'run ${{ parameters.taskBuild }}'
+
+        # Run performance tests
+        # - Add custom npm feeds to the tool's .npmrc file
+        # - Authenticate to the custom npm feeds
+        # - Install the aria-logger package from the custom npm feeds
+        # - Run tests
+        # - Process output files and send telemetry to Kusto
+        - task: Bash@3
+          displayName: 'Add custom feeds to .npmrc'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolFolder)
+            script: |
+              echo "Adding custom npm feeds to .npmrc"
+              cat << EOF >> .npmrc
+                registry=https://registry.npmjs.org
+                always-auth=false
+                @fluidframework:registry=${{ variables.feed }}
+                @fluid-experimental:registry=${{ variables.feed }}
+                @fluid-internal:registry=${{ variables.feed }}
+                @ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+                @microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/
+                always-auth=true
+              EOF
+              echo "Contents of .npmrc:"
+              cat .npmrc
+
+        - task: npmAuthenticate@0
+          displayName: 'npm authenticate (internal feed)'
+          inputs:
+            workingFile: $(toolFolder)/.npmrc
+
+        - task: npmAuthenticate@0
+          displayName: 'npm authenticate (office feed)'
+          inputs:
+            workingFile: $(toolFolder)/.npmrc
+            customEndpoint: 'Office Packages - Readonly'
+
+        - task: Npm@1
+          displayName: 'Install @ff-internal/aria-logger'
+          inputs:
+            command: 'custom'
+            workingDir: $(toolFolder)
+            customCommand: 'install @ff-internal/aria-logger'
+            customRegistry: 'useNpmrc'
+
+        - task: Npm@1
+          displayName: 'Run performance benchmarks - runtime'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.buildDirectory }}
+            customCommand: 'run test:benchmark:report -- --require node_modules/@ff-internal/aria-logger'
+
+        - task: Npm@1
+          displayName: 'Consolidate output files - runtime'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.buildDirectory }}
+            customCommand: 'run test:benchmark:copyresults'
+
+        - task: Bash@3
+          displayName: 'Write runtime perf benchmarks to Aria/Kusto'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolFolder)
+            script: |
+              npm i;
+              npm run build:compile;
+              node dist/index.js '../../benchmarkOutput';
+
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Benchmark tests output
+          inputs:
+            targetPath: '${{ parameters.buildDirectory }}/benchmarkOutput'
+            artifactName: 'benchmark-test-outputs'
+            condition: succeededOrFailed()
