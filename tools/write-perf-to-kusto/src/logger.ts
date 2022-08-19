@@ -15,7 +15,6 @@ export class ConsoleLogger implements ITelemetryBufferedLogger {
 
     send(event: ITelemetryBaseEvent): void {
         event.Event_Time = Date.now();
-        // keep track of the frequency of every log event, as we'll sort by most common on write
         console.log(JSON.stringify(event));
     }
 }
