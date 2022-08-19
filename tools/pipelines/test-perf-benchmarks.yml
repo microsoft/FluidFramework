@@ -43,7 +43,7 @@ parameters:
 
 - name: buildNumberInPatch
   type: string
-  default: ""
+  default: "false"
 
 - name: tagName
   type: string
