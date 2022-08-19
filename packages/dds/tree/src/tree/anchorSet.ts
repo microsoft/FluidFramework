@@ -14,6 +14,9 @@ import { Value } from "./types";
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
 
+/** A singleton which represents a permanently invalid location (i.e. there is never a node there) */
+const NeverAnchor: Anchor = brand(0);
+
 /**
  * Collection of Anchors at a specific revision.
  *
@@ -21,7 +24,8 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
  */
 export class AnchorSet {
     // Incrementing counter to give each anchor in this set a unique index for its identifier.
-    private anchorCounter = 0;
+    // "0" is reserved for the `NeverAnchor`
+    private anchorCounter = 1;
     /**
      * Special root node under which all anchors in this anchor set are transitively parented.
      * This does not appear in the UpPaths (instead they use undefined for the root).
@@ -55,25 +59,36 @@ export class AnchorSet {
      * (not ideal for anchors for places or ranges instead of nodes).
      */
     public locate(anchor: Anchor): UpPath | undefined {
-        // TODO: this should error for anchors that do not exist,
-        // and return undefined only if anchor does exist, but points nowhere in current revision.
+        if (anchor === NeverAnchor) {
+            return undefined;
+        }
+
         const path = this.anchorToPath.get(anchor);
         assert(path !== undefined, "Cannot locate anchor which is not in this AnchorSet");
         return path.deleted ? undefined : path;
     }
 
     public forget(anchor: Anchor): void {
-        const path = this.anchorToPath.get(anchor);
-        assert(path !== undefined, 0x351 /* cannot forget unknown Anchor */);
-        path.removeRef();
-        this.anchorToPath.delete(anchor);
+        if (anchor !== NeverAnchor) {
+            const path = this.anchorToPath.get(anchor);
+            assert(path !== undefined, 0x351 /* cannot forget unknown Anchor */);
+            path.removeRef();
+            this.anchorToPath.delete(anchor);
+        }
     }
 
     /**
      * TODO: Add APIs need to allow callers of this function to reduce copying here.
      * Ex: maybe return something extending UpPath here.
+     * @param path - the path to the node to be tracked. If null, returns an anchor
+     * which is permanently invalid.
      */
-    public track(path: UpPath): Anchor {
+    // eslint-disable-next-line @rushstack/no-new-null
+    public track(path: UpPath | null): Anchor {
+        if (path === null) {
+            return NeverAnchor;
+        }
+
         const foundPath = this.trackInner(path);
         const anchor: Anchor = brand(this.anchorCounter++);
         this.anchorToPath.set(anchor, foundPath);
