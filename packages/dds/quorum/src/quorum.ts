@@ -28,7 +28,7 @@ import { IQuorum, IQuorumEvents } from "./interfaces";
  */
 interface IAcceptedQuorumValue<T> {
     /**
-     * The accepted value, of the given type or undefined (typically in case of delete).
+     * The accepted value of the given type or undefined (typically in case of delete).
      */
     value: T | undefined;
 
@@ -49,7 +49,7 @@ interface IAcceptedQuorumValue<T> {
  */
 interface IPendingQuorumValue<T> {
     /**
-     * The pending value, of the given type or undefined (typically in case of delete).
+     * The pending value of the given type or undefined (typically in case of delete).
      */
     value: T | undefined;
     /**
@@ -155,7 +155,7 @@ const snapshotFileName = "header";
  * });
  * ```
  */
-export class Quorum<T = any> extends SharedObject<IQuorumEvents> implements IQuorum<T> {
+export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements IQuorum<T> {
     /**
      * Create a new Quorum
      *

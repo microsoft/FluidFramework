@@ -16,7 +16,7 @@ import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
-export interface IQuorum<T = any> extends ISharedObject<IQuorumEvents> {
+export interface IQuorum<T = unknown> extends ISharedObject<IQuorumEvents> {
     delete(key: string): void;
     get(key: string): T | undefined;
     getPending(key: string): T | undefined;
@@ -30,7 +30,7 @@ export interface IQuorumEvents extends ISharedObjectEvents {
 }
 
 // @public
-export class Quorum<T = any> extends SharedObject<IQuorumEvents> implements IQuorum<T> {
+export class Quorum<T = unknown> extends SharedObject<IQuorumEvents> implements IQuorum<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
     applyStashedOp(): void;

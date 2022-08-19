@@ -20,7 +20,7 @@ export interface IQuorumEvents extends ISharedObjectEvents {
  * the set message.  As a result, the value goes through two phases - "pending" state where the local client has seen
  * the set, but not all connected clients have, and "accepted" where all connected clients have seen the set.
  */
-export interface IQuorum<T = any> extends ISharedObject<IQuorumEvents> {
+export interface IQuorum<T = unknown> extends ISharedObject<IQuorumEvents> {
     /**
      * Gets the accepted value for the given key.
      * @param key - The key to retrieve from
