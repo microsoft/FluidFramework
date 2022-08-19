@@ -943,9 +943,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     private readonly pendingKeys: Map<string, number[]> = new Map();
 
     /**
-     * Subdirectories that have been modified locally but not yet ack'd from the server.
+     * Subdirectories that have been created/deleted locally but not yet ack'd from the server.
      */
     private readonly pendingSubDirectories: Map<string, number[]> = new Map();
+
+    /**
+     * Subdirectories that have been deleted locally but not yet ack'd from the server. This maintains the count
+     * of delete op that are pending or yet to be acked from server.
+     */
+    private readonly pendingDeleteSubDirectoriesCount: Map<string, number> = new Map();
 
     /**
      * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
@@ -1084,12 +1090,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             return subDir;
         }
 
-        const op: IDirectoryCreateSubDirectoryOperation = {
-            path: this.absolutePath,
-            subdirName,
-            type: "createSubDirectory",
-        };
-        this.submitCreateSubDirectoryMessage(op, !isNew);
+        // Only submit the op, if it is newly created.
+        if (isNew) {
+            const op: IDirectoryCreateSubDirectoryOperation = {
+                path: this.absolutePath,
+                subdirName,
+                type: "createSubDirectory",
+            };
+            this.submitCreateSubDirectoryMessage(op, !isNew);
+        }
 
         return subDir;
     }
@@ -1123,13 +1132,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             return subDir !== undefined;
         }
 
-        const op: IDirectoryDeleteSubDirectoryOperation = {
-            path: this.absolutePath,
-            subdirName,
-            type: "deleteSubDirectory",
-        };
+        // Only submit the op, if the directory existed and we deleted it.
+        if (subDir !== undefined) {
+            const op: IDirectoryDeleteSubDirectoryOperation = {
+                path: this.absolutePath,
+                subdirName,
+                type: "deleteSubDirectory",
+            };
 
-        this.submitDeleteSubDirectoryMessage(op, subDir);
+            this.submitDeleteSubDirectoryMessage(op, subDir);
+        }
         return subDir !== undefined;
     }
 
@@ -1147,6 +1159,29 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
     public getWorkingDirectory(relativePath: string): IDirectory | undefined {
         this.throwIfDisposed();
         return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));
+    }
+
+    private getParentDirectory(relativePath: string): IDirectory | undefined {
+        const absolutePath = this.makeAbsolute(relativePath);
+        const subdirs = absolutePath.substr(1).split(posix.sep);
+        if (subdirs.length === 0) {
+            return undefined;
+        }
+        subdirs.pop();
+        return this.directory.getWorkingDirectory(subdirs.join(posix.sep));
+    }
+
+    /**
+     * This checks if there is pending delete op for local delete for a given child subdirectory.
+     * @param subDirName - directory name.
+     * @returns - true if there is pending delete.
+     */
+    public isSubDirectoryDeletePending(subDirName: string): boolean {
+        const pendingDeleteSubDirectory = this.pendingDeleteSubDirectoriesCount.get(subDirName);
+        if (pendingDeleteSubDirectory !== undefined && pendingDeleteSubDirectory > 0) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1482,6 +1517,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         } else {
             this.pendingSubDirectories.set(op.subdirName, [newMessageId]);
         }
+        if (op.type === "deleteSubDirectory") {
+            const count = this.pendingDeleteSubDirectoriesCount.get(op.subdirName);
+            this.pendingDeleteSubDirectoriesCount.set(op.subdirName,
+                count !== undefined ? count + 1 : 1);
+        }
         return newMessageId;
     }
 
@@ -1653,6 +1693,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             }
 
             this.rollbackPendingMessageId(this.pendingSubDirectories, op.subdirName, localOpMetadata.pendingMessageId);
+            const count = this.pendingDeleteSubDirectoriesCount.get(op.subdirName);
+            assert(count !== undefined && count > 0, "should have record for delete op");
+            this.pendingDeleteSubDirectoriesCount.set(op.subdirName, count - 1);
+            if (count === 1) {
+                this.pendingDeleteSubDirectoriesCount.delete(op.subdirName);
+            }
         } else {
             throw new Error("Unsupported op for rollback");
         }
@@ -1709,6 +1755,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
             return false;
         }
 
+        // If there is pending delete op for this subDirectory, then don't apply the this op as we are going
+        // to delete this subDirectory.
+        const parentSubDir = this.getParentDirectory(op.path) as SubDirectory | undefined;
+        const index = op.path.lastIndexOf(posix.sep);
+        const dirName = op.path.substring(index + 1);
+        if (parentSubDir?.isSubDirectoryDeletePending(dirName)) {
+            return false;
+        }
+
         // If we don't have a NACK op on the key, we need to process the remote ops.
         return !local;
     }
@@ -1740,6 +1795,19 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                 if (pendingMessageIds.length === 0) {
                     this.pendingSubDirectories.delete(op.subdirName);
                 }
+                if (op.type === "deleteSubDirectory") {
+                    const count = this.pendingDeleteSubDirectoriesCount.get(op.subdirName);
+                    assert(count !== undefined && count > 0, "should have record for delete op");
+                    this.pendingDeleteSubDirectoriesCount.set(op.subdirName, count - 1);
+                    if (count === 1) {
+                        this.pendingDeleteSubDirectoriesCount.delete(op.subdirName);
+                    }
+                }
+            } else if (op.type === "deleteSubDirectory") {
+                // If this is remote delete op and we have keys in this subDirectory, then we need to delete these
+                // keys except the pending ones as they will be sequenced after this delete.
+                const subDirectory = this._subdirectories.get(op.subdirName);
+                subDirectory?.clearExceptPendingKeys();
             }
             return false;
         }

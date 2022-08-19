@@ -629,6 +629,7 @@ describe("Directory", () => {
         let containerRuntimeFactory: MockContainerRuntimeFactory;
         let directory1: SharedDirectory;
         let directory2: SharedDirectory;
+        let directory3: SharedDirectory;
 
         beforeEach(async () => {
             containerRuntimeFactory = new MockContainerRuntimeFactory();
@@ -636,6 +637,8 @@ describe("Directory", () => {
             directory1 = createConnectedDirectory("directory1", containerRuntimeFactory);
             // Create a second directory1
             directory2 = createConnectedDirectory("directory2", containerRuntimeFactory);
+            // Create a second directory1
+            directory3 = createConnectedDirectory("directory3", containerRuntimeFactory);
         });
 
         describe("API", () => {
@@ -867,7 +870,7 @@ describe("Directory", () => {
                 assert.equal(directory1.get("test"), "directory1value4", "could not get the set key");
             });
 
-            it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
+            it("Test1:Directories should ensure eventual consistency using LWW approach", async () => {
                 const root1SubDir = directory1.createSubDirectory("testSubDir");
                 root1SubDir.set("key1", "testValue1");
 
@@ -877,23 +880,24 @@ describe("Directory", () => {
                 directory2.createSubDirectory("testSubDir");
 
                 // After the above scenario, the consistent state using LWW would be to have testSubDir with 1 key.
-                // Right now what happens is directory B just ignores the delete Op from directory 1 because its own
-                // create is not acked and it ends up ignoring the delete op. So directory 2 ends up having 2 keys
-                // instead of one.
                 containerRuntimeFactory.processAllMessages();
                 const directory1SubDir = directory1.getSubDirectory("testSubDir");
                 const directory2SubDir = directory2.getSubDirectory("testSubDir");
+                const directory3SubDir = directory3.getSubDirectory("testSubDir");
 
                 assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
                 assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
+                assert(directory3SubDir !== undefined, "SubDirectory on dir 3 should be present");
 
                 assert.strictEqual(directory1SubDir.size, 1, "Dir1 1 key should exist");
                 assert.strictEqual(directory2SubDir.size, 1, "Dir2 1 key should exist");
+                assert.strictEqual(directory3SubDir.size, 1, "Dir3 1 key should exist");
                 assert.strictEqual(directory1SubDir.get("key2"), "testValue2", "Dir1 key value should match");
                 assert.strictEqual(directory2SubDir.get("key2"), "testValue2", "Dir2 key value should match");
+                assert.strictEqual(directory3SubDir.get("key2"), "testValue2", "Dir3 key value should match");
             });
 
-            it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
+            it("Test2:Directories should ensure eventual consistency using LWW approach", async () => {
                 const root1SubDir = directory1.createSubDirectory("testSubDir");
                 directory2.createSubDirectory("testSubDir");
 
@@ -902,18 +906,112 @@ describe("Directory", () => {
                 directory2.createSubDirectory("testSubDir");
 
                 // After the above scenario, the consistent state using LWW would be to have testSubDir with 0 keys.
-                // Right now what happens is directory B just sees the set Op from directory 1 and set the key while
-                // directory A sees delete and create sub directory op from B and eventually have a sub directory
-                // testSubDir with 0 keys. So the state of directory 2 ends up wrong.
                 containerRuntimeFactory.processAllMessages();
                 const directory1SubDir = directory1.getSubDirectory("testSubDir");
                 const directory2SubDir = directory2.getSubDirectory("testSubDir");
+                const directory3SubDir = directory3.getSubDirectory("testSubDir");
 
                 assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
                 assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
+                assert(directory3SubDir !== undefined, "SubDirectory on dir 3 should be present");
 
                 assert.strictEqual(directory1SubDir.size, 0, "Dir 1 no key should exist");
                 assert.strictEqual(directory2SubDir.size, 0, "Dir 2 no key should exist");
+                assert.strictEqual(directory3SubDir.size, 0, "Dir 3 no key should exist");
+            });
+
+            it("Test3:Directories should ensure eventual consistency using LWW approach", async () => {
+                const root1SubDir = directory1.createSubDirectory("testSubDir");
+                root1SubDir.set("key1", "testValue1");
+
+                directory1.deleteSubDirectory("testSubDir");
+                const root2SubDir = directory2.createSubDirectory("testSubDir");
+                root2SubDir.set("key2", "testValue2");
+                // After the above scenario, the consistent state using LWW would be to have testSubDir with 1 key.
+                containerRuntimeFactory.processAllMessages();
+                const directory1SubDir = directory1.getSubDirectory("testSubDir");
+                const directory2SubDir = directory2.getSubDirectory("testSubDir");
+                const directory3SubDir = directory3.getSubDirectory("testSubDir");
+
+                assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
+                assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
+                assert(directory3SubDir !== undefined, "SubDirectory on dir 3 should be present");
+
+                assert.strictEqual(directory1SubDir.size, 1, "Dir1 1 key should exist");
+                assert.strictEqual(directory2SubDir.size, 1, "Dir2 1 key should exist");
+                assert.strictEqual(directory3SubDir.size, 1, "Dir3 1 key should exist");
+            });
+
+            it("Test4:Directories should ensure eventual consistency using LWW approach", async () => {
+                const root1SubDir = directory1.createSubDirectory("testSubDir");
+                root1SubDir.set("key1", "testValue1");
+
+                directory1.deleteSubDirectory("testSubDir");
+                directory2.createSubDirectory("testSubDir");
+
+                // After the above scenario, the consistent state using LWW would be to have testSubDir with 0 key.
+                containerRuntimeFactory.processAllMessages();
+                const directory1SubDir = directory1.getSubDirectory("testSubDir");
+                const directory2SubDir = directory2.getSubDirectory("testSubDir");
+                const directory3SubDir = directory3.getSubDirectory("testSubDir");
+
+                assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
+                assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
+                assert(directory3SubDir !== undefined, "SubDirectory on dir 3 should be present");
+
+                assert.strictEqual(directory1SubDir.size, 0, "Dir1 0 key should exist");
+                assert.strictEqual(directory2SubDir.size, 0, "Dir2 0 key should exist");
+                assert.strictEqual(directory3SubDir.size, 0, "Dir3 0 key should exist");
+            });
+
+            it("Test5:Directories should ensure eventual consistency using LWW approach", async () => {
+                const root1SubDir = directory1.createSubDirectory("testSubDir");
+                const root2SubDir = directory2.createSubDirectory("testSubDir");
+                root1SubDir.set("key1", "testValue1");
+                root2SubDir.clear();
+                directory1.deleteSubDirectory("testSubDir");
+                root2SubDir.set("key2", "testValue2");
+                directory2.createSubDirectory("testSubDir");
+
+                // After the above scenario, the consistent state using LWW would be to not have testSubDir.
+                containerRuntimeFactory.processAllMessages();
+                const directory1SubDir = directory1.getSubDirectory("testSubDir");
+                const directory2SubDir = directory2.getSubDirectory("testSubDir");
+                const directory3SubDir = directory3.getSubDirectory("testSubDir");
+
+                assert(directory1SubDir === undefined, "SubDirectory on dir 1 should be present");
+                assert(directory2SubDir === undefined, "SubDirectory on dir 2 should be present");
+                assert(directory3SubDir === undefined, "SubDirectory on dir 3 should be present");
+            });
+
+            it("Test6:Directories should ensure eventual consistency using LWW approach", async () => {
+                const root1SubDir = directory1.createSubDirectory("testSubDir");
+                const root2SubDir = directory2.createSubDirectory("testSubDir");
+                root1SubDir.set("key1", "testValue1");
+                root2SubDir.clear();
+                root1SubDir.set("key2", "testValue2");
+                directory1.deleteSubDirectory("testSubDir");
+                const root3SubDir = directory3.createSubDirectory("testSubDir");
+                root3SubDir.clear();
+                root2SubDir.set("key3", "testValue3");
+                console.log("messages ", containerRuntimeFactory["messages"]);
+                // After the above scenario, the consistent state using LWW would be to not have testSubDir.
+                containerRuntimeFactory.processAllMessages();
+                const directory1SubDir = directory1.getSubDirectory("testSubDir");
+                const directory2SubDir = directory2.getSubDirectory("testSubDir");
+                const directory3SubDir = directory3.getSubDirectory("testSubDir");
+
+                assert(directory1SubDir !== undefined, "SubDirectory on dir 1 should be present");
+                assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
+                assert(directory3SubDir !== undefined, "SubDirectory on dir 3 should be present");
+
+                assert.strictEqual(directory1SubDir.size, 1, "Dir1 1 key should exist");
+                assert.strictEqual(directory2SubDir.size, 1, "Dir2 1 key should exist");
+                assert.strictEqual(directory3SubDir.size, 1, "Dir3 1 key should exist");
+
+                assert.strictEqual(directory1SubDir.get("key3"), "testValue3", "Dir1 key value should match");
+                assert.strictEqual(directory2SubDir.get("key3"), "testValue3", "Dir2 key value should match");
+                assert.strictEqual(directory3SubDir.get("key3"), "testValue3", "Dir3 key value should match");
             });
         });
 
