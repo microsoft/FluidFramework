@@ -55,10 +55,14 @@ Then define some common variables and deploy the Helm chart:
 ```bash
 HELM_CHART_NAME=ingress-nginx
 HELM_CHART_REPO=https://kubernetes.github.io/ingress-nginx
-HELM_CHART_VERSION=4.1.4
+HELM_CHART_VERSION=4.2.1
 
-helm upgrade --install $HELM_RELEASE_NAME $HELM_CHART_NAME --version $HELM_CHART_VERSION --repo $HELM_CHART_REPO -f $VALUES_FILE --namespace $K8S_NAMESPACE --create-namespace
-```
+helm upgrade --install --set controller.image.registry=<registry> \
+	--set controller.image.image=<repo-name> \
+	--set controller.image.tag=<tag> \
+	--set controller.image.digest=<digest> \
+	$HELM_RELEASE_NAME $HELM_CHART_NAME --version $HELM_CHART_VERSION --repo $HELM_CHART_REPO -f $VALUES_FILE --namespace $K8S_NAMESPACE --create-namespace
+
 
 The output will include a command that you can use to check the status of the `Service` object, something similar to this:
 
