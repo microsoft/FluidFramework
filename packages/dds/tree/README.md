@@ -111,7 +111,7 @@ could be added in the future.
 #### Viewing
 
 ```mermaid
-graph TD;
+graph LR;
     doc["Persisted Summaries"]--"Summary+Trailing ops"-->shared-tree-core
     shared-tree--"configures"-->shared-tree-core
     shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
