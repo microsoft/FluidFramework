@@ -171,7 +171,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ variables.buildDirectory }}
-            customCommand: 'run test:benchmark:report -- --require node_modules/@ff-internal/aria-logger'
+            customCommand: 'run test:benchmark:report'
 
         - task: Npm@1
           displayName: 'Consolidate output files - runtime'
@@ -188,7 +188,7 @@ stages:
             script: |
               npm i;
               npm run build:compile;
-              node dist/index.js '../../benchmarkOutput';
+              node --require node_modules/@ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Benchmark tests output
