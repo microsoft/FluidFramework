@@ -290,9 +290,7 @@ export class Client {
         splitRange: boolean = false,
     ): void {
         this._mergeTree.mapRange(
-            {
-                leaf: handler,
-            },
+            handler,
             this.getCurrentSeq(), this.getClientId(),
             accum, start, end, splitRange);
     }
@@ -303,7 +301,8 @@ export class Client {
      * serializer which keeps track of all serialized handles.
      */
     public serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void {
-        walkAllChildSegments(this._mergeTree.root,
+        walkAllChildSegments(
+            this._mergeTree.root,
             (seg) => {
                 // Only serialize segments that have not been removed.
                 if (seg.removedSeq === undefined) {

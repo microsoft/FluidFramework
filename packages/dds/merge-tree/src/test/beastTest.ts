@@ -335,7 +335,7 @@ function checkMarkRemoveMergeTree(mergeTree: MergeTree, start: number, end: numb
 export function mergeTreeTest1() {
     const mergeTree = new MergeTree();
     mergeTree.insertSegments(0, [TextSegment.make("the cat is on the mat")], UniversalSequenceNumber, LocalClientId, UniversalSequenceNumber, undefined);
-    mergeTree.mapRange({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
+    mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
     let fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
     checkInsertMergeTree(mergeTree, 4, fuzzySeg);
     fuzzySeg = makeCollabTextSegment("fuzzy, fuzzy ");
@@ -343,7 +343,7 @@ export function mergeTreeTest1() {
     checkMarkRemoveMergeTree(mergeTree, 4, 13);
     // checkRemoveSegTree(segTree, 4, 13);
     checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
-    mergeTree.mapRange({ leaf: printTextSegment }, UniversalSequenceNumber, LocalClientId, undefined);
+    mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
     const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
     log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
     log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));

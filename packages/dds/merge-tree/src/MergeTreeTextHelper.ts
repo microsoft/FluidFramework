@@ -23,7 +23,7 @@ export class MergeTreeTextHelper implements IMergeTreeTextHelper {
         const accum: ITextAccumulator = { textSegment: new TextSegment(""), placeholder };
 
         this.mergeTree.mapRange<ITextAccumulator>(
-            { leaf: gatherText },
+            gatherText,
             refSeq,
             clientId,
             accum,
