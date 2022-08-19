@@ -3,30 +3,27 @@
  * Licensed under the MIT License.
  */
 
-/**
- * This file represents the public API. Consumers of this package will not see exported modules unless
- * they are enumerated here.  Removing / editing existing exports here will often indicate a breaking
- * change, so please be cognizant of changes made here.
- */
-
-//import { v4 as uuid } from "uuid";
 import fs from "fs";
 import path from "path";
-import "@ff-internal/aria-logger";
-// import { AriaLogger } from "@ff-internal/aria-logger";
+import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
+import { ConsoleLogger } from "./logger";
 
-// const logger = new AriaLogger("mySessionId20220816_2");
-const logger = getTestLogger?.();
+const _global: any = global;
+let logger: ITelemetryBufferedLogger = _global.getTestLogger?.(10000);
+
+if (logger === undefined) {
+    logger = new ConsoleLogger();
+}
 
 const filesToProcess: string[] = [];
 
 const dirs = process.argv.slice(2);
 
 while (dirs.length > 0) {
-    const dir = dirs.pop()!;
+    const dir: string = dirs.pop()!;
     const files = fs.readdirSync(dir, { withFileTypes: true });
     files.forEach((dirent) => {
-        const direntFullPath = path.join(dir!, dirent.name);
+        const direntFullPath = path.join(dir, dirent.name);
         if (dirent.isDirectory()) {
             dirs.push(direntFullPath);
             return;
@@ -41,9 +38,8 @@ while (dirs.length > 0) {
 filesToProcess.forEach((fullPath) => {
     try {
         console.log(`Processing file '${fullPath}'`);
-        const data = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
-        //console.log(data);
-        data.benchmarks.forEach(b => {
+        const data = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+        data.benchmarks.forEach((b) => {
             const props = {
                 suiteName: data.suiteName,
                 benchmarkName: b.benchmarkName,
@@ -51,11 +47,10 @@ filesToProcess.forEach((fullPath) => {
                 marginOfError: b.stats.marginOfError,
             };
 
-            console.log(JSON.stringify(props));
             logger.send({
                 category: "generic",
                 eventName: "testevents",
-                ...props
+                ...props,
             });
         });
     } catch (err) {
@@ -63,14 +58,11 @@ filesToProcess.forEach((fullPath) => {
     }
 });
 
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
 (async () => {
     await logger.flush();
-    await delay(3000);
     console.log("Done");
     process.exit(0);
-})().catch(e => {
+})().catch((e) => {
     console.error(`ERROR: ${e.stack}`);
     process.exit(-1);
 });

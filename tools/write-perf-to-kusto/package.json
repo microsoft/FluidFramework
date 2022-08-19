@@ -11,34 +11,28 @@
   "author": "Microsoft and contributors",
   "sideEffects": false,
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
     "build": "concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc && npm run build:test",
-    "build:docs": "api-extractor run --local",
+    "build:compile": "npm run tsc",
     "build:full": "npm run build",
     "build:full:compile": "npm run build:compile",
-    "build:test": "tsc --project ./src/test/tsconfig.json",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint src",
     "eslint:fix": "eslint src --fix",
     "lint": "npm run eslint",
     "lint:fix": "npm run eslint:fix",
-    "perf": "mocha --config ./.mocharc.js --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
     "start": "node dist/index.js '/workspaces/FluidFramework/experimental/dds/tree/benchOutput' '/workspaces/FluidFramework/packages/dds/tree/benchOutput'",
-    "test": "npm run test:mocha",
-    "test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
-    "test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc"
   },
   "dependencies": {
-    "@ff-internal/aria-logger": "0.0.9",
-    "uuid": "^8.3.1"
+    "@fluidframework/common-definitions": "^0.20.1",
+    "@fluidframework/test-driver-definitions": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0"
   },
   "devDependencies": {
-    "@types/mocha": "^9.1.1",
+    "@fluidframework/eslint-config-fluid": "^0.28.2000",
     "@types/node": "^14.18.0",
-    "cross-env": "^7.0.2",
+    "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
     "rimraf": "^2.6.2",
     "typescript": "~4.5.5"
