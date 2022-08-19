@@ -280,7 +280,7 @@ export class LoadTestDataStoreModel {
         return (this.dir.get<number>(taskTimeKey) ?? 0) + this.currentTaskTime;
     }
     public get currentTaskTime(): number {
-        return Date.now() - (this.assignedTask() ? this.taskStartTime : this.startTime);
+        return Date.now() - (this.assigned() ? this.taskStartTime : this.startTime);
     }
 
     private blobKey(id): string { return `blob_${this.config.runId}_${id}`; }
@@ -321,7 +321,7 @@ export class LoadTestDataStoreModel {
         return handle.get();
     }
 
-    public assignedTask() {
+    public assigned() {
         if (this.runtime.disposed) {
             return false;
         }
@@ -329,7 +329,7 @@ export class LoadTestDataStoreModel {
     }
 
     public abandonTask() {
-        if (this.assignedTask()) {
+        if (this.assigned()) {
             // We are becoming the reader. Remove the reference to the GC data store.
             this.runDir.delete(gcDataStoreKey);
             this.taskManager.abandon(this.taskId);
@@ -340,7 +340,7 @@ export class LoadTestDataStoreModel {
         if (this.runtime.disposed) {
             return;
         }
-        if (!this.assignedTask()) {
+        if (!this.assigned()) {
             try {
                 if (!this.runtime.connected) {
                     await new Promise<void>((resolve, reject) => {
@@ -397,7 +397,7 @@ export class LoadTestDataStoreModel {
                 ` sent: ${this.counter.value.toString().padStart(8)} (${sendRate.toString().padStart(2)}/min),` +
                 ` run time: ${taskMin.toFixed(2).toString().padStart(5)} min`,
                 ` total time: ${totalMin.toFixed(2).toString().padStart(5)} min`,
-                `hasTask: ${this.assignedTask().toString().padStart(5)}`,
+                `hasTask: ${this.assigned().toString().padStart(5)}`,
                 blobsEnabled ? `blobWriter: ${this.isBlobWriter.toString().padStart(5)}` : "",
                 blobsEnabled ? `blobs uploaded: ${formatBytes(this.blobCount * blobSize).padStart(8)}` : "",
                 !disposed ? `audience: ${this.runtime.getAudience().getMembers().size}` : "",
@@ -460,7 +460,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
                     return true;
                 }
 
-                if (dataModel.assignedTask()) {
+                if (dataModel.assigned()) {
                     dataModel.counter.increment(1);
                     if (dataModel.counter.value % opsPerCycle === 0) {
                         await dataModel.blobFinish();
