@@ -12,10 +12,10 @@ class TargetForest {
 
 	constructor(
 		public readonly forest: IEditableForest,
-		cursor?: ITreeSubscriptionCursor,
+		_cursor?: ITreeSubscriptionCursor,
 	) {
-		if (cursor) {
-			this.cursor = cursor.fork();
+		if (_cursor) {
+			this.cursor = _cursor.fork();
 		} else {
 			this.cursor = forest.allocateCursor();
 			forest.tryMoveCursorTo(forest.root(forest.rootField), this.cursor);
