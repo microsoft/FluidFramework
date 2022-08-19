@@ -593,7 +593,7 @@ export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderT
 type ProtoNode = JsonableTree;
 
 // @public
-export const proxifyForest: (forest: IEditableForest) => ProxyTarget;
+export const proxifyForest: (forest: IEditableForest) => TargetForest;
 
 // @public
 export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {

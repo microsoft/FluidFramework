@@ -8,22 +8,18 @@ import { IEditableForest, TreeNavigationResult, ITreeSubscriptionCursor } from "
 export const proxySymbol = Symbol("forest-proxy");
 
 class TargetForest {
-	private readonly _cursor: ITreeSubscriptionCursor;
+	public readonly cursor: ITreeSubscriptionCursor;
 
 	constructor(
 		public readonly forest: IEditableForest,
-		_cursor?: ITreeSubscriptionCursor,
+		cursor?: ITreeSubscriptionCursor,
 	) {
-		if (_cursor) {
-			this._cursor = _cursor.fork();
+		if (cursor) {
+			this.cursor = cursor.fork();
 		} else {
-			this._cursor = forest.allocateCursor();
-			forest.tryMoveCursorTo(forest.root(forest.rootField), this._cursor);
+			this.cursor = forest.allocateCursor();
+			forest.tryMoveCursorTo(forest.root(forest.rootField), this.cursor);
 		}
-	}
-
-	public get cursor(): ITreeSubscriptionCursor {
-		return this._cursor;
 	}
 
 	public get type() {
@@ -70,13 +66,14 @@ const handler: ProxyHandler<TargetForest> = {
 		}
 		const result = target.cursor.down(key as FieldKey, 0);
 		if (result === TreeNavigationResult.Ok) {
-			target.cursor.up();
-			return {
+			const descriptor = {
 				configurable: true,
 				enumerable: true,
 				value: target.cursor.value,
 				writable: true,
 			};
+			target.cursor.up();
+			return descriptor;
 		}
 		return undefined;
 	},
