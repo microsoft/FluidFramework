@@ -4,89 +4,183 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { FieldKey, TreeType, Value } from "../tree";
-
-export const enum TreeNavigationResult {
-    /** Attempt to navigate cursor to a key or index that is outside the client's view. */
-    NotFound = -1,
-
-    /** Attempt to navigate cursor to a portion of the tree that has not yet been loaded. */
-    Pending = 0,
-
-    /** ITreeReader successfully navigated to the desired node. */
-    Ok = 1,
-}
-
-/**
- * TreeNavigationResult, but never "Pending".
- * Can be used when data is never pending.
- */
-export type SynchronousNavigationResult = TreeNavigationResult.Ok | TreeNavigationResult.NotFound;
+import { FieldKey, TreeType, UpPath, Value } from "../tree";
 
 /**
  * A stateful low-level interface for reading tree data.
- *
- * TODO: Needs rules around invalidation/mutation of the underlying tree.
- * Should either be documented here, or each producer should document them
- * (and likely via returning a sub-interface with documentation on the subject).
- *
- * TODO: Needs a way to efficiently clone Cursor so patterns like lazy tree reification can be implemented efficiently.
- *
- * TODO: add optional fast path APIs for more efficient handling when supported by underlying format and reader.
- * Leverage "chunks" and "shape" for this, and skip to next chunk with seek (chunk length).
- * Default chunks of size 1, and "node" shape?
  */
-export interface ITreeCursor<TResult = TreeNavigationResult> {
-    /** Select the child located at the given key and index. */
-    down(key: FieldKey, index: number): TResult;
+export interface ITreeCursor {
+    /**
+     * What kind of place the cursor is at.
+     * Determines which operations are allowed.
+     */
+
+    readonly mode: CursorLocationType;
+    /*
+     * True iff the current field or node (depending on mode) is "pending",
+     * meaning that is has not been downloaded.
+     */
+    readonly pending: boolean;
 
     /**
-     * Moves `offset` entries in the field.
+     * Moves the "current field" forward one in an arbitrary field traversal order.
+     *
+     * If there is no remaining field to iterate to,
+     * returns false and navigates up to the parent setting the mode to `Nodes`.
+     *
+     * Order of fields only applies to this function,
+     * and is only guaranteed to be consistent thorough a single iteration.
+     *
+     * If mode is `Nodes` enters the first field.
+     *
+     * If skipPending, skip past fields which are currently pending.
+     * This can be used to skip to the end of a large number of consecutive pending fields.
+     *
+     * NOT allowed if mode is `Nodes` and also `pending`.
      */
-    seek(offset: number): TResult;
+    nextField(skipPending: boolean): boolean;
 
-    /** Select the parent of the currently selected node. */
-    up(): TResult;
+    /**
+     * Moves `offset` nodes in the field.
+     * If seeking to exactly past the either end,
+     * returns false and navigates up to the parent field (setting `inFields` to `true`).
+     *
+     * If mode is `Fields`, enters "outside" the field range, then seeks `offset`.
+     * For example, `-1` would see to the last node and `1` would seek to the first.
+     *
+     * NOT allowed if mode is `Fields` and also `pending`.
+     */
+    seek(offset: number): boolean;
 
-    /** The type of the currently selected node. */
+    // ********** APIs for when mode = Fields, and not pending ********** //
+
+    /**
+     * Returns the FieldKey for the current field.
+     *
+     * Allowed when `mode` is `Fields`, and not `pending`.
+     */
+    getCurrentFieldKey(): FieldKey;
+
+    /**
+     * @returns the number of immediate children in the current field.
+     *
+     * Allowed when `mode` is `Fields`, and not `pending`.
+     */
+    getCurrentFieldLength(): number;
+
+    /**
+     * Sets current node to the on at the provided `index` of the current field.
+     *
+     * Allowed when `mode` is `Fields`, and not `pending`.
+     * Sets mode to `Nodes`.
+     */
+    enterChildNode(index: number): void;
+
+    // ********** APIs for when mode = Nodes ********** //
+
+    /**
+     * @returns a path to the current node.
+     *
+     * Only valid when `mode` is `Nodes`.
+     */
+    getPath(): UpPath;
+
+    /**
+     * Index (with its parent field) of the current node.
+     *
+     * Only valid when `mode` is `Nodes`.
+     */
+    readonly currentIndexInField: number;
+
+    /**
+     * Index (with its parent field) of the first node in the current chunk.
+     * Always less than or equal to `currentIndexInField`.
+     *
+     * Only valid when `mode` is `Nodes`.
+     */
+    readonly currentChunkStart: number;
+
+    /**
+     * Length of current chunk.
+     * Since an entire chunk always has the same `pending` value,
+     * can be used to help skip over all of a pending chunk at once.
+     *
+     * TODO:
+     * Add optional APIs to access underlying chunks so readers can
+     * accelerate processing of chunk formats they understand.
+     *
+     * Only valid when `mode` is `Nodes`.
+     */
+    readonly currentChunkLength: number;
+
+    // ********** APIs for when mode = Nodes and not pending ********** //
+
+    /**
+     * Sets the current field to the specified one and set the mode to `Fields`
+     */
+    enterField(key: FieldKey): void;
+
+    /**
+     * Navigate up to parent node.
+     * Sets mode to `Nodes`
+     *
+     * Only valid when `mode` is `Fields`.
+     */
+    upToNode(): void;
+
+    /**
+     * Navigate up to parent field.
+     * Sets mode to `Fields`
+     *
+     * Same as seek Number.POSITIVE_INFINITY, but only valid when `mode` is `Nodes`.
+     */
+    upToField(): void;
+
+    /**
+     * The type of the currently selected node.
+     *
+     * Only valid when `mode` is `Nodes`, and not `pending`.
+     */
     readonly type: TreeType;
 
     /**
-     * @returns the keys of the currently selected node.
-     * TODO: ordering invariants: Consistent over time? Consistent across nodes? Sorted?
-     * TODO: empty fields: are they always omitted here? Sometimes omitted? Depends on field kind and schema?
-     * */
-    keys: Iterable<FieldKey>;
-
-    /** @returns the number of immediate children for the given key of the currently selected node. */
-    length(key: FieldKey): number;
-
-    /** value associated with the currently selected node. */
+     * value associated with the currently selected node.
+     *
+     * Only valid when `mode` is `Nodes`, and not `pending`.
+     */
     readonly value: Value;
+}
+
+export const enum CursorLocationType {
+    /**
+     * Can iterate through fields of a node.
+     * At a "current field".
+     */
+    Fields,
+
+    /**
+     * Can iterate through nodes in a field.
+     * At a "current node".
+     */
+    Nodes,
+}
+
+export interface ITreeCursorSynchronous extends ITreeCursor{
+    readonly pending: false;
 }
 
 /**
  * @param cursor - tree whose field will be visited.
- * @param key - the field to visit.
  * @param f - builds output from field member, which will be selected in cursor when cursor is provided.
  *  If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
- * @returns array resulting from applying `f` to each item of field `key` on `cursor`'s current node.
+ * @returns array resulting from applying `f` to each item of the current field on `cursor`.
  * Returns an empty array if the field is empty or not present (which are considered the same).
  */
-export function mapCursorField<T>(cursor: ITreeCursor, key: FieldKey, f: (cursor: ITreeCursor) => T): T[] {
+export function mapCursorField<T>(cursor: ITreeCursor, f: (cursor: ITreeCursor) => T): T[] {
     const output: T[] = [];
-    let result = cursor.down(key, 0);
-    if (result !== TreeNavigationResult.Ok) {
-        assert(result === TreeNavigationResult.NotFound, 0x34e /* pending not supported in mapCursorField */);
-        // This has to be special cased (and not fall through the code below)
-        // since the call to `up` needs to be skipped.
-        return [];
-    }
-    while (result === TreeNavigationResult.Ok) {
+    assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
+    while (cursor.seek(1)) {
         output.push(f(cursor));
-        result = cursor.seek(1);
     }
-    assert(result === TreeNavigationResult.NotFound, 0x34f /* expected enumeration to end at end of field */);
-    cursor.up();
     return output;
 }
