@@ -149,7 +149,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     /**
      * Tracks tasks that are this client is currently subscribed to.
      */
-    private readonly subscribedTasks: Map<string, boolean> = new Map();
+    private readonly subscribedTasks: Set<string> = new Set();
 
     /**
      * Constructs a new task manager. If the object is non-local an id and service interfaces will
@@ -340,7 +340,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             this.connectionWatcher.off("disconnect", disconnectHandler);
             this.connectionWatcher.off("connect", submitVolunteerOp);
 
-            this.subscribedTasks.set(taskId, false);
+            this.subscribedTasks.delete(taskId);
         };
 
         this.abandonWatcher.on("abandon", checkIfAbandoned);
@@ -352,7 +352,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
             // TODO simulate auto-ack in detached scenario
             submitVolunteerOp();
         }
-        this.subscribedTasks.set(taskId, true);
+        this.subscribedTasks.add(taskId);
     }
 
     public abandon(taskId: string) {
@@ -394,7 +394,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     }
 
     public subscribed(taskId: string): boolean {
-        return (this.subscribedTasks.get(taskId) ?? false);
+        return this.subscribedTasks.has(taskId);
     }
 
     /**
