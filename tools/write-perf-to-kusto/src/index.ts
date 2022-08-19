@@ -48,8 +48,8 @@ filesToProcess.forEach((fullPath) => {
             };
 
             logger.send({
-                category: "generic",
-                eventName: "testevents",
+                category: "performance",
+                eventName: "Benchmark",
                 ...props,
             });
         });
