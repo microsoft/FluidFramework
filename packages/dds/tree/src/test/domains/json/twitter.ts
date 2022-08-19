@@ -531,67 +531,7 @@ export function isEscapeChar(ch: string) {
  */
 /* eslint-disable no-useless-escape, @typescript-eslint/no-non-null-assertion, no-trailing-spaces, padded-blocks, no-multiple-empty-lines, max-len, @typescript-eslint/brace-style */
 
-export interface Word {
-    value: string;
-    alphabet: "Latin" | "Japanese" | "Unknown";
-    length?: number;
-}
 export function parseTwitterStatusesSentences(twitterJson: TwitterJson) {
-    const sentences: Word[][] = [];
-
-    twitterJson.statuses.forEach((status) => {
-        const sentenceWords: Word[] = [];
-        const spaceSeparatedWords = status.source.split(" ");
-
-        spaceSeparatedWords.forEach((potentialWord) => {
-            const innerWords: Word[] = [];
-            let previousChar: string | null = null;
-            let currentWord = "";
-            let wordAlphabet: "Latin" | "Japanese" | "Unknown" = "Unknown";
-            for (let i = 0; i < potentialWord.length; i++) {
-                const currentChar = potentialWord.charAt(i);
-                if (isEscapeChar(currentChar)) {
-                    if (previousChar && !isEscapeChar(previousChar)) {
-                        innerWords.push({ value: currentWord, alphabet: wordAlphabet });
-                        currentWord = currentChar;
-                        wordAlphabet = "Unknown";
-                    } else {
-                        currentWord += currentChar;
-                    }
-                }
-                else if (isAlphaLatin(currentChar)) {
-                    currentWord += currentChar;
-                    wordAlphabet = "Latin";
-                }
-                else if (isJapanese(currentChar)) {
-                    if (currentWord.length > 0) {
-                        innerWords.push({ value: `${currentWord}`, alphabet: wordAlphabet });
-                    }
-                    innerWords.push({ value: `${currentChar}`, alphabet: "Japanese" });
-                    currentWord = "";
-                    wordAlphabet = "Unknown";
-                }
-                else {
-                    currentWord += currentChar;
-                }
-                previousChar = currentChar;
-            }
-
-            if (currentWord.length > 0) {
-                innerWords.push({ value: currentWord, alphabet: wordAlphabet });
-            }
-
-            innerWords.forEach((word) => sentenceWords.push(word));
-            wordAlphabet = "Unknown";
-        });
-
-        sentences.push(sentenceWords);
-    });
-
-    return sentences;
-}
-
-export function parseTwitterStatusesSentencesClassic(twitterJson: TwitterJson) {
     const sentences: string[][] = [];
 
     twitterJson.statuses.forEach((status) => {

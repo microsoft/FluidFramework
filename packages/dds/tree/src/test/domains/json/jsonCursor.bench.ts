@@ -13,10 +13,8 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./canada";
-import { generateTwitterJsonByByteSize, isEscapeChar, miniTwitterJson,
-     parseTwitterStatusesSentences, parseTwitterStatusesSentencesClassic, twitterRawJson } from "./twitter";
-import { buildTextFromMarkovChain, buildTextFromMarkovChainV2, buildTextFromMarkovChainV3,
-    getSizeInBytes, markovChainBuilder, markovChainBuilderV2 } from "./jsonGeneratorUtils";
+import { generateTwitterJsonByByteSize, parseTwitterStatusesSentences, twitterRawJson } from "./twitter";
+import { getSizeInBytes } from "./jsonGeneratorUtils";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -123,28 +121,18 @@ describe("ITreeCursor", () => {
     // const sentence = buildTextFromMarkovChain(chain, makeRandom(), 4);
 
     const parsedSentences = parseTwitterStatusesSentences(twitterRawJson());
-    const twitterMarkovChainWordBased = markovChainBuilderV2(parsedSentences);
-    const twitterWordMarkovSize = getSizeInBytes(JSON.stringify(Array.from(twitterMarkovChainWordBased.entries())));
-    const twitterSentence = buildTextFromMarkovChainV2(twitterMarkovChainWordBased, makeRandom(), 20);
-
-    const parsedSentencesClassic = parseTwitterStatusesSentencesClassic(twitterRawJson());
-    const twitterMarkovChainClassic = markovChainBuilder(parsedSentencesClassic);
-    const twitterSentenceClassic = buildTextFromMarkovChainV3(twitterMarkovChainClassic, makeRandom());
-    const twitterClassicMarkovSize = getSizeInBytes(JSON.stringify(Array.from(twitterMarkovChainClassic.entries())));
-
 
     const performanceMarkovChain = new PerformanceMarkovChain(makeRandom());
     console.time("performanceMarkovChain.initialize()");
-    performanceMarkovChain.initialize(parsedSentencesClassic);
+    performanceMarkovChain.initialize(parsedSentences);
     console.timeEnd("performanceMarkovChain.initialize()");
     const performanceSentence = performanceMarkovChain.generateSentence();
     const performanceMarkovChainSize =
     getSizeInBytes(JSON.stringify(Array.from(performanceMarkovChain.chain.entries())));
 
-
     const spaceEfficientMarkovChain = new SpaceEfficientMarkovChain(makeRandom());
     console.time("spaceEfficientMarkovChain.initialize()");
-    spaceEfficientMarkovChain.initialize(parsedSentencesClassic);
+    spaceEfficientMarkovChain.initialize(parsedSentences);
     console.timeEnd("spaceEfficientMarkovChain.initialize()");
     const spaceEfficientSentence = spaceEfficientMarkovChain.generateSentence();
     const chainMapArr = [];
