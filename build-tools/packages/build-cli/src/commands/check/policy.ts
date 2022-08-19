@@ -1,3 +1,10 @@
+/* eslint-disable no-constant-condition */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable @typescript-eslint/promise-function-async */
+/* eslint-disable @typescript-eslint/restrict-plus-operands */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable array-callback-return */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -9,7 +16,7 @@ import { EOL as newline } from "os";
 import * as child_process from "child_process";
 // eslint-disable-next-line unicorn/import-style
 import * as path from "path";
-import { Flags, CliUx } from "@oclif/core";
+import { Flags } from "@oclif/core";
 import {
     copyrightFileHeaderHandlers,
     npmPackageContentsHandlers,
@@ -20,6 +27,26 @@ import {
     Handler,
 } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";
+
+const readStdin: () => Promise<string | undefined> = () => {
+    return new Promise(resolve => {
+      const stdin = process.openStdin()
+      stdin.setEncoding('utf-8')
+
+      let data = ''
+      stdin.on('data', chunk => {
+        data += chunk
+      })
+
+      stdin.on('end', () => {
+        resolve(data)
+      })
+
+      if (stdin.isTTY) {
+        resolve('')
+      }
+    })
+  }
 
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
@@ -97,12 +124,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         const routeToHandlers = (file: string) => {
             handlers
                 .filter((handler) => handler.match.test(file) && handlerRegex.test(handler.name))
-                // eslint-disable-next-line array-callback-return
                 .map((handler) => {
                     const result = runWithPerf(handler.name, "handle", () =>
                         handler.handler(file, pathToGitRoot),
                     );
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (result) {
                         let output = `${newline}file failed policy check: ${file}${newline}${result}`;
                         const resolver = handler.resolver;
@@ -112,7 +137,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                                 resolver(file, pathToGitRoot),
                             );
 
-                            // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                             if (resolveResult.message) {
                                 output += newline + resolveResult.message;
                             }
@@ -150,7 +174,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
                     const result = runWithPerf(h.name, "final", () =>
                         final(pathToGitRoot, flags.resolve),
                     );
-                    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
                     if (result?.error) {
                         this.exit(1);
                         this.log(result.error);
@@ -184,20 +207,27 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
 
         if (flags.stdin) {
-            // eslint-disable-next-line no-constant-condition
-            while (true) {
-                // eslint-disable-next-line no-await-in-loop
-                const filePath: string = await CliUx.ux.prompt("1", { required: false });
-                if (filePath === "") {
-                    runPolicyCheck();
-                    logStats();
-                    break;
-                }
 
-                handleLine(filePath);
+            const pipeString = await readStdin()
+
+            if (pipeString) {
+                this.log(pipeString)
+            } else {
+                this.log(pipeString)
             }
 
-            process.on("beforeExit", logStats); // never runs
+            // while (true) {
+            //     const filePath: string = await CliUx.ux.prompt("1", { required: false });
+            //     if (filePath === "") {
+            //         runPolicyCheck();
+            //         logStats();
+            //         break;
+            //     }
+
+            //     handleLine(filePath);
+            // }
+
+            // process.on("beforeExit", logStats); // never runs
         } else {
             // eslint-disable-next-line camelcase
             pathToGitRoot = child_process
