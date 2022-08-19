@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { deflate, inflate } from "pako";
 import { compress, decompress } from "lz4js";
 import { ISummaryContext } from "@fluidframework/driver-definitions";

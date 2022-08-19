@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 /**
  * This class represents the object instatiation of the header which is optionaly writen at the
  * beginning of the binary blob. It supports conversion to / from the binary array.

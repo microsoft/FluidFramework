@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { FetchSource, IDocumentStorageService, IDocumentStorageServicePolicies, ISummaryContext }
     from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISnapshotTree, ISummaryBlob, ISummaryHandle,
