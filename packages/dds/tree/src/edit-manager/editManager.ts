@@ -27,6 +27,11 @@ export type SessionId = string;
 // TODO: Move logic into Rebaser if possible
 export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>> {
     private readonly trunk: Commit<TChangeset>[] = [];
+    /**
+     * Branches are maintained to represent the local change list that the issuing client would have had
+     * at the time of submitting the last edit on the branch.
+     * This means the last change on a branch is always in its original (non-rebased) form.
+     */
     private readonly branches: Map<SessionId, Branch<TChangeset>> = new Map();
     private localChanges: TChangeset[] = [];
     private localSessionId: SessionId | undefined;
@@ -74,7 +79,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         }
 
         const branch = this.getOrCreateBranch(newCommit.sessionId, newCommit.refNumber);
-        this.rebaseBranch(branch, newCommit.refNumber);
+        this.updateBranch(branch, newCommit.refNumber);
         const newChangeFullyRebased = this.rebaseChangeFromBranchToTrunk(newCommit.changeset, branch);
 
         // Note: we never use the refNumber of a commit in the trunk
@@ -105,7 +110,7 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
             changeToRebase,
         );
 
-        return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsBetween(branch.refSeq, undefined));
+        return this.rebaseOverCommits(changeRebasedToRef, this.getCommitsAfter(branch.refSeq));
     }
 
     // TODO: Try to share more logic between this method and `rebaseBranch`
@@ -137,12 +142,32 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         return netChange;
     }
 
-    private rebaseBranch(branch: Branch<TChangeset>, newRef: SeqNumber) {
-        const trunkChanges = this.getCommitsBetween(branch.refSeq, newRef);
+    /**
+     * Updates the `branch` to reflect the local changes that the session owner would have had after
+     * they learned of the commit with sequence number `newRef` being sequenced.
+     * Concretely, this means two things:
+     * 1. Rebasing the changes in the branch over any new trunk changes up to and including `newRef`.
+     * 2. Removing from the branch those changes that were sequenced before or at sequence number `newRef`.
+     * We can purge those because any new changes from this session (such as the one whose ref is `newRef`)
+     * will be independent from them (they will instead depend the trunk version of them, or some later changes
+     * in the trunk).
+     * @param branch - The branch to update.
+     * @param newRef - The point in the trunk to rebase the branch up to.
+     */
+    private updateBranch(branch: Branch<TChangeset>, newRef: SeqNumber) {
+        const trunkChanges = this.getCommitsAfterAndUpToInclusive(branch.refSeq, newRef);
+        if (trunkChanges.length === 0) {
+            assert(branch.refSeq === newRef, "Expected trunk changes");
+            // This early return avoids rebasing the branch changes over an empty sandwich.
+            return;
+        }
         const newBranchChanges: Commit<TChangeset>[] = [];
         const inverses: TChangeset[] = [];
 
         for (const commit of branch.localChanges) {
+            // If this commit was sequenced after the ref of the new commit then it means
+            // the new commit would have been based on a more up to date version of this commit.
+            // We need to compute this updated version.
             if (commit.seqNumber > newRef) {
                 let change = this.rebaseChange(commit.changeset, inverses);
                 change = this.rebaseOverCommits(change, trunkChanges);
@@ -172,14 +197,38 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
         );
     }
 
-    private getCommitsBetween(first: SeqNumber, last: SeqNumber | undefined): Commit<TChangeset>[] {
-        const firstIndex = this.getCommitIndex(first);
-        const lastIndex = last === undefined ? undefined : this.getCommitIndex(last);
-        return this.trunk.slice(firstIndex, lastIndex);
+    /**
+     * @param pred - The sequence number of the commit immediately before the commits of interest.
+     * @param last - The sequence number of the last commit of interest.
+     * @returns The trunk commits with sequence numbers greater than `pred` and smaller or equal to `last`,
+     * ordered in sequencing order.
+     */
+    private getCommitsAfterAndUpToInclusive(pred: SeqNumber, last: SeqNumber): Commit<TChangeset>[] {
+        // This check is not just a fast-path for the common case where no concurrent edits occurred,
+        // it also serves to handle the case where the `last` commit is the non-existent commit that the
+        // very first change on the document (and possibly others) will refer to.
+        if (pred === last) {
+            return [];
+        }
+        // The undefined case corresponds to the case where `pred` is a reference to the inception of the DDS.
+        const firstIndex = (this.getCommitIndex(pred) ?? -1) + 1;
+        const lastIndex = this.getCommitIndex(last) ?? fail("Unknown sequence number");
+        return this.trunk.slice(firstIndex, lastIndex + 1);
     }
 
-    private getCommitIndex(seqNumber: SeqNumber): number {
-        return this.trunk.findIndex((commit) => commit.seqNumber === seqNumber);
+    /**
+     * @param pred - The sequence number of the commit immediately before the commits of interest.
+     * @returns The commits that occurred after the commit with sequence number `pred` ordered in sequencing order.
+     */
+    private getCommitsAfter(pred: SeqNumber): Commit<TChangeset>[] {
+        // The undefined case corresponds to the case where `pred` is a reference to the inception of the DDS.
+        const firstIndex = (this.getCommitIndex(pred) ?? -1) + 1;
+        return this.trunk.slice(firstIndex);
+    }
+
+    private getCommitIndex(seqNumber: SeqNumber): number | undefined {
+        const found = this.trunk.findIndex((commit) => commit.seqNumber === seqNumber);
+        return found === -1 ? undefined : found;
     }
 
     private getOrCreateBranch(sessionId: SessionId, refSeq: SeqNumber): Branch<TChangeset> {
