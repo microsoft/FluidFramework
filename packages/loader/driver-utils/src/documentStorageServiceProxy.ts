@@ -35,6 +35,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
     constructor(protected readonly internalStorageService: IDocumentStorageService) { }
 
     public async getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null> {
+        console.log("documentStorageProxy:");
         return this.internalStorageService.getSnapshotTree(version, scenarioName);
     }
 

@@ -263,6 +263,7 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
 
     public async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string> {
         const summaryNew = this.allowPacking ? await this.compressSmallBlobs(summary) : summary;
+        console.log("blob agregation:?");
         return this.storage.uploadSummaryWithContext(summaryNew, context);
     }
 

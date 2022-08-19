@@ -82,6 +82,7 @@ export class RetriableGitManager implements IGitManager {
     }
 
     public async createGitTree(params: git.ICreateTreeParams): Promise<git.ITree> {
+        console.log("retriableGitManager: createGitTree");
         return this.runWithRetry(
             async () => this.internalGitManager.createGitTree(params),
             "gitManager_createGitTree",
@@ -89,6 +90,7 @@ export class RetriableGitManager implements IGitManager {
     }
 
     public async createTree(files: protocol.ITree): Promise<git.ITree> {
+        console.log("retriableManager yeee");
         return this.runWithRetry(
             async () => this.internalGitManager.createTree(files),
             "gitManager_createTree",
@@ -96,6 +98,7 @@ export class RetriableGitManager implements IGitManager {
     }
 
     public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
+        console.log("createCommit");
         return this.runWithRetry(
             async () => this.internalGitManager.createCommit(commit),
             "gitManager_createCommit",
@@ -110,6 +113,7 @@ export class RetriableGitManager implements IGitManager {
     }
 
     public async createRef(branch: string, sha: string): Promise<git.IRef> {
+        console.log("createRef");
         return this.runWithRetry(
             async () => this.internalGitManager.createRef(branch, sha),
             "gitManager_createRef",
@@ -117,6 +121,7 @@ export class RetriableGitManager implements IGitManager {
     }
 
     public async upsertRef(branch: string, commitSha: string): Promise<git.IRef> {
+        console.log("upsertRef");
         return this.runWithRetry(
             async () => this.internalGitManager.upsertRef(branch, commitSha),
             "gitManager_upsertRef",

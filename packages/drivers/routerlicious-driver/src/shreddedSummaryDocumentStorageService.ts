@@ -167,6 +167,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
             },
             async () => {
                 const summaryUploadManager = await this.getSummaryUploadManager();
+                console.log("uploadSummaryWithContext");
                 return summaryUploadManager.writeSummaryTree(summary, context.ackHandle ?? "", "channel");
             },
         );
@@ -186,6 +187,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
                 size: uint8ArrayFile.length,
             },
             async (event) => {
+                console.log("createBlob");
                 const manager = await this.getStorageManager();
                 const response = await manager.createBlob(
                     Uint8ArrayToString(
