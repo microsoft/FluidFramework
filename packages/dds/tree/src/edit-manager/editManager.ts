@@ -59,13 +59,6 @@ export class EditManager<TChangeset, TChangeFamily extends ChangeFamily<any, TCh
     }
 
     public addSequencedChange(newCommit: Commit<TChangeset>): Delta.Root {
-        if (this.trunk.length > 0) {
-            const lastSeqNumber = this.trunk[this.trunk.length - 1].seqNumber;
-            const nextSeqNumber: SeqNumber = brand(lastSeqNumber as number + 1);
-            assert(newCommit.seqNumber === nextSeqNumber,
-                0x34a /* Expected incoming commit to be next sequenced commit */);
-        }
-
         if (newCommit.sessionId === this.localSessionId) {
             // `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
             // `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
