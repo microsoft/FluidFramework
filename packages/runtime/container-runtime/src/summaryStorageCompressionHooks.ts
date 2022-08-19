@@ -2,7 +2,7 @@ import { deflate, inflate } from "pako";
 import { compress, decompress } from "lz4js";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryTree, ISnapshotTree, ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
-// import { Uint8ArrayToString } from "@fluidframework/common-utils";
+import { Uint8ArrayToString } from "@fluidframework/common-utils";
 import { getBlobAtPath, listBlobPaths, replaceSummaryObject, SummaryStorageHooks } from "./summaryStorageAdapter";
 import { BlobHeaderBuilder, readBlobHeader, skipHeader, writeBlobHeader } from "./summaryBlobProtocol";
 
@@ -41,13 +41,9 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
                 decompressed = summaryBlob.content;
             }
             const compressed: ArrayBufferLike = this.encodeBlob(decompressed);
-/*
             const compressedString = Uint8ArrayToString(Buffer.from(compressed), "base64");
             const compressedEncoded = new TextEncoder().encode(compressedString);
-            console.log("compressedEncoded: ");
-            console.log(compressedEncoded);
-*/
-            const newSummaryBlob: ISummaryBlob = { type: SummaryType.Blob, content: Buffer.from(compressed) };
+            const newSummaryBlob: ISummaryBlob = { type: SummaryType.Blob, content: compressedEncoded };
             replaceSummaryObject(newSummary, path, newSummaryBlob);
         });
         return { prepSummary: newSummary, prepContext: context };
@@ -78,14 +74,17 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
     }
 
     private decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
-        const compressedEncoded = file;
-/*
-        const compressedString = Uint8ArrayToString(Buffer.from(file), "base64");
-        const compressedEncoded = new TextEncoder().encode(compressedString);
-*/
+        let compressedEncoded = file;
+        let header = readBlobHeader(compressedEncoded);
+        if (!header) {
+            const compressedString = new TextDecoder().decode(compressedEncoded);
+            compressedEncoded = Buffer.from(compressedString, "base64");
+            header = readBlobHeader(compressedEncoded);
+            if (!header) {
+                return file;
+            }
+        }
         let decompressed: ArrayBufferLike;
-        const header = readBlobHeader(compressedEncoded);
-        if (!header) { return compressedEncoded; }
         const input = skipHeader(compressedEncoded);
         const myAlgorithm = Number(header.getValue(ALGORITHM_KEY));
         if (myAlgorithm === Algorithms.DEFLATE) {

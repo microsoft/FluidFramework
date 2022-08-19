@@ -5,6 +5,11 @@ export class BlobHeader {
     public getValue(key: string): string {
         return this._fields[key];
     }
+
+    public headerLength() {
+        return this.toBinary().byteLength;
+    }
+
     public toBinary(): Buffer {
         const contentStr = JSON.stringify(this._fields);
         const contentBinary: Buffer = Buffer.from(contentStr, BlobHeader.ENCODING);
@@ -20,21 +25,32 @@ export class BlobHeader {
         if (!possibleHeader.equals(BlobHeader.HEADER_PREFIX)) {
             return undefined;
         }
-        const view = new DataView(buffer);
+        const arrayBuffer = toArrayBuffer(buffer);
+        const view = new DataView(arrayBuffer);
         const contentBinaryLength = view.getUint32(BlobHeader.HEADER_PREFIX.byteLength, false);
         const contentPos = BlobHeader.HEADER_PREFIX.byteLength + 4;
-        const contentBinary = buffer.slice(contentPos, contentPos + contentBinaryLength);
-        const contentStr = contentBinary.toString(BlobHeader.ENCODING);
+        const contentBinary = arrayBuffer.slice(contentPos, contentPos + contentBinaryLength);
+        const contentStr = Buffer.from(contentBinary).toString(BlobHeader.ENCODING);
         return new BlobHeader(JSON.parse(contentStr));
     }
 
     public static readRest(buffer: Buffer): Buffer {
+        const header = this.fromBinary(buffer);
         if (!this.fromBinary(buffer)) {
             return buffer;
         } else {
-            return buffer.slice(BlobHeader.HEADER_PREFIX.byteLength + 4);
+            return buffer.slice(header?.headerLength());
         }
     }
+}
+
+function toArrayBuffer(buf) {
+    const ab = new ArrayBuffer(buf.length);
+    const view = new Uint8Array(ab);
+    for (let i = 0; i < buf.length; ++i) {
+        view[i] = buf[i];
+    }
+    return ab;
 }
 
 export function writeBlobHeader(header: BlobHeader, buffer: ArrayBufferLike): ArrayBufferLike {
