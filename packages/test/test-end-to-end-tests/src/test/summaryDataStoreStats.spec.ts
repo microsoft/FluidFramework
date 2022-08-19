@@ -87,15 +87,14 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
      * @returns the sequence number of the summary
      */
      async function waitForSummary(timeout: number): Promise<number> {
-        // create the timeout error message since the timeout reason in local test is still not clear
-        // (Bug 1556 on sprint board)
+        // Create the timeout error message since the timeout reason in local test is still not clear
         await timeoutAwait(provider.ensureSynchronized(), {
-            durationMs: timeout / 3,
+            durationMs: timeout,
             errorMsg: "Timeout happened on provider synchronization",
         });
         const sequenceNumber = mainContainer.deltaManager.lastSequenceNumber;
         await timeoutAwait(summaryCollection.waitSummaryAck(sequenceNumber), {
-            durationMs: timeout / 3,
+            durationMs: timeout,
             errorMsg: "Timeout happened on waitSummaryAck",
         });
         return sequenceNumber;
@@ -137,7 +136,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         mainDataStore._root.set(directoryKey, dataStore2.handle);
 
         // Wait for summary that contains the above set.
-        const sequenceNumber = await waitForSummary(this.timeout());
+        const sequenceNumber = await waitForSummary(this.timeout() / 2);
 
         const summaryEvent = getGenerateSummaryEvent(sequenceNumber);
         assert(summaryEvent !== undefined, "generate summary event is undefined");
@@ -160,7 +159,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         mainDataStore._root.set("dataStore6", dataStore6.handle);
 
         // Wait for summary that contains the above set.
-        let sequenceNumber = await waitForSummary(this.timeout());
+        let sequenceNumber = await waitForSummary(this.timeout() / 4);
         let summaryEvent = getGenerateSummaryEvent(sequenceNumber);
         assert(summaryEvent !== undefined, "generate summary event is undefined");
         assert.strictEqual(summaryEvent.dataStoreCount, 6, "wrong data store count");
@@ -168,7 +167,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 
         mainDataStore._root.delete("dataStore2");
 
-        sequenceNumber = await waitForSummary(this.timeout());
+        sequenceNumber = await waitForSummary(this.timeout() / 4);
         summaryEvent = getGenerateSummaryEvent(sequenceNumber);
         assert(summaryEvent !== undefined, "generate summary event is undefined");
         // all dataStores
@@ -180,7 +179,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
         mainDataStore._root.delete("dataStore4");
         mainDataStore._root.delete("dataStore5");
 
-        sequenceNumber = await waitForSummary(this.timeout());
+        sequenceNumber = await waitForSummary(this.timeout() / 4);
         summaryEvent = getGenerateSummaryEvent(sequenceNumber);
         assert(summaryEvent !== undefined, "generate summary event is undefined");
         // all dataStores
