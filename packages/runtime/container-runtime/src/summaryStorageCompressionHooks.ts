@@ -18,6 +18,10 @@ function cloneSummary(summary: ISummaryTree): ISummaryTree {
     return JSON.parse(JSON.stringify(summary)) as ISummaryTree;
 }
 
+/**
+ * This class implements the SummaryStorageHooks which can apply various kinds of compressions
+ * to the blob payload.
+ */
 export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
     constructor(private readonly _algorithm: Algorithms) { }
     public onPreCreateBlob(file: ArrayBufferLike): ArrayBufferLike {
@@ -26,6 +30,16 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
     public onPostReadBlob(file: ArrayBufferLike): ArrayBufferLike {
         return this.decodeBlob(file);
     }
+
+    /**
+     * All paths of ISummaryTree which lead to ISummaryBlob objects are iterated.
+     * At each ISummaryBlob, content is mapped to binary array and compressed.
+     * The header is then addded which shows, which algorithm was used for encryption.
+     * The result binary is base64 encoded due to the issue with summaryTreeUploadManager#writeSummaryBlob
+     * hash assertion
+     * New ISummaryBlob is created with the new string content obtained in the above step and the
+     * old blob is replaced by this new blob in the ISummaryTree.
+     */
     public onPreUploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext):
     { prepSummary: ISummaryTree; prepContext: ISummaryContext; } {
         const newSummary = cloneSummary(summary);
@@ -41,6 +55,9 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
                 decompressed = summaryBlob.content;
             }
             const compressed: ArrayBufferLike = this.encodeBlob(decompressed);
+            // TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummaryBlob
+            // fails on assertion at 2 different generations of the hash which do not lead to
+            // the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
             const compressedString = Uint8ArrayToString(Buffer.from(compressed), "base64");
             const compressedEncoded = new TextEncoder().encode(compressedString);
             const newSummaryBlob: ISummaryBlob = { type: SummaryType.Blob, content: compressedEncoded };
@@ -48,9 +65,15 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         });
         return { prepSummary: newSummary, prepContext: context };
     }
+    /**
+     * TODO: This method is not yet implemented
+     */
     public onPostGetSnapshotTree(tree: ISnapshotTree | null): ISnapshotTree | null {
         return tree;
     }
+    /**
+     * TODO: This method is not yet implemented
+     */
     public onPostDownloadSummary(summary: ISummaryTree): ISummaryTree {
         return summary;
     }
@@ -77,6 +100,10 @@ export class CompressionSummaryStorageHooks implements SummaryStorageHooks {
         let compressedEncoded = file;
         let header = readBlobHeader(compressedEncoded);
         if (!header) {
+            // TODO: Due to the function summaryTreeUploadManager#writeSummaryBlob issue
+            // where the binary blob representation inside ISummaryTree causes assertion issues
+            // with the hash comparison we need to be prepared that the blob together with the
+            // blob header is base64 encoded. We need to try whether it is the case.
             const compressedString = new TextDecoder().decode(compressedEncoded);
             compressedEncoded = Buffer.from(compressedString, "base64");
             header = readBlobHeader(compressedEncoded);
