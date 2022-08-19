@@ -31,7 +31,6 @@ trigger:
     include:
     - common/lib/core-interfaces
     - tools/pipelines/build-core-interfaces.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -48,7 +47,6 @@ pr:
     include:
     - common/lib/core-interfaces
     - tools/pipelines/build-core-interfaces.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
