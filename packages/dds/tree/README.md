@@ -67,7 +67,20 @@ This typically means the client side "business logic" or "view" part of some gra
 
 ### Ownership and Lifetimes
 
-TODO: add a diagram for this section.
+This diagram shows the ownership hierarchy during a transaction with solid arrows, and some important references with dashed arrows:
+
+```mermaid
+graph TD;
+    store["Data Store"]-->doc["Persisted Summaries"]
+    container["Fluid Container"]-->shared-tree;
+    shared-tree--"extends"-->shared-tree-core;
+    shared-tree-core-."reads".->doc;
+    shared-tree-core-->EditManager-->X["collab window & branches"];
+    shared-tree-core-->Indexes-->ForestIndex;
+    shared-tree-->checkout["default checkout"]-->transaction-."updates".->checkout;
+    transaction-->ProgressiveEditBuilder
+    checkout-."reads".->ForestIndex;
+```
 
 `tree` is a DDS, and therefore it stores its persisted data in a Fluid Container, and is also owned by that same container.
 When nothing in that container references the DDS anymore, it may get garbage collected by the Fluid GC.
@@ -97,7 +110,14 @@ could be added in the future.
 
 #### Viewing
 
-TODO: add a diagram for this section.
+```mermaid
+graph LR;
+    doc["Persisted Summaries"]--"Summary+Trailing ops"-->shared-tree-core
+    shared-tree--"configures"-->shared-tree-core
+    shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
+    ForestIndex--"Exposed by"-->checkout;
+    checkout--"viewed by"-->app
+```
 
 [`shared-tree`](./src/shared-tree/) configures [`shared-tree-core`](./src/shared-tree-core/README.md) with a set of indexes.
 `shared-tree-core` downloads the summary data from the Fluid Container, feeding the summary data (and any future edits) into the indexes.
