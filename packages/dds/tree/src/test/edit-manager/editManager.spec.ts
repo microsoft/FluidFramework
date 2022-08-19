@@ -528,9 +528,9 @@ describe("EditManager", () => {
             seq: 0,
         };
         for (const scenario of buildScenario([], meta)) {
-            const name = scenario.map((step) => `${step.type}${step.client}`).join("-");
-            console.debug(name);
-            // it(name, () => { runScenario(scenario); });
+            // Uncomment the lines below to see which scenario fails first.
+            // const name = scenario.map((step) => `${step.type}${step.client}`).join("-");
+            // console.debug(name);
             runScenario(scenario);
         }
     });
