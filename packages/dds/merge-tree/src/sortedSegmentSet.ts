@@ -5,6 +5,8 @@
 
 import { ISegment } from "./mergeTreeNodes";
 
+export type SortedSegmentSetItem = ISegment | { readonly segment: ISegment; };
+
 /**
  * Stores a unique and sorted set of segments, or objects with segments
  *
@@ -16,7 +18,7 @@ import { ISegment } from "./mergeTreeNodes";
  * can be inserted into that order.
  */
 export class SortedSegmentSet<
-    T extends ISegment | { readonly segment: ISegment; } = ISegment> {
+    T extends SortedSegmentSetItem= ISegment> {
     private readonly ordinalSortedItems: T[] = [];
 
     public get size(): number {
