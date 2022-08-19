@@ -18,7 +18,8 @@ export const NodeAction = {
     Skip: 2,
 } as const;
 
-export type NodeAction = Exclude<typeof NodeAction[keyof typeof NodeAction] | LeafAction, true >;
+// we exclude true from, as we only want one continue value, undefined
+export type NodeAction = typeof NodeAction[keyof typeof NodeAction] | Exclude<LeafAction, true>;
 
 /**
  * Does a depth first walk of the tree from the specific start.
