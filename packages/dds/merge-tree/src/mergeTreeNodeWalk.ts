@@ -35,19 +35,19 @@ export function depthFirstNodeWalk(
     startBlock: IMergeBlock,
     startChild: IMergeNode | undefined,
     downAction?: (node: IMergeNode) => NodeAction,
-    leafActionOverride?: (seg: ISegment) => boolean | undefined,
+    leafActionOverride?: (seg: ISegment) => LeafAction,
     upAction?: (block: IMergeBlock) => void,
     forward: boolean = true,
 ): boolean {
     const increment = forward ? 1 : -1;
-    const leafAction = leafActionOverride ?? downAction as (seg: ISegment) => boolean | undefined;
+    const leafAction = leafActionOverride ?? downAction;
     if (leafAction === undefined) {
         return true;
     }
 
     let block = startBlock;
     let childCount = block.childCount;
-	let start: IMergeNode | undefined = startChild;
+    let start: IMergeNode | undefined = startChild;
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -175,7 +175,9 @@ export function walkAllChildSegments(
     return depthFirstNodeWalk(
         startBlock,
         startBlock.children[0],
-        undefined, /* downAction */
+        startBlock.parent === undefined
+            ? undefined
+            : (node) => node === startBlock.parent ? NodeAction.Exit : NodeAction.Continue,
         leafAction,
     );
 }

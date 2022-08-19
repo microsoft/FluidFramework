@@ -13,6 +13,7 @@ import random from "random-js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { ISegment, SegmentGroup, toRemovalInfo } from "../mergeTreeNodes";
+import { walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
@@ -30,7 +31,7 @@ export const insertAtRefPos: TestOperation =
     (client: TestClient, opStart: number, opEnd: number, mt: random.Engine) => {
         const segs: ISegment[] = [];
         // gather all the segments at the pos, including removed segments
-        client.mergeTree.walkAllSegments((seg) => {
+        walkAllChildSegments(client.mergeTree.root, (seg) => {
             const pos = client.getPosition(seg);
             if (pos >= opStart) {
                 if (pos <= opStart) {

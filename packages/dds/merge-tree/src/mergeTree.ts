@@ -93,6 +93,7 @@ import {
     depthFirstNodeWalk,
     forwardExcursion,
     NodeAction,
+    walkAllChildSegments,
 } from "./mergeTreeNodeWalk";
 
 const minListenerComparer: Comparer<MinListener> = {
@@ -2029,7 +2030,7 @@ export class MergeTree {
      */
     private findRollbackPosition(segment: ISegment) {
         let segmentPosition = 0;
-        this.walkAllSegments((seg) => {
+        walkAllChildSegments(this.root, (seg) => {
             // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
             if (seg === segment) {
                 return false;
@@ -2268,25 +2269,6 @@ export class MergeTree {
             post === undefined
                 ? undefined
                 : (block) => post(block, pos, refSeq, clientId, start - pos, endPos - pos, accum),
-        );
-    }
-
-    // Invokes the leaf action for all segments.  Note that *all* segments are visited
-    // regardless of if they would be visible to the current `clientId` and `refSeq`.
-    public walkAllSegments<TClientData>(
-        leafAction: (segment: ISegment, accum?: TClientData) => boolean | undefined,
-        accum?: TClientData,
-    ): boolean {
-        if (this.root.childCount === 0) {
-            return true;
-        }
-        return depthFirstNodeWalk(
-            this.root,
-            this.root.children[0],
-            undefined, /* downAction */
-            accum === undefined
-                ? leafAction :
-                (seg) => leafAction(seg, accum),
         );
     }
 }

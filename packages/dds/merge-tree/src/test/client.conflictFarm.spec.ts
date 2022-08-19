@@ -39,7 +39,7 @@ export const debugOptions: IConflictFarmConfig = {
 };
 
 export const defaultOptions: IConflictFarmConfig = {
-    minLength: { min: 1, max: 512 },
+    minLength: { min: 1, max: 1 },
     clients: { min: 1, max: 8 },
     opsPerRoundRange: { min: 1, max: 128 },
     rounds: 8,
