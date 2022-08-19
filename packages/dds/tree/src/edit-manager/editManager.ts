@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily } from "../change-family";
 import { AnchorSet, Delta } from "../tree";
-import { brand, Brand, fail, RecursiveReadonly } from "../util";
+import { Brand, fail, RecursiveReadonly } from "../util";
 
 export interface Commit<TChangeset> {
     sessionId: SessionId;
