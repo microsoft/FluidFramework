@@ -25,7 +25,7 @@ import {
     SummaryElementStringifier,
 } from "../../shared-tree-core";
 import { AnchorSet } from "../../tree";
-import { DefaultChangeFamily, DefaultChangeSet, DefaultRebaser } from "../../feature-libraries";
+import { DefaultChangeFamily, DefaultChangeset, DefaultRebaser } from "../../feature-libraries";
 
 describe("SharedTreeCore", () => {
     it("summarizes without indexes", async () => {
@@ -106,8 +106,8 @@ describe("SharedTreeCore", () => {
     }
 
     function createTree(
-        indexes?: Index<DefaultChangeSet>[],
-    ): SharedTreeCore<DefaultChangeSet, DefaultChangeFamily> {
+        indexes?: Index<DefaultChangeset>[],
+    ): SharedTreeCore<DefaultChangeset, DefaultChangeFamily> {
         const runtime = new MockFluidDataStoreRuntime();
         const attributes: IChannelAttributes = {
             type: "TestSharedTree",
@@ -130,7 +130,7 @@ describe("SharedTreeCore", () => {
         (event: "loaded" | "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): unknown;
     }
 
-    class MockIndex extends TypedEventEmitter<TestIndexEvents> implements Index<DefaultChangeSet>, SummaryElement {
+    class MockIndex extends TypedEventEmitter<TestIndexEvents> implements Index<DefaultChangeset>, SummaryElement {
         public summaryElement: SummaryElement = this;
 
         public constructor(public readonly key = "TestIndex") {
