@@ -8,16 +8,16 @@ import structuredClone from "@ungap/structured-clone";
 /**
  * Make all transitive properties in T readonly
  */
- export type RecursiveReadonly<T> = {
-    readonly [P in keyof T]: RecursiveReadonly<T[P]>;
+export type RecursiveReadonly<T> = {
+	readonly [P in keyof T]: RecursiveReadonly<T[P]>;
 };
 
 export function clone<T>(original: T): T {
-    return structuredClone(original);
+	return structuredClone(original);
 }
 
 export function fail(message: string): never {
-    throw new Error(message);
+	throw new Error(message);
 }
 
 /**
@@ -38,7 +38,7 @@ export function fail(message: string): never {
  * @param never - The switch value
  */
 export function unreachableCase(never: never): never {
-    fail("unreachableCase was called");
+	fail("unreachableCase was called");
 }
 
 /**
@@ -47,11 +47,11 @@ export function unreachableCase(never: never): never {
  * @param filler - Callback for populating the array with a value for a given index
  */
 export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
-    const array = [];
-    for (let i = 0; i < size; ++i) {
-        array.push(filler(i));
-    }
-    return array;
+	const array = [];
+	for (let i = 0; i < size; ++i) {
+		array.push(filler(i));
+	}
+	return array;
 }
 
 /**
@@ -65,30 +65,36 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
  * @param same - Called for items in `a` and `b`.
  * @returns false iff any of the call backs returned false.
  */
-export function compareSets<T>({ a, b, aExtra, bExtra, same }: {
-    a: ReadonlySet<T> | ReadonlyMap<T, unknown>;
-    b: ReadonlySet<T> | ReadonlyMap<T, unknown>;
-    aExtra?: (t: T) => boolean;
-    bExtra?: (t: T) => boolean;
-    same?: (t: T) => boolean;
+export function compareSets<T>({
+	a,
+	b,
+	aExtra,
+	bExtra,
+	same,
+}: {
+	a: ReadonlySet<T> | ReadonlyMap<T, unknown>;
+	b: ReadonlySet<T> | ReadonlyMap<T, unknown>;
+	aExtra?: (t: T) => boolean;
+	bExtra?: (t: T) => boolean;
+	same?: (t: T) => boolean;
 }): boolean {
-    for (const item of a.keys()) {
-        if (!b.has(item)) {
-            if (aExtra && !aExtra(item)) {
-                return false;
-            }
-        } else {
-            if (same && !same(item)) {
-                return false;
-            }
-        }
-    }
-    for (const item of b.keys()) {
-        if (!a.has(item)) {
-            if (bExtra && !bExtra(item)) {
-                return false;
-            }
-        }
-    }
-    return true;
+	for (const item of a.keys()) {
+		if (!b.has(item)) {
+			if (aExtra && !aExtra(item)) {
+				return false;
+			}
+		} else {
+			if (same && !same(item)) {
+				return false;
+			}
+		}
+	}
+	for (const item of b.keys()) {
+		if (!a.has(item)) {
+			if (bExtra && !bExtra(item)) {
+				return false;
+			}
+		}
+	}
+	return true;
 }

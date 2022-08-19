@@ -154,16 +154,16 @@ export type Mark = OuterMark | InnerModify;
  * A mark that represents changes to nodes that are otherwise unaffected by changes to their ancestors.
  */
 export type OuterMark =
-    | Skip
-    | Modify
-    | Delete
-    | MoveOut
-    | MoveIn
-    | Insert
-    | ModifyAndDelete
-    | ModifyAndMoveOut
-    | MoveInAndModify
-    | InsertAndModify;
+	| Skip
+	| Modify
+	| Delete
+	| MoveOut
+	| MoveIn
+	| Insert
+	| ModifyAndDelete
+	| ModifyAndMoveOut
+	| MoveInAndModify
+	| InsertAndModify;
 
 /**
  * A mark that represents changes to nodes that also unaffected by changes to their ancestors.
@@ -188,50 +188,52 @@ export type Skip = number;
  * moved).
  */
 export interface Modify {
-    type: typeof MarkType.Modify;
-    setValue?: Value;
-    fields?: FieldMarks<OuterMark>;
+	type: typeof MarkType.Modify;
+	setValue?: Value;
+	fields?: FieldMarks<OuterMark>;
 }
 
 /**
  * Describes modifications made to a subtree that is being deleted.
  */
 export interface ModifyDeleted {
-    type: typeof MarkType.Modify;
-    fields: FieldMarks<Skip | ModifyDeleted | ModifyAndMoveOut | MoveOut>;
+	type: typeof MarkType.Modify;
+	fields: FieldMarks<Skip | ModifyDeleted | ModifyAndMoveOut | MoveOut>;
 }
 
 /**
  * Describes modifications made to a subtree that is being moved out.
  */
 export interface ModifyMovedOut {
-    type: typeof MarkType.Modify;
-    setValue?: Value;
-    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | ModifyAndDelete | ModifyAndMoveOut | MoveOut>;
+	type: typeof MarkType.Modify;
+	setValue?: Value;
+	fields?: FieldMarks<
+		Skip | ModifyMovedOut | Delete | ModifyAndDelete | ModifyAndMoveOut | MoveOut
+	>;
 }
 
 /**
  * Describes modifications made to a subtree that is being moved in.
  */
 export interface ModifyMovedIn {
-    type: typeof MarkType.Modify;
-    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | MoveInAndModify | Insert | InsertAndModify>;
+	type: typeof MarkType.Modify;
+	fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | MoveInAndModify | Insert | InsertAndModify>;
 }
 
 /**
  * Describes modifications made to a subtree that is being inserted.
  */
 export interface ModifyInserted {
-    type: typeof MarkType.Modify;
-    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+	type: typeof MarkType.Modify;
+	fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
 }
 
 /**
  * Describes the deletion of a contiguous range of node.
  */
 export interface Delete {
-    type: typeof MarkType.Delete;
-    count: number;
+	type: typeof MarkType.Delete;
+	count: number;
 }
 
 /**
@@ -239,20 +241,20 @@ export interface Delete {
  * Includes descriptions of the modifications the node.
  */
 export interface ModifyAndDelete {
-    type: typeof MarkType.ModifyAndDelete;
-    fields: FieldMarks<Skip | ModifyDeleted | MoveOut>;
+	type: typeof MarkType.ModifyAndDelete;
+	fields: FieldMarks<Skip | ModifyDeleted | MoveOut>;
 }
 
 /**
  * Describes the moving out of a contiguous range of node.
  */
 export interface MoveOut {
-    type: typeof MarkType.MoveOut;
-    count: number;
-    /**
-     * The delta should carry exactly one `MoveIn` mark with the same move ID.
-     */
-    moveId: MoveId;
+	type: typeof MarkType.MoveOut;
+	count: number;
+	/**
+	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
+	 */
+	moveId: MoveId;
 }
 
 /**
@@ -260,24 +262,24 @@ export interface MoveOut {
  * Includes descriptions of the modifications made to the node.
  */
 export interface ModifyAndMoveOut {
-    type: typeof MarkType.ModifyAndMoveOut;
-    /**
-     * The delta should carry exactly one `MoveIn` mark with the same move ID.
-     */
-    moveId: MoveId;
-    setValue?: Value;
-    fields?: FieldMarks<Skip | ModifyMovedOut | Delete | MoveOut>;
+	type: typeof MarkType.ModifyAndMoveOut;
+	/**
+	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
+	 */
+	moveId: MoveId;
+	setValue?: Value;
+	fields?: FieldMarks<Skip | ModifyMovedOut | Delete | MoveOut>;
 }
 
 /**
  * Describes the moving in of a contiguous range of node.
  */
 export interface MoveIn {
-    type: typeof MarkType.MoveIn;
-    /**
-     * The delta should carry exactly one `MoveOut` mark with the same move ID.
-     */
-    moveId: MoveId;
+	type: typeof MarkType.MoveIn;
+	/**
+	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
+	 */
+	moveId: MoveId;
 }
 
 /**
@@ -285,20 +287,20 @@ export interface MoveIn {
  * Includes descriptions of the modifications made to the node.
  */
 export interface MoveInAndModify {
-    type: typeof MarkType.MoveInAndModify;
-    /**
-     * The delta should carry exactly one `MoveOut` mark with the same move ID.
-     */
-    moveId: MoveId;
-    fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | Insert>;
+	type: typeof MarkType.MoveInAndModify;
+	/**
+	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
+	 */
+	moveId: MoveId;
+	fields: FieldMarks<Skip | ModifyMovedIn | MoveIn | Insert>;
 }
 
 /**
  * Describes the insertion of a contiguous range of node.
  */
 export interface Insert {
-    type: typeof MarkType.Insert;
-    content: ProtoNode[];
+	type: typeof MarkType.Insert;
+	content: ProtoNode[];
 }
 
 /**
@@ -306,9 +308,9 @@ export interface Insert {
  * Includes descriptions of the modifications made to the nodes.
  */
 export interface InsertAndModify {
-    type: typeof MarkType.InsertAndModify;
-    content: ProtoNode;
-    fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
+	type: typeof MarkType.InsertAndModify;
+	content: ProtoNode;
+	fields: FieldMarks<Skip | ModifyInserted | MoveIn | MoveInAndModify>;
 }
 
 /**
@@ -330,39 +332,40 @@ export type FieldMap<T> = Map<FieldKey, T>;
 export type FieldMarks<TMark> = FieldMap<MarkList<TMark>>;
 
 export const MarkType = {
-    Modify: 0,
-    Insert: 1,
-    InsertAndModify: 2,
-    MoveIn: 3,
-    MoveInAndModify: 4,
-    Delete: 5,
-    ModifyAndDelete: 6,
-    MoveOut: 7,
-    ModifyAndMoveOut: 8,
+	Modify: 0,
+	Insert: 1,
+	InsertAndModify: 2,
+	MoveIn: 3,
+	MoveInAndModify: 4,
+	Delete: 5,
+	ModifyAndDelete: 6,
+	MoveOut: 7,
+	ModifyAndMoveOut: 8,
 } as const;
 
 /**
  * Returns the number of nodes in the input tree that the mark affects or skips.
  */
 export function inputLength(mark: Mark): number {
-    if (typeof mark === "number") {
-        return mark;
-    }
-    // Inline into `switch(mark.type)` once we upgrade to TS 4.7
-    const type = mark.type;
-    switch (type) {
-        case MarkType.Delete:
-        case MarkType.MoveOut:
-            return mark.count;
-        case MarkType.Modify:
-        case MarkType.ModifyAndDelete:
-        case MarkType.ModifyAndMoveOut:
-            return 1;
-        case MarkType.Insert:
-        case MarkType.InsertAndModify:
-        case MarkType.MoveIn:
-        case MarkType.MoveInAndModify:
-            return 0;
-        default: unreachableCase(type);
-    }
+	if (typeof mark === "number") {
+		return mark;
+	}
+	// Inline into `switch(mark.type)` once we upgrade to TS 4.7
+	const type = mark.type;
+	switch (type) {
+		case MarkType.Delete:
+		case MarkType.MoveOut:
+			return mark.count;
+		case MarkType.Modify:
+		case MarkType.ModifyAndDelete:
+		case MarkType.ModifyAndMoveOut:
+			return 1;
+		case MarkType.Insert:
+		case MarkType.InsertAndModify:
+		case MarkType.MoveIn:
+		case MarkType.MoveInAndModify:
+			return 0;
+		default:
+			unreachableCase(type);
+	}
 }

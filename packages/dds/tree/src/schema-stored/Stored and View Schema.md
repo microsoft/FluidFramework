@@ -45,6 +45,7 @@ Places we can store stored schema information:
 -   Declaratively on nodes of a specific type: Nodes in the tree are typed, so similar to the above, the tree can be configured to apply specific schema based on type of the nodes.
 
     This forces all nodes of the same type to have the same schema: it's not contextual but easily handles open polymorphism (ex: a child that's allowed to be anything as long as it's in schema for its type).
+
 -   In other schema: For example, a schema can apply specific schema to its children.
 
     This allows for `contextual schema` (under one parent the same type might have different rules compared to under another parent).
@@ -64,6 +65,7 @@ Requirements for this initial version should include:
 -   Provide a schema-on-read system (ex: schematize) that can give an application a nice interface to the data, including validation and error handling.
 
     Anytime the view schema and stored schema are different, this can allow the app to function as well as possible (detect and handle out of schema data, both on read and on edit, as localized as permitted by the provided error handlers).
+
 -   Provide at least one way to customize the stored schema (schema-on-write), which can at least do type based constraints.
 -   Have at least one good design pattern that apps can use to handle schema migrations for each method they use to enforce/specify schema (make sure this supports a roll out process where clients have mixed code versions and old documents will be supportable forever).
 
@@ -107,6 +109,7 @@ The MVP should include a simple schema system, usable as an MVP for both `stored
 
     Note: It's possible to add a schema that is compatible with all possible data (assuming the children themselves are compatible with their own types).
     Applications which wish to rely entirely on schema-on-read for some or all of their data can use this pattern for all `stored schema` and only use their actual developer authored schema as `view schema`.
+
 -   Change application: changes can conflict if they violate the schema (or maybe only check at the end of a transaction? Or at special marked places and at end?).
 
     Change application could (someday) adjust behavior based on the schema (ex: provide set semantics to a sequence) or have schema specific edits but the initial version will just detect violations and mark them as conflicted.
@@ -121,6 +124,7 @@ The MVP should include a simple schema system, usable as an MVP for both `stored
 -   Document load: The application can check that their view schema matches their stored schema and that the root has supported content.
 
     See `checkCompatibility` in [schema.ts](./schema.ts) for an example of how this could work.
+
 -   Let the app provide handlers/converters to adapt data that does not match the desired view schema (ex: support old formats), and apply them through Schematize.
 
 ## Schema Evolution Design Pattern
@@ -164,9 +168,9 @@ During the migration, both can be kept and a test can be used to confirm that th
 
 Once the migration is done, all code depending on the old schema can be deleted which should just be:
 
-- the old schema itself
-- support for creating data in that format when inserting it into the document
-- the above mentioned test
+-   the old schema itself
+-   support for creating data in that format when inserting it into the document
+-   the above mentioned test
 
 The two schema could be kept straight by calling them `*CompatibilitySchema` and `*Schema` respectively.
 
@@ -293,9 +297,9 @@ Some approaches for bounded open polymorphism at the applications level:
 
     The application can compute a closed set of types which meet it's requirements:
 
-    - structural e.g. require specific fields
-    - nominal: Specific types opt in to some named set of types they want to be included in.
-    - behavioral: All types supporting some specific functionality/[behavior](https://en.wikipedia.org/wiki/Aspect-oriented_programming)).
+    -   structural e.g. require specific fields
+    -   nominal: Specific types opt in to some named set of types they want to be included in.
+    -   behavioral: All types supporting some specific functionality/[behavior](https://en.wikipedia.org/wiki/Aspect-oriented_programming)).
 
     This can be used to programmatically construct a schema using closed polymorphism while exposing it as open polymorphism to the application authors/schema language.
     This has the issue that different applications might come up with different sets of types so this approach is mainly suitable for view schema.
@@ -307,19 +311,24 @@ Some approaches for bounded open polymorphism at the applications level:
     -   initially use the same schema used for view and update later (ex: when a different app performs an edit inserting something the first app doesn't support)
     -   just list the minimal set of types actually used in the document in that field, and update the field schema to allow new types when needed used.
     -   use open polymorphism
+
 -   The above, but hand code the type lists.
 
     It should be possible to get build errors if you don't update it, so this should be practical if all allowed types are statically known when building the app (ex: no dynamically loaded plugins that add extra types).
+
 -   Use open polymorphism in the stored and view schema. Handle unexpected values in the app.
 -   Build a nominal open polymorphism system into the schema, allowing types to explicitly declare they are a member of a particular typeset/interface.
 
     Compatibility between stored and view schema can include checking these align.
+
 -   Add a structural constraints that can be applied to field's children.
     There are a few design choices for this:
+
     -   How deep does it go?
         -   Allow constraints to apply further constraints on the children recursively.
         -   Allow only constraining the immediate children beyond the constraints their type implies.
     -   Are the constraints applied to types or values?
+
         -   Types: compute, based only on the schema, which types are allowed under which constraints.
             This only permits types where all possible values meet the constraints. `allowsTreeSuperset` can compute if a type is allowed.
         -   Values: compute, based only on the value, if it's allowed under which constraints.

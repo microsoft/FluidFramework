@@ -11,28 +11,28 @@ import { SequenceChangeset } from "./sequenceChangeset";
 export type SequenceChangeRebaser = ChangeRebaser<SequenceChangeset>;
 
 function compose(changes: SequenceChangeset[]): SequenceChangeset {
-    if (changes.length === 1) {
-        return changes[0];
-    }
+	if (changes.length === 1) {
+		return changes[0];
+	}
 
-    throw Error("Not implemented"); // TODO
+	throw Error("Not implemented"); // TODO
 }
 
 function invert(changes: SequenceChangeset): SequenceChangeset {
-    throw Error("Not implemented"); // TODO
- }
+	throw Error("Not implemented"); // TODO
+}
 
 function rebase(change: SequenceChangeset, over: SequenceChangeset): SequenceChangeset {
-    throw Error("Not implemented"); // TODO
+	throw Error("Not implemented"); // TODO
 }
 
 function rebaseAnchors(anchors: AnchorSet, over: SequenceChangeset): void {
-    anchors.applyDelta(toDelta(over));
+	anchors.applyDelta(toDelta(over));
 }
 
 export const sequenceChangeRebaser: SequenceChangeRebaser = {
-    compose,
-    invert,
-    rebase,
-    rebaseAnchors,
+	compose,
+	invert,
+	rebase,
+	rebaseAnchors,
 };

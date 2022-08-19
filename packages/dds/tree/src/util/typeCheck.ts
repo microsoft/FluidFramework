@@ -80,7 +80,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  *
  * @public
  */
-export interface MakeNominal { }
+export interface MakeNominal {}
 
 /**
  * Constrain generic type parameters to Contravariant.
@@ -141,7 +141,7 @@ export interface Bivariant<T> {
  *
  * @public
  */
-export interface Invariant<T> extends Contravariant<T>, Covariant<T> { }
+export interface Invariant<T> extends Contravariant<T>, Covariant<T> {}
 
 /**
  * Compile time assert that X is True.

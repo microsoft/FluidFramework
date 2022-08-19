@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 
 import {
 	DisposingDependee,
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
+	// Allow importing from this specific file which is being tested:
+	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../dependency-tracking/disposingDependee";
 import {
-    InvalidationToken,
+	InvalidationToken,
 	recordDependency,
 	SimpleObservingDependent,
 } from "../../dependency-tracking";

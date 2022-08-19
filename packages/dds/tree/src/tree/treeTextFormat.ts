@@ -33,7 +33,7 @@ import { FieldKey, TreeValue } from "./types";
  * @public
  */
 export interface FieldMap<TChild> {
-    [key: string]: TChild[];
+	[key: string]: TChild[];
 }
 
 /**
@@ -41,17 +41,17 @@ export interface FieldMap<TChild> {
  * @public
  */
 export interface NodeData {
-    /**
-     * A payload of arbitrary serializable data
-     */
-    value?: TreeValue;
+	/**
+	 * A payload of arbitrary serializable data
+	 */
+	value?: TreeValue;
 
-    /**
-     * The meaning of this node.
-     * Provides contexts/semantics for this node and its content.
-     * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
-     */
-    readonly type: TreeSchemaIdentifier;
+	/**
+	 * The meaning of this node.
+	 * Provides contexts/semantics for this node and its content.
+	 * Typically use to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
+	 */
+	readonly type: TreeSchemaIdentifier;
 }
 
 /**
@@ -60,13 +60,15 @@ export interface NodeData {
  * @public
  */
 export interface GenericTreeNode<TChild> extends NodeData {
-    fields?: FieldMap<TChild>;
+	fields?: FieldMap<TChild>;
 }
 
 /**
  * A tree whose nodes are either tree nodes or placeholders.
  */
-export type PlaceholderTree<TPlaceholder = never> = GenericTreeNode<PlaceholderTree<TPlaceholder>> | TPlaceholder;
+export type PlaceholderTree<TPlaceholder = never> =
+	| GenericTreeNode<PlaceholderTree<TPlaceholder>>
+	| TPlaceholder;
 
 /**
  * A tree represented using plain JavaScript objects.
@@ -77,42 +79,53 @@ export interface JsonableTree extends PlaceholderTree {}
 /**
  * Get a field from `node`, optionally modifying the tree to create it if missing.
  */
-export function getGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, createIfMissing: boolean): T[] {
-    const children = getGenericTreeFieldMap(node, createIfMissing);
+export function getGenericTreeField<T>(
+	node: GenericTreeNode<T>,
+	key: FieldKey,
+	createIfMissing: boolean,
+): T[] {
+	const children = getGenericTreeFieldMap(node, createIfMissing);
 
-    const field = children[key as string];
-    if (field !== undefined) {
-        return field;
-    }
-    // Handle missing field:
-    if (createIfMissing === false) {
-        return [];
-    }
-    const newField: T[] = [];
-    children[key as string] = newField;
-    return newField;
+	const field = children[key as string];
+	if (field !== undefined) {
+		return field;
+	}
+	// Handle missing field:
+	if (createIfMissing === false) {
+		return [];
+	}
+	const newField: T[] = [];
+	children[key as string] = newField;
+	return newField;
 }
 
 /**
  * Get a FieldMap from `node`, optionally modifying the tree to create it if missing.
  */
- export function getGenericTreeFieldMap<T>(node: GenericTreeNode<T>, createIfMissing: boolean): FieldMap<T> {
-    let children = node.fields;
-    if (children === undefined) {
-        children = {};
-        // Handle missing fields:
-        if (createIfMissing) {
-            node.fields = children;
-        }
-    }
+export function getGenericTreeFieldMap<T>(
+	node: GenericTreeNode<T>,
+	createIfMissing: boolean,
+): FieldMap<T> {
+	let children = node.fields;
+	if (children === undefined) {
+		children = {};
+		// Handle missing fields:
+		if (createIfMissing) {
+			node.fields = children;
+		}
+	}
 
-    return children;
+	return children;
 }
 
 /**
  * Sets a field on `node`.
  */
-export function setGenericTreeField<T>(node: GenericTreeNode<T>, key: FieldKey, content: T[]): void {
-    const children = getGenericTreeFieldMap(node, true);
-    children[key as string] = content;
+export function setGenericTreeField<T>(
+	node: GenericTreeNode<T>,
+	key: FieldKey,
+	content: T[],
+): void {
+	const children = getGenericTreeFieldMap(node, true);
+	children[key as string] = content;
 }

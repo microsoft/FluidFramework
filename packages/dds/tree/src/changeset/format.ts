@@ -308,7 +308,7 @@ export interface TreeForestPath {
 	[label: string]: TreeRootPath;
 }
 
-export type TreeRootPath = number | { [label: number]: TreeForestPath; };
+export type TreeRootPath = number | { [label: number]: TreeForestPath };
 
 export enum RangeType {
 	Set = "Set",
@@ -350,7 +350,10 @@ export type Skip = number;
 export type SeqNumber = number;
 export type Value = number | string | boolean;
 export type ClientId = number;
-export enum Tiebreak { Left, Right }
+export enum Tiebreak {
+	Left,
+	Right,
+}
 export enum Effects {
 	All = "All",
 	Move = "Move",

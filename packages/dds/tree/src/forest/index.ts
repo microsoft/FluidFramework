@@ -4,12 +4,17 @@
  */
 
 export {
-    ITreeCursor,
-    TreeNavigationResult,
-    mapCursorField,
-    SynchronousNavigationResult,
+	ITreeCursor,
+	TreeNavigationResult,
+	mapCursorField,
+	SynchronousNavigationResult,
 } from "./cursor";
 export * from "./forest";
 export {
-    IEditableForest, FieldLocation, TreeLocation, isFieldLocation, ForestLocation, initializeForest,
+	IEditableForest,
+	FieldLocation,
+	TreeLocation,
+	isFieldLocation,
+	ForestLocation,
+	initializeForest,
 } from "./editableForest";

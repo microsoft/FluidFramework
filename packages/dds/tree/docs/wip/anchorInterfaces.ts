@@ -47,19 +47,35 @@ interface SliceLikeRangeAnchor {
 	end: RangeBoundary;
 }
 
-type RangeBoundary = {
-	side: Side;
-	sibling: NodeId;
-	tiebreak: Tiebreak;
-} | {
-	extremity: Extremity;
-	tiebreak: Tiebreak;
-}
+type RangeBoundary =
+	| {
+			side: Side;
+			sibling: NodeId;
+			tiebreak: Tiebreak;
+	  }
+	| {
+			extremity: Extremity;
+			tiebreak: Tiebreak;
+	  };
 
-enum Extremity { Start, End }
-enum Side { Before, After }
-enum Tiebreak { LastToFirst, FirstToLast }
-enum Commutativity { Full, MoveOnly, DeleteOnly, None }
+enum Extremity {
+	Start,
+	End,
+}
+enum Side {
+	Before,
+	After,
+}
+enum Tiebreak {
+	LastToFirst,
+	FirstToLast,
+}
+enum Commutativity {
+	Full,
+	MoveOnly,
+	DeleteOnly,
+	None,
+}
 
 type NodeId = number;
 type TraitLabel = number | string;

@@ -5,12 +5,14 @@
 
 import { Invariant } from "../../util";
 import {
-    fieldSchema, treeSchema, TreeSchemaBuilder,
-    FieldSchema,
-    LocalFieldKey,
-    TreeSchema,
-    ValueSchema,
-    TreeSchemaIdentifier,
+	fieldSchema,
+	treeSchema,
+	TreeSchemaBuilder,
+	FieldSchema,
+	LocalFieldKey,
+	TreeSchema,
+	ValueSchema,
+	TreeSchemaIdentifier,
 } from "../../schema-stored";
 import { FieldKind } from "./fieldKind";
 
@@ -23,16 +25,16 @@ import { FieldKind } from "./fieldKind";
  * Type implemented by schema to allow compile time schema access via type checking.
  */
 interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
-    readonly local: { [key: string]: LabeledFieldSchema<any>; };
-    readonly global: { [key: string]: unknown; };
-    readonly extraLocalFields: LabeledFieldSchema<any>;
-    readonly extraGlobalFields: boolean;
-    readonly value: ValueSchema;
+	readonly local: { [key: string]: LabeledFieldSchema<any> };
+	readonly global: { [key: string]: unknown };
+	readonly extraLocalFields: LabeledFieldSchema<any>;
+	readonly extraGlobalFields: boolean;
+	readonly value: ValueSchema;
 }
 
 interface FieldSchemaTypeInfo {
-    types: { [key: string]: unknown; };
-    kind: FieldKind;
+	types: { [key: string]: unknown };
+	kind: FieldKind;
 }
 
 /**
@@ -40,7 +42,7 @@ interface FieldSchemaTypeInfo {
  * typescript type to allow for deriving schema aware APIs.
  */
 export function typedTreeSchema<T extends TreeSchemaTypeInfo>(t: T): LabeledTreeSchema<T> {
-    return treeSchema(t) as LabeledTreeSchema<T>;
+	return treeSchema(t) as LabeledTreeSchema<T>;
 }
 
 /**
@@ -48,31 +50,28 @@ export function typedTreeSchema<T extends TreeSchemaTypeInfo>(t: T): LabeledTree
  * typescript type to allow for deriving schema aware APIs.
  */
 export function typedFieldSchema<T extends FieldSchemaTypeInfo>(t: T): LabeledFieldSchema<T> {
-    return fieldSchema(t.kind, [...Object.keys(t.types)] as TreeSchemaIdentifier[]);
+	return fieldSchema(t.kind, [...Object.keys(t.types)] as TreeSchemaIdentifier[]);
 }
 
-export type TypeInfo<T extends LabeledTreeSchema<any>> = T extends LabeledTreeSchema<
-    infer R
->
-    ? R
-    : unknown;
+export type TypeInfo<T extends LabeledTreeSchema<any>> = T extends LabeledTreeSchema<infer R>
+	? R
+	: unknown;
 
-export type FieldInfo<T extends LabeledFieldSchema<any>> =
-    T extends LabeledFieldSchema<infer R> ? R : unknown;
+export type FieldInfo<T extends LabeledFieldSchema<any>> = T extends LabeledFieldSchema<infer R>
+	? R
+	: unknown;
 
-export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo>
-    extends TreeSchema {
-    readonly typeCheck?: Invariant<T>;
+export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends TreeSchema {
+	readonly typeCheck?: Invariant<T>;
 
-    // Allow reading localFields through the normal map, but without losing type information.
-    readonly localFields: ObjectToMap<T["local"], LocalFieldKey>;
+	// Allow reading localFields through the normal map, but without losing type information.
+	readonly localFields: ObjectToMap<T["local"], LocalFieldKey>;
 }
 
-export interface LabeledFieldSchema<T extends FieldSchemaTypeInfo>
-    extends FieldSchema {
-    readonly typeCheck?: Invariant<T>;
+export interface LabeledFieldSchema<T extends FieldSchemaTypeInfo> extends FieldSchema {
+	readonly typeCheck?: Invariant<T>;
 }
 
 type ObjectToMap<T, K extends number | string> = ReadonlyMap<K, FieldSchema> & {
-    get<X extends keyof T>(key: X): T[X];
+	get<X extends keyof T>(key: X): T[X];
 };

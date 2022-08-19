@@ -8,13 +8,13 @@ import { value, forbidden, fieldKinds } from "./defaultFieldKinds";
 import { FullSchemaPolicy } from "./modular-schema";
 
 /**
-* FieldSchema which is impossible for any data to be in schema with.
-*/
+ * FieldSchema which is impossible for any data to be in schema with.
+ */
 export const neverField = fieldSchema(value, []);
 
 /**
-* FieldSchema which is impossible to put anything in.
-*/
+ * FieldSchema which is impossible to put anything in.
+ */
 
 export const emptyField = fieldSchema(forbidden, []);
 
