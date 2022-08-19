@@ -161,7 +161,7 @@ class TestChangeRebaser implements ChangeRebaser<TestChangeset> {
         }
     }
 
-    public checkChangeList(changes: readonly RecursiveReadonly<TestChangeset>[], intentions: number[]): void {
+    public static checkChangeList(changes: readonly RecursiveReadonly<TestChangeset>[], intentions: number[]): void {
         const filtered = changes.filter(isNonEmptyChange);
         let intentionsSeen: number[] = [];
         let index = 0;
@@ -253,7 +253,7 @@ describe("EditManager", () => {
         manager.addSequencedChange(c2);
         manager.addLocalChange(c3.changeset);
         manager.addSequencedChange(c3);
-        checkChangeList(manager, rebaser, [1, 2, 3]);
+        checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can handle non-concurrent local changes being sequenced later", () => {
@@ -282,7 +282,7 @@ describe("EditManager", () => {
         manager.addSequencedChange(c1);
         manager.addSequencedChange(c2);
         manager.addSequencedChange(c3);
-        checkChangeList(manager, rebaser, [1, 2, 3]);
+        checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can handle non-concurrent peer changes sequenced immediately", () => {
@@ -305,7 +305,7 @@ describe("EditManager", () => {
             refNumber: brand(2),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         });
-        checkChangeList(manager, rebaser, [1, 2, 3]);
+        checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can handle non-concurrent peer changes sequenced later", () => {
@@ -328,7 +328,7 @@ describe("EditManager", () => {
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([1, 2], 3),
         });
-        checkChangeList(manager, rebaser, [1, 2, 3]);
+        checkChangeList(manager, [1, 2, 3]);
     });
 
     it("Can rebase a single peer change over multiple peer changes", () => {
@@ -357,7 +357,7 @@ describe("EditManager", () => {
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([], 4),
         });
-        checkChangeList(manager, rebaser, [1, 2, 3, 4]);
+        checkChangeList(manager, [1, 2, 3, 4]);
     });
 
     it("Can rebase multiple non-interleaved peer changes", () => {
@@ -398,7 +398,7 @@ describe("EditManager", () => {
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([4, 5], 6),
         });
-        checkChangeList(manager, rebaser, [1, 2, 3, 4, 5, 6]);
+        checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
     });
 
     it("Can rebase multiple interleaved peer changes", () => {
@@ -439,7 +439,7 @@ describe("EditManager", () => {
             refNumber: brand(0),
             changeset: TestChangeRebaser.mintChangeset([2, 5], 6),
         });
-        checkChangeList(manager, rebaser, [1, 2, 3, 4, 5, 6]);
+        checkChangeList(manager, [1, 2, 3, 4, 5, 6]);
     });
 
     it("Can rebase multiple interleaved peer and local changes", () => {
@@ -510,7 +510,7 @@ describe("EditManager", () => {
         manager.addSequencedChange(c7);
         manager.addSequencedChange(c8);
         manager.addSequencedChange(c9);
-        checkChangeList(manager, rebaser, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        checkChangeList(manager, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
     });
 
     /**
@@ -656,7 +656,7 @@ function runScenario(scenario: readonly ScenarioStep[]): void {
         }
         // Check the validity of the managers
         for (const client of clientData) {
-            checkChangeList(client.manager, rebaser, client.intentions);
+            checkChangeList(client.manager, client.intentions);
             const intentionsThatAnchorsWereRebasedOver =
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 rebaser.anchorRebases.get(client.manager.anchors!)?.intentions;
@@ -677,8 +677,8 @@ function newClientData(family: TestChangeFamily, iClient: number): ClientData {
     };
 }
 
-function checkChangeList(manager: TestEditManager, rebaser: TestChangeRebaser, intentions: number[]): void {
-    rebaser.checkChangeList(getAllChanges(manager), intentions);
+function checkChangeList(manager: TestEditManager, intentions: number[]): void {
+    TestChangeRebaser.checkChangeList(getAllChanges(manager), intentions);
 }
 
 function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChangeset>[] {
