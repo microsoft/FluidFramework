@@ -43,10 +43,11 @@ parameters:
 
 - name: buildNumberInPatch
   type: string
-  default:
+  default: ""
 
 - name: tagName
   type: string
+  default: client
 
 trigger: none
 

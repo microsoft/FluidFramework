@@ -27,7 +27,6 @@
     "ci:build:docs": "lerna run ci:build:docs --stream --parallel",
     "ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
     "ci:test:coverage": "npm run test:coverage ; t1=$? ; npm run test:copyresults ; exit $t1",
-    "ci:test:benchmark": "npm run test:benchmark:report ; t1=$? ; npm run test:benchmark:copyresults ; exit $t1",
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
