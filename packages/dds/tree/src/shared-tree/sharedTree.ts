@@ -8,10 +8,16 @@ import {
     IChannelAttributes,
     IChannelFactory,
     IChannelServices,
-    IFluidDataStoreRuntime
+    IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import {
-    defaultSchemaPolicy, ForestIndex, ObjectForest, SchemaIndex, SequenceChangeFamily, SequenceChangeset, SequenceEditBuilder,
+    defaultSchemaPolicy,
+    ForestIndex, ObjectForest,
+    SchemaIndex,
+    sequenceChangeFamily,
+    SequenceChangeFamily,
+    SequenceChangeset,
+    SequenceEditBuilder,
 } from "../feature-libraries";
 import { IEditableForest, IForestSubscription } from "../forest";
 import { StoredSchemaRepository } from "../schema-stored";
