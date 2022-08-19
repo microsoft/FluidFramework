@@ -5,11 +5,11 @@
 import { strict as assert } from "assert";
 import { StoredSchemaRepository } from "../../schema-stored";
 import { initializeForest } from "../../forest";
-import { JsonableTree, buildForest, proxifyForest } from "../..";
+import { JsonableTree, buildForest, proxifyForest, JsonCursor, jsonableTreeFromCursor, EmptyKey } from "../..";
 import { brand } from "../../util";
 import { defaultSchemaPolicy } from "../../feature-libraries";
 
-const content: JsonableTree = {
+const person: JsonableTree = {
 	type: brand("Test:Person-1.0.0"),
 	fields: {
 		name: [{ value: "Adam", type: brand("String") }],
@@ -22,6 +22,15 @@ const content: JsonableTree = {
 			fields: {
 				street: [{ value: "treeStreet", type: brand("String") }],
 				zip: [{ type: brand("String") }],
+				phones: [{
+					type: brand("Test:Phones-1.0.0"),
+					fields: {
+						[EmptyKey as string]: [
+							{ type: brand("String"), value: "+49123456778" },
+							{ type: brand("Int32"), value: 123456879 },
+						],
+					},
+				}],
 			},
 			type: brand("Test:Address-1.0.0"),
 		}],
@@ -39,13 +48,18 @@ const buildTestProxy = (data: JsonableTree): any => {
 
 describe("forest-proxy", () => {
 	it("proxified forest", () => {
-		const proxy = buildTestProxy(content);
+		const proxy = buildTestProxy(person);
 		assert.ok(proxy);
 		assert.equal(Object.keys(proxy).length, 5);
 	});
 
+	it("cached children", () => {
+		const proxy = buildTestProxy(person);
+		assert.equal(proxy.address, proxy.address);
+	});
+
 	it("get own property descriptor", () => {
-		const proxy = buildTestProxy(content);
+		const proxy = buildTestProxy(person);
 		const descriptor = Object.getOwnPropertyDescriptor(proxy, "name");
 		assert.deepEqual(descriptor, {
 			configurable: true,
@@ -56,37 +70,39 @@ describe("forest-proxy", () => {
 	});
 
 	it("check has field and get value", () => {
-		const proxy = buildTestProxy(content);
+		const proxy = buildTestProxy(person);
 		assert.equal("name" in proxy, true);
 		assert.equal(proxy.name, "Adam");
 	});
 
 	it("read downwards", () => {
-		const proxy = buildTestProxy(content);
+		const proxy = buildTestProxy(person);
 		assert.deepEqual(Object.keys(proxy), ["name", "age", "salary", "friends", "address"]);
 		assert.equal(proxy.name, "Adam");
 		assert.equal(proxy.age, 35);
 		assert.equal(proxy.salary, 10420.2);
 		assert.deepEqual(proxy.friends, { Mat: "Mat" });
-		assert.deepEqual(Object.keys(proxy.address), ["street", "zip"]);
+		assert.deepEqual(Object.keys(proxy.address), ["street", "zip", "phones"]);
 		assert.equal(proxy.address.street, "treeStreet");
+		assert.equal(proxy.address.phones[1], 123456879);
 	});
 
 	it("read upwards", () => {
-		const proxy = buildTestProxy(content);
-		assert.deepEqual(Object.keys(proxy.address), ["street", "zip"]);
+		const proxy = buildTestProxy(person);
+		assert.deepEqual(Object.keys(proxy.address), ["street", "zip", "phones"]);
+		assert.equal(proxy.address.phones[1], 123456879);
 		assert.equal(proxy.address.street, "treeStreet");
 		assert.deepEqual(Object.keys(proxy), ["name", "age", "salary", "friends", "address"]);
 		assert.equal(proxy.name, "Adam");
 	});
 
 	it("update property", () => {
-		const proxy = buildTestProxy(content);
+		const proxy = buildTestProxy(person);
 		assert.throws(() => (proxy.name = "Bob"), "Not implemented");
 	});
 
 	it("add property", () => {
-		const proxy = buildTestProxy(content);
+		const proxy = buildTestProxy(person);
 		const zip: JsonableTree = { value: "99999", type: brand("String") };
 		assert.throws(() => (proxy.address.zip = zip), "Not implemented");
 	});
