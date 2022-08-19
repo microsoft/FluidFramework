@@ -42,6 +42,11 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     public root(range: DetachedField, index = 0): Anchor {
+        if (!this.roots.get(range)?.length) {
+            return this.anchors.track(null);
+        }
+
+        // TODO: Mark anchor as undefined/removed
         return this.anchors.track(
             { parent: undefined, parentField: detachedFieldAsKey(range), parentIndex: index },
         );
