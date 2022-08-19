@@ -81,9 +81,9 @@ export function depthFirstNodeWalk(
         }
 
         // if there is no upAction, we don't need to walk up before exiting
-		if (upAction === undefined && exit) {
-			return false;
-		}
+        if (upAction === undefined && exit) {
+            return false;
+        }
 
         // since we already enumerated the children
         // we walk up to the next level until there is a sibling
