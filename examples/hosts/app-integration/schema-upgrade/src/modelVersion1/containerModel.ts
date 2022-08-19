@@ -22,6 +22,8 @@ const getStateFromMigrationTool = (migrationTool: IMigrationTool) => {
         return MigrationState.migrated;
     } else if (migrationTool.acceptedVersion !== undefined) {
         return MigrationState.migrating;
+    } else if (migrationTool.proposedVersion !== undefined) {
+        return MigrationState.stopping;
     } else {
         return MigrationState.collaborating;
     }
@@ -75,6 +77,7 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         super();
         this._inventoryList = inventoryList;
         this._migrationState = getStateFromMigrationTool(this.migrationTool);
+        this.migrationTool.on("newVersionProposed", this.onNewVersionProposed);
         this.migrationTool.on("newVersionAccepted", this.onNewVersionAccepted);
         this.migrationTool.on("migrated", this.onMigrated);
     }
@@ -98,6 +101,11 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
         await applyStringData(this.inventoryList, initialData);
     };
 
+    private readonly onNewVersionProposed = () => {
+        this._migrationState = MigrationState.stopping;
+        this.emit("stopping");
+    };
+
     private readonly onNewVersionAccepted = () => {
         this._migrationState = MigrationState.migrating;
         this.emit("migrating");
@@ -111,6 +119,14 @@ export class InventoryListContainer extends TypedEventEmitter<IInventoryListCont
     public readonly exportData = async (): Promise<InventoryListContainerExportType> => {
         return exportStringData(this.inventoryList);
     };
+
+    public get proposedVersion() {
+        const version = this.migrationTool.proposedVersion;
+        if (typeof version !== "string" && version !== undefined) {
+            throw new Error("Unexpected code detail format");
+        }
+        return version;
+    }
 
     public get acceptedVersion() {
         const version = this.migrationTool.acceptedVersion;
