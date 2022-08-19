@@ -109,7 +109,7 @@ stages:
             customRegistry: 'useNpmrc'
 
         # Set version
-        - template: include-set-package-version.yml
+        - template: templates/include-set-package-version.yml
           parameters:
             buildDirectory: ${{ variables.buildDirectory }}
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
