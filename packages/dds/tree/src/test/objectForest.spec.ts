@@ -5,9 +5,9 @@
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
+import { ObjectForest } from "../feature-libraries/object-forest";
 import { jsonTypeSchema } from "../domains";
 import { defaultSchemaPolicy } from "../feature-libraries";
-import { ObjectForest } from "../feature-libraries/object-forest";
 import { SchemaData, StoredSchemaRepository } from "../schema-stored";
 
 import { testForest } from "./forest";
