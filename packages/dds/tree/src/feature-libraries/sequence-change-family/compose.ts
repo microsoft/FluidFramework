@@ -71,16 +71,13 @@ function composeMarkLists(
     for (let newMark of newIter) {
         let baseMark: T.Mark | undefined = baseIter.pop();
         if (baseMark === undefined) {
-            // We have reached an region of the field that the base change does not affect.
+            // We have reached a region of the field that the base change does not affect.
             // We therefore adopt the new mark as is.
             factory.push(clone(newMark));
         } else if (isAttachGroup(newMark)) {
             // Content that is being attached by the new changeset cannot interact with base changes.
             // Note that attach marks from different changesets can only target the same gap if they are concurrent.
-            // If two concurrent changesets A and B were targeting the same gap, the changeset that is sequenced later
-            // would bet rebased over the first, resulting in a Skip mark being introduced in the later changeset.
-            // Since compose only deals with changes that are rebased in this way,
-            // we don't have to deal with tie-breaking issues.
+            // This method assumes that `newMarkList` is based on `baseMarkList`, so they are not concurrent.
             factory.pushContent(clone(newMark));
             baseIter.push(baseMark);
         } else if (isReattach(newMark)) {
