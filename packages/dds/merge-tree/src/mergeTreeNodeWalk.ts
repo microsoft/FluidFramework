@@ -106,7 +106,7 @@ export function depthFirstNodeWalk(
             start = block;
             block = block.parent;
             childCount = block.childCount;
-            nextIndex = start.index + 1;
+            nextIndex = start.index + increment;
         } while (exit || nextIndex === -1 || nextIndex === childCount);
         // the above loop ensured that siblings are possible
         start = block.children[nextIndex];
