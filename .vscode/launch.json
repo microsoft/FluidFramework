@@ -284,7 +284,7 @@
             "name": "Debug Current Mocha Test",
             "env": {
                 // "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
-                "FLUID_TEST_VERBOSE": "1"
+                // "FLUID_TEST_VERBOSE": "1"
             },
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
             "windows": {

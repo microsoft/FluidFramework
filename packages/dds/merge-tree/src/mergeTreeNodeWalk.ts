@@ -72,7 +72,7 @@ export function depthFirstNodeWalk(
         // walk the leaves if we reached them
         if (start !== undefined) {
             for (let i = start.index; i !== -1 && i !== childCount; i += increment) {
-                // the above loop ensues start is a leaf or undefined, so all children
+                // the above loop ensures start is a leaf or undefined, so all children
                 // will be leaves if start exits, so the cast is safe
                 if (leafAction(block.children[i] as ISegment) === LeafAction.Exit) {
                     exit = true;
