@@ -7,7 +7,7 @@
         "dockerfile": "Dockerfile",
         // Update 'NODE_VERSION' to pick a Node version: 10, 12, 14
         "args": {
-            "NODE_VERSION": "12"
+            "NODE_VERSION": "14"
         }
     },
     "runArgs": [ "--init" ],
@@ -30,5 +30,10 @@
     "postCreateCommand": ". /usr/local/share/nvm/nvm.sh; nvm install",
 
     // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-    "remoteUser": "node"
+    "remoteUser": "node",
+    "features": {
+        "azure-cli": "latest",
+        "github-cli": "latest",
+        "git-lfs": "latest"
+    }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@fluidframework/server-services-client",
-  "version": "0.1037.1000",
+  "version": "0.1037.2000",
   "description": "Fluid server isomorphic services for communicating with Fluid",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -58,8 +58,8 @@
   },
   "dependencies": {
     "@fluidframework/common-utils": "^1.0.0",
-    "@fluidframework/gitresources": "^0.1037.1000",
-    "@fluidframework/protocol-base": "^0.1037.1000",
+    "@fluidframework/gitresources": "^0.1037.2000",
+    "@fluidframework/protocol-base": "^0.1037.2000",
     "@fluidframework/protocol-definitions": "^1.0.0",
     "axios": "^0.26.0",
     "crc-32": "1.2.0",
@@ -83,7 +83,7 @@
     "@types/node": "^14.18.0",
     "axios-mock-adapter": "^1.19.0",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "eslint": "~8.6.0",
     "mocha": "^10.0.0",
     "nyc": "^15.0.0",

@@ -6,21 +6,22 @@
 import { strict as assert } from "assert";
 
 import {
-    fieldSchema, rootFieldKey,
-    isNeverField, FieldKind,
+    fieldSchema,
+    rootFieldKey,
+    StoredSchemaRepository,
 } from "../../schema-stored";
 import { IEditableForest, initializeForest, TreeNavigationResult } from "../../forest";
 import { JsonCursor, cursorToJsonObject, jsonTypeSchema, jsonNumber, jsonObject } from "../../domains";
 import { recordDependency } from "../../dependency-tracking";
 import { clonePath, Delta, detachedFieldAsKey, JsonableTree, UpPath } from "../../tree";
-import { jsonableTreeFromCursor } from "../..";
+import { defaultSchemaPolicy, FieldKinds, isNeverField, jsonableTreeFromCursor } from "../..";
 import { brand } from "../../util";
 import { MockDependent } from "../utils";
 
 /**
  * Generic forest test suite
  */
-export function testForest(suiteName: string, factory: () => IEditableForest): void {
+export function testForest(suiteName: string, factory: (schema: StoredSchemaRepository) => IEditableForest): void {
     describe(`${suiteName} forest implementation`, () => {
         // Use Json Cursor to insert and extract some Json data
         describe("insert and extract json", () => {
@@ -33,18 +34,18 @@ export function testForest(suiteName: string, factory: () => IEditableForest): v
             ];
             for (const [name, data] of testCases) {
                 it(name, () => {
-                    const forest = factory();
-                    const schema = forest.schema;
+                    const schema = new StoredSchemaRepository(defaultSchemaPolicy);
+                    const forest = factory(schema);
 
                     for (const t of jsonTypeSchema.values()) {
-                        assert(schema.tryUpdateTreeSchema(t.name, t));
+                        schema.updateTreeSchema(t.name, t);
                     }
 
-                    const rootFieldSchema = fieldSchema(FieldKind.Optional, [...jsonTypeSchema.keys()]);
-                    assert(schema.tryUpdateFieldSchema(rootFieldKey, rootFieldSchema));
+                    const rootFieldSchema = fieldSchema(FieldKinds.optional, jsonTypeSchema.keys());
+                    schema.updateFieldSchema(rootFieldKey, rootFieldSchema);
 
                     // Check schema is actually valid. If we forgot to add some required types this would fail.
-                    assert(!isNeverField(schema, rootFieldSchema));
+                    assert(!isNeverField(defaultSchemaPolicy, schema, rootFieldSchema));
 
                     const insertCursor = new JsonCursor(data);
                     const content: JsonableTree[] = [jsonableTreeFromCursor(insertCursor)];
@@ -63,7 +64,7 @@ export function testForest(suiteName: string, factory: () => IEditableForest): v
         });
 
         it("create and use anchors", () => {
-            const forest = factory();
+            const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
             const dependent = new MockDependent("dependent");
             recordDependency(dependent, forest);
 
@@ -137,7 +138,7 @@ export function testForest(suiteName: string, factory: () => IEditableForest): v
 
         // TODOJ: unskip this once Noah makes the fix
         it.skip("tryMoveCursorTo root on an empty forest fails", () => {
-            const forest = factory();
+            const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
             const dependent = new MockDependent("dependent");
             recordDependency(dependent, forest);
 
@@ -150,7 +151,7 @@ export function testForest(suiteName: string, factory: () => IEditableForest): v
         // TODO: test more kinds of deltas, including moves.
         describe("can apply deltas with", () => {
             it("setValue", () => {
-                const forest = factory();
+                const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
                 const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
                 initializeForest(forest, content);
                 const anchor = forest.root(forest.rootField);
@@ -168,7 +169,7 @@ export function testForest(suiteName: string, factory: () => IEditableForest): v
             });
 
             it("clear value", () => {
-                const forest = factory();
+                const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
                 const content: JsonableTree[] = [{ type: jsonNumber.name, value: 1 }];
                 initializeForest(forest, content);
                 const anchor = forest.root(forest.rootField);
@@ -186,7 +187,7 @@ export function testForest(suiteName: string, factory: () => IEditableForest): v
             });
 
             it("delete", () => {
-                const forest = factory();
+                const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
                 const content: JsonableTree[] = [
                     { type: jsonNumber.name, value: 1 },
                     { type: jsonNumber.name, value: 2 },
@@ -210,7 +211,7 @@ export function testForest(suiteName: string, factory: () => IEditableForest): v
         });
 
         it("using an anchor that went away returns NotFound", () => {
-            const forest = factory();
+            const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
             const dependent = new MockDependent("dependent");
             recordDependency(dependent, forest);
 
@@ -228,7 +229,7 @@ export function testForest(suiteName: string, factory: () => IEditableForest): v
 
         describe("top level invalidation", () => {
             it("data editing", () => {
-                const forest = factory();
+                const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
                 const dependent = new MockDependent("dependent");
                 recordDependency(dependent, forest);
 
@@ -249,11 +250,11 @@ export function testForest(suiteName: string, factory: () => IEditableForest): v
             });
 
             it("schema editing", () => {
-                const forest = factory();
+                const forest = factory(new StoredSchemaRepository(defaultSchemaPolicy));
                 const dependent = new MockDependent("dependent");
                 recordDependency(dependent, forest);
                 for (const t of jsonTypeSchema.values()) {
-                    assert(forest.schema.tryUpdateTreeSchema(t.name, t));
+                    forest.schema.updateTreeSchema(t.name, t);
                 }
                 assert.deepEqual(dependent.tokens.length, jsonTypeSchema.size);
             });

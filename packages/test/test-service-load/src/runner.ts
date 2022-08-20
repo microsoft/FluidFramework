@@ -226,7 +226,7 @@ async function runnerProcess(
 
             try {
                 printStatus(runConfig, `running`);
-                done = await test.run(runConfig, reset);
+                done = await test.run(runConfig, reset, logger);
                 reset = false;
                 printStatus(runConfig, done ? `finished` : "closed");
             } catch (error) {

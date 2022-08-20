@@ -39,7 +39,7 @@
     "broken-link-checker": "^0.7.8",
     "colors": "^1.2.1",
     "concurrently": "^6.2.0",
-    "copyfiles": "^2.1.0",
+    "copyfiles": "^2.4.1",
     "cpy": "^8.1.2",
     "deepdash": "^5.3.9",
     "fs-extra": "^10.0.1",

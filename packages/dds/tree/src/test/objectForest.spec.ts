@@ -5,8 +5,15 @@
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
+import { jsonTypeSchema } from "../domains";
+import { defaultSchemaPolicy } from "../feature-libraries";
 import { ObjectForest } from "../feature-libraries/object-forest";
+import { SchemaData, StoredSchemaRepository } from "../schema-stored";
 
 import { testForest } from "./forest";
 
-testForest("object-forest", () => new ObjectForest());
+const schemaData: SchemaData = {
+    globalFieldSchema: new Map(),
+    treeSchema: jsonTypeSchema,
+};
+testForest("object-forest", () => new ObjectForest(new StoredSchemaRepository(defaultSchemaPolicy, schemaData)));

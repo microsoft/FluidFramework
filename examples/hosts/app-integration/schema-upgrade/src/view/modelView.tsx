@@ -31,10 +31,12 @@ export const InventoryListContainerView: React.FC<IInventoryListContainerViewPro
         const migrationStateChangedHandler = () => {
             setDisableInput(model.getMigrationState() !== MigrationState.collaborating);
         };
+        model.on("stopping", migrationStateChangedHandler);
         model.on("migrating", migrationStateChangedHandler);
         model.on("migrated", migrationStateChangedHandler);
         migrationStateChangedHandler();
         return () => {
+            model.off("stopping", migrationStateChangedHandler);
             model.off("migrating", migrationStateChangedHandler);
             model.off("migrated", migrationStateChangedHandler);
         };

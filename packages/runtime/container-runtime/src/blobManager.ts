@@ -9,7 +9,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ICreateBlobResponse, ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { generateHandleContextPath, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert, bufferToString, Deferred, stringToBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainerRuntime, IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -102,6 +102,8 @@ interface PendingBlob {
     uploadP: Promise<ICreateBlobResponse>;
 }
 
+export interface IPendingBlobs { [id: string]: { blob: string; }; }
+
 export class BlobManager {
     public static readonly basePath = "_blobs";
     private static readonly redirectTableBlobName = ".redirectTable";
@@ -154,10 +156,22 @@ export class BlobManager {
         // of the format `/<BlobManager.basePath>/<blobId>`.
         private readonly gcNodeUpdated: (blobPath: string) => void,
         private readonly runtime: IBlobManagerRuntime,
+        stashedBlobs: IPendingBlobs = {},
     ) {
         this.logger = ChildLogger.create(this.runtime.logger, "BlobManager");
         this.runtime.on("disconnected", () => this.onDisconnected());
         this.redirectTable = this.load(snapshot);
+
+        // Begin uploading stashed blobs from previous container instance
+        Object.entries(stashedBlobs).forEach(([localId, entry]) => {
+            const blob = stringToBuffer(entry.blob, "base64");
+            this.pendingBlobs.set(localId, {
+                blob,
+                status: PendingBlobStatus.OfflinePendingUpload,
+                handleP: new Deferred(),
+                uploadP: this.uploadBlob(localId, blob),
+            });
+        });
     }
 
     private get pendingOfflineUploads() {
@@ -565,5 +579,13 @@ export class BlobManager {
             // set identity (id -> id) entry
             this.redirectTable.set(storageId, storageId);
         }
+    }
+
+    public getPendingBlobs(): IPendingBlobs {
+        const blobs = {};
+        for (const [key, entry] of this.pendingBlobs) {
+            blobs[key] = { blob: bufferToString(entry.blob, "base64") };
+        }
+        return blobs;
     }
 }
