@@ -18,6 +18,7 @@
     "build:webpack": "npm run webpack",
     "build:webpack:dev": "webpack --env.clean",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
+    "esbuild": "node esbuild.cjs",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",

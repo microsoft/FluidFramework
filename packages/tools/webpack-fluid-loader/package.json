@@ -26,6 +26,7 @@
     "build:test": "tsc --project ./src/test/tsconfig.json",
     "build:webpack": "npm run webpack",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "esbuild": "node esbuild.cjs",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",

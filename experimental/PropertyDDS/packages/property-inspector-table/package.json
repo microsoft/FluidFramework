@@ -27,6 +27,7 @@
     "build:full:compile": "npm run build:compile",
     "build:webpack": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+    "esbuild": "node esbuild.cjs",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "lint": "npm run eslint",
