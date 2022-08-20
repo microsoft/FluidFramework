@@ -13,7 +13,7 @@ import {
     splitMarkOnInput,
     Transposed as T,
 } from "../../changeset";
-import { clone, fail } from "../../util";
+import { clone, fail, StackyIterator } from "../../util";
 import { SequenceChangeset } from "./sequenceChangeset";
 
 /**
@@ -52,15 +52,13 @@ function rebaseFieldMarks(change: T.FieldMarks, base: T.FieldMarks): T.FieldMark
 
 function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.MarkList {
     const factory = new MarkListFactory();
-    let iBase = 0;
-    let iCurr = 0;
-    let nextCurrMark: T.Mark | undefined = currMarkList[iCurr];
-    let nextBaseMark: T.Mark | undefined = baseMarkList[iBase];
-    while (nextCurrMark !== undefined && nextBaseMark !== undefined) {
-        let currMark: T.Mark = nextCurrMark;
-        let baseMark: T.Mark = nextBaseMark;
-        nextCurrMark = undefined;
-        nextBaseMark = undefined;
+    const baseIter = new StackyIterator(baseMarkList);
+    const currIter = new StackyIterator(currMarkList);
+    for (let baseMark of baseIter) {
+        let currMark: T.Mark | undefined = currIter.pop();
+        if (currMark === undefined) {
+            break;
+        }
 
         if (isAttachGroup(currMark)) {
             // We currently ignore the ways in which base marks could affect attaches.
@@ -70,7 +68,7 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             // We ignore #1 because slices are not yet supported.
             // We ignore #2 because we do not yet support specifying the tiebreak.
             factory.pushContent(clone(currMark));
-            nextBaseMark = baseMark;
+            baseIter.push(baseMark);
         } else if (isReattach(currMark)) {
             // We currently ignore the ways in which base marks could affect re-attaches.
             // These are:
@@ -79,7 +77,7 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             // We ignore #1 because it could only occur if undo were supported.
             // We ignore #2 because we do not yet support specifying the tiebreak.
             factory.pushContent(clone(currMark));
-            nextBaseMark = baseMark;
+            baseIter.push(baseMark);
         } else if (isReattach(baseMark)) {
             // We currently ignore the ways in which curr marks overlap with this re-attach.
             // These are:
@@ -88,14 +86,14 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             // We ignore #1 because it could only occur if undo were supported.
             // We ignore #2 because we do not yet produce tombs.
             factory.pushOffset(getOutputLength(baseMark));
-            nextCurrMark = currMark;
+            currIter.push(currMark);
         } else if (isAttachGroup(baseMark)) {
             // We currently ignore the ways in which curr marks overlap with these attaches.
             // These are:
             // 1. Slice ranges that include prior insertions
             // We ignore #1 because we do not yet support slices.
             factory.pushOffset(getOutputLength(baseMark));
-            nextCurrMark = currMark;
+            currIter.push(currMark);
         } else {
             // If we've reached this branch then `baseMark` and `currMark` start at the same location
             // in the document field at the revision to which both changesets apply.
@@ -105,9 +103,13 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             const currMarkLength = getInputLength(currMark);
             const baseMarkLength = getInputLength(baseMark);
             if (currMarkLength < baseMarkLength) {
+                let nextBaseMark;
                 [baseMark, nextBaseMark] = splitMarkOnInput(baseMark, currMarkLength);
+                baseIter.push(nextBaseMark);
             } else if (currMarkLength > baseMarkLength) {
+                let nextCurrMark;
                 [currMark, nextCurrMark] = splitMarkOnInput(currMark, baseMarkLength);
+                currIter.push(nextCurrMark);
             }
             // Past this point, we are guaranteed that `baseMark` and `currMark` have the same length and
             // start at the same location at the revision to which both changesets apply.
@@ -115,17 +117,9 @@ function rebaseMarkList(currMarkList: T.MarkList, baseMarkList: T.MarkList): T.M
             const rebasedMark = rebaseMark(currMark, baseMark);
             factory.push(rebasedMark);
         }
-        if (nextCurrMark === undefined) {
-            iCurr += 1;
-            nextCurrMark = currMarkList[iCurr];
-        }
-        if (nextBaseMark === undefined) {
-            iBase += 1;
-            nextBaseMark = baseMarkList[iBase];
-        }
     }
-    if (nextCurrMark !== undefined) {
-        factory.push(nextCurrMark, ...currMarkList.slice(iCurr + 1));
+    for (const currMark of currIter) {
+        factory.push(currMark);
     }
     return factory.list;
 }
