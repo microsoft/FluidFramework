@@ -52,6 +52,11 @@
     "react-virtualized-auto-sizer": "^1.0.6"
   },
   "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/eslint-parser": "^7.16.5",
+    "@babel/plugin-transform-runtime": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
+    "@craftamap/esbuild-plugin-html": "^0.4.0",
     "@fluid-experimental/property-binder": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/property-changeset": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
     "@fluid-experimental/property-dds": ">=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0",
@@ -79,6 +84,12 @@
     "concurrently": "^6.2.0",
     "copyfiles": "^2.4.1",
     "enzyme": "^3.10.0",
+<<<<<<< HEAD
+=======
+    "enzyme-adapter-react-16": "^1.14.0",
+    "esbuild": "^0.15.5",
+    "esbuild-loader": "^2.19.0",
+>>>>>>> 6d9e89cf08 (add esbuild dep)
     "eslint": "~8.6.0",
     "html-webpack-plugin": "^5.5.0",
     "identity-obj-proxy": "^3.0.0",

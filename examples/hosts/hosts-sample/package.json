@@ -50,6 +50,8 @@
     "@types/react": "^17.0.1",
     "@types/semver": "^7.3.6",
     "concurrently": "^6.2.0",
+    "esbuild": "^0.15.5",
+    "esbuild-loader": "^2.19.0",
     "eslint": "~8.6.0",
     "rimraf": "^2.6.2",
     "source-map-loader": "^2.0.0",
