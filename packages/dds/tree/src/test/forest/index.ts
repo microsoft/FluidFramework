@@ -4,4 +4,3 @@
  */
 
 export * from "./forest.spec";
-export * from "./editableForest.spec";
