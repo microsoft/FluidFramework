@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import {
+    typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo,
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo } from "../../schema-view/typedSchema";
+} from "../../../feature-libraries/modular-schema/typedSchema";
 
-import { FieldKind, ValueSchema } from "../../schema-stored";
-import { requireTrue } from "../../util";
+import { ValueSchema } from "../../../schema-stored";
+import { requireTrue } from "../../../util";
+import { FieldKinds } from "../../../feature-libraries";
 
 // These tests currently just cover the type checking, so its all compile time.
 
@@ -20,7 +23,7 @@ export const testTypeIdentifier = "testType";
 
 const testField = typedFieldSchema({
     types: { testType: 0 as unknown },
-    kind: FieldKind.Value,
+    kind: FieldKinds.value,
 });
 
 export const testTreeSchema = typedTreeSchema({
