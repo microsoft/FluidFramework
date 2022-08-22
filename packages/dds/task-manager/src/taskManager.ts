@@ -359,23 +359,20 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
         // Always allow abandon if the client is subscribed to allow clients to unsubscribe while disconnected.
         // Otherwise, we should check to make sure the client is both connected queued for the task before sending an
         // abandon op.
-        if (!this.subscribed(taskId)) {
-            if (!this.connected) {
-                throw new Error(`Attempted to abandon in disconnected state: ${taskId}`);
-            }
-
-            // Nothing to do if we're not at least trying to get the lock.
-            if (!this.queued(taskId)) {
-                return;
-            }
-
-            // TODO simulate auto-ack in detached scenario
-            if (!this.isAttached()) {
-                return;
-            }
+        if (!this.subscribed(taskId) && !this.queued(taskId)) {
+            // Nothing to do
+            return;
         }
 
-        this.submitAbandonOp(taskId);
+        // TODO simulate auto-ack in detached scenario
+        if (!this.isAttached()) {
+            return;
+        }
+
+        // If we're subscribed but not queued, we don't need to submit an abandon op (probably offline)
+        if (this.queued(taskId)) {
+            this.submitAbandonOp(taskId);
+        }
         this.abandonWatcher.emit("abandon", taskId);
     }
 
