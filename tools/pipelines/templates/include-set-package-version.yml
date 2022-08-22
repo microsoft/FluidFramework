@@ -24,7 +24,6 @@ steps:
     script: |
       pushd "$(Build.SourcesDirectory)/build-tools"
       npm ci
-      # npm run install:build-tools
       popd
       npm link "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
 
@@ -34,7 +33,7 @@ steps:
       echo $prefix
       # ln -s "$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin/run" "$(prefix)/bin/flub"
 
-      flub help
+      flub
 
 - task: Bash@3
   name: SetVersion
