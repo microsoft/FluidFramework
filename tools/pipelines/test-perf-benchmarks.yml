@@ -158,12 +158,12 @@ stages:
             customCommand: 'install @ff-internal/aria-logger'
             customRegistry: 'useNpmrc'
 
-        - task: Npm@1
-          displayName: 'Run performance benchmarks - runtime'
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
-            customCommand: 'run test:benchmark:report'
+        # - task: Npm@1
+        #   displayName: 'Run performance benchmarks - runtime'
+        #   inputs:
+        #     command: 'custom'
+        #     workingDir: ${{ variables.buildDirectory }}
+        #     customCommand: 'run test:benchmark:report'
 
         - task: Npm@1
           displayName: 'Consolidate output files - runtime'
@@ -181,6 +181,7 @@ stages:
               npm i;
               npm run build:compile;
               pwd;
+              echo "$(toolFolder)";
               ls;
               ls node_modules | grep "@ff";
               node --require node_modules/@ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
