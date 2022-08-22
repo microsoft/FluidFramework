@@ -34,7 +34,6 @@ function createLocalMap(id: string) {
     return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 async function populate(directory: SharedDirectory, content: object) {
     const storage = new MockSharedObjectServices({
         header: JSON.stringify(content),
@@ -994,8 +993,8 @@ describe("Directory", () => {
                 const root3SubDir = directory3.createSubDirectory("testSubDir");
                 root3SubDir.clear();
                 root2SubDir.set("key3", "testValue3");
-                console.log("messages ", containerRuntimeFactory["messages"]);
-                // After the above scenario, the consistent state using LWW would be to not have testSubDir.
+
+                // After the above scenario, the consistent state using LWW would to have testSubDir with no key.
                 containerRuntimeFactory.processAllMessages();
                 const directory1SubDir = directory1.getSubDirectory("testSubDir");
                 const directory2SubDir = directory2.getSubDirectory("testSubDir");
@@ -1005,13 +1004,9 @@ describe("Directory", () => {
                 assert(directory2SubDir !== undefined, "SubDirectory on dir 2 should be present");
                 assert(directory3SubDir !== undefined, "SubDirectory on dir 3 should be present");
 
-                assert.strictEqual(directory1SubDir.size, 1, "Dir1 1 key should exist");
-                assert.strictEqual(directory2SubDir.size, 1, "Dir2 1 key should exist");
-                assert.strictEqual(directory3SubDir.size, 1, "Dir3 1 key should exist");
-
-                assert.strictEqual(directory1SubDir.get("key3"), "testValue3", "Dir1 key value should match");
-                assert.strictEqual(directory2SubDir.get("key3"), "testValue3", "Dir2 key value should match");
-                assert.strictEqual(directory3SubDir.get("key3"), "testValue3", "Dir3 key value should match");
+                assert.strictEqual(directory1SubDir.size, 0, "Dir1 0 key should exist");
+                assert.strictEqual(directory2SubDir.size, 0, "Dir2 0 key should exist");
+                assert.strictEqual(directory3SubDir.size, 0, "Dir3 0 key should exist");
             });
         });
 

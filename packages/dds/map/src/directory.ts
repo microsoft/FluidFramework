@@ -50,12 +50,14 @@ const snapshotFileName = "header";
 interface IDirectoryMessageHandler {
     /**
      * Apply the given operation.
+     * @param msg - The message from the server to apply.
      * @param op - The directory operation to apply
      * @param local - Whether the message originated from the local client
      * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
      * For messages from a remote client, this will be undefined.
      */
     process(
+        msg: ISequencedDocumentMessage,
         op: IDirectoryOperation,
         local: boolean,
         localOpMetadata: unknown,
@@ -339,7 +341,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     /**
      * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
      */
-    private readonly root: SubDirectory = new SubDirectory(this, this.runtime, this.serializer, posix.sep);
+    private readonly root: SubDirectory = new SubDirectory(0, [], this, this.runtime, this.serializer, posix.sep);
 
     /**
      * Mapping of op types to message handlers.
@@ -614,6 +616,8 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                     let newSubDir = currentSubDir.getSubDirectory(subdirName) as SubDirectory;
                     if (!newSubDir) {
                         newSubDir = new SubDirectory(
+                            0,
+                            [],
                             this,
                             this.runtime,
                             this.serializer,
@@ -647,7 +651,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
             const op: IDirectoryOperation = message.contents as IDirectoryOperation;
             const handler = this.messageHandlers.get(op.type);
             assert(handler !== undefined, 0x00e /* Missing message handler for message type */);
-            handler.process(op, local, localOpMetadata);
+            handler.process(message, op, local, localOpMetadata);
         }
     }
 
@@ -693,6 +697,17 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         return this.localValueMaker.fromSerializable(serializable);
     }
 
+    private shouldProcessMessage(subDir: SubDirectory, msg: ISequencedDocumentMessage) {
+        // If the message is either from the creator of directory or this directory was created when
+        // container was detached or in case this directory is already live(known to other clients)
+        // and the op was created after the directory was created then apply this op.
+        if (subDir.clientIds.includes(msg.clientId) || subDir.clientIds.includes("detached") ||
+            (subDir.sequenceNumber !== -1 && subDir.sequenceNumber <= msg.referenceSequenceNumber)) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Set the message handlers for the directory.
      */
@@ -700,9 +715,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "clear",
             {
-                process: (op: IDirectoryClearOperation, local, localOpMetadata) => {
+                process: (msg: ISequencedDocumentMessage, op: IDirectoryClearOperation, local, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    if (subdir) {
+                    if (subdir && this.shouldProcessMessage(subdir, msg)) {
                         subdir.processClearMessage(op, local, localOpMetadata);
                     }
                 },
@@ -717,9 +732,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "delete",
             {
-                process: (op: IDirectoryDeleteOperation, local, localOpMetadata) => {
+                process: (msg: ISequencedDocumentMessage, op: IDirectoryDeleteOperation, local, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    if (subdir) {
+                    if (subdir && this.shouldProcessMessage(subdir, msg)) {
                         subdir.processDeleteMessage(op, local, localOpMetadata);
                     }
                 },
@@ -734,9 +749,9 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "set",
             {
-                process: (op: IDirectorySetOperation, local, localOpMetadata) => {
+                process: (msg: ISequencedDocumentMessage, op: IDirectorySetOperation, local, localOpMetadata) => {
                     const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    if (subdir) {
+                    if (subdir && this.shouldProcessMessage(subdir, msg)) {
                         const context = local ? undefined : this.makeLocal(op.key, op.path, op.value);
                         subdir.processSetMessage(op, context, local, localOpMetadata);
                     }
@@ -753,10 +768,15 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "createSubDirectory",
             {
-                process: (op: IDirectoryCreateSubDirectoryOperation, local, localOpMetadata) => {
+                process: (
+                    msg: ISequencedDocumentMessage,
+                    op: IDirectoryCreateSubDirectoryOperation,
+                    local,
+                    localOpMetadata,
+                ) => {
                     const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
                     if (parentSubdir) {
-                        parentSubdir.processCreateSubDirectoryMessage(op, local, localOpMetadata);
+                        parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
                     }
                 },
                 submit: (op: IDirectoryCreateSubDirectoryOperation, localOpMetadata: unknown) => {
@@ -772,10 +792,18 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
         this.messageHandlers.set(
             "deleteSubDirectory",
             {
-                process: (op: IDirectoryDeleteSubDirectoryOperation, local, localOpMetadata) => {
-                    const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-                    if (parentSubdir) {
-                        parentSubdir.processDeleteSubDirectoryMessage(op, local, localOpMetadata);
+                process: (
+                    msg: ISequencedDocumentMessage,
+                    op: IDirectoryDeleteSubDirectoryOperation,
+                    local,
+                    localOpMetadata,
+                ) => {
+                    const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+                    if (subdir && this.shouldProcessMessage(subdir, msg)) {
+                        const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
+                        if (parentSubdir) {
+                            parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
+                        }
                     }
                 },
                 submit: (op: IDirectoryDeleteSubDirectoryOperation, localOpMetadata: unknown) => {
@@ -820,7 +848,6 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
                 }
                 const result: ISerializableValue = {
                     type: value.type,
-                    // eslint-disable-next-line @typescript-eslint/ban-types
                     value: value.value && JSON.parse(value.value) as object,
                 };
                 if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
@@ -965,12 +992,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
     /**
      * Constructor.
+     * @param sequenceNumber - Message seq number at which this was created.
+     * @param clientIds - Ids of client which created this directory.
      * @param directory - Reference back to the SharedDirectory to perform operations
      * @param runtime - The data store runtime this directory is associated with
      * @param serializer - The serializer to serialize / parse handles
      * @param absolutePath - The absolute path of this IDirectory
      */
     constructor(
+        public sequenceNumber: number,
+        public clientIds: string[],
         private readonly directory: SharedDirectory,
         private readonly runtime: IFluidDataStoreRuntime,
         private readonly serializer: IFluidSerializer,
@@ -1080,10 +1111,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
         }
 
         // Create the sub directory locally first.
-        const isNew = this.createSubDirectoryCore(subdirName, true);
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const subDir: IDirectory = this._subdirectories.get(subdirName)!;
+        const isNew = this.createSubDirectoryCore(subdirName, true, -1, this.directory.isAttached() ?
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            this.runtime.clientId! : "detached");
+        const subDir = this._subdirectories.get(subdirName);
+        assert(subDir !== undefined, "subdirectory should exist after creation");
 
         // If we are not attached, don't submit the op.
         if (!this.directory.isAttached()) {
@@ -1395,15 +1427,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public processCreateSubDirectoryMessage(
+        msg: ISequencedDocumentMessage,
         op: IDirectoryCreateSubDirectoryOperation,
         local: boolean,
         localOpMetadata: unknown,
     ): void {
         this.throwIfDisposed();
-        if (!this.needProcessSubDirectoryOperation(op, local, localOpMetadata)) {
+        if (!this.needProcessSubDirectoryOperation(msg, op, local, localOpMetadata)) {
             return;
         }
-        this.createSubDirectoryCore(op.subdirName, local);
+        this.createSubDirectoryCore(op.subdirName, local, msg.sequenceNumber, msg.clientId);
     }
 
     /**
@@ -1415,12 +1448,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @internal
      */
     public processDeleteSubDirectoryMessage(
+        msg: ISequencedDocumentMessage,
         op: IDirectoryDeleteSubDirectoryOperation,
         local: boolean,
         localOpMetadata: unknown,
     ): void {
         this.throwIfDisposed();
-        if (!this.needProcessSubDirectoryOperation(op, local, localOpMetadata)) {
+        if (!this.needProcessSubDirectoryOperation(msg, op, local, localOpMetadata)) {
             return;
         }
         this.deleteSubDirectoryCore(op.subdirName, local);
@@ -1779,6 +1813,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @returns True if the operation should be processed, false otherwise
      */
     private needProcessSubDirectoryOperation(
+        msg: ISequencedDocumentMessage,
         op: IDirectorySubDirectoryOperation,
         local: boolean,
         localOpMetadata: unknown,
@@ -1807,7 +1842,26 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
                 // If this is remote delete op and we have keys in this subDirectory, then we need to delete these
                 // keys except the pending ones as they will be sequenced after this delete.
                 const subDirectory = this._subdirectories.get(op.subdirName);
-                subDirectory?.clearExceptPendingKeys();
+                if (subDirectory) {
+                    subDirectory.clearExceptPendingKeys();
+                    // In case of remote delete op, we need to reset the creation seq number and client ids of
+                    // creators as the previous directory is getting deleted and we will initialize again when
+                    // we will receive op for the create again.
+                    subDirectory.sequenceNumber = -1;
+                    subDirectory.clientIds = [];
+                }
+            }
+            if (op.type === "createSubDirectory") {
+                const dir = this._subdirectories.get(op.subdirName);
+                if (dir?.sequenceNumber === -1) {
+                    // Only set the seq on the first message, could be more
+                    dir.sequenceNumber = msg.sequenceNumber;
+                }
+                // The client created the dir at or after the dirs seq, so list its client id as a creator.
+                if (dir !== undefined && !dir.clientIds.includes(msg.clientId)
+                    && dir.sequenceNumber <= msg.sequenceNumber) {
+                    dir.clientIds.push(msg.clientId);
+                }
             }
             return false;
         }
@@ -1884,14 +1938,18 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
      * @param local - Whether the message originated from the local client
      * @returns - True if is newly created, false if it already existed.
      */
-    private createSubDirectoryCore(subdirName: string, local: boolean): boolean {
-        if (!this._subdirectories.has(subdirName)) {
+    private createSubDirectoryCore(subdirName: string, local: boolean, seq: number, clientId: string): boolean {
+        const subdir = this._subdirectories.get(subdirName);
+        if (subdir === undefined) {
             const absolutePath = posix.join(this.absolutePath, subdirName);
-            const subDir = new SubDirectory(this.directory, this.runtime, this.serializer, absolutePath);
+            const subDir = new SubDirectory(
+                seq, [clientId], this.directory, this.runtime, this.serializer, absolutePath);
             this.registerEventsOnSubDirectory(subDir, subdirName);
             this._subdirectories.set(subdirName, subDir);
             this.emit("subDirectoryCreated", subdirName, local, this);
             return true;
+        } else {
+            subdir.clientIds.push(clientId);
         }
         return false;
     }
