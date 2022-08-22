@@ -14,8 +14,7 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./canada";
 import { generateTwitterJsonByByteSize, getTwitterJsonTextFieldMarkovChain,
-     parseSentencesIntoWords,
-     parseTwitterJsonIntoSentences, TwitterJson, twitterRawJson } from "./twitter";
+     parseSentencesIntoWords, TwitterJson, twitterRawJson } from "./twitter";
 import { getSizeInBytes } from "./jsonGeneratorUtils";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -178,13 +177,13 @@ describe("ITreeCursor", () => {
     console.timeEnd("userDescFieldSpaceEffChain.generateSentence()");
     const userDescFieldSpaceEffMarkovChainSize = getSizeInBytes(userDescFieldSpaceEffChain.chain);
     const userDescSpaceEffKeyLen = Object.keys(userDescFieldSpaceEffChain.chain).length;
-    const descriptionFieldStringifiedChain = JSON.stringify(userDescFieldSpaceEffChain.chain);
+    const userDescFieldStringifiedChain = JSON.stringify(userDescFieldSpaceEffChain.chain);
 
     // example of producting a markov chain class instance from a precomputed markov chain.
     const textFieldChainFromString =
      new SpaceEfficientMarkovChain(makeRandom(), getTwitterJsonTextFieldMarkovChain());
     const userDescChainFromString =
-    new SpaceEfficientMarkovChain(makeRandom(), JSON.parse(descriptionFieldStringifiedChain));
+    new SpaceEfficientMarkovChain(makeRandom(), JSON.parse(userDescFieldStringifiedChain));
     const textFieldGeneratedSentence3 = textFieldChainFromString.generateSentence(maxTextFieldLength);
     const userDescFieldGeneratedSentence2 = userDescChainFromString.generateSentence(maxUserDescFieldLength);
 
