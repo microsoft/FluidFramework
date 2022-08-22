@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 
@@ -9,7 +14,7 @@ export class ConsoleLogger implements ITelemetryBufferedLogger {
     public constructor() {
     }
 
-    async flush(runInfo?: { url: string; runId?: number; }): Promise<void> {
+    async flush(): Promise<void> {
         return;
     }
 
