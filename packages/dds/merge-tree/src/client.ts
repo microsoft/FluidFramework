@@ -115,7 +115,7 @@ export class Client {
      */
     public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
         let node = this._mergeTree.pendingSegments?.last;
-        if (count === 1 && node) {
+        if (count === 1) {
             return node?.data;
         }
         const taken: SegmentGroup[] = [];
