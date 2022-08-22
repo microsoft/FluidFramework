@@ -4,7 +4,7 @@
  */
 
 import { Skip, Transposed as T } from "./format";
-import { extendAttachGroup, isAttachGroup, isObjMark, isSkipMark, tryExtendMark } from "./utils";
+import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -37,20 +37,9 @@ export class MarkListFactory {
             this.offset = 0;
         }
         const prev = this.list[this.list.length - 1];
-        if (isObjMark(prev)) {
-            if (isAttachGroup(prev)) {
-                if (isAttachGroup(mark)) {
-                    extendAttachGroup(prev, mark);
-                    return;
-                }
-            } else if (
-                !isAttachGroup(mark)
-                && prev.type === mark.type
-            ) {
-                // Neither are attach groups
-                if (tryExtendMark(prev, mark)) {
-                    return;
-                }
+        if (isObjMark(prev) && prev.type === mark.type) {
+            if (tryExtendMark(prev, mark)) {
+                return;
             }
         }
         this.list.push(mark);

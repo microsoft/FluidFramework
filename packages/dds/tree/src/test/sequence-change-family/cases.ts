@@ -60,7 +60,7 @@ export const cases: {
         marks: {
             root: [
                 1,
-                [{ type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] }],
+                { type: "Insert", id: 1, content: [{ type, value: 1 }, { type, value: 2 }] },
             ],
         },
     },
@@ -70,7 +70,7 @@ export const cases: {
                 type: "Modify",
                 fields: {
                     foo: [
-                        [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                        { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                     ],
                 },
             }],
@@ -80,16 +80,16 @@ export const cases: {
         marks: {
             root: [
                 1,
-                [{
+                {
                     type: "MInsert",
                     id: 1,
                     content: { type, value: 1 },
                     fields: {
                         foo: [
-                            [{ type: "Insert", id: 2, content: [{ type, value: 2 }] }],
+                            { type: "Insert", id: 2, content: [{ type, value: 2 }] },
                         ],
                     },
-                }],
+                },
             ],
         },
     },
