@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* eslint-disable no-constant-condition */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable @typescript-eslint/promise-function-async */
@@ -12,7 +13,6 @@
 
 import * as fs from "fs";
 import { EOL as newline } from "os";
-// eslint-disable-next-line camelcase
 import * as child_process from "child_process";
 // eslint-disable-next-line unicorn/import-style
 import * as path from "path";
@@ -29,24 +29,24 @@ import {
 import { BaseCommand } from "../../base";
 
 const readStdin: () => Promise<string | undefined> = () => {
-    return new Promise(resolve => {
-      const stdin = process.openStdin()
-      stdin.setEncoding('utf-8')
+    return new Promise((resolve) => {
+        const stdin = process.openStdin();
+        stdin.setEncoding("utf-8");
 
-      let data = ''
-      stdin.on('data', chunk => {
-        data += chunk
-      })
+        let data = "";
+        stdin.on("data", (chunk) => {
+            data += chunk;
+        });
 
-      stdin.on('end', () => {
-        resolve(data)
-      })
+        stdin.on("end", () => {
+            resolve(data);
+        });
 
-      if (stdin.isTTY) {
-        resolve('')
-      }
-    })
-  }
+        if (stdin.isTTY) {
+            resolve("");
+        }
+    });
+};
 
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
     static description =
@@ -159,7 +159,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
             if (pathRegex.test(line) && fs.existsSync(filePath)) {
                 count++;
                 if (exclusions.every((value) => !value.test(line))) {
-                    routeToHandlers(filePath);
+                    try {
+                        routeToHandlers(filePath);
+                    } finally {
+                        runPolicyCheck();
+                        logStats();
+                    }
+
                     processed++;
                 } else {
                     this.log(`Excluded: ${line}`);
@@ -207,48 +213,33 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
         }
 
         if (flags.stdin) {
-
-            const pipeString = await readStdin()
+            const pipeString = await readStdin();
 
             if (pipeString) {
-                this.log(pipeString)
-            } else {
-                this.log(pipeString)
+                pipeString.split("\n").map((line: string) => handleLine(line));
+                return;
             }
 
-            // while (true) {
-            //     const filePath: string = await CliUx.ux.prompt("1", { required: false });
-            //     if (filePath === "") {
-            //         runPolicyCheck();
-            //         logStats();
-            //         break;
-            //     }
-
-            //     handleLine(filePath);
-            // }
-
-            // process.on("beforeExit", logStats); // never runs
-        } else {
-            // eslint-disable-next-line camelcase
-            pathToGitRoot = child_process
-                .execSync("git rev-parse --show-cdup", { encoding: "utf8" })
-                .trim();
-            // eslint-disable-next-line camelcase
-            const p = child_process.spawn("git", [
-                "ls-files",
-                "-co",
-                "--exclude-standard",
-                "--full-name",
-            ]);
-            let scriptOutput = "";
-            p.stdout.on("data", (data) => {
-                scriptOutput = `${scriptOutput}${data.toString()}`;
-            });
-            p.stdout.on("close", () => {
-                scriptOutput.split("\n").map((line: string) => handleLine(line));
-                runPolicyCheck();
-                logStats();
-            });
+            runPolicyCheck();
+            logStats();
+            return;
         }
+
+        pathToGitRoot = child_process
+            .execSync("git rev-parse --show-cdup", { encoding: "utf8" })
+            .trim();
+        const p = child_process.spawn("git", [
+            "ls-files",
+            "-co",
+            "--exclude-standard",
+            "--full-name",
+        ]);
+        let scriptOutput = "";
+        p.stdout.on("data", (data) => {
+            scriptOutput = `${scriptOutput}${data.toString()}`;
+        });
+        p.stdout.on("close", () => {
+            scriptOutput.split("\n").map((line: string) => handleLine(line));
+        });
     }
 }
