@@ -25,6 +25,9 @@ export interface ISharedTreeCoreEvents extends ISharedObjectEvents {
     (event: "updated", listener: () => void): unknown;
 }
 
+// TODO: How should the format version be determined?
+const formatVersion = 0;
+
 /**
  * Generic shared tree, which needs to be configured with indexes, field kinds and a history policy to be used.
  *
@@ -45,7 +48,7 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
      */
     public constructor(
         private readonly indexes: Index<TChange>[],
-        changeFamily: TChangeFamily,
+        public readonly changeFamily: TChangeFamily,
         anchors: AnchorSet,
 
         // Base class arguments
@@ -117,10 +120,18 @@ export class SharedTreeCore<TChange, TChangeFamily extends ChangeFamily<any, TCh
         this.editManager.setLocalSessionId(this.runtime.clientId);
     }
 
+    public submitEdit(edit: TChange): void {
+        const delta = this.editManager.addLocalChange(edit);
+        for (const index of this.indexes) {
+            index.newLocalChange?.(edit);
+            index.newLocalState?.(delta);
+        }
+
+        this.submitLocalMessage(this.changeFamily.encoder.encodeForJson(formatVersion, edit));
+    }
+
     protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) {
-        // TODO: How should the format version be determined?
-        const formatVersion = 0;
-        const changes = this.editManager.changeFamily.encoder.decodeJson(formatVersion, message.contents);
+        const changes = this.changeFamily.encoder.decodeJson(formatVersion, message.contents);
         const commit: Commit<TChange> = {
             sessionId: message.clientId,
             seqNumber: brand(message.sequenceNumber),

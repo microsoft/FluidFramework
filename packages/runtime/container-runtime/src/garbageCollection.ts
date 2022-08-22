@@ -690,7 +690,7 @@ export class GarbageCollector implements IGarbageCollector {
             const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
             const baseGCDetailsMap = unpackChildNodesGCDetails({ gcData: { gcNodes }, usedRoutes });
-            // Currently, the nodes may write the GC data. So, we need to update it's base GC details with the
+            // Currently, the nodes may write the GC data. So, we need to update its base GC details with the
             // unreferenced timestamp. Once we start writing the GC data here, we won't need to do this anymore.
             for (const [nodeId, nodeData] of Object.entries(baseState.gcNodes)) {
                 if (nodeData.unreferencedTimestampMs !== undefined) {

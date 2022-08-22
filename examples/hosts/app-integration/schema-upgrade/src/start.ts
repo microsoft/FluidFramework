@@ -7,7 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { createTinyliciousCreateNewRequest } from "@fluidframework/tinylicious-driver";
-import { DemoCodeLoader } from "./demoLoaders";
+import { DemoCodeLoader } from "./demoCodeLoader";
 import { ModelLoader } from "./modelLoading";
 import { externalDataSource } from "./externalData";
 import { IMigratableModel, IVersionedModel } from "./migrationInterfaces";
@@ -15,6 +15,7 @@ import { Migrator } from "./migrator";
 import { IInventoryListContainer } from "./modelInterfaces";
 import { TinyliciousService } from "./tinyliciousService";
 import { DebugView, InventoryListContainerView } from "./view";
+import { inventoryListDataTransformationCallback } from "./dataTransform";
 
 const updateTabForId = (id: string) => {
     // Update the URL with the actual ID
@@ -96,7 +97,9 @@ async function start(): Promise<void> {
 
     // The Migrator takes the starting state (model and id) and watches for a migration proposal.  It encapsulates
     // the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
-    const migrator = new Migrator(modelLoader, model, id);
+    // It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
+    // import with newly created models.
+    const migrator = new Migrator(modelLoader, model, id, inventoryListDataTransformationCallback);
     migrator.on("migrated", () => {
         model.close();
         render(migrator.currentModel);
@@ -108,7 +111,7 @@ async function start(): Promise<void> {
     // ModelLoader doesn't know about.
     // However, this will never be hit in this demo since we have a finite set of models to support.  If the model
     // code loader pulls in the appropriate model dynamically, this might also never be hit since all clients
-    // theoretically are referencing the same model library.
+    // are theoretically referencing the same model library.
     migrator.on("migrationNotSupported", (version: string) => {
         // To move forward, we would need to acquire a model loader capable of loading the given model, retry the
         // load, and set up a new Migrator with the new model loader.
