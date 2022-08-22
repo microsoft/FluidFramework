@@ -79,14 +79,14 @@ describe("resetPendingSegmentsToOp", () => {
                 },
             );
             const oldops = opList;
-            opList = oldops.map((op) => client.regeneratePendingOp(op, client.peekPendingSegmentGroups()!));
+            opList = oldops.map((op) => client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first!.data));
             applyOpList(client);
             assert.equal(localPartialsComputeCount, 1);
         });
 
         it("nacked insertSegment", async () => {
             const oldops = opList;
-            opList = oldops.map((op) => client.regeneratePendingOp(op, client.peekPendingSegmentGroups()!));
+            opList = oldops.map((op) => client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first!.data));
             // we expect a nack op per segment since our original ops split segments
             // we should expect mores nack ops then original ops.
             // only the first op didn't split a segment, all the others did
@@ -109,7 +109,7 @@ describe("resetPendingSegmentsToOp", () => {
             assert(client.mergeTree.pendingSegments?.empty);
 
             opList.push(client.removeRangeLocal(0, client.getLength())!);
-            opList.push(client.regeneratePendingOp(opList.shift()!, client.peekPendingSegmentGroups()!));
+            opList.push(client.regeneratePendingOp(opList.shift()!, client.mergeTree.pendingSegments.first!.data));
             // we expect a nack op per segment since our original ops split segments
             // we should expect mores nack ops then original ops.
             // only the first op didn't split a segment, all the others did
@@ -121,7 +121,7 @@ describe("resetPendingSegmentsToOp", () => {
         it("nacked insertSegment and removeRange", async () => {
             opList.push(client.removeRangeLocal(0, client.getLength())!);
             const oldops = opList;
-            opList = oldops.map((op) => client.regeneratePendingOp(op, client.peekPendingSegmentGroups()!));
+            opList = oldops.map((op) => client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first!.data));
 
             assert.equal(client.mergeTree.pendingSegments?.length, expectedSegmentCount * 2);
 
@@ -144,7 +144,7 @@ describe("resetPendingSegmentsToOp", () => {
             assert(client.mergeTree.pendingSegments?.empty);
 
             opList.push(client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!);
-            opList.push(client.regeneratePendingOp(opList.shift()!, client.peekPendingSegmentGroups()!));
+            opList.push(client.regeneratePendingOp(opList.shift()!, client.mergeTree.pendingSegments.first!.data));
             // we expect a nack op per segment since our original ops split segments
             // we should expect mores nack ops then original ops.
             // only the first op didn't split a segment, all the others did
@@ -156,7 +156,7 @@ describe("resetPendingSegmentsToOp", () => {
         it("nacked insertSegment and annotateRange", async () => {
             opList.push(client.annotateRangeLocal(0, client.getLength(), { foo: "bar" }, undefined)!);
             const oldops = opList;
-            opList = oldops.map((op) => client.regeneratePendingOp(op, client.peekPendingSegmentGroups()!));
+            opList = oldops.map((op) => client.regeneratePendingOp(op, client.mergeTree.pendingSegments!.first!.data));
             // we expect a nack op per segment since our original ops split segments
             // we should expect mores nack ops then original ops.
             // only the first op didn't split a segment, all the others did
@@ -183,7 +183,7 @@ describe("resetPendingSegmentsToOp", () => {
             const otherClient = new TestClient();
             otherClient.startOrUpdateCollaboration("other user");
             const regeneratedInsert =
-                client.regeneratePendingOp(insertOp, client.peekPendingSegmentGroups()!);
+                client.regeneratePendingOp(insertOp, client.mergeTree.pendingSegments!.first!.data);
             otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
             const { segment: otherSegment } = otherClient.getContainingSegment(0);
@@ -201,7 +201,7 @@ describe("resetPendingSegmentsToOp", () => {
             const otherClient = new TestClient();
             otherClient.startOrUpdateCollaboration("other user");
             const regeneratedInsert =
-                client.regeneratePendingOp(insertOp, client.peekPendingSegmentGroups()!);
+                client.regeneratePendingOp(insertOp, client.mergeTree.pendingSegments!.first!.data);
             otherClient.applyMsg(client.makeOpMessage(regeneratedInsert, 1), false);
 
             const { segment: otherSegment } = otherClient.getContainingSegment(0);

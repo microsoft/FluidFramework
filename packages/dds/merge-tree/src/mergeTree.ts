@@ -1940,12 +1940,12 @@ export class MergeTree {
      */
     public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup) {
         if (op.type === MergeTreeDeltaType.REMOVE) {
-            const pendingSegmentGroup = this.pendingSegments?.shift?.()?.data;
+            const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
             if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
                 throw new Error("Rollback op doesn't match last edit");
             }
             for (const segment of pendingSegmentGroup.segments) {
-                const segmentSegmentGroup = segment.segmentGroups.dequeue();
+                const segmentSegmentGroup = segment.segmentGroups?.pop?.();
                 assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
 
                 assert(segment.removedClientIds !== undefined
@@ -1980,14 +1980,14 @@ export class MergeTree {
                 }
             }
         } else if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
-            const pendingSegmentGroup = this.pendingSegments?.shift?.()?.data;
+            const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
             if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
                 || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
                 throw new Error("Rollback op doesn't match last edit");
             }
             let i = 0;
             for (const segment of pendingSegmentGroup.segments) {
-                const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
+                const segmentSegmentGroup = segment.segmentGroups.pop?.();
                 assert(segmentSegmentGroup === pendingSegmentGroup, "Unexpected segmentGroup in segment");
 
                 const start = this.findRollbackPosition(segment);

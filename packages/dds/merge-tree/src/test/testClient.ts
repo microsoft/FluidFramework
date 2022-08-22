@@ -132,12 +132,12 @@ export class TestClient extends Client {
         this.q.push(msg);
     }
     public dequeueMsg(): ISequencedDocumentMessage | undefined {
-        return this.q.pop()?.data;
+        return this.q.shift()?.data;
     }
     public applyMessages(msgCount: number) {
         let currMsgCount = msgCount;
         while (currMsgCount > 0) {
-            const msg = this.q.pop()?.data;
+            const msg = this.dequeueMsg();
             if (msg) {
                 this.applyMsg(msg);
             } else {
