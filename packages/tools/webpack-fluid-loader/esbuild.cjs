@@ -57,4 +57,7 @@ esbuild.build({
         }),
         // NodePolyFillsPlugin,
     ],
+    logOverride: {
+        "equals-new-object": "info",
+    },
 }).catch(() => process.exit(1));

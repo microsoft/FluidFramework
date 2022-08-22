@@ -37,7 +37,7 @@ const esbuild = require("esbuild");
 // };
 
 esbuild.build({
-    entryPoints: ["src/index.ts"],
+    entryPoints: ["src/index.tsx"],
     bundle: true,
     metafile: true, // needs to be set
     outdir: "dist/", // needs to be set
@@ -49,11 +49,14 @@ esbuild.build({
     plugins: [
         htmlPlugin({
             files: [{
-                entryPoints: ["src/index.ts"],
+                entryPoints: ["src/index.tsx"],
                 filename: "index.html",
-                htmlTemplate: "src/index.html"
+                // htmlTemplate: "src/index.html"
             }],
         }),
         // NodePolyFillsPlugin,
     ],
+    logOverride: {
+        "equals-new-object": "info",
+    },
 }).catch(() => process.exit(1));
