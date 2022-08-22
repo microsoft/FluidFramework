@@ -19,8 +19,9 @@
 
 import child_process from "child_process";
 import fs from "fs";
-import { detectVersionScheme, getLatestReleaseFromList } from "@fluid-tools/version-tools";
-import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
+import { detectVersionScheme, getLatestReleaseFromList, isInternalVersionScheme } from "@fluid-tools/version-tools";
+import * as semver from "semver";
+// import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
 import { Logger } from "../common/logging";
 
 export function getFileVersion() {
@@ -124,7 +125,7 @@ function getVersions(prefix: TagPrefix) {
 export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
     const filtered = filterTags(prefix, tags);
     const versions = filtered.map((tag) => tag.substring(`${prefix}_v`.length));
-    sort_semver(versions);
+    semver.sort(versions);
     return versions;
 }
 
@@ -134,22 +135,45 @@ export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
  * @returns true if the current version is to be considered the latest (higher than the tagged releases _and NOT_ a
  * pre-release version).
  */
-export function getIsLatest(prefix: TagPrefix, current_version: string, input_tags?: string[], includeInternalVersions = false, log?: Logger) {
-    const versions = input_tags !== undefined ? getVersionsFromStrings(prefix, input_tags) : getVersions(prefix);
+export function getIsLatest(
+    prefix: TagPrefix,
+    current_version: string,
+    input_tags?: string[],
+    // eslint-disable-next-line default-param-last
+    includeInternalVersions = false,
+    log?: Logger,
+) {
+    let latestTaggedRelease: string;
 
-    // The last item in the array is the latest because the array is already sorted.
-    let latestTaggedRelease = includeInternalVersions ? getLatestReleaseFromList(versions) : versions.slice(-1)[0] ?? "0.0.0";
+    if(input_tags?.length === 0) {
+        latestTaggedRelease = "0.0.0";
+    }
 
-    // const hasInternalReleases = versions.some(v => isInternalVersionScheme(v));
-    // const hasInternalPrereleases = versions.some(v => isInternalVersionScheme(v, true));
-    if (includeInternalVersions) {
-        latestTaggedRelease = getLatestReleaseFromList(versions);
+    let versions = input_tags === undefined
+        ? getVersions(prefix)
+        : getVersionsFromStrings(prefix, input_tags);
+    versions = versions.filter((v) => {
+        if (v === undefined) {
+            return false;
+        }
+
+        if (includeInternalVersions) {
+            return true;
+        }
+
+        return !isInternalVersionScheme(v);
+    });
+
+    latestTaggedRelease = getLatestReleaseFromList(versions);
+    if(versions.length === 0 || latestTaggedRelease === undefined) {
+        latestTaggedRelease = "0.0.0";
     }
 
     log?.log(`Latest tagged: ${latestTaggedRelease}, current: ${current_version}`);
-    const currentIsGreater = gt_semver(current_version, latestTaggedRelease);
-    const currentIsPrerelease =
-        prerelease_semver(current_version) !== null
-        && detectVersionScheme(current_version) !== "internalPrerelease";
+    const currentIsGreater = semver.gte(current_version, latestTaggedRelease);
+    const currentIsPrerelease = includeInternalVersions
+        ? detectVersionScheme(current_version) === "internalPrerelease"
+        : semver.prerelease(current_version) !== null;
+
     return currentIsGreater && !currentIsPrerelease;
 }

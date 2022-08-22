@@ -4,9 +4,8 @@
  */
 
 import { assert } from "chai";
-// import {  getVersionsFromStrings, } from "../src/lib/buildVersion";
-// import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "@fluidframework/build-tools";
-import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "../src/lib/buildVersion";
+import { getSimpleVersion, getVersionsFromStrings, getIsLatest } from "@fluidframework/build-tools";
+import { getLatestReleaseFromList } from "@fluid-tools/version-tools";
 
 // Deliberately not sorted here; highest version is 0.59.3000
 const test_tags = [
@@ -23,7 +22,7 @@ const test_tags = [
 ];
 
 // Add a Fluid internal release version
-// Deliberately not sorted here; highest version is 1.2.3
+// Deliberately not sorted here; highest version is 2.0.0-internal.1.0.0
 const post1_tags = [
     "client_v1.0.0",
     "client_v1.2.3",
@@ -87,33 +86,33 @@ describe("getVersionsFromStrings", () => {
 
 describe("getIsLatest", () => {
     it("basic functionality", () => {
-        assert.equal(getIsLatest("client", "0.59.4000", test_tags), true);
-        assert.equal(getIsLatest("client", "0.59.4000-1234", test_tags), false);
+        assert.isTrue(getIsLatest("client", "0.59.4000", test_tags));
+        assert.isFalse(getIsLatest("client", "0.59.4000-1234", test_tags));
     });
 
     it("highest version should be 0.59.3000", () => {
-        assert.equal(getIsLatest("client", "0.59.4000", test_tags), true);
-        assert.equal(getIsLatest("client", "0.59.3001", test_tags), true);
-        assert.equal(getIsLatest("client", "0.59.4000-1234", test_tags), false);
-        assert.equal(getIsLatest("client", "0.60.1000-1234", test_tags), false);
+        assert.isTrue(getIsLatest("client", "0.59.4000", test_tags));
+        assert.isTrue(getIsLatest("client", "0.59.3001", test_tags));
+        assert.isFalse(getIsLatest("client", "0.59.4000-1234", test_tags));
+        assert.isFalse(getIsLatest("client", "0.60.1000-1234", test_tags));
     });
 
     it("highest version should be 0.60.2000", () => {
         // Add a higher version tag to simulate a release
         // Highest version is now 0.60.2000
         test_tags.push("client_v0.60.1000", "client_v0.60.2000");
-        assert.equal(getIsLatest("client", "0.59.4000", test_tags), false);
-        assert.equal(getIsLatest("client", "0.60.1001", test_tags), false);
-        assert.equal(getIsLatest("client", "0.59.4001-1234", test_tags), false);
-        assert.equal(getIsLatest("client", "0.60.3000-1234", test_tags), false);
-        assert.equal(getIsLatest("client", "0.60.3000", test_tags), true);
+        assert.isFalse(getIsLatest("client", "0.59.4000", test_tags));
+        assert.isFalse(getIsLatest("client", "0.60.1001", test_tags));
+        assert.isFalse(getIsLatest("client", "0.59.4001-1234", test_tags));
+        assert.isFalse(getIsLatest("client", "0.60.3000-1234", test_tags));
+        assert.isTrue(getIsLatest("client", "0.60.3000", test_tags));
     });
 
     it("Fluid internal versions", () => {
-        assert.equal(getIsLatest("client", "0.59.4000", post1_tags), false);
-        assert.equal(getIsLatest("client", "0.59.3001", post1_tags), false);
-        assert.equal(getIsLatest("client", "2.0.0-internal.1.0.0", post1_tags, true), true);
-        assert.equal(getIsLatest("client", "2.0.0-internal.1.0.0.12345", post1_tags, true), false);
-        assert.equal(getIsLatest("client", "1.2.3", post1_tags), true);
+        assert.isFalse(getIsLatest("client", "0.59.4000", post1_tags, true));
+        assert.isFalse(getIsLatest("client", "0.59.3001", post1_tags, true));
+        assert.isTrue(getIsLatest("client", "2.0.0-internal.1.0.0", post1_tags, true));
+        assert.isFalse(getIsLatest("client", "2.0.0-internal.1.0.0.12345", post1_tags, true));
+        assert.isFalse(getIsLatest("client", "1.2.3", post1_tags, true));
     });
 });
