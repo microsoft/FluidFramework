@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export function ListRemoveEntry<U>(entry: List<U>): List<U> | undefined {
     if (entry === undefined) {
         return undefined;
@@ -25,18 +21,10 @@ function ListMakeEntry<U>(data: U): List<U> {
     return new List<U>(false, data);
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export function ListMakeHead<U>(): List<U> {
     return new List<U>(true, undefined);
 }
 
-/**
- * @deprecated  for internal use only. public export will be removed.
- * @internal
- */
 export class List<T> {
     public next: List<T>;
     public prev: List<T>;

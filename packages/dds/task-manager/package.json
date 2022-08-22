@@ -96,6 +96,12 @@
   },
   "typeValidation": {
     "version": "2.0.0",
-    "broken": {}
+    "broken": {
+      "RemovedInterfaceDeclaration_IOldestClientObservable": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IOldestClientObservableEvents":  {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IOldestClientObserver": {"backCompat": false, "forwardCompat": false},
+      "RemovedInterfaceDeclaration_IOldestClientObserverEvents": {"backCompat": false, "forwardCompat": false},
+      "RemovedClassDeclaration_OldestClientObserver": {"backCompat": false, "forwardCompat": false}
+    }
   }
 }
