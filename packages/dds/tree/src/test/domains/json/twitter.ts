@@ -529,44 +529,38 @@ export function isEscapeChar(ch: string) {
  *
  *
  */
-/* eslint-disable no-useless-escape, @typescript-eslint/no-non-null-assertion, no-trailing-spaces, padded-blocks, no-multiple-empty-lines, max-len, @typescript-eslint/brace-style */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 
-export function parseTwitterStatusesSentences(twitterJson: TwitterJson) {
+export function parseTwitterJsonIntoSentences(twitterJson: TwitterJson, fieldName: string) {
     const sentences: string[][] = [];
 
     twitterJson.statuses.forEach((status) => {
         const sentenceWords: string[] = [];
-        const spaceSeparatedWords = status.text.split(" ");
-
+        // @ts-ignore: ideally we would type all the fieldName options
+        // but for this testing utility helper function its unecessary.
+        const spaceSeparatedWords: string[] = status[`${fieldName}`].split(" ");
         spaceSeparatedWords.forEach((potentialWord) => {
             const innerWords: string[] = [];
             let previousChar: string | null = null;
             let currentWord = "";
-            let wordAlphabet: "Latin" | "Japanese" | "Unknown" = "Unknown";
             for (let i = 0; i < potentialWord.length; i++) {
                 const currentChar = potentialWord.charAt(i);
                 if (isEscapeChar(currentChar)) {
                     if (previousChar && !isEscapeChar(previousChar)) {
                         innerWords.push(`${currentWord}`);
                         currentWord = currentChar;
-                        wordAlphabet = "Unknown";
                     } else {
                         currentWord += currentChar;
                     }
-                }
-                else if (isAlphaLatin(currentChar)) {
+                } else if (isAlphaLatin(currentChar)) {
                     currentWord += currentChar;
-                    wordAlphabet = "Latin";
-                }
-                else if (isJapanese(currentChar)) {
+                } else if (isJapanese(currentChar)) {
                     if (currentWord.length > 0) {
                         innerWords.push(`${currentWord}`);
                     }
                     innerWords.push(`${currentChar}`);
                     currentWord = "";
-                    wordAlphabet = "Unknown";
-                }
-                else {
+                } else {
                     currentWord += currentChar;
                 }
                 previousChar = currentChar;
@@ -575,9 +569,7 @@ export function parseTwitterStatusesSentences(twitterJson: TwitterJson) {
             if (currentWord.length > 0) {
                 innerWords.push(currentWord);
             }
-
             innerWords.forEach((word) => sentenceWords.push(word));
-            wordAlphabet = "Unknown";
         });
 
         sentences.push(sentenceWords);

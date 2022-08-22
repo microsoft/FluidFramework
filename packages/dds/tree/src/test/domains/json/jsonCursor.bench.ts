@@ -13,7 +13,7 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./canada";
-import { generateTwitterJsonByByteSize, parseTwitterStatusesSentences, twitterRawJson } from "./twitter";
+import { generateTwitterJsonByByteSize, parseTwitterJsonIntoSentences, twitterRawJson } from "./twitter";
 import { getSizeInBytes } from "./jsonGeneratorUtils";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -120,27 +120,24 @@ describe("ITreeCursor", () => {
     // const chain = markovChainBuilder(sentences);
     // const sentence = buildTextFromMarkovChain(chain, makeRandom(), 4);
 
-    const parsedSentences = parseTwitterStatusesSentences(twitterRawJson());
+    const parsedSentences = parseTwitterJsonIntoSentences(twitterRawJson(), "text");
 
     const performanceMarkovChain = new PerformanceMarkovChain(makeRandom());
     console.time("performanceMarkovChain.initialize()");
     performanceMarkovChain.initialize(parsedSentences);
     console.timeEnd("performanceMarkovChain.initialize()");
     const performanceSentence = performanceMarkovChain.generateSentence();
-    const performanceMarkovChainSize =
-    getSizeInBytes(JSON.stringify(Array.from(performanceMarkovChain.chain.entries())));
+    const performanceMarkovChainSize = getSizeInBytes(performanceMarkovChain.chain);
+    const perfKeyLen = Object.keys(performanceMarkovChain.chain).length;
 
     const spaceEfficientMarkovChain = new SpaceEfficientMarkovChain(makeRandom());
     console.time("spaceEfficientMarkovChain.initialize()");
     spaceEfficientMarkovChain.initialize(parsedSentences);
     console.timeEnd("spaceEfficientMarkovChain.initialize()");
     const spaceEfficientSentence = spaceEfficientMarkovChain.generateSentence();
-    const chainMapArr = [];
-    Array.from(spaceEfficientMarkovChain.chain.entries()).forEach((array) => {
-        chainMapArr.push([array[0], Array.from(array[1].entries())]);
-    });
-    const spaceEfficientMarkovChainSize = getSizeInBytes(chainMapArr);
-
+    const spaceEfficientMarkovChainSize = getSizeInBytes(spaceEfficientMarkovChain.chain);
+    const serializedChain = JSON.stringify(spaceEfficientMarkovChain.chain);
+    const spaceEffKeyLen = Object.keys(spaceEfficientMarkovChain.chain).length;
     bench("canada", () => canada);
     bench("twitter", () => twitter);
 });
