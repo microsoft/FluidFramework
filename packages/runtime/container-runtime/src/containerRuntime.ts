@@ -1055,8 +1055,11 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             this.handleContext,
             blobManagerSnapshot,
             () => this.storage,
-            (blobId, localId) => this.submit(
-                ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId }),
+            (blobId, localId) => {
+                if (!this.disposed) {
+                    this.submit(ContainerMessageType.BlobAttach, undefined, undefined, { blobId, localId });
+                }
+            },
             (blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
             this,
             pendingRuntimeState?.pendingAttachmentBlobs,

@@ -202,15 +202,7 @@ function applyOrCollectModifications(
 ): InsertedFieldsMarksMap {
     const outFieldsMarks: InsertedFieldsMarksMap = new Map();
     if (modify.value !== undefined) {
-        const type = modify.value.type;
-        switch (type) {
-            case "Set":
-                node.value = modify.value.value;
-                break;
-            case "Revert":
-                fail(ERR_REVERT_ON_INSERT);
-            default: unreachableCase(type);
-        }
+        node.value = modify.value.value;
     }
     if (modify.fields !== undefined) {
         const protoFields = node.fields ?? {};
@@ -328,7 +320,6 @@ function applyOrCollectModifications(
 const ERR_NOT_IMPLEMENTED = "Not implemented";
 const ERR_TOMB_IN_INSERT = "Encountered a concurrent deletion in inserted content";
 const ERR_MOD_ON_MISSING_FIELD = "Encountered a modification that targets a non-existent field on an inserted tree";
-const ERR_REVERT_ON_INSERT = "Encountered a revert operation on an inserted node";
 const ERR_BOUNCE_ON_INSERT = "Encountered a Bounce mark in an inserted field";
 const ERR_INTAKE_ON_INSERT = "Encountered an Intake mark in an inserted field";
 const ERR_REVIVE_ON_INSERT = "Encountered a Revive mark in an inserted field";
@@ -338,7 +329,7 @@ const ERR_RETURN_ON_INSERT = "Encountered a Return mark in an inserted field";
  * Modifications to a subtree as described by a Changeset.
  */
 interface ChangesetMods {
-    value?: T.ValueMark;
+    value?: T.SetValue;
     fields?: T.FieldMarks;
 }
 
@@ -356,15 +347,7 @@ interface ChangesetMods {
 function convertModify<TMarks>(modify: ChangesetMods): DeltaMods<TMarks> {
     const out: DeltaMods<TMarks> = {};
     if (modify.value !== undefined) {
-        const type = modify.value.type;
-        switch (type) {
-            case "Set":
-                out.setValue = modify.value.value;
-                break;
-            case "Revert":
-                fail(ERR_NOT_IMPLEMENTED);
-            default: unreachableCase(type);
-        }
+        out.setValue = modify.value.value;
     }
     const fields = modify.fields;
     if (fields !== undefined) {

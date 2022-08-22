@@ -9,8 +9,8 @@ import { strict as assert } from "assert";
 import {
     AcceptanceCondition,
     BaseFuzzTestState,
+    createFuzzDescribe,
     createWeightedGenerator,
-    describeFuzz,
     Generator,
     generatorFromArray,
     interleave,
@@ -479,7 +479,9 @@ function getPath(seed: number): string {
     return path.join(directory, `${seed}.json`);
 }
 
-describeFuzz("IntervalCollection fuzz testing", (testCount) => {
+const describeFuzz = createFuzzDescribe({ defaultTestCount: 10 });
+
+describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
     before(() => {
         if (!existsSync(directory)) {
             mkdirSync(directory);
