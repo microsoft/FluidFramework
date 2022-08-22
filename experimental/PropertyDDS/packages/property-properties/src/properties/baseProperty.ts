@@ -355,8 +355,8 @@ export abstract class BaseProperty {
      * Modifies the property according to the given changeset
      *
      * @param in_changeSet - The changeset to apply
-     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
-     *    The filtering options to consider while applying the ChangeSet.
+     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions] - The filtering options to
+     * consider while applying the ChangeSet.
      * @throws if in_changeSet is invalid.
      */
     applyChangeSet(in_changeSet: SerializedChangeSet) {
@@ -372,13 +372,12 @@ export abstract class BaseProperty {
      * Internal function.
      *
      * @param in_changeSet - The changeset to apply
-     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view
-     *                          and trigger a modified event there. When batching updates, this
-     *                          can be prevented via this flag.
-     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions]
-     *    The filtering options to consider while applying the ChangeSet. For now it is only used to
-     *    control property creation, to prevent properties from being created outside the checked out
-     *    paths. It does not validate that a value inside the ChangeSet is outside those paths.
+     * @param in_reportToView - By default, the dirtying will always be reported to the checkout view and trigger a
+     * modified event there. When batching updates, this can be prevented via this flag.
+     * @param {property-properties.BaseProperty.PathFilteringOptions} [in_filteringOptions] - The filtering options to
+     * consider while applying the ChangeSet. For now it is only used to control property creation, to prevent
+     * properties from being created outside the checked out paths. It does not validate that a value inside the
+     * ChangeSet is outside those paths.
      */
     _applyChangeset(in_changeSet: SerializedChangeSet, in_reportToView = true, in_filteringOptions = undefined) {
         var typeids = _.keys(in_changeSet);
@@ -478,7 +477,7 @@ export abstract class BaseProperty {
      * Indicates that the property has been modified and a corresponding modified call has not yet been sent to the
      * application for runtime scene updates.
      *
-     * @param  in_dirtinessType - The type of dirtiness to check for. By default this is DIRTY
+     * @param in_dirtinessType - The type of dirtiness to check for. By default this is DIRTY
      * @returns Is the property dirty?
      */
     _isDirty(in_dirtinessType: MODIFIED_STATE_FLAGS = MODIFIED_STATE_FLAGS.DIRTY): boolean {
@@ -576,7 +575,7 @@ export abstract class BaseProperty {
     /**
      * Resolves a direct child node based on the given path segment
      *
-     * @param {String} in_segment                                   - The path segment to resolve
+     * @param {String} in_segment - The path segment to resolve
      * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
      *
      * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
@@ -1034,7 +1033,7 @@ export abstract class BaseProperty {
      * Traverses all children in the child hierarchy
      * TODO: How should this behave for collections?
      *
-     * @param in_callback             - Callback to invoke for every child
+     * @param in_callback - Callback to invoke for every child
      * @param in_pathFromTraversalStart - Path from the root of the traversal to this node
      * @returns Returns BaseProperty.BREAK_TRAVERSAL if the traversal has been interrupted,
      *                            otherwise undefined
@@ -1046,22 +1045,17 @@ export abstract class BaseProperty {
 
     /**
      * Deserialize takes a currently existing property and sets it to the hierarchy described in the normalized
-     * ChangeSet passed as parameter. It will return a ChangeSet that describes the difference between the
-     * current state of the property and the passed in normalized property
+     * ChangeSet passed as parameter. It will return a ChangeSet that describes the difference between the current state
+     * of the property and the passed in normalized property
      *
-     * @param in_serializedObj - The serialized changeset to apply to this node. This
-     *     has to be a normalized change-set (only containing insertions and property assignments. Deletes and Modify
-     *     must not appear)
-     * @param in_filteringOptions
-     *    The filtering options to consider while deserializing the property.
-     * @param in_createChangeSet
-     *    Should a changeset be created for this deserialization?
-     * @param in_reportToView
-     *    Usually the dirtying should be reported to the view and trigger a modified
-     *    event there. This can be prevented via this flag.
+     * @param in_serializedObj - The serialized changeset to apply to this node. This has to be a normalized change-set
+     *     (only containing insertions and property assignments. Deletes and Modify must not appear)
+     * @param in_filteringOptions - The filtering options to consider while deserializing the property.
+     * @param in_createChangeSet - Should a changeset be created for this deserialization?
+     * @param in_reportToView - Usually the dirtying should be reported to the view and trigger a modified event there.
+     * This can be prevented via this flag.
      * @throws if called on a read-only property.
-     * @returns ChangeSet with the changes that actually were performed during the
-     *     deserialization
+     * @returns ChangeSet with the changes that actually were performed during the deserialization
      */
     deserialize(
         in_serializedObj: SerializedChangeSet,
@@ -1080,10 +1074,8 @@ export abstract class BaseProperty {
      *     has to be a normalized change-set (only containing inserts. Removes and Modifies are forbidden).
      * @param in_reportToView - Usually the dirtying should be reported to the view
      *     and trigger a modified event there. When batching updates, this can be prevented via this flag.
-     * @param in_filteringOptions
-     *    The filtering options to consider while deserializing the property.
-     * @param in_createChangeSet
-     *    Should a changeset be created for this deserialization?
+     * @param in_filteringOptions - The filtering options to consider while deserializing the property.
+     * @param in_createChangeSet - Should a changeset be created for this deserialization?
      * @returns ChangeSet with the changes that actually were performed during the
      *     deserialization
      */

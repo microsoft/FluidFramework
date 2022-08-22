@@ -4,16 +4,9 @@
  */
 
 module.exports = {
-    "extends": [
-        "./minimal.js",
-        "plugin:unicorn/recommended",
-        "plugin:editorconfig/all",
-    ],
-    "plugins": [
-        "editorconfig",
-        "eslint-plugin-tsdoc",
-    ],
-    "rules": {
+    extends: ["./minimal.js", "plugin:unicorn/recommended", "plugin:editorconfig/all"],
+    plugins: ["editorconfig", "eslint-plugin-tsdoc"],
+    rules: {
         // RECOMMENDED RULES
         "@rushstack/no-new-null": "error",
         "no-empty": "error",
@@ -29,12 +22,12 @@ module.exports = {
         "@typescript-eslint/explicit-function-return-type": [
             "error",
             {
-                "allowExpressions": false,
-                "allowTypedFunctionExpressions": true,
-                "allowHigherOrderFunctions": true,
-                "allowDirectConstAssertionInArrowFunctions": true,
-                "allowConciseArrowFunctionExpressionsStartingWithVoid": false,
-            }
+                allowExpressions: false,
+                allowTypedFunctionExpressions: true,
+                allowHigherOrderFunctions: true,
+                allowDirectConstAssertionInArrowFunctions: true,
+                allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+            },
         ],
         "unicorn/empty-brace-spaces": "off",
         "unicorn/prevent-abbreviations": "off",
@@ -88,23 +81,38 @@ module.exports = {
          * hole, and source of bugs in your codebase.
          */
         "@typescript-eslint/no-unsafe-return": "error",
+
+        // #region eslint-plugin-jsdoc rules
+
+        /**
+         * Ensures all JSDoc/TSDoc comments use the multi-line format for consistency.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-multiline-blocks>
+         */
+        "jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
+
+        /**
+         * Require the description (summary) component in JSDoc/TSDoc comments
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
+         */
+        "jsdoc/require-description": "error",
+
+        // #endregion
     },
-    "overrides": [
+    overrides: [
         {
             // Rules only for TypeScript files
-            "files": ["**/*.{ts,tsx}"],
-            "rules": {
+            files: ["**/*.{ts,tsx}"],
+            rules: {
                 "editorconfig/indent": "off", // We use tsfmt for "official" formatting.
-            }
+            },
         },
         {
             // Rules only for type validation files
-            "files": ["**/types/*validate*Previous.ts"],
-            "rules": {
+            files: ["**/types/*validate*Previous.ts"],
+            rules: {
                 "@typescript-eslint/no-explicit-any": "off",
                 "@typescript-eslint/no-unsafe-argument": "off",
-            }
+            },
         },
-    ]
+    ],
 };
-

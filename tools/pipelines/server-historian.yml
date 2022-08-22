@@ -37,6 +37,7 @@ trigger:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - server/historian
@@ -58,6 +59,7 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:

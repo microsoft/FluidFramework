@@ -12,7 +12,7 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IntervalCollection, intervalLocatorFromEndpoint, IntervalType, SequenceInterval } from "../intervalCollection";
 
 const assertIntervals = (
     sharedString: SharedString,
@@ -143,6 +143,15 @@ describe("IntervalCollection snapshotting", () => {
             assertIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
             containerRuntimeFactory.processAllMessages();
             assertIntervals(sharedString2, collection2, [{ start: 0, end: 2 }, { start: 2, end: 4 }]);
+        });
+
+        it("intervals can be retrieved from endpoints", async () => {
+            const interval1 = collection.getIntervalById(id) ?? assert.fail("collection should have interval");
+            const locator1 = intervalLocatorFromEndpoint(interval1.start);
+            assert.deepEqual(locator1, { interval: interval1, label: "test" });
+            const interval2 = collection.add(1, 2, IntervalType.SlideOnRemove);
+            const locator2 = intervalLocatorFromEndpoint(interval2.start);
+            assert.deepEqual(locator2, { interval: interval2, label: "test" });
         });
     });
 });

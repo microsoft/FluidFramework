@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { brand, Brand, Contravariant, Covariant, Invariant } from "../util";
+import { brand, Brand, Invariant } from "../util";
 import { AnchorSet } from "../tree";
 
 /**
@@ -14,7 +14,7 @@ export type RevisionTag = Brand<number, "rebaser.RevisionTag">;
 /**
  * A collection of branches which can rebase changes between them.
  */
-export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
+export class Rebaser<TChangeRebaser extends ChangeRebaser<any>> {
     private lastRevision = 0;
 
     private makeRevision(): RevisionTag {
@@ -32,7 +32,7 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
      */
     private readonly revisionTree: Map<
         RevisionTag,
-        { before: RevisionTag; change: ChangeSetFromChangeRebaser<TChangeRebaser>; }
+        { before: RevisionTag; change: ChangesetFromChangeRebaser<TChangeRebaser>; }
     > = new Map();
 
     public constructor(public readonly rebaser: TChangeRebaser) {
@@ -44,23 +44,19 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
      * @returns a RevisionTag for the state after applying changes to `to`, and the rebased changes themselves.
      */
     public rebase(
-        changes: ChangeFromChangeRebaser<TChangeRebaser>,
+        changes: ChangesetFromChangeRebaser<TChangeRebaser>,
         from: RevisionTag,
         to: RevisionTag,
-    ): [RevisionTag, FinalFromChangeRebaser<TChangeRebaser>] {
-        const initalChangeset: ChangeSetFromChangeRebaser<TChangeRebaser> =
-            this.rebaser.import(changes);
+    ): [RevisionTag, ChangesetFromChangeRebaser<TChangeRebaser>] {
         const over = this.getResolutionPath(from, to);
-        const finalChangeset: ChangeSetFromChangeRebaser<TChangeRebaser> =
-            this.rebaser.rebase(initalChangeset, over);
+        const finalChangeset: ChangesetFromChangeRebaser<TChangeRebaser> =
+            this.rebaser.rebase(changes, over);
         const newRevision = this.makeRevision();
         this.revisionTree.set(newRevision, {
             before: to,
             change: finalChangeset,
         });
-        const output: FinalFromChangeRebaser<TChangeRebaser> =
-            this.rebaser.export(finalChangeset);
-        return [newRevision, output];
+        return [newRevision, finalChangeset];
     }
 
     /**
@@ -79,20 +75,20 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
     private getRawResolutionPath(
         from: RevisionTag,
         to: RevisionTag,
-    ): ChangeSetFromChangeRebaser<TChangeRebaser>[] {
+    ): ChangesetFromChangeRebaser<TChangeRebaser>[] {
         if (from !== to) {
             throw Error("Not implemented"); // TODO: rebase
         }
         return [];
     }
 
-    private getResolutionPath(
+    public getResolutionPath(
         from: RevisionTag,
         to: RevisionTag,
-    ): ChangeSetFromChangeRebaser<TChangeRebaser> {
+    ): ChangesetFromChangeRebaser<TChangeRebaser> {
         // TODO: fix typing
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return this.rebaser.compose(...this.getRawResolutionPath(from, to));
+        return this.rebaser.compose(this.getRawResolutionPath(from, to));
     }
 
     /**
@@ -104,24 +100,11 @@ export class Rebaser<TChangeRebaser extends ChangeRebaser<any, any, any>> {
     }
 }
 
-// TODO: managing the types with these is not working well (inferring any for methods in Rebaser). Do something else.
-
-export type ChangeFromChangeRebaser<
-    TChangeRebaser extends ChangeRebaser<any, any, any>,
-    > = TChangeRebaser extends ChangeRebaser<infer TChange, any, any>
-    ? TChange
-    : never;
-
-export type FinalFromChangeRebaser<
-    TChangeRebaser extends ChangeRebaser<any, any, any>,
-    > = TChangeRebaser extends ChangeRebaser<any, infer TFinal, any>
-    ? TFinal
-    : never;
-
-export type ChangeSetFromChangeRebaser<
-    TChangeRebaser extends ChangeRebaser<any, any, any>,
-    > = TChangeRebaser extends ChangeRebaser<any, any, infer TChangeSet>
-    ? TChangeSet
+// TODO: managing the types with this is not working well (inferring any for methods in Rebaser). Do something else.
+export type ChangesetFromChangeRebaser<
+    TChangeRebaser extends ChangeRebaser<any>,
+    > = TChangeRebaser extends ChangeRebaser<infer TChangeset>
+    ? TChangeset
     : never;
 
 /**
@@ -130,42 +113,64 @@ export type ChangeSetFromChangeRebaser<
  * This interface is designed to be easy to implement.
  * Use {@link Rebaser} for an ergonomic wrapper around this.
  *
- * TODO: more fully document all axioms Rebaser assumes about implementations.
- * Be clear about which of these are required for coherence, and which are desired for good semantics.
+ * The implementation must ensure TChangeset forms a [group](https://en.wikipedia.org/wiki/Group_(mathematics)) where:
+ * - `compose([])` is the identity element.
+ * - associativity is defined as `compose([...a, ...b])` is equal to
+ * `compose([compose(a), compose(b)])` for all `a` and `b`.
+ * - `inverse(a)` gives the inverse element of `a`.
+ *
+ * In these requirements the definition of equality is up to the implementer,
+ * but it is required that any two changes which are considered equal
+ * have the same impact when applied to any tree, and rebaseAnchors has identical effects as well.
+ * For the sake of testability, implementations will likely want to have a concrete equality implementation.
+ *
+ * This API uses `compose` on arrays instead of an explicit identity element and associative binary operator
+ * to allow the implementation more room for optimization,
+ * but should otherwise be equivalent to the identity element and binary operator group approach.
+ *
+ * TODO:
+ * Be more specific about the above requirements.
+ * For example, would something that is close to forming a group but has precision issues
+ * (ex: the floating point numbers and addition) be ok?
+ * Would this cause decoherence (and thus be absolutely not ok),
+ * or just minor semantic precision issues, which could be tolerated.
+ * For now assume that such issues are not ok.
  */
-export interface ChangeRebaser<TChange, TFinalChange, TChangeSet> {
-    _typeCheck?: Covariant<TChange> &
-    Contravariant<TFinalChange> &
-    Invariant<TChangeSet>;
+export interface ChangeRebaser<TChangeset> {
+    _typeCheck?: Invariant<TChangeset>;
 
     /**
-     * TChangeSet must form a [group](https://en.wikipedia.org/wiki/Group_(mathematics)).
-     *
-     * Calling compose with [] gives the identity element.
-     * This function must use a an associative composition operation to compose all the provided changes.
-     *
-     * A whole batch of changes is provided at once instead of
-     * just a pair to allow the implementation to be more optimized.
+     * Compose a collection of changesets into a single one.
+     * See {@link ChangeRebaser} for requirements.
      */
-    compose(...changes: TChangeSet[]): TChangeSet;
+    compose(changes: TChangeset[]): TChangeset;
 
     /**
-     * Returns the inverse of `changes`.
+     * @returns the inverse of `changes`.
      *
-     * `compose(changes, inverse(changes))` must return compose().
+     * `compose([changes, inverse(changes)])` be equal to `compose([])`:
+     * See {@link ChangeRebaser} for details.
      */
-    invert(changes: TChangeSet): TChangeSet;
+    invert(changes: TChangeset): TChangeset;
 
-    rebase(change: TChangeSet, over: TChangeSet): TChangeSet;
+    /**
+     * Rebase `change` over `over`.
+     *
+     * The resulting changeset should, as much as possible, replicate the same semantics as `change`,
+     * except be valid to apply after `over` instead of before it.
+     *
+     * Requirements:
+     * The implementation must ensure that:
+     * - `rebase(a, compose([b, c])` is equal to `rebase(rebase(a, b), c)`.
+     * - `rebase(compose([a, b]), c)` is equal to
+     * `compose([rebase(a, c), rebase(b, compose([inverse(a), c, rebase(a, c)])])`.
+     */
+    rebase(change: TChangeset, over: TChangeset): TChangeset;
 
     // TODO: we are forcing a single AnchorSet implementation, but also making ChangeRebaser deal depend on/use it.
     // This isn't ideal, but it might be fine?
     // Performance and implications for custom Anchor types (ex: Place anchors) aren't clear.
-    rebaseAnchors(anchor: AnchorSet, over: TChangeSet): void;
-
-    import(change: TChange): TChangeSet;
-
-    export(change: TChangeSet): TFinalChange;
+    rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
 }
 
 export interface FinalChange {

@@ -14,6 +14,7 @@ import {
     ITestObjectProvider,
     ITestContainerConfig,
     DataObjectFactoryType,
+    ensureContainerConnected,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
 
@@ -34,12 +35,6 @@ describeNoCompat("Flush mode validation", (getTestObjectProvider) => {
     let provider: ITestObjectProvider;
     let dataObject1: ITestFluidObject;
     let dataObject1map1: SharedMap;
-
-    async function ensureContainerConnected(container: Container): Promise<void> {
-        if (!container.connected) {
-            return new Promise((resolve) => container.once("connected", () => resolve()));
-        }
-    }
 
     before(function() {
         provider = getTestObjectProvider();

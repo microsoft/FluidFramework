@@ -6,20 +6,22 @@
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime, IChannelStorageService } from "@fluidframework/datastore-definitions";
-import { ISummaryAttachment, ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import {
     ITelemetryContext,
     ISummaryTreeWithStats,
     IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
-    IEditableForest, ITreeSubscriptionCursor, TreeNavigationResult,
+    IEditableForest, initializeForest, ITreeSubscriptionCursor, TreeNavigationResult,
 } from "../forest";
-import { Index, SummaryElement } from "../shared-tree-core";
+import { Index, SummaryElement, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { cachedValue, ICachedValue, recordDependency } from "../dependency-tracking";
-import { Delta } from "../changeset";
-import { ObjectForest } from "./object-forest";
-import { PlaceholderTree, placeholderTreeFromCursor, TextCursor } from "./treeTextFormat";
+import { JsonableTree, Delta } from "../tree";
+import { jsonableTreeFromCursor } from "./treeTextCursor";
+
+/** The storage key for the blob in the summary containing tree data */
+const treeBlobKey = "ForestTree";
 
 /**
  * Index which provides an editable forest for the current state for the document.
@@ -31,19 +33,16 @@ import { PlaceholderTree, placeholderTreeFromCursor, TextCursor } from "./treeTe
  * Used to capture snapshots of document for summaries.
  */
 export class ForestIndex implements Index<unknown>, SummaryElement {
-    readonly key: string = "Forest";
-    private readonly forest: IEditableForest = new ObjectForest();
+    public readonly key = "Forest";
 
-    // TODO: implement this to provide snapshots in summaries.
-    readonly summaryElement?: SummaryElement = this;
+    public readonly summaryElement?: SummaryElement = this;
 
     private readonly cursor: ITreeSubscriptionCursor;
 
     // Note that if invalidation happens when these promises are running, you may get stale results.
-    private readonly treeBlob: ICachedValue<Promise<ISummaryAttachment>>;
-    private readonly schemaBlob: ICachedValue<Promise<ISummaryAttachment>>;
+    private readonly treeBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
 
-    public constructor(private readonly runtime: IFluidDataStoreRuntime) {
+    public constructor(private readonly runtime: IFluidDataStoreRuntime, private readonly forest: IEditableForest) {
         this.cursor = this.forest.allocateCursor();
         this.treeBlob = cachedValue(async (observer) => {
             // TODO: could optimize to depend on tree only, not also schema.
@@ -51,23 +50,13 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
             const treeText = this.getTreeString();
 
             // For now we are not chunking the data, and instead put it in a single blob:
-            const blob = await this.runtime.uploadBlob(IsoBuffer.from(treeText));
-            return { type: SummaryType.Attachment, id: idFromBlob(blob) };
-        });
-        this.schemaBlob = cachedValue(async (observer) => {
-            recordDependency(observer, this.forest.schema);
-            const schemaText = this.getSchemaString();
-
-            // For now we are not chunking the the schema, but still put it in a reusable blob:
-            const blob = await this.runtime.uploadBlob(IsoBuffer.from(schemaText));
-            return { type: SummaryType.Attachment, id: idFromBlob(blob) };
+            // TODO: use lower level API to avoid blob manager?
+            return this.runtime.uploadBlob(IsoBuffer.from(treeText));
         });
     }
 
     newLocalState(changeDelta: Delta.Root): void {
-        // TODO: apply changeDelta to the forest.
-        // TODO: unity this with logic in transaction.
-        throw new Error("Method not implemented.");
+        this.forest.applyDelta(changeDelta);
     }
 
     /**
@@ -81,103 +70,64 @@ export class ForestIndex implements Index<unknown>, SummaryElement {
         // TODO: maybe assert there are no other roots
         // (since we don't save them, and they should not exist outside transactions).
         const rootAnchor = this.forest.root(this.forest.rootField);
-        const roots: PlaceholderTree[] = [];
-        let result = this.forest.tryGet(rootAnchor, this.cursor);
+        const roots: JsonableTree[] = [];
+        let result = this.forest.tryMoveCursorTo(rootAnchor, this.cursor);
         while (result === TreeNavigationResult.Ok) {
-            roots.push(placeholderTreeFromCursor(this.cursor));
-            result = this.cursor.seek(1).result;
+            roots.push(jsonableTreeFromCursor(this.cursor));
+            result = this.cursor.seek(1);
         }
         this.cursor.clear();
-        assert(result === TreeNavigationResult.NotFound, "Unsupported navigation result");
+        assert(result === TreeNavigationResult.NotFound, 0x34b /* Unsupported navigation result */);
 
         return JSON.stringify(roots);
     }
 
-    /**
-     * Synchronous monolithic summarization of schema content.
-     *
-     * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
-     *
-     * @returns a snapshot of the forest schema as a string.
-     */
-     private getSchemaString(): string {
-        const { treeSchema, globalFieldSchema } = this.forest.schema;
-        throw new Error("Method not implemented.");
-        return `TODO: actual format ${treeSchema}, ${globalFieldSchema}`;
-    }
-
-    getAttachSummary(
+    public getAttachSummary(
+        stringify: SummaryElementStringifier,
         fullTree?: boolean,
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): ISummaryTreeWithStats {
-        // Synchronously generate a simple summary:
-        const tree: ISummaryBlob = { type: SummaryType.Blob, content: this.getTreeString() };
-        const schema: ISummaryBlob = { type: SummaryType.Blob, content: this.getSchemaString() };
-        return {
-            stats: {
-                treeNodeCount: 1,
-                handleNodeCount: 0,
-                blobNodeCount: 1,
-                totalBlobSize: tree.content.length,
-                unreferencedBlobSize: 0,
-            },
-            summary: {
-                type: SummaryType.Tree,
-                tree: { schema, tree },
-            },
-        };
+        return this.summarizeCore(stringify, this.getTreeString());
     }
 
-    async summarize(
+    public async summarize(
+        stringify: SummaryElementStringifier,
         fullTree?: boolean,
         trackState?: boolean,
         telemetryContext?: ITelemetryContext,
     ): Promise<ISummaryTreeWithStats> {
-        const tree: ISummaryAttachment = await this.treeBlob.get();
-        const schema: ISummaryAttachment = await this.schemaBlob.get();
+        const treeBlobHandle = await this.treeBlob.get();
+        return this.summarizeCore(stringify, treeBlobHandle);
+    }
+
+    private summarizeCore(
+        stringify: SummaryElementStringifier,
+        tree: string | IFluidHandle<ArrayBufferLike>,
+    ): ISummaryTreeWithStats {
+        const builder = new SummaryTreeBuilder();
+        const serializedTreeBlobHandle = stringify(tree);
+        builder.addBlob(treeBlobKey, serializedTreeBlobHandle);
+        return builder.getSummaryTree();
+    }
+
+    public getGCData(fullGC?: boolean): IGarbageCollectionData {
+        // TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
+        // by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
+        // to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
+        // blob.
         return {
-            stats: {
-                treeNodeCount: 1,
-                handleNodeCount: 0,
-                blobNodeCount: 0,
-                // TODO:
-                // I think this refers to the total size of ISummaryBlobs, not ISummaryAttachment blobs.
-                // Also, it seems off ISummaryAttachments are not counted in stats: determine what is up with this.
-                totalBlobSize: 0,
-                unreferencedBlobSize: 0,
-            },
-            summary: {
-                type: SummaryType.Tree,
-                tree: { schema, tree },
-            },
+            gcNodes: {},
         };
     }
 
-    getGCData(fullGC?: boolean): IGarbageCollectionData {
-        throw new Error("Method not implemented.");
+    public async load(services: IChannelStorageService, parse: SummaryElementParser): Promise<void> {
+        if (await services.contains(treeBlobKey)) {
+            const treeBuffer = await services.readBlob(treeBlobKey);
+            const treeBufferString = bufferToString(treeBuffer, "utf8");
+            const tree = parse(treeBufferString) as string;
+            const placeholderTree = JSON.parse(tree) as JsonableTree[];
+            initializeForest(this.forest, placeholderTree);
+        }
     }
-
-    async loadCore(services: IChannelStorageService): Promise<void> {
-        // TODO: does this handle both ISummaryAttachment and ISummaryBlob cases?
-        const [schemaBuffer, treeBuffer] = await Promise.all([services.readBlob("schema"), services.readBlob("tree")]);
-        const decodedSchema = bufferToString(schemaBuffer, "utf8");
-        const decodedtree = bufferToString(treeBuffer, "utf8");
-
-        const placeholderTree = JSON.parse(decodedtree) as PlaceholderTree[];
-
-        // TODO: maybe assert forest is empty?
-        const range = this.forest.add(placeholderTree.map((t) => new TextCursor(t)));
-        const dst = { index: 0, range: this.forest.rootField };
-        this.forest.attachRangeOfChildren(dst, range);
-
-        // TODO: use decodedSchema to initialize forest.schema
-        throw new Error("Method not implemented.");
-        throw new Error(decodedSchema);
-    }
-}
-
-function idFromBlob(blob: IFluidHandle<ArrayBufferLike>): string {
-    // TODO: figure out how you get an id from a blob.
-    throw new Error("Method not implemented.");
 }

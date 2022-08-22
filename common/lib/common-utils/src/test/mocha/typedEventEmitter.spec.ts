@@ -30,7 +30,7 @@ describe("TypedEventEmitter", () => {
         const tee = new TypedEventEmitter<IErrorEvent>();
         let newListenerCalls = 0;
         let removeListenerCalls = 0;
-        const errListener = (): void => { };
+        const errListener = (): void => {};
         tee.on("removeListener", (event, listener) => {
             assert.equal(event, "error");
             assert.equal(listener, errListener);

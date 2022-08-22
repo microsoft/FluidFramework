@@ -1,6 +1,6 @@
 {
   "name": "@fluid-experimental/tree-graphql",
-  "version": "2.0.0-internal.1.0.0",
+  "version": "2.0.0-internal.1.1.0",
   "description": "Prototype using GraphQL to access a distributed tree",
   "homepage": "https://fluidframework.com",
   "repository": {
@@ -26,6 +26,7 @@
     "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
     "eslint": "eslint src",
     "eslint:fix": "eslint src --fix",
+    "format": "npm run prettier:fix",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
     "prettier": "prettier --check \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\"",
@@ -36,16 +37,16 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@fluid-experimental/tree": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/common-utils": "^0.32.1",
+    "@fluid-experimental/tree": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/common-utils": "^1.0.0",
     "@graphql-codegen/plugin-helpers": "^1.18.2",
     "@graphql-codegen/visitor-plugin-common": "^1.18.2",
     "graphql": "^15.4.0",
     "graphql-tools": "^7.0.2"
   },
   "devDependencies": {
-    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
-    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/mocha-test-setup": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
+    "@fluidframework/test-runtime-utils": ">=2.0.0-internal.1.1.0 <2.0.0-internal.2.0.0",
     "@graphql-codegen/cli": "1.20.1",
     "@graphql-codegen/typescript": "1.20.2",
     "@microsoft/api-extractor": "^7.22.2",

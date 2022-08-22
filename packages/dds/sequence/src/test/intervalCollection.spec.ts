@@ -141,6 +141,35 @@ describe("SharedString interval collections", () => {
             ]);
         });
 
+        describe("remain consistent on double-delete", () => {
+            let collection: IntervalCollection<SequenceInterval>;
+            let collection2: IntervalCollection<SequenceInterval>;
+            beforeEach(() => {
+                sharedString.insertText(0, "01234");
+                collection = sharedString.getIntervalCollection("test");
+                collection2 = sharedString.getIntervalCollection("test");
+                containerRuntimeFactory.processAllMessages();
+            });
+
+            it("causing references to slide forward", () => {
+                sharedString2.removeRange(2, 3);
+                collection.add(2, 2, IntervalType.SlideOnRemove);
+                sharedString.removeRange(2, 4);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [{ start: 2, end: 2 }]);
+                assertIntervals(sharedString2, collection2, [{ start: 2, end: 2 }]);
+            });
+
+            it("causing references to slide backward", () => {
+                sharedString2.removeRange(2, 3);
+                collection.add(2, 2, IntervalType.SlideOnRemove);
+                sharedString.removeRange(2, 5);
+                containerRuntimeFactory.processAllMessages();
+                assertIntervals(sharedString, collection, [{ start: 1, end: 1 }]);
+                assertIntervals(sharedString2, collection2, [{ start: 1, end: 1 }]);
+            });
+        });
+
         it("errors creating invalid intervals", () => {
             const collection1 = sharedString.getIntervalCollection("test");
             containerRuntimeFactory.processAllMessages();
@@ -330,6 +359,29 @@ describe("SharedString interval collections", () => {
             assertIntervals(sharedString2, collection2, [
                 { start: -1, end: -1 },
             ], false);
+        });
+
+        it("remains consistent after changing only one end of a detached interval", () => {
+            const collection1 = sharedString.getIntervalCollection("test");
+            const collection2 = sharedString2.getIntervalCollection("test");
+            const assertAllIntervals = (expected: readonly { start: number; end: number; }[]) => {
+                assertIntervals(sharedString, collection1, expected, false);
+                assertIntervals(sharedString2, collection2, expected, false);
+            };
+
+            sharedString.insertText(0, "ABCD");
+            const interval = collection1.add(1, 3, IntervalType.SlideOnRemove);
+            sharedString.removeRange(0, 4);
+            sharedString.insertText(0, "012");
+            containerRuntimeFactory.processAllMessages();
+
+            assertAllIntervals([{ start: -1, end: -1 }]);
+
+            const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
+            collection2.change(id, undefined, 2);
+            containerRuntimeFactory.processAllMessages();
+
+            assertAllIntervals([{ start: -1, end: 2 }]);
         });
 
         it("can slide intervals on remove ack", () => {

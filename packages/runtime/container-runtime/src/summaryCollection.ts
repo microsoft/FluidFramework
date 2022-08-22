@@ -366,11 +366,11 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
             // from. i.e. initialSequenceNumber > summarySequenceNumber.
             // We really don't care about it for now, since it is older than
             // the one we loaded from.
-            if (seq >= this.deltaManager.initialSequenceNumber) {
+            if (seq > this.deltaManager.initialSequenceNumber) {
                 // Potential causes for it to be later than our initialSequenceNumber
                 // are that the summaryOp was nacked then acked, double-acked, or
                 // the summarySequenceNumber is incorrect.
-                this.logger.sendErrorEvent({
+                this.logger.sendTelemetryEvent({
                     eventName: "SummaryAckWithoutOp",
                     sequenceNumber: op.sequenceNumber, // summary ack seq #
                     summarySequenceNumber: seq, // missing summary seq #

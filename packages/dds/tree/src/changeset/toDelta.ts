@@ -4,25 +4,28 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brand, fail } from "../util";
-import { FieldKey, Value } from "../tree";
-import { Delta, ProtoNode, Transposed as T } from ".";
+import { brand, brandOpaque, clone, fail, OffsetListFactory } from "../util";
+import { FieldKey, Value, Delta } from "../tree";
+import { ProtoNode, Transposed as T } from "./format";
 
 /**
  * Converts a Changeset into a Delta.
  * @param changeset - The Changeset to convert
  * @returns A Delta for applying the changes described in the given Changeset.
  */
-export function toDelta(changeset: T.Changeset): Delta.Root {
-    return convertPositionedMarks<Delta.OuterMark>(changeset.marks);
+export function toDelta(changeset: T.LocalChangeset): Delta.Root {
+    // Save result to a constant to work around linter bug:
+    // https://github.com/typescript-eslint/typescript-eslint/issues/5014
+    const out: Delta.Root = convertFieldMarks<Delta.OuterMark>(changeset.marks);
+    return out;
 }
 
-function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.PositionedMarks<TMarks> {
-    const out: Delta.PositionedMarks<Delta.Mark> = [];
-    for (const offsetMark of marks) {
-        const offset = offsetMark.offset ?? 0;
-        const mark = offsetMark.mark;
-        if (Array.isArray(mark)) {
+function convertMarkList<TMarks>(marks: T.MarkList): Delta.MarkList<TMarks> {
+    const out = new OffsetListFactory<Delta.Mark>();
+    for (const mark of marks) {
+        if (typeof mark === "number") {
+            out.pushOffset(mark);
+        } else if (Array.isArray(mark)) {
             for (const attach of mark) {
                 // Inline into `switch(attach.type)` once we upgrade to TS 4.7
                 const type = attach.type;
@@ -32,27 +35,34 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.Positio
                             type: Delta.MarkType.Insert,
                             content: cloneTreeContent(attach.content),
                         };
-                        out.push({ offset, mark: insertMark });
+                        out.pushContent(insertMark);
                         break;
                     }
                     case "MInsert": {
-                        const clone = cloneAndModify(attach);
-                        if (clone.fields.size > 0) {
+                        const cloned = cloneAndModify(attach);
+                        if (cloned.fields.size > 0) {
                             const insertMark: Delta.InsertAndModify = {
                                 type: Delta.MarkType.InsertAndModify,
-                                ...clone,
+                                ...cloned,
                             };
-                            out.push({ offset, mark: insertMark });
+                            out.pushContent(insertMark);
                         } else {
                             const insertMark: Delta.Insert = {
                                 type: Delta.MarkType.Insert,
-                                content: [clone.content],
+                                content: [cloned.content],
                             };
-                            out.push({ offset, mark: insertMark });
+                            out.pushContent(insertMark);
                         }
                         break;
                     }
-                    case "MoveIn":
+                    case "MoveIn": {
+                        const moveMark: Delta.MoveIn = {
+                            type: Delta.MarkType.MoveIn,
+                            moveId: brandOpaque<Delta.MoveId>(attach.id),
+                        };
+                        out.pushContent(moveMark);
+                        break;
+                    }
                     case "MMoveIn":
                         fail(ERR_NOT_IMPLEMENTED);
                     case "Bounce":
@@ -68,12 +78,9 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.Positio
             switch (type) {
                 case "Modify": {
                     if (mark.tomb === undefined) {
-                        out.push({
-                            offset,
-                            mark: {
-                                type: Delta.MarkType.Modify,
-                                ...convertModify<Delta.OuterMark>(mark),
-                            },
+                        out.pushContent({
+                            type: Delta.MarkType.Modify,
+                            ...convertModify<Delta.OuterMark>(mark),
                         });
                     }
                     break;
@@ -83,7 +90,7 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.Positio
                         type: Delta.MarkType.Delete,
                         count: mark.count,
                     };
-                    out.push({ offset, mark: deleteMark });
+                    out.pushContent(deleteMark);
                     break;
                 }
                 case "MDelete": {
@@ -93,17 +100,25 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.Positio
                             type: Delta.MarkType.ModifyAndDelete,
                             fields,
                         };
-                        out.push({ offset, mark: deleteMark });
+                        out.pushContent(deleteMark);
                     } else {
                         const deleteMark: Delta.Delete = {
                             type: Delta.MarkType.Delete,
                             count: 1,
                         };
-                        out.push({ offset, mark: deleteMark });
+                        out.pushContent(deleteMark);
                     }
                     break;
                 }
-                case "MoveOut":
+                case "MoveOut": {
+                    const moveMark: Delta.MoveOut = {
+                        type: Delta.MarkType.MoveOut,
+                        moveId: brandOpaque<Delta.MoveId>(mark.id),
+                        count: mark.count,
+                    };
+                    out.pushContent(moveMark);
+                    break;
+                }
                 case "MMoveOut":
                 case "Revive":
                 case "MRevive":
@@ -121,31 +136,16 @@ function convertPositionedMarks<TMarks>(marks: T.PositionedMarks): Delta.Positio
         }
     }
     // TODO: add runtime checks
-    return out as unknown as Delta.PositionedMarks<TMarks>;
+    return out.list as unknown as Delta.MarkList<TMarks>;
 }
 
 /**
  * Clones the content described by a Changeset into tree content expected by Delta.
  */
 function cloneTreeContent(content: ProtoNode[]): Delta.ProtoNode[] {
-    const out: Delta.ProtoNode[] = [];
-    for (const node of content) {
-        const outNode: Delta.ProtoNode = {
-            id: node.id,
-            value: node.value,
-        };
-        if (node.fields !== undefined) {
-            const fields: Delta.FieldMap<Delta.ProtoField> = new Map();
-            for (const key of Object.keys(node.fields)) {
-                fields.set(brand<FieldKey>(key), cloneTreeContent(node.fields[key]));
-            }
-            if (fields.size > 0) {
-                outNode.fields = fields;
-            }
-        }
-        out.push(outNode);
-    }
-    return out;
+    // The changeset and Delta format currently use the same interface to represent inserted content.
+    // This is an implementation detail that may not remain true.
+    return clone(content);
 }
 
 /**
@@ -173,14 +173,14 @@ interface DeltaInsertModification {
      * The modifications to make to the inserted subtree.
      * May be empty.
      */
-    fields: Delta.FieldMarks<Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify>;
+    fields: InsertedFieldsMarksMap;
 }
 
 /**
  * A map of marks to be applied to inserted fields.
  */
-type InsertedFieldsMarksMap = Delta.FieldMarks<Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify>;
-type InsertedFieldsMarks = Delta.PositionedMarks<Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify>;
+type InsertedFieldsMarksMap = Delta.FieldMarks<InsertedFieldsMark>;
+type InsertedFieldsMark = Delta.Skip | Delta.ModifyInserted | Delta.MoveIn | Delta.MoveInAndModify;
 
 /**
  * Converts inserted content into the format expected in Delta instances.
@@ -202,30 +202,21 @@ function applyOrCollectModifications(
 ): InsertedFieldsMarksMap {
     const outFieldsMarks: InsertedFieldsMarksMap = new Map();
     if (modify.value !== undefined) {
-        const type = modify.value.type;
-        switch (type) {
-            case "Set":
-                node.value = modify.value.value;
-                break;
-            case "Revert":
-                fail(ERR_REVERT_ON_INSERT);
-            default: unreachableCase(type);
-        }
+        node.value = modify.value.value;
     }
     if (modify.fields !== undefined) {
-        const protoFields = node.fields ?? new Map();
+        const protoFields = node.fields ?? {};
         const modifyFields = modify.fields;
         for (const key of Object.keys(modifyFields)) {
-            const brandedKey = brand<FieldKey>(key);
-            const outNodes = protoFields.get(brandedKey) ?? fail(ERR_MOD_ON_MISSING_FIELD);
-            const outMarks: InsertedFieldsMarks = [];
+            const brandedKey: FieldKey = brand(key);
+            const outNodes = protoFields[key] ?? fail(ERR_MOD_ON_MISSING_FIELD);
+            const outMarks = new OffsetListFactory<InsertedFieldsMark>();
             let index = 0;
-            let offset = 0;
-            for (const markWithOffset of modifyFields[key]) {
-                index += markWithOffset.offset ?? 0;
-                offset += markWithOffset.offset ?? 0;
-                const mark = markWithOffset.mark;
-                if (Array.isArray(mark)) {
+            for (const mark of modifyFields[key]) {
+                if (typeof mark === "number") {
+                    index += mark;
+                    outMarks.pushOffset(mark);
+                } else if (Array.isArray(mark)) {
                     for (const attach of mark) {
                         // Inline into `switch(attach.type)` once we upgrade to TS 4.7
                         const type = attach.type;
@@ -234,20 +225,16 @@ function applyOrCollectModifications(
                                 const content = cloneTreeContent(attach.content);
                                 outNodes.splice(index, 0, ...content);
                                 index += content.length;
-                                offset += content.length;
+                                outMarks.pushOffset(content.length);
                                 break;
                             }
                             case "MInsert": {
                                 const cloned = cloneAndModify(attach);
                                 if (cloned.fields.size > 0) {
-                                    outMarks.push({
-                                        offset,
-                                        mark: {
-                                            type: Delta.MarkType.Modify,
-                                            fields: cloned.fields,
-                                        },
+                                    outMarks.pushContent({
+                                        type: Delta.MarkType.Modify,
+                                        fields: cloned.fields,
                                     });
-                                    offset = 0;
                                 }
                                 outNodes.splice(index, 0, cloned.content);
                                 index += 1;
@@ -274,14 +261,10 @@ function applyOrCollectModifications(
                             }
                             const clonedFields = applyOrCollectModifications(outNodes[index], mark);
                             if (clonedFields.size > 0) {
-                                outMarks.push({
-                                    offset,
-                                    mark: {
-                                        type: Delta.MarkType.Modify,
-                                        fields: clonedFields,
-                                    },
+                                outMarks.pushContent({
+                                    type: Delta.MarkType.Modify,
+                                    fields: clonedFields,
                                 });
-                                offset = 0;
                             }
                             index += 1;
                             break;
@@ -319,14 +302,15 @@ function applyOrCollectModifications(
                     }
                 }
             }
-            if (outMarks.length > 0) {
-                outFieldsMarks.set(brandedKey, outMarks);
+            if (outMarks.list.length > 0) {
+                outFieldsMarks.set(brandedKey, outMarks.list);
             }
             if (outNodes.length === 0) {
-                protoFields.delete(brandedKey);
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete protoFields[key];
             }
         }
-        if (protoFields.size === 0) {
+        if (Object.keys(protoFields).length === 0) {
             delete node.fields;
         }
     }
@@ -336,7 +320,6 @@ function applyOrCollectModifications(
 const ERR_NOT_IMPLEMENTED = "Not implemented";
 const ERR_TOMB_IN_INSERT = "Encountered a concurrent deletion in inserted content";
 const ERR_MOD_ON_MISSING_FIELD = "Encountered a modification that targets a non-existent field on an inserted tree";
-const ERR_REVERT_ON_INSERT = "Encountered a revert operation on an inserted node";
 const ERR_BOUNCE_ON_INSERT = "Encountered a Bounce mark in an inserted field";
 const ERR_INTAKE_ON_INSERT = "Encountered an Intake mark in an inserted field";
 const ERR_REVIVE_ON_INSERT = "Encountered a Revive mark in an inserted field";
@@ -346,7 +329,7 @@ const ERR_RETURN_ON_INSERT = "Encountered a Return mark in an inserted field";
  * Modifications to a subtree as described by a Changeset.
  */
 interface ChangesetMods {
-    value?: T.ValueMark;
+    value?: T.SetValue;
     fields?: T.FieldMarks;
 }
 
@@ -364,25 +347,21 @@ interface ChangesetMods {
 function convertModify<TMarks>(modify: ChangesetMods): DeltaMods<TMarks> {
     const out: DeltaMods<TMarks> = {};
     if (modify.value !== undefined) {
-        const type = modify.value.type;
-        switch (type) {
-            case "Set":
-                out.setValue = modify.value.value;
-                break;
-            case "Revert":
-                fail(ERR_NOT_IMPLEMENTED);
-            default: unreachableCase(type);
-        }
+        out.setValue = modify.value.value;
     }
     const fields = modify.fields;
     if (fields !== undefined) {
-        const outFields: Delta.FieldMarks<TMarks> = new Map();
-        for (const key of Object.keys(fields)) {
-            const marks = convertPositionedMarks<TMarks>(fields[key]);
-            const brandedKey = brand<FieldKey>(key);
-            outFields.set(brandedKey, marks);
-        }
-        out.fields = outFields;
+        out.fields = convertFieldMarks<TMarks>(fields);
     }
     return out;
+}
+
+function convertFieldMarks<TMarks>(fields: T.FieldMarks): Delta.FieldMarks<TMarks> {
+    const outFields: Delta.FieldMarks<TMarks> = new Map();
+    for (const key of Object.keys(fields)) {
+        const marks = convertMarkList<TMarks>(fields[key]);
+        const brandedKey: FieldKey = brand(key);
+        outFields.set(brandedKey, marks);
+    }
+    return outFields;
 }

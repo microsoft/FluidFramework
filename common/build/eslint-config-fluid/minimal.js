@@ -4,32 +4,32 @@
  */
 
 module.exports = {
-    "env": {
-        "browser": true,
-        "es6": true,
-        "node": true
+    env: {
+        browser: true,
+        es6: true,
+        node: true,
     },
-    "extends": [
+    extends: [
         "./eslint7",
         "plugin:eslint-comments/recommended",
         "plugin:import/errors",
         "plugin:import/warnings",
-        "plugin:import/typescript"
+        "plugin:import/typescript",
     ],
-    "globals": {
-        "Atomics": "readonly",
-        "SharedArrayBuffer": "readonly"
+    globals: {
+        Atomics: "readonly",
+        SharedArrayBuffer: "readonly",
     },
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaFeatures": {
-            "jsx": true
+    parser: "@typescript-eslint/parser",
+    parserOptions: {
+        ecmaFeatures: {
+            jsx: true,
         },
-        "ecmaVersion": 2018,
-        "sourceType": "module",
-        "project": "./tsconfig.json",
+        ecmaVersion: 2018,
+        sourceType: "module",
+        project: "./tsconfig.json",
     },
-    "plugins": [
+    plugins: [
         // Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin
         "@rushstack/eslint-plugin",
         // Plugin documentation: https://www.npmjs.com/package/@rushstack/eslint-plugin-security
@@ -49,9 +49,8 @@ module.exports = {
         // Plugin documentation: https://www.npmjs.com/package/eslint-plugin-unicorn
         "unicorn",
     ],
-    "reportUnusedDisableDirectives": true,
-    "rules": {
-
+    reportUnusedDisableDirectives: true,
+    rules: {
         // The @rushstack rules are documented in the package README:
         // https://www.npmjs.com/package/@rushstack/eslint-plugin
         "@rushstack/no-new-null": "warn",
@@ -65,15 +64,16 @@ module.exports = {
                 selector: "accessor",
                 modifiers: ["private"],
                 format: ["camelCase"],
-                "leadingUnderscore": "allow"
+                leadingUnderscore: "allow",
             },
         ],
 
         // Encourages minimal disabling of eslint rules, while still permitting whole-file exclusions.
         "eslint-comments/disable-enable-pair": [
-            "error", {
-                "allowWholeFile": true
-            }
+            "error",
+            {
+                allowWholeFile: true,
+            },
         ],
 
         // ENABLED INTENTIONALLY
@@ -81,23 +81,20 @@ module.exports = {
         "@typescript-eslint/dot-notation": "error",
         "@typescript-eslint/no-non-null-assertion": "error",
         "@typescript-eslint/no-unnecessary-type-assertion": "error",
-        "eqeqeq": [
-            "error",
-            "smart"
-        ],
+        "eqeqeq": ["error", "smart"],
         "max-len": [
             "error",
             {
-                "ignoreRegExpLiterals": false,
-                "ignoreStrings": false,
-                "code": 120
-            }
+                ignoreRegExpLiterals: false,
+                ignoreStrings: false,
+                code: 120,
+            },
         ],
         "no-multi-spaces": [
             "error",
             {
-                "ignoreEOLComments": true
-            }
+                ignoreEOLComments: true,
+            },
         ],
 
         // Note: this can be replaced altogether by `@typescript-eslint/no-unused-vars`,
@@ -114,11 +111,11 @@ module.exports = {
         "unicorn/filename-case": [
             "error",
             {
-                "cases": {
-                    "camelCase": true,
-                    "pascalCase": true
-                }
-            }
+                cases: {
+                    camelCase: true,
+                    pascalCase: true,
+                },
+            },
         ],
         "unicorn/no-new-buffer": "error",
         "unicorn/no-unsafe-regex": "error",
@@ -150,7 +147,7 @@ module.exports = {
             "error",
             "1tbs",
             {
-                "allowSingleLine": true,
+                allowSingleLine: true,
             },
         ],
         "@typescript-eslint/comma-spacing": "error",
@@ -159,42 +156,33 @@ module.exports = {
         "@typescript-eslint/member-delimiter-style": [
             "error",
             {
-                "multiline": {
-                    "delimiter": "semi",
-                    "requireLast": true
+                multiline: {
+                    delimiter: "semi",
+                    requireLast: true,
                 },
-                "singleline": {
-                    "delimiter": "semi",
-                    "requireLast": true
+                singleline: {
+                    delimiter: "semi",
+                    requireLast: true,
                 },
-                "multilineDetection": "brackets"
+                multilineDetection: "brackets",
             },
         ],
-        "@typescript-eslint/object-curly-spacing": [
-            "error",
-            "always",
-        ],
-        "@typescript-eslint/semi": [
-            "error",
-            "always"
-        ],
+        "@typescript-eslint/object-curly-spacing": ["error", "always"],
+        "@typescript-eslint/semi": ["error", "always"],
         "@typescript-eslint/space-before-function-paren": [
             "error",
             {
-                "anonymous": "never",
-                "asyncArrow": "always",
-                "named": "never"
-            }
+                anonymous: "never",
+                asyncArrow: "always",
+                named: "never",
+            },
         ],
         "@typescript-eslint/space-infix-ops": "error",
         "@typescript-eslint/type-annotation-spacing": "error",
         "array-bracket-spacing": "error",
         "arrow-spacing": "error",
         "block-spacing": "error",
-        "dot-location": [
-            "error",
-            "property",
-        ],
+        "dot-location": ["error", "property"],
         "jsx-quotes": "error",
         "key-spacing": "error",
         "space-unary-ops": "error",
@@ -205,21 +193,71 @@ module.exports = {
 
         // #region eslint-plugin-jsdoc rules
 
-        // Ensures that conflicting access tags don't exist in the same comment.
-        // See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
+        /**
+         * Ensures that conflicting access tags don't exist in the same comment.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#check-access>.
+         */
         "jsdoc/check-access": "error",
 
-        // The syntax this validates does not accommodate the syntax used by API-Extractor
-        // See <https://api-extractor.com/pages/tsdoc/tag_example/>
-        'jsdoc/check-examples': 'off',
+        /**
+         * Ensures consistent line formatting in JSDoc/TSDoc comments
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-check-alignment>
+         */
+        "jsdoc/check-line-alignment": "error",
 
-        // Covered by `tsdoc/syntax`
-        'jsdoc/check-tag-names': 'off',
+        /**
+         * The syntax this validates does not accommodate the syntax used by API-Extractor
+         * See <https://api-extractor.com/pages/tsdoc/tag_example/>
+         */
+        "jsdoc/check-examples": "off",
 
-        // Ensure function/method parameter comments include a `-` between name and description.
-        // Useful to ensure API-Extractor compatability.
-        // See <https://www.npmjs.com/package/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-hyphen-before-param-description>.
+        /**
+         * Ensures correct indentation within JSDoc/TSDoc comment body
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-check-indentation>
+         */
+        "jsdoc/check-indentation": "error",
+
+        /**
+         * Covered by `tsdoc/syntax`
+         */
+        "jsdoc/check-tag-names": "off",
+
+        /**
+         * Ensures that JSDoc/TSDoc "modifier" tags are empty.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-empty-tags>
+         */
+        "jsdoc/empty-tags": "error",
+
+        /**
+         * Ensures multi-line formatting meets JSDoc/TSDoc requirements.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-no-bad-blocks>
+         */
+        "jsdoc/no-bad-blocks": "error",
+
+        /**
+         * Requires that each line in a JSDoc/TSDoc comment starts with a `*`.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-asterisk-prefix>
+         */
+        "jsdoc/require-asterisk-prefix": "error",
+
+        /**
+         * Ensure function/method parameter comments include a `-` between name and description.
+         * Useful to ensure API-Extractor compatability.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-hyphen-before-param-description>.
+         */
         "jsdoc/require-hyphen-before-param-description": "error",
+
+        /**
+         * Require `@param` tags be non-empty.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-param-description>
+         */
+        "jsdoc/require-param-description": "error",
+
+        /**
+         * Requires `@returns` tags to be non-empty.
+         * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-returns-description>
+         */
+        "jsdoc/require-returns-description": "error",
 
         // #endregion
 
@@ -227,80 +265,64 @@ module.exports = {
         "@typescript-eslint/prefer-nullish-coalescing": "error",
         "@typescript-eslint/prefer-optional-chain": "error",
     },
-    "overrides": [
+    overrides: [
         {
             // Rules only for TypeScript files
-            "files": ["*.ts", "*.tsx"],
-            "rules": {
+            files: ["*.ts", "*.tsx"],
+            rules: {
                 "dot-notation": "off", // Superseded by @typescript-eslint/dot-notation
                 "no-unused-expressions": "off", // Superseded by @typescript-eslint/no-unused-expressions
             },
-            "settings": {
-                "jsdoc": {
-                    "mode": "typescript",
+            settings: {
+                jsdoc: {
+                    mode: "typescript",
                 },
             },
         },
         {
             // Rules only for test files
-            "files": ["*.spec.ts", "src/test/**"],
-            "rules": {
+            files: ["*.spec.ts", "src/test/**"],
+            rules: {
                 "@typescript-eslint/no-invalid-this": "off",
                 "@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.
-            }
+            },
         },
         {
             // Rules only for type validation files
-            "files": ["**/types/*validate*Previous.ts"],
-            "rules": {
+            files: ["**/types/*validate*Previous.ts"],
+            rules: {
                 "@typescript-eslint/comma-spacing": "off",
                 "@typescript-eslint/consistent-type-imports": "off",
                 "max-lines": "off",
-            }
+            },
         },
     ],
-    "settings": {
-        "import/extensions": [
-            ".ts",
-            ".tsx",
-            ".d.ts",
-            ".js",
-            ".jsx"
-        ],
+    settings: {
+        "import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
         "import/parsers": {
-            "@typescript-eslint/parser": [
-                ".ts",
-                ".tsx",
-                ".d.ts"
-            ]
+            "@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
         },
         "import/resolver": {
-            "node": {
-                "extensions": [
-                    ".ts",
-                    ".tsx",
-                    ".d.ts",
-                    ".js",
-                    ".jsx"
-                ]
-            }
+            node: {
+                extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+            },
         },
         "jsdoc": {
-            // The following are intended to keep js/jsx jsdoc comments in line with tsdoc syntax used in ts/tsx code.
-            "tagNamePreference": {
-                "arg": {
-                    "message": "Please use @param instead of @arg.",
-                    "replacement": "param",
+            // The following are intended to keep js/jsx JSDoc comments in line with TSDoc syntax used in ts/tsx code.
+            tagNamePreference: {
+                arg: {
+                    message: "Please use @param instead of @arg.",
+                    replacement: "param",
                 },
-                "argument": {
-                    "message": "Please use @param instead of @argument.",
-                    "replacement": "param",
+                argument: {
+                    message: "Please use @param instead of @argument.",
+                    replacement: "param",
                 },
-                "return": {
-                    "message": "Please use @returns instead of @return.",
-                    "replacement": "returns",
+                return: {
+                    message: "Please use @returns instead of @return.",
+                    replacement: "returns",
                 },
             },
-        }
-    }
+        },
+    },
 };

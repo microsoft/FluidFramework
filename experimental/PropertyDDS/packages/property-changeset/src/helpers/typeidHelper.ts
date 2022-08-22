@@ -61,7 +61,7 @@ export namespace TypeIdHelper {
      * Checks whether the given type is a reserved type.
      *
      * @param in_typeid - The typeid we want to check
-     * @returns  Is this a reserved type?
+     * @returns Is this a reserved type?
      */
     export function isReservedType(in_typeid: string): boolean {
         const reservedTypes = templateSchemaJson["$defs"]["reserved-typeid"]["enum"];
@@ -70,7 +70,7 @@ export namespace TypeIdHelper {
 
     /**
      * Extract the version number from the given typeid
-     * @param in_typeid The typeid to check against
+     * @param in_typeid - The typeid to check against
      * @returns Extracted version
      */
     export function extractVersion(in_typeid): ExtractedVersion {
@@ -89,7 +89,7 @@ export namespace TypeIdHelper {
  * Extracts the context from a typeid
  *
  * @param in_typeid - The typeid to process
- * @returns  Returns the typeid without context, the context and if we have an enum type
+ * @returns The typeid without context, the context and if we have an enum type
  */
     export function extractContext(in_typeid: string | undefined): ExtractedContext {
         const bracketIndex = in_typeid.indexOf("<");
@@ -138,9 +138,9 @@ export namespace TypeIdHelper {
      * Creates a collection typeid string from the
      * typeid and the context.
      *
-     * @param in_typeid  - the typeid in the collection
-     * @param in_context - the context
-     * @param in_enum    - set to true, if the type should get an enum tag
+     * @param in_typeid - The typeid in the collection
+     * @param in_context - The context
+     * @param in_enum - Set to true if the type should get an enum tag
      *
      * @returns The combined typeid string
      */
@@ -192,7 +192,7 @@ export namespace TypeIdHelper {
     /**
      * Checks whether the given type is a template typeid.
      *
-     * @param  in_typeid - The typeid we want to check
+     * @param in_typeid - The typeid we want to check
      * @returns Is this a base template typeid?
      */
     export function isSchemaTypeid(in_typeid: string): boolean {
@@ -202,7 +202,7 @@ export namespace TypeIdHelper {
     /**
      * Extracts referenced typeid from input typeid
      *
-     * @param in_typeid typeid
+     * @param in_typeid - typeid
      *
      * @return referenced typeid or in_param if it is not a reference
      */
@@ -220,7 +220,7 @@ export namespace TypeIdHelper {
      *
      *  Note: By default, this also returns true if in_typeid === in_baseTypeid.
      *
-     * @param in_typeid     - Typeid for which we want to check, whethwe in_baseTypeid is a parent
+     * @param in_typeid - Typeid for which we want to check, whethwe in_baseTypeid is a parent
      * @param in_baseTypeid - The base typeId to check for
      * @throws if in_typeid or in_baseTypeid are not native typeid
      * @returns True if in_baseTypeid is a parent of in_typeid

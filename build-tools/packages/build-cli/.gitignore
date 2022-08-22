@@ -3,6 +3,7 @@
 /.nyc_output
 /dist
 /lib
+!/src/lib
 /tmp
 node_modules
 oclif.manifest.json

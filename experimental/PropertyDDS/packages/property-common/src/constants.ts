@@ -1248,7 +1248,7 @@ const PropertyFactoryError = {
     /**
      * methods: PropertyFactory.initializeSchemaStore
      * Warning: The initializeSchemaStore method must be provided with an options object
-                containing a getBearerToken function and the url to the ForgeSchemaService.
+     * containing a getBearerToken function and the url to the ForgeSchemaService.
      */
     MISSING_FSS_INIT_OPTIONS: "PF-065: The initializeSchemaStore method must be provided with an options object " +
         "containing a getBearerToken function and the url to the ForgeSchemaService.",

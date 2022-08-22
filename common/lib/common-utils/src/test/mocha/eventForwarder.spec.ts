@@ -34,17 +34,27 @@ describe("Loader", () => {
 
                 it("Should forward events", () => {
                     let emitted = false;
-                    forwarder.on(testEvent, () => { emitted = true; });
+                    forwarder.on(testEvent, () => {
+                        emitted = true;
+                    });
                     source.emit(testEvent);
                     assert(emitted);
                 });
 
                 it("Should forward events in correct order", () => {
                     let emitCount = 0;
-                    forwarder.on(testEvent, () => { assert.strictEqual(emitCount++, 2); });
-                    forwarder.once(testEvent, () => { assert.strictEqual(emitCount++, 3); });
-                    forwarder.prependListener(testEvent, () => { assert.strictEqual(emitCount++, 1); });
-                    forwarder.prependOnceListener(testEvent, () => { assert.strictEqual(emitCount++, 0); });
+                    forwarder.on(testEvent, () => {
+                        assert.strictEqual(emitCount++, 2);
+                    });
+                    forwarder.once(testEvent, () => {
+                        assert.strictEqual(emitCount++, 3);
+                    });
+                    forwarder.prependListener(testEvent, () => {
+                        assert.strictEqual(emitCount++, 1);
+                    });
+                    forwarder.prependOnceListener(testEvent, () => {
+                        assert.strictEqual(emitCount++, 0);
+                    });
                     source.emit(testEvent);
                     assert.strictEqual(emitCount, 4);
                 });
@@ -66,9 +76,15 @@ describe("Loader", () => {
                     let listener1Count = 0;
                     let listener2Count = 0;
                     let listenerOnceCount = 0;
-                    forwarder.on(testEvent, () => { listener1Count++; });
-                    forwarder.once(testEvent, () => { listenerOnceCount++; });
-                    forwarder.on(testEvent, () => { listener2Count++; });
+                    forwarder.on(testEvent, () => {
+                        listener1Count++;
+                    });
+                    forwarder.once(testEvent, () => {
+                        listenerOnceCount++;
+                    });
+                    forwarder.on(testEvent, () => {
+                        listener2Count++;
+                    });
                     source.emit(testEvent);
                     source.emit(testEvent);
                     source.emit(testEvent);
@@ -80,8 +96,12 @@ describe("Loader", () => {
                 it("Should remove listeners", () => {
                     let listener1Results = "";
                     let listener2Results = "";
-                    const listener1 = (value: string): void => { listener1Results += value; };
-                    const listener2 = (value: string): void => { listener2Results += value; };
+                    const listener1 = (value: string): void => {
+                        listener1Results += value;
+                    };
+                    const listener2 = (value: string): void => {
+                        listener2Results += value;
+                    };
                     forwarder.on(testEvent, listener1);
                     forwarder.on(testEvent, listener2);
                     source.emit(testEvent, "a");

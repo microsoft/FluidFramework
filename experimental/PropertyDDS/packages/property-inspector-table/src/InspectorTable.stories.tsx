@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 import { PropertyProxy } from '@fluid-experimental/property-proxy';
-import { InspectorDecorator } from './InspectorDecorator';
-import { ModalManager } from './ModalManager';
-import { ModalRoot } from './ModalRoot';
 import { storiesOf } from '@storybook/react';
 import * as React from 'react';
-import { MockWorkspace, getPopulateFunctionWithSerializedBranchData, populateWorkspace } from '../test/testUtils';
-import { handlePropertyDataCreation, handlePropertyDataCreationOptionGeneration } from './PropertyDataCreationHandlers';
+import { getPopulateFunctionWithSerializedBranchData, MockWorkspace, populateWorkspace } from '../test/common';
+import { InspectorDecorator } from './InspectorDecorator';
 import { InspectorTable } from './InspectorTable';
 import { InspectorTableDecorator } from './InspectorTableDecorator';
 import { IInspectorTableProps } from './InspectorTableTypes';
+import { ModalManager } from './ModalManager';
+import { ModalRoot } from './ModalRoot';
+import { handlePropertyDataCreation, handlePropertyDataCreationOptionGeneration } from './PropertyDataCreationHandlers';
 
 class Loading extends React.Component<
   Partial<IInspectorTableProps> & { empty?: boolean, populateFunction: (workspace: MockWorkspace) => void },

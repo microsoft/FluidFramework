@@ -466,7 +466,7 @@ export async function asyncFunctionThrowsCorrectly(
 	return errorMessage === expectedError;
 }
 
-/*
+/**
  * Returns true if two nodes have equivalent data, otherwise false.
  * Does not compare children or payloads.
  * @param nodes - two or more nodes to compare

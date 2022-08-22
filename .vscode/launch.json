@@ -132,11 +132,21 @@
             "port": 5858,
             "restart": true,
             "sourceMaps": true,
-            "localRoot": "${workspaceFolder}",
+            "localRoot": "${workspaceFolder}/server/routerlicious",
             "remoteRoot": "/usr/src/server",
-            "outFiles": [
-                "${workspaceFolder}/dist/**/*.js"
-            ],
+            "protocol": "inspector",
+            "trace": "sm"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to riddler",
+            "address": "localhost",
+            "port": 5865,
+            "restart": true,
+            "sourceMaps": true,
+            "localRoot": "${workspaceFolder}/server/routerlicious",
+            "remoteRoot": "/usr/src/server",
             "protocol": "inspector",
             "trace": "sm"
         },

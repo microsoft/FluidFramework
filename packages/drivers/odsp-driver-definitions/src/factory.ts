@@ -57,7 +57,7 @@ export interface ICollabSessionOptions {
      */
     unauthenticatedUserDisplayName?: string;
     /**
-     * @deprecated - Due to security reasons we will passing the token via Authorization header only.
+     * @deprecated - Due to security reasons we will be passing the token via Authorization header only.
      * Value indicating session preference to always pass access token via Authorization header.
      * Default behavior is to pass access token via query parameter unless overall href string
      * length exceeds 2048 characters. Using query param is performance optimization which results
@@ -121,10 +121,24 @@ export interface HostStoragePolicy {
     isolateSocketCache?: boolean;
 
     /**
-     * Enable creation of sharing link along with the creation of file by setting this value to true.
+     * @deprecated Switch to using the new feature gated by enableSingleRequestForShareLinkWithCreate
+     * with 'createLinkScope' and 'createLinkRole' is requested to the odsp apis instead of 'createLinkType'.
+     * It enables the creation of sharing link along with the creation of file by setting this value to true.
      * If the host provides a 'createLinkType' parameter in the request URL to the container.attach()
-     * method, we will request for send the request to ODSP with the same (if the flag is enabled) so
-     * that a sharing can be created with the creation of file to save number for round trips made to ODSP.
+     * method, we will send the request to ODSP with the same (if the flag is enabled) so
+     * that a share link can be created with the creation of file to save number for round trips made to ODSP.
+     * (This flag works independently of enableSingleRequestForShareLinkWithCreate which is used for sharing link
+     * requests where 'createLinkScope' is requested.)
      */
      enableShareLinkWithCreate?: boolean;
+
+    /**
+     * Enable creation of sharing link along with the creation of file by setting this value to true.
+     * If the host provides a 'createLinkScope' parameter in the request URL to the container.attach()
+     * method, we will send the request to ODSP with the same (if the flag is enabled) so
+     * that a share link can be created with the creation of file to save number for round trips made to ODSP.
+     * (This flag works independently of enableShareLinkWithCreate which was used for old sharing link requests
+     * where 'createLinkType' was requested.)
+     */
+    enableSingleRequestForShareLinkWithCreate?: boolean;
 }

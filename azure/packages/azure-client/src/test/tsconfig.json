@@ -1,16 +1,16 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "rootDir": "./",
-        "outDir": "../../dist/test",
-        "composite": true,
-        "types": ["mocha", "node"],
-        "skipLibCheck": true,
+  "extends": "@fluidframework/build-common/ts-common-config.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "outDir": "../../dist/test",
+    "composite": true,
+    "types": ["mocha", "node"],
+    "skipLibCheck": true,
+  },
+  "include": ["./**/*"],
+  "references": [
+    {
+      "path": "../..",
     },
-    "include": ["./**/*"],
-    "references": [
-        {
-            "path": "../..",
-        },
-    ],
+  ],
 }

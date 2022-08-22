@@ -12,6 +12,7 @@ parameters:
   default: none
   values:
     - none
+    - prerelease
     - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
@@ -27,6 +28,7 @@ trigger:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - build-tools
@@ -44,6 +46,7 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:
@@ -60,12 +63,11 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: build-tools
-    tagName:
+    tagName: build-tools
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
     taskTest: test
-    buildNumberInPatch: true
     poolBuild: Large
     cgSubDirectory: packages
     checkoutSubmodules: true

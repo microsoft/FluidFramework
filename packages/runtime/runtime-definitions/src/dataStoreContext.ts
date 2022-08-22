@@ -84,7 +84,7 @@ export const VisibilityState = {
 };
 export type VisibilityState = typeof VisibilityState[keyof typeof VisibilityState];
 
-export interface IContainerRuntimeBaseEvents extends IEvent{
+export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchBegin" | "op", listener: (op: ISequencedDocumentMessage) => void);
     (event: "batchEnd", listener: (error: any, op: ISequencedDocumentMessage) => void);
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
@@ -99,12 +99,12 @@ export interface IContainerRuntimeBaseEvents extends IEvent{
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  */
- export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
+export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
  * A fluid router with the capability of being assigned an alias
  */
- export interface IDataStore extends IFluidRouter {
+export interface IDataStore extends IFluidRouter {
     /**
      * Attempt to assign an alias to the datastore.
      * If the operation succeeds, the datastore can be referenced
@@ -151,14 +151,13 @@ export interface IContainerRuntimeBase extends
     submitSignal(type: string, content: any): void;
 
     /**
-     * @deprecated 0.16 Issue #1537, #3631
-     * @internal
-     */
+    * @deprecated 0.16 Issue #1537, #3631
+    * @internal
+    */
     _createDataStoreWithProps(
         pkg: string | string[],
         props?: any,
         id?: string,
-        isRoot?: boolean,
     ): Promise<IDataStore>;
 
     /**

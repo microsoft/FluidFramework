@@ -12,7 +12,11 @@ export class VersionBag {
     private versionData: { [key: string]: string } = {};
 
     public isEmpty(): boolean {
-        return Object.keys(this.versionData).length === 0;
+        return this.size === 0;
+    }
+
+    public get size(): number {
+        return Object.keys(this.versionData).length;
     }
     public add(pkg: Package, version: string) {
         const existing = this.internalAdd(pkg, version);
@@ -52,8 +56,8 @@ export class VersionBag {
 }
 
 /**
- * Keep track of all the dependency version information and detect conflicting dependencies.
- * Provide functionality to collect the dependencies information from published package as well.
+ * A specialized {@link VersionBag} that tracks dependency version information about packages and detects conflicting
+ * dependencies. It can also be used to collect dependency information from packages published to npm.
  */
 export class ReferenceVersionBag extends VersionBag {
     private readonly referenceData = new Map<string, { reference: string, published: boolean }>();
@@ -61,13 +65,18 @@ export class ReferenceVersionBag extends VersionBag {
     private readonly publishedPackage = new Set<string>();
     private readonly publishedPackageRange = new Set<string>();
 
-    constructor(private readonly repoRoot: string, private readonly fullPackageMap: Map<string, Package>, public readonly repoVersions: VersionBag) {
+    constructor(
+        private readonly repoRoot: string,
+        private readonly fullPackageMap: Map<string, Package>,
+        public readonly repoVersions: VersionBag
+    ) {
         super();
     }
 
     /**
-     * Add package and version to the version bag, with option reference to indicate where the reference comes from
-     * Will error if there is a conflicting dependency versions, if the references are from the local repo, other wise warn.
+     * Add package and version to the version bag, with optional reference to indicate where the reference comes from.
+     * Will error if there is a conflicting dependency versions, if the references are from the local repo, otherwise
+     * warn.
      *
      * @param pkg
      * @param version
@@ -155,11 +164,11 @@ export class ReferenceVersionBag extends VersionBag {
      * That version is added to the version bag, and will error on conflict.
      * It then ask NPM for the list of dependency for the matched version, and collect the version as well.
      *
-     * @param pkg - the package to begin collection information
-     * @param versionRange - the version range to match
-     * @param repoRoot - where the repo root is
-     * @param fullPackageMap - map of all the package in the repo
-     * @param reference - reference of this dependency for error reporting in case of conflict
+     * @param pkg - The package to begin collection information
+     * @param versionRange - The version range to match
+     * @param repoRoot - Where the repo root is
+     * @param fullPackageMap - Map of all the package in the repo
+     * @param reference - Reference of this dependency for error reporting in case of conflict
      */
     public async collectPublishedPackageDependencies(
         pkg: Package,

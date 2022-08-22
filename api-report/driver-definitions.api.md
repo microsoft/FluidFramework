@@ -60,6 +60,14 @@ export interface DriverPreCheckInfo {
 }
 
 // @public (undocumented)
+export enum FetchSource {
+    // (undocumented)
+    default = "default",
+    // (undocumented)
+    noCache = "noCache"
+}
+
+// @public (undocumented)
 export interface IAuthorizationError extends IDriverErrorBase {
     // (undocumented)
     readonly claims?: string;
@@ -153,7 +161,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number, scenarioName?: string): Promise<IVersion[]>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
     readonly policies?: IDocumentStorageServicePolicies;
     readBlob(id: string): Promise<ArrayBufferLike>;
     // (undocumented)

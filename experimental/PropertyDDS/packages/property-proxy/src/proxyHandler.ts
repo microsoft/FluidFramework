@@ -20,9 +20,9 @@ import { ProxyType, ReferenceType } from "./interfaces";
 export const proxyHandler = {
     /**
      * The get trap that handles access to properties
-     * @param target The Object that references a non-collection type
+     * @param target - The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param key The name of the property that is to be accessed.
+     * @param key - The name of the property that is to be accessed.
      * @return {Object | external:BaseProperty} The accessed primitive or Property.
      */
     get(target: ProxyType<ContainerProperty>, key: string) {
@@ -53,10 +53,10 @@ export const proxyHandler = {
      * The set trap that handles assigning of values to properties. In case the underlying
      * {@link external:BaseProperty BaseProperty} is a {@link external:NodeProperty NodeProperty}
      * and the key does not yet exist an insertion happens.
-     * @param target The Object that references a non-collection type
+     * @param target - The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param key The name of the property something is assigned to.
-     * @param value The value to be assigned.
+     * @param key - The name of the property something is assigned to.
+     * @param value - The value to be assigned.
      * @return True on success.
      */
     set(target: ProxyType<ContainerProperty | NodeProperty>
@@ -98,9 +98,9 @@ export const proxyHandler = {
 
     /**
      * Traps the `delete`operator and removes the targeted property from the workspace.
-     * @param target The Object that references a non-collection type
+     * @param target - The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param key The name of the property to be deleted.
+     * @param key - The name of the property to be deleted.
      * @return {Boolean} Returns `true`on successful removal.
      */
     deleteProperty(target: ProxyType<ContainerProperty | NodeProperty>, key: string) {
@@ -116,9 +116,9 @@ export const proxyHandler = {
     /**
      * Trap for Object.getOwnPropertyDescriptor().
      * Returns a writeable and enumerable descriptor. Required for the ownKeys trap.
-     * @param target The Object that references a non-collection type
+     * @param target - The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param key The name of the property.
+     * @param key - The name of the property.
      * @return The Descriptor
      */
     getOwnPropertyDescriptor(target: ProxyType<ContainerProperty>, key: string | typeof proxySymbol) {
@@ -138,9 +138,9 @@ export const proxyHandler = {
 
     /**
      * Trap for the `in` operator.
-     * @param target The Object that references a non-collection type
+     * @param target - The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty} the Proxy handles.
-     * @param key The name of the property.
+     * @param key - The name of the property.
      * @return true if `key` is a child of the property.
      */
     has: (target: ProxyType<ContainerProperty>, key: string | typeof proxySymbol) =>
@@ -149,7 +149,7 @@ export const proxyHandler = {
     /**
      * Trap for the Object.keys().
      * Returns the Ids of the ArrayProperty as an array.
-     * @param target The Object that references a non-collection type
+     * @param target - The Object that references a non-collection type
      * {@link external:BaseProperty BaseProperty}
      * the Proxy handles.
      * @return The array containing the IDs of the {@link external:BaseProperty BaseProperty}.

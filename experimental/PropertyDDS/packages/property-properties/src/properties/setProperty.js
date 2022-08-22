@@ -78,7 +78,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
 
     /**
      * Returns the full property type identifier for the ChangeSet including the enum type id
-     * @param  {boolean} [in_hideCollection=false] - if true the collection type (if applicable) will be omitted
+     * @param {boolean} [in_hideCollection=false] - If true the collection type (if applicable) will be omitted
      * @return {string} The typeid
      */
     getFullTypeid(in_hideCollection = false) {
@@ -104,7 +104,7 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     /**
      * Resolves a direct child node based on the given path segment
      *
-     * @param {String} in_segment                                   - The path segment to resolve
+     * @param {String} in_segment - The path segment to resolve
      * @param {property-properties.PathHelper.TOKEN_TYPES} in_segmentType - The type of segment in the tokenized path
      *
      * @return {property-properties.BaseProperty|undefined} The child property that has been resolved
@@ -201,16 +201,16 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     /**
      * Returns the collection entry with the given ID
      *
-     * @param {string|array<string|number>} in_ids - key of the entry to return or an array of keys
-     *     if an array is passed, the .get function will be performed on each id in sequence
-     *     for example .get(['position','x']) is equivalent to .get('position').get('x').
-     *     If .get resolves to a ReferenceProperty, it will return the property that the ReferenceProperty
-     *     refers to.
+     * @param {string|array<string|number>} in_ids - key of the entry to return or an array of keys if an array is
+     * passed, the .get function will be performed on each id in sequence for example .get(['position','x']) is
+     * equivalent to .get('position').get('x'). If .get resolves to a ReferenceProperty, it will return the property
+     * that the ReferenceProperty refers to.
      * @param {Object} in_options - parameter object
-     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS]
-     *     How should this function behave during reference resolution?
+     * @param {property-properties.BaseProperty.REFERENCE_RESOLUTION} [in_options.referenceResolutionMode=ALWAYS] - How
+     * should this function behave during reference resolution?
      *
-     * @return {property-properties.NamedProperty|undefined} The entry in the collection or undefined if none could be found
+     * @return {property-properties.NamedProperty|undefined} The entry in the collection or undefined if none could be
+     * found
      */
     get(in_ids, in_options) {
         if (_.isArray(in_ids)) {
@@ -275,13 +275,12 @@ export class SetProperty extends IndexedCollectionBaseProperty {
     }
 
     /**
-     * Adds a list of properties to the set.
-     * See {@link SetProperty.setValues}
+     * Adds a list of properties to the set. See {@link SetProperty.setValues}
      * @param {NamedProperty[]|NamedNodeProperty[]|Object[]} in_properties - The list of properties to add to the list
-     * @param {Boolean} in_typed - If the set's items have a typeid and a value then create the
-     *   properties with that typeid, else use the set's typeid (support polymorphic items).
-     * @param {Bool} in_initial  - Whether we are setting default/initial values
-     *   or if the function is called directly with the values to set.
+     * @param {Boolean} in_typed - If the set's items have a typeid and a value then create the properties with that
+     * typeid, else use the set's typeid (support polymorphic items).
+     * @param {Bool} in_initial - Whether we are setting default/initial values or if the function is called directly
+     * with the values to set.
      * @override
      */
     _setValues(in_properties, in_typed, in_initial) {

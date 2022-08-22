@@ -4,9 +4,9 @@
  */
 
 import * as semver from "semver";
-import { adjustVersion, VersionBumpTypeExtended } from "@fluidframework/build-tools";
+import { VersionBumpTypeExtended } from "./bumpTypes";
 import { bumpInternalVersion, getVersionRange } from "./internalVersionScheme";
-import { detectVersionScheme } from "./schemes";
+import { adjustVersion, detectVersionScheme } from "./schemes";
 
 /**
  * Return the version RANGE incremented by the bump type (major, minor, or patch).
@@ -66,23 +66,17 @@ export function incRange(
     }
 }
 
-// export function removePrerelease(range: string): string {
-//     const scheme = detectVersionScheme(range);
-//     const isPrerelease = semver.prerelease(range)?.length ?? 0 > 0;
-//     if(!isPrerelease) {
-//         return range;
-//     }
-//     switch (scheme) {
-//         case "internal": {
-//             throw new Error(`Cannot remove prerelease secrtions from Fluid internal version ranges.`);
-//         }
-//         default: {
-//             const ver = semver.parse()
-//             return `${}`
-//         }
-
-// }
-
+/**
+ * Detects the type of upgrade constraint that a version range represents. Only works for Fluid internal version scheme
+ * versions.
+ *
+ * @param range - The range to check.
+ * @returns The constraint type.
+ *
+ * @remarks
+ *
+ * Throws an Error if the range is not valid.
+ */
 export function detectConstraintType(range: string): "minor" | "patch" {
     const minVer = semver.minVersion(range);
     if (minVer === null) {

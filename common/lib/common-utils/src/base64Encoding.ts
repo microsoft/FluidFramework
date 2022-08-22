@@ -7,21 +7,23 @@ import { IsoBuffer } from "./indexNode";
 
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/Base64 | base64}-encoded string
- * to {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}
+ * to {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}.
  */
-export const fromBase64ToUtf8 = (input: string): string => IsoBuffer.from(input, "base64").toString("utf-8");
+export const fromBase64ToUtf8 = (input: string): string =>
+    IsoBuffer.from(input, "base64").toString("utf-8");
 
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}-encoded string
- * to {@link https://en.wikipedia.org/wiki/Base64 | base64}
+ * to {@link https://en.wikipedia.org/wiki/Base64 | base64}.
  */
-export const fromUtf8ToBase64 = (input: string): string => IsoBuffer.from(input, "utf8").toString("base64");
+export const fromUtf8ToBase64 = (input: string): string =>
+    IsoBuffer.from(input, "utf8").toString("base64");
 
 /**
  * Convenience function to convert unknown encoding to utf8 that avoids
- * buffer copies/encode ops when no conversion is needed
- * @param input - The source string to convert
- * @param encoding - The source string's encoding
+ * buffer copies/encode ops when no conversion is needed.
+ * @param input - The source string to convert.
+ * @param encoding - The source string's encoding.
  */
 export const toUtf8 = (input: string, encoding: string): string => {
     switch (encoding) {

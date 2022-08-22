@@ -231,6 +231,10 @@ export class TestObjectProvider implements ITestObjectProvider {
         return this._logger;
     }
 
+    set logger(logger: EventAndErrorTrackingLogger) {
+        this._logger = logger;
+    }
+
     get documentServiceFactory() {
         if (!this._documentServiceFactory) {
             this._documentServiceFactory = this.driver.createDocumentServiceFactory();

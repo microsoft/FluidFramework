@@ -15,3 +15,5 @@
 export * from "./utils";
 export * from "./typeCheck";
 export * from "./brand";
+export * from "./offsetList";
+export * from "./stackyIterator";

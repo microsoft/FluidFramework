@@ -14,10 +14,7 @@ describe("Assert", () => {
                 assert(false, Number.parseInt(shortCode, 16));
             } catch (e: any) {
                 strict(e instanceof Error, "not an error");
-                strict.strictEqual(
-                    e.message,
-                    shortCode,
-                    "incorrect short code format");
+                strict.strictEqual(e.message, shortCode, "incorrect short code format");
             }
         }
     });

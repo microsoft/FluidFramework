@@ -1,12 +1,22 @@
-# @fluid-internal/version-tools
+# @fluid-tools/version-tools
 
-version-tools provides tools to parse and transform version schemes that are used by the Fluid Framework.
+The version-tools package provides APIs and a CLI to parse and transform version numbers and ranges that are used by the
+Fluid Framework.
+
+<!-- toc -->
+* [@fluid-tools/version-tools](#fluid-toolsversion-tools)
+* [Version schemes](#version-schemes)
+* [General API](#general-api)
+* [CLI Usage](#cli-usage)
+* [Commands](#commands)
+<!-- tocstop -->
 
 # Version schemes
 
-version-tools currently supports the internal Fluid version scheme.
-
-## internal
+Fluid Framework packages sometimes use version schemes that diverge from standard semantic versioning. By default, a new
+package should use standard semantic versioning. However, there are also two other versioning schemes: *internal* and
+*virtualPatch*.
+## internal version scheme
 
 The Fluid internal version scheme consists of two semver "triplets" of major/minor/patch. The first triplet is called
 the *public version*, and is stored in the typical semver positions in the version string.
@@ -21,14 +31,38 @@ In the following example, the public version is `a.b.c`, while the internal vers
 
 `a.b.c-internal.x.y.z`
 
-<!-- toc -->
-* [@fluid-internal/version-tools](#fluid-internalversion-tools)
-* [Version schemes](#version-schemes)
-* [Usage](#usage)
-* [Commands](#commands)
-<!-- tocstop -->
+### API
 
-# Usage
+* `isInternalVersionScheme` -- Returns true if a string represents an internal version number.
+* `isInternalVersionRange` -- Returns true if a string represents an internal version range.
+* `toInternalScheme` -- Converts a standard semver version string to the internal version scheme.
+* `fromInternalScheme` -- Converts an internal version scheme string into two standard semvers -- one for the public
+  version and one for the internal version.
+* `bumpInternalVersion` -- Given an internal version and a bump type, returns the bumped version.
+* `getVersionRange` -- Given an internal version and a constraint type, returns a dependency version range that enforces
+  the constraint.
+
+## virtualPatch version scheme
+
+The Fluid virtualPatch version scheme is only used for pre-1.0 packages. Versions are of the form:
+
+`0.major.minorpatch`
+
+The minor version and patch version are combined by multiplying the minor version by 1000 and then adding the patch
+version. For example, for the standard semver `1.2.3`, the virtualPatch version scheme would yield `0.1.2003`.
+
+Minor versions always start at 1 instead of 0. That is, the first release of a major version 3 would be `0.3.1000`.
+
+### API
+
+* `isVirtualPatch` -- Returns true if a string represents an internal version number.
+
+# General API
+
+* `detectVersionScheme` -- Given a version or a range string, determines what version scheme the string is using.
+* `incRange` -- Increments a _range_ by the bump type (major, minor, or patch), maintaining the existing constraint.
+
+# CLI Usage
 
 version-tools provides a command-line interface (`fluv`) when installed directly. However, the commands listed here are
 also available in the Fluid build and release tool (`flub`). This is accomplished using
@@ -36,11 +70,11 @@ also available in the Fluid build and release tool (`flub`). This is accomplishe
 
 <!-- usage -->
 ```sh-session
-$ npm install -g @fluid-internal/version-tools
+$ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version)
-@fluid-internal/version-tools/0.3.0 linux-x64 node-v14.19.2
+@fluid-tools/version-tools/0.3.2000 linux-x64 node-v14.20.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
@@ -53,6 +87,7 @@ USAGE
 <!-- commands -->
 * [`fluv help [COMMAND]`](#fluv-help-command)
 * [`fluv version VERSION`](#fluv-version-version)
+* [`fluv version latest`](#fluv-version-latest)
 
 ## `fluv help [COMMAND]`
 
@@ -112,9 +147,43 @@ EXAMPLES
   You can use ^ and ~ as a shorthand.
 
     $ fluv version ^1.0.0
+
+  You can use the 'current' bump type to calculate ranges without bumping the version.
+
+    $ fluv version 2.0.0-internal.1.0.0 --type current
 ```
 
-_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.0/dist/commands/version.ts)_
+_See code: [dist/commands/version.ts](https://github.com/microsoft/FluidFramework/blob/v0.3.2000/dist/commands/version.ts)_
+
+## `fluv version latest`
+
+Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+```
+USAGE
+  $ fluv version latest -r <value> [--json] [--prerelease]
+
+FLAGS
+  -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
+                             multiple versions, or a space-delimited list of versions can be provided using a single
+                             argument.
+  --prerelease               Include prerelease versions. By default, prerelease versions are excluded.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Find the latest version from a list of version strings, accounting for the Fluid internal version scheme.
+
+EXAMPLES
+  You can use the --versions (-r) flag multiple times.
+
+    $ fluv version latest -r 2.0.0 -r 2.0.0-internal.1.0.0 -r 1.0.0 -r 0.56.1000
+
+  You can omit the repeated --versions (-r) flag and pass a space-delimited list instead.
+
+    $ fluv version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
+```
 <!-- commandsstop -->
 
 ## Trademark

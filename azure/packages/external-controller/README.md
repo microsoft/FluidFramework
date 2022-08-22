@@ -6,8 +6,8 @@
 the value in the root SharedDirectory. The Fluid Container is defined in container/, the data object is defined in dataObject/.
 
 This implementation demonstrates plugging that Container into a standalone application, rather than using the
-`webpack-fluid-loader` environment that most of our packages use.  This implementation relies on
-[Tinylicious](/server/tinylicious), so there are a few extra steps to get started.  We bring our own view that we will
+`webpack-fluid-loader` environment that most of our packages use. This implementation relies on
+[Tinylicious](/server/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
 bind to the data in the container.
 
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
@@ -19,10 +19,11 @@ To update them, edit docs/md-magic.config.js, then run 'npm run build:md-magic' 
 You can run this example using the following steps:
 
 1. Run `npm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
-   a. For an even faster build, you can add the package name to the build command, like this:
+    - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/app-integration-external-controller`
 1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
 1. Run `npm run start` from this directory (azure/packages/external-controller) and open <http://localhost:8080> in a web browser to see the app running.
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Testing
@@ -45,7 +46,7 @@ For in browser testing update `./jest-puppeteer.config.js` to:
 
 Dice Roller uses the following distributed data structures:
 
-- SharedDirectory - root
+-   SharedDirectory - root
 
 ## Backed Locally and running with live Azure Fluid Relay service instance
 
@@ -65,16 +66,21 @@ userID/userName as optional parameters. The Azure Function is responsible for ma
 to generate and sign the token such that the service will accept it.
 
 ```typescript
-const connectionConfig: AzureConnectionConfig = useAzure ? {
-    type: "remote",
-    tenantId: "YOUR-TENANT-ID-HERE",
-    tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL"+"/api/GetAzureToken", { userId: "test-user", userName: "Test User" }),
-    endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
-} : {
-    type: "local",
-    tokenProvider: new InsecureTokenProvider("fooBar", user),
-    endpoint: "http://localhost:7070",
-};
+const connectionConfig: AzureConnectionConfig = useAzure
+    ? {
+          type: "remote",
+          tenantId: "YOUR-TENANT-ID-HERE",
+          tokenProvider: new AzureFunctionTokenProvider(
+              "AZURE-FUNCTION-URL" + "/api/GetAzureToken",
+              { userId: "test-user", userName: "Test User" },
+          ),
+          endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
+      }
+    : {
+          type: "local",
+          tokenProvider: new InsecureTokenProvider("fooBar", user),
+          endpoint: "http://localhost:7070",
+      };
 ```
 
 In this way, we can toggle between remote and local mode using the same config format. We make use of

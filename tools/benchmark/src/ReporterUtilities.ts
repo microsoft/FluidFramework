@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import Benchmark from "benchmark";
 import { assert } from "chai";
 
 /**
@@ -75,4 +76,50 @@ export function geometricMean(values: number[]): number {
         sum += Math.log(value);
     }
     return Math.exp(sum / values.length);
+}
+
+/**
+ * T-Distribution two-tailed critical values for 95% confidence.
+ * For more info see http://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm.
+ */
+/* eslint-disable quote-props,key-spacing,no-multi-spaces */
+const tTable = {
+    "1":  12.706, "2":  4.303, "3":  3.182, "4":  2.776, "5":  2.571, "6":  2.447,
+    "7":  2.365,  "8":  2.306, "9":  2.262, "10": 2.228, "11": 2.201, "12": 2.179,
+    "13": 2.16,   "14": 2.145, "15": 2.131, "16": 2.12,  "17": 2.11,  "18": 2.101,
+    "19": 2.093,  "20": 2.086, "21": 2.08,  "22": 2.074, "23": 2.069, "24": 2.064,
+    "25": 2.06,   "26": 2.056, "27": 2.052, "28": 2.048, "29": 2.045, "30": 2.042,
+    "infinity": 1.96,
+};
+/* eslint-enable */
+
+/**
+ * Compute statistics for an array of numbers. For homogeneity, it outputs the same
+ * object that the Benchmark library does.
+ *
+ * @param array - List of numbers for which to compute the statistics.
+ * @returns
+ */
+export function getArrayStatistics(array: number[]): Benchmark.Stats {
+    const n = array.length;
+    let max = -Infinity;
+    let min = Infinity;
+    let mean = 0;
+    array.forEach((x) => {
+        mean += x;
+        if (x > max) { max = x; }
+        if (x < min) { min = x; }
+    });
+    mean /= n;
+
+    const variance = array.map((x) => (x - mean) ** 2).reduce((a, b) => a + b) / n;
+    const deviation = Math.sqrt(variance);
+    const sem = deviation / Math.sqrt(n); // Standard Error of the Mean
+    const df = n - 1; // Degrees of Freedom
+    const propName = df === 0 ? "1" : df.toString();
+    const critical = tTable[propName] ?? tTable.infinity;
+    const moe = sem * critical; // Margin of Error
+    const rme = (moe / Math.abs(mean)) * 100 || 0; // Relative Margin of Error
+
+    return { mean, variance, deviation, moe, sem, sample: array, rme };
 }

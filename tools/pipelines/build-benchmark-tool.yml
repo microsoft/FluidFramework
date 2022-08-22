@@ -27,6 +27,7 @@ trigger:
     include:
     - main
     - next
+    - lts
   paths:
     include:
     - tools/benchmark
@@ -44,6 +45,7 @@ pr:
     include:
     - main
     - next
+    - lts
     - release/*
   paths:
     include:

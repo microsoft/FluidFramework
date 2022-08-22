@@ -6,9 +6,8 @@
 import { ContainerProperty } from "@fluid-experimental/property-properties";
 import Switch, { SwitchProps } from "@material-ui/core/Switch";
 import * as React from "react";
-import { IEditableValueCellProps } from "../EditableValueCell";
-import { IInspectorRow } from "../InspectorTableTypes";
-import { getPropertyValue } from "../utils";
+import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes";
+import { getPropertyValue } from "../propertyInspectorUtils";
 
 type BooleanProps = (IEditableValueCellProps & {
   onSubmit: (val: boolean, props: IEditableValueCellProps) => void;

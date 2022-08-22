@@ -264,7 +264,7 @@ export function deepCompareNodes(
 	return true;
 }
 
-/*
+/**
  * Returns true if two nodes have equivalent data and payloads, otherwise false.
  * Does not compare children
  * @param nodes - two or more nodes to compare

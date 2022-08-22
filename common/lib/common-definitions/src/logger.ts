@@ -26,6 +26,7 @@ export interface ITaggedTelemetryPropertyType {
     value: TelemetryEventPropertyType;
     tag: string;
 }
+
 /**
  * JSON-serializable properties, which will be logged with telemetry.
  */
@@ -65,7 +66,7 @@ export interface ITelemetryGenericEvent extends ITelemetryProperties {
  * Error telemetry event.
  * Maps to category = "error"
  */
- export interface ITelemetryErrorEvent extends ITelemetryProperties {
+export interface ITelemetryErrorEvent extends ITelemetryProperties {
     eventName: string;
 }
 

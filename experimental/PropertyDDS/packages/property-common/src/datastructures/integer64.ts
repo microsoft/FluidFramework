@@ -13,6 +13,7 @@ import { constants } from "../constants";
 
 const BIT32 = 4294967296;
 const { MSG } = constants;
+
 /**
  * A data representation class for 64 bit integer types.
  * This is necessary since js doesn't support 64bit
@@ -22,22 +23,22 @@ const { MSG } = constants;
  * There are and there won't be set functions!
  * (see javascript String class)
  *
- * @param low  - lower 32 bit
- * @param high - higher 32 bit
+ * @param low - Lower 32 bit
+ * @param high - Higher 32 bit
  */
 export class Integer64 {
     constructor(protected low = 0, protected high = 0) {
     }
 
     /**
-     * @returns the higher 32 bit integer part
+     * @returns The higher 32 bit integer part
      */
     getValueHigh() {
         return this.high;
     }
 
     /**
-     * @returns the lower 32 bit integer part
+     * @returns The lower 32 bit integer part
      */
     getValueLow() {
         return this.low;
@@ -73,11 +74,11 @@ export class Integer64 {
  * @param in_string - The value to parse. Leading whitespace in the string argument is ignored.
  * @param in_radix - An integer between 2 and 36 that represents the
  *     radix (the base in mathematical numeral systems) of the above mentioned string.
- * @throws if in_string is not a string
- * @throws if in_radix is entered but is not a number between 2 and 36
- * @throws if the property is a Uint64 property and in_string is a negative number
- * @throws if in_string contains characters other than numbers
- * @returns low and high bits of Int64
+ * @throws If in_string is not a string
+ * @throws If in_radix is entered but is not a number between 2 and 36
+ * @throws If the property is a Uint64 property and in_string is a negative number
+ * @throws If in_string contains characters other than numbers
+ * @returns Low and high bits of Int64
  */
 function _stringToInt64(in_signed: boolean, in_string: string, in_radix = 10): number[] {
     ConsoleUtils.assert(_.isString(in_string), MSG.IN_STRING_MUST_BE_STRING + in_string);

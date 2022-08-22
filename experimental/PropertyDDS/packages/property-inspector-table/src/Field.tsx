@@ -5,12 +5,9 @@
 import { PropertyProxy, ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
 import { SetProperty, ContainerProperty } from "@fluid-experimental/property-properties";
 import * as React from "react";
-import { IEditableValueCellProps } from "./EditableValueCell";
-import { BooleanView } from "./PropertyViews/Boolean";
-import { EnumView } from "./PropertyViews/Enum";
-import { NumberView } from "./PropertyViews/Number";
-import { StringView } from "./PropertyViews/String";
+import { StringView, typeToViewMap } from "./PropertyViews";
 import { Utils } from "./typeUtils";
+import { IEditableValueCellProps } from "./InspectorTableTypes";
 
 function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCellProps) {
     const { rowData } = props;
@@ -52,23 +49,6 @@ function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCe
         console.error(error);
     }
 }
-
-const typeToViewMap = {
-    Bool: BooleanView,
-    String: StringView,
-    enum: EnumView,
-
-    Float32: NumberView,
-    Float64: NumberView,
-    Int16: NumberView,
-    Int32: NumberView,
-    Int64: NumberView,
-    Int8: NumberView,
-    Uint16: NumberView,
-    Uint32: NumberView,
-    Uint64: NumberView,
-    Uint8: NumberView,
-};
 
 export const Field: React.FunctionComponent<IEditableValueCellProps> = ({ rowData, ...restProps }) => {
     const parent = rowData.parent!;

@@ -15,9 +15,11 @@ function encodeDigest(hashArray: Uint8Array, encoding: "hex" | "base64"): string
     // eslint-disable-next-line default-case
     switch (encoding) {
         case "hex": {
-            const hashHex = Array.prototype.map.call(hashArray, (byte) => {
-                return byte.toString(16).padStart(2, "0") as string;
-            }).join("");
+            const hashHex = Array.prototype.map
+                .call(hashArray, (byte) => {
+                    return byte.toString(16).padStart(2, "0") as string;
+                })
+                .join("");
             return hashHex;
         }
         case "base64": {
@@ -32,10 +34,10 @@ function encodeDigest(hashArray: Uint8Array, encoding: "hex" | "base64"): string
  * If called under an insecure context for a browser, this will fallback to
  * using the node implementation.
  *
- * @param file - The contents of the file in a buffer
- * @param algorithm - The hash algorithm to use, artificially constrained by what is used internally
- * @param hashEncoding - The encoding of the returned hash, also artificially constrained
- * @returns The hash of the content of the buffer
+ * @param file - The contents of the file in a buffer.
+ * @param algorithm - The hash algorithm to use, artificially constrained by what is used internally.
+ * @param hashEncoding - The encoding of the returned hash, also artificially constrained.
+ * @returns The hash of the content of the buffer.
  */
 export async function hashFile(
     file: IsoBuffer,

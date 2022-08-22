@@ -30,9 +30,15 @@
     "deno.enable": false,
     "deno.lint": false,
     "deno.unstable": false,
+
+    // Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
     "cSpell.words": [
         "injective",
         "losslessly",
+        "mitigations",
+        "multinomial",
+        "nonfinite",
+        "pseudorandomly",
         "unaugmented"
     ],
     "editor.detectIndentation": true,

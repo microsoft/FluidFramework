@@ -24,17 +24,17 @@ export interface IProposal {
 /**
  * Similar to IProposal except includes the sequence number when it was made in addition to the fields on IProposal
  */
-export type ISequencedProposal = { sequenceNumber: number; } & IProposal;
+export type ISequencedProposal = { sequenceNumber: number } & IProposal;
 
 /**
  * Adds the sequence number at which the message was approved to an ISequencedProposal
  */
-export type IApprovedProposal = { approvalSequenceNumber: number; } & ISequencedProposal;
+export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
 
 /**
  * Adds the sequence number at which the message was committed to an IApprovedProposal
  */
-export type ICommittedProposal = { commitSequenceNumber: number; } & IApprovedProposal;
+export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
 /**
  * Events fired by a Quorum in response to client tracking.
@@ -51,7 +51,13 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
     (event: "addProposal", listener: (proposal: ISequencedProposal) => void);
     (
         event: "approveProposal",
-        listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void);
+        listener: (
+            sequenceNumber: number,
+            key: string,
+            value: any,
+            approvalSequenceNumber: number,
+        ) => void,
+    );
 }
 
 /**
@@ -82,10 +88,10 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
 /**
  * Interface combining tracking of clients as well as proposals in the Quorum.
  */
-export interface IQuorum extends
-    Omit<IQuorumClients, "on" | "once" | "off">,
-    Omit<IQuorumProposals, "on" | "once" | "off">,
-    IEventProvider<IQuorumEvents> { }
+export interface IQuorum
+    extends Omit<IQuorumClients, "on" | "once" | "off">,
+        Omit<IQuorumProposals, "on" | "once" | "off">,
+        IEventProvider<IQuorumEvents> {}
 
 export interface IProtocolState {
     sequenceNumber: number;

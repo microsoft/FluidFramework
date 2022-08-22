@@ -94,6 +94,9 @@ function parseOptions(argv: string[]) {
 
 parseOptions(process.argv);
 
+/**
+ * @deprecated -- deprecating in favor of {@link @fluidframework/build-tools/build-cli/src/commands/check/layers.ts }
+ */
 async function main() {
     const timer = new Timer(commonOptions.timer);
 

@@ -44,6 +44,10 @@ parameters:
   type: string
   default: null
 
+- name: downloadAzureTestArtifacts
+  type: boolean
+  default: false
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -70,6 +74,12 @@ jobs:
       - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
         - name: feed
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      - ${{ if eq(parameters.downloadAzureTestArtifacts, true) }}:
+        - name: artifactPipeline
+          value: Build - azure
+      - ${{ else }}:
+        - name: artifactPipeline
+          value: Build - client packages
 
       steps:
       # Setup
@@ -112,7 +122,7 @@ jobs:
         inputs:
           source: specific
           project: internal
-          pipeline: Build - client packages
+          pipeline: ${{ variables.artifactPipeline }}
           preferTriggeringPipeline: true
           allowPartiallySucceededBuilds: true
           runVersion: latestFromBranch
@@ -189,7 +199,7 @@ jobs:
           inputs:
             source: specific
             project: internal
-            pipeline: Build - client packages
+            pipeline: ${{ variables.artifactPipeline }}
             preferTriggeringPipeline: true
             allowPartiallySucceededBuilds: true
             runVersion: latestFromBranch

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Context } from "./context";
 import { bumpDependencies } from "./bumpDependencies";
 import { bumpVersion } from "./bumpVersion";
@@ -10,7 +11,6 @@ import { runPolicyCheckWithFix } from "./policyCheck";
 import { fatal } from "./utils";
 import { isMonoRepoKind, MonoRepo, MonoRepoKind } from "../common/monoRepo";
 import { Package } from "../common/npmPackage";
-import { VersionBumpType } from "./versionSchemes";
 
 export function getPackageShortName(pkgName: string) {
     let name = pkgName.split("/").pop()!;

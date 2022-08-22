@@ -129,7 +129,7 @@ export class SortedCollection<T> extends Collection<T> {
      * For the given list of keys ['1.0.1', '2.0.0', '2.2.0', '7.0.1'] the nearest next item to 6.0.1 is
      * the item mapped by '7.0.1'
      * @param in_key - The key to check against in order to get the nearest next item
-     * @returns  The nearest next item
+     * @returns The nearest next item
      */
     getNearestNextItem(in_key: string) {
         const closestNextIndex = this._binarySearchNearestIndex(this._sortedKeys, in_key.toString());

@@ -15,16 +15,14 @@ import {
     ITestFluidObject,
     ITestObjectProvider,
     TestFluidObjectFactory,
+    mockConfigProvider,
+    createSummarizerFromFactory,
+    waitForContainerConnection,
+    summarizeNow,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { pkgVersion } from "../../packageVersion";
-import { mockConfigProvider } from "./gcTestConfigs";
-import {
-    createSummarizerFromFactory,
-    getGCStateFromSummary,
-    summarizeNow,
-    waitForContainerConnection,
-} from "./gcTestSummaryUtils";
+import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
  * These tests validate the compatibility of the GC data in the summary tree across the past 2 container runtime

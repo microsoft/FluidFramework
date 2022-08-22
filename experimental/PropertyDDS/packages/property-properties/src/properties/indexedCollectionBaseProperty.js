@@ -126,13 +126,11 @@ export class IndexedCollectionBaseProperty extends AbstractStaticCollectionPrope
     /**
      * Inserts a property into the collection
      *
-     * @param {string}                                                 in_key      -
-     *     Key of the entry in the collection
-     * @param {property-properties.IndexedCollectionBaseProperty~ValueType}  in_value    -
-     *     The value to insert
-     * @param {boolean}                                                in_reportToView -
-     *     By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
-     *     When batching updates, this can be prevented via this flag.
+     * @param {string} in_key - Key of the entry in the collection
+     * @param {property-properties.IndexedCollectionBaseProperty~ValueType} in_value - The value to insert
+     * @param {boolean} in_reportToView -
+     * By default, the dirtying will always be reported to the checkout view and trigger a modified event there.
+     * When batching updates, this can be prevented via this flag.
      */
     _insert(in_key, in_value, in_reportToView) {
         if (validationsEnabled.enabled) {

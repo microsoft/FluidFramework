@@ -185,7 +185,9 @@ export class ScribeLambda implements IPartitionLambda {
                 }
 
                 this.clearCache = false;
-                if (value.operation.type === MessageType.Summarize) {
+
+                // skip summarize messages that deli already acked
+                if (value.operation.type === MessageType.Summarize && !value.operation.serverMetadata?.deliAcked) {
                     // Process up to the summary op ref seq to get the protocol state at the summary op.
                     // Capture state first in case the summary is nacked.
                     const prevState = {

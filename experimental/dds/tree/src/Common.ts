@@ -131,7 +131,7 @@ export function assertNotUndefined<T>(value: T | undefined, message = 'value mus
 
 /**
  * Asserts an array contains a single value and returns the value.
- * @param array - array to assert contains a single value.
+ * @param array - Array to assert contains a single value.
  * @param message - Message to be printed if assertion fails.
  */
 export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
@@ -141,9 +141,9 @@ export function assertArrayOfOne<T>(array: readonly T[], message = 'array value 
 
 /**
  * Assign a property and value to a given object.
- * @param object - the object to add the property to
- * @param property - the property key
- * @param value - the value of the property
+ * @param object - The object to add the property to
+ * @param property - The property key
+ * @param value - The value of the property
  * @returns `object` after assigning `value` to the property `property`.
  */
 export function assign<T, K extends keyof never, V>(object: T, property: K, value: V): With<T, K, V> {
@@ -163,9 +163,9 @@ export function assign<T, K extends keyof never, V>(object: T, property: K, valu
  *   }
  * }
  * ```
- * @param object - the object containing the property
- * @param propName - the name of the property on the object
- * @param value - the value of the property
+ * @param object - The object containing the property
+ * @param propName - The name of the property on the object
+ * @param value - The value of the property
  */
 export function memoizeGetter<T, K extends keyof T>(object: T, propName: K, value: T[K]): T[K] {
 	Object.defineProperty(object, propName, {
@@ -235,9 +235,9 @@ export function find<T>(sequence: Iterable<T>, find: (t: T) => boolean): T | und
 
 /**
  * Iterate through two iterables and return true if they yield equivalent elements in the same order.
- * @param iterableA - the first iterable to compare
- * @param iterableB - the second iterable to compare
- * @param elementComparator - the function used to check if two `T`s are equivalent.
+ * @param iterableA - The first iterable to compare
+ * @param iterableB - The second iterable to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareIterables<T>(
@@ -250,9 +250,9 @@ export function compareIterables<T>(
 
 /**
  * Iterate through two iterators and return true if they yield equivalent elements in the same order.
- * @param iteratorA - the first iterator to compare
- * @param iteratorB - the second iterator to compare
- * @param elementComparator - the function used to check if two `T`s are equivalent.
+ * @param iteratorA - The first iterator to compare
+ * @param iteratorB - The second iterator to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 function compareIterators<T, TReturn extends T = T>(
@@ -279,9 +279,9 @@ function compareIterators<T, TReturn extends T = T>(
 
 /**
  * Compare two arrays and return true if their elements are equivalent and in the same order.
- * @param arrayA - the first array to compare
- * @param arrayB - the second array to compare
- * @param elementComparator - the function used to check if two `T`s are equivalent.
+ * @param arrayA - The first array to compare
+ * @param arrayB - The second array to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareArrays<T>(
@@ -304,9 +304,9 @@ export function compareArrays<T>(
 
 /**
  * Compare two maps and return true if their contents are equivalent.
- * @param mapA - the first array to compare
- * @param mapB - the second array to compare
- * @param elementComparator - the function used to check if two `T`s are equivalent.
+ * @param mapA - The first array to compare
+ * @param mapB - The second array to compare
+ * @param elementComparator - The function used to check if two `T`s are equivalent.
  * Defaults to `Object.is()` equality (a shallow compare)
  */
 export function compareMaps<K, V>(
@@ -330,8 +330,8 @@ export function compareMaps<K, V>(
 
 /**
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
- * @param map - the map to query/update
- * @param key - the key to lookup in the map
+ * @param map - The map to query/update
+ * @param key - The key to lookup in the map
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
@@ -576,4 +576,21 @@ export function hasLength<T, Len extends TakeWholeNumbers<16>>(
 	length: Len
 ): array is [...ArrayOfLength<T, Len>, ...T[]] {
 	return array.length >= length;
+}
+
+/**
+ * Type for a rest parameter which can accept many values, or a single array.
+ * Since a callee cannot modify an array passed as a rest parameter with the spread operator,
+ * an array passed directly should be readonly for consistency (caller retains ownership).
+ */
+export type RestOrArray<T> = readonly T[] | [readonly T[]];
+
+/**
+ * When value is a one-element array containing another array, unwraps and returns the inner array.
+ * Otherwise, returns the provided array.
+ * Useful for implementing functions with a `RestOrArray` parameter.
+ * T must not be implemented with an array (`Array.isArray(t)` must return false)
+ */
+export function unwrapRestOrArray<T>(value: [any[]] extends [T] ? never : RestOrArray<T>): readonly T[] {
+	return value.length === 1 && Array.isArray(value[0]) ? value[0] : (value as T[]);
 }

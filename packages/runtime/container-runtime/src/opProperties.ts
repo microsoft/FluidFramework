@@ -10,7 +10,7 @@ export const opSize = (op: ISequencedDocumentMessage): number => {
     // so stringifying them again will add inaccurate overhead.
     const content = typeof op.contents === "string" ?
         op.contents :
-        JSON.stringify(op.contents);
+        JSON.stringify(op.contents) ?? "";
     const data = opHasData(op) ? op.data : "";
     return content.length + data.length;
 };

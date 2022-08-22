@@ -155,8 +155,12 @@ export enum ChangeTypeInternal {
 export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEvents> implements IDisposable {
     protected constructor(tree: SharedTree, currentView: RevisionView, onEditCommitted: EditCommittedHandler);
     abortEdit(): void;
-    applyChanges(...changes: Change[]): void;
-    applyEdit(...changes: Change[]): EditId;
+    applyChanges(changes: readonly Change[]): void;
+    // (undocumented)
+    applyChanges(...changes: readonly Change[]): void;
+    applyEdit(changes: readonly Change[]): EditId;
+    // (undocumented)
+    applyEdit(...changes: readonly Change[]): EditId;
     closeEdit(): EditId;
     // (undocumented)
     get currentView(): TreeView;
@@ -175,8 +179,12 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
     rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid;
     revert(editId: EditId): void;
     readonly tree: SharedTree;
-    protected tryApplyChangesInternal(...changes: ChangeInternal[]): EditStatus;
-    tryApplyEdit(...changes: Change[]): EditId | undefined;
+    protected tryApplyChangesInternal(changes: readonly ChangeInternal[]): EditStatus;
+    // (undocumented)
+    protected tryApplyChangesInternal(...changes: readonly ChangeInternal[]): EditStatus;
+    tryApplyEdit(changes: readonly Change[]): EditId | undefined;
+    // (undocumented)
+    tryApplyEdit(...changes: readonly Change[]): EditId | undefined;
     // (undocumented)
     abstract waitForEditsToSubmit(): Promise<void>;
     // (undocumented)
@@ -817,9 +825,9 @@ export interface SetValueInternal_0_0_2 {
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_0_2>);
     constructor(runtime: IFluidDataStoreRuntime, id: string, ...args: SharedTreeArgs<WriteFormat.v0_1_1>);
-    applyEdit(...changes: Change[]): Edit<InternalizedChange>;
+    applyEdit(...changes: readonly Change[]): Edit<InternalizedChange>;
     // (undocumented)
-    applyEdit(changes: Change[]): Edit<InternalizedChange>;
+    applyEdit(changes: readonly Change[]): Edit<InternalizedChange>;
     // @internal
     applyEditInternal(editOrChanges: Edit<ChangeInternal> | readonly ChangeInternal[]): Edit<ChangeInternal>;
     protected applyStashedOp(op: unknown): StashedLocalOpMetadata;
@@ -1104,9 +1112,9 @@ export type TraitNodeIndex = number & {
 // @public
 export class Transaction extends TypedEventEmitter<TransactionEvents> {
     constructor(tree: SharedTree);
-    apply(...changes: Change[]): EditStatus;
+    apply(...changes: readonly Change[]): EditStatus;
     // (undocumented)
-    apply(changes: Change[]): EditStatus;
+    apply(changes: readonly Change[]): EditStatus;
     closeAndCommit(): void;
     get currentView(): TreeView;
     get isOpen(): boolean;

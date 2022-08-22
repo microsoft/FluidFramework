@@ -32,12 +32,8 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
  * It can be used in places where logger instance is required, but events should be not send over.
  */
 export class TelemetryNullLogger implements ITelemetryLogger {
-    public send(event: ITelemetryBaseEvent): void {
-    }
-    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {
-    }
-    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {
-    }
-    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {
-    }
+    public send(event: ITelemetryBaseEvent): void {}
+    public sendTelemetryEvent(event: ITelemetryGenericEvent, error?: any): void {}
+    public sendErrorEvent(event: ITelemetryErrorEvent, error?: any): void {}
+    public sendPerformanceEvent(event: ITelemetryPerformanceEvent, error?: any): void {}
 }

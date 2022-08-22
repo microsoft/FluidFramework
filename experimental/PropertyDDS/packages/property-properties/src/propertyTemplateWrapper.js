@@ -20,7 +20,7 @@ const reservedTypesWithoutTemplates = {
 };
 /**
  * Utility function that validates if the typeid is a reserved type without a template.
- * @param {string} in_typeid The typeid to validate.
+ * @param {string} in_typeid - The typeid to validate.
  * @return {boolean} True if the typeid is a reserved type without a template, false otherwise.
  */
 const hasAssociatedTemplate = (in_typeid) => {
@@ -30,8 +30,8 @@ const hasAssociatedTemplate = (in_typeid) => {
 export class PropertyTemplateWrapper {
     /**
      * Constructor for creating a PropertyTemplateWrapper based on the given template.
-     * @param {PropertyTemplate} in_remoteTemplate A property template
-     * @param {string} in_scope The scope of the template
+     * @param {PropertyTemplate} in_remoteTemplate - A property template
+     * @param {string} in_scope - The scope of the template
      *
      * @constructor
      * @package
@@ -65,7 +65,7 @@ export class PropertyTemplateWrapper {
 
     /**
      * Gets the compiled template or creates it then returns it.
-     * @param {property-properties.PropertyFactory} in_propertyFactory The assosiated PropertyFactory.
+     * @param {property-properties.PropertyFactory} in_propertyFactory - The assosiated PropertyFactory.
      * @return {property-properties.PropertyTemplate} The compiled template
      * A compiled template is the template which is actually used for creating objects.
      * It has all information from parent Templates, and other changes.
@@ -100,7 +100,7 @@ export class PropertyTemplateWrapper {
      * If current creation type is undefined, sets it to in_typeid if in_typeid is a creation type.
      * If current creation type is defined, throws if in_typeid is a creation type.
      *
-     * @param {string} in_typeid A typeid
+     * @param {string} in_typeid - A typeid
      * @package
      */
     setCreationType(in_typeid) {
@@ -123,7 +123,7 @@ export class PropertyTemplateWrapper {
 
     /**
      * Contructs the compiled template from the template this wraps
-     * @param {property-properties.PropertyFactory} in_propertyFactory The associated PropertyFactory.
+     * @param {property-properties.PropertyFactory} in_propertyFactory - The associated PropertyFactory.
      * @return {property-properties.PropertyTemplate} The compiled template
      * A compiled template is the template which is actually used for creating objects.
      * It has all information from parent Templates, and other changes.
@@ -253,8 +253,8 @@ export class PropertyTemplateWrapper {
     /**
      * A helper function which merges a child and parent property.
      * The changes are applied directly to the in_childProperty.
-     * @param {object} in_childProperty The child's property defition.
-     * @param {object} in_parentProperty The parent's property defition.
+     * @param {object} in_childProperty - The child's property defition.
+     * @param {object} in_parentProperty - The parent's property defition.
      * @package
      */
     _mergeProperty(in_childProperty, in_parentProperty) {

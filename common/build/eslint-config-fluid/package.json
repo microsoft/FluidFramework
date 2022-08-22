@@ -13,6 +13,11 @@
   "main": "index.js",
   "scripts": {
     "cleanup-printed-configs": "node ./scripts/cleanup-printed-configs.js ./printed-configs",
+    "format": "npm run prettier:fix",
+    "lint": "npm run prettier",
+    "lint:fix": "npm run prettier:fix",
+    "prettier": "prettier --check .",
+    "prettier:fix": "prettier --write .",
     "print-config": "concurrently npm:print-config:default npm:print-config:test npm:print-config:minimal npm:print-config:recommended npm:print-config:strict && npm run cleanup-printed-configs",
     "print-config:default": "eslint --config ./index.js --print-config ./src/file.ts > ./printed-configs/default.json",
     "print-config:minimal": "eslint --config ./minimal.js --print-config ./src/file.ts > ./printed-configs/minimal.json",
@@ -40,6 +45,7 @@
     "concurrently": "^6.2.0",
     "eslint": "~8.6.0",
     "node-jq": "^2.3.3",
+    "prettier": "~2.6.2",
     "sort-json": "^2.0.1",
     "typescript": "~4.5.5"
   }

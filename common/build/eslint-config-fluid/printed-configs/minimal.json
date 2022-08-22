@@ -490,10 +490,31 @@
         "jsdoc/check-examples": [
             "off"
         ],
+        "jsdoc/check-indentation": [
+            "error"
+        ],
+        "jsdoc/check-line-alignment": [
+            "error"
+        ],
         "jsdoc/check-tag-names": [
             "off"
         ],
+        "jsdoc/empty-tags": [
+            "error"
+        ],
+        "jsdoc/no-bad-blocks": [
+            "error"
+        ],
+        "jsdoc/require-asterisk-prefix": [
+            "error"
+        ],
         "jsdoc/require-hyphen-before-param-description": [
+            "error"
+        ],
+        "jsdoc/require-param-description": [
+            "error"
+        ],
+        "jsdoc/require-returns-description": [
             "error"
         ],
         "jsx-quotes": [

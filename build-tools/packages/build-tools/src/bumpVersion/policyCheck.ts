@@ -11,7 +11,7 @@ import { exec, fatal } from "./utils";
  * Runs policy check in fix/resolution mode the apply any an necessary changes
  * Currently this should only apply assert short codes, but could apply
  * additional policies in the future
- * @param context - the git repo context to run policy check on
+ * @param context - The git repo context to run policy check on
  */
  export async function runPolicyCheckWithFix(context: Context){
     console.log("Running Policy Check with Resolution(fix)");

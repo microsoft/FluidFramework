@@ -32,12 +32,12 @@ type anyFunction = (...args: any[]) => any;
  * If no error occurs, returns according to the input function.
  * @param anythingThatMightEmitError - The input function. Parameters should be passed by using `bind`.
  * @param catchErr - (default = true) Whether to catch errors or not. If this is false, the ErrorPopup will return a
- *  rejected Promise on error.
+ * rejected Promise on error.
  * @return A Promise. When the given function returns a Promise, this Promise is returned in case of
- *  `catchErr = false`. If it set to `true`, a caught Promise is returned. When the given function returns anything but
- *  a Promise, a Promise that resolves with the function's return value is returned.
- *  When an exception is thrown in the given function, we return a resolved Promise, or a Promise that is rejected with
- *  the original error object, depending on the `catchErr` flag.
+ * `catchErr = false`. If it set to `true`, a caught Promise is returned. When the given function returns anything but
+ * a Promise, a Promise that resolves with the function's return value is returned.
+ * When an exception is thrown in the given function, we return a resolved Promise, or a Promise that is rejected with
+ * the original error object, depending on the `catchErr` flag.
  */
 export async function ErrorPopup<
   T extends anyFunction = anyFunction,

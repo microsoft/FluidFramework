@@ -11,14 +11,16 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { gcTreeKey } from "@fluidframework/container-runtime";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+    ITestObjectProvider,
+    createSummarizer,
+    summarizeNow,
+    waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, TestDataObjectType } from "@fluidframework/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 import {
-    createSummarizer,
     getGCStateFromSummary,
-    summarizeNow,
-    waitForContainerConnection,
 } from "./gcTestSummaryUtils";
 
 /**
@@ -403,7 +405,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
         });
 
         /*
-         * Validates that we can detect references that were added and removed via new root data stores.
+         * Validates that we can detect references that were added and removed via new aliased data stores.
          * 1. Summary 1 at t1. V = [A*, C]. E = []. C has unreferenced time t1.
          * 2. Root data store B is created. E = [].
          * 3. Op adds reference from A to B. E = [A -> B].
@@ -434,8 +436,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
             assert(dsCTime1 !== undefined, `C should have unreferenced timestamp`);
 
             // 2. Create data store B. E = [].
-            const dataStoreB = await requestFluidObject<ITestDataObject>(
-                await containerRuntime.createRootDataStore(TestDataObjectType, "dataStoreA"), "");
+            const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+            await dataStore.trySetAlias("dataStoreA");
+            const dataStoreB = await requestFluidObject<ITestDataObject>(dataStore, "");
 
             // 4. Add reference from B to C. E = [A -> B, B -> C].
             dataStoreB._root.set("dataStoreC", dataStoreC.handle);

@@ -8,7 +8,8 @@ import process from "process";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { PromiseTimer, Timer, IPromiseTimerResult } from "../..";
 
-const flushPromises = async (): Promise<void> => new Promise((resolve) => process.nextTick(resolve));
+const flushPromises = async (): Promise<void> =>
+    new Promise((resolve) => process.nextTick(resolve));
 type PromiseTimerResultString = IPromiseTimerResult["timerResult"];
 
 describe("Timers", () => {
@@ -41,7 +42,10 @@ describe("Timers", () => {
             timer.clear();
         });
 
-        const assertShouldNotRunYet = (initialRunCount = 0, getRunCount = (): number => runCount): void => {
+        const assertShouldNotRunYet = (
+            initialRunCount = 0,
+            getRunCount = (): number => runCount,
+        ): void => {
             assert.strictEqual(getRunCount(), initialRunCount, "Should not run yet");
         };
 
@@ -234,7 +238,9 @@ describe("Timers", () => {
 
         function startWithThen(ms?: number, handler?: () => void): void {
             timer.start(ms, handler).then(
-                (result) => { resolveResult = result.timerResult; },
+                (result) => {
+                    resolveResult = result.timerResult;
+                },
                 (error) => assert.fail(error),
             );
         }
@@ -244,7 +250,10 @@ describe("Timers", () => {
             await flushPromises();
         }
 
-        const assertShouldNotRunYet = (initialRunCount = 0, getRunCount = (): number => runCount): void => {
+        const assertShouldNotRunYet = (
+            initialRunCount = 0,
+            getRunCount = (): number => runCount,
+        ): void => {
             assert.strictEqual(getRunCount(), initialRunCount, "Should not run yet");
             assert.strictEqual(resolveResult, undefined, "Run promise should not be resolved yet");
         };
