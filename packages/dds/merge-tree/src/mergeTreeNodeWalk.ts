@@ -88,7 +88,7 @@ export function depthFirstNodeWalk(
 
         // since we already enumerated the children
         // we walk up to the next level until there is a sibling
-        // of all the way up if exit is true
+        // or all the way up if exit is true
         let nextIndex = -1;
         do {
             // if the blockAction was exit or skip
@@ -128,7 +128,7 @@ export function forwardExcursion(
     return depthFirstNodeWalk(
         startNode.parent,
         // this will either be the sibling, or undefined
-        // either if fine, and will result in skipping
+        // either is fine, and will result in skipping
         // the startNode only
         startNode.parent.children[startNode.index + 1],
         undefined /* downAction */,
@@ -150,7 +150,7 @@ export function backwardExcursion(
     return depthFirstNodeWalk(
         startNode.parent,
         // this will either be the sibling, or undefined
-        // either if fine, and will result in skipping
+        // either is fine, and will result in skipping
         // the startNode only
         startNode.parent.children[startNode.index - 1],
         undefined /* downAction */,
