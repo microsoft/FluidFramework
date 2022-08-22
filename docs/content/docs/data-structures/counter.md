@@ -70,6 +70,16 @@ The `SharedCounter` object provides a simple API surface for managing a shared i
 A new `SharedCounter` value will be initialized with its value set to `0`.
 If you wish to initialize the counter to a different value, you may [modify the value](#incrementing--decrementing-the-value) before attaching the container, or before storing it in another shared object like a `SharedMap`.
 
+## Installation
+
+The package containing the `SharedCounter` library is [@fluidframework/shared-counter](https://www.npmjs.com/package/@fluidframework/counter).
+
+To get started, run the following from a terminal in your repository:
+
+```bash
+npm install @fluidframework/shared-counter
+```
+
 ### Creation
 
 The workflow for creating a `SharedCounter` is effectively the same as many of our other DDSes.
