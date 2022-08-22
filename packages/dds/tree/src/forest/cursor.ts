@@ -42,11 +42,11 @@ export interface ITreeCursor {
 
     /**
      * Moves `offset` nodes in the field.
-     * If seeking to exactly past the either end,
+     * If seeking to exactly past either end,
      * returns false and navigates up to the parent field (setting `inFields` to `true`).
      *
      * If mode is `Fields`, enters "outside" the field range, then seeks `offset`.
-     * For example, `-1` would see to the last node and `1` would seek to the first.
+     * For example, `-1` would seek to the last node and `1` would seek to the first.
      *
      * NOT allowed if mode is `Fields` and also `pending`.
      */
@@ -69,7 +69,7 @@ export interface ITreeCursor {
     getCurrentFieldLength(): number;
 
     /**
-     * Sets current node to the on at the provided `index` of the current field.
+     * Sets current node to the node at the provided `index` of the current field.
      *
      * Allowed when `mode` is `Fields`, and not `pending`.
      * Sets mode to `Nodes`.
@@ -86,14 +86,14 @@ export interface ITreeCursor {
     getPath(): UpPath;
 
     /**
-     * Index (with its parent field) of the current node.
+     * Index (within its parent field) of the current node.
      *
      * Only valid when `mode` is `Nodes`.
      */
     readonly currentIndexInField: number;
 
     /**
-     * Index (with its parent field) of the first node in the current chunk.
+     * Index (within its parent field) of the first node in the current chunk.
      * Always less than or equal to `currentIndexInField`.
      *
      * Only valid when `mode` is `Nodes`.
@@ -116,7 +116,7 @@ export interface ITreeCursor {
     // ********** APIs for when mode = Nodes and not pending ********** //
 
     /**
-     * Sets the current field to the specified one and set the mode to `Fields`
+     * Navigate to the field with the specified `key` and set the mode to `Fields`.
      */
     enterField(key: FieldKey): void;
 
@@ -144,7 +144,7 @@ export interface ITreeCursor {
     readonly type: TreeType;
 
     /**
-     * value associated with the currently selected node.
+     * The value associated with the currently selected node.
      *
      * Only valid when `mode` is `Nodes`, and not `pending`.
      */
