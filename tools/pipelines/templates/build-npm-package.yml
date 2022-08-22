@@ -226,42 +226,6 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run lint'
 
-        # Benchmark tests
-        - ${{ if eq(parameters.runBenchmarkTests, 'true') }}:
-          # Auth to private npm feeds
-          - task: npmAuthenticate@0
-            displayName: 'npm authenticate (internal feed)'
-            inputs:
-              workingFile: ${{ parameters.buildDirectory }}/tools/perf-test-processing/.npmrc
-          - task: npmAuthenticate@0
-            displayName: 'npm authenticate (office feed)'
-            inputs:
-              workingFile: ${{ parameters.buildDirectory }}/tools/perf-test-processing/.npmrc
-              customEndpoint: 'Office Packages - Readonly'
-          # Run tests and process results
-          - task: Npm@1
-            displayName: Run performance benchmarks - runtime
-            inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run ci:test:benchmark'
-          - task: Bash@3
-            displayName: Write runtime perf benchmarks to Aria/Kusto
-            inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
-              script: |
-                cd tools/perf-test-processing;
-                npm i;
-                npm run tsc;
-                node dist/index.js '../../benchmarkOutput';
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Artifact - Benchmark tests output
-            inputs:
-              targetPath: '${{ parameters.buildDirectory }}/benchmarkOutput'
-              artifactName: 'benchmark-test-outputs'
-              condition: succeededOrFailed()
-
         # Test
         - ${{ if ne(parameters.taskTest, 'false') }}:
           # Run any additional tests first so their results can be copied to the ~/nyc dir and published below
