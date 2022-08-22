@@ -112,7 +112,6 @@ export interface IRuntime extends IDisposable {
  * and the Container has created a new ContainerContext.
  */
 export interface IContainerContext extends IDisposable {
-    readonly existing: boolean | undefined;
     readonly options: ILoaderOptions;
     readonly clientId: string | undefined;
     readonly clientDetails: IClientDetails;
@@ -188,5 +187,5 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
      * @param context - container context to be supplied to the runtime
      * @param existing - whether to instantiate for the first time or from an existing context
      */
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }
