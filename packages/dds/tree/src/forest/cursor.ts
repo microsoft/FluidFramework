@@ -45,7 +45,7 @@ export interface ITreeCursor {
      * If seeking to exactly past either end,
      * returns false and navigates up to the parent field (setting `inFields` to `true`).
      *
-     * If mode is `Fields`, enters "outside" the field range, then seeks `offset`.
+     * If mode is `Fields`, offset is from the corresponding end of the field.
      * For example, `-1` would seek to the last node and `1` would seek to the first.
      *
      * NOT allowed if mode is `Fields` and also `pending`.
