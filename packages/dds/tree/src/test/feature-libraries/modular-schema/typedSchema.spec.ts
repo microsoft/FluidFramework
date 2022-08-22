@@ -4,9 +4,12 @@
  */
 
 import {
-    typedTreeSchema, typedFieldSchema, FieldInfo, TypeInfo,
-// Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
+	typedTreeSchema,
+	typedFieldSchema,
+	FieldInfo,
+	TypeInfo,
+	// Allow importing from this specific file which is being tested:
+	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/typedSchema";
 
 import { ValueSchema } from "../../../schema-stored";
@@ -22,16 +25,16 @@ export const lk2 = "localKey2Name";
 export const testTypeIdentifier = "testType";
 
 const testField = typedFieldSchema({
-    types: { testType: 0 as unknown },
-    kind: FieldKinds.value,
+	types: { testType: 0 as unknown },
+	kind: FieldKinds.value,
 });
 
 export const testTreeSchema = typedTreeSchema({
-    local: { localKey1Name: testField },
-    global: {},
-    extraLocalFields: testField,
-    extraGlobalFields: true,
-    value: ValueSchema.Serializable,
+	local: { localKey1Name: testField },
+	global: {},
+	extraLocalFields: testField,
+	extraGlobalFields: true,
+	value: ValueSchema.Serializable,
 });
 
 type TestTreeSchema = TypeInfo<typeof testTreeSchema>;

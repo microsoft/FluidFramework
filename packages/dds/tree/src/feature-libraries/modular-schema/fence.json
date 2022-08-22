@@ -1,5 +1,14 @@
 {
-    "tags": [ "modular-schema" ],
-    "exports": [ "index"],
-    "imports": ["schema-stored","schema-view","tree","util","rebase","dependency-tracking","changeset","change-family"]
+  "tags": ["modular-schema"],
+  "exports": ["index"],
+  "imports": [
+    "schema-stored",
+    "schema-view",
+    "tree",
+    "util",
+    "rebase",
+    "dependency-tracking",
+    "changeset",
+    "change-family"
+  ]
 }

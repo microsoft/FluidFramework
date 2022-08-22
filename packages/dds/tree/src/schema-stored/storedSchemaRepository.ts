@@ -5,12 +5,12 @@
 
 import { SimpleDependee } from "../dependency-tracking";
 import {
-    GlobalFieldKey,
-    FieldSchema,
-    TreeSchemaIdentifier,
-    TreeSchema,
-    SchemaDataReader,
-    SchemaPolicy,
+	GlobalFieldKey,
+	FieldSchema,
+	TreeSchemaIdentifier,
+	TreeSchema,
+	SchemaDataReader,
+	SchemaPolicy,
 } from "./schema";
 
 /**
@@ -51,87 +51,77 @@ import {
  * TODO: could implement more fine grained dependency tracking.
  */
 export class StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
-    extends SimpleDependee implements SchemaData {
-    readonly computationName: string = "StoredSchemaRepository";
-    protected readonly data = {
-        treeSchema: new Map<TreeSchemaIdentifier, TreeSchema>(),
-        globalFieldSchema: new Map<GlobalFieldKey, FieldSchema>(),
-    };
-    /**
-     * For now, the schema are just scored in maps.
-     * There are a couple reasons we might not want this simple solution long term:
-     * 1. We might want an easy/fast copy.
-     * 2. We might want a way to reserve a large namespace of schema with the same schema.
-     * The way extraFields has been structured mitigates the need for this, but it still might be useful.
-     *
-     * (ex: someone using data as field identifiers might want to
-     * reserve all fields identifiers starting with "foo." to have a specific schema).
-     * Combined with support for such namespaces in the allowed sets in the schema objects,
-     * that might provide a decent alternative to extraFields (which is a bit odd).
-     */
-    public constructor(
-        public readonly policy: TPolicy,
-        data?: SchemaData,
-    ) {
-        super();
-        if (data !== undefined) {
-            this.data = {
-                treeSchema: new Map(this.data.treeSchema),
-                globalFieldSchema: new Map(this.data.globalFieldSchema),
-            };
-        }
-    }
+	extends SimpleDependee
+	implements SchemaData
+{
+	readonly computationName: string = "StoredSchemaRepository";
+	protected readonly data = {
+		treeSchema: new Map<TreeSchemaIdentifier, TreeSchema>(),
+		globalFieldSchema: new Map<GlobalFieldKey, FieldSchema>(),
+	};
+	/**
+	 * For now, the schema are just scored in maps.
+	 * There are a couple reasons we might not want this simple solution long term:
+	 * 1. We might want an easy/fast copy.
+	 * 2. We might want a way to reserve a large namespace of schema with the same schema.
+	 * The way extraFields has been structured mitigates the need for this, but it still might be useful.
+	 *
+	 * (ex: someone using data as field identifiers might want to
+	 * reserve all fields identifiers starting with "foo." to have a specific schema).
+	 * Combined with support for such namespaces in the allowed sets in the schema objects,
+	 * that might provide a decent alternative to extraFields (which is a bit odd).
+	 */
+	public constructor(public readonly policy: TPolicy, data?: SchemaData) {
+		super();
+		if (data !== undefined) {
+			this.data = {
+				treeSchema: new Map(this.data.treeSchema),
+				globalFieldSchema: new Map(this.data.globalFieldSchema),
+			};
+		}
+	}
 
-    public clone(): StoredSchemaRepository {
-        return new StoredSchemaRepository(
-            this.policy,
-            this.data,
-        );
-    }
+	public clone(): StoredSchemaRepository {
+		return new StoredSchemaRepository(this.policy, this.data);
+	}
 
-    public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
-        return this.data.globalFieldSchema;
-    }
+	public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
+		return this.data.globalFieldSchema;
+	}
 
-    public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
-        return this.data.treeSchema;
-    }
+	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
+		return this.data.treeSchema;
+	}
 
-    public lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema {
-        return this.globalFieldSchema.get(identifier) ?? this.policy.defaultGlobalFieldSchema;
-    }
+	public lookupGlobalFieldSchema(identifier: GlobalFieldKey): FieldSchema {
+		return this.globalFieldSchema.get(identifier) ?? this.policy.defaultGlobalFieldSchema;
+	}
 
-    public lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema {
-        return this.treeSchema.get(identifier) ?? this.policy.defaultTreeSchema;
-    }
+	public lookupTreeSchema(identifier: TreeSchemaIdentifier): TreeSchema {
+		return this.treeSchema.get(identifier) ?? this.policy.defaultTreeSchema;
+	}
 
-    /**
-     * Updates the specified schema.
-     */
-    public updateFieldSchema(
-        identifier: GlobalFieldKey,
-        schema: FieldSchema,
-    ): void {
-        this.data.globalFieldSchema.set(identifier, schema);
-        this.invalidateDependents();
-    }
+	/**
+	 * Updates the specified schema.
+	 */
+	public updateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): void {
+		this.data.globalFieldSchema.set(identifier, schema);
+		this.invalidateDependents();
+	}
 
-    /**
-     * Updates the specified schema.
-     */
-    public updateTreeSchema(
-        identifier: TreeSchemaIdentifier,
-        schema: TreeSchema,
-    ): void {
-        this.data.treeSchema.set(identifier, schema);
-        this.invalidateDependents();
-    }
+	/**
+	 * Updates the specified schema.
+	 */
+	public updateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): void {
+		this.data.treeSchema.set(identifier, schema);
+		this.invalidateDependents();
+	}
 }
 
 /**
  * Schema data that can be stored in a document.
  */
 export interface SchemaData extends SchemaDataReader {
-    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }

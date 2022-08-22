@@ -4,17 +4,17 @@
  */
 
 export {
-    EmptyKey,
-    FieldKey,
-    TreeType,
-    ChildLocation,
-    DetachedField,
-    ChildCollection,
-    RootField,
-    Value,
-    TreeValue,
-    detachedFieldAsKey,
-    keyAsDetachedField,
+	EmptyKey,
+	FieldKey,
+	TreeType,
+	ChildLocation,
+	DetachedField,
+	ChildCollection,
+	RootField,
+	Value,
+	TreeValue,
+	detachedFieldAsKey,
+	keyAsDetachedField,
 } from "./types";
 
 export * from "./pathTree";

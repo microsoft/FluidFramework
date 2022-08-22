@@ -22,8 +22,8 @@ export const EmptyKey: FieldKey = brand("");
  * @public
  */
 export interface ChildLocation {
-    readonly container: ChildCollection;
-    readonly index: number;
+	readonly container: ChildCollection;
+	readonly index: number;
 }
 
 /**
@@ -63,7 +63,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * @returns `field` as a {@link LocalFieldKey} usable on a special root node serving as a parent of detached fields.
  */
 export function detachedFieldAsKey(field: DetachedField): LocalFieldKey {
-    return brand(extractFromOpaque(field));
+	return brand(extractFromOpaque(field));
 }
 
 /**
@@ -72,7 +72,7 @@ export function detachedFieldAsKey(field: DetachedField): LocalFieldKey {
  * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
-    return brand(extractFromOpaque(key));
+	return brand(extractFromOpaque(key));
 }
 
 /**
@@ -81,10 +81,10 @@ export function keyAsDetachedField(key: FieldKey): DetachedField {
  * TODO: factor ChangeRebaser implementations to support adding new field kinds.
  */
 export interface FieldKind {
-    readonly name: string;
-    readonly description: string;
-    readonly minimumChildren: number;
-    readonly maximumChildren: number;
+	readonly name: string;
+	readonly description: string;
+	readonly minimumChildren: number;
+	readonly maximumChildren: number;
 }
 
 /**
@@ -99,7 +99,7 @@ export interface FieldKind {
  */
 export interface TreeValue extends Serializable {}
 
- /**
-  * Value stored on a node.
-  */
+/**
+ * Value stored on a node.
+ */
 export type Value = undefined | TreeValue;

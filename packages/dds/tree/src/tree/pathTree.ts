@@ -18,19 +18,19 @@ import { FieldKey } from "./types";
  * Use of an UpPath that was acquired before the most recent edit is undefined behavior.
  */
 export interface UpPath {
-    /**
-     * @returns the parent, or undefined in the case where this path is a member of a detached sequence.
-     */
-    readonly parent: UpPath | undefined;
-    /**
-     * The Field under which this path points.
-     * Note that if `parent` returns `undefined`, this key is a LocalFieldKey that corresponds to a detached sequence.
-     */
-     readonly parentField: FieldKey; // TODO: Type information, including when in DetachedField.
-    /**
-     * The index within `parentField` this path is pointing to.
-     */
-     readonly parentIndex: number; // TODO: field index branded type?
+	/**
+	 * @returns the parent, or undefined in the case where this path is a member of a detached sequence.
+	 */
+	readonly parent: UpPath | undefined;
+	/**
+	 * The Field under which this path points.
+	 * Note that if `parent` returns `undefined`, this key is a LocalFieldKey that corresponds to a detached sequence.
+	 */
+	readonly parentField: FieldKey; // TODO: Type information, including when in DetachedField.
+	/**
+	 * The index within `parentField` this path is pointing to.
+	 */
+	readonly parentIndex: number; // TODO: field index branded type?
 }
 
 /**
@@ -39,13 +39,13 @@ export interface UpPath {
  * Runs in O(depth) time.
  */
 export function getDepth(path: UpPath): number {
-    let depth = 0;
-    let next = path.parent;
-    while (next !== undefined) {
-        depth += 1;
-        next = next.parent;
-    }
-    return depth;
+	let depth = 0;
+	let next = path.parent;
+	while (next !== undefined) {
+		depth += 1;
+		next = next.parent;
+	}
+	return depth;
 }
 
 /**
@@ -61,12 +61,12 @@ export function clonePath(path: UpPath): UpPath;
 export function clonePath(path: UpPath | undefined): UpPath | undefined;
 
 export function clonePath(path: UpPath | undefined): UpPath | undefined {
-    if (path === undefined) {
-        return undefined;
-    }
-    return {
-        parent: clonePath(path.parent),
-        parentField: path.parentField,
-        parentIndex: path.parentIndex,
-    };
+	if (path === undefined) {
+		return undefined;
+	}
+	return {
+		parent: clonePath(path.parent),
+		parentField: path.parentField,
+		parentIndex: path.parentIndex,
+	};
 }

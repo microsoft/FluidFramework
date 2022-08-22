@@ -1,5 +1,14 @@
 {
-    "tags": [ "transaction" ],
-    "exports": [ "index"],
-    "imports": ["schema-stored","tree","dependency-tracking","util","forest","rebase","changeset","change-family"]
+  "tags": ["transaction"],
+  "exports": ["index"],
+  "imports": [
+    "schema-stored",
+    "tree",
+    "dependency-tracking",
+    "util",
+    "forest",
+    "rebase",
+    "changeset",
+    "change-family"
+  ]
 }

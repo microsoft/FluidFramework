@@ -5,7 +5,11 @@
 
 export * from "./fieldKind";
 export {
-	isNeverField, isNeverTree, allowsRepoSuperset, allowsTreeSchemaIdentifierSuperset, allowsFieldSuperset,
+	isNeverField,
+	isNeverTree,
+	allowsRepoSuperset,
+	allowsTreeSchemaIdentifierSuperset,
+	allowsFieldSuperset,
 	allowsTreeSuperset,
 } from "./comparison";
 export { FieldTypeView, TreeViewSchema, ViewSchemaCollection, ViewSchema } from "./view";

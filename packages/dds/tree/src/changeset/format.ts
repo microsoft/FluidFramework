@@ -50,17 +50,11 @@ export namespace Transposed {
 
 	export type MarkList<TMark = Mark> = TMark[];
 
-	export type Mark =
-		| SizedMark
-		| AttachGroup;
+	export type Mark = SizedMark | AttachGroup;
 
-	export type ObjectMark =
-		| SizedObjectMark
-		| AttachGroup;
+	export type ObjectMark = SizedObjectMark | AttachGroup;
 
-	export type SizedMark =
-		| Skip
-		| SizedObjectMark;
+	export type SizedMark = Skip | SizedObjectMark;
 
 	export type SizedObjectMark =
 		| Tomb
@@ -291,7 +285,7 @@ export interface TreeForestPath {
 	[label: string]: TreeRootPath;
 }
 
-export type TreeRootPath = number | { [label: number]: TreeForestPath; };
+export type TreeRootPath = number | { [label: number]: TreeForestPath };
 
 export enum RangeType {
 	Set = "Set",
@@ -325,7 +319,10 @@ export type Skip = number;
 export type ChangesetTag = number | string;
 export type Value = number | string | boolean;
 export type ClientId = number;
-export enum Tiebreak { Left, Right }
+export enum Tiebreak {
+	Left,
+	Right,
+}
 export enum Effects {
 	All = "All",
 	Move = "Move",
