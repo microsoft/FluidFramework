@@ -71,15 +71,21 @@ This diagram shows the ownership hierarchy during a transaction with solid arrow
 
 ```mermaid
 graph TD;
-    store["Data Store"]-->doc["Persisted Summaries"]
-    container["Fluid Container"]-->shared-tree;
-    shared-tree--"extends"-->shared-tree-core;
-    shared-tree-core-."reads".->doc;
-    shared-tree-core-->EditManager-->X["collab window & branches"];
-    shared-tree-core-->Indexes-->ForestIndex;
-    shared-tree-->checkout["default checkout"]-->transaction-."updates".->checkout;
-    transaction-->ProgressiveEditBuilder
-    checkout-."reads".->ForestIndex;
+    subgraph "Persisted Data"
+        store["Data Store"]-->doc["Persisted Summaries"]
+    end
+    container["Fluid Container"]-->shared-tree
+    subgraph "@fluid-internal/tree"
+        shared-tree--"extends"-->shared-tree-core
+        shared-tree-core-."reads".->doc
+        shared-tree-core-->EditManager-->X["collab window & branches"]
+        shared-tree-core-->Indexes-->ForestIndex
+        shared-tree-->checkout["default checkout"]
+        transaction-."updates".->checkout
+        transaction-->ProgressiveEditBuilder
+        checkout-."reads".->ForestIndex
+        checkout-->transaction
+    end
 ```
 
 `tree` is a DDS, and therefore it stores its persisted data in a Fluid Container, and is also owned by that same container.
@@ -111,11 +117,13 @@ could be added in the future.
 #### Viewing
 
 ```mermaid
-graph LR;
+flowchart LR;
     doc["Persisted Summaries"]--"Summary+Trailing ops"-->shared-tree-core
-    shared-tree--"configures"-->shared-tree-core
-    shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
-    ForestIndex--"Exposed by"-->checkout;
+    subgraph "@fluid-internal/tree"
+        shared-tree--"configures"-->shared-tree-core
+        shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
+        ForestIndex--"Exposed by"-->checkout;
+    end
     checkout--"viewed by"-->app
 ```
 
@@ -157,12 +165,15 @@ Key view related updates made in response with dotted arrows.
 This shows editing during a transaction:
 
 ```mermaid
-graph RL;
-    command["App's command callback"]--"Views and Edits"-->transaction
-    transaction--"collects edits in"-->ProgressiveEditBuilder
-    ProgressiveEditBuilder--"updates anchors"-->AnchorSet
-    ProgressiveEditBuilder--"deltas for edits"-->transaction
-    transaction--"applies deltas to"-->forest["checkout's forest"]
+flowchart RL
+    subgraph "@fluid-internal/tree"
+        transaction--"collects edits in"-->ProgressiveEditBuilder
+        ProgressiveEditBuilder--"updates anchors"-->AnchorSet
+        ProgressiveEditBuilder--"deltas for edits"-->transaction
+        transaction--"applies deltas to"-->forest["checkout's forest"]
+    end
+    command["App's command callback"]
+    command--"Edits"-->transaction
     forest-."invalidation".->command
 ```
 
@@ -190,12 +201,14 @@ In the common case this can be skipped (since they cancel out).
 Also not shown is the (also usually unneeded) step of rebasing the changeset before storing it and sending it to the service.
 
 ```mermaid
-graph RL;
+flowchart LR
     command["App's command callback"]--"completes transaction"-->transaction
-    transaction--"completes transaction"-->ProgressiveEditBuilder
-    ProgressiveEditBuilder--"changeset"-->transaction
-    transaction--"changeset"-->core["shared-tree-core"]
-    core--"changeset"-->EditManager--"changeset"-->local["Local Branch"]
+    subgraph "@fluid-internal/tree"
+        transaction--"completes transaction"-->ProgressiveEditBuilder
+        ProgressiveEditBuilder--"changeset"-->transaction
+        transaction--"changeset"-->core["shared-tree-core"]
+        core--"changeset"-->EditManager--"changeset"-->local["Local Branch"]
+    end
     core--"Op"-->service["Fluid ordering service (Kafka)"]
     service--"Sequenced Op"-->clients["All clients"]
     service--"Sequenced Op"-->log["Op Log"]
@@ -207,13 +220,15 @@ rebases it as needed, and sends another delta to the indexes.
 ```mermaid
 graph LR;
     service["Fluid Service"]--"Sequenced Op"-->core["shared-tree-core"]
-    core--"changeset"-->EditManager
-    EditManager--"add changeset"-->remote["remote branch"]
-    remote--"rebase into"-->main[main branch]
-    main--"rebase over new changeset"-->local["Local Branch"]
-    main--"sequenced changeset"-->Indexes
-    local--"delta"-->Indexes
-    Indexes--"delta"-->ForestIndex
+    subgraph "@fluid-internal/tree"
+        core--"changeset"-->EditManager
+        EditManager--"add changeset"-->remote["remote branch"]
+        remote--"rebase into"-->main[main branch]
+        main--"rebase over new changeset"-->local["Local Branch"]
+        main--"sequenced changeset"-->Indexes
+        local--"delta"-->Indexes
+        Indexes--"delta"-->ForestIndex
+    end
     ForestIndex--"invalidates"-->app
     Indexes--"delta (for apps that want deltas)"-->app
 ```
