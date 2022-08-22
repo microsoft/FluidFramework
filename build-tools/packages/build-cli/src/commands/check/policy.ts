@@ -1,9 +1,9 @@
+/* eslint-disable unicorn/prefer-module */
+/* eslint-disable import/no-internal-modules */
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable unicorn/import-style */
 /* eslint-disable camelcase */
-/* eslint-disable no-constant-condition */
-/* eslint-disable no-await-in-loop */
 /* eslint-disable @typescript-eslint/promise-function-async */
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable array-callback-return */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /*!
@@ -14,7 +14,6 @@
 import * as fs from "fs";
 import { EOL as newline } from "os";
 import * as child_process from "child_process";
-// eslint-disable-next-line unicorn/import-style
 import * as path from "path";
 import { Flags } from "@oclif/core";
 import {
@@ -78,7 +77,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
     async run() {
         const { flags } = await this.parse(CheckPolicy);
-        // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-internal-modules, unicorn/prefer-module
         const exclusions: RegExp[] = require("../../data/exclusions.json").map(
             (e: string) => new RegExp(e, "i"),
         );
