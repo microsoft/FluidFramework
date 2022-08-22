@@ -100,21 +100,6 @@ stages:
           displayName: Use Node 14.x
           inputs:
             version: 14.x
-        - task: Npm@1
-          displayName: npm ci
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
-            customCommand: 'ci --unsafe-perm'
-            customRegistry: 'useNpmrc'
-
-        # Set version
-        - template: templates/include-set-package-version.yml
-          parameters:
-            buildDirectory: ${{ variables.buildDirectory }}
-            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            tagName: ${{ parameters.tagName }}
-
 
         # Run performance tests
         # - Add custom npm feeds to the tool's .npmrc file
@@ -185,7 +170,7 @@ stages:
               ls;
               ls node_modules/@ff-internal;
               ls node_modules/@ff-internal/aria-logger;
-              node --require node_modules/@ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
+              node --require @ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - Benchmark tests output
@@ -193,6 +178,22 @@ stages:
             targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
             artifactName: 'benchmark-test-outputs'
             condition: succeededOrFailed()
+
+        - task: Npm@1
+          displayName: npm ci
+          inputs:
+            command: 'custom'
+            workingDir: ${{ variables.buildDirectory }}
+            customCommand: 'ci --unsafe-perm'
+            customRegistry: 'useNpmrc'
+
+        # Set version
+        - template: templates/include-set-package-version.yml
+          parameters:
+            buildDirectory: ${{ variables.buildDirectory }}
+            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+            tagName: ${{ parameters.tagName }}
+
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
