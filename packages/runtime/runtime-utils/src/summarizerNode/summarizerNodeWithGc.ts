@@ -12,7 +12,6 @@ import {
     gcBlobKey,
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
     ISummarizeInternalResult,
     ISummarizeResult,
     ISummarizerNodeConfigWithGC,
@@ -118,13 +117,6 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
         this.baseGCDetailsP = new LazyPromise(async () => {
             return (await getBaseGCDetailsFn?.()) ?? { usedRoutes: [] };
         });
-    }
-
-    /**
-     * @deprecated - Renamed to getBaseGCDetails.
-     */
-    public getGCSummaryDetails(): IGarbageCollectionSummaryDetails {
-        return this.getBaseGCDetails();
     }
 
     // Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state.

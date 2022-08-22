@@ -14,7 +14,6 @@ import {
 import {
     IGarbageCollectionData,
     IGarbageCollectionDetailsBase,
-    IGarbageCollectionSummaryDetails,
 } from "./garbageCollection";
 
 /**
@@ -234,7 +233,7 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
         /** Optional configuration affecting summarize behavior */
         config?: ISummarizerNodeConfigWithGC,
         getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-        getInitialGCSummaryDetailsFn?: () => Promise<IGarbageCollectionSummaryDetails>,
+        getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
     ): ISummarizerNodeWithGC;
 
     /**
@@ -265,14 +264,8 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
      */
     updateUsedRoutes(usedRoutes: string[], gcTimestamp?: number): void;
 
-    /**
-     * @deprecated - Renamed to getBaseGCDetails.
-     * Returns the GC details that may be added to this node's summary.
-     */
-    getGCSummaryDetails(): IGarbageCollectionSummaryDetails;
-
     /** Returns the GC details to be added to this node's summary and is used to initialize new nodes' GC state. */
-    getBaseGCDetails?(): IGarbageCollectionDetailsBase;
+    getBaseGCDetails(): IGarbageCollectionDetailsBase;
 }
 
 export const channelsTreeName = ".channels";
