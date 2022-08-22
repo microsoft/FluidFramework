@@ -2693,7 +2693,10 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                                          metadata);
     }
 
-    private submitChunkedMessage(type: ContainerMessageType, content: string, maxOpSize: number, md: any): number {
+    private submitChunkedMessage(type: ContainerMessageType,
+                                 content: string,
+                                 maxOpSize: number,
+                                 metadata: unknown): number {
         const contentLength = content.length;
         const chunkN = Math.floor((contentLength - 1) / maxOpSize) + 1;
         let offset = 0;
@@ -2711,7 +2714,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ContainerMessageType.ChunkedOp,
                 chunkedOp,
                 false,
-                md);
+                metadata);
         }
         return clientSequenceNumber;
     }
