@@ -71,7 +71,7 @@ stages:
         pool: ${{ parameters.poolBuild }}
         variables:
           releaseBuildVar: $[variables.releaseBuild]
-          toolFolder: ${{ variables.buildDirectory }}/tools/write-perf-to-kusto/
+          toolFolder: ${{ variables.buildDirectory }}/tools/write-perf-to-kusto
         steps:
         # Setup
         - checkout: self
@@ -183,7 +183,8 @@ stages:
               pwd;
               echo "$(toolFolder)";
               ls;
-              ls node_modules | grep "@ff";
+              ls node_modules/@ff-internal;
+              ls node_modules/@ff-internal/aria-logger;
               node --require node_modules/@ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
