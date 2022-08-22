@@ -168,8 +168,7 @@ stages:
               pwd;
               echo "$(toolFolder)";
               ls;
-              ls node_modules/@ff-internal;
-              ls node_modules/@ff-internal/aria-logger;
+              ls -R node_modules/@fluidframework;
               node --require @ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
