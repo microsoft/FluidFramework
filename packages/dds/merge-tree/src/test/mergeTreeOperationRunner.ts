@@ -155,7 +155,7 @@ export function generateOperationMessagesForClients(
         // and is our baseline
         const client = clients[random.integer(1, clients.length - 1)(mt)];
         const len = client.getLength();
-        const sg = client.mergeTree.pendingSegments?.last();
+        const sg = client.mergeTree.pendingSegments?.last?.data;
         let op: IMergeTreeOp | undefined;
         if (len === 0 || len < minLength) {
             const text = client.longClientId!.repeat(random.integer(1, 3)(mt));
@@ -175,10 +175,10 @@ export function generateOperationMessagesForClients(
         }
         if (op !== undefined) {
             // Pre-check to avoid logger.toString() in the string template
-            if (sg === client.mergeTree.pendingSegments?.last()) {
+            if (sg === client.mergeTree.pendingSegments?.last?.data) {
                 assert.notEqual(
                     sg,
-                    client.mergeTree.pendingSegments?.last(),
+                    client.mergeTree.pendingSegments?.last?.data,
                     `op created but segment group not enqueued.${logger}`);
             }
             const message = client.makeOpMessage(op, --tempSeq);

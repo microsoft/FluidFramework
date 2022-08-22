@@ -14,7 +14,6 @@ import {
     Comparer,
     Heap,
     List,
-    ListMakeHead,
     Stack,
 } from "./collections";
 import {
@@ -573,7 +572,7 @@ export class MergeTree {
         this.collabWindow.collaborating = true;
         this.collabWindow.currentSeq = currentSeq;
         this.segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
-        this.pendingSegments = ListMakeHead<SegmentGroup>();
+        this.pendingSegments = new List<SegmentGroup>();
         this.nodeUpdateLengthNewStructure(this.root, true);
     }
 
@@ -1227,7 +1226,7 @@ export class MergeTree {
      */
     public ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
         const seq = opArgs.sequencedMessage!.sequenceNumber;
-        const pendingSegmentGroup = this.pendingSegments!.dequeue();
+        const pendingSegmentGroup = this.pendingSegments!.pop()?.data;
         const nodesToUpdate: IMergeBlock[] = [];
         let overwrite = false;
         if (pendingSegmentGroup !== undefined) {
@@ -1278,7 +1277,7 @@ export class MergeTree {
             if (previousProps) {
                 _segmentGroup.previousProps = [];
             }
-            this.pendingSegments!.enqueue(_segmentGroup);
+            this.pendingSegments!.push(_segmentGroup);
         }
 
         if ((!_segmentGroup.previousProps && previousProps) ||
@@ -1941,7 +1940,7 @@ export class MergeTree {
      */
     public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup) {
         if (op.type === MergeTreeDeltaType.REMOVE) {
-            const pendingSegmentGroup = this.pendingSegments?.pop?.();
+            const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
             if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
                 throw new Error("Rollback op doesn't match last edit");
             }
@@ -1981,7 +1980,7 @@ export class MergeTree {
                 }
             }
         } else if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
-            const pendingSegmentGroup = this.pendingSegments?.pop?.();
+            const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
             if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
                 || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
                 throw new Error("Rollback op doesn't match last edit");

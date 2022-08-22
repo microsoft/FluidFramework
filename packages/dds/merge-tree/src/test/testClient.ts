@@ -12,7 +12,6 @@ import random from "random-js";
 import { Client } from "../client";
 import {
     List,
-    ListMakeHead,
 } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { ISegment, Marker } from "../mergeTreeNodes";
@@ -94,8 +93,8 @@ export class TestClient extends Client {
 
     public readonly mergeTree: MergeTree;
 
-    public readonly checkQ: List<string> = ListMakeHead<string>();
-    protected readonly q: List<ISequencedDocumentMessage> = ListMakeHead<ISequencedDocumentMessage>();
+    public readonly checkQ: List<string> = new List<string>();
+    protected readonly q: List<ISequencedDocumentMessage> = new List<ISequencedDocumentMessage>();
 
     private readonly textHelper: MergeTreeTextHelper;
     constructor(
@@ -124,21 +123,21 @@ export class TestClient extends Client {
     }
 
     public enqueueTestString() {
-        this.checkQ.enqueue(this.getText());
+        this.checkQ.push(this.getText());
     }
     public getMessageCount(): number {
-        return this.q.count();
+        return this.q.length;
     }
     public enqueueMsg(msg: ISequencedDocumentMessage) {
-        this.q.enqueue(msg);
+        this.q.push(msg);
     }
     public dequeueMsg(): ISequencedDocumentMessage | undefined {
-        return this.q.dequeue();
+        return this.q.pop()?.data;
     }
     public applyMessages(msgCount: number) {
         let currMsgCount = msgCount;
         while (currMsgCount > 0) {
-            const msg = this.q.dequeue();
+            const msg = this.q.pop()?.data;
             if (msg) {
                 this.applyMsg(msg);
             } else {

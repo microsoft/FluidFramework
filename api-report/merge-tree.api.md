@@ -183,7 +183,7 @@ export class Client {
     // (undocumented)
     get mergeTreeMaintenanceCallback(): MergeTreeMaintenanceCallback | undefined;
     set mergeTreeMaintenanceCallback(callback: MergeTreeMaintenanceCallback | undefined);
-    peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
+    peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[];
     posFromRelativePos(relativePos: IRelativePosition): number;
     rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
@@ -1139,7 +1139,7 @@ export interface SegmentGroup {
 // @public (undocumented)
 export class SegmentGroupCollection {
     constructor(segment: ISegment);
-    // (undocumented)
+    // @deprecated (undocumented)
     clear(): void;
     // (undocumented)
     copyTo(segment: ISegment): void;
