@@ -75,8 +75,6 @@ module.exports = env => {
         watchOptions: {
             ignored: "**/node_modules/**",
         }
-    }, isProduction
-        ? require("./webpack.prod")
-        : require("./webpack.dev"),
+    },
     fluidRoute.devServerConfig(__dirname, env));
 };
