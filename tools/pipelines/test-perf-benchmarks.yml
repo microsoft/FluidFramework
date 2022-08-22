@@ -115,14 +115,6 @@ stages:
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
             tagName: ${{ parameters.tagName }}
 
-        # Build
-        - ${{ if ne(parameters.taskBuild, 'false') }}:
-          - task: Npm@1
-            displayName: npm run ${{ parameters.taskBuild }}
-            inputs:
-              command: 'custom'
-              workingDir: ${{ variables.buildDirectory }}
-              customCommand: 'run ${{ parameters.taskBuild }}'
 
         # Run performance tests
         # - Add custom npm feeds to the tool's .npmrc file
@@ -188,6 +180,9 @@ stages:
             script: |
               npm i;
               npm run build:compile;
+              pwd;
+              ls;
+              ls node_modules | grep "@ff";
               node --require node_modules/@ff-internal/aria-logger dist/index.js '../../benchmarkOutput';
 
         - task: PublishPipelineArtifact@1
@@ -196,3 +191,12 @@ stages:
             targetPath: '${{ variables.buildDirectory }}/benchmarkOutput'
             artifactName: 'benchmark-test-outputs'
             condition: succeededOrFailed()
+
+        # Build
+        - ${{ if ne(parameters.taskBuild, 'false') }}:
+          - task: Npm@1
+            displayName: npm run ${{ parameters.taskBuild }}
+            inputs:
+              command: 'custom'
+              workingDir: ${{ variables.buildDirectory }}
+              customCommand: 'run ${{ parameters.taskBuild }}'
