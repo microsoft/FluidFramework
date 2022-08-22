@@ -150,12 +150,12 @@ stages:
         #     workingDir: ${{ variables.buildDirectory }}
         #     customCommand: 'run test:benchmark:report'
 
-        - task: Npm@1
-          displayName: 'Consolidate output files - runtime'
-          inputs:
-            command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
-            customCommand: 'run test:benchmark:copyresults'
+        # - task: Npm@1
+        #   displayName: 'Consolidate output files - runtime'
+        #   inputs:
+        #     command: 'custom'
+        #     workingDir: ${{ variables.buildDirectory }}
+        #     customCommand: 'run test:benchmark:copyresults'
 
         - task: Bash@3
           displayName: 'Write runtime perf benchmarks to Aria/Kusto'
