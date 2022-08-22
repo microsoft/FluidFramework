@@ -2714,7 +2714,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
                 ContainerMessageType.ChunkedOp,
                 chunkedOp,
                 false,
-                metadata);
+                i === chunkN ? metadata : undefined); // Only the last chunk needs to know about compression
         }
         return clientSequenceNumber;
     }
