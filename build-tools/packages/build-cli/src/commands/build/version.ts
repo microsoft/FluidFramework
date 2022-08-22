@@ -18,7 +18,7 @@
 import child_process from "child_process";
 import fs from "fs";
 import { Flags } from "@oclif/core";
-import { Timer, test } from "@fluidframework/build-tools";
+import { Timer,test } from "@fluidframework/build-tools";
 import { sort as sort_semver, gt as gt_semver, prerelease as prerelease_semver } from "semver";
 import { BaseCommand } from "../../base";
 
@@ -167,7 +167,7 @@ export class BuildVersion extends BaseCommand<typeof BuildVersion.flags> {
         "Checks that the dependencies between Fluid Framework packages are properly layered.";
 
     static flags = {
-        buildNum: Flags.integer({
+        build: Flags.integer({
             description: `Build Number`,
             required: false,
         }),
@@ -220,10 +220,14 @@ export class BuildVersion extends BaseCommand<typeof BuildVersion.flags> {
 
         const file_version: string = typeof flags.base === "string" ? flags.base : getFileVersion();
 
+        if(flags.build === undefined && process.env["VERSION_BUILDNUMBER"] === undefined){
+            this.error("ERROR: Missing VERSION_BUILDNUMBER environment variable");
+        }
+
         const arg_build_num: string | undefined =
-            typeof flags.buildNum === "number"
-                ? flags.buildNum.toString()
-                : process.env["VERSION_BUILDNUMBER"];
+            typeof flags.build === "number"
+                ? flags.build.toString()
+                : process.env["VERSION_BUILDNUMBER"]
 
         if (flags.test) {
             test();
