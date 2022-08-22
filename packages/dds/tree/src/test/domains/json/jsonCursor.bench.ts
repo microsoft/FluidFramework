@@ -13,6 +13,7 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./canada";
 import { generateTwitterJsonByByteSize } from "./twitter";
+import { createAlphabetFromUnicodeRange } from "./jsonGeneratorUtils";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
 // the leaves, but this should be verified.
@@ -107,7 +108,7 @@ const canada = generateCanada(
         : [2, 10]);
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
-const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true, true);
+const twitter = generateTwitterJsonByByteSize(isInPerformanceTestingMode ? 2500000 : 466906, true);
 describe("ITreeCursor", () => {
     bench("canada", () => canada);
     bench("twitter", () => twitter);

@@ -4,18 +4,16 @@
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 
-const englishAlphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
-
-export function getRandomStringByCharCode(random = makeRandom(), minLen: number, maxLen: number,
- charCodeMin: number, charCodeMax: number) {
-    const stringLength = (minLen < maxLen) ? random.integer(minLen, maxLen) : minLen;
+// Constructs a string containing all character in the given unicode range [charMin..charMax] (inclusive).
+export function createAlphabetFromUnicodeRange(charMin: number, charMax: number) {
     let string = "";
-    for (let i = 0; i < stringLength; i++) {
-        string += String.fromCharCode(charCodeMin + random.real() * (charCodeMax - charCodeMin + 1));
+    for (let i = charMin; i <= charMax; i++) {
+        string += String.fromCodePoint(charMin + i);
     }
     return string;
 }
 
+const englishAlphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
 // Returns either an alphanumeric string or an alpha string within the specified length range
 export function getRandomEnglishString(random = makeRandom(), includeNumbers: boolean, minLen: number, maxLen: number) {
     const stringLength = (minLen < maxLen) ? random.integer(minLen, maxLen) : minLen;
@@ -26,8 +24,10 @@ export function getRandomEnglishString(random = makeRandom(), includeNumbers: bo
     }
 }
 
+const numbersString = "0123456789";
 export function getRandomNumberString(random = makeRandom(), minLen: number, maxLen: number) {
-    return getRandomStringByCharCode(random, minLen, maxLen, 0x0030, 0x0039);
+    const stringLength = random.integer(minLen, maxLen);
+    return random.string(stringLength, numbersString);
 }
 
 export function getSizeInBytes(obj: unknown) {
