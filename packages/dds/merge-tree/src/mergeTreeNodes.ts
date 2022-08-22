@@ -15,6 +15,7 @@ import {
 } from "./constants";
 import {
      LocalReferenceCollection,
+     LocalReferencePosition,
 } from "./localReference";
 import {
     IMergeTreeDeltaOpArgs,
@@ -108,6 +109,10 @@ export interface IHierBlock extends IMergeBlock {
  * Contains removal information associated to an {@link ISegment}.
  */
 export interface IRemovalInfo {
+    /**
+     * Local seq at which this segment was removed, if the removal is yet-to-be acked.
+     */
+    localRemovedSeq?: number;
     /**
      * Seq at which this segment was removed.
      */
@@ -295,6 +300,7 @@ export interface MergeTreeStats {
 export interface SegmentGroup {
     segments: ISegment[];
     previousProps?: PropertySet[];
+    removedReferences?: LocalReferencePosition[];
     localSeq: number;
 }
 

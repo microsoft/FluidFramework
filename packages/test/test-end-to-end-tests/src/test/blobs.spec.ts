@@ -129,6 +129,10 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
     });
 
     it("round trip blob handle on shared string property", async function() {
+        if (provider.driver.type === "tinylicious") {
+            // Flaky test: see AB#1454
+            this.skip();
+        }
         const container1 = await provider.makeTestContainer(testContainerConfig);
         const container2 = await provider.loadTestContainer(testContainerConfig);
         const testString = "this is a test string";

@@ -21,6 +21,7 @@ import {
     CollaborationWindow,
     compareStrings,
     IConsensusInfo,
+    IMergeNode,
     ISegment,
     ISegmentAction,
     Marker,
@@ -48,7 +49,6 @@ import {
     ReferenceType,
 } from "./ops";
 import { PropertySet } from "./properties";
-import { PropertiesRollback } from "./segmentPropertiesManager";
 import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
@@ -370,72 +370,7 @@ export class Client {
      * Revert an op
      */
     public rollback?(op: any, localOpMetadata: unknown) {
-        if (op.type === MergeTreeDeltaType.INSERT || op.type === MergeTreeDeltaType.ANNOTATE) {
-            const pendingSegmentGroup = this._mergeTree.pendingSegments?.pop?.();
-            if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata
-                || (op.type === MergeTreeDeltaType.ANNOTATE && !pendingSegmentGroup.previousProps)) {
-                throw new Error("Rollback op doesn't match last edit");
-            }
-            let i = 0;
-            for (const segment of pendingSegmentGroup.segments) {
-                const segmentSegmentGroup = segment.segmentGroups.pop ? segment.segmentGroups.pop() : undefined;
-                assert(segmentSegmentGroup === pendingSegmentGroup, 0x347 /* Unexpected segmentGroup in segment */);
-
-                const start = this.findRollbackPosition(segment);
-                const segWindow = this.getCollabWindow();
-                if (op.type === MergeTreeDeltaType.INSERT) {
-                    const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
-                    this._mergeTree.markRangeRemoved(
-                        start,
-                        start + segment.cachedLength,
-                        UniversalSequenceNumber,
-                        segWindow.clientId,
-                        UniversalSequenceNumber,
-                        false,
-                        { op: removeOp });
-                } else {
-                    const props = pendingSegmentGroup.previousProps![i];
-                    const rollbackType = (op.combiningOp && op.combiningOp.name === "rewrite") ?
-                        PropertiesRollback.Rewrite : PropertiesRollback.Rollback;
-                    const annotateOp = createAnnotateRangeOp(start, start + segment.cachedLength, props, undefined);
-                    this._mergeTree.annotateRange(
-                        start,
-                        start + segment.cachedLength,
-                        props,
-                        undefined,
-                        UniversalSequenceNumber,
-                        segWindow.clientId,
-                        UniversalSequenceNumber,
-                        { op: annotateOp },
-                        rollbackType);
-                    i++;
-                }
-            }
-        } else {
-            throw new Error("Unsupported op type for rollback");
-        }
-    }
-
-    /**
-     *  Walk the segments up to the current segment and calculate its position
-     */
-    private findRollbackPosition(segment: ISegment) {
-        let segmentPosition = 0;
-        this._mergeTree.walkAllSegments(this._mergeTree.root, (seg) => {
-            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
-            if (seg === segment) {
-                return false;
-            }
-
-            // If not removed, increase position
-            if (seg.removedSeq === undefined) {
-                segmentPosition += seg.cachedLength;
-            }
-
-            return true;
-        });
-
-        return segmentPosition;
+        this._mergeTree.rollback(op as IMergeTreeDeltaOp, localOpMetadata as SegmentGroup);
     }
 
     /**
@@ -753,39 +688,8 @@ export class Client {
      */
     protected findReconnectionPosition(segment: ISegment, localSeq: number) {
         assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x032 /* "localSeq greater than collab window" */);
-        let segmentPosition = 0;
-
-        const isInsertedInView = (seg: ISegment) => seg.localSeq === undefined || seg.localSeq <= localSeq;
-
-        const isRemovedFromView = (seg: ISegment) => seg.removedSeq !== undefined &&
-            (seg.removedSeq !== UnassignedSequenceNumber || seg.localRemovedSeq! <= localSeq);
-        /*
-            Walk the segments up to the current segment, and calculate its
-            position taking into account local segments that were modified,
-            after the current segment.
-
-            TODO: Consider embedding this information into the tree for
-            more efficient look up of pending segment positions.
-        */
-        this._mergeTree.walkAllSegments(this._mergeTree.root, (seg) => {
-            // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
-            if (seg === segment) {
-                return false;
-            }
-
-            // Otherwise, advance segmentPosition if the segment has been inserted and not removed
-            // with respect to the given 'localSeq'.
-            //
-            // Note that all ACKed / remote ops are applied and we only need concern ourself with
-            // determining if locally pending ops fall before/after the given 'localSeq'.
-            if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
-                segmentPosition += seg.cachedLength;
-            }
-
-            return true;
-        });
-
-        return segmentPosition;
+        const { currentSeq, clientId } = this.getCollabWindow();
+        return this._mergeTree.getPosition(segment, currentSeq, clientId, localSeq);
     }
 
     /**
@@ -802,35 +706,20 @@ export class Client {
         localSeq: number,
     ): number {
         assert(localSeq <= this._mergeTree.collabWindow.localSeq, 0x300 /* localSeq greater than collab window */);
-        let segment: ISegment | undefined;
-        let posAccumulated = 0;
-        let offset = pos;
-        const isInsertedInView = (seg: ISegment) =>
-            (seg.seq !== undefined && seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom)
-            || (seg.localSeq !== undefined && seg.localSeq <= localSeq);
-
-        const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment) =>
-            (removedSeq !== undefined && removedSeq !== UnassignedSequenceNumber && removedSeq <= seqNumberFrom)
-            || (localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
-
-        this._mergeTree.walkAllSegments(this._mergeTree.root, (seg) => {
-            assert(seg.seq !== undefined || seg.localSeq !== undefined,
-                0x301 /* Either seq or localSeq should be defined */);
-            segment = seg;
-
-            if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
-                posAccumulated += seg.cachedLength;
-                if (offset >= seg.cachedLength) {
-                    offset -= seg.cachedLength;
-                }
+        const { clientId, currentSeq: seqNumberTo } = this.getCollabWindow();
+        let { segment, offset } = this._mergeTree.getContainingSegment(pos, seqNumberFrom, clientId, localSeq);
+        if (segment === undefined && offset === undefined) {
+            // getContainingSegment will only return non-removed segments. This means the position was past
+            // all non-removed segments in the tree, so we take the last one instead as an approximation.
+            let finalSegment: IMergeNode = this._mergeTree.root;
+            while (!finalSegment.isLeaf()) {
+                finalSegment = finalSegment.children[finalSegment.childCount - 1];
             }
-
-            // Keep going while we've yet to reach the segment at the desired position
-            return posAccumulated <= pos;
-        });
+            segment = finalSegment;
+            offset = 0;
+        }
 
         assert(segment !== undefined, 0x302 /* No segment found */);
-        const seqNumberTo = this.getCollabWindow().currentSeq;
         if ((segment.removedSeq !== undefined &&
              segment.removedSeq !== UnassignedSequenceNumber &&
              segment.removedSeq <= seqNumberTo)
@@ -839,7 +728,7 @@ export class Client {
             offset = 0;
         }
 
-        assert(0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
+        assert(offset !== undefined && 0 <= offset && offset < segment.cachedLength, 0x303 /* Invalid offset */);
         return this.findReconnectionPosition(segment, localSeq) + offset;
     }
 
