@@ -13,7 +13,9 @@ import { initializeForest, TreeNavigationResult } from "../../../forest";
 /* eslint-disable-next-line import/no-internal-modules */
 import { cursorToJsonObject, JsonCursor } from "../../../domains/json/jsonCursor";
 import { generateCanada } from "./canada";
-import { generateTwitterJsonByByteSize, parseTwitterJsonIntoSentences, twitterRawJson } from "./twitter";
+import { generateTwitterJsonByByteSize, getTwitterJsonTextFieldMarkovChain,
+     parseSentencesIntoWords,
+     parseTwitterJsonIntoSentences, TwitterJson, twitterRawJson } from "./twitter";
 import { getSizeInBytes } from "./jsonGeneratorUtils";
 
 // IIRC, extracting this helper from clone() encourages V8 to inline the terminal case at
@@ -120,24 +122,72 @@ describe("ITreeCursor", () => {
     // const chain = markovChainBuilder(sentences);
     // const sentence = buildTextFromMarkovChain(chain, makeRandom(), 4);
 
-    const parsedSentences = parseTwitterJsonIntoSentences(twitterRawJson(), "text");
+    const originalTwitterBenchmarkJson: TwitterJson = twitterRawJson();
 
-    const performanceMarkovChain = new PerformanceMarkovChain(makeRandom());
+    const textFieldSentences: string[] = [];
+    let maxTextFieldLength = 0;
+    const userDescriptionFieldSentences: string[] = [];
+    let maxUserDescFieldLength = 0;
+    originalTwitterBenchmarkJson.statuses.forEach((tweet) => {
+        textFieldSentences.push(tweet.text);
+        maxTextFieldLength = Math.max(maxTextFieldLength, tweet.text.length);
+        userDescriptionFieldSentences.push(tweet.user.description);
+        maxUserDescFieldLength = Math.max(maxUserDescFieldLength, tweet.user.description.length);
+        if (tweet.retweeted_status) {
+            textFieldSentences.push(tweet.retweeted_status.text);
+            maxTextFieldLength = Math.max(maxTextFieldLength, tweet.retweeted_status.text.length);
+            userDescriptionFieldSentences.push(tweet.retweeted_status.user.description);
+            maxUserDescFieldLength = Math.max(maxUserDescFieldLength, tweet.retweeted_status.user.description.length);
+        }
+    });
+
+    const textFieldParsedSentences = parseSentencesIntoWords(textFieldSentences);
+    const userDescriptionFieldParsedSentences = parseSentencesIntoWords(userDescriptionFieldSentences);
+
+    // example of producing a performance efficient markov chain
+    const textFieldPerformanceMarkovChain = new PerformanceMarkovChain(makeRandom());
     console.time("performanceMarkovChain.initialize()");
-    performanceMarkovChain.initialize(parsedSentences);
+    textFieldPerformanceMarkovChain.initialize(textFieldParsedSentences);
     console.timeEnd("performanceMarkovChain.initialize()");
-    const performanceSentence = performanceMarkovChain.generateSentence();
-    const performanceMarkovChainSize = getSizeInBytes(performanceMarkovChain.chain);
-    const perfKeyLen = Object.keys(performanceMarkovChain.chain).length;
+    console.time("performanceMarkovChain.generateSentence()");
+    const textFieldGeneratedSentence1 = textFieldPerformanceMarkovChain.generateSentence(maxTextFieldLength);
+    console.timeEnd("performanceMarkovChain.generateSentence()");
+    const performanceMarkovChainSize = getSizeInBytes(textFieldPerformanceMarkovChain.chain);
+    const perfKeyLen = Object.keys(textFieldPerformanceMarkovChain.chain).length;
 
-    const spaceEfficientMarkovChain = new SpaceEfficientMarkovChain(makeRandom());
-    console.time("spaceEfficientMarkovChain.initialize()");
-    spaceEfficientMarkovChain.initialize(parsedSentences);
-    console.timeEnd("spaceEfficientMarkovChain.initialize()");
-    const spaceEfficientSentence = spaceEfficientMarkovChain.generateSentence();
-    const spaceEfficientMarkovChainSize = getSizeInBytes(spaceEfficientMarkovChain.chain);
-    const serializedChain = JSON.stringify(spaceEfficientMarkovChain.chain);
-    const spaceEffKeyLen = Object.keys(spaceEfficientMarkovChain.chain).length;
+    // example of producing a space efficient markov chain based on the text field
+    const textFieldSpaceEffChain = new SpaceEfficientMarkovChain(makeRandom());
+    console.time("textFieldSpaceEffChain.initialize()");
+    textFieldSpaceEffChain.initialize(textFieldParsedSentences);
+    console.timeEnd("textFieldSpaceEffChain.initialize()");
+    console.time("textFieldSpaceEffChain.generateSentence()");
+    const textFieldGeneratedSentence2 = textFieldSpaceEffChain.generateSentence(maxTextFieldLength);
+    console.timeEnd("textFieldSpaceEffChain.generateSentence()");
+    const textFieldSpaceEffMarkovChainSize = getSizeInBytes(textFieldSpaceEffChain.chain);
+    const spaceEffKeyLen = Object.keys(textFieldSpaceEffChain.chain).length;
+    const textFieldStringifiedChain = JSON.stringify(textFieldSpaceEffChain.chain);
+
+    // example of producing a space efficient markov chain based on the user.description field
+    const userDescFieldSpaceEffChain = new SpaceEfficientMarkovChain(makeRandom());
+    console.time("userDescFieldSpaceEffChain.initialize()");
+    userDescFieldSpaceEffChain.initialize(userDescriptionFieldParsedSentences);
+    console.timeEnd("userDescFieldSpaceEffChain.initialize()");
+    console.time("userDescFieldSpaceEffChain.generateSentence()");
+    const userDescFieldGeneratedSentence1 =
+    userDescFieldSpaceEffChain.generateSentence(maxUserDescFieldLength);
+    console.timeEnd("userDescFieldSpaceEffChain.generateSentence()");
+    const userDescFieldSpaceEffMarkovChainSize = getSizeInBytes(userDescFieldSpaceEffChain.chain);
+    const userDescSpaceEffKeyLen = Object.keys(userDescFieldSpaceEffChain.chain).length;
+    const descriptionFieldStringifiedChain = JSON.stringify(userDescFieldSpaceEffChain.chain);
+
+    // example of producting a markov chain class instance from a precomputed markov chain.
+    const textFieldChainFromString =
+     new SpaceEfficientMarkovChain(makeRandom(), getTwitterJsonTextFieldMarkovChain());
+    const userDescChainFromString =
+    new SpaceEfficientMarkovChain(makeRandom(), JSON.parse(descriptionFieldStringifiedChain));
+    const textFieldGeneratedSentence3 = textFieldChainFromString.generateSentence(maxTextFieldLength);
+    const userDescFieldGeneratedSentence2 = userDescChainFromString.generateSentence(maxUserDescFieldLength);
+
     bench("canada", () => canada);
     bench("twitter", () => twitter);
 });
