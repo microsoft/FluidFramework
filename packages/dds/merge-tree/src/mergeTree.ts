@@ -31,6 +31,7 @@ import {
 } from "./localReference";
 import {
 	BaseSegment,
+	BlockAction,
 	BlockUpdateActions,
 	CollaborationWindow,
 	IHierBlock,
@@ -87,6 +88,13 @@ import {
 	refHasTileLabel,
  } from "./referencePositions";
 import { PropertiesRollback } from "./segmentPropertiesManager";
+import {
+    backwardExcursion,
+    depthFirstNodeWalk,
+    forwardExcursion,
+    NodeAction,
+    walkAllChildSegments,
+} from "./mergeTreeNodeWalk";
 
 const minListenerComparer: Comparer<MinListener> = {
     min: { minRequired: Number.MIN_VALUE, onMinGE: () => { assert(false, 0x048 /* "onMinGE()" */); } },
@@ -837,7 +845,7 @@ export class MergeTree {
             offset = start;
             return false;
         };
-        this.searchBlock(this.root, pos, 0, refSeq, clientId, { leaf }, undefined, localSeq);
+        this.nodeMap(refSeq, clientId, leaf, undefined, undefined, pos, pos + 1, localSeq);
         return { segment, offset };
     }
 
@@ -859,12 +867,12 @@ export class MergeTree {
             return true;
         };
         // Slide to the next farthest valid segment in the tree.
-        this.rightExcursion(segment, goFurtherToFindSlideToSegment);
+        forwardExcursion(segment, goFurtherToFindSlideToSegment);
         if (slideToSegment) {
             return slideToSegment;
         }
         // If no such segment is found, slide to the last valid segment.
-        this.leftExcursion(segment, goFurtherToFindSlideToSegment);
+        backwardExcursion(segment, goFurtherToFindSlideToSegment);
         return slideToSegment;
     }
 
@@ -1412,7 +1420,7 @@ export class MergeTree {
             startSeg = splitSeg.next;
         }
         // walk back from the segment, to see if there is a previous tie break seg
-        this.leftExcursion(startSeg, (backSeg) => {
+        backwardExcursion(startSeg, (backSeg) => {
             if (!backSeg.isLeaf()) {
                 return true;
             }
@@ -1537,7 +1545,7 @@ export class MergeTree {
 
         const continueFrom = (node: IMergeBlock) => {
             segIsLocal = false;
-            this.rightExcursion(node, checkSegmentIsLocal);
+            forwardExcursion(node, checkSegmentIsLocal);
             return segIsLocal;
         };
 
@@ -1642,72 +1650,6 @@ export class MergeTree {
             return false;
         } else {
             return true;
-        }
-    }
-
-    // Visit segments starting from node's left siblings, then up to node's parent
-    private leftExcursion(node: IMergeNode, leafAction: ISegmentAction<undefined>) {
-        let go = true;
-        let startNode = node;
-        let parent = startNode.parent;
-        while (parent) {
-            const children = parent.children;
-            let childIndex: number;
-            let _node: IMergeNode;
-            let matchedStart = false;
-            for (childIndex = parent.childCount - 1; childIndex >= 0; childIndex--) {
-                _node = children[childIndex];
-                if (matchedStart) {
-                    if (!_node.isLeaf()) {
-                        const childBlock = _node;
-                        go = this.nodeMapReverse(childBlock, leafAction, 0, UniversalSequenceNumber,
-                            this.collabWindow.clientId);
-                    } else {
-                        go = leafAction(_node, 0, UniversalSequenceNumber, this.collabWindow.clientId, 0, 0, undefined);
-                    }
-                    if (!go) {
-                        return;
-                    }
-                } else {
-                    matchedStart = (startNode === _node);
-                }
-            }
-            startNode = parent;
-            parent = parent.parent;
-        }
-    }
-
-    /**
-     * Visit segments starting from node's right siblings, then up to node's parent.
-     * All segments past `node` are visited, regardless of their visibility.
-     */
-    private rightExcursion(node: IMergeNode, leafAction: (seg: ISegment) => boolean) {
-        let go = true;
-        let startNode = node;
-        let parent = startNode.parent;
-        while (parent) {
-            const children = parent.children;
-            let childIndex: number;
-            let _node: IMergeNode;
-            let matchedStart = false;
-            for (childIndex = 0; childIndex < parent.childCount; childIndex++) {
-                _node = children[childIndex];
-                if (matchedStart) {
-                    if (!_node.isLeaf()) {
-                        const childBlock = _node;
-                        go = this.walkAllSegments(childBlock, leafAction);
-                    } else {
-                        go = leafAction(_node);
-                    }
-                    if (!go) {
-                        return;
-                    }
-                } else {
-                    matchedStart = (startNode === _node);
-                }
-            }
-            startNode = parent;
-            parent = parent.parent;
         }
     }
 
@@ -1876,7 +1818,7 @@ export class MergeTree {
             return true;
         };
 
-        this.mapRange({ leaf: annotateSegment }, refSeq, clientId, undefined, start, end);
+        this.nodeMap(refSeq, clientId, annotateSegment, undefined, undefined, start, end);
 
         // OpArgs == undefined => test code
         if (this.mergeTreeDeltaCallback && deltaSegments.length > 0) {
@@ -1957,7 +1899,7 @@ export class MergeTree {
             }
             return true;
         };
-        this.mapRange({ leaf: markRemoved, post: afterMarkRemoved }, refSeq, clientId, undefined, start, end);
+        this.nodeMap(refSeq, clientId, markRemoved, undefined, afterMarkRemoved, start, end);
         // these segments are already viewed as being removed locally and are not event-ed
         // so can slide non-StayOnRemove refs immediately
         localOverlapWithRefs.forEach(
@@ -2088,7 +2030,7 @@ export class MergeTree {
      */
     private findRollbackPosition(segment: ISegment) {
         let segmentPosition = 0;
-        this.walkAllSegments(this.root, (seg) => {
+        walkAllChildSegments(this.root, (seg) => {
             // If we've found the desired segment, terminate the walk and return 'segmentPosition'.
             if (seg === segment) {
                 return false;
@@ -2206,18 +2148,8 @@ export class MergeTree {
         }
     }
 
-    public map<TClientData>(
-        actions: SegmentActions<TClientData>,
-        refSeq: number,
-        clientId: number,
-        accum: TClientData,
-    ) {
-        // TODO: optimize to avoid comparisons
-        this.nodeMap(this.root, actions, 0, refSeq, clientId, accum);
-    }
-
     public mapRange<TClientData>(
-        actions: SegmentActions<TClientData>,
+        handler: ISegmentAction<TClientData>,
         refSeq: number,
         clientId: number,
         accum: TClientData,
@@ -2233,7 +2165,7 @@ export class MergeTree {
                 this.ensureIntervalBoundary(end, refSeq, clientId);
             }
         }
-        this.nodeMap(this.root, actions, 0, refSeq, clientId, accum, start, end);
+        this.nodeMap(refSeq, clientId, handler, accum, undefined, start, end);
     }
 
     public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
@@ -2283,98 +2215,60 @@ export class MergeTree {
     }
 
     private nodeMap<TClientData>(
-        node: IMergeBlock, actions: SegmentActions<TClientData>, pos: number, refSeq: number,
-        clientId: number, accum: TClientData, start?: number, end?: number) {
-        let _start = start;
-        let _end = end;
-        let _pos = pos;
-        if (_start === undefined) {
-            _start = 0;
+        refSeq: number,
+        clientId: number,
+        leaf: ISegmentAction<TClientData>,
+        accum: TClientData,
+        post?: BlockAction<TClientData>,
+        start: number = 0,
+        end?: number,
+        localSeq?: number,
+    ): void {
+        const endPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
+        if (endPos === start) {
+            return;
         }
-        if (_end === undefined) {
-            _end = this.blockLength(node, refSeq, clientId);
-        }
-        let go = true;
-        if (actions.pre) {
-            go = actions.pre(node, _pos, refSeq, clientId, _start, _end, accum);
-            if (!go) {
-                // Cancel this node but not entire traversal
-                return true;
-            }
-        }
-        const children = node.children;
-        for (let childIndex = 0; childIndex < node.childCount; childIndex++) {
-            const child = children[childIndex];
-            const len = this.nodeLength(child, refSeq, clientId) ?? 0;
-            if (go && (_end > 0) && (len > 0) && (_start < len)) {
-                // Found entry containing pos
-                if (!child.isLeaf()) {
-                    if (go) {
-                        go = this.nodeMap(child, actions, _pos, refSeq, clientId, accum, _start, _end);
-                    }
-                } else {
-                    if (actions.leaf) {
-                        go = actions.leaf(child, _pos, refSeq, clientId, _start, _end, accum);
-                    }
+
+        let pos = 0;
+
+        depthFirstNodeWalk(
+            this.root,
+            this.root.children[0],
+            (node) => {
+                if (endPos <= pos) {
+                    return NodeAction.Exit;
                 }
-            }
-            if (!go) {
-                break;
-            }
-            if (actions.shift) {
-                actions.shift(child, _pos, refSeq, clientId, _start, _end, accum);
-            }
-            _pos += len;
-            _start -= len;
-            _end -= len;
-        }
-        if (go && actions.post) {
-            go = actions.post(node, _pos, refSeq, clientId, _start, _end, accum);
-        }
-
-        return go;
-    }
-
-    // Invokes the leaf action for all segments.  Note that *all* segments are visited
-    // regardless of if they would be visible to the current `clientId` and `refSeq`.
-    public walkAllSegments<TClientData>(
-        block: IMergeBlock,
-        action: (segment: ISegment, accum?: TClientData) => boolean,
-        accum?: TClientData,
-    ): boolean {
-        let go = true;
-        const children = block.children;
-        for (let childIndex = 0; go && childIndex < block.childCount; childIndex++) {
-            const child = children[childIndex];
-            go = child.isLeaf()
-                ? action(child, accum)
-                : this.walkAllSegments(child, action, accum);
-        }
-        return go;
-    }
-
-    // Straight call every segment; goes until leaf action returns false
-    private nodeMapReverse(
-        block: IMergeBlock, leafAction: ISegmentAction<undefined>, pos: number, refSeq: number,
-        clientId: number) {
-        let go = true;
-        const children = block.children;
-        for (let childIndex = block.childCount - 1; childIndex >= 0; childIndex--) {
-            const child = children[childIndex];
-            if (go) {
-                // Found entry containing pos
-                if (!child.isLeaf()) {
-                    if (go) {
-                        go = this.nodeMapReverse(child, leafAction, pos, refSeq, clientId);
-                    }
-                } else {
-                    go = leafAction(child, pos, refSeq, clientId, 0, 0, undefined);
+                const len = this.nodeLength(node, refSeq, clientId, localSeq);
+                if (len === undefined || len === 0) {
+                    return NodeAction.Skip;
                 }
-            }
-            if (!go) {
-                break;
-            }
-        }
-        return go;
+
+                const nextPos = pos + len;
+                // start is beyond the current node, so we can skip it
+                if (start >= nextPos) {
+                    pos = nextPos;
+                    return NodeAction.Skip;
+                }
+
+                if (node.isLeaf()) {
+                    if (leaf(
+                        node,
+                        pos,
+                        refSeq,
+                        clientId,
+                        start - pos,
+                        endPos - pos,
+                        accum,
+                    ) === false) {
+                        return NodeAction.Exit;
+                    }
+                    pos = nextPos;
+                }
+            },
+            undefined,
+            post === undefined
+                ? undefined
+                : (block) => post(block, pos, refSeq, clientId, start - pos, endPos - pos, accum),
+        );
     }
 }

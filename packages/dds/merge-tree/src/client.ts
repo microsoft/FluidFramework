@@ -56,6 +56,7 @@ import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import { MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
+import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import {
     IMergeTreeClientSequenceArgs,
     IMergeTreeDeltaOpArgs,
@@ -289,9 +290,7 @@ export class Client {
         splitRange: boolean = false,
     ): void {
         this._mergeTree.mapRange(
-            {
-                leaf: handler,
-            },
+            handler,
             this.getCurrentSeq(), this.getClientId(),
             accum, start, end, splitRange);
     }
@@ -300,7 +299,10 @@ export class Client {
         action: (segment: ISegment, accum?: TClientData) => boolean,
         accum?: TClientData,
     ): boolean {
-        return this._mergeTree.walkAllSegments(this._mergeTree.root, action, accum);
+        return walkAllChildSegments(
+            this._mergeTree.root,
+            accum === undefined ? action : (seg) => action(seg, accum),
+        );
     }
 
     /**
@@ -309,7 +311,7 @@ export class Client {
      * serializer which keeps track of all serialized handles.
      */
     public serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void {
-        this._mergeTree.walkAllSegments(
+        walkAllChildSegments(
             this._mergeTree.root,
             (seg) => {
                 // Only serialize segments that have not been removed.

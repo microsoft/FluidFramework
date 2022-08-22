@@ -163,22 +163,18 @@ export function TestPack(verbose = true) {
         const aveTime = (client.accumTime / client.accumOps).toFixed(1);
         const aveLocalTime = (client.localTime / client.localOps).toFixed(1);
         const stats = client.mergeTree.getStats();
-        const windowTime = stats.windowTime;
-        assert(windowTime !== undefined, "window time is expected to exist");
         const packTime = stats.packTime;
         const ordTime = stats.ordTime;
-        const aveWindowTime = ((windowTime || 0) / (client.accumOps)).toFixed(1);
         const aveOrdTime = ((ordTime || 0) / (client.accumOps)).toFixed(1);
         const avePackTime = ((packTime || 0) / (client.accumOps)).toFixed(1);
         const aveExtraWindowTime = (client.accumWindowTime / client.accumOps).toFixed(1);
         const aveWindow = (client.accumWindow / client.accumOps).toFixed(1);
-        const adjTime = ((client.accumTime - (windowTime - client.accumWindowTime)) / client.accumOps).toFixed(1);
         if (client.localOps > 0) {
             console.log(`local time ${client.localTime} us ops: ${client.localOps} ave time ${aveLocalTime}`);
         }
         console.log(`ord time average: ${aveOrdTime}us max ${stats.maxOrdTime}us`);
-        console.log(`${client.longClientId} accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - wtime ${adjTime} pack ${avePackTime} ave window ${aveWindow}`);
-        console.log(`${client.longClientId} accum window time ${client.accumWindowTime} us ave window time total ${aveWindowTime} not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
+        console.log(`${client.longClientId} accum time ${client.accumTime} us ops: ${client.accumOps} ave time ${aveTime} - pack ${avePackTime} ave window ${aveWindow}`);
+        console.log(`${client.longClientId} accum window time ${client.accumWindowTime} us ave window time not in ops ${aveExtraWindowTime}; max ${client.maxWindowTime}`);
     }
 
     function manyMergeTrees() {
