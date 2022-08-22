@@ -206,6 +206,8 @@ export class Client {
     // (undocumented)
     updateSeqNumbers(min: number, seq: number): void;
     // (undocumented)
+    protected walkAllSegments<TClientData>(action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
+    // (undocumented)
     walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
     // (undocumented)
     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
