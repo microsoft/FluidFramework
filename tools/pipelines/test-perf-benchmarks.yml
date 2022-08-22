@@ -4,29 +4,26 @@
 
 name: $(Build.BuildId)
 
-# trigger:
-#   branches:
-#     include:
-#     - main
-#     - next
-#     - lts
-#     - release/*
-#   paths:
-#     include:
-#     - packages
-#     - examples
-#     - experimental
-#     - package.json
-#     - package-lock.json
-#     - lerna.json
-#     - lerna-package-lock.json
-#     - tools/pipelines/test-perf-benchmarks.yml
-#     - tools/pipelines/templates/include-set-package-version.yml
-
-# extends:
-#   template: templates/build-npm-package.yml
-#   parameters:
-#     tagName: client
+trigger:
+  branches:
+    include:
+    - main
+    - next
+    - lts
+    - release/*
+  paths:
+    include:
+    - packages
+    - examples
+    - experimental
+    - package.json
+    - package-lock.json
+    - lerna.json
+    - lerna-package-lock.json
+    - tools/benchmark
+    - tools/perf-test-processing
+    - tools/pipelines/test-perf-benchmarks.yml
+    - tools/pipelines/templates/include-set-package-version.yml
 
 parameters:
 - name: taskBuild
