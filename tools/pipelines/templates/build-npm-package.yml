@@ -35,10 +35,6 @@ parameters:
   type: boolean
   default: true
 
-- name: runBenchmarkTests
-  type: boolean
-  default: true # TODO: default here should be false and only pass true in the scenarios we want these to run
-
 - name: poolCG
   type: object
   default: Small
