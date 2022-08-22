@@ -2614,6 +2614,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     ): number {
         let maybeCompressedContent: any;
         let metadata: any;
+        let contentLength: number;
 
         if (this.runtimeOptions.compressionOptions?.minimumSize !== undefined &&
             serializedContent &&
@@ -2639,19 +2640,22 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
             if (serializedContent.length < compressedContent.length) {
                 maybeCompressedContent = content;
                 metadata = opMetadataInternal;
+                contentLength = serializedContent.length;
             } else {
                 maybeCompressedContent = compressedContent;
                 metadata = { ...opMetadataInternal, compressed: true };
+                contentLength = compressedContent.length;
             }
         } else {
             maybeCompressedContent = content;
             metadata = opMetadataInternal;
+            contentLength = serializedContent.length;
         }
 
         // submitRuntimeMessage is expecting contents as an object
         if (this._maxOpSizeInBytes >= 0) {
             // Chunking disabled
-            if (!serializedContent || serializedContent.length <= this._maxOpSizeInBytes) {
+            if (!serializedContent || contentLength <= this._maxOpSizeInBytes) {
                 return this.submitRuntimeMessage(type,
                                                  maybeCompressedContent,
                                                  batch,
@@ -2673,7 +2677,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
 
         // Chunking enabled, fallback on the server's max message size
         // and split the content accordingly
-        if (!serializedContent || serializedContent.length <= serverMaxOpSize) {
+        if (!serializedContent || contentLength <= serverMaxOpSize) {
             return this.submitRuntimeMessage(type,
                                              maybeCompressedContent,
                                              batch,
