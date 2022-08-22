@@ -87,7 +87,7 @@ export class DocumentService implements api.IDocumentService {
 
 // @public (undocumented)
 export class DocumentStorageService extends DocumentStorageServiceProxy {
-    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies?: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>, noCacheGitManager?: GitManager | undefined, getStorageManager?: (disableCache?: boolean) => Promise<GitManager>);
+    constructor(id: string, manager: GitManager, logger: ITelemetryLogger, policies: IDocumentStorageServicePolicies, driverPolicies?: IRouterliciousDriverPolicies, blobCache?: ICache<ArrayBufferLike>, snapshotTreeCache?: ICache<ISnapshotTreeVersion>, noCacheGitManager?: GitManager | undefined, getStorageManager?: (disableCache?: boolean) => Promise<GitManager>);
     // (undocumented)
     getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
     // (undocumented)

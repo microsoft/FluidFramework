@@ -173,7 +173,7 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
 export interface IDocumentStorageServicePolicies {
     // (undocumented)
     readonly caching?: LoaderCachingPolicy;
-    readonly maximumCacheDurationMs?: number;
+    readonly maximumCacheDurationMs: number;
     // (undocumented)
     readonly minBlobSize?: number;
 }

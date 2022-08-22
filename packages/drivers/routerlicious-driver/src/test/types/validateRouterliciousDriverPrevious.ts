@@ -143,6 +143,7 @@ declare function get_old_ClassDeclaration_DocumentStorageService():
 declare function use_current_ClassDeclaration_DocumentStorageService(
     use: TypeOnly<current.DocumentStorageService>);
 use_current_ClassDeclaration_DocumentStorageService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_DocumentStorageService());
 
 /*

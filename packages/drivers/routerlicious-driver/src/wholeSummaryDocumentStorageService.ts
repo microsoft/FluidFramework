@@ -53,7 +53,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         protected readonly id: string,
         protected readonly manager: GitManager,
         protected readonly logger: ITelemetryLogger,
-        public readonly policies: IDocumentStorageServicePolicies = {},
+        public readonly policies: IDocumentStorageServicePolicies,
         private readonly driverPolicies?: IRouterliciousDriverPolicies,
         private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),
         private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> = new InMemoryCache(),

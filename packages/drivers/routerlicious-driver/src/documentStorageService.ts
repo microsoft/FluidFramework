@@ -74,7 +74,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
         public readonly id: string,
         public manager: GitManager,
         logger: ITelemetryLogger,
-        policies: IDocumentStorageServicePolicies = {},
+        policies: IDocumentStorageServicePolicies,
         driverPolicies?: IRouterliciousDriverPolicies,
         blobCache?: ICache<ArrayBufferLike>,
         snapshotTreeCache?: ICache<ISnapshotTreeVersion>,

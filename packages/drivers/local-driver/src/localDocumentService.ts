@@ -43,7 +43,7 @@ export class LocalDocumentService implements api.IDocumentService {
             this.documentId,
             new GitManager(new TestHistorian(this.localDeltaConnectionServer.testDbFactory.testDatabase)),
             new TelemetryNullLogger(),
-            { minBlobSize: 2048 }, // Test blob aggregation.
+            { minBlobSize: 2048, maximumCacheDurationMs: 0 }, // Test blob aggregation.
             undefined,
             undefined,
             undefined,

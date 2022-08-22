@@ -101,7 +101,7 @@ export interface IDocumentStorageServicePolicies {
     /**
      * This policy tells the runtime that the driver will not use cached snapshots older than this value.
      */
-    readonly maximumCacheDurationMs?: number;
+    readonly maximumCacheDurationMs: number;
 }
 
 /**

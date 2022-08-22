@@ -119,6 +119,8 @@ export class DocumentService implements api.IDocumentService {
                 ? api.LoaderCachingPolicy.Prefetch
                 : api.LoaderCachingPolicy.NoCaching,
             minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
+            // This is set to 0 as there is no caching between loading new containers. Update if this changes.
+            maximumCacheDurationMs: 0,
         };
 
         this.documentStorageService = new DocumentStorageService(

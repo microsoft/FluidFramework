@@ -60,6 +60,12 @@
     "broken": {
       "InterfaceDeclaration_IDocumentDeltaConnection": {
         "backCompat": false
+      },
+      "InterfaceDeclaration_IDocumentStorageServicePolicies": {
+        "forwardCompat": false
+      },
+      "InterfaceDeclaration_IDocumentStorageService": {
+        "forwardCompat": false
       }
     }
   }

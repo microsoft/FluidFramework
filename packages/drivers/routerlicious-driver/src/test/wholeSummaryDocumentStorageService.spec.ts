@@ -142,6 +142,7 @@ describe("WholeSummaryDocumentStorageService", () => {
             "id",
             new MockGitManager() as any,
             DebugLogger.create("fluid:testSummaries"),
+            { maximumCacheDurationMs: 0 },
         );
 
         const res = await service.downloadSummary({
