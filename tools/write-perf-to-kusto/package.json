@@ -1,7 +1,8 @@
 {
-  "name": "@ff-tools/write-perf-to-kusto",
+  "name": "@fluid-tools/write-perf-to-kusto",
   "version": "1.0.0",
   "description": "Tool to take performance benchmark output files and write them to kusto",
+  "homepage": "https://fluidframework.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/FluidFramework.git",
