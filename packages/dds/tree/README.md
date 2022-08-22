@@ -122,7 +122,7 @@ flowchart LR;
     subgraph "@fluid-internal/tree"
         shared-tree--"configures"-->shared-tree-core
         shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
-        ForestIndex--"Exposed by"-->checkout;
+        ForestIndex--"Exposed by"-->checkout
     end
     checkout--"viewed by"-->app
 ```
@@ -202,11 +202,11 @@ Also not shown is the (also usually unneeded) step of rebasing the changeset bef
 
 ```mermaid
 flowchart LR
-    command["App's command callback"]--"completes transaction"-->transaction
+    command["App's command callback"]--"commit"-->transaction
     subgraph "@fluid-internal/tree"
-        transaction--"completes transaction"-->ProgressiveEditBuilder
+        transaction--"build"-->ProgressiveEditBuilder
         ProgressiveEditBuilder--"changeset"-->transaction
-        transaction--"changeset"-->core["shared-tree-core"]
+        transaction--"changeset (from builder)"-->core["shared-tree-core"]
         core--"changeset"-->EditManager--"changeset"-->local["Local Branch"]
     end
     core--"Op"-->service["Fluid ordering service (Kafka)"]
