@@ -42,6 +42,11 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     }
 
     public root(range: DetachedField, index = 0): Anchor {
+        if (!this.roots.get(range)?.length) {
+            return this.anchors.track(null);
+        }
+
+        // TODO: Mark anchor as undefined/removed
         return this.anchors.track(
             { parent: undefined, parentField: detachedFieldAsKey(range), parentIndex: index },
         );
@@ -196,7 +201,7 @@ export class ObjectForest extends SimpleDependee implements IEditableForest {
     private detachRangeOfChildren(field: ObjectField, startIndex: number, endIndex: number): DetachedField {
         assertValidIndex(startIndex, field, true);
         assertValidIndex(endIndex, field, true);
-        assert(startIndex <= endIndex, 0x371 /* detached range's end must be after it's start */);
+        assert(startIndex <= endIndex, 0x371 /* detached range's end must be after its start */);
         const newRange = this.newDetachedField();
         const newField = field.splice(startIndex, endIndex - startIndex);
         this.roots.set(newRange, newField);

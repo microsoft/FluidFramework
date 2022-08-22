@@ -47,7 +47,7 @@ function getCommentFooter(baselineCommit: string) {
 }
 
 /**
- * Gets a Details block from a single BundleDiff, with a table of all it's metrics
+ * Gets a Details block from a single BundleDiff, with a table of all its metrics
  *
  * @param bundleDiff
  */
